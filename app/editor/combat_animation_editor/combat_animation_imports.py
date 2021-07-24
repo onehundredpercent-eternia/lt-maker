@@ -756,8 +756,8 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
                 shield_toss = True
             elif command_code == '28':
                 parse_text('sound;ShamanRune')
-            elif command_code == '28':
-                parse_text('sound;ArmorShift')
+            elif command_code == '2B':
+                parse_text('sound;Armor Shift')
             elif command_code == '2E':
                 parse_text('sound;MageInit')
                 logging.warning("Change MageInit effect to SageInit effect if working with Sage animations")
