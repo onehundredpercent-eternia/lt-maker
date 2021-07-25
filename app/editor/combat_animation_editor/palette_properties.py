@@ -1,10 +1,12 @@
 import os
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QFileDialog, QVBoxLayout, \
-    QGraphicsView, QGraphicsScene, QLineEdit, QLabel, QSizePolicy, QPushButton, \
-    QSpinBox, QMessageBox, QDialog
+    QGraphicsView, QGraphicsScene, QLineEdit, QSizePolicy, QPushButton, \
+    QMessageBox, QDialog, QAction, QApplication
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QPen, QPixmap, QImage, QPainter
+from PyQt5.QtGui import QColor, QPen, QPixmap, QImage, QPainter, qRgb
+
+from typing import Tuple
 
 from app.constants import WINWIDTH, WINHEIGHT
 from app.resources.resources import RESOURCES
@@ -12,24 +14,179 @@ from app.resources.resources import RESOURCES
 from app.editor.settings import MainSettingsController
 
 from app.editor import timer
-from app.utilities import utils, str_utils
+from app.utilities import str_utils
 from app.extensions.custom_gui import PropertyBox, ComboBox, Dialog
-from app.extensions.color_icon import ColorIcon
-from app.extensions.color_slider import RGBSlider, HSVSlider
 from app.editor.combat_animation_editor.frame_selector import FrameSelector
 from app.editor.combat_animation_editor import combat_animation_model
+from app.editor.combat_animation_editor.color_editor import ColorEditorWidget
 from app.resources.combat_anims import Frame
 from app.resources.combat_palettes import Palette
 from app.editor.icon_editor.icon_view import IconView
 import app.editor.utilities as editor_utilities
-from app.resources import combat_anims
+
+import logging
+
+class UndoStack():
+    def __init__(self):
+        self.current_idx = -1
+        self._list = []
+
+    def clear(self):
+        self.current_idx = -1
+        self._list.clear()
+
+    def append(self, val):
+        self._list = self._list[:self.current_idx + 1]
+        self._list.append(val)
+        self.current_idx += 1
+
+    def undo(self):
+        if not self._list or self.current_idx < 0:
+            return
+        command = self._list[self.current_idx]
+        command.undo()
+        self.current_idx -= 1
+        if self.current_idx >= 0 and command.can_stack(self._list[self.current_idx]):
+            self.undo()
+
+    def redo(self):
+        if not self._list or self.current_idx >= len(self._list) - 1:
+            return
+        self.current_idx += 1
+        command = self._list[self.current_idx]
+        command.redo()
+        if self.current_idx < len(self._list) - 1 and command.can_stack(self._list[self.current_idx + 1]):
+            self.redo()
+
+palette_commands = UndoStack()
+
+class CommandChangePaletteColor():
+    nid = 'change_palette_color'
+
+    def __init__(self, palette: Palette, coord: tuple, new_color: QColor):
+        self.palette = palette
+        self.coord = coord
+        self.new_color = new_color.getRgb()[:3]
+        self.old_color = self.palette.colors.get(self.coord)
+
+        self.swap_coord = None
+        if self.new_color in self.palette.colors.values():
+            for coord, color in self.palette.colors.items():
+                if color == self.new_color and self.old_color:
+                    self.swap_coord = coord
+                    break
+
+    def redo(self): 
+        if self.swap_coord:
+            self.palette.colors[self.swap_coord] = self.old_color
+        self.palette.colors[self.coord] = self.new_color
+
+    def undo(self):
+        if self.swap_coord:
+            self.palette.colors[self.swap_coord] = self.new_color
+
+        if self.old_color is not None:
+            self.palette.colors[self.coord] = self.old_color
+        else:
+            del self.palette.colors[self.coord]
+
+    def can_stack(self, other) -> bool:
+        return self.nid == other.nid and self.palette == other.palette and self.coord == other.coord
+
+class CommandChangePaletteSlot():
+    nid = 'change_palette_slot'
+
+    def __init__(self, palette: Palette, frame_set, coord: tuple, new_coord: tuple):
+        self.palette = palette
+        self.frame_set = frame_set
+        self.old_coord = coord
+        self.new_coord = new_coord
+
+        self.swap_coord = False
+        if self.new_coord in self.palette.colors.keys():
+            self.swap_coord = True
+
+    def redo(self):
+        print(self.swap_coord) 
+        if self.swap_coord:
+            # old_color = self.palette.colors[self.old_coord]
+            # new_color = self.palette.colors[self.new_coord]
+            # self.palette.colors[self.old_coord] = new_color
+            # self.palette.colors[self.new_coord] = old_color
+            temp_coord = (255, 255)
+            convert_dict = {qRgb(0, *self.old_coord): qRgb(0, *temp_coord), 
+                            qRgb(0, *self.new_coord): qRgb(0, *self.old_coord)}
+            second_convert_dict = {qRgb(0, *temp_coord): qRgb(0, *self.new_coord)}
+            for frame in self.frame_set.frames:
+                frame.pixmap = editor_utilities.color_convert_pixmap(frame.pixmap, convert_dict)
+                frame.pixmap = editor_utilities.color_convert_pixmap(frame.pixmap, second_convert_dict)
+            self.frame_set.pixmap = editor_utilities.color_convert_pixmap(self.frame_set.pixmap, convert_dict)
+            self.frame_set.pixmap = editor_utilities.color_convert_pixmap(self.frame_set.pixmap, second_convert_dict)
+
+        else:
+            # color = self.palette.colors[self.old_coord]
+            # self.palette.colors[self.new_coord] = color
+            # del self.palette.colors[self.old_coord]
+            convert_dict = {qRgb(0, *self.old_coord): qRgb(0, *self.new_coord)}
+            for frame in self.frame_set.frames:
+                frame.pixmap = editor_utilities.color_convert_pixmap(frame.pixmap, convert_dict)
+            # Propagate changes up to main anim
+            self.frame_set.pixmap = editor_utilities.color_convert_pixmap(self.frame_set.pixmap, convert_dict)
+        self.frame_set.full_path = None  # So it saves the new pixmap
+
+    def undo(self):
+        if self.swap_coord:
+            # old_color = self.palette.colors[self.old_coord]
+            # new_color = self.palette.colors[self.new_coord]
+            # self.palette.colors[self.old_coord] = old_color
+            # self.palette.colors[self.new_coord] = new_color
+            temp_coord = (255, 255)
+            # Swap back
+            convert_dict = {qRgb(0, *self.old_coord): qRgb(0, *temp_coord), 
+                            qRgb(0, *self.new_coord): qRgb(0, *self.old_coord)}
+            second_convert_dict = {qRgb(0, *temp_coord): qRgb(0, *self.new_coord)}
+            for frame in self.frame_set.frames:
+                frame.pixmap = editor_utilities.color_convert_pixmap(frame.pixmap, convert_dict)
+                frame.pixmap = editor_utilities.color_convert_pixmap(frame.pixmap, second_convert_dict)
+            self.frame_set.pixmap = editor_utilities.color_convert_pixmap(self.frame_set.pixmap, convert_dict)
+            self.frame_set.pixmap = editor_utilities.color_convert_pixmap(self.frame_set.pixmap, second_convert_dict)
+        else:
+            # color = self.palette.colors[self.new_coord]
+            # self.palette.colors[self.old_coord] = color
+            # del self.palette.colors[self.new_coord]
+            convert_dict = {qRgb(0, *self.new_coord): qRgb(0, *self.old_coord)}
+            for frame in self.frame_set.frames:
+                frame.pixmap = editor_utilities.color_convert_pixmap(frame.pixmap, convert_dict)
+            # Propagate changes up to main anim
+            self.frame_set.pixmap = editor_utilities.color_convert_pixmap(self.frame_set.pixmap, convert_dict)
+        self.frame_set.full_path = None
+
+    def can_stack(self, other) -> bool:
+        return False
+
+class CommandDeleteColor():
+    def __init__(self, palette, coord):
+        self.palette = palette
+        self.coord = coord
+        self.old_color = self.palette.colors[self.coord]
+
+    def redo(self):
+        del self.palette.colors[self.coord]
+
+    def undo(self):
+        self.palette.colors[self.coord] = self.old_color
+
+    def can_stack(self, other) -> bool: 
+        return False
 
 class AnimView(IconView):
-    def get_color_at_pos(self, pixmap, pos):
+    def get_color_at_pos(self, pixmap, pos) -> Tuple[int, int, int]:
         image = pixmap.toImage()
-        current_color = image.pixel(*pos)
-        color = QColor(current_color)
-        return (color.red(), color.green(), color.blue())
+        if pos[0] >= 0 and pos[1] >= 0:
+            current_color = image.pixel(*pos)
+            color = QColor(current_color)
+            return (color.red(), color.green(), color.blue())
+        return (0, 0, 0)
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -44,22 +201,35 @@ class AnimView(IconView):
         pos = pos[0] - offset_x, pos[1] - offset_y
         pixmap = frame.pixmap
 
-        if event.button() == Qt.LeftButton:
-            base_color = self.get_color_at_pos(pixmap, pos)
-            palette = self.window.current_palette
-            if not palette:
-                return
-            base_colors = palette.colors.keys()
-            if base_color not in base_colors:
-                print("Cannot find color: %s in %s" % (base_color, base_colors))
-                return
-            c = palette.colors[base_color]
-            print(c, flush=True)
-            self.window.color_editor_widget.set_current(c)
+        coord_color: Tuple[int, int, int] = self.get_color_at_pos(pixmap, pos)
+        coord = coord_color[1], coord_color[2]  # Just the G, B channels
 
-class ColorSelectorWidget(QGraphicsView):
+        palette = self.window.current_palette
+        if not palette:
+            return
+        palette_coords = palette.colors.keys()
+        if coord not in palette_coords:
+            logging.warning("Cannot find coord: %s in %s" % (coord, palette_coords))
+            return
+
+        if event.buttons() == Qt.LeftButton:
+            # overwrite current color with painting color
+            painting_color = self.window.get_painting_color()
+            command = CommandChangePaletteColor(palette, coord, painting_color)
+            palette_commands.append(command)
+            command.redo()
+            self.window.draw_frame()
+
+        elif event.buttons() == Qt.RightButton:
+            # replace painting color with current color
+            current_color = palette.colors[coord]
+            color = QColor(*current_color)
+            self.window.set_painting_color(color)
+
+class EaselWidget(QGraphicsView):
     palette_size = 32
     square_size = 8
+    # Emitted when the current coord changes
     selectionChanged = pyqtSignal(object)
 
     def __init__(self, parent):
@@ -73,7 +243,7 @@ class ColorSelectorWidget(QGraphicsView):
 
         self.current_palette = None
         self.current_frame = None
-        self.current_color = None
+        self.current_coord = None
 
         self.working_image = None
 
@@ -108,16 +278,31 @@ class ColorSelectorWidget(QGraphicsView):
         base_image = QImage(side_length, side_length, QImage.Format_ARGB32)
         base_image.fill(QColor(192, 192, 192, 255))
 
+        painting_color = self.window.get_painting_color()
+        if painting_color:
+            painting_color = painting_color.getRgb()[:3]
+        painting_color_coord = None
+        if painting_color:
+            for coord, color in self.current_palette.colors.items():
+                if color == painting_color:
+                    painting_color_coord = coord
+                    break
+
         painter = QPainter()
         painter.begin(base_image)
         if self.current_frame:
             painter.setPen(QPen(QColor(0, 0, 0, 255), 1, Qt.SolidLine))
             for coord in self.get_coords_used_in_frame(self.current_frame):
                 painter.drawRect(coord[0] * self.palette_size + 1, coord[1] * self.palette_size + 1, self.palette_size - 2, self.palette_size - 2)
-        # Outline chosen color in bright yellow
-        if self.current_color:
+        # Outline painting color in dashed line
+        if painting_color_coord:
+            painter.setPen(QPen(QColor(255, 255, 0, 255), 1, Qt.DashLine))
+            coord = painting_color_coord
+            painter.drawRect(coord[0] * self.palette_size, coord[1] * self.palette_size, self.palette_size, self.palette_size)
+        # Outline chosen coord in bright cyan
+        if self.current_coord:
             painter.setPen(QPen(QColor(0, 255, 255, 255), 2, Qt.SolidLine))
-            coord = self.current_color
+            coord = self.current_coord
             painter.drawRect(coord[0] * self.palette_size, coord[1] * self.palette_size, self.palette_size, self.palette_size)
         # draw actual colors
         for coord, color in self.current_palette.colors.items():
@@ -129,326 +314,59 @@ class ColorSelectorWidget(QGraphicsView):
     def set_current(self, current_palette: Palette, current_frame: Frame):
         self.current_palette = current_palette
         self.current_frame = current_frame
-        self.current_color = None
+        self.current_coord = None
         self.update_view()
         self.selectionChanged.emit(None)
 
-    def get_current_color(self) -> tuple:
-        """
-        Returns 3-tuple of color
-        """
-        return self.current_palette.colors.get(self.current_color)
-
     def set_current_color(self, color: QColor):
-        if self.current_palette and self.current_color:
-            self.current_palette.colors[self.current_color] = tuple(color.getRgb()[:3])
+        if self.current_palette and self.current_coord:
+            command = CommandChangePaletteColor(self.current_palette, self.current_coord, color)
+            palette_commands.append(command)
+            command.redo()
+            self.window.draw_frame()
+
+    def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+        if event.key() == Qt.Key_Delete:
+            if self.current_coord:
+                command = CommandDeleteColor(self.current_palette, self.current_coord)
+                palette_commands.append(command)
+                command.redo()
+                self.window.draw_frame()
 
     def mousePressEvent(self, event):
         scene_pos = self.mapToScene(event.pos())
         tile_pos = int(scene_pos.x() // self.palette_size), \
             int(scene_pos.y() // self.palette_size)
 
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.RightButton:
             print(tile_pos)
-            self.current_color = tile_pos
-            self.selectionChanged.emit(self.current_palette.colors.get(self.current_color))
+            # Set current slot to this coord
+            if (QApplication.keyboardModifiers() & Qt.ControlModifier):
+                if self.current_frame and self.window.current_frame_set and tile_pos in self.current_palette.colors:
+                    self.current_coord = tile_pos
+            # Set painting color to this coord
+            else:
+                self.current_coord = None
+                self.selectionChanged.emit(self.current_palette.colors.get(tile_pos))
 
-class ChannelBox(QWidget):
-    colorChanged = pyqtSignal(QColor)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.color: QColor = QColor(0, 0, 0)
-
-        self.hue_slider = HSVSlider('hue', self)
-        self.hue_slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        self.hue_slider.setMinimumSize(200, 20)
-        self.saturation_slider = HSVSlider('saturation', self)
-        self.saturation_slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        self.saturation_slider.setMinimumSize(200, 20)
-        self.value_slider = HSVSlider('value', self)
-        self.value_slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        self.value_slider.setMinimumSize(200, 20)
-
-        self.hue_label = QLabel('H')
-        self.saturation_label = QLabel('S')
-        self.value_label = QLabel('V')
-
-        self.hue_spin = QSpinBox()
-        self.hue_spin.setRange(0, 360)
-        self.saturation_spin = QSpinBox()
-        self.saturation_spin.setRange(0, 255)
-        self.value_spin = QSpinBox()
-        self.value_spin.setRange(0, 255)
-
-        self.red_slider = RGBSlider('red', self)
-        self.red_slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        self.red_slider.setMinimumSize(200, 20)
-        self.green_slider = RGBSlider('green', self)
-        self.green_slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        self.green_slider.setMinimumSize(200, 20)
-        self.blue_slider = RGBSlider('blue', self)
-        self.blue_slider.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-        self.blue_slider.setMinimumSize(200, 20)
-
-        self.red_label = QLabel('R')
-        self.green_label = QLabel('G')
-        self.blue_label = QLabel('B')
-
-        self.red_spin = QSpinBox()
-        self.red_spin.setRange(0, 255)
-        self.green_spin = QSpinBox()
-        self.green_spin.setRange(0, 255)
-        self.blue_spin = QSpinBox()
-        self.blue_spin.setRange(0, 255)
-
-        self.manual_edit: bool = False  # Guard so that we don't get infinite change
-
-        self.hue_slider.hueChanged.connect(self.change_hue)
-        self.saturation_slider.saturationChanged.connect(self.change_saturation)
-        self.value_slider.valueChanged.connect(self.change_value)
-
-        self.hue_spin.valueChanged.connect(self.change_hue_i)
-        self.saturation_spin.valueChanged.connect(self.change_saturation_i)
-        self.value_spin.valueChanged.connect(self.change_value_i)
-
-        self.red_slider.redChanged.connect(self.change_red)
-        self.green_slider.greenChanged.connect(self.change_green)
-        self.blue_slider.blueChanged.connect(self.change_blue)
-
-        self.red_spin.valueChanged.connect(self.change_red_i)
-        self.green_spin.valueChanged.connect(self.change_green_i)
-        self.blue_spin.valueChanged.connect(self.change_blue_i)
-
-        main_layout = QVBoxLayout()
-        hue_layout = QHBoxLayout()
-        saturation_layout = QHBoxLayout()
-        value_layout = QHBoxLayout()
-        hue_layout.addWidget(self.hue_label)
-        hue_layout.addWidget(self.hue_spin)
-        hue_layout.addWidget(self.hue_slider)
-        saturation_layout.addWidget(self.saturation_label)
-        saturation_layout.addWidget(self.saturation_spin)
-        saturation_layout.addWidget(self.saturation_slider)
-        value_layout.addWidget(self.value_label)
-        value_layout.addWidget(self.value_spin)
-        value_layout.addWidget(self.value_slider)
-        main_layout.addLayout(hue_layout)
-        main_layout.addLayout(saturation_layout)
-        main_layout.addLayout(value_layout)
-
-        red_layout = QHBoxLayout()
-        green_layout = QHBoxLayout()
-        blue_layout = QHBoxLayout()
-        red_layout.addWidget(self.red_label)
-        red_layout.addWidget(self.red_spin)
-        red_layout.addWidget(self.red_slider)
-        green_layout.addWidget(self.green_label)
-        green_layout.addWidget(self.green_spin)
-        green_layout.addWidget(self.green_slider)
-        blue_layout.addWidget(self.blue_label)
-        blue_layout.addWidget(self.blue_spin)
-        blue_layout.addWidget(self.blue_slider)
-        main_layout.addLayout(red_layout)
-        main_layout.addLayout(green_layout)
-        main_layout.addLayout(blue_layout)
-
-        self.setLayout(main_layout)
-
-    def change_color(self, color: QColor):
-        if self.color != color:
-            self.color = color
-            self.change_hue(color)
-            self.change_saturation(color)
-            self.change_value(color)
-            self.change_red(color)
-            self.change_green(color)
-            self.change_blue(color)
-
-    def change_hue(self, color: QColor):
-        self.manual_edit = False
-        self.hue_slider.set_hue(color)
-        self.hue_spin.setValue(color.hue())
-
-        self.saturation_slider.change_hue(color)
-        self.value_slider.change_hue(color)
-
-        self.color = self.hue_slider.color
-        self.colorChanged.emit(self.color)
-
-        self.update_rgb_sliders(self.color)
-
-    def change_hue_i(self, i: int):
-        if self.manual_edit:
-            new_color = QColor.fromHsv(i, 0, 0)
-            self.change_hue(new_color)
-        self.manual_edit = True
-
-    def change_saturation(self, color: QColor):
-        self.manual_edit = False
-        self.saturation_slider.set_saturation(color)
-        self.saturation_spin.setValue(color.saturation())
-
-        self.hue_slider.change_saturation(color)
-        self.value_slider.change_saturation(color)
-
-        self.color = self.saturation_slider.color
-        self.colorChanged.emit(self.color)
-
-        self.update_rgb_sliders(self.color)
-
-    def change_saturation_i(self, i: int):
-        if self.manual_edit:
-            new_color = QColor.fromHsv(0, i, 0)
-            self.change_saturation(new_color)
-        self.manual_edit = True
-
-    def change_value(self, color: QColor):
-        self.manual_edit = False
-        self.value_slider.set_value(color)
-        self.value_spin.setValue(color.value())
-
-        self.hue_slider.change_value(color)
-        self.saturation_slider.change_value(color)
-
-        self.color = self.value_slider.color
-        self.colorChanged.emit(self.color)
-
-        self.update_rgb_sliders(self.color)
-
-    def change_value_i(self, i: int):
-        if self.manual_edit:
-            new_color = QColor.fromHsv(0, 0, i)
-            self.change_value(new_color)
-        self.manual_edit = True
-
-    def update_hsv_sliders(self, color: QColor):
-        self.hue_slider.change_hue(color)
-        self.hue_slider.change_saturation(color)
-        self.hue_slider.change_value(color)
-        self.saturation_slider.change_hue(color)
-        self.saturation_slider.change_saturation(color)
-        self.saturation_slider.change_value(color)
-        self.value_slider.change_hue(color)
-        self.value_slider.change_saturation(color)
-        self.value_slider.change_value(color)
-
-        self.hue_spin.setValue(color.hue())
-        self.saturation_spin.setValue(color.saturation())
-        self.value_spin.setValue(color.value())
-
-    def change_red(self, color: QColor):
-        self.manual_edit = False
-        self.red_slider.set_red(color)
-        self.red_spin.setValue(color.red())
-
-        self.green_slider.change_red(color)
-        self.blue_slider.change_red(color)
-
-        self.color = self.red_slider.color
-        self.colorChanged.emit(self.color)
-
-        self.update_hsv_sliders(self.color)
-
-    def change_red_i(self, i: int):
-        if self.manual_edit:
-            new_color = QColor.fromRgb(i, 0, 0)
-            self.change_red(new_color)
-        self.manual_edit = True
-
-    def change_green(self, color: QColor):
-        self.manual_edit = False
-        self.green_slider.set_green(color)
-        self.green_spin.setValue(color.green())
-
-        self.red_slider.change_green(color)
-        self.blue_slider.change_green(color)
-
-        self.color = self.green_slider.color
-        self.colorChanged.emit(self.color)
-
-        self.update_hsv_sliders(self.color)
-
-    def change_green_i(self, i: int):
-        if self.manual_edit:
-            new_color = QColor.fromRgb(0, i, 0)
-            self.change_green(new_color)
-        self.manual_edit = True
-
-    def change_blue(self, color: QColor):
-        self.manual_edit = False
-        self.blue_slider.set_blue(color)
-        self.blue_spin.setValue(color.blue())
-
-        self.red_slider.change_blue(color)
-        self.green_slider.change_blue(color)
-
-        self.color = self.blue_slider.color
-        self.colorChanged.emit(self.color)
-
-        self.update_hsv_sliders(self.color)
-
-    def change_blue_i(self, i: int):
-        if self.manual_edit:
-            new_color = QColor.fromRgb(0, 0, i)
-            self.change_blue(new_color)
-        self.manual_edit = True
-
-    def update_rgb_sliders(self, color: QColor):
-        self.red_slider.change_red(color)
-        self.red_slider.change_green(color)
-        self.red_slider.change_blue(color)
-        self.green_slider.change_red(color)
-        self.green_slider.change_green(color)
-        self.green_slider.change_blue(color)
-        self.blue_slider.change_red(color)
-        self.blue_slider.change_green(color)
-        self.blue_slider.change_blue(color)
-        
-        self.red_spin.setValue(color.red())
-        self.green_spin.setValue(color.green())
-        self.blue_spin.setValue(color.blue())
-
-class ColorEditorWidget(QWidget):
-    colorChanged = pyqtSignal(QColor)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.window = parent
-
-        self.current_color = QColor(0, 0, 0)
-
-        self.color_icon = ColorIcon(self.current_color, self)
-        self.color_icon.colorChanged.connect(self.on_color_change)
-
-        self.channel_box = ChannelBox(self)
-        self.channel_box.colorChanged.connect(self.on_color_change)
-
-        self.hex_label = PropertyBox('Hex Code', QLabel, self)
-        self.hex_label.edit.setText(utils.color_to_hex(self.current_color.getRgb()))
-
-        main_layout = QHBoxLayout()
-        left_layout = QVBoxLayout()
-        left_layout.addWidget(self.color_icon)
-        left_layout.addWidget(self.hex_label)
-        main_layout.addLayout(left_layout)
-        main_layout.addWidget(self.channel_box)
-        self.setLayout(main_layout)
-
-    def on_color_change(self, color: QColor):
-        self.set_current(color)
-
-    def set_current(self, color: QColor):
-        if color != self.current_color:
-            self.current_color: QColor = color
-
-            self.color_icon.change_color(color)
-            tuple_color = color.getRgb()
-            self.hex_label.edit.setText(utils.color_to_hex(tuple_color))
-            self.channel_box.change_color(color)
-
-            self.colorChanged.emit(color)
+        elif event.button() == Qt.LeftButton:
+            # If control is pressed, move current coord to new position
+            if self.current_coord:
+                # Modify base frame if it exists
+                if self.current_frame and self.window.current_frame_set:
+                    command = CommandChangePaletteSlot(self.current_palette, self.window.current_frame_set, self.current_coord, tile_pos)
+                    palette_commands.append(command)
+                    command.redo()
+                    self.current_coord = None
+                    self.window.draw_frame()
+            else:
+                # overwrite current color with painting color
+                painting_color = self.window.get_painting_color()
+                command = CommandChangePaletteColor(self.current_palette, tile_pos, painting_color)
+                palette_commands.append(command)
+                command.redo()
+                self.window.draw_frame()
 
 class WeaponAnimSelection(Dialog):
     def __init__(self, parent):
@@ -482,13 +400,22 @@ class WeaponAnimSelection(Dialog):
         self.weapon_box.edit.addItems([weapon_anim.nid for weapon_anim in weapon_anims])
 
     @classmethod
-    def get(cls, parent):
+    def get(cls, parent) -> tuple:
         dlg = cls(parent)
         result = dlg.exec_()
         if result == QDialog.Accepted:
             return dlg.combat_box.edit.currentText(), dlg.weapon_box.edit.currentText()
         else:
             return None, None
+
+    @classmethod
+    def autoget(cls, current_palette: Palette) -> tuple:
+        for combat_anim in RESOURCES.combat_anims:
+            palette_nids = [nid for name, nid in combat_anim.palettes]
+            if current_palette.nid in palette_nids:
+                if combat_anim.weapon_anims:
+                    return combat_anim.nid, combat_anim.weapon_anims[0].nid
+        return None, None
 
 class PaletteProperties(QWidget):
     def __init__(self, parent):
@@ -501,6 +428,14 @@ class PaletteProperties(QWidget):
 
         self.current_palette = None
         self.current_frame = None
+        self.current_frame_set = None
+        self.painting_color: QColor = QColor(0, 0, 0)
+
+        self.undo_action = QAction("Undo", self, shortcut="Ctrl+Z", triggered=self.undo)
+        self.redo_action = QAction("Redo", self, triggered=self.redo)
+        self.redo_action.setShortcuts(["Ctrl+Shift+Z", "Ctrl+Y"])
+        self.addAction(self.undo_action)
+        self.addAction(self.redo_action)
 
         self.nid_box = PropertyBox("Unique ID", QLineEdit, self)
         self.nid_box.edit.textChanged.connect(self.nid_changed)
@@ -519,25 +454,39 @@ class PaletteProperties(QWidget):
         self.raw_view.setSceneRect(0, 0, WINWIDTH, WINHEIGHT)
         self.raw_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.select_frame_button = QPushButton("Select Frame", self)
+        self.autoselect_frame_button = QPushButton("Autoselect Frame", self)
+        self.autoselect_frame_button.clicked.connect(self.autoselect_frame)
+
+        self.select_frame_button = QPushButton("Select Frame...", self)
         self.select_frame_button.clicked.connect(self.select_frame)
 
-        self.color_selector_widget = ColorSelectorWidget(self)
+        self.easel_widget = EaselWidget(self)
         self.color_editor_widget = ColorEditorWidget(self)
 
-        self.color_editor_widget.colorChanged.connect(self.color_changed)
-        self.color_selector_widget.selectionChanged.connect(self.selection_changed)
+        self.easel_widget.selectionChanged.connect(self.easel_selection_changed)
+        self.color_editor_widget.colorChanged.connect(self.set_painting_color)
         
         main_layout = QVBoxLayout()
         top_layout = QHBoxLayout()
-        top_layout.addWidget(self.color_selector_widget)
+        top_layout.addWidget(self.easel_widget)
         view_layout = QVBoxLayout()
         view_layout.addWidget(self.raw_view)
-        view_layout.addWidget(self.select_frame_button)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.autoselect_frame_button)
+        button_layout.addWidget(self.select_frame_button)
+        view_layout.addLayout(button_layout)
         top_layout.addLayout(view_layout)
         main_layout.addLayout(top_layout)
         main_layout.addWidget(self.color_editor_widget)
         self.setLayout(main_layout)
+
+    def undo(self):
+        palette_commands.undo()
+        self.draw_frame()
+
+    def redo(self):
+        palette_commands.redo()
+        self.draw_frame()
 
     def nid_changed(self, text):
         self.current_palette.nid = text
@@ -558,17 +507,11 @@ class PaletteProperties(QWidget):
         return self.current_palette
 
     def set_current(self, current):
+        palette_commands.clear()
         self.current_palette = current
         self.nid_box.edit.setText(self.current_palette.nid)
-        self.color_selector_widget.set_current(current, self.current_frame)
-        if self.current_palette:
-            current_color = self.color_selector_widget.get_current_color()
-            if current_color:
-                self.color_editor_widget.setEnabled(True)
-                self.color_editor_widget.set_current(current_color)
-            else:
-                self.color_editor_widget.setEnabled(False)
-            self.draw_frame()
+        self.easel_widget.set_current(current, self.current_frame)
+        self.draw_frame()
 
     def get_current_palette(self):
         return self.current_palette.nid
@@ -580,30 +523,51 @@ class PaletteProperties(QWidget):
             return
         weapon_anim = combat_anim.weapon_anims.get(weapon_anim_nid)
         if not weapon_anim:
-            return        
+            return
         frame, ok = FrameSelector.get(combat_anim, weapon_anim, self)
         if frame and ok:
+            self.current_frame_set = weapon_anim
             self.current_frame = frame
-            self.color_selector_widget.set_current(self.current_palette, self.current_frame)
+            self.easel_widget.set_current(self.current_palette, self.current_frame)
             self.draw_frame()
 
-    def selection_changed(self, selection):
-        current = self.color_selector_widget.get_current_color()
-        if current:
-            self.color_editor_widget.setEnabled(True)
-            self.color_editor_widget.set_current(QColor(*current))
-        else:
-            self.color_editor_widget.setEnabled(True)
-            self.color_editor_widget.set_current(QColor(0, 0, 0))
-            # self.color_editor_widget.setEnabled(False)
+    def autoselect_frame(self):
+        if not self.current_palette:
+            return
+        combat_anim_nid, weapon_anim_nid = WeaponAnimSelection.autoget(self.current_palette)
+        combat_anim = RESOURCES.combat_anims.get(combat_anim_nid)
+        if not combat_anim:
+            QMessageBox.critical(self, "Autoselect Error", 'Could not find a good frame. Try using manual "Select".')
+            return
+        weapon_anim = combat_anim.weapon_anims.get(weapon_anim_nid)
+        if not weapon_anim:
+            QMessageBox.critical(self, "Autoselect Error", 'Could not find a good frame. Try using manual "Select".')
+            return
+        if not weapon_anim.frames:
+            QMessageBox.critical(self, "Autoselect Error", 'Could not find a good frame. Try using manual "Select".')
+            return
+        frame = weapon_anim.frames[0]
+        if frame:
+            self.current_frame_set = weapon_anim
+            self.current_frame = frame
+            self.easel_widget.set_current(self.current_palette, self.current_frame)
+            self.draw_frame()
 
-    def color_changed(self, color: QColor):
-        if self.current_palette:
-            self.color_selector_widget.set_current_color(color)
-        self.draw_frame()
+    def easel_selection_changed(self, current_color):
+        if current_color:
+            self.painting_color = QColor(*current_color)
+        if self.painting_color:
+            self.color_editor_widget.set_current(self.painting_color)
+
+    def set_painting_color(self, color: QColor):
+        self.painting_color = color
+        self.color_editor_widget.set_current(color)
+
+    def get_painting_color(self) -> QColor:
+        return self.painting_color
 
     def draw_frame(self):
-        if self.current_frame:
+        if self.current_frame and self.current_palette:
             im = combat_animation_model.palette_swap(self.current_frame.pixmap, self.get_current_palette())
             base_image = QImage(WINWIDTH, WINHEIGHT, QImage.Format_ARGB32)
             base_image.fill(editor_utilities.qCOLORKEY)

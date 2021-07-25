@@ -68,9 +68,7 @@ def add_frames(index_fn, current, new_weapon, images):
         offset_x, offset_y = [int(_) for _ in i[3].split(',')]
         new_pixmap = main_pixmap.copy(x, y, width, height)
         # Need to convert to universal base palette
-        im = new_pixmap.toImage()
-        im = editor_utilities.color_convert(im, convert_dict)
-        new_pixmap = QPixmap.fromImage(im)
+        new_pixmap = editor_utilities.color_convert_pixmap(new_pixmap, convert_dict)
         new_frame = combat_anims.Frame(nid, (x, y, width, height), (offset_x, offset_y), pixmap=new_pixmap)
         new_weapon.frames.append(new_frame)
     return main_pixmap
@@ -290,12 +288,6 @@ def split_doubles(pixmaps: dict) -> dict:
     pixmaps.update(new_pixmaps)
     return pixmaps
 
-def color_convert(pixmap: QPixmap, convert_dict: dict) -> QPixmap:
-    im = pixmap.toImage()
-    im = editor_utilities.color_convert(im, convert_dict)
-    pixmap = QPixmap.fromImage(im)
-    return pixmap
-
 def find_empty_pixmaps(pixmaps: dict) -> set:
     empty_pixmaps = set()
     for name, pixmap in pixmaps.items():
@@ -391,7 +383,7 @@ def import_from_gba(current, fn):
             logging.info("Using existing palette! %s" % palette.nid)
             # Change first color to colorkey
             colorkey_conversion = {qRgb(*all_palette_colors[0]): editor_utilities.qCOLORKEY}
-            pixmaps = {name: color_convert(pixmap, colorkey_conversion) for name, pixmap in pixmaps.items()}
+            pixmaps = {name: editor_utilities.color_convert_pixmap(pixmap, colorkey_conversion) for name, pixmap in pixmaps.items()}
             break
     else:
         logging.info("Generating new palette...")
@@ -402,7 +394,7 @@ def import_from_gba(current, fn):
         current.palettes.append([palette_name, my_palette.nid])
         # Change first color to colorkey
         colorkey_conversion = {qRgb(*all_palette_colors[0]): editor_utilities.qCOLORKEY}
-        pixmaps = {name: color_convert(pixmap, colorkey_conversion) for name, pixmap in pixmaps.items()}
+        pixmaps = {name: editor_utilities.color_convert_pixmap(pixmap, colorkey_conversion) for name, pixmap in pixmaps.items()}
         all_palette_colors[0] = COLORKEY
         # Build true palette colors
         colors = {(int(idx % 8), int(idx / 8)): color for idx, color in enumerate(all_palette_colors)}
@@ -414,7 +406,7 @@ def import_from_gba(current, fn):
     pixmaps = split_doubles(pixmaps)
     # Convert pixmaps to new palette colors
     convert_dict = {qRgb(*color): qRgb(0, coord[0], coord[1]) for coord, color in my_palette.colors.items()}
-    pixmaps = {name: color_convert(pixmap, convert_dict) for name, pixmap in pixmaps.items()}
+    pixmaps = {name: editor_utilities.color_convert_pixmap(pixmap, convert_dict) for name, pixmap in pixmaps.items()}
     # Determine which pixmaps should be replaced by "wait" commands
     empty_pixmaps = find_empty_pixmaps(pixmaps)
 

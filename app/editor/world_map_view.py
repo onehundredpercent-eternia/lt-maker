@@ -22,7 +22,7 @@ class WorldMapView(SimpleMapView):
         self.should_draw_ghost = False
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Space:
+        if event.key() == Qt.Key_Space:
             self.should_draw_ghost = not self.should_draw_ghost
 
     def set_current_level(self, overworld_nid):

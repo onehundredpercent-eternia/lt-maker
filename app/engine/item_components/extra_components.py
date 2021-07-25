@@ -54,7 +54,7 @@ class BraveOnAttack(ItemComponent):
     tag = 'extra'
 
     def dynamic_multiattacks(self, unit, item, target, mode=None):
-        return 1 if mode == 'Attack' else 0
+        return 1 if mode == 'attack' else 0
 
 class Lifelink(ItemComponent):
     nid = 'lifelink'

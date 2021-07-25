@@ -40,8 +40,11 @@ def get():
 if __name__ == '__main__':
     import sys
     from PyQt5.QtWidgets import QApplication
+    from app.editor.combat_animation_editor.combat_animation_display import populate_anim_pixmaps
     app = QApplication(sys.argv)
-    RESOURCES.load('default.ltproj')
+    RESOURCES.load('sacred_stones.ltproj')
+    for anim in RESOURCES.combat_anims:
+        populate_anim_pixmaps(anim)
     window = SingleResourceEditor(PaletteDatabase, ['combat_palettes'])
     window.show()
     app.exec_()

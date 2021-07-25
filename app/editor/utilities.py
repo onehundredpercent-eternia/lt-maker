@@ -54,7 +54,13 @@ def color_convert(image, conversion_dict):
                 new_image.setColor(i, new_color)
     return new_image.convertToFormat(QtGui.QImage.Format_RGB32)
 
-def find_palette(image):
+def color_convert_pixmap(pixmap: QtGui.QPixmap, convert_dict: dict) -> QtGui.QPixmap:
+    im = pixmap.toImage()
+    im = color_convert(im, convert_dict)
+    pixmap = QtGui.QPixmap.fromImage(im)
+    return pixmap
+
+def find_palette(image: QtGui.QImage) -> list:
     palette = []
     for x in range(image.width()):
         for y in range(image.height()):

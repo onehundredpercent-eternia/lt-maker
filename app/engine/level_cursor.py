@@ -38,8 +38,7 @@ class LevelCursor(BaseCursor):
         return None
 
     def get_bounds(self) -> Tuple[int, int, int, int]:
-        if not self.tilemap:
-            self.tilemap = self.game.tilemap
+        self.tilemap = self.game.tilemap
         return super().get_bounds()
 
     def hide(self):
