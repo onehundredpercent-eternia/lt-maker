@@ -3458,7 +3458,7 @@
         "party": "Eirika",
         "music": {
             "player_phase": "Shadow of the Enemy",
-            "enemy_phase": null,
+            "enemy_phase": "Shadow of the Enemy",
             "other_phase": null,
             "player_battle": "Attack",
             "enemy_battle": "Defense",
