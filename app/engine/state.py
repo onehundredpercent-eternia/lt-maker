@@ -1,6 +1,7 @@
-from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
+from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH, MAPWIDTH, STATWIDTH
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_state import game
+from app.engine import engine
 
 class State():
     name = None
@@ -54,6 +55,8 @@ class MapState(State):
         game.camera.update()
         game.highlight.update()
 
-        camera_cull = int(game.camera.get_x() * TILEWIDTH), int(game.camera.get_y() * TILEHEIGHT), WINWIDTH, WINHEIGHT
+        full_surf = engine.create_surface((WINWIDTH, WINHEIGHT))
+        camera_cull = int(game.camera.get_x() * TILEWIDTH), int(game.camera.get_y() * TILEHEIGHT), MAPWIDTH, WINHEIGHT
         surf = game.map_view.draw(camera_cull, culled_rect)
-        return surf
+        full_surf.blit(surf, (STATWIDTH, 0))
+        return full_surf

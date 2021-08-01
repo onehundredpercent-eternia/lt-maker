@@ -1,14 +1,13 @@
-from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
+from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, MAPWIDTH
 
 from app.engine import engine
 from app.engine.game_state import game
 
 class MapView():
     def __init__(self):
-        self._unit_surf = engine.create_surface((WINWIDTH, WINHEIGHT), transparent=True)
+        self._unit_surf = engine.create_surface((MAPWIDTH, WINHEIGHT), transparent=True)
 
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
-        # Surf is always 240x160 WxH
         unit_surf = engine.copy_surface(self._unit_surf)
 
         # Update all units except the cur unit
@@ -80,7 +79,6 @@ class MapView():
             self.draw_units(surf, cull_rect)
 
         surf = game.cursor.draw(surf, cull_rect)
-
 
         for weather in game.tilemap.weather:
             weather.update()
