@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple
 if TYPE_CHECKING:
     from app.engine import (ai_controller, death,
         game_board, highlight, map_view, movement, phase,
-        promotion, ui_view, banner, boundary, camera, cursor,
+        promotion, ui_view, stat_screen, banner, boundary, camera, cursor,
         initiative, records, save, supports, turnwheel, unit_sprite)
     from app.engine.combat.simple_combat import SimpleCombat
     from app.engine.overworld.overworld_movement_manager import \
@@ -91,6 +91,7 @@ class GameState():
         self.movement: movement.MovementManager | OverworldMovementManager = None
         self.death: death.DeathManager = None
         self.ui_view: ui_view.UIView = None
+        self.stat_screen: stat_screen.StatScreen = None
         self.combat_instance: List[SimpleCombat] = []
         self.exp_instance: List[Tuple[UnitObject, int, promotion.PromotionState, str]] = []
         self.mana_instance = []
@@ -189,7 +190,7 @@ class GameState():
         Done on loading a level, whether from overworld, last level, save_state, etc.
         """
         from app.engine import (ai_controller, camera, death, highlight,
-                                map_view, movement, phase, ui_view)
+                                map_view, movement, phase, ui_view, stat_screen)
 
         # Systems
         self.camera = camera.Camera(self)
@@ -199,6 +200,7 @@ class GameState():
         self.movement = movement.MovementManager()
         self.death = death.DeathManager()
         self.ui_view = ui_view.UIView()
+        self.stat_screen = stat_screen.StatScreen()
         self.combat_instance = []
         self.exp_instance = []
         self.mana_instance = []

@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from app.constants import TILEHEIGHT, TILEWIDTH
+from app.constants import TILEHEIGHT, TILEWIDTH, STATWIDTH
 from app.counters import generic3counter
 from app.engine import engine, target_system
 from app.engine.cursor import BaseCursor
@@ -68,10 +68,6 @@ class LevelCursor(BaseCursor):
         else:
             self._transition_speed = 1
 
-    def set_pos(self, pos):
-        super().set_pos(pos)
-        self.game.ui_view.remove_unit_display()
-
     def _get_path(self) -> list:
         if not self._last_valid_position:
             self.path.clear()
@@ -99,10 +95,6 @@ class LevelCursor(BaseCursor):
         if self._display_arrows:
             self.path = self._get_path()
             self.construct_arrows(self.path[::-1])
-
-        # Remove unit info display
-        if dx != 0 or dy != 0:
-            self.game.ui_view.remove_unit_display()
 
     def autocursor(self, immediate=False):
         player_units = [unit for unit in self.game.units if unit.team == 'player' and unit.position]
@@ -233,7 +225,7 @@ class LevelCursor(BaseCursor):
             mouse_pos = INPUT.get_real_mouse_position()
             if mouse_pos:
                 from_mouse = True
-                new_pos = mouse_pos[0] // TILEWIDTH, mouse_pos[1] // TILEHEIGHT
+                new_pos = (mouse_pos[0] - STATWIDTH) // TILEWIDTH, mouse_pos[1] // TILEHEIGHT
                 new_pos = int(new_pos[0] + self.game.camera.get_x()), int(new_pos[1] + self.game.camera.get_y())
                 dpos = new_pos[0] - self.position[0], new_pos[1] - self.position[1]
                 dx = dpos[0]

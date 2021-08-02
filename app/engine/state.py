@@ -59,4 +59,6 @@ class MapState(State):
         camera_cull = int(game.camera.get_x() * TILEWIDTH), int(game.camera.get_y() * TILEHEIGHT), MAPWIDTH, WINHEIGHT
         surf = game.map_view.draw(camera_cull, culled_rect)
         full_surf.blit(surf, (STATWIDTH, 0))
+        if STATWIDTH > 0:
+            game.stat_screen.draw(full_surf)
         return full_surf

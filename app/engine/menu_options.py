@@ -273,7 +273,7 @@ class ConvoyItemOption(ItemOption):
 
 class FullItemOption(ItemOption):
     def width(self):
-        return 120
+        return 108
 
     def draw(self, surf, x, y):
         icon = icons.get_icon(self.item)
@@ -296,9 +296,9 @@ class FullItemOption(ItemOption):
         elif self.item.data.get('cooldown') is not None:
             uses_string_a = str(self.item.data['cooldown'])
             uses_string_b = str(self.item.data['starting_cooldown'])
-        FONT[uses_font].blit_right(uses_string_a, surf, (x + 96, y))
-        FONT['text-white'].blit("/", surf, (x + 98, y))
-        FONT[uses_font].blit_right(uses_string_b, surf, (x + 120, y))
+        FONT[uses_font].blit_right(uses_string_a, surf, (x + 84, y))
+        FONT['text-white'].blit("/", surf, (x + 86, y))
+        FONT[uses_font].blit_right(uses_string_b, surf, (x + 108, y))
 
 class ValueItemOption(ItemOption):
     def __init__(self, idx, item, disp_value):

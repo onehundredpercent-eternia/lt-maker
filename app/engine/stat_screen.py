@@ -1,0 +1,208 @@
+from app.constants import STATWIDTH, WINHEIGHT
+
+from app.data.database import DB
+from app.utilities import utils
+
+from app.engine.sprites import SPRITES
+from app.engine.fonts import FONT
+from app.engine import engine, info_menu, \
+    icons, image_mods, item_funcs, menu_options
+from app.engine.game_state import game
+
+def build_groove(surf, topleft, width, fill):
+    bg = SPRITES.get('groove_back')
+    start = engine.subsurface(bg, (0, 0, 2, 5))
+    mid = engine.subsurface(bg, (2, 0, 1, 5))
+    end = engine.subsurface(bg, (3, 0, 2, 5))
+    fg = SPRITES.get('groove_fill')
+
+    # Build back groove
+    surf.blit(start, topleft)
+    for idx in range(width - 2):
+        mid_pos = (topleft[0] + 2 + idx, topleft[1])
+        surf.blit(mid, mid_pos)
+    surf.blit(end, (topleft[0] + width, topleft[1]))
+
+    # Build fill groove
+    number_needed = int(fill * (width - 1))  # Width of groove minus section for start and end
+    for groove in range(number_needed):
+        surf.blit(fg, (topleft[0] + 1 + groove, topleft[1] + 1))
+
+class StatScreen():
+    def __init__(self):
+        self.bg = SPRITES.get('stat_screen_background')
+        self.unit = None
+        self._next_unit = None
+
+        self.info_graph = info_menu.InfoGraph()
+        self.info_flag = False
+        self.info_graph.set_current_state('personal_data')
+        self.reset_surfs()
+
+        self.transition = None
+        self.transition_counter = 0
+
+    def reset_surfs(self):
+        self.info_graph.clear()
+        self.portrait_surf = None
+        self.personal_data_surf = None
+
+    def update(self):
+        hover = game.cursor.get_hover()
+        if hover:
+            if hover != self.unit:
+                self._next_unit = hover
+                self.transition = 'out'
+
+        if self.transition == 'out':
+            self.transition_counter += 1
+            self.transparency = self.transition_counter / 5
+            if self.transparency >= 1:
+                self.transition = 'in'
+                self.transparency = 1
+                self.unit = self._next_unit
+                self._next_unit = None
+                self.reset_surfs()
+
+        elif self.transition == 'in':
+            self.transition_counter -= 1
+            self.transparency = self.transition_counter / 5
+            if self.transparency <= 0:
+                self.transition = None
+                self.transparency = 0
+
+    def draw(self, surf):
+        self.update()
+        if self.bg:
+            surf.blit(self.bg, (0, 0))
+        if self.unit:
+            self.draw_portrait(surf)
+            self.draw_slide(surf)
+        return surf
+
+    def draw_portrait(self, surf):
+        if not self.portrait_surf:
+            self.portrait_surf = self.create_portrait()
+
+        # Stick it on the surface
+        if self.transparency:
+            im = image_mods.make_translucent(self.portrait_surf, self.transparency)
+            surf.blit(im, (0, 0))
+        else:
+            surf.blit(self.portrait_surf, (0, 0))
+
+    def create_portrait(self):
+        surf = engine.create_surface((STATWIDTH, WINHEIGHT), transparent=True)
+        surf.blit(SPRITES.get('info_unit'), (54, 86))
+
+        im = icons.get_portrait(self.unit)
+        if im:
+            x_pos = (im.get_width() - 80)//2
+            portrait_surf = engine.subsurface(im, (x_pos, 0, 80, 72))
+            portrait_surf = engine.flip_horiz(portrait_surf)
+            surf.blit(portrait_surf, (24, 8))
+
+        name_width = FONT['text-white'].width(self.unit.name)
+        FONT['text-white'].blit(self.unit.name, surf, (20 - name_width//2, 0))
+        self.info_graph.register((0, 0, 52, 24), self.unit.desc, 'all')
+        class_obj = DB.classes.get(self.unit.klass)
+        FONT['text-white'].blit(class_obj.name, surf, (8, 84))
+        self.info_graph.register((8, 104, 72, 16), class_obj.desc, 'all')
+        FONT['text-blue'].blit_right(str(self.unit.level), surf, (86, 84))
+        self.info_graph.register((50, 84, 30, 16), 'Level_desc', 'all')
+        FONT['text-blue'].blit_right(str(self.unit.exp), surf, (110, 84))
+        self.info_graph.register((86, 84, 30, 16), 'Exp_desc', 'all')
+        FONT['text-blue'].blit_right(str(self.unit.get_hp()), surf, (86, 100))
+        self.info_graph.register((50, 100, 72, 16), 'HP_desc', 'all')
+        max_hp = self.unit.get_max_hp()
+        FONT['text-blue'].blit_right(str(max_hp), surf, (110, 100))
+        # Blit the white status platform
+        # surf.blit(SPRITES.get('status_platform'), (66, 131))
+        # Blit affinity
+        affinity = DB.affinities.get(self.unit.affinity)
+        if affinity:
+            icons.draw_item(surf, affinity, (4, 16))
+            self.info_graph.register((4, 24, 16, 16), affinity.desc, 'all')
+        return surf
+
+    def draw_slide(self, surf):
+        if not self.personal_data_surf:
+            self.personal_data_surf = self.create_slide()
+
+        # Stick it on the surface
+        if self.transparency:
+            im = image_mods.make_translucent(self.personal_data_surf, self.transparency)
+            surf.blit(im, (0, 0))
+        else:
+            surf.blit(self.personal_data_surf, (0, 0))
+
+    def create_slide(self):
+        state = 'personal_data'
+
+        menu_size = STATWIDTH, WINHEIGHT
+        surf = engine.create_surface(menu_size, transparent=True)
+
+        class_obj = DB.classes.get(self.unit.klass)
+        max_stats = class_obj.max_stats
+
+        stats = [stat.nid for stat in DB.stats if stat.position == 'left']
+        # Make sure we only display up to 6 on each
+
+        for idx, stat_nid in enumerate(stats):
+            left = 37 * (idx // 2)
+            top = 116 + 16 * (idx % 2)
+            highest_stat = DB.stats.get(stat_nid).maximum
+            max_stat = max_stats.get(stat_nid, 30)
+            if max_stat > 0:
+                total_length = int(max_stat / highest_stat * 24)
+                frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
+                build_groove(surf, (left + 19, top + 8), total_length, frac)
+            icons.draw_stat(surf, stat_nid, self.unit, (36 + left, top))
+            # Name
+            name = DB.stats.get(stat_nid).name
+            FONT['text-yellow'].blit(name, surf, (1 + left, top))
+            self.info_graph.register((1 + left, top, 40, 16), '%s_desc' % stat_nid, state, first=(idx == 0))
+
+        # Equipment
+        weapon = self.unit.get_weapon()
+        accessory = self.unit.get_accessory()
+
+        # Blit items
+        for idx, item in enumerate(self.unit.nonaccessories):
+            y_pos = idx * 16 + 152
+            if item.multi_item and any(subitem is weapon for subitem in item.subitems):
+                surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
+                for subitem in item.subitems:
+                    if subitem is weapon:
+                        item_option = menu_options.FullItemOption(idx, subitem)
+                        break
+                else:  # Shouldn't happen
+                    item_option = menu_options.FullItemOption(idx, item)
+            else:
+                if item is weapon:
+                    surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
+                item_option = menu_options.FullItemOption(idx, item)
+            item_option.draw(surf, 2, y_pos)
+            self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'equipment', first=(idx == 0))
+
+        # Blit accessories
+        for idx, item in enumerate(self.unit.accessories):
+            aidx = item_funcs.get_num_items(self.unit) + idx
+            y_pos = aidx * 16 + 152
+            if item.multi_item and any(subitem is accessory for subitem in item.subitems):
+                surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
+                for subitem in item.subitems:
+                    if subitem is accessory:
+                        item_option = menu_options.FullItemOption(aidx, subitem)
+                        break
+                else:  # Shouldn't happen
+                    item_option = menu_options.FullItemOption(aidx, item)
+            else:
+                if item is accessory:
+                    surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
+                item_option = menu_options.FullItemOption(aidx, item)
+            item_option.draw(surf, 2, y_pos)
+            first = (idx == 0 and not self.unit.nonaccessories)
+            self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'equipment', first=first)
+
+        return surf
