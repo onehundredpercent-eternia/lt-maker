@@ -32,6 +32,11 @@ class MusicDialog(SimpleDialog):
             box.button.setMaximumWidth(40)
             box.button.clicked.connect(
                 partial(self.access_music_resources, key))
+            box.delete_button = QPushButton('X')
+            box.bottom_section.addWidget(box.delete_button)
+            box.delete_button.setMaximumWidth(30)
+            box.delete_button.clicked.connect(
+                partial(self.delete_music_resource, key))
 
             layout.addWidget(box)
             self.boxes[key] = box
@@ -52,6 +57,9 @@ class MusicDialog(SimpleDialog):
             self.current.music[key] = nid
             self.boxes[key].edit.setText(nid)
 
+    def delete_music_resource(self, key):
+        self.current.music[key] = None
+        self.boxes[key].edit.setText('')
 
 class PropertiesMenu(QWidget):
     def __init__(self, state_manager):

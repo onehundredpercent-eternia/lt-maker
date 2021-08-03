@@ -151,11 +151,15 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.bar_offset = 1
                 self.name_offset = 1
                 self.state = 'init_pause'
-                self.start_battle_music()
 
         elif self.state == 'init_pause':
             if self._skip or current_time > utils.frames2ms(25):
-                self.state = 'pre_proc'
+                self.start_event(True)
+                self.state = 'battle_music'
+
+        elif self.state == 'battle_music':
+            self.start_battle_music()
+            self.state = 'pre_proc'
 
         elif self.state == 'pre_proc':
             if self.left_battle_anim.done() and self.right_battle_anim.done():

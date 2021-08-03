@@ -1083,7 +1083,7 @@ class Event():
             if len(values) > 1 and values[1]:
                 action.do(action.SetGameVar('_base_music', values[1]))
             if 'show_map' in flags:
-                action.do(action.SetGameVar('_base_transparent', True)) 
+                action.do(action.SetGameVar('_base_transparent', True))
             else:
                 action.do(action.SetGameVar('_base_transparent', False))
             game.state.change('base_main')
@@ -1302,6 +1302,10 @@ class Event():
 
         new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror)
         self.portraits[name] = new_portrait
+
+        if len(values) > 3 and values[3]:
+            expression_list = values[3].split(',')
+            new_portrait.set_expression(expression_list)
 
         if 'immediate' in flags or 'no_block' in flags or self.do_skip:
             pass
@@ -1863,7 +1867,8 @@ class Event():
             game.cursor = level_cursor.LevelCursor(game)
             game.movement = movement.MovementManager()
             game.map_view = map_view.MapView()
-            game.set_up_game_board(game.level.tilemap)
+            game.boundary = self.prev_game_boundary
+            game.board = self.prev_board
             return
 
         if not len(values) > 0:
@@ -2638,6 +2643,9 @@ class Event():
             else:
                 logging.error('No overworlds in the DB - why are you calling the overworld command?')
                 return
+        # save level state
+        self.prev_game_boundary = game.boundary
+        self.prev_board = game.board
         from app.engine.overworld.overworld_states import OverworldState
         OverworldState.set_up_overworld_game_state(overworld_nid)
 

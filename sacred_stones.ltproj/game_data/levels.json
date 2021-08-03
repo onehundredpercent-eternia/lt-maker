@@ -3457,10 +3457,10 @@
         "tilemap": "Chapter 2",
         "party": "Eirika",
         "music": {
-            "player_phase": "Shadow of the Enemy",
+            "player_phase": "Quiet Burn",
             "enemy_phase": "Shadow of the Enemy",
             "other_phase": null,
-            "player_battle": "Attack",
+            "player_battle": "Quiet Burn",
             "enemy_battle": "Defense",
             "other_battle": null,
             "base": null

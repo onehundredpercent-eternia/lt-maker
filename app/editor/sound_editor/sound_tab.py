@@ -27,6 +27,7 @@ class SoundTab(QWidget):
         self.view = view(None, self)
         self.view.setAlternatingRowColors(True)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.view.setSelectionMode(QAbstractItemView.SingleSelection)
         self.view.setModel(self.proxy_model)
         self.view.setSortingEnabled(True)
         # Remove edit on double click
