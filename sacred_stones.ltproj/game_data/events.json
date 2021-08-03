@@ -1269,6 +1269,42 @@
         "priority": 20
     },
     {
+        "name": "FightBone",
+        "trigger": "combat_start",
+        "level_nid": "DEBUG",
+        "condition": "unit.nid == \"Bone\" or unit2.nid == \"Bone\"",
+        "commands": [
+            [
+                "add_portrait",
+                [
+                    "Bone",
+                    "Left"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Bone",
+                    "You will be the first to die!"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Bone"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "#change_music;player_phase;Grasp at Victory"
+                ]
+            ]
+        ],
+        "only_once": true,
+        "priority": 20
+    },
+    {
         "name": "FightSaar",
         "trigger": "combat_start",
         "level_nid": "5",
