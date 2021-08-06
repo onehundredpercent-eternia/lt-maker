@@ -1,0 +1,29 @@
+Enemies:
+Thieves
+Skirmishers
+Brigands
+Mercenaries
+Hunter
+Mage?
+
+Goals:
+
+Open treasure chests
+Save Civilians
+Recruit Skirmisher/Thief Girl (Piper?)
+Recruit Millie
+
+For vertical slice
+Chapter 3 and 4
+Alternate forms of Chapter 3 and 4
+Overworld
+Implement Skills
+Write Script
+Implement new Stat Screen aesthetic
+Implement new Dialogue aesthetic
+Implement Wyllt
+Implement Memory Mechanics
+Implement Free Roam Base
+Base conversations
+Title Screen
+Playtest playtest playtest
