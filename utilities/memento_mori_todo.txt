@@ -26,4 +26,29 @@ Implement Memory Mechanics
 Implement Free Roam Base
 Base conversations
 Title Screen
+Portraits
+Arrow UI
+Particle Effects
 Playtest playtest playtest
+
+Portraits:
+Ash (M) Pale skin, dark colors
+Pale (F) Dark skin, white hair, nature wild girl mystical waif aesthetic
+Cedric (M) Blond hair
+Aelfred (M) Red hair
+Ceabbi (F) Blond hair
+Ceathrun (F) Blond hair
+Magnus (M) Blue hair
+---
+Aelfwynn (F) Red hair
+Sorrel (M) Dark skin, brown hair
+Clover (F) Dark skin, brown hair
+Eadan (M) Green hair
+Bjorn (M) Blond hair
+Millie (F) Blue hair
+Anna (F) Orange hair
+Willow (F) Black hair
+Wound (Dog)
+Rhun (M) Amber hair
+Piper (F) Dark skin, purple hair?
+Rhodri (M) Amber hair, strong lad
