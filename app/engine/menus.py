@@ -1108,6 +1108,19 @@ class Table(Simple):
         surf = image_mods.make_translucent(surf, .1)
         return surf
 
+    def draw_info(self, surf):
+        help_box = self.options[self.current_index].help_box
+        if not help_box:
+            return surf
+        topleft = self.get_topleft()
+        idxs, rects = self.get_rects()
+        rect = rects[self.current_index - self.scroll]
+        if topleft[0] < WINWIDTH // 2:
+            help_box.draw(surf, (rect[0] - 4, rect[1] + 16))
+        else:
+            help_box.draw(surf, (rect[0] + self.get_menu_width(), rect[1] + 16), right=True)
+        return surf
+
     def draw_scroll_bar(self, surf, topleft):
         right = topleft[0] + self.get_menu_width()
         topright = (right, topleft[1])

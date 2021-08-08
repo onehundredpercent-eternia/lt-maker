@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.data.units import UnitPrefab
 
 from typing import TYPE_CHECKING
 
@@ -175,8 +176,8 @@ class OverworldRoadSprite():
         return surf
 
 class OverworldUnitSprite():
-    def __init__(self, unit_object: UnitObject, parent: OverworldEntityObject):
-        self.unit: UnitObject = unit_object
+    def __init__(self, unit_object: UnitObject | UnitPrefab, parent: OverworldEntityObject):
+        self.unit: UnitObject | UnitPrefab = unit_object
         self.state = 'normal'                       # What state the image sprite is in
         self.image_state = 'passive'                # What the image looks like
         self.transition_state = 'normal'
@@ -259,29 +260,29 @@ class OverworldUnitSprite():
             self.fake_position = None
             self.change_state('fake_transition_in')
         elif self.transition_state in ('fake_out', 'rescue'):
-            self.fake_position = self.unit.position
+            self.fake_position = self.parent.display_position
             self.change_state('fake_transition_out')
         elif self.transition_state == 'fade_in':
             self.fake_position = None
         elif self.transition_state == 'fade_out':
-            self.fake_position = self.unit.position
+            self.fake_position = self.parent.display_position
         elif self.transition_state == 'fade_move':
-            self.fake_position = self.unit.position
+            self.fake_position = self.parent.display_position
         elif self.transition_state == 'warp_in':
             SOUNDTHREAD.play_sfx('WarpEnd')
         elif self.transition_state == 'warp_out':
             SOUNDTHREAD.play_sfx('Warp')
-            self.fake_position = self.unit.position
+            self.fake_position = self.parent.display_position
         elif self.transition_state == 'warp_move':
             SOUNDTHREAD.play_sfx('Warp')
-            self.fake_position = self.unit.position
+            self.fake_position = self.parent.display_position
 
     def change_state(self, new_state):
         self.state = new_state
         if self.state == 'fake_transition_in':
-            pos = (self.unit.position[0] + utils.clamp(self.offset[0], -1, 1),
-                   self.unit.position[1] + utils.clamp(self.offset[1], -1, 1))
-            pos = (pos[0] - self.unit.position[0], pos[1] - self.unit.position[1])
+            pos = (self.parent.display_position[0] + utils.clamp(self.offset[0], -1, 1),
+                   self.parent.display_position[1] + utils.clamp(self.offset[1], -1, 1))
+            pos = (pos[0] - self.parent.display_position[0], pos[1] - self.parent.display_position[1])
             self.net_position = (-pos[0], -pos[1])
             self.update_sprite_direction(self.net_position)
         elif self.state == 'fake_transition_out':

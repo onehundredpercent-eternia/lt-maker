@@ -1,9 +1,6 @@
 from __future__ import annotations
-
+import re
 from typing import Dict, TYPE_CHECKING, List
-
-if TYPE_CHECKING:
-    from app.engine.objects.overworld import OverworldEntityObject, OverworldObject
 
 from functools import lru_cache
 from typing import List, Tuple
@@ -12,7 +9,7 @@ from app.data.database import DB
 from app.events import event_commands
 from app.resources.resources import RESOURCES
 from app.utilities import str_utils
-from app.utilities.typing import NID
+from app.utilities.typing import NID, Point
 
 
 class Validator():
@@ -30,6 +27,9 @@ class Validator():
             List[Tuple[str, NID]]: A list of (name, nid) tuples that are valid for this type.
         """
         return []
+
+    def convert(self, text: str):
+        return text
 
 class OptionValidator(Validator):
     valid = []
@@ -84,6 +84,9 @@ class Float(Validator):
         if str_utils.is_float(text):
             return float(text)
         return None
+
+    def convert(self, text: str):
+        return float(text)
 
 class PositiveInteger(Validator):
     desc = "must be a positive whole number"
@@ -278,6 +281,44 @@ class StringList(Validator):
     def validate(self, text, level):
         text = text.split(',')
         return text
+
+class DashList(Validator):
+    desc = "similar to a StringList, but delimited by dashes. For example: `Water-Earth-Fire-Air`"
+
+    def validate(self, text, level):
+        try:
+            self.convert(text)
+            return text
+        except:
+            pass
+        return None
+
+    def convert(self, text: str) -> List:
+        return text.split('-')
+
+class PointList(Validator):
+    desc = "A list of points separated by dashes. E.g. (1, 1)-(3.5, 3)-(24,-6)"
+    decimal_converter = re.compile(r'[^\d.]+')
+
+    def validate(self, value, level):
+        if isinstance(value, list):
+            if all([isinstance(p, tuple) for p in value]):
+                return value
+        return None
+
+    def convert(self, text: str) -> List[Point]:
+        try:
+            text.replace(' ', '')
+            tlist = text.split(')-(')
+            parsed_list = []
+            for pstring in tlist:
+                coords = pstring.split(',')
+                x = float(self.decimal_converter.sub('', coords[0]))
+                y = float(self.decimal_converter.sub('', coords[1]))
+                parsed_list.append((x, y))
+            return parsed_list
+        except:
+            return text
 
 class Speaker(Validator):
     pass  # Any text will do
@@ -750,7 +791,43 @@ class OverworldNID(Validator):
         return valids
 
 class OverworldLocation(Validator):
-    desc = "accepts the nid of an overworld location/node."
+    desc = "accepts the nid of an overworld location/node, or a coordinate x, y"
+    decimal_converter = re.compile(r'[^\d.]+')
+
+    def validate(self, text, level):
+        try:
+            text = self.convert(text)
+            if isinstance(text, tuple) and len(text) == 2:
+                return text
+            for overworld in DB.overworlds.values():
+                for node in overworld.overworld_nodes:
+                    if node.nid == text:
+                        return text
+        except:
+            pass
+        return None
+
+    @lru_cache()
+    def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
+        valids = []
+        for overworld in DB.overworlds.values():
+            valids = valids + [(node.name, node.nid) for node in overworld.overworld_nodes.values()]
+        return valids
+
+    def convert(self, text: str) -> NID | Tuple[float, float]:
+        if len(text.split(',')) == 2: # is coordinate
+            try:
+                coords = text.split(',')
+                x = float(self.decimal_converter.sub('', coords[0]))
+                y = float(self.decimal_converter.sub('', coords[1]))
+                return (x, y)
+            except:
+                raise ValueError("Could not parse coordinates from string %s" % text)
+        else: # is nid
+            return text
+
+class OverworldNodeNID(Validator):
+    desc = "accepts the nid of an overworld node only"
 
     def validate(self, text, level):
         for overworld in DB.overworlds.values():
@@ -766,6 +843,17 @@ class OverworldLocation(Validator):
             valids = valids + [(node.name, node.nid) for node in overworld.overworld_nodes.values()]
         return valids
 
+class OverworldEntity(Validator):
+    desc = "accepts the nid of an overworld entity. By default, all parties have associated overworld entities."
+
+    def validate(self, text, level):
+        return text
+
+    @lru_cache()
+    def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
+        valids = [(party.name, party.nid) for party in DB.parties.values()]
+        return valids
+
 validators = {validator.__name__: validator for validator in Validator.__subclasses__()}
 option_validators = {validator.__name__: validator for validator in OptionValidator.__subclasses__()}
 
@@ -779,6 +867,23 @@ def validate(var_type, text, level):
         v = validator()
         return v.validate(text, level)
     else:
+        return text
+
+def convert(var_type, text):
+    if not text:
+        return None
+    try:
+        validator = validators.get(var_type)
+        if validator:
+            v = validator()
+            return v.convert(text)
+        validator = option_validators.get(var_type)
+        if validator:
+            v = validator()
+            return v.convert(text)
+        else:
+            return text
+    except:
         return text
 
 def get(keyword) -> Validator:

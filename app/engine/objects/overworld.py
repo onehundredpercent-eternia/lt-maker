@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Dict, List, Set, Tuple
 
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.data.database import DB
-from app.engine.unit_sprite import MapSprite
 from app.utilities.utils import magnitude, tuple_sub
 
 if TYPE_CHECKING:
@@ -65,6 +63,7 @@ class OverworldEntityObject():
                                                     # is chiefly used in service of animation - when walking along
                                                     # roads, etc.
         self._display_position: Point = None        # ditto as above
+        self._nid: NID = None                       # nid if no party is associated
 
     @classmethod
     def from_prefab(cls, initial_node: NID, prefab: PartyObject, unit_registry: Dict[NID, UnitObject]):
@@ -81,23 +80,46 @@ class OverworldEntityObject():
             entity.sprite = OverworldUnitSprite(entity.unit, entity)
         else:
             logging.error("OverworldEntityObject cannot find unit %s", prefab.leader_nid)
-            entity.sprite = None
+            raise ValueError("OverworldEntityObject cannot find unit " + prefab.leader_nid)
+        return entity
+
+    @classmethod
+    def dummy_entity(cls, nid: NID, initial_position: Point, unit: UnitPrefab):
+        entity = cls()
+        entity.prefab = None
+        entity.on_node = None
+
+        entity.unit = unit
+        entity.sprite = OverworldUnitSprite(entity.unit, entity)
+        entity.display_position = initial_position
+        entity._nid = nid
         return entity
 
     def save(self):
-        s_dict = {'prefab_nid': self.prefab.nid,
-                  'on_node_nid': self.on_node,
+        s_dict = {'on_node_nid': self.on_node,
+                  'pnid': self.nid,
+
+                  # only used for dummy entities
+                  'position': self.display_position,
+                  'unit_nid': self.unit.nid if self.unit else None,
                   'team': self.team}
         return s_dict
 
     @classmethod
     def restore(cls, s_dict, game: GameState) -> OverworldEntityObject:
-        prefab_nid = s_dict['prefab_nid']
-        party_prefab = game.parties.get(prefab_nid)
-        on_node_nid = s_dict['on_node_nid']
-        entity_object = OverworldEntityObject.from_prefab(on_node_nid, party_prefab, game.unit_registry)
-        entity_object.team = s_dict['team']
-        return entity_object
+        prefab_nid = s_dict['pnid']
+        if prefab_nid:
+            party_prefab = game.parties.get(prefab_nid)
+            on_node_nid = s_dict['on_node_nid']
+            entity_object = OverworldEntityObject.from_prefab(on_node_nid, party_prefab, game.unit_registry)
+            entity_object.team = s_dict['team']
+            return entity_object
+        else: # dummy entity
+            nid = s_dict['pnid']
+            pos = s_dict['position']
+            unit_nid = s_dict['unit_nid']
+            entity_object = OverworldEntityObject.dummy_entity(nid, pos, DB.units.get(unit_nid, DB.units.values[0]))
+            return entity_object
 
     @property
     def position(self) -> Point:
@@ -114,6 +136,8 @@ class OverworldEntityObject():
             return self._display_position
         elif self.temporary_position:
             return self.temporary_position
+        elif self.sprite.fake_position:
+            return self.sprite.fake_position
         else:
             return self.position
 
@@ -123,7 +147,10 @@ class OverworldEntityObject():
 
     @property
     def nid(self) -> NID:
-        return self.prefab.nid
+        if self._nid:
+            return self._nid
+        else:
+            return self.prefab.nid
 
     @property
     def sound(self):

@@ -20,16 +20,16 @@ class OverworldMovementManager():
         self.camera_follow: NID = None
         self.abort_movement: Dict[NID, bool] = {}
 
-    def add(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1):
+    def add(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1, linger = 250, after_move_callback=None):
         if not self.camera_follow and follow:
             self.camera_follow = entity.nid
-        self.moving_entities[entity.nid] = MovementData(path, event, follow, speed_adj)
+        self.moving_entities[entity.nid] = MovementData(path, event, follow, speed_adj, linger, after_move_callback)
 
-    def begin_move(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1):
+    def begin_move(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1, linger = 250, after_move_callback=None):
         logging.info("Overworld Entity %s begin move: %s", entity.nid, path)
         # set the entity's temporary position to begin with
         entity.temporary_position = path[-1]
-        self.add(entity, path, event, follow, speed_adj)
+        self.add(entity, path, event, follow, speed_adj, linger, after_move_callback)
 
     def __len__(self):
         return len(self.moving_entities)
@@ -70,15 +70,18 @@ class OverworldMovementManager():
         entity.sprite.change_state('normal')
         if self.overworld.node_at(entity.temporary_position):
             entity.on_node = self.overworld.node_at(entity.temporary_position).nid
+            # clear the temporary position since we use the node for our position
+            entity.temporary_position = None
+            entity.display_position = None
+        else:
+            entity.on_node = None
+        if data.callback:
+            data.callback()
         if self.camera_follow == entity_nid:
             self.camera_follow = None
         if surprise:
             SOUNDTHREAD.play_sfx('Surprise')
             entity.sprite.change_state('normal')
-
-        # clear the temporary position
-        entity.temporary_position = None
-        entity.display_position = None
 
     def finish_all_movement(self):
         for entity_nid, data in self.moving_entities.items():
@@ -86,11 +89,13 @@ class OverworldMovementManager():
             destination = data.path[0]
             if self.overworld.node_at(destination):
                 entity.on_node = self.overworld.node_at(destination).nid
+                entity.temporary_position = None
+                entity.display_position = None
+            else:
+                entity.display_position = destination
             if entity.sound:
                 entity.sound.stop()
             entity.sprite.change_state('normal')
-            entity.temporary_position = None
-            entity.display_position = None
         self.moving_entities = {}
 
     def interrupt_movement(self, nid: NID):

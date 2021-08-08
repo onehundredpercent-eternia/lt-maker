@@ -58,6 +58,7 @@ class FeatChoice(menus.Table):
         self.options.clear()
         for idx, option in enumerate(options):
             option = SkillOption(idx, option)
+            option.help_box = option.get_help_box()
             self.options.append(option)
 
 class FeatChoiceState(MapState):
@@ -139,4 +140,6 @@ class FeatChoiceState(MapState):
         self.draw_face(surf)
         self.draw_label(surf)
         self.menu.draw(surf)
+        if self.menu.info_flag:
+            self.menu.draw_info(surf)
         return surf

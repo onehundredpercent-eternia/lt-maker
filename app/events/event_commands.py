@@ -1664,20 +1664,23 @@ class StartOverworldCinematic(EventCommand):
 class OverworldSetPosition(EventCommand):
     nid = 'set_overworld_position'
     tag = Tags.OVERWORLD
-    desc = "Sets the position of a specific party in the overworld to a specific node in the overworld"
+    desc = "Sets the position of a specific party in the overworld to a specific coordinate or node in the overworld"
 
-    keywords = ['Party', 'OverworldLocation']
+    keywords = ['OverworldEntity', 'OverworldLocation']
+    flags = ['no_animate']
 
 class OverworldMoveUnit(EventCommand):
     nid = 'overworld_move_unit'
     nickname = 'omove'
     tag = Tags.OVERWORLD
-    desc = ('Issues a move command *Party* to move from its current position to given *OverworldLocation*.'
-            'You can adjust the speed via the *Float* parameter - higher is slower (2 is twice as slow, 3 is thrice...)')
+    desc = ('Issues a move command to *OverworldEntity* to move from its current position to given *OverworldLocation*. '
+            'Alternately, moves *OverworldEntity* along a path denoted by the *PointList* in the format "(x, y)-(x1,y1)-(x2,y2)-...". '
+            'You can adjust the travel time via the *Float* parameter - higher is slower (2 is twice as slow, 3 is thrice...)'
+            '\n the `disable_after` flag determines whether or not to remove the unit after the move concludes. Useful for cinematics.')
 
-    keywords = ["Party", "OverworldLocation"]
-    optional_keywords = ['Float']
-    flags = ['no_block', 'no_follow']
+    keywords = ["OverworldEntity"]
+    optional_keywords = ['OverworldLocation', 'Float', 'PointList']
+    flags = ['no_block', 'no_follow', 'disable_after']
 
 class OverworldRevealNode(EventCommand):
     nid = 'reveal_overworld_node'
@@ -1685,17 +1688,36 @@ class OverworldRevealNode(EventCommand):
     desc = ('Reveals an overworld node on the map: moves the camera to the new location, plays the animation, and fades in the nodes.'
             'By default, fades in via animation; the *Bool* can be set to **True** to skip this anim.')
 
-    keywords = ['OverworldLocation']
+    keywords = ['OverworldNodeNID']
     optional_keywords = ['Bool']
 
 class OverworldRevealRoad(EventCommand):
     nid = 'reveal_overworld_road'
     tag = Tags.OVERWORLD
-    desc = ('Enables a road between two overworld nodes. *OverworldLocation* denotes the NID of a valid node. '
+    desc = ('Enables a road between two overworld nodes. *OverworldNodeNID* denotes the NID of a valid node. '
             'By default, fades in via animation; the *Bool* can be set to **True** to skip this anim.')
 
-    keywords = ['OverworldLocation', 'OverworldLocation']
+    keywords = ['OverworldNodeNID', 'OverworldNodeNID']
     optional_keywords = ['Bool']
+
+class CreateOverworldEntity(EventCommand):
+    nid = 'create_overworld_entity'
+    tag = Tags.OVERWORLD
+    desc = ('Create an overworld entity in memory with nid *Nid*. This can be used for purely cinematic purposes,'
+            ' or alternatively, used to spawn enemy reinforcements on the map.'
+            'If the `delete` flag is passed, this command will instead delete the entity with said NID')
+
+    keywords = ['Nid']
+    optional_keywords = ['Unit']
+    flags = ['delete']
+
+class DisableOverworldEntity(EventCommand):
+    nid = 'disable_overworld_entity'
+    tag = Tags.OVERWORLD
+    desc = ('remove an overworld entity from the map, with or without animation')
+
+    keywords = ['Nid']
+    flags = ['no_animate']
 
 class ToggleNarrationMode(EventCommand):
     nid = 'toggle_narration_mode'
@@ -1756,7 +1778,7 @@ def parse_text(text: str, strict=False) -> EventCommand:
                 else:
                     cmd_keyword = "N/A"
                 # if parentheses exists, then they contain the "true" arg, with everything outside parens essentially as comments
-                if '(' in arg and ')' in arg and not (cmd_keyword == 'Condition' or cmd_keyword == 'Text'):
+                if '(' in arg and ')' in arg and ('FLAG' in arg or not (cmd_keyword in ['Condition', 'Text', 'StringList', 'PointList', 'DashList'])):
                     true_arg = arg[arg.find("(")+1:arg.find(")")]
                     true_cmd_args.append(true_arg)
                 else:
@@ -1775,4 +1797,24 @@ def parse(command):
     flags = {v for v in values[num_keywords:] if v in command.flags}
     optional_keywords = [v for v in values[num_keywords:] if v not in flags]
     true_values += optional_keywords
+    return true_values, flags
+
+def convert_parse(command: EventCommand):
+    from app.events.event_validators import convert
+    values = command.values
+    num_keywords = len(command.keywords)
+    num_optionals = len(command.optional_keywords)
+    num_total_keywords = num_keywords + num_optionals
+    true_values = [None] * num_total_keywords
+
+    kwd_idx = 0
+    for keyword_idx, keyword in enumerate(values[:num_keywords]):
+        true_values[kwd_idx] = convert(command.keywords[keyword_idx], keyword)
+        kwd_idx += 1
+    flags = {v for v in values[num_keywords:] if v in command.flags}
+    for okeyword_idx, okeyword in enumerate(values[num_keywords:]):
+        if okeyword not in flags:
+            if kwd_idx < len(true_values):
+                true_values[kwd_idx] = convert(command.optional_keywords[okeyword_idx], okeyword)
+        kwd_idx += 1
     return true_values, flags

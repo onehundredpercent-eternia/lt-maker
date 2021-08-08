@@ -32,7 +32,7 @@ class OverworldMapView():
     def draw_entities(self, surf, cull_rect):
         overworld_entities = self.overworld.entities.values()
         # get rid of the unplaced entities
-        overworld_entities = [entity for entity in overworld_entities if entity.sprite and entity.on_node is not None]
+        overworld_entities = [entity for entity in overworld_entities if entity.sprite and entity.display_position is not None]
         # Only draw units within 2 tiles of cull_rect
         culled_entities = \
             [entity for entity in overworld_entities if entity.sprite.draw_anyway() or

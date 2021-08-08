@@ -76,6 +76,12 @@ class OverworldManager():
                         break
         return self.entities[self._overworld.selected_party_nid]
 
+    def add_entity(self, entity: OverworldEntityObject):
+        self._overworld.overworld_entities[entity.nid] = entity
+
+    def delete_entity(self, entity_nid: NID):
+        self._overworld.overworld_entities.pop(entity_nid, None)
+
     def select_entity(self, party: OverworldEntityObject | NID):
         if isinstance(party, OverworldEntityObject):
             party = party.nid

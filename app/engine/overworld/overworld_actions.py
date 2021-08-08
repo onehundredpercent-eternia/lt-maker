@@ -12,40 +12,49 @@ class OverworldMove():
     """
     A user-issued move to a party on the overworld between two nodes.
     """
-    def __init__(self, entity: OverworldEntityObject | NID, target_node: OverworldNodeObject | NID, overworld: OverworldManager, event=False, follow=True, speed_adj=1, remove_last=False):
+    def __init__(self, entity: OverworldEntityObject | NID, target_node: OverworldNodeObject | NID,
+                 overworld: OverworldManager, event=False, follow=True, speed_adj=1,
+                 remove_last=False, path=None, linger=250, after_move_callback=None):
         if isinstance(entity, OverworldEntityObject):
             entity = entity.nid
-        if isinstance(target_node, NID):
-            target_node = overworld.nodes[target_node]
         self.entity = overworld.entities[entity]
-        self.old_node = overworld.nodes[self.entity.on_node]
-        self.new_node = target_node
         self.speed_adj = speed_adj
+        self.linger = linger
 
-        roads: List[RoadObject] = overworld.shortest_path(self.old_node, self.new_node)
-        if remove_last:
-            roads.pop()
-        self.path = [self.old_node.position]
+        # pathfinding
+        if not path and self.entity.on_node:
+            if isinstance(target_node, NID):
+                target_node = overworld.nodes[target_node]
+            old_node = overworld.nodes[self.entity.on_node]
+            new_node = target_node
 
-        for road in roads:
-            # fetch the actual coordinate paths from the roads and orient them properly
-            tpath = road.prefab
-            if tpath[0] == self.path[-1]:
-                self.path = self.path + tpath
-            else:
-                self.path = self.path + tpath[::-1]
+            roads: List[RoadObject] = overworld.shortest_path(old_node, new_node)
+            if remove_last:
+                roads.pop()
+            self.path = [old_node.position]
+
+            for road in roads:
+                # fetch the actual coordinate paths from the roads and orient them properly
+                tpath = road.prefab
+                if tpath[0] == self.path[-1]:
+                    self.path = self.path + tpath
+                else:
+                    self.path = self.path + tpath[::-1]
+        elif not path and not self.entity.on_node: # path directly to node from where we're at
+            self.path = [target_node.position]
+            if self.entity.display_position != self.path[0]:
+                self.path.insert(0, self.entity.display_position)
+        else: # queue custom path
+            self.path = path
+            if self.entity.display_position != self.path[0]:
+                self.path.insert(0, self.entity.display_position)
         # finally, since movement is queued LIFO, we reverse the path
         # so the first step is last in the list
         self.path.reverse()
         self.event = event
         self.follow = follow
+        self.after_move_callback = after_move_callback
 
     def queue(self, movement_manager: OverworldMovementManager):
         if self.path:
-            movement_manager.begin_move(self.entity, self.path, self.event, self.follow, self.speed_adj)
-
-    def execute(self):
-        self.entity.on_node = self.new_node.nid
-
-    def reverse(self):
-        self.entity.on_node = self.old_node.nid
+            movement_manager.begin_move(self.entity, self.path, self.event, self.follow, self.speed_adj, self.linger, self.after_move_callback)
