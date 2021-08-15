@@ -32,6 +32,7 @@ class PreferencesDialog(Dialog):
         self.saved_preferences['place_button'] = self.settings.get_place_button(Qt.RightButton)
         self.saved_preferences['theme'] = self.settings.get_theme(0)
         self.saved_preferences['event_autocomplete'] = self.settings.get_event_autocomplete(1)
+        self.saved_preferences['event_autocomplete_desc'] = self.settings.get_event_autocomplete_desc(1)
         self.saved_preferences['autocomplete_button'] = self.settings.get_autocomplete_button(Qt.Key_Tab)
         self.saved_preferences['autosave_time'] = self.settings.get_autosave_time()
 
@@ -59,6 +60,8 @@ class PreferencesDialog(Dialog):
 
         self.autocomplete = PropertyCheckBox('Event Autocomplete', QCheckBox, self)
         self.autocomplete.edit.setChecked(bool(self.saved_preferences['event_autocomplete']))
+        self.autocomplete_desc = PropertyCheckBox('Show Event Command Description?', QCheckBox, self)
+        self.autocomplete_desc.edit.setChecked(bool(self.saved_preferences['event_autocomplete_desc']))
 
         self.autocomplete_button = PropertyBox('Autocomplete Button', ComboBox, self)
         for option in self.autocomplete_options:
@@ -77,6 +80,7 @@ class PreferencesDialog(Dialog):
         self.layout.addWidget(self.theme)
         self.layout.addWidget(self.autocomplete_button)
         self.layout.addWidget(self.autocomplete)
+        self.layout.addWidget(self.autocomplete_desc)
         self.layout.addWidget(self.autosave)
         self.layout.addWidget(self.buttonbox)
 
@@ -122,6 +126,8 @@ class PreferencesDialog(Dialog):
         # resorting to int
         autocomplete = 1 if self.autocomplete.edit.isChecked() else 0
         self.settings.set_event_autocomplete(autocomplete)
+        autocomplete_desc = 1 if self.autocomplete_desc.edit.isChecked() else 0
+        self.settings.set_event_autocomplete_desc(autocomplete_desc)
         autosave = float(self.autosave.edit.value())
         self.settings.set_autosave_time(autosave)
         super().accept()

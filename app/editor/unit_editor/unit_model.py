@@ -82,6 +82,9 @@ class UnitModel(DragDropCollectionModel):
                 level.units.remove_key(old_nid)
             for unit_group in level.unit_groups:
                 unit_group.remove(old_nid)
+        for party in DB.parties:
+            if party.leader == old_nid:
+                party.leader == new_nid
 
     def on_nid_changed(self, old_nid, new_nid):
         for ai in DB.ai:

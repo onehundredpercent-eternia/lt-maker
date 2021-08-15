@@ -38,7 +38,7 @@ class PartyProperties(QWidget):
         if self.current.name == self.current.nid:
             self.name_box.edit.setText(text)
         self.current.nid = text
-        self.window.update_list()        
+        self.window.update_list()
 
     def nid_done_editing(self):
         other_nids = [d.nid for d in self._data.values() if d is not self.current]

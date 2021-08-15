@@ -2,6 +2,7 @@ import logging
 import math
 import os
 from dataclasses import dataclass
+from app.extensions.markdown2 import Markdown
 
 from app.data.database import DB
 from app.editor import table_model, timer
@@ -204,6 +205,7 @@ class CodeEditor(QPlainTextEdit):
 
         self.completer: event_autocompleter.Completer = None
         self.function_annotator: QLabel = QLabel(self)
+        self.markdown_converter: Markdown = Markdown()
 
         if not bool(self.settings.get_event_autocomplete()):
             return  # Event auto completer is turned off
@@ -295,6 +297,7 @@ class CodeEditor(QPlainTextEdit):
         # style both components
         hint_cmd = '<div class="command_text">' + hint_cmd + '</div>'
         hint_desc = '<div class="desc_text">' + hint_desc + '</div>'
+        hint_command_desc = '<div class="desc_text">' + self.markdown_converter.convert(command.desc) + '</div>'
 
         style = """
             <style>
@@ -304,6 +307,8 @@ class CodeEditor(QPlainTextEdit):
         """
 
         hint_text = style + hint_cmd + '<hr>' + hint_desc
+        if self.settings.get_event_autocomplete_desc():
+            hint_text += '<hr>' + hint_command_desc
         self.function_annotator.setText(hint_text)
         self.function_annotator.adjustSize()
 
@@ -343,7 +348,7 @@ class CodeEditor(QPlainTextEdit):
 
         # determine what dictionary to use for completion
         validator, flags = event_autocompleter.detect_type_under_cursor(line, cursor_pos)
-        autofill_dict = event_autocompleter.generate_wordlist_from_validator_type(validator, self.window.current.nid)
+        autofill_dict = event_autocompleter.generate_wordlist_from_validator_type(validator, self.window.current.level_nid)
         if flags:
             autofill_dict = autofill_dict + event_autocompleter.generate_flags_wordlist(flags)
         if len(autofill_dict) == 0:
@@ -1060,16 +1065,30 @@ class ShowCommandsDialog(QDialog):
             idx = index.row()
             command = self._data[idx]
             if command not in self.categories:
+                # command name
                 if command.nickname:
                     text = '**%s**' % command.nickname
                 else:
                     text = '**%s**' % command.nid
-                if command.keywords:
-                    text += ';' + ';'.join(command.keywords) + '\n\n'
+                text += ';'
+
+                # command keywords
+                i = 0
+                all_keywords = command.keywords + command.optional_keywords
+                for i, kwyd in enumerate(all_keywords):
+                    next_text = kwyd
+                    if i < len(command.keyword_names) and command.keyword_names[i]: # it has a name
+                        next_text = '**' + command.keyword_names[i] + '**=' + next_text
+                    if not i < len(command.keywords): # it's an optional
+                        next_text = '_' + next_text + '_'
+                    next_text += ';'
+                    text += next_text
+                if command.flags:
+                    text += '_flags_'
                 else:
-                    text += '\n\n'
-                if command.optional_keywords:
-                    text += '_Optional Keywords:_ ' + ';'.join(command.optional_keywords) + '\n\n'
+                    if text[-1] == ';':
+                        text = text[:-1]
+                text += '\n\n'
                 if command.flags:
                     text += '_Optional Flags:_ ' + ';'.join(command.flags) + '\n\n'
                 text += " --- \n\n"

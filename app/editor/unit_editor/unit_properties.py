@@ -1,26 +1,27 @@
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLineEdit, \
-    QMessageBox, QSpinBox, QHBoxLayout, QPushButton, QDialog, QSplitter, \
-    QVBoxLayout, QTableView, QStyledItemDelegate, QTextEdit
-from PyQt5.QtGui import QIcon, QFontMetrics
-from PyQt5.QtCore import Qt, QItemSelection, QItemSelectionModel
-
+from app.extensions.key_value_delegate import KeyValueDelegate, KeyValueDoubleListModel
+from app.data.database import DB
+from app.editor.custom_widgets import AffinityBox, ClassBox
+from app.editor.icons import UnitPortrait
+from app.editor.item_list_widget import ItemListWidget
+from app.editor.learned_skill_delegate import LearnedSkillDelegate
+from app.editor.stat_widget import (StatAverageDialog, StatListWidget,
+                                    UnitStatAveragesModel)
+from app.editor.tag_widget import TagDialog
+from app.editor.weapon_editor import weapon_model
+from app.extensions.custom_gui import ComboBox, PropertyBox, QHLine
+from app.extensions.list_models import ReverseDoubleListModel, VirtualListModel
+from app.extensions.list_widgets import (AppendMultiListWidget,
+                                         BasicSingleListWidget)
+from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.utilities import str_utils
 
-from app.data.database import DB
+from PyQt5.QtCore import QItemSelection, QItemSelectionModel, Qt
+from PyQt5.QtGui import QFontMetrics, QIcon
+from PyQt5.QtWidgets import (QDialog, QGridLayout, QHBoxLayout, QLineEdit,
+                             QMessageBox, QPushButton, QSpinBox, QSplitter,
+                             QStyledItemDelegate, QTableView, QTextEdit,
+                             QVBoxLayout, QWidget)
 
-from app.extensions.custom_gui import PropertyBox, QHLine, ComboBox
-from app.extensions.multi_select_combo_box import MultiSelectComboBox
-from app.extensions.list_models import VirtualListModel, ReverseDoubleListModel
-from app.extensions.list_widgets import BasicSingleListWidget, AppendMultiListWidget
-
-from app.editor.custom_widgets import ClassBox, AffinityBox
-from app.editor.tag_widget import TagDialog
-from app.editor.stat_widget import StatListWidget, StatAverageDialog, UnitStatAveragesModel
-from app.editor.learned_skill_delegate import LearnedSkillDelegate
-from app.editor.unit_notes_delegate import UnitNotesDelegate, UnitNotesDoubleListModel
-from app.editor.item_list_widget import ItemListWidget
-from app.editor.weapon_editor import weapon_model
-from app.editor.icons import UnitPortrait
 
 class WexpModel(VirtualListModel):
     def __init__(self, columns, data, parent=None):
@@ -200,10 +201,14 @@ class UnitProperties(QWidget):
         # self.personal_skill_widget.activated.connect(self.learned_skills_changed)
 
         noteAttrs = ("Category", "Entries")
-        self.unit_notes_widget = AppendMultiListWidget([], "Unit Notes", noteAttrs, UnitNotesDelegate, self, model=UnitNotesDoubleListModel)
+        self.unit_notes_widget = AppendMultiListWidget([], "Unit Notes", noteAttrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
         self.unit_notes_widget.view.setMaximumHeight(120)
         if not DB.constants.value('unit_notes'):
             self.unit_notes_widget.hide()
+
+        fieldAttrs = ("Name", "Value")
+        self.unit_fields_widget = AppendMultiListWidget([], "Unit Properties", fieldAttrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
+        self.unit_fields_widget.view.setMaximumHeight(120)
 
         default_weapons = {weapon_nid: DB.weapons.default() for weapon_nid in DB.weapons.keys()}
         self.wexp_gain_widget = HorizWeaponListWidget(
@@ -239,6 +244,7 @@ class UnitProperties(QWidget):
         right_section.addWidget(QHLine())
         right_section.addWidget(self.personal_skill_widget)
         right_section.addWidget(self.unit_notes_widget)
+        right_section.addWidget(self.unit_fields_widget)
         right_section.addWidget(QHLine())
         right_section.addWidget(self.alternate_class_box)
         right_section.addWidget(self.affinity_box)
@@ -379,6 +385,7 @@ class UnitProperties(QWidget):
 
         self.personal_skill_widget.set_current(current.learned_skills)
         self.unit_notes_widget.set_current(current.unit_notes)
+        self.unit_fields_widget.set_current(current.fields)
         self.wexp_gain_widget.set_current(current.wexp_gain)
         self.item_widget.set_current(current.starting_items)
 

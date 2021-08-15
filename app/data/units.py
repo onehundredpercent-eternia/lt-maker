@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict
 
 from app.data.weapons import WexpGain
 from app.utilities.data import Data, Prefab
@@ -6,27 +7,30 @@ from app.utilities.data import Data, Prefab
 
 @dataclass
 class UnitPrefab(Prefab):
-    nid: str = None
-    name: str = None
-    desc: str = None
-    variant: str = None
+    def __init__(self) -> None:
+        self.nid: str = None
+        self.name: str = None
+        self.desc: str = None
+        self.variant: str = None
 
-    level: int = None
-    klass: str = None
+        self.level: int = None
+        self.klass: str = None
 
-    tags: list = None
-    bases: dict = None
-    growths: dict = None
-    starting_items: list = None  # of tuples (ItemPrefab, droppable)
+        self.tags: list = None
+        self.bases: dict = None
+        self.growths: dict = None
+        self.starting_items: list = None  # of tuples (ItemPrefab, droppable)
 
-    learned_skills: list = None
-    unit_notes: list = None
-    wexp_gain: dict = None
+        self.learned_skills: list = None
+        self.unit_notes: list = None
+        self.wexp_gain: dict = None
 
-    alternate_classes: list = None
+        self.alternate_classes: list = None
 
-    portrait_nid: str = None
-    affinity: str = None
+        self.portrait_nid: str = None
+        self.affinity: str = None
+
+        self.fields: list = None # arbitrary field, allow players to fill out anything they want
 
     def get_stat_titles(self):
         return ["Bases", "Growths"]
@@ -74,7 +78,7 @@ class UnitPrefab(Prefab):
         elif name == 'starting_items':
             # Need to convert to item nid + droppable
             value = [i if isinstance(i, list) else [i, False] for i in value]
-        elif name == 'unit_notes':
+        elif name == 'unit_notes' or name == 'fields':
             if value is None:
                 value = []
         else:

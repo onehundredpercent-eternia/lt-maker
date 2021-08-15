@@ -1,18 +1,18 @@
-import sys
-
-from app.utilities import utils
-from app.constants import TILEWIDTH, TILEHEIGHT
-from app.data.database import DB
-
-from app.engine import banner, static_random, unit_funcs, equations, \
-    skill_system, item_system, item_funcs, particles, aura_funcs
-from app.engine.objects.unit import UnitObject
-from app.engine.objects.item import ItemObject
-from app.engine.objects.skill import SkillObject
-from app.events.regions import Region
-from app.engine.game_state import game
+from __future__ import annotations
 
 import logging
+import sys
+
+from app.constants import TILEHEIGHT, TILEWIDTH
+from app.data.database import DB
+from app.engine import (aura_funcs, banner, equations, item_funcs, item_system,
+                        particles, skill_system, static_random, unit_funcs)
+from app.engine.game_state import game
+from app.engine.objects.item import ItemObject
+from app.engine.objects.skill import SkillObject
+from app.engine.objects.unit import UnitObject
+from app.events.regions import Region
+from app.utilities import utils
 
 
 class Action():
@@ -1435,6 +1435,24 @@ class ChangeFatigue(Action):
         for action in self.subactions:
             action.reverse()
         self.unit.set_fatigue(self.old_fatigue)
+
+class ChangeField(Action):
+    def __init__(self, unit: UnitObject, key: str, value: str | float | int, should_increment: bool = False):
+        self.unit = unit
+        self.value = value
+        self.key = key
+        self.old_value = self.unit._fields.get(key, '')
+        self.should_increment = should_increment
+
+    def do(self):
+        if self.should_increment and not isinstance(self.value, str):
+            if self.key in self.unit._fields and not isinstance(self.unit._fields[self.key], str):
+                self.unit.set_field(self.key, self.unit.get_field(self.key) + self.value)
+                return
+        self.unit.set_field(self.key, self.value)
+
+    def reverse(self):
+        self.unit.set_field(self.key, self.old_value)
 
 class Die(Action):
     def __init__(self, unit):

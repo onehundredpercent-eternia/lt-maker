@@ -12,7 +12,7 @@
 
 **Lex Talionis** was originally released without a dedicated graphical editor, which meant all game creation was done through modification of text files and xml files. But no longer!
 
-**LT-maker** is the easy-to-use but powerful editor built on top of the **Lex Talionis** engine. The **Lex Talionis** engine itself as been completely rewritten using the knowledge gained over seven years of development to be faster, better, and easier-to-use. You can create a whole new game without touching any code.
+**LT-maker** is the easy-to-use but powerful editor built on top of the **Lex Talionis** engine. The **Lex Talionis** engine itself has been completely rewritten using the knowledge gained over seven years of development to be faster, better, and easier-to-use. You can create a whole new game without touching any code.
 
 ## Getting Started
 
@@ -26,7 +26,9 @@ Visit the Discord server for more information and help: https://discord.gg/dC6VW
 
 ## Executable Version 
 > Recommended for beginners and those without programming experience
-**LT-maker** can be run directly as an executable on Windows. Download it here: https://www.dropbox.com/s/1ikh26td9d68z5n/the_lion_throne.zip?dl=0. Unzip the downloaded files, and then double-click *??.exe* to begin creating your own game.
+
+> **LT-maker** can be run directly as an executable on Windows. Download it here:   https://www.dropbox.com/s/q8ii1e4rd3e97et/lt_editor.zip?dl=1
+. Unzip the downloaded files, and then double-click *double_click_to_run.bat* to begin creating your own game.
 
 ## Python Version
 If you have Python programming experience and want to make direct changes to the code itself, you can download the Python version of the engine and start tinkering today. The code is entirely open-source and can be changed to meet your needs. Follow these instructions to get the python version up and running: https://gitlab.com/rainlash/lt-maker/-/wikis/Python-Installation

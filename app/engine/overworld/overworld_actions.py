@@ -14,7 +14,7 @@ class OverworldMove():
     """
     def __init__(self, entity: OverworldEntityObject | NID, target_node: OverworldNodeObject | NID,
                  overworld: OverworldManager, event=False, follow=True, speed_adj=1,
-                 remove_last=False, path=None, linger=250, after_move_callback=None):
+                 remove_last=False, path=None, linger=250, after_move_callback=None, mute=False):
         if isinstance(entity, OverworldEntityObject):
             entity = entity.nid
         self.entity = overworld.entities[entity]
@@ -54,7 +54,8 @@ class OverworldMove():
         self.event = event
         self.follow = follow
         self.after_move_callback = after_move_callback
+        self.mute = mute
 
     def queue(self, movement_manager: OverworldMovementManager):
         if self.path:
-            movement_manager.begin_move(self.entity, self.path, self.event, self.follow, self.speed_adj, self.linger, self.after_move_callback)
+            movement_manager.begin_move(self.entity, self.path, self.event, self.follow, self.speed_adj, self.linger, self.after_move_callback, self.mute)

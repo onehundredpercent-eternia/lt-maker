@@ -74,13 +74,12 @@ class OverworldEntityObject():
         # create unit
         if prefab.leader_nid in unit_registry:
             entity.unit = unit_registry.get(prefab.leader_nid)
-        else:
+        elif prefab.leader_nid in DB.units.keys():
             entity.unit = DB.units.get(prefab.leader_nid)
-        if entity.unit:
-            entity.sprite = OverworldUnitSprite(entity.unit, entity)
         else:
+            entity.unit = DB.units.values()[0]
             logging.error("OverworldEntityObject cannot find unit %s", prefab.leader_nid)
-            raise ValueError("OverworldEntityObject cannot find unit " + prefab.leader_nid)
+        entity.sprite = OverworldUnitSprite(entity.unit, entity)
         return entity
 
     @classmethod

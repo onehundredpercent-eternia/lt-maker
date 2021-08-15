@@ -3,7 +3,7 @@ import os
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListView, QDialog, \
     QPushButton, QFileDialog, QMessageBox, QGroupBox, QFormLayout, QSpinBox
 from PyQt5.QtCore import Qt, QDir
-from PyQt5.QtGui import QPixmap, QIcon, QImage, QPainter, qRgb
+from PyQt5.QtGui import QPixmap, QIcon, QImage, QPainter
 
 from app.constants import WINWIDTH, WINHEIGHT
 
@@ -185,11 +185,10 @@ class FrameSelector(Dialog):
                 nid = utilities.get_next_name("New Palette", RESOURCES.combat_palettes.keys())
                 my_palette = combat_palettes.Palette(nid)
                 RESOURCES.combat_palettes.append(my_palette)
-                self.combat_anims.palettes.append(["New Palette", my_palette.nid])
-                colors = {(int(idx % 8), int(idx / 8)): color for idx, color in enumerate(all_palette_colors)}
-                my_palette.colors = colors
+                self.combat_anim.palettes.append(["New Palette", my_palette.nid])
+                my_palette.assign_colors(all_palette_colors)
 
-            convert_dict = {qRgb(*color): qRgb(0, coord[0], coord[1]) for coord, color in my_palette.colors}
+            convert_dict = editor_utilities.get_color_conversion(my_palette)
             for idx, pixmap in enumerate(pixmaps):
                 im = pix.toImage()
                 im = editor_utilities.color_convert(im, convert_dict)

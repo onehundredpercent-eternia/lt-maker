@@ -38,8 +38,7 @@ def populate_palettes(current, images, nid):
                 pix = QPixmap(image_fn)
                 palette_colors = editor_utilities.find_palette(pix.toImage())
                 new_palette = combat_palettes.Palette(palette_nid)
-                colors = {(int(idx % 8), int(idx / 8)): color for idx, color in enumerate(palette_colors)}
-                new_palette.colors = colors
+                new_palette.assign_colors(palette_colors)
                 RESOURCES.combat_palettes.append(new_palette)
             current.palettes.append([palette_name, palette_nid])
 
@@ -52,10 +51,9 @@ def add_frames(index_fn, current, new_weapon, images):
     # Use the first palette
     palette_name, palette_nid = current.palettes[0]
     palette = RESOURCES.combat_palettes.get(palette_nid)
-    colors = palette.colors
 
     # Need to convert to universal coord palette
-    convert_dict = {qRgb(*color): qRgb(0, coord[0], coord[1]) for coord, color in colors.items()}
+    convert_dict = editor_utilities.get_color_conversion(palette)
     main_pixmap = QPixmap(images[0])
     for i in index_lines:
         # Only accepts length 4 lines
@@ -396,16 +394,14 @@ def import_from_gba(current, fn):
         colorkey_conversion = {qRgb(*all_palette_colors[0]): editor_utilities.qCOLORKEY}
         pixmaps = {name: editor_utilities.color_convert_pixmap(pixmap, colorkey_conversion) for name, pixmap in pixmaps.items()}
         all_palette_colors[0] = COLORKEY
-        # Build true palette colors
-        colors = {(int(idx % 8), int(idx / 8)): color for idx, color in enumerate(all_palette_colors)}
-        my_palette.colors = colors
+        my_palette.assign_colors(all_palette_colors)
 
     # Now do a simple crop to get rid of palette extras
     pixmaps = {name: simple_crop(pix) for name, pix in pixmaps.items()}
     # Split double images into "_under" image
     pixmaps = split_doubles(pixmaps)
     # Convert pixmaps to new palette colors
-    convert_dict = {qRgb(*color): qRgb(0, coord[0], coord[1]) for coord, color in my_palette.colors.items()}
+    convert_dict = editor_utilities.get_color_conversion(my_palette)
     pixmaps = {name: editor_utilities.color_convert_pixmap(pixmap, convert_dict) for name, pixmap in pixmaps.items()}
     # Determine which pixmaps should be replaced by "wait" commands
     empty_pixmaps = find_empty_pixmaps(pixmaps)

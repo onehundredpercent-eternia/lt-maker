@@ -64,6 +64,8 @@ class FeatChoice(menus.Table):
 class FeatChoiceState(MapState):
     name = 'feat_choice'
     transparent = True
+    menu = None
+    unit = None
 
     def start(self):
         self.unit = game.memory['current_unit']
@@ -137,9 +139,10 @@ class FeatChoiceState(MapState):
         surf.blit(bg_surf, (0, 0))
 
     def draw(self, surf):
-        self.draw_face(surf)
-        self.draw_label(surf)
-        self.menu.draw(surf)
-        if self.menu.info_flag:
-            self.menu.draw_info(surf)
+        if self.menu:
+            self.draw_face(surf)
+            self.draw_label(surf)
+            self.menu.draw(surf)
+            if self.menu.info_flag:
+                self.menu.draw_info(surf)
         return surf

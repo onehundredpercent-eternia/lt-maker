@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Tuple
 
 from app.data.database import DB
 from app.data.difficulty_modes import GrowthOption
@@ -25,6 +25,7 @@ class UnitObject(Prefab):
         self.generic: bool = None
         self.ai = None
         self.ai_group = None
+        self._fields: Dict[str, str] = {}
 
     @classmethod
     def from_prefab(cls, prefab: UnitPrefab):
@@ -74,7 +75,11 @@ class UnitObject(Prefab):
             self.portrait_nid = prefab.portrait_nid
             self.affinity = prefab.affinity
             self.notes = [[n[0], n[1]] for n in prefab.unit_notes]
+            if prefab.fields:
+                for (key, value) in prefab.fields:
+                    self._fields[key] = value
         self.starting_position = self.position
+
 
         method = unit_funcs.get_leveling_method(self)
 
@@ -209,6 +214,19 @@ class UnitObject(Prefab):
 
     def set_fatigue(self, val):
         self.current_fatigue = int(max(val, 0))
+
+    def get_field(self, key, default=''):
+        if key in self._fields:
+            return self._fields[key]
+        my_klass = DB.classes.get(self.klass, None)
+        if my_klass:
+            klass_property_dict = dict(my_klass.fields)
+            if key in klass_property_dict:
+                return klass_property_dict[key]
+        return default
+
+    def set_field(self, key, value):
+        self._fields[key] = value
 
     def get_exp(self):
         return self.exp
@@ -517,6 +535,7 @@ class UnitObject(Prefab):
                   'dead': self.dead,
                   'action_state': self.get_action_state(),
                   'ai_group_active': self.ai_group_active,
+                  '_fields': self._fields
                   }
         return s_dict
 
@@ -557,6 +576,7 @@ class UnitObject(Prefab):
             self.starting_position = tuple(s_dict['starting_position'])
         else:
             self.starting_position = None
+        self._fields = s_dict.get('_fields', {})
 
         self.skills = [game.get_skill(skill_uid) for skill_uid in s_dict['skills']]
         self.skills = [s for s in self.skills if s]

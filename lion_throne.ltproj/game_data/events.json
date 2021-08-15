@@ -167,6 +167,16 @@
                     "Poison",
                     "no_banner"
                 ]
+            ],
+            [
+                "add_group",
+                [
+                    "rein",
+                    "rein",
+                    "fade",
+                    "stack",
+                    "create"
+                ]
             ]
         ],
         "only_once": false,

@@ -9,7 +9,7 @@ from app.utilities import utils
 
 
 class MovementData():
-    def __init__(self, path, event, follow, speed_adj=1, linger=250, callback=None):
+    def __init__(self, path, event, follow, speed_adj=1, linger=250, callback=None, muted=False):
         self.path = path
         self.last_update = 0
         self.event = event
@@ -17,6 +17,7 @@ class MovementData():
         self.speed_adj = speed_adj
         self.linger = linger
         self.callback = callback
+        self.muted = muted
 
 class MovementManager():
     def __init__(self):

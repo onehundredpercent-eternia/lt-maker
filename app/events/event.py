@@ -2,7 +2,6 @@ from __future__ import annotations
 import logging
 import re
 from typing import Callable, Dict, List, Tuple
-from ast import literal_eval as make_tuple
 
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
@@ -772,7 +771,7 @@ class Event():
                 return
             portrait = RESOURCES.portraits.get(values[1])
             if not portrait:
-                logging.error("Couldn't find portrat %s" % values[1])
+                logging.error("Couldn't find portrait %s" % values[1])
                 return
             action.do(action.ChangePortrait(unit, values[1]))
 
@@ -838,6 +837,23 @@ class Event():
                 return
             fatigue = int(values[1])
             action.do(action.ChangeFatigue(unit, fatigue))
+
+        elif command.nid == 'set_field':
+            values, flags = event_commands.parse(command)
+            unit = self.get_unit(values[0])
+            if not unit:
+                logging.error("Couldn't find unit %s" % values[0])
+                return
+            key = values[1]
+            try:
+                value = evaluate.evaluate(values[2])
+            except:
+                logging.error("Could not evaluate {%s}" % values[2])
+                return
+            should_increment = False
+            if 'increment_mode' in flags:
+                should_increment = True
+            action.do(action.ChangeField(unit, key, value, should_increment))
 
         elif command.nid == 'resurrect':
             values, flags = event_commands.parse(command)
@@ -1272,8 +1288,8 @@ class Event():
         unit = self.get_unit(name)
         if unit and unit.portrait_nid:
             portrait = RESOURCES.portraits.get(unit.portrait_nid)
-        elif unit in DB.units.keys():
-            portrait = RESOURCES.portraits.get(DB.units.get(unit).portrait_nid)
+        elif name in DB.units.keys():
+            portrait = RESOURCES.portraits.get(DB.units.get(name).portrait_nid)
         else:
             portrait = RESOURCES.portraits.get(name)
         if not portrait:
@@ -1657,10 +1673,10 @@ class Event():
         for unit_nid in group.units:
             unit = game.get_unit(unit_nid)
             if create:
-                unit = self.copy_unit(unit)
+                unit = self._copy_unit(unit_nid)
             elif unit.position or unit.dead:
                 continue
-            position = self._get_position(next_pos, unit, group)
+            position = self._get_position(next_pos, unit, group, unit_nid)
             if not position:
                 continue
             position = tuple(position)
@@ -1731,16 +1747,18 @@ class Event():
             return True
         return False
 
-    def _get_position(self, next_pos, unit, group):
+    def _get_position(self, next_pos, unit, group, unit_nid=None):
+        if unit_nid is None:
+            unit_nid = unit.nid
         if not next_pos:
-            position = group.positions.get(unit.nid)
+            position = group.positions.get(unit_nid)
         elif next_pos.lower() == 'starting':
             position = unit.starting_position
         elif ',' in next_pos:
             position = self.parse_pos(next_pos)
         else:
             other_group = game.level.unit_groups.get(next_pos)
-            position = other_group.positions.get(unit.nid)
+            position = other_group.positions.get(unit_nid)
         return position
 
     def spawn_group(self, command):
@@ -1768,11 +1786,11 @@ class Event():
         for unit_nid in group.units:
             unit = game.get_unit(unit_nid)
             if create:
-                unit = self.copy_unit(unit)
+                unit = self._copy_unit(unit_nid)
             elif unit.position or unit.dead:
                 logging.warning("Unit %s in group %s already on map or dead", unit.nid, group.nid)
                 continue
-            position = self._get_position(next_pos, unit, group)
+            position = self._get_position(next_pos, unit, group, unit_nid)
             if not position:
                 continue
 
@@ -1899,6 +1917,9 @@ class Event():
         else:
             reload_map_nid = tilemap_nid
 
+        # Reset cursor position
+        game.cursor.set_pos((0, 0))
+
         # Remove all units from the map
         # But remember their original positions for later
         previous_unit_pos = {}
@@ -1932,6 +1953,19 @@ class Event():
 
         # Can't use turnwheel to go any further back
         game.action_log.set_first_free_action()
+
+    def _copy_unit(self, unit_nid):
+        level_prefab = DB.levels.get(game.level.nid)
+        level_unit_prefab = level_prefab.units.get(unit_nid)
+        new_nid = str_utils.get_next_int(level_unit_prefab.nid, game.unit_registry.keys())
+        level_unit_prefab.nid = new_nid
+        new_unit = UnitObject.from_prefab(level_unit_prefab)
+        level_unit_prefab.nid = unit_nid  # Set back to old nid
+        new_unit.position = None
+        new_unit.dead = False
+        new_unit.party = game.current_party
+        game.full_register(new_unit)
+        return new_unit
 
     def load_unit(self, command):
         values, flags = event_commands.parse(command)
@@ -1973,8 +2007,11 @@ class Event():
             logging.error("Class %s doesn't exist in database " % klass)
             return
         # Level
-        level = int(evaluate.evaluate(values[2], self.unit, self.unit2, self.item, self.position, self.region))
-
+        try:
+            level = int(evaluate.evaluate(values[2], self.unit, self.unit2, self.item, self.position, self.region))
+        except:
+            logging.error("Could not evaluate {%s}" % values[2])
+            return
         team = values[3]
         if len(values) > 4 and values[4]:
             ai_nid = values[4]
@@ -2019,7 +2056,11 @@ class Event():
             return
 
         if len(values) > 2 and values[2]:
-            level = int(evaluate.evaluate(values[2], self.unit, self.unit2, self.item, self.position, self.region))
+            try:
+                level = int(evaluate.evaluate(values[2], self.unit, self.unit2, self.item, self.position, self.region))
+            except:
+                logging.error("Could not evaluate {%s}" % values[2])
+                return
         else:
             level = unit.level
         if len(values) > 3 and values[3]:
@@ -2219,6 +2260,7 @@ class Event():
             action.do(action.GiveBexp(party_nid, val))
         except:
             logging.error("Could not evaluate {%s}" % to_eval)
+            return
         banner_flag = 'no_banner' not in flags
 
         # action.do(action.GiveBexp(party_nid, bexp))
@@ -2357,8 +2399,11 @@ class Event():
         if not unit:
             logging.error("Couldn't find unit %s" % values[0])
             return
-
-        final_level = int(evaluate.evaluate(values[1], self.unit, self.unit2, self.item, self.position, self.region))
+        try:
+            final_level = int(evaluate.evaluate(values[1], self.unit, self.unit2, self.item, self.position, self.region))
+        except:
+            logging.error("Could not evaluate {%s}" % values[1])
+            return
         current_level = unit.level
         diff = max(0, final_level - current_level)
         if diff <= 0:
@@ -2380,7 +2425,11 @@ class Event():
 
     def set_mode_autolevels(self, command):
         values, flags = event_commands.parse(command)
-        autolevel = int(evaluate.evaluate(values[1], self.unit, self.unit2, self.item, self.position, self.region))
+        try:
+            autolevel = int(evaluate.evaluate(values[1], self.unit, self.unit2, self.item, self.position, self.region))
+        except:
+            logging.error("Could not evaluate {%s}" % values[1])
+            return
         if 'hidden' in flags:
             game.current_mode.enemy_autolevels = autolevel
         else:
@@ -2759,6 +2808,7 @@ class Event():
         follow = 'no_follow' not in flags
         block = 'no_block' not in flags
         disable_after = 'disable_after' in flags
+        mute = 'no_sound' in flags
 
         if disable_after:
             def disable_func():
@@ -2778,7 +2828,7 @@ class Event():
             return
         if path:
             # i'm disabling linger for arbitrary paths as a default, because i think it makes more sense that way
-            movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func)
+            movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)
         elif isinstance(target_location, NID):
             target_node: OverworldNodeObject = game.overworld_controller.nodes.get(target_location, None)
             if entity.on_node: # we're pathfinding to a node
@@ -2787,10 +2837,10 @@ class Event():
                     if self.do_skip: # we are skipping; resolve this instantly
                         entity.on_node = target_node.nid
                         return
-            movement = OverworldMove(entity, target_node, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, after_move_callback=disable_func)
+            movement = OverworldMove(entity, target_node, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, after_move_callback=disable_func, mute=mute)
         elif isinstance(target_location, Tuple):
             path = [target_location]
-            movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func)
+            movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)
         else:
             logging.error("%s: No valid path or target location specified: path: %s | target_location: %s", "overworld_move_unit", str(path), str(target_location))
             return
@@ -2947,7 +2997,7 @@ class Event():
                 position = static_random.shuffle(valid_regions)[0]
         return position
 
-    def get_unit(self, text):
+    def get_unit(self, text) -> UnitObject:
         if text in ('{unit}', '{unit1}'):
             return self.unit
         elif text == '{unit2}':

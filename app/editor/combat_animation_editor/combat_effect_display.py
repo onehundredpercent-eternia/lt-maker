@@ -188,10 +188,10 @@ class CombatEffectProperties(CombatAnimProperties):
         self.window.update_list()
 
     def select_frame(self):
-        if not self.current.frames:
-            QMessageBox.critical(self, "Frame Error", "%s has no associated frames!" % self.current.nid)
-            return
-        elif not self.current.palettes:
+        # if not self.current.frames:
+        #     QMessageBox.critical(self, "Frame Error", "%s has no associated frames!" % self.current.nid)
+        #     return
+        if not self.current.palettes:
             QMessageBox.critical(self, "Palette Error", "%s has no associated palettes!" % self.current.nid)
             return
         dlg = FrameSelector(self.current, self.current, self)

@@ -1,3 +1,4 @@
+from app.extensions.key_value_delegate import KeyValueDelegate, KeyValueDoubleListModel
 from PyQt5.QtWidgets import QWidget, QGridLayout, QLineEdit, \
     QMessageBox, QSpinBox, QHBoxLayout, QPushButton, QDialog, QSplitter, \
     QVBoxLayout, QLabel, QTextEdit, QSizePolicy
@@ -120,7 +121,7 @@ class ClassProperties(QWidget):
         attrs = ("usable", "nid", "wexp_gain")
         default_weapons = {weapon_nid: DB.weapons.default() for weapon_nid in DB.weapons.keys()}
         self.wexp_gain_widget = MultiDictWidget(
-            default_weapons, "Weapon Experience", 
+            default_weapons, "Weapon Experience",
             attrs, WexpGainDelegate, self, model=WexpGainMultiAttrModel)
         self.wexp_gain_widget.model.checked_columns = {0}  # Add checked column
         weapon_section.addWidget(self.wexp_gain_widget)
@@ -129,6 +130,11 @@ class ClassProperties(QWidget):
         attrs = ("level", "skill_nid")
         self.class_skill_widget = AppendMultiListWidget([], "Class Skills", attrs, LearnedSkillDelegate, self, model=ReverseDoubleListModel)
         skill_section.addWidget(self.class_skill_widget)
+
+        field_section = QHBoxLayout()
+        attrs = ("name", "value")
+        self.field_widget = AppendMultiListWidget([], "Class Properties", attrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
+        field_section.addWidget(self.field_widget)
 
         self.map_sprite_label = QLabel()
         self.map_sprite_label.setMaximumWidth(32)
@@ -167,6 +173,7 @@ class ClassProperties(QWidget):
         right_section.addLayout(weapon_section)
         right_section.addWidget(QHLine())
         right_section.addLayout(skill_section)
+        right_section.addLayout(field_section)
         map_sprite_section = QHBoxLayout()
         map_sprite_section.addWidget(self.map_sprite_label)
         map_sprite_section.addWidget(self.map_sprite_box)
@@ -357,6 +364,7 @@ class ClassProperties(QWidget):
 
         self.class_skill_widget.set_current(current.learned_skills)
         self.wexp_gain_widget.set_current(current.wexp_gain)
+        self.field_widget.set_current(current.fields)
 
         self.icon_edit.set_current(current.icon_nid, current.icon_index)
         pix = class_model.get_map_sprite_icon(self.current, num=0)

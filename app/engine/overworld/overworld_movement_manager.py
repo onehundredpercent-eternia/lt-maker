@@ -20,16 +20,13 @@ class OverworldMovementManager():
         self.camera_follow: NID = None
         self.abort_movement: Dict[NID, bool] = {}
 
-    def add(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1, linger = 250, after_move_callback=None):
-        if not self.camera_follow and follow:
-            self.camera_follow = entity.nid
-        self.moving_entities[entity.nid] = MovementData(path, event, follow, speed_adj, linger, after_move_callback)
-
-    def begin_move(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1, linger = 250, after_move_callback=None):
+    def begin_move(self, entity: OverworldEntityObject, path: List[Point], event: bool=False, follow: bool=True, speed_adj: float = 1, linger = 250, after_move_callback=None, mute=False):
         logging.info("Overworld Entity %s begin move: %s", entity.nid, path)
         # set the entity's temporary position to begin with
         entity.temporary_position = path[-1]
-        self.add(entity, path, event, follow, speed_adj, linger, after_move_callback)
+        if not self.camera_follow and follow:
+            self.camera_follow = entity.nid
+        self.moving_entities[entity.nid] = MovementData(path, event, follow, speed_adj, linger, after_move_callback, muted=mute)
 
     def __len__(self):
         return len(self.moving_entities)
@@ -125,10 +122,12 @@ class OverworldMovementManager():
     def update(self):
         current_time = engine.get_time()
         for entity_nid in list(self.moving_entities.keys()):
+            data = self.moving_entities[entity_nid]
             entity = self.overworld.entities[entity_nid]
             if entity.sprite.state != 'moving':
                 entity.sprite.change_state('moving')
-                entity.sound.play()
+                if not data.muted:
+                    entity.sound.play()
             if not entity:
                 logging.error("Could not find entity with nid %s", entity_nid)
                 del self.moving_entities[entity_nid]
@@ -136,7 +135,6 @@ class OverworldMovementManager():
             starting_position = entity.temporary_position
             ending_position = self.get_next_position(entity_nid)
             segment_being_traversed = (starting_position, ending_position)
-            data = self.moving_entities[entity_nid]
 
             # calculate the progress towards the next point
             if starting_position == ending_position:
@@ -151,7 +149,8 @@ class OverworldMovementManager():
             if percentage_progress <= 0: # brief pause, don't play sound
                 entity.sound.stop()
             else:
-                entity.sound.play()
+                if not data.muted:
+                    entity.sound.play()
 
             if percentage_progress < 1: # we're still in the middle of walking a segment
                 # update its display position

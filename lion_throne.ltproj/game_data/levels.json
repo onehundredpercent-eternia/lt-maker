@@ -12975,8 +12975,15 @@
         "unit_groups": [
             {
                 "nid": "rein",
-                "units": [],
-                "positions": {}
+                "units": [
+                    "101"
+                ],
+                "positions": {
+                    "101": [
+                        6,
+                        14
+                    ]
+                }
             }
         ]
     }

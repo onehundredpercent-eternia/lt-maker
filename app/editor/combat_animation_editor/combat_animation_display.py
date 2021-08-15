@@ -590,6 +590,9 @@ class CombatAnimProperties(QWidget):
                 self.weapon_box.setValue(self.current.weapon_anims[-1].nid)
 
     def select_frame(self):
+        if not self.current.palettes:
+            QMessageBox.critical(self, "Palette Error", "%s has no associated palettes!" % self.current.nid)
+            return
         weapon_anim = self.get_current_weapon_anim()
         if weapon_anim:
             dlg = FrameSelector(self.current, weapon_anim, self)

@@ -101,6 +101,8 @@ class PaletteMenu(QListWidget):
         self.radio_button_group.button(idx).setChecked(True)
 
     def get_palette(self):
+        if not self.combat_anim.palettes:
+            return None
         return self.combat_anim.palettes[self.current_idx][1]
 
     def get_palette_widget(self):
