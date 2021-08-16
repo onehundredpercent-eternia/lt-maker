@@ -20,14 +20,27 @@ Overworld
 Implement Skills
 Write Script
 Implement new Stat Screen aesthetic
-Implement new Dialogue aesthetic
+     - Remove bars
+     - Add Stat Icons?
+     - Test with halfbody portrait
+Implement new Dialogue aesthetic (celtic knot around dialog)
+ - Parchment
+ - Desaturate units who aren't talking
+ - Unit who is talking gets nametag
+ - Dissolve fade in and out? Or dissolve scroll fade in and out from middle?
 Implement Wyllt
 Implement Memory Mechanics
-Implement Free Roam Base
-Base conversations
+No Free Roam Base:
+    - Instead, after every 3rd chapter, forced free roam "dream" sequence where you can talk to each character in the party, and perhaps even dead characters.
+    - You can also get items and even find items.
+    - Certain choices you make in the free roam section can change things up
+    - Then you wake up back in the overworld map
+Dream conversations
 Title Screen
 Portraits
 Arrow UI
+Cursor UI
+Tile Display UI
 Particle Effects
 Playtest playtest playtest
 
@@ -39,6 +52,9 @@ Aelfred (M) Red hair
 Ceabbi (F) Blond hair
 Ceathrun (F) Blond hair
 Magnus (M) Blue hair
+Istrid (F) Witch, Purple hair
+Tristan (M) Ophie 
+Isolde (F) Green hair
 ---
 Aelfwynn (F) Red hair
 Sorrel (M) Dark skin, brown hair

@@ -9,6 +9,7 @@ from app.resources.resources import RESOURCES
 
 from app.utilities.data import Data
 from app.data.database import DB
+from app.constants import MEMENTO_MODE
 
 from app.extensions.custom_gui import DeletionDialog
 from app.editor.base_database_gui import ResourceCollectionModel
@@ -65,7 +66,10 @@ class PortraitModel(ResourceCollectionModel):
             if not portrait.pixmap:
                 portrait.pixmap = QPixmap(portrait.full_path)
             pixmap = portrait.pixmap
-            chibi = pixmap.copy(96, 16, 32, 32)
+            if MEMENTO_MODE:
+                chibi = pixmap.copy(128, 0, 32, 32)
+            else:
+                chibi = pixmap.copy(96, 16, 32, 32)
             chibi = QPixmap.fromImage(editor_utilities.convert_colorkey(chibi.toImage()))
             return QIcon(chibi)
         elif role == Qt.EditRole:
@@ -88,6 +92,9 @@ class PortraitModel(ResourceCollectionModel):
                     if pix.width() == 128 and pix.height() == 112:
                         new_portrait = Portrait(nid, fn, pix)
                         auto_frame_portrait(new_portrait)
+                        RESOURCES.portraits.append(new_portrait)
+                    elif MEMENTO_MODE:
+                        new_portrait = Portrait(nid, fn, pix)
                         RESOURCES.portraits.append(new_portrait)
                     else:
                         QMessageBox.critical(self.window, "Error", "Image is not correct size (128x112 px)")

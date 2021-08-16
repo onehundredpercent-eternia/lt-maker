@@ -1,6 +1,6 @@
 from app.utilities import utils
 
-from app.constants import COLORKEY
+from app.constants import COLORKEY, MEMENTO_MODE
 from app.resources.resources import RESOURCES
 from app.data.database import DB
 
@@ -95,7 +95,10 @@ def get_portrait(unit):
     if image:
         if not image.image:
             image.image = engine.image_load(image.full_path)
-        image = engine.subsurface(image.image, (0, 0, 96, 80))
+        if MEMENTO_MODE:
+            image = engine.subsurface(image.image, (0, 0, 128, 128))
+        else:
+            image = engine.subsurface(image.image, (0, 0, 96, 80))
     else:  # Generic class portrait
         klass = DB.classes.get(unit.klass)
         image = RESOURCES.icons80.get(klass.icon_nid)

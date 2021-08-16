@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, \
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QPixmap, QPainter, QIcon
 
+from app.constants import MEMENTO_MODE
 from app.extensions.spinbox_xy import SpinBoxXY
 from app.extensions.custom_gui import PropertyBox
 from app.editor import timer
@@ -50,7 +51,10 @@ class PortraitProperties(QWidget):
         left_section = QGridLayout()
 
         self.portrait_view = IconView(self)
-        self.portrait_view.setMinimumHeight(80 + 2)
+        if MEMENTO_MODE:
+            self.portrait_view.setMinimumHeight(128 + 2)
+        else:
+            self.portrait_view.setMinimumHeight(80 + 2)
         left_section.addWidget(self.portrait_view, 0, 0, 1, 3)
 
         self.smile_button = QPushButton(self)
@@ -168,7 +172,10 @@ class PortraitProperties(QWidget):
         self.update_talk()
         if not self.current:
             return
-        main_portrait = self.current.pixmap.copy(0, 0, 96, 80)
+        if MEMENTO_MODE:
+            main_portrait = self.current.pixmap.copy(0, 0, 128, 128)
+        else:
+            main_portrait = self.current.pixmap.copy(0, 0, 96, 80)
         main_portrait = main_portrait.toImage()
         # For smile image
         if self.smile_on:
@@ -196,13 +203,14 @@ class PortraitProperties(QWidget):
         else:
             blink_image = None
         # Draw image
-        painter = QPainter()
-        painter.begin(main_portrait)
-        if blink_image:
-            blink_image = blink_image.toImage()
-            painter.drawImage(self.current.blinking_offset[0], self.current.blinking_offset[1], blink_image)
-        painter.drawImage(self.current.smiling_offset[0], self.current.smiling_offset[1], mouth_image)
-        painter.end()
+        if not MEMENTO_MODE:
+            painter = QPainter()
+            painter.begin(main_portrait)
+            if blink_image:
+                blink_image = blink_image.toImage()
+                painter.drawImage(self.current.blinking_offset[0], self.current.blinking_offset[1], blink_image)
+            painter.drawImage(self.current.smiling_offset[0], self.current.smiling_offset[1], mouth_image)
+            painter.end()
 
         final_pix = QPixmap.fromImage(editor_utilities.convert_colorkey(main_portrait))
         self.portrait_view.set_image(final_pix)

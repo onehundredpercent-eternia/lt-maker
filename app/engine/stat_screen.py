@@ -93,29 +93,37 @@ class StatScreen():
 
     def create_portrait(self):
         surf = engine.create_surface((STATWIDTH, WINHEIGHT), transparent=True)
-        surf.blit(SPRITES.get('info_unit'), (54, 86))
+        surf.blit(SPRITES.get('info_unit'), (54, 82))
 
         im = icons.get_portrait(self.unit)
         if im:
-            x_pos = (im.get_width() - 80)//2
-            portrait_surf = engine.subsurface(im, (x_pos, 0, 80, 72))
-            portrait_surf = engine.flip_horiz(portrait_surf)
-            surf.blit(portrait_surf, (24, 8))
+            width = im.get_width()
+            if width < 112:
+                x_pos = (width - 80)//2
+                portrait_surf = engine.subsurface(im, (x_pos, 0, 80, 72))
+                portrait_surf = engine.flip_horiz(portrait_surf)
+                surf.blit(portrait_surf, (16, 2))
+            else:
+                x_pos = (width - 112)//2
+                portrait_surf = engine.subsurface(im, (x_pos, 0, 112, 72))
+                portrait_surf = engine.flip_horiz(portrait_surf)
+                surf.blit(portrait_surf, (0, 2))
 
-        name_width = FONT['text-white'].width(self.unit.name)
-        FONT['text-white'].blit(self.unit.name, surf, (20 - name_width//2, 0))
-        self.info_graph.register((0, 0, 52, 24), self.unit.desc, 'all')
         class_obj = DB.classes.get(self.unit.klass)
-        FONT['text-white'].blit(class_obj.name, surf, (8, 84))
-        self.info_graph.register((8, 104, 72, 16), class_obj.desc, 'all')
-        FONT['text-blue'].blit_right(str(self.unit.level), surf, (86, 84))
-        self.info_graph.register((50, 84, 30, 16), 'Level_desc', 'all')
-        FONT['text-blue'].blit_right(str(self.unit.exp), surf, (110, 84))
-        self.info_graph.register((86, 84, 30, 16), 'Exp_desc', 'all')
-        FONT['text-blue'].blit_right(str(self.unit.get_hp()), surf, (86, 100))
-        self.info_graph.register((50, 100, 72, 16), 'HP_desc', 'all')
+        if self.unit.generic:
+            FONT['text-white'].blit(class_obj.name, surf, (8, 80))
+            self.info_graph.register((8, 104, 72, 16), class_obj.desc, 'all')
+        else:
+            FONT['text-white'].blit(self.unit.name, surf, (8, 80))
+            self.info_graph.register((8, 100, 72, 16), self.unit.desc, 'all')
+        FONT['text-blue'].blit_right(str(self.unit.level), surf, (86, 80))
+        self.info_graph.register((50, 80, 30, 16), 'Level_desc', 'all')
+        FONT['text-blue'].blit_right(str(self.unit.exp), surf, (110, 80))
+        self.info_graph.register((86, 80, 30, 16), 'Exp_desc', 'all')
+        FONT['text-blue'].blit_right(str(self.unit.get_hp()), surf, (86, 96))
+        self.info_graph.register((50, 96, 72, 16), 'HP_desc', 'all')
         max_hp = self.unit.get_max_hp()
-        FONT['text-blue'].blit_right(str(max_hp), surf, (110, 100))
+        FONT['text-blue'].blit_right(str(max_hp), surf, (110, 96))
         # Blit the white status platform
         # surf.blit(SPRITES.get('status_platform'), (66, 131))
         # Blit affinity
@@ -137,11 +145,15 @@ class StatScreen():
             surf.blit(self.personal_data_surf, (0, 0))
 
     def create_slide(self):
-        state = 'personal_data'
-
         menu_size = STATWIDTH, WINHEIGHT
         surf = engine.create_surface(menu_size, transparent=True)
 
+        self.draw_stats(surf, 116)
+        self.draw_equipment(surf, 152)
+
+        return surf
+
+    def draw_stats(self, surf, top):
         class_obj = DB.classes.get(self.unit.klass)
         max_stats = class_obj.max_stats
 
@@ -150,26 +162,29 @@ class StatScreen():
 
         for idx, stat_nid in enumerate(stats):
             left = 37 * (idx // 2)
-            top = 116 + 16 * (idx % 2)
+            y_pos = top + 16 * (idx % 2)
             highest_stat = DB.stats.get(stat_nid).maximum
             max_stat = max_stats.get(stat_nid, 30)
             if max_stat > 0:
                 total_length = int(max_stat / highest_stat * 24)
                 frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
-                build_groove(surf, (left + 19, top + 8), total_length, frac)
-            icons.draw_stat(surf, stat_nid, self.unit, (36 + left, top))
+                build_groove(surf, (left + 19, y_pos + 8), total_length, frac)
+            icons.draw_stat(surf, stat_nid, self.unit, (36 + left, y_pos))
             # Name
             name = DB.stats.get(stat_nid).name
-            FONT['text-yellow'].blit(name, surf, (1 + left, top))
-            self.info_graph.register((1 + left, top, 40, 16), '%s_desc' % stat_nid, state, first=(idx == 0))
+            FONT['text-yellow'].blit(name, surf, (1 + left, y_pos))
+            self.info_graph.register((1 + left, y_pos, 40, 16), '%s_desc' % stat_nid, 'all', first=(idx == 0))
 
+        return surf
+
+    def draw_equipment(self, surf, top):
         # Equipment
         weapon = self.unit.get_weapon()
         accessory = self.unit.get_accessory()
 
         # Blit items
         for idx, item in enumerate(self.unit.nonaccessories):
-            y_pos = idx * 16 + 152
+            y_pos = idx * 16 + top
             if item.multi_item and any(subitem is weapon for subitem in item.subitems):
                 surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
                 for subitem in item.subitems:
@@ -188,7 +203,7 @@ class StatScreen():
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):
             aidx = item_funcs.get_num_items(self.unit) + idx
-            y_pos = aidx * 16 + 152
+            y_pos = aidx * 16 + top
             if item.multi_item and any(subitem is accessory for subitem in item.subitems):
                 surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
                 for subitem in item.subitems:
@@ -203,6 +218,6 @@ class StatScreen():
                 item_option = menu_options.FullItemOption(aidx, item)
             item_option.draw(surf, 2, y_pos)
             first = (idx == 0 and not self.unit.nonaccessories)
-            self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'equipment', first=first)
+            self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'all', first=first)
 
         return surf

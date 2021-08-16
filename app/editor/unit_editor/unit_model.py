@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
 
+from app.constants import MEMENTO_MODE
 from app.resources.resources import RESOURCES
 from app.utilities.data import Data
 from app.data.database import DB
@@ -19,7 +20,10 @@ def get_chibi(unit):
         return None
     if not res.pixmap:
         res.pixmap = QPixmap(res.full_path)
-    pixmap = res.pixmap.copy(96, 16, 32, 32)
+    if MEMENTO_MODE:
+        pixmap = res.pixmap.copy(128, 0, 32, 32)
+    else:
+        pixmap = res.pixmap.copy(96, 16, 32, 32)
     pixmap = QPixmap.fromImage(editor_utilities.convert_colorkey(pixmap.toImage()))
     return pixmap
 

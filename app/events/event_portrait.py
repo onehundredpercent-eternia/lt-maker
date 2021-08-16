@@ -4,7 +4,7 @@ import random
 
 from app import counters
 from app.utilities import utils
-from app.constants import COLORKEY
+from app.constants import COLORKEY, MEMENTO_MODE
 
 from app.engine import engine, image_mods
 
@@ -30,6 +30,8 @@ class EventPortrait():
         self.portrait = portrait
         if not self.portrait.image:
             self.portrait.image = engine.image_load(self.portrait.full_path)
+        self.width = self.portrait.image.get_width()
+        self.height = self.portrait.image.get_height()
         self.portrait.image = self.portrait.image.convert()
         engine.set_colorkey(self.portrait.image, COLORKEY, rleaccel=True)
         self.position = position
@@ -69,10 +71,16 @@ class EventPortrait():
         self.last_bop = None
 
     def get_width(self):
-        return 96
+        if MEMENTO_MODE:
+            return 128
+        else:
+            return 96
 
     def get_height(self):
-        return 80
+        if MEMENTO_MODE:
+            return 128
+        else:
+            return 80
 
     def set_expression(self, expression_list):
         self.expressions = expression_list

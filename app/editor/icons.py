@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal
 
+from app.constants import MEMENTO_MODE
 from app.resources.resources import RESOURCES
 
 import app.editor.utilities as editor_utilities
@@ -100,7 +101,10 @@ class ItemIcon80(ItemIcon16):
 
 class UnitPortrait(QPushButton):
     sourceChanged = pyqtSignal(str)
-    width, height = 96, 80
+    if MEMENTO_MODE:
+        width, height = 128, 128
+    else:
+        width, height = 96, 80
     database = RESOURCES.portraits
 
     def __init__(self, parent):

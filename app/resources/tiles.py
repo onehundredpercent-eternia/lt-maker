@@ -9,7 +9,7 @@ from app.utilities import str_utils
 class TileMapPrefab(Prefab):
     def __init__(self, nid):
         self.nid = nid
-        self.width, self.height = TILEX, TILEY
+        self.width, self.height = TILEX, int(TILEY)
         self.autotile_fps = 29
         self.layers = Data()
         self.layers.append(LayerGrid('base', self))
