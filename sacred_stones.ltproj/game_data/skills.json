@@ -20,6 +20,26 @@
         ]
     },
     {
+        "nid": "Canto+",
+        "name": "Canto+",
+        "desc": "Can move again after certain actions.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            1,
+            4
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "canto_plus",
+                null
+            ]
+        ]
+    },
+    {
         "nid": "Fort",
         "name": "Fort",
         "desc": "",

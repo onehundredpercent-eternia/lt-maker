@@ -22,7 +22,6 @@ Write Script
 Implement new Stat Screen aesthetic
      - Remove bars
      - Add Stat Icons?
-     - Test with halfbody portrait
 Implement new Dialogue aesthetic (celtic knot around dialog)
  - Parchment
  - Desaturate units who aren't talking
@@ -67,4 +66,4 @@ Willow (F) Black hair
 Wound (Dog)
 Rhun (M) Amber hair
 Piper (F) Dark skin, purple hair?
-Rhodri (M) Amber hair, strong lad
+*Rhodri (M) Amber hair, strong lad

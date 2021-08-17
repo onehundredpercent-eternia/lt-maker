@@ -117,7 +117,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Eirika",
-        "affinity": "Light"
+        "affinity": "Light",
+        "fields": []
     },
     {
         "nid": "Seth",
@@ -209,7 +210,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Seth",
-        "affinity": "Anima"
+        "affinity": "Anima",
+        "fields": []
     },
     {
         "nid": "Franz",
@@ -305,7 +307,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Franz",
-        "affinity": "Light"
+        "affinity": "Light",
+        "fields": []
     },
     {
         "nid": "Gilliam",
@@ -389,7 +392,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Gilliam",
-        "affinity": "Thunder"
+        "affinity": "Thunder",
+        "fields": []
     },
     {
         "nid": "Vanessa",
@@ -481,7 +485,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Vanessa",
-        "affinity": "Anima"
+        "affinity": "Anima",
+        "fields": []
     },
     {
         "nid": "Moulder",
@@ -569,7 +574,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Moulder",
-        "affinity": "Anima"
+        "affinity": "Anima",
+        "fields": []
     },
     {
         "nid": "Ross",
@@ -657,7 +663,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Ross",
-        "affinity": "Fire"
+        "affinity": "Fire",
+        "fields": []
     },
     {
         "nid": "Garcia",
@@ -749,7 +756,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Garcia",
-        "affinity": "Fire"
+        "affinity": "Fire",
+        "fields": []
     },
     {
         "nid": "Neimi",
@@ -837,7 +845,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Neimi",
-        "affinity": "Fire"
+        "affinity": "Fire",
+        "fields": []
     },
     {
         "nid": "Colm",
@@ -929,7 +938,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Colm",
-        "affinity": "Light"
+        "affinity": "Light",
+        "fields": []
     },
     {
         "nid": "Artur",
@@ -1017,7 +1027,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Artur",
-        "affinity": "Ice"
+        "affinity": "Ice",
+        "fields": []
     },
     {
         "nid": "Lute",
@@ -1101,7 +1112,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Lute",
-        "affinity": "Anima"
+        "affinity": "Anima",
+        "fields": []
     },
     {
         "nid": "Natasha",
@@ -1189,7 +1201,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Natasha",
-        "affinity": "Ice"
+        "affinity": "Ice",
+        "fields": []
     },
     {
         "nid": "Joshua",
@@ -1273,7 +1286,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Joshua",
-        "affinity": "Wind"
+        "affinity": "Wind",
+        "fields": []
     },
     {
         "nid": "Ephraim",
@@ -1365,7 +1379,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Ephraim",
-        "affinity": "Fire"
+        "affinity": "Fire",
+        "fields": []
     },
     {
         "nid": "Forde",
@@ -1457,7 +1472,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Forde",
-        "affinity": "Wind"
+        "affinity": "Wind",
+        "fields": []
     },
     {
         "nid": "Kyle",
@@ -1549,7 +1565,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Kyle",
-        "affinity": "Ice"
+        "affinity": "Ice",
+        "fields": []
     },
     {
         "nid": "Orson",
@@ -1641,7 +1658,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Orson",
-        "affinity": "None"
+        "affinity": "None",
+        "fields": []
     },
     {
         "nid": "Tana",
@@ -1733,7 +1751,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Tana",
-        "affinity": "Wind"
+        "affinity": "Wind",
+        "fields": []
     },
     {
         "nid": "Amelia",
@@ -1825,7 +1844,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Amelia",
-        "affinity": "Thunder"
+        "affinity": "Thunder",
+        "fields": []
     },
     {
         "nid": "Innes",
@@ -1917,7 +1937,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Innes",
-        "affinity": "Ice"
+        "affinity": "Ice",
+        "fields": []
     },
     {
         "nid": "Gerik",
@@ -2009,7 +2030,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Gerik",
-        "affinity": "Thunder"
+        "affinity": "Thunder",
+        "fields": []
     },
     {
         "nid": "Tethys",
@@ -2101,7 +2123,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Tethys",
-        "affinity": "Fire"
+        "affinity": "Fire",
+        "fields": []
     },
     {
         "nid": "Marisa",
@@ -2189,7 +2212,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Marisa",
-        "affinity": "Ice"
+        "affinity": "Ice",
+        "fields": []
     },
     {
         "nid": "L'arachel",
@@ -2281,7 +2305,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "L'arachel",
-        "affinity": "Light"
+        "affinity": "Light",
+        "fields": []
     },
     {
         "nid": "Dozla",
@@ -2369,7 +2394,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Dozla",
-        "affinity": "Thunder"
+        "affinity": "Thunder",
+        "fields": []
     },
     {
         "nid": "Saleh",
@@ -2457,7 +2483,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Saleh",
-        "affinity": "Wind"
+        "affinity": "Wind",
+        "fields": []
     },
     {
         "nid": "Ewan",
@@ -2549,7 +2576,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Ewan",
-        "affinity": "Light"
+        "affinity": "Light",
+        "fields": []
     },
     {
         "nid": "Cormag",
@@ -2641,7 +2669,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Cormag",
-        "affinity": "Fire"
+        "affinity": "Fire",
+        "fields": []
     },
     {
         "nid": "Rennac",
@@ -2729,7 +2758,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Rennac",
-        "affinity": "Dark"
+        "affinity": "Dark",
+        "fields": []
     },
     {
         "nid": "Duessel",
@@ -2821,7 +2851,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Duessel",
-        "affinity": "Anima"
+        "affinity": "Anima",
+        "fields": []
     },
     {
         "nid": "O'Neill",
@@ -2907,7 +2938,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Mercenary1",
-        "affinity": "None"
+        "affinity": "None",
+        "fields": []
     },
     {
         "nid": "Breguet",
@@ -2993,7 +3025,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Breguet",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Bone",
@@ -3084,7 +3117,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Bone",
-        "affinity": "None"
+        "affinity": "None",
+        "fields": []
     },
     {
         "nid": "Bazba",
@@ -3174,7 +3208,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Bazba",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Saar",
@@ -3260,7 +3295,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Saar",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Selena",
@@ -3348,7 +3384,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Selena",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Vigarde",
@@ -3436,7 +3473,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "VigardeHealthy",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Caellach",
@@ -3528,7 +3566,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Caellach",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Valter",
@@ -3620,7 +3659,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Valter",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Riev",
@@ -3704,7 +3744,8 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Riev",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     },
     {
         "nid": "Lyon",
@@ -3792,6 +3833,7 @@
         },
         "alternate_classes": null,
         "portrait_nid": "Lyon",
-        "affinity": null
+        "affinity": null,
+        "fields": []
     }
 ]
