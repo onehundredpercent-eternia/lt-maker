@@ -215,7 +215,9 @@ class UnitObject(Prefab):
     def set_fatigue(self, val):
         self.current_fatigue = int(max(val, 0))
 
-    def get_field(self, key, default=''):
+    def get_field(self, key, default='FIELD_NOT_DEFINED'):
+        if not getattr(self, '_fields'):
+            return default
         if key in self._fields:
             return self._fields[key]
         my_klass = DB.classes.get(self.klass, None)

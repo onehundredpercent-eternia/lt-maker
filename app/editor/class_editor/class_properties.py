@@ -132,8 +132,8 @@ class ClassProperties(QWidget):
         skill_section.addWidget(self.class_skill_widget)
 
         field_section = QHBoxLayout()
-        attrs = ("name", "value")
-        self.field_widget = AppendMultiListWidget([], "Class Properties", attrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
+        attrs = ("field", "value")
+        self.field_widget = AppendMultiListWidget([], "Class Fields", attrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
         field_section.addWidget(self.field_widget)
 
         self.map_sprite_label = QLabel()

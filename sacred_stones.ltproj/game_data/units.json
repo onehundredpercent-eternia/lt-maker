@@ -3070,12 +3070,7 @@
                 false
             ]
         ],
-        "learned_skills": [
-            [
-                1,
-                "Smush"
-            ]
-        ],
+        "learned_skills": [],
         "unit_notes": [],
         "wexp_gain": {
             "Sword": [

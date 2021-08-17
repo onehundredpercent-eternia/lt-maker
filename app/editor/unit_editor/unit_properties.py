@@ -206,8 +206,8 @@ class UnitProperties(QWidget):
         if not DB.constants.value('unit_notes'):
             self.unit_notes_widget.hide()
 
-        fieldAttrs = ("Name", "Value")
-        self.unit_fields_widget = AppendMultiListWidget([], "Unit Properties", fieldAttrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
+        fieldAttrs = ("Field", "Value")
+        self.unit_fields_widget = AppendMultiListWidget([], "Unit Fields", fieldAttrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
         self.unit_fields_widget.view.setMaximumHeight(120)
 
         default_weapons = {weapon_nid: DB.weapons.default() for weapon_nid in DB.weapons.keys()}

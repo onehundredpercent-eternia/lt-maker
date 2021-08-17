@@ -860,6 +860,8 @@ validators = {validator.__name__: validator for validator in Validator.__subclas
 option_validators = {validator.__name__: validator for validator in OptionValidator.__subclasses__()}
 
 def validate(var_type, text, level):
+    if text and text[0] == '{' and text[-1] == '}': # eval, so assume this is valid
+        return text
     validator = validators.get(var_type)
     if validator:
         v = validator()

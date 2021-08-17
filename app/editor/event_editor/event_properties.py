@@ -125,6 +125,15 @@ class Highlighter(QSyntaxHighlighter):
             if not line:
                 continue
             sections = line.split(';')
+            # handle eval and vars
+            for idx, section in enumerate(sections):
+                start = num_tabs * 4 + len(';'.join(sections[:idx])) + 1
+                for idx, char in enumerate(section):
+                    if char == '{':
+                        special_start = start + idx
+                    elif char == '}':
+                        self.setFormat(special_start, start + idx - special_start + 1, self.special_text_format)
+
             # Handle text format
             if sections[0] in ('s', 'speak') and len(sections) >= 3:
                 start = num_tabs * 4 + len(';'.join(sections[:2])) + 1

@@ -34,7 +34,7 @@ for fn in files_to_change:
         if new_version_prefix == old_version_prefix:
             new_last_char = str(chr(ord(last_char) + 1))
         else:
-            new_last_char = last_char
+            new_last_char = 'a'
         new_version = new_version_prefix + new_last_char
         line = line.replace(substr, new_version)
         print(line, end='')
