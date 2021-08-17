@@ -45,7 +45,7 @@ class MementoShove(SkillComponent):
     def cleanup_combat(self, playback, unit, item, target, mode):
         marks = [mark[0] for mark in playback if mark[0] in ('mark_hit', 'mark_crit') and mark[1] is unit and mark[2] is target]
         did_hit = len(marks) > 0
-        if did_hit and not skill_system.ignore_forced_movement(target):
+        if did_hit and not skill_system.ignore_forced_movement(target) and mode != 'splash':
             new_position = self._check_shove(target, unit.position, 1)
             if new_position:
                 action.do(action.ForcedMovement(target, new_position))

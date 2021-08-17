@@ -2,7 +2,7 @@ from app.data.item_components import ItemComponent
 from app.data.components import Type
 
 from app.utilities import utils
-from app.engine import target_system, skill_system
+from app.engine import target_system, skill_system, action, equations
 from app.engine.game_state import game 
 
 class MementoStaff(ItemComponent):
@@ -104,3 +104,70 @@ class MementoEnemyPierceAOE(ItemComponent):
         # Doesn't highlight allies positions
         splash = {pos for pos in splash_positions if not game.board.get_unit(pos) or skill_system.check_enemy(unit, game.board.get_unit(pos))}
         return splash
+
+class MementoBurstAOE(ItemComponent):
+    nid = 'memento_burst_aoe'
+    desc = "Gives Memento Burst AOE"
+    tag = 'memento'
+
+    expose = Type.Int
+    value = 1
+
+    def splash(self, unit, item, position) -> tuple:
+        pos = unit.position
+        x_diff = position[0] - pos[0]
+        y_diff = position[1] - pos[1]
+        if x_diff in (1, -1):
+            splash_positions = {(position[0], position[1] - 1), (position[0], position[1] + 1)}
+        elif y_diff in (1, -1):
+            splash_positions = {(position[0] - 1, position[1]), (position[0] + 1, position[1])}
+        else:
+            splash_positions = set()
+        
+        splash_positions = {pos for pos in splash_positions if game.tilemap.check_bounds(pos)}
+        splash = [game.board.get_unit(pos) for pos in splash_positions]
+        splash = [s.position for s in splash if s and skill_system.check_enemy(unit, s)]
+        main_target = position if game.board.get_unit(position) else None
+        return main_target, splash
+
+    def splash_positions(self, unit, item, position) -> set:
+        unit_pos = unit.position
+        splash_positions = {
+            (unit_pos[0], unit_pos[1] - 1),
+            (unit_pos[0], unit_pos[1] + 1),
+            (unit_pos[0] - 1, unit_pos[1]),
+            (unit_pos[0] + 1, unit_pos[1])
+        }
+        
+        splash_positions = {pos for pos in splash_positions if game.tilemap.check_bounds(pos)}
+        return splash_positions
+
+class MementoPull(ItemComponent):
+    nid = 'memento_pull'
+    desc = "Item moves target toward user on hit, and if it cannot, applies this status instead"
+    tag = 'memento'
+
+    expose = Type.Skill
+
+    def _pull(self, user, target, magnitude: int) -> tuple:
+        offset_x = utils.clamp(target.position[0] - user.position[0], -1, 1)
+        offset_y = utils.clamp(target.position[1] - user.position[1], -1, 1)
+        new_position_target = (target.position[0] - offset_x * magnitude,
+                               target.position[1] - offset_y * magnitude)
+
+        mcost_target = game.movement.get_mcost(target, new_position_target)
+
+        if game.tilemap.check_bounds(new_position_target) and \
+                not game.board.get_unit(new_position_target) and \
+                mcost_target <= equations.parser.movement(target):
+            return new_position_target
+        return None
+
+    def end_combat(self, playback, unit, item, target, mode):
+        if not skill_system.ignore_forced_movement(target):
+            new_position_target = self._pull(unit, target, 1)
+            if new_position_target:
+                action.do(action.ForcedMovement(target, new_position_target))
+                playback.append(('shove_hit', unit, item, target))
+            else:  # Immobilize Status
+                action.do(action.AddSkill(target, self.value, unit))
