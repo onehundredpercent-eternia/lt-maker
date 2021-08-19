@@ -159,7 +159,15 @@ def draw_stat(surf, stat_nid, unit, topright, compact=False):
     value = unit.stats.get(stat_nid, 0)
     bonus = unit.stat_bonus(stat_nid)
     if compact:
-        pass
+        if bonus > 0:
+            typeface = FONT['text-green']
+        elif bonus < 0:
+            typeface = FONT['text-red']
+        elif value >= class_obj.max_stats.get(stat_nid, 30):
+            typeface = FONT['text-yellow']
+        else:
+            typeface = FONT['text-blue']
+        typeface.blit_right(str(value), surf, topright)
     else:
         if value >= class_obj.max_stats.get(stat_nid, 30):
             FONT['text-yellow'].blit_right(str(value), surf, topright)

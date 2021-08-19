@@ -1,4 +1,4 @@
-from app.constants import TILEWIDTH, TILEHEIGHT
+from app.constants import STATWIDTH
 from app.resources.resources import RESOURCES
 
 from app.engine.combat.solver import CombatPhaseSolver
@@ -31,7 +31,6 @@ class MapCombat(SimpleCombat):
         self.actions = []
 
         self.animations = []
-        self.damage_numbers = []
         self.health_bars = {}
 
         self.first_phase = True
@@ -259,28 +258,28 @@ class MapCombat(SimpleCombat):
                 if damage <= 0:
                     continue
                 str_damage = str(damage)
-                left = brush[3].position
+                target = brush[3]
                 for idx, num in enumerate(str_damage):
-                    d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'small_red')
-                    self.damage_numbers.append(d)
+                    d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, 'small_red')
+                    target.sprite.damage_numbers.append(d)
             elif brush[0] == 'damage_crit':
                 damage = brush[4]
                 if damage <= 0:
                     continue
                 str_damage = str(damage)
-                left = brush[3].position
+                target = brush[3]
                 for idx, num in enumerate(str_damage):
-                    d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'small_yellow')
-                    self.damage_numbers.append(d)
+                    d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, 'small_yellow')
+                    target.sprite.damage_numbers.append(d)
             elif brush[0] == 'heal_hit':
                 damage = brush[4]
                 if damage <= 0:
                     continue
                 str_damage = str(damage)
-                left = brush[3].position
+                target = brush[3]
                 for idx, num in enumerate(str_damage):
-                    d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'small_cyan')
-                    self.damage_numbers.append(d)
+                    d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, 'small_cyan')
+                    target.sprite.damage_numbers.append(d)
 
     def _apply_actions(self):
         """
@@ -319,15 +318,5 @@ class MapCombat(SimpleCombat):
         
         for hp_bar in self.health_bars.values():
             hp_bar.draw(surf)
-
-        # Damage Nums
-        for damage_num in self.damage_numbers:
-            damage_num.update()
-            position = damage_num.left
-            c_pos = game.camera.get_xy()
-            rel_x = position[0] - c_pos[0]
-            rel_y = position[1] - c_pos[1]
-            damage_num.draw(surf, (rel_x * TILEWIDTH + 4, rel_y * TILEHEIGHT))
-        self.damage_numbers = [d for d in self.damage_numbers if not d.done]
 
         return surf

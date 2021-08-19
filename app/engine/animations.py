@@ -1,4 +1,4 @@
-from app.constants import TILEHEIGHT, TILEWIDTH
+from app.constants import TILEHEIGHT, TILEWIDTH, STATWIDTH
 from app.engine import engine, image_mods
 from app.utilities import str_utils, utils
 
@@ -131,7 +131,7 @@ class Animation():
 class MapAnimation(Animation):
     def __init__(self, anim, position, delay=0, loop=False, hold=False, speed_adj: float = 1):
         super().__init__(anim, position, delay, loop, hold, speed_adj=speed_adj)
-        self.position = self.position[0] * TILEWIDTH, self.position[1] * TILEHEIGHT
+        self.position = STATWIDTH + self.position[0] * TILEWIDTH, self.position[1] * TILEHEIGHT
         self.use_center()
 
     def use_center(self):

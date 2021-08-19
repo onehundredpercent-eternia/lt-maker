@@ -12,7 +12,7 @@ from app.engine.game_state import game
 from app.engine import engine, action, menus, image_mods, \
     banner, save, phase, skill_system, target_system, item_system, \
     item_funcs, ui_view, info_menu, base_surf, gui, background, dialog, \
-    text_funcs, equations, evaluate, supports
+    text_funcs, equations, evaluate, supports, stat_screen
 from app.engine.combat import interaction
 from app.engine.selection_helper import SelectionHelper
 from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES
@@ -175,7 +175,7 @@ class FreeState(MapState):
         game.cursor.take_input()
 
         if event == 'INFO':
-            info_menu.handle_info()
+            stat_screen.handle_info()
 
         elif event == 'AUX':
             info_menu.handle_aux()

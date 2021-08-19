@@ -3,11 +3,23 @@ from app.constants import STATWIDTH, WINHEIGHT
 from app.data.database import DB
 from app.utilities import utils
 
-from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
+from app.engine.sound import SOUNDTHREAD
+from app.engine.sprites import SPRITES
+from app.engine.input_manager import INPUT
+from app.engine.state import MapState
 from app.engine import engine, info_menu, \
     icons, image_mods, item_funcs, menu_options
 from app.engine.game_state import game
+from app.engine.fluid_scroll import FluidScroll
+
+def handle_info():
+    if game.cursor.get_hover():
+        SOUNDTHREAD.play_sfx('Select 1')
+        game.state.change('stat_screen')
+    else:
+        SOUNDTHREAD.play_sfx('Select 3')
+        game.boundary.toggle_all_enemy_attacks()
 
 def build_groove(surf, topleft, width, fill):
     bg = SPRITES.get('groove_back')
@@ -28,6 +40,50 @@ def build_groove(surf, topleft, width, fill):
     for groove in range(number_needed):
         surf.blit(fg, (topleft[0] + 1 + groove, topleft[1] + 1))
 
+class StatScreenState(MapState):
+    name = 'stat_screen'
+
+    def start(self):
+        self.fluid = FluidScroll(200, 1)
+
+        SOUNDTHREAD.play_sfx('Info In')
+        game.stat_screen.toggle_info(True)
+        game.stat_screen.info_graph.set_transition_in()
+
+    def take_input(self, event):
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        self.handle_mouse()
+        if game.stat_screen.info_flag:
+            if event == 'INFO' or event == 'BACK':
+                SOUNDTHREAD.play_sfx('Info Out')
+                game.stat_screen.info_graph.set_transition_out()
+                game.state.back()
+
+            if 'RIGHT' in directions:
+                SOUNDTHREAD.play_sfx('Select 6')
+                game.stat_screen.info_graph.move_right()
+            elif 'LEFT' in directions:
+                SOUNDTHREAD.play_sfx('Select 6')
+                game.stat_screen.info_graph.move_left()
+            elif 'UP' in directions:
+                SOUNDTHREAD.play_sfx('Select 6')
+                game.stat_screen.info_graph.move_up()
+            elif 'DOWN' in directions:
+                SOUNDTHREAD.play_sfx('Select 6')
+                game.stat_screen.info_graph.move_down()
+
+    def handle_mouse(self):
+        mouse_position = INPUT.get_mouse_position()
+        if not mouse_position:
+            return
+        if game.stat_screen.info_flag:
+            game.stat_screen.info_graph.handle_mouse(mouse_position)
+
+    def finish(self):
+        game.stat_screen.toggle_info(False)
+
 class StatScreen():
     def __init__(self):
         self.bg = SPRITES.get('stat_screen_background')
@@ -46,6 +102,9 @@ class StatScreen():
         self.info_graph.clear()
         self.portrait_surf = None
         self.personal_data_surf = None
+
+    def toggle_info(self, val=False):
+        self.info_flag = val
 
     def update(self):
         hover = game.cursor.get_hover()
@@ -78,6 +137,8 @@ class StatScreen():
         if self.unit:
             self.draw_portrait(surf)
             self.draw_slide(surf)
+        if self.info_graph.current_bb:
+            self.info_graph.draw(surf)
         return surf
 
     def draw_portrait(self, surf):
@@ -112,10 +173,10 @@ class StatScreen():
         class_obj = DB.classes.get(self.unit.klass)
         if self.unit.generic:
             FONT['text-white'].blit(class_obj.name, surf, (8, 80))
-            self.info_graph.register((8, 104, 72, 16), class_obj.desc, 'all')
+            self.info_graph.register((8, 80, 72, 16), class_obj.desc, 'all', first=True)
         else:
             FONT['text-white'].blit(self.unit.name, surf, (8, 80))
-            self.info_graph.register((8, 100, 72, 16), self.unit.desc, 'all')
+            self.info_graph.register((8, 80, 72, 16), self.unit.desc, 'all', first=True)
         FONT['text-blue'].blit_right(str(self.unit.level), surf, (86, 80))
         self.info_graph.register((50, 80, 30, 16), 'Level_desc', 'all')
         FONT['text-blue'].blit_right(str(self.unit.exp), surf, (110, 80))
@@ -124,9 +185,6 @@ class StatScreen():
         self.info_graph.register((50, 96, 72, 16), 'HP_desc', 'all')
         max_hp = self.unit.get_max_hp()
         FONT['text-blue'].blit_right(str(max_hp), surf, (110, 96))
-        # Blit the white status platform
-        # surf.blit(SPRITES.get('status_platform'), (66, 131))
-        # Blit affinity
         affinity = DB.affinities.get(self.unit.affinity)
         if affinity:
             icons.draw_item(surf, affinity, (4, 16))
@@ -163,17 +221,17 @@ class StatScreen():
         for idx, stat_nid in enumerate(stats):
             left = 37 * (idx // 2)
             y_pos = top + 16 * (idx % 2)
-            highest_stat = DB.stats.get(stat_nid).maximum
-            max_stat = max_stats.get(stat_nid, 30)
-            if max_stat > 0:
-                total_length = int(max_stat / highest_stat * 24)
-                frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
-                build_groove(surf, (left + 19, y_pos + 8), total_length, frac)
-            icons.draw_stat(surf, stat_nid, self.unit, (36 + left, y_pos))
+            # highest_stat = DB.stats.get(stat_nid).maximum
+            # max_stat = max_stats.get(stat_nid, 30)
+            # if max_stat > 0:
+            #     total_length = int(max_stat / highest_stat * 24)
+            #     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
+            #     build_groove(surf, (left + 19, y_pos + 8), total_length, frac)
+            icons.draw_stat(surf, stat_nid, self.unit, (36 + left, y_pos), compact=True)
             # Name
             name = DB.stats.get(stat_nid).name
             FONT['text-yellow'].blit(name, surf, (1 + left, y_pos))
-            self.info_graph.register((1 + left, y_pos, 40, 16), '%s_desc' % stat_nid, 'all', first=(idx == 0))
+            self.info_graph.register((1 + left, y_pos, 40, 16), '%s_desc' % stat_nid, 'all')
 
         return surf
 
@@ -198,7 +256,7 @@ class StatScreen():
                     surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
                 item_option = menu_options.FullItemOption(idx, item)
             item_option.draw(surf, 2, y_pos)
-            self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'equipment', first=(idx == 0))
+            self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'all')
 
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):

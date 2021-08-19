@@ -1,5 +1,5 @@
 import app.engine.config as cf
-from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, STATWIDTH
 from app.data.database import DB
 from app.data.difficulty_modes import RNGOption
 from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
@@ -432,7 +432,7 @@ class UIView():
         crit = DB.constants.get('crit').value
 
         if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
-            topleft = (8 - self.attack_info_offset, 4)
+            topleft = (STATWIDTH + 8 - self.attack_info_offset, 4)
         else:
             topleft = (WINWIDTH - 77 + self.attack_info_offset, 4)
         if self.attack_info_offset > 0:
@@ -623,9 +623,9 @@ class UIView():
             unit_surf = defender.sprite.create_image('passive')
 
         if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
-            topleft = (4, 4)
+            topleft = (STATWIDTH + 4, 4)
             if defender:
-                u_topleft = (16 - max(0, (unit_surf.get_width() - 16)//2), 12 - max(0, (unit_surf.get_width() - 16)//2))
+                u_topleft = (STATWIDTH + 16 - max(0, (unit_surf.get_width() - 16)//2), 12 - max(0, (unit_surf.get_width() - 16)//2))
         else:
             topleft = (WINWIDTH - 4 - width, 4)
             if defender:
