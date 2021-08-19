@@ -76,6 +76,8 @@ class FrameSelector(Dialog):
         self.model = FrameModel(self.frames, self)
         self.view.setModel(self.model)
 
+        self.delete_button = QPushButton("Delete Current Frame")
+        self.delete_button.clicked.connect(self.delete_frame)
         self.add_button = QPushButton("Add Frames...")
         self.add_button.clicked.connect(self.import_frames)
         self.export_button = QPushButton("Export Frames...")
@@ -86,6 +88,7 @@ class FrameSelector(Dialog):
         left_layout = QVBoxLayout()
         left_layout.addWidget(self.view)
         left_layout.addWidget(self.add_button)
+        left_layout.addWidget(self.delete_button)
         left_layout.addWidget(self.export_button)
         right_layout = QVBoxLayout()
         right_layout.addWidget(self.display)
@@ -128,6 +131,12 @@ class FrameSelector(Dialog):
             self.x_box.setValue(self.current.offset[0])
             self.y_box.setValue(self.current.offset[1])
             self.draw()
+
+    def delete_frame(self):
+        idx = self.frames.index(self.current.nid)
+        new_idx = self.model.delete(idx)
+        new_frame = self.frames[new_idx.row()]
+        self.set_current(new_frame)
 
     def draw(self):
         base_image = QImage(WINWIDTH, WINHEIGHT, QImage.Format_ARGB32)

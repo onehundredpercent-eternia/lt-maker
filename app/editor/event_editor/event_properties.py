@@ -128,6 +128,7 @@ class Highlighter(QSyntaxHighlighter):
             # handle eval and vars
             for idx, section in enumerate(sections):
                 start = num_tabs * 4 + len(';'.join(sections[:idx])) + 1
+                special_start = 0
                 for idx, char in enumerate(section):
                     if char == '{':
                         special_start = start + idx

@@ -259,6 +259,7 @@ class CollectionModel(QAbstractListModel):
         new_index = self.index(min(idx, len(self._data) - 1))
         self.window.view.setCurrentIndex(new_index)
         self.layoutChanged.emit()
+        return new_index
 
     def update(self):
         # self.dataChanged.emit(self.index(0), self.index(self.rowCount()))
