@@ -85,6 +85,6 @@ class Fatigue(ItemComponent):
     def end_combat(self, playback, unit, item, target, mode):
         if mode != 'attack':
             return
-        marks = [mark for mark in playback if mark[0].startswith('mark') and mark[1] is unit and mark[3] is item]
+        marks = [mark for mark in playback if mark[0].startswith('mark') and mark[1] is unit and mark[4] is item]
         if marks:
             action.do(action.ChangeFatigue(unit, self.value))

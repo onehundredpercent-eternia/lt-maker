@@ -9,7 +9,7 @@ import pygame.draw
 import pygame.event
 from pygame import Surface
 
-from ..premade_components.text_component import *
+from ..premade_components import PlainTextComponent
 from ..premade_components.header_list import *
 from ...ui_framework import *
 from ..ui_framework_animation import *
@@ -308,11 +308,11 @@ class DemoUnitMenu():
         self.unit_info_box.props.h_alignment = HAlignment.LEFT
         self.unit_info_box.margin = (0, 0, 0, 0)
 
-        self.page_title_component = TextComponent("page type text", "", self.unit_info_box)
+        self.page_title_component = PlainTextLine("page type text", self.unit_info_box, "")
         self.page_title_component.props.h_alignment = HAlignment.CENTER
         self.page_title_component.props.v_alignment = VAlignment.CENTER
         self.page_title_component.props.resize_mode = ResizeMode.AUTO
-        self.page_title_component.props.font = FONT['chapter-grey']
+        self.page_title_component.set_font_name('chapter-grey')
         self.page_title_component.set_text("Character")
         self.unit_info_box.add_child(self.page_title_component)
 
@@ -323,11 +323,11 @@ class DemoUnitMenu():
         self.sort_box.props.h_alignment = HAlignment.RIGHT
         self.sort_box.margin = (0, 4, 5, 0)
 
-        self.sort_by_text = TextComponent("sort by", "", self.sort_box)
+        self.sort_by_text = PlainTextComponent("sort by", self.sort_box, "")
         self.sort_by_text.props.h_alignment = HAlignment.LEFT
         self.sort_by_text.props.v_alignment = VAlignment.CENTER
         self.sort_by_text.props.resize_mode = ResizeMode.AUTO
-        self.sort_by_text.props.font = FONT['text-white']
+        self.sort_by_text.set_font_name('text-white')
         self.sort_by_text.margin = (3, 0, 0, 0)
         self.sort_by_text.padding = (0, 0, 0, 2)
         self.sort_by_text.set_text("Sort: ")
@@ -346,8 +346,8 @@ class DemoUnitMenu():
         self.desc_sort_arrow.margin = (0, 2, 5, 0)
         self.sort_box.add_child(self.desc_sort_arrow)
 
-        self.page_number_text = TextComponent('page_num', '%d / %d' % (self.page_num, NUM_PAGES))
-        self.page_number_text.props.font = FONT['text-blue']
+        self.page_number_text = PlainTextLine('page_num', text='%d / %d' % (self.page_num, NUM_PAGES))
+        self.page_number_text.set_font_name('text-blue')
         self.page_number_text.props.h_alignment = HAlignment.RIGHT
         bottom_of_sort_box = self.sort_box.margin[2] + self.sort_box.size[1]
         self.page_number_text.margin = (0, 5, bottom_of_sort_box - 5, 0)

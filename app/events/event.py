@@ -545,6 +545,10 @@ class Event():
         elif command.nid == 'center_cursor':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             position = self.parse_pos(values[0])
+            if not position:
+                logging.error("Could not determine position from %s" % values[0])
+                return
+
             game.cursor.set_pos(position)
             if 'immediate' in flags or self.do_skip:
                 game.camera.force_center(*position)

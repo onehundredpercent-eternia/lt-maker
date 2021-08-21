@@ -48,6 +48,8 @@ class UIMetric():
     Returns:
         UIMetric: a UIMetric corresponding to the parsed value
     """
+    if isinstance(metric_string, UIMetric): # this isn't a string, but a metric already?
+      return metric_string
     try:
       metric_string = str(metric_string)
       if 'px' in metric_string:
@@ -120,3 +122,9 @@ class UIMetric():
         return "{}px".format(self.val)
       else:
         return "{}%".format(self.val)
+
+  def __eq__(self, o: object) -> bool:
+      if not isinstance(o, UIMetric):
+          return False
+      else:
+          return o.val == self.val and o.mtype == self.mtype

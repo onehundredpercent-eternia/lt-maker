@@ -296,6 +296,9 @@ class GroupUnitModel(DragDropCollectionModel):
             klass_nid = unit.klass
             num = timer.get_timer().passive_counter.count
             klass = DB.classes.get(klass_nid)
+            if not klass:
+                logging.error("Class with nid '%s' does not exist in database", klass_nid)
+                return
             if self.window.view:
                 active = self.window.view.selectionModel().isSelected(index)
             else:

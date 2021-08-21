@@ -38,7 +38,7 @@ class BmpFont():
                     self.chartable[words[0]] = (int(words[1]) * self._width,
                                                 int(words[2]) * self.height,
                                                 int(words[3]))
-                    
+
         self.surface = engine.image_load(self.png_path)
         # engine.set_colorkey(self.surface, (0, 0, 0), rleaccel=True)
 
@@ -140,4 +140,5 @@ class BmpFont():
                 print("string: ", string)
                 char_width = 8
             length += char_width
+        length += 1
         return length

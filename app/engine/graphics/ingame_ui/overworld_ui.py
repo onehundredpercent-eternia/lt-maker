@@ -16,6 +16,7 @@ class OverworldTravelUI():
     legal_states = ('overworld')
 
     def __init__(self, overworld: OverworldObject = None, cursor: OverworldCursor = None):
+        self.base_component = uif.UIComponent.create_base_component()
         # initialize components
         self.location_title: uif.UIComponent = uif.UIComponent(name="location title")
         self.location_title.props.bg = SPRITES.get('world_map_location_box')
@@ -25,39 +26,22 @@ class OverworldTravelUI():
         self._init_location_title_animations()
         self.location_title.disable()
 
-        self.location_title_text = uif.TextComponent("location title text", "", self.location_title)
+        self.location_title_text = uif.PlainTextLine("location title text", self.location_title, "")
         self.location_title_text.props.h_alignment = uif.HAlignment.CENTER
         self.location_title_text.props.v_alignment = uif.VAlignment.CENTER
         self.location_title_text.props.resize_mode = uif.ResizeMode.AUTO
         self.location_title.add_child(self.location_title_text)
 
-        self.minimap: OverworldMinimap = OverworldMinimap('minimap', None, overworld, cursor)
-        self.minimap.props.v_alignment = uif.VAlignment.BOTTOM
-        self.minimap.margin = (5, 5, 5, 5)
-        self.minimap.disable()
-        self._init_minimap_animations()
+        if SPRITES.get('MagvelMinimap'):
+            self.minimap: OverworldMinimap = OverworldMinimap('minimap', None, overworld, cursor)
+            self.minimap.props.v_alignment = uif.VAlignment.BOTTOM
+            self.minimap.margin = (5, 5, 5, 5)
+            self.minimap.disable()
+            self.base_component.add_child(self.minimap)
+        else:
+            self.minimap = None
 
-        self.base_component = uif.UIComponent.create_base_component()
         self.base_component.add_child(self.location_title)
-        self.base_component.add_child(self.minimap)
-
-    def _init_minimap_animations(self):
-        translate_down = uif.translate_anim((0, 0), (0, WINHEIGHT))
-        translate_up = uif.translate_anim((0, WINHEIGHT), (0, 0))
-
-        def change_align(c: uif.UIComponent, *args):
-            if c.props.h_alignment == uif.HAlignment.LEFT:
-                c.props.h_alignment = uif.HAlignment.RIGHT
-            else:
-                c.props.h_alignment = uif.HAlignment.LEFT
-        change_alignment = uif.UIAnimation(before_anim=change_align)
-
-        self.minimap.save_animation(translate_down, 'translate_down')
-        self.minimap.save_animation(translate_up, 'translate_up')
-        self.minimap.save_animation(change_alignment, 'change_alignment')
-
-        self.minimap.save_animation(translate_down, '!exit')
-        self.minimap.save_animation(translate_up, '!enter')
 
     def _init_location_title_animations(self):
         exit_left = uif.translate_anim((0, 0), (-WINWIDTH, 0), disable_after=True)
@@ -107,28 +91,31 @@ class OverworldTravelUI():
                     self.location_title.enter()
 
     def _update_minimap_component(self):
-        if not self.minimap.enabled:
-            self.minimap.enter()
-        if (game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1 and
-                game.cursor.position[1] > TILEY // 2 + game.camera.get_y() - 1):
-            # if cursor is in the bottom right
-            if self.minimap.props.h_alignment == uif.HAlignment.RIGHT:
-                # if we're also in the right - get out of dodge
-                self.minimap.queue_animation(names=['translate_down', 'change_alignment', 'translate_up'])
-        elif (game.cursor.position[0] < TILEX // 2 + game.camera.get_x() and
-                game.cursor.position[1] > TILEY // 2 + game.camera.get_y() - 1):
-            # cursor is in the bottom left
-            if self.minimap.props.h_alignment != uif.HAlignment.RIGHT:
-                # then we leave the left
-                self.minimap.queue_animation(names=['translate_down', 'change_alignment', 'translate_up'])
+        if self.minimap:
+            if not self.minimap.enabled:
+                self.minimap.enter()
+            if (game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1 and
+                    game.cursor.position[1] > TILEY // 2 + game.camera.get_y() - 1):
+                # if cursor is in the bottom right
+                if self.minimap.props.h_alignment == uif.HAlignment.RIGHT:
+                    # if we're also in the right - get out of dodge
+                    self.minimap.queue_animation(names=['translate_down', 'change_alignment', 'translate_up'])
+            elif (game.cursor.position[0] < TILEX // 2 + game.camera.get_x() and
+                    game.cursor.position[1] > TILEY // 2 + game.camera.get_y() - 1):
+                # cursor is in the bottom left
+                if self.minimap.props.h_alignment != uif.HAlignment.RIGHT:
+                    # then we leave the left
+                    self.minimap.queue_animation(names=['translate_down', 'change_alignment', 'translate_up'])
 
     def draw(self, surf: Surface) -> Surface:
         if not game.state.current() in self.legal_states:
-            self.minimap.disable()
+            if self.minimap:
+                self.minimap.disable()
             self.location_title.disable()
             return surf
         self._update_location_title_component()
         self._update_minimap_component()
+        self.base_component._should_redraw = True
         ui_surf = self.base_component.to_surf()
         surf.blit(ui_surf, (0, 0))
         return surf

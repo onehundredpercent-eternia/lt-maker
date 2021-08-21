@@ -37,7 +37,7 @@ class UnitMenuUI():
         self.unit_info_box.props.h_alignment = uif.HAlignment.LEFT
         self.unit_info_box.margin = (0, 0, 0, 0)
 
-        self.page_title_component = uif.text_component.TextComponent("page type text", "", self.unit_info_box)
+        self.page_title_component = uif.plain_text_component.PlainTextLine("page type text", self.unit_info_box, "")
         self.page_title_component.props.h_alignment = uif.HAlignment.CENTER
         self.page_title_component.props.v_alignment = uif.VAlignment.CENTER
         self.page_title_component.props.font = FONT['chapter-grey']
@@ -51,7 +51,7 @@ class UnitMenuUI():
         self.sort_box.props.h_alignment = uif.HAlignment.RIGHT
         self.sort_box.margin = (0, 4, 5, 0)
 
-        self.sort_by_text = uif.text_component.TextComponent("sort by", "", self.sort_box)
+        self.sort_by_text = uif.plain_text_component.PlainTextLine("sort by", self.sort_box, "")
         self.sort_by_text.props.h_alignment = uif.HAlignment.LEFT
         self.sort_by_text.props.v_alignment = uif.VAlignment.CENTER
         self.sort_by_text.props.font = FONT['text-white']
@@ -73,14 +73,14 @@ class UnitMenuUI():
         self.desc_sort_arrow.margin = (0, 2, 5, 0)
         self.sort_box.add_child(self.desc_sort_arrow)
 
-        self.page_number_text = uif.text_component.TextComponent('page_num', '%d / %d' % (0, 0))
+        self.page_number_text = uif.plain_text_component.PlainTextLine('page_num', None, '%d / %d' % (0, 0))
         self.page_number_text.props.font = FONT['text-blue']
         self.page_number_text.props.h_alignment = uif.HAlignment.RIGHT
         bottom_of_sort_box = self.sort_box.margin[2] + self.sort_box.size[1]
         self.page_number_text.margin = (0, 5, bottom_of_sort_box - 5, 0)
 
         self.unit_info_table = UnitInformationTable(
-            name='unit box', data=self.data)
+            name='unit_box', data=self.data)
 
         self.base_component = uif.UIComponent.create_base_component()
         self.base_component.name = "base"

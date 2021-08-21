@@ -588,6 +588,8 @@ def handle_unit_spec(all_targets, behaviour):
         all_targets = [pos for pos in all_targets if bool(game.board.get_unit(pos).party == target_spec[1]) ^ invert]
     elif target_spec[0] == 'ID':
         all_targets = [pos for pos in all_targets if bool(game.board.get_unit(pos).nid == target_spec[1]) ^ invert]
+    elif target_spec[0] == 'Team':
+        all_targets = [pos for pos in all_targets if bool(game.board.get_unit(pos).team == target_spec[1]) ^ invert]
     return all_targets
 
 def get_targets(unit, behaviour):

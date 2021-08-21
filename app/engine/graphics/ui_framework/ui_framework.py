@@ -16,7 +16,7 @@ from .ui_framework_layout import (HAlignment, ListLayoutStyle, UILayoutHandler,
 from .ui_framework_styling import UIMetric
 
 CACHED_ATTRIBUTES = ['size', 'height', 'width', 'margin', 'padding', 'offset', 'scroll', 'tsize', 'twidth', 'theight', 'max_width', 'max_height', 'overflow']
-UNSETTABLE_ATTRIBUTES = ['tsize', 'twidth', 'theight']
+UNSETTABLE_ATTRIBUTES = ['tsize', 'twidth', 'theight', 'isize', 'iwidth', 'iheight']
 class ResizeMode(Enum):
     MANUAL = 0
     AUTO = 1
@@ -37,8 +37,6 @@ class ComponentProperties():
         # used by the component to configure itself
         self.bg: engine.Surface = None                         # bg image for the component
         self.bg_color: Color4 = (0, 0, 0, 0)            # (if no bg) - bg fill color for the component
-        self.bg_resize_mode: ResizeMode = (             # whether or not the bg will stretch to fit component
-            ResizeMode.MANUAL )
 
         self.bg_align: Tuple[HAlignment, VAlignment] = (HAlignment.CENTER,
                                                         VAlignment.CENTER)
@@ -79,10 +77,10 @@ class ComponentProperties():
         self.scroll: List[UIMetric] = [UIMetric.pixels(0),
                                         UIMetric.pixels(0)]
 
-        # maximum width str for the component
+        # maximum width for the component
         # Useful for dynamic components such as dialog.
         self.max_width: UIMetric = UIMetric.percent(100)
-        # maximum height str for the component.
+        # maximum height for the component.
         self.max_height: UIMetric = UIMetric.percent(100)
 
         self.opacity: float = 1                         # layer opacity for the element.
@@ -92,38 +90,71 @@ class ComponentProperties():
         self._done_init = True
 
     def __setattr__(self, name: str, value: Any) -> None:
+        # is it actually updating something?
+        try:
+            if self.__getattribute__(name) == value:
+                return
+        except:
+            pass
+
+        _should_redraw = True
+
         if name == '_parent_pointer' or name == '_done_init' or not self._done_init:
             super(ComponentProperties, self).__setattr__(name, value)
             return
         if name in ['max_width', 'max_height']:
             value = UIMetric.parse(value)
+            if self.__getattribute__(name) == value:
+                return
             super(ComponentProperties, self).__setattr__(name, value)
             self._parent_pointer._recalculate_cached_size_from_props()
         elif name in ['size', 'offset', 'scroll', 'margin', 'padding', 'overflow']:
             value = tuple([UIMetric.parse(i) for i in value])
+            if self.__getattribute__(name) == value:
+                return
             super(ComponentProperties, self).__setattr__(name, value)
             if name == 'size' or name == 'padding':
                 self._parent_pointer._recalculate_cached_size_from_props()
-                return
             elif name == 'offset':
+                _should_redraw = False
                 self._parent_pointer._recalculate_cached_offset_from_props()
+                if self._parent_pointer.parent:
+                    self._parent_pointer.parent._should_redraw = True
             elif name == 'scroll':
+                _should_redraw = False
                 self._parent_pointer._recalculate_cached_scroll_from_props()
+                if self._parent_pointer.parent:
+                    self._parent_pointer.parent._should_redraw = True
             elif name == 'margin':
+                _should_redraw = False
                 self._parent_pointer._recalculate_cached_margin_from_props()
+                if self._parent_pointer.parent:
+                    self._parent_pointer.parent._should_redraw = True
             elif name == 'overflow':
                 self._parent_pointer._recalculate_cached_overflow_from_props()
         elif name == 'height':
             value = UIMetric.parse(value)
+            if self.size[1] == value:
+                return
             super(ComponentProperties, self).__setattr__('size', (self.size[0], value))
             self._parent_pointer._recalculate_cached_size_from_props()
         elif name == 'width':
             value = UIMetric.parse(value)
+            if self.size[0] == value:
+                return
             super(ComponentProperties, self).__setattr__('size', (value, self.size[1]))
             self._parent_pointer._recalculate_cached_size_from_props()
+        elif name in ['h_alignment', 'v_alignment']:
+            super(ComponentProperties, self).__setattr__(name, value)
+            _should_redraw = False
         else:
             super(ComponentProperties, self).__setattr__(name, value)
             self._parent_pointer._recalculate_cached_dimensions_from_props()
+
+        try:
+            self._parent_pointer._should_redraw = _should_redraw
+        except: # probably hasn't been initialized yet
+            pass
 
 class RootComponent():
     """Dummy component to simulate the top-level window
@@ -174,6 +205,10 @@ class UIComponent():
         self.twidth: int = 0
         self.theight: int = 0
 
+        self.isize: Tuple[int, int] = (0, 0)
+        self.iwidth: int = 0
+        self.iheight: int = 0
+
         self.size: Tuple[int, int] = (0, 0)
         self.height: int = 0
         self.width: int = 0
@@ -206,6 +241,11 @@ class UIComponent():
         # freezing stuff (see freeze())
         self._frozen = False
         self._frozen_children: List[UIComponent] = []
+
+        self._should_redraw = True
+        self._cached_surf: engine.Surface = None
+        # for testing
+        self._times_drawn: int = 0
 
         self._done_init = True
         self._recalculate_cached_dimensions_from_props()
@@ -282,41 +322,15 @@ class UIComponent():
         """
         if child:
             child.parent = self
+            child.is_root = False
             child._recalculate_cached_dimensions_from_props()
             child.set_chronometer(self._chronometer)
             self.children.append(child)
-            child._reset('add_parent')
+            child._should_redraw = True
             if self.props.resize_mode == ResizeMode.AUTO:
-                self._reset('add_child')
+                self._should_redraw = True
         else:
             logging.warning('Attempted to add Nonetype Child to component %s' % self.name)
-
-    def has_child(self, child_name: str) -> bool:
-        for child in self.children:
-            if child_name == child.name:
-                return True
-        return False
-
-    def get_child(self, child_name: str) -> Optional[UIComponent]:
-        for child in self.children:
-            if child_name == child.name:
-                return child
-        return None
-
-    def remove_child(self, child_name: str) -> bool:
-        """remove a child from this component.
-
-        Args:
-            child_name (str): name of child component.
-
-        Returns:
-            bool: whether or not the child existed in the first place to be removed
-        """
-        for idx, child in enumerate(self.children):
-            if child.name == child_name:
-                self.children.pop(idx)
-                return True
-        return False
 
     def has_child(self, child_name: str) -> bool:
         for child in self.children:
@@ -382,7 +396,16 @@ class UIComponent():
             surf (engine.Surface): A Surface
             pos (Tuple[int, int]): the coordinate position of the top left of surface
         """
+        self._should_redraw = True
         self.manual_surfaces.append((pos, surf, z_level))
+
+    def should_redraw(self) -> bool:
+        if not self.enabled:
+            return False
+        return self._should_redraw or any([child.should_redraw() for child in self.children])
+
+    def did_redraw(self):
+        pass
 
     def speed_up_animation(self, multiplier: int):
         """scales the animation of the component and its children
@@ -575,16 +598,16 @@ class UIComponent():
                                   repr(e))
                 self.queued_animations.pop(0)
 
-    def _reset(self, reason: str = None):
-        """Resets internal state. Triggers on dimension change, so as to allow
-        dynamically resized subclasses to resize on prop change.
+    def on_parent_resize(self):
+        self._should_redraw = True
 
+    def _reset(self, reason: str = None):
+        """Pre-draw: take all known props and state, and recalculate true size one last time.
         Args:
             reason (str): the source of the reset call; usually the name of the function or property
             (e.g. 'size')
         """
-        for child in self.children:
-            child._reset('reset')
+        pass
 
     def _create_bg_surf(self) -> engine.Surface:
         """Generates the background surf for this component of identical dimension
@@ -626,54 +649,66 @@ class UIComponent():
                 self.cached_background = base
             return self.cached_background
 
-    def to_surf(self, no_cull=False) -> engine.Surface:
+    def to_surf(self, no_cull=False, should_not_cull_on_redraw=True) -> engine.Surface:
         if not self.enabled:
             return engine.create_surface(self.size, True)
         if self.is_root:
             self.update()
-        # draw the background.
-        base_surf = self._create_bg_surf().copy()
+        if not self.should_redraw() and self._cached_surf:
+            base_surf = self._cached_surf
+        else:
+            self._reset('to_surf' + self.name if self.name else "")
+            # draw the background.
+            base_surf = self._create_bg_surf().copy()
 
-        # draw all hard coded surfaces by z-index
-        negative_z_children = [surf_tup for surf_tup in self.manual_surfaces if surf_tup[2] < 0]
-        sorted_neg_z = sorted(negative_z_children, key=lambda tup: tup[2])
-        for child in sorted_neg_z:
-            pos = tuple_add(child[0], self.overflow[::2])
-            img = child[1]
-            base_surf.blit(img, pos)
+            # draw all hard coded surfaces by z-index
+            negative_z_children = [surf_tup for surf_tup in self.manual_surfaces if surf_tup[2] < 0]
+            sorted_neg_z = sorted(negative_z_children, key=lambda tup: tup[2])
+            for child in sorted_neg_z:
+                pos = tuple_add(child[0], self.overflow[::2])
+                img = child[1]
+                base_surf.blit(img, pos)
 
-        # @TODO: add z-index support for children. For now, they're all 0
-        # position and then draw all children recursively according to our layout
-        child_positions = self.layout_handler.generate_child_positions(no_cull)
-        for idx, child in enumerate(self.children):
-            if idx in child_positions:
-                base_surf.blit(child.to_surf(), tuple_add(tuple_sub(child_positions[idx], child.overflow[::2]), self.overflow[::2]))
-                child.on_screen = True
-            else:
-                child.on_screen = False
+            # @TODO: add z-index support for children. For now, they're all 0
+            # position and then draw all children recursively according to our layout
+            child_surfs = []
+            for child in self.children: # draw first to allow the child to update itself
+                child_surfs.append(child.to_surf())
+            child_positions = self.layout_handler.generate_child_positions(should_not_cull_on_redraw)
+            for idx, child in enumerate(self.children):
+                if idx in child_positions:
+                    base_surf.blit(child_surfs[idx], tuple_add(tuple_sub(child_positions[idx], child.overflow[::2]), self.overflow[::2]))
+                    child.on_screen = True
+                else:
+                    child.on_screen = False
 
-        # draw all hard coded surfaces by z-index
-        z_children = [surf_tup for surf_tup in self.manual_surfaces if surf_tup[2] >= 0]
-        sorted_z = sorted(z_children, key=lambda tup: tup[2])
-        for child in sorted_z:
-            pos = tuple_add(child[0], self.overflow[::2])
-            img = child[1]
-            base_surf.blit(img, pos)
+            # draw all hard coded surfaces by z-index
+            z_children = [surf_tup for surf_tup in self.manual_surfaces if surf_tup[2] >= 0]
+            sorted_z = sorted(z_children, key=lambda tup: tup[2])
+            for child in sorted_z:
+                pos = tuple_add(child[0], self.overflow[::2])
+                img = child[1]
+                base_surf.blit(img, pos)
+            # handle own opacity
+            if self.props.opacity < 1:
+                base_surf = image_mods.make_translucent(base_surf, 1 - self.props.opacity)
+            self._cached_surf = base_surf
 
-        # scroll the component
-        scroll_x, scroll_y = self.scroll
-        scroll_width = min(self.twidth - scroll_x, self.width)
-        scroll_height = min(self.theight - scroll_y, self.height)
-        overflow_sum = (self.overflow[0] + self.overflow[1],
-                        self.overflow[2] + self.overflow[3])
-        scroll_width, scroll_height = tuple_add((scroll_width, scroll_height), overflow_sum)
+            self._times_drawn += 1
+            self._should_redraw = False
+            self.did_redraw()
+
         if not no_cull:
+            # scroll the component
+            scroll_x, scroll_y = self.scroll
+            scroll_width = min(self.twidth - scroll_x, self.width)
+            scroll_height = min(self.theight - scroll_y, self.height)
+            overflow_sum = (self.overflow[0] + self.overflow[1],
+                            self.overflow[2] + self.overflow[3])
+            scroll_width, scroll_height = tuple_add((scroll_width, scroll_height), overflow_sum)
             ret_surf = engine.subsurface(base_surf, (scroll_x, scroll_y, scroll_width, scroll_height))
         else:
             ret_surf = base_surf
-        # handle own opacity
-        if self.props.opacity < 1:
-            ret_surf = image_mods.make_translucent(ret_surf, 1 - self.props.opacity)
         return ret_surf
 
     #################################
@@ -698,9 +733,11 @@ class UIComponent():
         ctwidth = self.props.size[0].to_pixels(pwidth)
         cmax_width = self.props.max_width.to_pixels(pwidth)
         cwidth = min(cmax_width, ctwidth)
+
         ctheight = self.props.size[1].to_pixels(pheight)
         cmax_height = self.props.max_height.to_pixels(pheight)
         cheight = min(ctheight, cmax_height)
+
         ctsize = (ctwidth, ctheight)
         csize = (cwidth, cheight)
 
@@ -708,6 +745,10 @@ class UIComponent():
             self.props.padding[1].to_pixels(ctsize[0]),
             self.props.padding[2].to_pixels(ctsize[1]),
             self.props.padding[3].to_pixels(ctsize[1]))
+
+        ciwidth = cwidth - cpadding[0] - cpadding[1]
+        ciheight = cheight - cpadding[2] - cpadding[3]
+        cisize = (ciwidth, ciheight)
         self.cached_background = None
         super(UIComponent, self).__setattr__('max_width', cmax_width)
         super(UIComponent, self).__setattr__('max_height', cmax_height)
@@ -715,6 +756,10 @@ class UIComponent():
         super(UIComponent, self).__setattr__('tsize', ctsize)
         super(UIComponent, self).__setattr__('twidth', ctwidth)
         super(UIComponent, self).__setattr__('theight', ctheight)
+
+        super(UIComponent, self).__setattr__('isize', cisize)
+        super(UIComponent, self).__setattr__('iwidth', ciwidth)
+        super(UIComponent, self).__setattr__('iheight', ciheight)
 
         super(UIComponent, self).__setattr__('size', csize)
         super(UIComponent, self).__setattr__('width', cwidth)
@@ -745,8 +790,7 @@ class UIComponent():
     def _recalculate_cached_scroll_from_props(self):
         if not self.on_screen:
             return
-        pwidth, pheight = tuple_sub(self.parent.size, (self.parent.padding[0] + self.parent.padding[1], self.parent.padding[2] + self.parent.padding[3]))
-        cscroll = tclamp((self.props.scroll[0].to_pixels(pwidth), self.props.scroll[1].to_pixels(pheight)), (0, 0), (self.tsize))
+        cscroll = tclamp((self.props.scroll[0].to_pixels(self.twidth - self.width), self.props.scroll[1].to_pixels(self.theight - self.height)), (0, 0), (self.tsize))
         super(UIComponent, self).__setattr__('scroll', cscroll)
         for child in self.children:
             child._recalculate_cached_scroll_from_props()
@@ -763,10 +807,29 @@ class UIComponent():
         for child in self.children:
             child._recalculate_cached_overflow_from_props()
 
+    @property
+    def _total_to_surfs(self):
+        """This is for debugging purposes. returns
+        the total number of to_surf calls
+        in the recursive component tree.
+        """
+        total = self._times_drawn
+        for child in self.children:
+            total += child._total_to_surfs
+        return total
+
     def __setattr__(self, name: str, value: Any) -> None:
-        if name == '_done_init' or not self._done_init:
+        if name == '_done_init' or not self._done_init or name == '_should_redraw':
             super(UIComponent, self).__setattr__(name, value)
             return
+
+        # is it actually updating something?
+        try:
+            if self.__getattribute__(name) == value:
+                return
+        except:
+            pass
+
         if name in CACHED_ATTRIBUTES and not name in UNSETTABLE_ATTRIBUTES:
             self.props.__setattr__(name, value)
         elif name in UNSETTABLE_ATTRIBUTES:

@@ -3,6 +3,7 @@
 
 # test project
 test.ltproj
+test_output/
 
 # Save States
 saves/*.p
@@ -41,6 +42,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# testing for uif
+test_output/
+expected_output/
 
 # =========================
 # Operating System Files

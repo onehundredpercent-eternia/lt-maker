@@ -68,7 +68,7 @@ def get_formatted_stat_pages() -> List[Tuple[str, List[Column]]]:
     for idx, stat in enumerate(get_all_character_stats()):
         new_character_stat_page.append(
             # truncate the name to 5 digits
-            Column('16%', stat.name[:5], uif.HAlignment.RIGHT, None, lambda unit, nid=stat.nid: unit.get_stat(nid), None, 
+            Column('16%', stat.name[:5], uif.HAlignment.RIGHT, None, lambda unit, nid=stat.nid: unit.get_stat(nid), None,
                    get_font=(lambda unit, nid=stat.nid: 'text-blue' if unit.get_stat(nid) < unit.get_stat_cap(nid) else 'text-yellow'))
         )
         if len(new_character_stat_page) == 6 or idx == len(get_all_character_stats()) - 1:
@@ -122,14 +122,12 @@ class UnitStatisticsTable(uif.UIComponent):
         self.STAT_PAGES = get_formatted_stat_pages()
         self.MAX_PAGES = len(self.STAT_PAGES)
         self.size = ('65%', '100%')
-        self.overflow = (16, 6, 0, 0)
+        self.overflow = (0, 0, 0, 0)
         self.max_width = '65%'
         self.max_height = '100%'
         self.padding = (0, 0, 0, 0)
         self.data = data
         self.page = 0
-
-        self.cursor_sprite: engine.Surface = SPRITES.get('menu_hand')
 
         # children layout
         self.props.layout = uif.UILayoutType.LIST
@@ -140,6 +138,11 @@ class UnitStatisticsTable(uif.UIComponent):
         self.recreate_table()
 
         self.width = self.max_width * self.MAX_PAGES
+
+        # initial cull
+        for idx, col in enumerate(self.children):
+            if idx + 1 not in self.col_indices_for_page(0):
+                col.disable()
 
     @property
     def cursor_pos(self):
@@ -167,7 +170,7 @@ class UnitStatisticsTable(uif.UIComponent):
                     data_rows=self.get_rows(column),
                     height=self.height - 4,
                     width=col_width,
-                    should_freeze=True
+                    list_overflow=0
                 )
                 col_list.margin = (left_margin, right_margin, 0, 0)
                 col_list.overflow = (col_list.overflow[0], col_list.overflow[1], 0, 0)
@@ -209,6 +212,9 @@ class UnitStatisticsTable(uif.UIComponent):
             scroll_right_anim = component_scroll_anim(self.scroll, (min(self.scroll[0] + self.width, self.twidth - self.width), self.scroll[1]), 250)
             self.queue_animation(animations=[scroll_right_anim])
             self.page += 1
+        for idx, col in enumerate(self.children):
+            if idx in self.col_indices_for_page(self.page):
+                col.enable()
 
     def scroll_left(self):
         if self.page > 0:
@@ -251,7 +257,7 @@ class UnitStatisticsTable(uif.UIComponent):
         else:
             return None
 
-    def update_cursor(self):
+    def get_cursor_draw_position_horizontal(self) -> Tuple[int, int] | None:
         if self.cursor_pos[1] == 0 and self.cursor_pos[0] > 0: # we're hovering a header
             # fancy math to position the cursor
             selected_list_left = self.layout_handler.generate_child_positions(True)[self.cursor_pos[0] - 1][0]
@@ -259,28 +265,11 @@ class UnitStatisticsTable(uif.UIComponent):
                 selected_list_text_offset = 0
             else:
                 selected_list_text_offset = self.table[self.cursor_pos[0] - 1].header_row.get_text_topleft()[0]
-            selected_list_left = selected_list_left + selected_list_text_offset - self.cursor_sprite.get_width()
-            perturbation = CURSOR_PERTURBATION[ANIMATION_COUNTERS.fps6_360counter.count % 8]
-            cursor_position = (selected_list_left + perturbation, 2)
-            self.manual_surfaces.clear()
-            self.add_surf(self.cursor_sprite, cursor_position)
+            selected_list_left = selected_list_left + selected_list_text_offset
+            cursor_position = selected_list_left - self.scroll[0]
+            return cursor_position
         else:
-            if self.manual_surfaces:
-                self.manual_surfaces.clear()
-
-    def to_surf(self, no_cull=False) -> engine.Surface:
-        self.update_cursor()
-        # automatically cull when stationary
-        if not self.is_scrolling():
-            for idx, col in enumerate(self.table):
-                if idx + 1 not in self.col_indices_for_page(self.page):
-                    col.disable()
-                else:
-                    col.enable()
-        else:
-            for col in self.table:
-                col.enable()
-        return super().to_surf(no_cull=no_cull)
+            return None
 
 class UnitInformationTable(uif.UIComponent):
     MENU_BOTTOM_BORDER_THICKNESS = 8
@@ -456,6 +445,12 @@ class UnitInformationTable(uif.UIComponent):
             top_left = (1 + perturbation, self.padding[2] + 2) # magic position, don't worry about it
             self.manual_surfaces.clear()
             self.add_surf(self.cursor_sprite, top_left, 1)
+        elif self.cursor_pos[1] == 0: # we're hovering over a grid header
+            perturbation = CURSOR_PERTURBATION[ANIMATION_COUNTERS.fps6_360counter.count % 8]
+            cursor_x = self.right_unit_data_grid.get_cursor_draw_position_horizontal()
+            cursor_draw_position = (cursor_x + self.left_unit_name_list.width + perturbation - self.cursor_sprite.get_width(), self.padding[2] + 2)
+            self.manual_surfaces.clear()
+            self.add_surf(self.cursor_sprite, cursor_draw_position, 1)
         else: # we don't need to draw anything, let the table handle it
             if self.manual_surfaces:
                 self.manual_surfaces.clear()
@@ -529,6 +524,9 @@ class UnitInformationTable(uif.UIComponent):
             return self.right_unit_data_grid.cursor_hover()
         else:
             return None
+
+    def should_redraw(self) -> bool:
+        return True
 
     def to_surf(self, no_cull=False) -> engine.Surface:
         self.update_unit_icons()

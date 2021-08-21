@@ -1,12 +1,11 @@
 from __future__ import annotations
-from app.constants import WINWIDTH
+from app.engine.graphics.ui_framework.premade_components.plain_text_component import PlainTextLine
 
 from app.engine import engine
 
 from ..ui_framework import HAlignment, UIComponent
 from ..ui_framework_layout import ListLayoutStyle, UILayoutType
 from ..ui_framework_styling import UIMetric
-from .text_component import TextComponent
 
 class IconRow(UIComponent):
     def __init__(self, name: str = None, parent: UIComponent = None,
@@ -21,10 +20,9 @@ class IconRow(UIComponent):
 
         self.data = data
 
-        self.text = TextComponent(text, text)
+        self.text = PlainTextLine(text, self, text)
         self.text.props.font_name = font
         self.text.props.h_alignment = text_align
-        self.text.max_width = WINWIDTH # ensure that text is always on one line
 
         self.icon: UIComponent = self.process_icon(icon)
 
@@ -33,17 +31,21 @@ class IconRow(UIComponent):
 
         self.add_child(self.icon)
         self.add_child(self.text)
+        self.update_font()
 
     def _reset(self, reason: str = None):
         self.update_font()
-        super()._reset(reason=reason)
+
+    def set_text(self, text: str):
+        self.text.set_text(text)
+        self._should_redraw = True
 
     def update_font(self):
-        total_width = self.icon.width + self.text.width
+        total_width = self.icon.width + self.text.twidth
         if total_width > self.max_width:
             [_, fcolor] = self.text.props.font_name.split('-')
             new_font_name = 'narrow-' + fcolor
-            self.text.set_font(new_font_name)
+            self.text.set_font_name(new_font_name)
 
     def process_icon(self, icon: UIComponent | engine.Surface | None) -> UIComponent:
         if isinstance(icon, UIComponent):
@@ -61,3 +63,4 @@ class IconRow(UIComponent):
         self.children.clear()
         self.add_child(self.icon)
         self.add_child(self.text)
+        self._should_redraw = True

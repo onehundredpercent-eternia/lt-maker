@@ -11,7 +11,6 @@ from .demo_code.demo_ui import DemoUI
 from .demo_code.demo_narration import NarrationUI
 from .demo_code.demo_scroll import ScrollUI
 from .demo_code.demo_unit_menu import DemoUnitMenu
-from .premade_components.text_component import *
 from .ui_framework import *
 from .ui_framework_animation import *
 from .ui_framework_layout import *

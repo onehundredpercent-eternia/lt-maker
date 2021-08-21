@@ -6,13 +6,13 @@ import pygame
 import pygame.draw
 import pygame.event
 
-from ..premade_components.text_component import *
-from ...ui_framework import *
-from ..ui_framework_animation import *
-from ..ui_framework_layout import *
-from ..ui_framework_styling import *
-from ..premade_components import *
-from ..premade_animations import *
+from app.engine import engine
+
+from ..premade_components.dialog_text_component import DialogTextComponent
+from ...ui_framework import UIComponent, HAlignment, VAlignment
+from ..ui_framework_animation import InterpolationType
+from ..premade_animations.animation_templates import fade_anim, translate_anim
+from ..premade_animations.text_animations import scroll_anim, scroll_to_next_line_anim, type_line_anim
 
 TILEWIDTH, TILEHEIGHT = 16, 16
 TILEX, TILEY = 15, 10
@@ -53,7 +53,7 @@ class NarrationDialogue(UIComponent):
         self._init_textbox_animations()
 
         # initialize the text component
-        self.text: DialogTextComponent = DialogTextComponent('narration_text',
+        self.text: DialogTextComponent = DialogTextComponent('narration_text', None,
             (
             '"Lorem ipsum dolor sit amet, consectetur adipiscing elit, {w}'
             'sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. {w}'
@@ -66,7 +66,7 @@ class NarrationDialogue(UIComponent):
         self.text.max_width = self.text_horizontal_area
         self.text.margin = (self.text_horizontal_margin, self.text_horizontal_margin, self.text_vertical_offset, 0)
         self.text.num_visible_chars = 0
-
+        self.text.props.max_lines = 2
         self._init_text_animations()
 
         self.bot_text_area.add_child(self.text)

@@ -280,6 +280,11 @@ class TextComponent(UIComponent):
 
     # @overrides UIComponent.to_surf
     def to_surf(self, no_cull=False) -> Surface:
+        if self._cached_surf and not self.should_redraw():
+            return self._cached_surf
+
+        self._should_redraw = False
+
         if not self.enabled:
             return engine.create_surface(self.tsize, True)
         # draw the background.
@@ -301,6 +306,7 @@ class TextComponent(UIComponent):
                                                      min(self.max_text_area_height, self.height - scrolled_down_height)))
         else:
             ret_surf = base_surf
+        self._cached_surf = False
         return ret_surf
 
 class DialogTextComponent(TextComponent):

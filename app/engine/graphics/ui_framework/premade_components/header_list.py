@@ -12,14 +12,14 @@ T = TypeVar('T', bound=UIComponent)
 
 class HeaderList(UIComponent, Generic[T]):
     def __init__(self, name: str = None, parent: UIComponent = None, header_row: T = None,
-                 data_rows: List[T] = None, height: str = '100%', width: str = '100%', should_freeze: bool = False):
+                 data_rows: List[T] = None, height: str = '100%', width: str = '100%', list_overflow: int = 6):
         super().__init__(name=name, parent=parent)
         self.size = (width, height)
         self.max_height = height
         self.props.layout = UILayoutType.LIST
         self.props.list_style = ListLayoutStyle.COLUMN
+        self.list_overflow = list_overflow
 
-        self.should_freeze = should_freeze
         self.data_rows = data_rows
 
         # children references
@@ -77,11 +77,9 @@ class HeaderList(UIComponent, Generic[T]):
 
     def sort_rows(self, sort_func: Callable[[T], int]):
         if self.scrollable_list:
-            if self.scrollable_list._frozen:
-                self.scrollable_list.unfreeze()
             self.scrollable_list.children = sorted(self.scrollable_list.children, key=sort_func)
-            if self.should_freeze:
-                self.scrollable_list.freeze()
+        self._should_redraw = True
+        self.scrollable_list._should_redraw = True
 
     def regenerate_list_component(self) -> UIComponent:
         if not self.data_rows:
@@ -91,16 +89,14 @@ class HeaderList(UIComponent, Generic[T]):
         list_comp.max_height = self.height
         list_comp.props.layout = UILayoutType.LIST
         list_comp.props.list_style = ListLayoutStyle.COLUMN
-        list_comp.overflow = (2, 2, 6, 0)
+        list_comp.overflow = (2, 2, self.list_overflow, 0)
 
         total_height = 0
         for row in self.data_rows:
+            row.max_width = self.width
             list_comp.add_child(row)
             total_height += row.height
         list_comp.height = max(list_comp.max_height, total_height)
-        if self.should_freeze:
-            list_comp.overflow = (2, 2, 0, 0)
-            list_comp.freeze()
         self.scrollable_list = list_comp
 
     def scroll_down(self):
@@ -119,9 +115,11 @@ class HeaderList(UIComponent, Generic[T]):
 
     def to_surf(self, no_cull=False) -> engine.Surface:
         # manually cull rows
-        if self.scrollable_list and not self.scrollable_list._frozen:
+        if self.scrollable_list:
             for idx, row in enumerate(self.scrollable_list.children):
                 if idx < self.scrolled_index - 0.4:
+                    row.disable()
+                elif idx > self.scrolled_index + self.max_visible_rows:
                     row.disable()
                 else:
                     row.enable()

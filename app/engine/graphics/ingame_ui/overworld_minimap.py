@@ -59,7 +59,25 @@ class OverworldMinimap(uif.UIComponent):
         self.TRUE_MAP_TOPLEFT: Tuple[int, int] = (0, 13)
         # Obviously, we don't want to draw off the map, so we limit
         self.MAP_SPRITABLE_TOPLEFTS: Tuple[int, int] = tuple_sub(self.TRUE_MAP_SIZE, self.player_minimap_marker.sprite.get_size())
+        self._init_minimap_animations()
 
+    def _init_minimap_animations(self):
+        translate_down = uif.translate_anim((0, 0), (0, WINHEIGHT))
+        translate_up = uif.translate_anim((0, WINHEIGHT), (0, 0))
+
+        def change_align(c: uif.UIComponent, *args):
+            if c.props.h_alignment == uif.HAlignment.LEFT:
+                c.props.h_alignment = uif.HAlignment.RIGHT
+            else:
+                c.props.h_alignment = uif.HAlignment.LEFT
+        change_alignment = uif.UIAnimation(before_anim=change_align)
+
+        self.save_animation(translate_down, 'translate_down')
+        self.save_animation(translate_up, 'translate_up')
+        self.save_animation(change_alignment, 'change_alignment')
+
+        self.save_animation(translate_down, '!exit')
+        self.save_animation(translate_up, '!enter')
 
     def convert_overworld_pos_to_minimap_pos(self, pos: Point):
         if self.overworld:

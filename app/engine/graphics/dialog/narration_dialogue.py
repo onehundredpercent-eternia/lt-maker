@@ -88,7 +88,7 @@ class NarrationDialogue(uif.UIComponent):
             if cf.SETTINGS['talk_boop'] and play_sound.time_since_last_sound > 32:
                 play_sound.time_since_last_sound = 0
                 SOUNDTHREAD.play_sfx('Talk_Boop')
-                
+
         play_sound.time_since_last_sound = 0
 
         dialog_sound = uif.UIAnimation(do_anim=play_sound)
@@ -103,19 +103,19 @@ class NarrationDialogue(uif.UIComponent):
         elif self.done_writing_current_text() and self.done_writing_all_text():
             # we're waiting on player acknowledgement to continue
             self.acknowledged = True
-            self.text.should_display_waiting_cursor = False
+            self.text.set_should_draw_cursor(False)
         else:
             # write the next part of the current line
             self.text.queue_animation(names=['play_text'])
 
     def push_text(self, narrator: str, text: str):
         self.acknowledged = False
-        self.text.should_display_waiting_cursor = True
+        self.text.set_should_draw_cursor(True)
         if not self.done_writing_current_text():
             self.queued_text.append((narrator, text))
         else:
             self.text.set_text(text)
-            self.text.set_visible(0)
+            self.text.set_number_visible_chars(0)
             self.text.queue_animation(names=['play_text'])
 
     def hurry_up(self, event):
@@ -133,12 +133,12 @@ class NarrationDialogue(uif.UIComponent):
     def text_is_waiting(self) -> bool:
         """Is the dialogue box currently waiting for a go-ahead?
         """
-        return self.text.is_index_at_sequence(self.text.num_visible_chars, '{w}')
+        return self.text.is_waiting()
 
     def done_writing_current_text(self) -> bool:
         """Has the dialogue box finished its current text?
         """
-        return self.text.is_completely_visible() and not self.text.is_animating()
+        return self.text.is_done() and not self.text.is_animating()
 
     def done_writing_all_text(self) -> bool:
         """has the dialogue box finished all queued text?
@@ -157,3 +157,6 @@ class NarrationDialogue(uif.UIComponent):
             'nisi ut aliquip ex ea commodo consequat.'
         )
         self.push_text(text)
+
+    def to_surf(self, no_cull=False, should_not_cull_on_redraw=True) -> engine.Surface:
+        return super().to_surf(no_cull=no_cull, should_not_cull_on_redraw=should_not_cull_on_redraw)

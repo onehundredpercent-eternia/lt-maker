@@ -11,7 +11,7 @@ from pygame import Color
 
 from .demo_cursor import Cursor
 from .demo_narration import NarrationDialogue
-from ..premade_components.text_component import *
+from ..premade_components.plain_text_component import PlainTextComponent, PlainTextLine
 from ...ui_framework import *
 from ..ui_framework_animation import *
 from ..ui_framework_layout import *
@@ -41,7 +41,7 @@ class DemoUI():
         self._init_location_title_animations()
         self.location_title.disable()
 
-        self.location_title_text = TextComponent("location title text", "", self.location_title)
+        self.location_title_text = PlainTextLine("location title text", self.location_title, "")
         self.location_title_text.props.h_alignment = HAlignment.CENTER
         self.location_title_text.props.v_alignment = VAlignment.CENTER
         self.location_title.add_child(self.location_title_text)

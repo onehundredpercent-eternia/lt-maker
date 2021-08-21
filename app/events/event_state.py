@@ -47,7 +47,6 @@ class EventState(State):
     def draw(self, surf):
         if self.event:
             self.event.draw(surf)
-
         return surf
 
     def level_end(self):

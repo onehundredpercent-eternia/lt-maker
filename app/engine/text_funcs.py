@@ -42,7 +42,7 @@ def line_chunk(string: str) -> list:
     chunks = [x for x in chunks if x]  # Remove empty chunks
     return chunks
 
-def line_wrap(font, string: str, width: int) -> List[str]:
+def line_wrap(font, string: str, width: int, pad=False) -> List[str]:
     """
     Adapted from text wrap module
     """
@@ -72,7 +72,10 @@ def line_wrap(font, string: str, width: int) -> List[str]:
                 break
 
         if cur_line:
-            lines.append(' '.join(cur_line))
+            line = ' '.join(cur_line)
+            if pad:
+                line += ' '
+            lines.append(line)
         else:
             # one chunk is TOO BIG
             lines.append(chunks.pop())

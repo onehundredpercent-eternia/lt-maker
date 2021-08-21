@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import List
 
-from app.engine.fonts import FONT
 from app.utilities import tclamp
 from app.constants import WINWIDTH, WINHEIGHT
 
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_layout import UILayoutType, ListLayoutStyle
-from app.engine.graphics.ui_framework.premade_components import TextComponent
+from app.engine.graphics.ui_framework.premade_components import PlainTextComponent
 
 class DialogEntryComponent(UIComponent):
     def __init__(self, name, speaker, text, parent=None):
@@ -17,13 +16,12 @@ class DialogEntryComponent(UIComponent):
         self.props.layout = UILayoutType.LIST
 
         self.props.list_style = ListLayoutStyle.COLUMN
-        self.speaker = TextComponent("speaker", speaker, self)
+        self.speaker = PlainTextComponent("speaker", self, text=speaker)
         self.speaker.padding = (5, 0, 0, 0)
-        self.speaker.set_font(FONT['text-yellow'])
+        self.speaker.set_font_name('text-yellow')
 
-        self.text = TextComponent("dialog text", text, self)
+        self.text = PlainTextComponent("dialog text", self, text=text)
         self.text.padding = (5, 5, 0, 10)
-        self.text.set_num_lines(0)
         self.size = self.calculate_size()
 
         self.add_child(self.speaker)
@@ -33,13 +31,14 @@ class DialogEntryComponent(UIComponent):
         width = self.parent.width
         height = self.text.height + self.speaker.height
         return (width, height)
+
 class DialogLogContainer(UIComponent):
     def __init__(self, name, parent=None):
         super().__init__(name=name, parent=parent)
         self.props.layout = UILayoutType.LIST
         self.props.bg_color = (33, 33, 33, 225)
         self.props.list_style = ListLayoutStyle.COLUMN
-        self.text_objects: List[TextComponent] = []
+        self.text_objects: List[PlainTextComponent] = []
         self.scroll_height = self.parent.height
 
     def scroll_up_down(self, dist):
@@ -71,7 +70,6 @@ class DialogLogContainer(UIComponent):
             return self.text_objects[-1]
         else:
             return None
-
 
 class DialogLogUI:
     entry_count = 0
