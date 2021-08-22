@@ -247,14 +247,14 @@ class StatScreen():
                 surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
                 for subitem in item.subitems:
                     if subitem is weapon:
-                        item_option = menu_options.FullItemOption(idx, subitem)
+                        item_option = menu_options.ItemOption(idx, subitem)
                         break
                 else:  # Shouldn't happen
-                    item_option = menu_options.FullItemOption(idx, item)
+                    item_option = menu_options.ItemOption(idx, item)
             else:
                 if item is weapon:
                     surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
-                item_option = menu_options.FullItemOption(idx, item)
+                item_option = menu_options.ItemOption(idx, item)
             item_option.draw(surf, 2, y_pos)
             self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'all')
 
@@ -266,14 +266,14 @@ class StatScreen():
                 surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
                 for subitem in item.subitems:
                     if subitem is accessory:
-                        item_option = menu_options.FullItemOption(aidx, subitem)
+                        item_option = menu_options.ItemOption(aidx, subitem)
                         break
                 else:  # Shouldn't happen
-                    item_option = menu_options.FullItemOption(aidx, item)
+                    item_option = menu_options.ItemOption(aidx, item)
             else:
                 if item is accessory:
                     surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
-                item_option = menu_options.FullItemOption(aidx, item)
+                item_option = menu_options.ItemOption(aidx, item)
             item_option.draw(surf, 2, y_pos)
             first = (idx == 0 and not self.unit.nonaccessories)
             self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'all', first=first)

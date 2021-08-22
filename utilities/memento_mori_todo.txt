@@ -21,7 +21,6 @@ Implement Skills
 Write Script
 Combat UI
 Implement new Stat Screen aesthetic
-     - Remove bars
      - Add Stat Icons?
 Implement new Dialogue aesthetic (celtic knot around dialog)
  - Parchment
@@ -39,7 +38,6 @@ Dream conversations
 Title Screen
 Portraits
 Personal Skills / Grave Weapons
-Arrow UI
 Cursor UI
 Tile Display UI
 Particle Effects
