@@ -1,4 +1,3 @@
-from app.constants import STATWIDTH
 from app.resources.resources import RESOURCES
 
 from app.engine.combat.solver import CombatPhaseSolver
