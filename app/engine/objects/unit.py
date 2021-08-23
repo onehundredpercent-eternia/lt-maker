@@ -333,6 +333,7 @@ class UnitObject(Prefab):
                     # rediscovered each time if necessary
                     self.equip(item)
                     _weapon = item
+                    break
         # Handle memento_staff mechanic
         if _weapon and _weapon.memento_staff:
             _weapon = _weapon.memento_staff.get_ward(_weapon)
