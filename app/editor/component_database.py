@@ -116,7 +116,7 @@ class StringItemComponent(BoolItemComponent):
         self.editor.setMaximumWidth(640)
         if not self._data.value:
             self._data.value = ''
-        self.editor.setText(self._data.value)
+        self.editor.setText(str(self._data.value))
         self.editor.textChanged.connect(self.on_value_changed)
         hbox.addWidget(self.editor)
 

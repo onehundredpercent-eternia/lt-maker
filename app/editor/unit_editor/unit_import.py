@@ -77,7 +77,7 @@ def get_from_xml(parent_dir: str, xml_fn: str) -> list:
         new_unit = units.UnitPrefab(
             nid, name, desc, None, level, klass, tags, 
             bases, growths, items, personal_skills, [],
-            wexp_gain, None, portrait)
+            wexp_gain, None, portrait, None, [])
         unit_list.append(new_unit)
 
     return unit_list

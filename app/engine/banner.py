@@ -2,6 +2,7 @@ from app.constants import WINWIDTH, WINHEIGHT
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine import engine, base_surf, image_mods, icons, text_funcs, item_system
+from app.data import skills, items
 
 class Banner():
     update_flag = False
@@ -50,14 +51,16 @@ class Banner():
             self.surf = image_mods.make_translucent(self.surf, .1)
 
         bg_surf = self.surf.copy()
-
+        
         left = 6
+        
         for idx, word in enumerate(self.text):
             word_width = FONT[self.font[idx]].width(word)
             FONT[self.font[idx]].blit(word, bg_surf, (left, self.size[1]//2 - self.font_height//2 + 3))
             left += word_width
 
         self.draw_icon(bg_surf)
+        
         engine.blit_center(surf, bg_surf)
         return surf
 
@@ -167,6 +170,52 @@ class Custom(Banner):
         self.item = None
         self.figure_out_size()
         self.sound = sound
+
+class CustomIcon(Banner):
+    def __init__(self, text, icon, sound=None):
+        self.text = [text]
+        self.font = ['text-white']
+        self.item = icon
+        self.figure_out_size()
+        self.sound = sound
+    
+    def figure_out_size(self):
+        self.length = FONT['text-white'].width(''.join(self.text))
+        self.length += 16
+        self.length -= self.length%8
+        self.length += (10 if self.item else 0)
+        self.font_height = 16
+        self.size = self.length, 24
+    
+    def draw_icon(self, surf):
+        if self.item:
+            if isinstance(self.item, skills.SkillPrefab):
+                icons.draw_skill(surf, self.item, (2, 7), simple=True)
+            elif isinstance(self.item, items.ItemPrefab):
+                icons.draw_item(surf, self.item, (2,7), cooldown=False)
+    
+    def draw(self, surf):
+        if not self.surf:
+            w, h = self.size
+            bg_surf = base_surf.create_base_surf(w, h, 'menu_bg_base')
+            self.surf = engine.create_surface((w + 2, h + 4), transparent=True)
+            self.surf.blit(bg_surf, (2, 4))
+            self.surf.blit(SPRITES.get('menu_gem_small'), (0, 0))
+            self.surf = image_mods.make_translucent(self.surf, .1)
+
+        bg_surf = self.surf.copy()
+        
+        left = 20
+        
+        for idx, word in enumerate(self.text):
+            word_width = FONT[self.font[idx]].width(word)
+            FONT[self.font[idx]].blit(word, bg_surf, (left, self.size[1]//2 - self.font_height//2 + 3))
+            left += word_width
+
+        self.draw_icon(bg_surf)
+        
+        engine.blit_center(surf, bg_surf)
+        return surf
 
 class Advanced(Banner):
     def __init__(self, text: list, font: list, sound=None):

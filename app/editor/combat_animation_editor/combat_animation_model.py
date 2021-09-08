@@ -127,7 +127,7 @@ class CombatEffectModel(ResourceCollectionModel):
         elif role == Qt.ForegroundRole:
             animation = self._data[index.row()]
             if not animation.palettes:
-                return QBrush(QColor("red"))
+                return QBrush(QColor("cyan"))
         return None
 
     def create_new(self):

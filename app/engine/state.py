@@ -54,7 +54,6 @@ class MapState(State):
     def draw(self, surf, culled_rect=None):
         game.camera.update()
         game.highlight.update()
-
         full_surf = engine.create_surface((WINWIDTH, WINHEIGHT))
         camera_cull = int(game.camera.get_x() * TILEWIDTH), int(game.camera.get_y() * TILEHEIGHT), MAPWIDTH, WINHEIGHT
         surf = game.map_view.draw(camera_cull, culled_rect)

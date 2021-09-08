@@ -90,6 +90,8 @@ class PortraitModel(ResourceCollectionModel):
                     pix = QPixmap(fn)
                     nid = str_utils.get_next_name(nid, [d.nid for d in RESOURCES.portraits])
                     if pix.width() == 128 and pix.height() == 112:
+                        # Swap to use colorkey color if it's not
+                        pix = editor_utilities.convert_to_correct_colorkey(pix)
                         new_portrait = Portrait(nid, fn, pix)
                         auto_frame_portrait(new_portrait)
                         RESOURCES.portraits.append(new_portrait)

@@ -21,7 +21,7 @@ class IgnoreDamage(SkillComponent):
     desc = "Unit will ignore all damage"
     tag = 'combat2'
 
-    def after_hit(self, actions, playback, unit, item, target, mode):
+    def after_take_hit(self, actions, playback, unit, item, target, mode):
         # Remove any acts that reduce my HP!
         did_something = False
         for act in reversed(actions):

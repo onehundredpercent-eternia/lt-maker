@@ -256,19 +256,19 @@ class UnitObject(Prefab):
         return DB.classes.get(self.klass).max_stats.get(stat_nid, 30)
 
     def get_damage_with_current_weapon(self) -> int:
-        if self.equipped_weapon:
-            return combat_calcs.damage(self, self.equipped_weapon)
+        if self.get_weapon():
+            return combat_calcs.damage(self, self.get_weapon())
         else:
             return 0
 
     def get_accuracy_with_current_weapon(self) -> int:
-        if self.equipped_weapon:
-            return combat_calcs.accuracy(self, self.equipped_weapon)
+        if self.get_weapon():
+            return combat_calcs.accuracy(self, self.get_weapon())
         else:
             return 0
 
     def get_avoid_with_current_weapon(self) -> int:
-        return combat_calcs.avoid(self, self.equipped_weapon)
+        return combat_calcs.avoid(self, self.get_weapon())
 
     @property
     def sprite(self):
@@ -581,6 +581,9 @@ class UnitObject(Prefab):
             self.starting_position = None
         self._fields = s_dict.get('_fields', {})
 
+        self.equipped_weapon = None
+        self.equipped_accessory = None
+
         self.skills = [game.get_skill(skill_uid) for skill_uid in s_dict['skills']]
         self.skills = [s for s in self.skills if s]
 
@@ -591,8 +594,6 @@ class UnitObject(Prefab):
 
         self.traveler = s_dict['traveler']
 
-        self.equipped_weapon = None
-        self.equipped_accessory = None
         self.equipped_weapon = self.get_weapon()
         self.equipped_accessory = self.get_accessory()
 

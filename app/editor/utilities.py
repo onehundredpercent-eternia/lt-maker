@@ -62,6 +62,17 @@ def color_convert_pixmap(pixmap: QtGui.QPixmap, convert_dict: dict) -> QtGui.QPi
     pixmap = QtGui.QPixmap.fromImage(im)
     return pixmap
 
+def convert_to_correct_colorkey(pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+    """
+    Checks if the topleft pixel is the correct colorkey backgroun
+    If it's not, converts all of that color to the correct colorkey
+    """
+    im = pixmap.toImage()
+    if im.pixel(0, 0) != qCOLORKEY:
+        im = color_convert(im, {im.pixel(0, 0): qCOLORKEY})
+        pixmap = QtGui.QPixmap.fromImage(im)
+    return pixmap
+
 def find_palette(image: QtGui.QImage) -> list:
     palette = []
     for x in range(image.width()):

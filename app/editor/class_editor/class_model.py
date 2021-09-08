@@ -124,5 +124,6 @@ class ClassModel(DragDropCollectionModel):
             nid, name, "", 1, movement_group, None, [], [], 20,
             bases, growths, growth_bonus, promotion, max_stats,
             [], wexp_gain)
+        new_class.fields = []
         DB.classes.append(new_class)
         return new_class

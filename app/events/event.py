@@ -1170,6 +1170,32 @@ class Event():
             game.state.change('alert')
             self.state = 'paused'
 
+        elif command.nid == 'alert_item':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            custom_string = values[0]
+            custom_item_nid = values[1]
+            if custom_item_nid in DB.items.keys():
+                custom_item = DB.items.get(custom_item_nid)
+            else:
+                logging.error("Couldn't find item with nid %s" % custom_item_nid)
+                return
+            game.alerts.append(banner.CustomIcon(custom_string, custom_item))
+            game.state.change('alert')
+            self.state = 'paused'
+
+        elif command.nid == 'alert_skill':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            custom_string = values[0]
+            custom_skill_nid = values[1]
+            if custom_skill_nid in DB.skills.keys():
+                custom_skill = DB.skills.get(custom_skill_nid)
+            else:
+                logging.error("Couldn't find skill with nid %s" % custom_skill_nid)
+                return
+            game.alerts.append(banner.CustomIcon(custom_string, custom_skill))
+            game.state.change('alert')
+            self.state = 'paused'
+
         elif command.nid == 'victory_screen':
             game.state.change('victory')
             self.state = 'paused'
@@ -1636,6 +1662,7 @@ class Event():
             script = None
 
         items = item_funcs.get_all_items(unit1)
+        item = None
         # Get item
         if len(values) > 3 and values[3]:
             item_nid = values[3]
@@ -1643,6 +1670,15 @@ class Event():
                 if item_nid == i.nid:
                     item = i
                     break
+            else:  # Create item on the fly
+                item_prefab = DB.items.get(values[3])
+                if not item_prefab:
+                    logging.error("Couldn't find item with nid %s" % values[3])
+                    return
+                # Create item
+                item = ItemObject.from_prefab(item_prefab)
+                item_system.init(item)
+                game.register_item(item)
         else:
             if items:
                 item = items[0]
@@ -1676,6 +1712,8 @@ class Event():
             unit = game.get_unit(unit_nid)
             if create:
                 unit = self._copy_unit(unit_nid)
+                if not unit:
+                    continue
             elif unit.position or unit.dead:
                 continue
             position = self._get_position(next_pos, unit, group, unit_nid)
@@ -1789,6 +1827,8 @@ class Event():
             unit = game.get_unit(unit_nid)
             if create:
                 unit = self._copy_unit(unit_nid)
+                if not unit:
+                    continue
             elif unit.position or unit.dead:
                 logging.warning("Unit %s in group %s already on map or dead", unit.nid, group.nid)
                 continue
@@ -1959,6 +1999,9 @@ class Event():
     def _copy_unit(self, unit_nid):
         level_prefab = DB.levels.get(game.level.nid)
         level_unit_prefab = level_prefab.units.get(unit_nid)
+        if not level_unit_prefab:
+            logging.warning("Could not find level unit prefab for unit with nid: %s", unit_nid)
+            return None
         new_nid = str_utils.get_next_int(level_unit_prefab.nid, game.unit_registry.keys())
         level_unit_prefab.nid = new_nid
         new_unit = UnitObject.from_prefab(level_unit_prefab)
@@ -2673,7 +2716,12 @@ class Event():
         if not unit_list:
             logging.warning("No units returned for list: %s" % (unit_list_str))
             return
+        if not all((isinstance(unit_nid, str) or isinstance(unit_nid, UnitObject)) for unit_nid in unit_list):
+            logging.error("%s: could not evaluate to NID list {%s}" % ('loop_units', unit_list_str))
+            return
         for unit_nid in reversed(unit_list):
+            if not isinstance(unit_nid, str):
+                unit_nid = unit_nid.nid  # Try this!
             macro_command = event_commands.TriggerScript([command.values[1], unit_nid])
             self.commands.insert(self.command_idx + 1, macro_command)
 
@@ -2858,7 +2906,7 @@ class Event():
         movement.queue(self.overworld_movement_manager)
         if follow:
             game.camera.do_slow_pan(1000)
-            game.camera.set_center(entity.position[0], entity.position[1])
+            game.camera.set_center(entity.display_position[0], entity.display_position[1])
         if 'overworld_movement' not in self.should_update.keys(): # queue continuous update function if not exists
             def update_movement(should_skip: bool):
                 if should_skip:

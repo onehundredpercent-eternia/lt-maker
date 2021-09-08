@@ -6,34 +6,33 @@ from app.data.weapons import WexpGain
 
 @dataclass
 class Klass(Prefab):
-    def __init__(self) -> None:
-        self.nid: str = None
-        self.name: str = None
+    nid: str = None
+    name: str = None
 
-        self.desc: str = ""
-        self.tier: int = 1
-        self.movement_group: str = None
+    desc: str = ""
+    tier: int = 1
+    movement_group: str = None
 
-        self.promotes_from: str = None
-        self.turns_into: list = None
-        self.tags: list = None
-        self.max_level: int = 20
+    promotes_from: str = None
+    turns_into: list = None
+    tags: list = None
+    max_level: int = 20
 
-        self.bases: dict = None
-        self.growths: dict = None
-        self.growth_bonus: dict = None
-        self.promotion: dict = None
-        self.max_stats: dict = None
+    bases: dict = None
+    growths: dict = None
+    growth_bonus: dict = None
+    promotion: dict = None
+    max_stats: dict = None
 
-        self.learned_skills: list = None
-        self.wexp_gain: dict = None
+    learned_skills: list = None
+    wexp_gain: dict = None
 
-        self.icon_nid: str = None
-        self.icon_index: tuple = (0, 0)
-        self.map_sprite_nid: str = None
-        self.combat_anim_nid: str = None
+    icon_nid: str = None
+    icon_index: tuple = (0, 0)
+    map_sprite_nid: str = None
+    combat_anim_nid: str = None
 
-        self.fields: list = None # arbitrary field, allow players to fill out anything they want for XTRA POWERFUL SCRIPTING
+    fields: list = None # arbitrary field, allow players to fill out anything they want for XTRA POWERFUL SCRIPTING
 
     def get_stat_titles(self):
         return ['Generic Bases', 'Generic Growths', 'Promotion Gains', 'Growth Bonuses', 'Stat Maximums']

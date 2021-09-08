@@ -7,30 +7,29 @@ from app.utilities.data import Data, Prefab
 
 @dataclass
 class UnitPrefab(Prefab):
-    def __init__(self) -> None:
-        self.nid: str = None
-        self.name: str = None
-        self.desc: str = None
-        self.variant: str = None
+    nid: str = None
+    name: str = None
+    desc: str = None
+    variant: str = None
 
-        self.level: int = None
-        self.klass: str = None
+    level: int = None
+    klass: str = None
 
-        self.tags: list = None
-        self.bases: dict = None
-        self.growths: dict = None
-        self.starting_items: list = None  # of tuples (ItemPrefab, droppable)
+    tags: list = None
+    bases: dict = None
+    growths: dict = None
+    starting_items: list = None  # of tuples (ItemPrefab, droppable)
 
-        self.learned_skills: list = None
-        self.unit_notes: list = None
-        self.wexp_gain: dict = None
+    learned_skills: list = None
+    unit_notes: list = None
+    wexp_gain: dict = None
 
-        self.alternate_classes: list = None
+    alternate_classes: list = None
 
-        self.portrait_nid: str = None
-        self.affinity: str = None
+    portrait_nid: str = None
+    affinity: str = None
 
-        self.fields: list = None # arbitrary field, allow players to fill out anything they want
+    fields: list = None # arbitrary field, allow players to fill out anything they want
 
     def get_stat_titles(self):
         return ["Bases", "Growths"]

@@ -221,7 +221,7 @@ class UIView():
 
         # Health text
         surf.blit(SPRITES.get('unit_info_hp'), (left + 34, top + height - 20))
-        surf.blit(SPRITES.get('unit_info_slash'), (left + 68, top + height - 19))
+        surf.blit(SPRITES.get('unit_info_slash'), (left + 66, top + height - 19))
         current_hp = unit.get_hp()
         max_hp = equations.parser.hitpoints(unit)
         font.blit_right(str(current_hp), surf, (left + 66, top + 16))

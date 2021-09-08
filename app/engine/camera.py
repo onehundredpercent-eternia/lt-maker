@@ -162,21 +162,21 @@ class Camera():
         if self.target_x < 0:
             self.target_x = 0
         elif self.target_x > tilemap.width - TILEX:
-            self.target_x = tilemap.width - TILEX
+            self.target_x = max(0, tilemap.width - TILEX)
         if self.target_y < 0:
             self.target_y = 0
         elif self.target_y > tilemap.height - TILEY:
-            self.target_y = tilemap.height - TILEY
+            self.target_y = max(0, tilemap.height - TILEY)
 
     def set_current_limits(self, tilemap):
         if self.current_x < 0:
             self.current_x = 0
         elif self.current_x > tilemap.width - TILEX:
-            self.current_x = tilemap.width - TILEX
+            self.current_x = max(0, tilemap.width - TILEX)
         if self.current_y < 0:
             self.current_y = 0
         elif self.current_y > tilemap.height - TILEY:
-            self.current_y = tilemap.height - TILEY
+            self.current_y = max(0, tilemap.height - TILEY)
 
     def do_slow_pan(self, duration):
         # queues up a slower algorithm for the next pan

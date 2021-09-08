@@ -77,10 +77,10 @@ def get_formatted_stat_pages() -> List[Tuple[str, List[Column]]]:
 
     equipment_page = [
         Column('50%', 'Equip', uif.HAlignment.LEFT, engine.create_surface(ICON_SIZE, True),
-                lambda unit: (unit.equipped_weapon.name if unit.equipped_weapon else None),
-                lambda unit: (icons.get_icon(unit.equipped_weapon) if unit.equipped_weapon else None),
-                lambda unit: (item_system.weapon_type(unit, unit.equipped_weapon) if unit.equipped_weapon else "",
-                              unit.equipped_weapon.name if unit.equipped_weapon else "",),
+                lambda unit: (unit.get_weapon().name if unit.get_weapon() else None),
+                lambda unit: (icons.get_icon(unit.get_weapon()) if unit.get_weapon() else None),
+                lambda unit: (item_system.weapon_type(unit, unit.get_weapon()) if unit.get_weapon() else "",
+                              unit.get_weapon().name if unit.get_weapon() else "",),
                 font='text-white'
                ),
         Column('16%', 'Atk', uif.HAlignment.RIGHT, None,

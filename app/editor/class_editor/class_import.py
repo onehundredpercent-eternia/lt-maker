@@ -89,7 +89,7 @@ def get_from_xml(parent_dir: str, xml_fn: str) -> list:
         new_class = Klass(
             nid, name, desc, tier, movement_group, promotes_from, turns_into, 
             tags, max_level, bases, growths, growth_bonus, promotion, maxes, 
-            learned_skills, wexp_gain, icon_nid, icon_index, map_sprite_nid)
+            learned_skills, wexp_gain, icon_nid, icon_index, map_sprite_nid, None, [])
         class_list.append(new_class)
 
     # Turns into

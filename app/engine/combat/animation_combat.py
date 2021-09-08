@@ -706,11 +706,11 @@ class AnimationCombat(BaseCombat, MockCombat):
         crit = '--'
         if stats is not None:
             if stats[0] is not None:
-                hit = str(stats[0])
+                hit = str(utils.clamp(stats[0], 0, 100))
             if stats[1] is not None:
                 damage = str(stats[1])
             if DB.constants.value('crit') and stats[2] is not None:
-                crit = str(stats[2])
+                crit = str(utils.clamp(stats[2], 0, 100))
         FONT['number-small2'].blit_right(hit, surf, (right, top))
         FONT['number-small2'].blit_right(damage, surf, (right, top + 8))
         if DB.constants.value('crit'):
