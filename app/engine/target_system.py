@@ -147,6 +147,7 @@ def get_valid_moves(unit, force=False) -> set:
 
     valid_moves = pathfinder.process(game.board, movement_left)
     valid_moves.add(unit.position)
+    valid_moves |= set(skill_system.witch_warp(unit))
     return valid_moves
 
 def get_path(unit, position, ally_block=False) -> list:

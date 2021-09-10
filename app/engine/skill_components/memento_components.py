@@ -55,3 +55,49 @@ class MementoShove(SkillComponent):
                 damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode)
                 damage = damage // 2
                 action.do(action.ChangeHP(target, -damage))
+
+class MementoTempo(SkillComponent):
+    nid = 'memento_tempo'
+    desc = "Gives +6 DEF if attacked last player phase, +6 POW otherwise"
+    tag = 'memento'
+
+    def init(self, skill):
+        self.skill.data['_has_attacked'] = False
+        self.skill.data['_last_turn'] = -1
+
+    def end_combat(self, playback, attacker, main_item, defender, mode):
+        if mode == 'attack' and defender and skill_system.check_enemy(attacker, defender):
+            action.do(action.SetObjData(self.skill, '_has_attacked', True))
+
+    def on_endstep(self, actions, playback, unit):
+        if self.skill.data['_has_attacked']:
+            action.do(action.SetObjData(self.skill, '_last_turn', game.turncount))
+            action.do(action.SetObjData(self.skill, '_has_attacked', False))
+        else:
+            action.do(action.SetObjData(self.skill, '_last_turn', -1))
+            
+    def on_end_chapter(self, unit, skill):
+        action.do(action.SetObjData(self.skill, '_last_turn', -1))
+
+    def stat_change(self, unit) -> dict:
+        if game.turncount > 0:
+            if game.turncount > self.skill.data['_last_turn'] + 1:
+                return {'POW': 6}
+            else:
+                return {'DEF': 6}
+        return {}
+
+class WitchWarp(SkillComponent):
+    nid = 'witch_warp'
+    desc = "Allows unit to witch warp to a given unit"
+    tag = 'memento'
+
+    expose = Type.Unit
+    value = None
+
+    def witch_warp(self, unit) -> list:
+        partner_pos = game.board.get_unit(self.value)
+        if partner_pos:
+            return target_system.get_adjacent_positions(partner_pos)
+        else:
+            return []

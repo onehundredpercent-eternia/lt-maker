@@ -34,6 +34,10 @@ class Defaults():
         return 0
 
     @staticmethod
+    def witch_warp(unit) -> list:
+        return []
+
+    @staticmethod
     def exp_multiplier(unit1, unit2) -> float:
         return 1.0
 
