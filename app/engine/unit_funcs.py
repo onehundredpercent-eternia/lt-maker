@@ -276,3 +276,5 @@ def check_flanked(unit) -> bool:
         if left and right and skill_system.check_enemy(unit, left) and skill_system.check_enemy(unit, right):
             return True
     return False
+
+check_flanking = check_flanked

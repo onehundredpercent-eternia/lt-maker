@@ -10,7 +10,7 @@ from app.engine.game_state import game
 
 class HelpDialog():
     help_logo = SPRITES.get('help_logo')
-    font = FONT['convo-black']
+    font = FONT['convo-white']
 
     def __init__(self, desc, num_lines=2, name=False):
         self.name = name

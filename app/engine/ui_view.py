@@ -581,7 +581,7 @@ class UIView():
             mt = combat_calcs.damage(attacker, spell)
             if mt is not None:
                 height += 16
-            real_surf = base_surf.create_base_surf((80, height), 'menu_bg_base_opaque')
+            real_surf = base_surf.create_base_surf((80, height), 'menu_bg_base')
             bg_surf = engine.create_surface((real_surf.get_width() + 2, real_surf.get_height() + 4), transparent=True)
             bg_surf.blit(real_surf, (2, 4))
             bg_surf.blit(SPRITES.get('menu_gem_small'), (0, 0))
@@ -702,7 +702,7 @@ class ItemDescriptionPanel():
 
     def create_surf(self):
         width, height = 96, 56
-        sub_bg_surf = base_surf.create_base_surf(width, height, 'menu_bg_base_opaque')
+        sub_bg_surf = base_surf.create_base_surf(width, height, 'menu_bg_base')
         bg_surf = engine.create_surface((width + 2, height + 4), transparent=True)
         bg_surf.blit(sub_bg_surf, (2, 4))
         bg_surf.blit(SPRITES.get('menu_gem_small'), (0, 0))

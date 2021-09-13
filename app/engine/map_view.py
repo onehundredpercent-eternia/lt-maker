@@ -1,11 +1,13 @@
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, MAPWIDTH
 
 from app.engine import engine
+from app.engine.value_noise import ValueNoise
 from app.engine.game_state import game
 
 class MapView():
     def __init__(self):
         self._unit_surf = engine.create_surface((MAPWIDTH, WINHEIGHT), transparent=True)
+        self._value_noise = ValueNoise()
 
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
         unit_surf = engine.copy_surface(self._unit_surf)
@@ -77,6 +79,8 @@ class MapView():
                 pass # Don't draw units
         else:
             self.draw_units(surf, cull_rect)
+
+        surf = self._value_noise.draw(surf)
 
         surf = game.cursor.draw(surf, cull_rect)
 
