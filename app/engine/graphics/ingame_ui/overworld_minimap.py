@@ -94,11 +94,11 @@ class OverworldMinimap(uif.UIComponent):
         entity_positions = []
         if self.overworld:
             for entity in self.overworld.entities.values():
-                if entity.on_node and entity.position:
+                if entity.on_node and entity.display_position:
                     if entity.team == 'player':
-                        entity_positions.append((True, self.convert_overworld_pos_to_minimap_pos(entity.position)))
+                        entity_positions.append((True, self.convert_overworld_pos_to_minimap_pos(entity.display_position)))
                     else:
-                        entity_positions.append((False, self.convert_overworld_pos_to_minimap_pos(entity.position)))
+                        entity_positions.append((False, self.convert_overworld_pos_to_minimap_pos(entity.display_position)))
         return entity_positions
 
     def get_cursor_position(self) -> Point:

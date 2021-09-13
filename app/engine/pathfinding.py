@@ -3,10 +3,10 @@ import heapq
 from app.utilities import utils
 
 class Djikstra():
-    __slots__ = ['open', 'closed', 'cells', 'width', 'height', 'start_pos', 
+    __slots__ = ['open', 'closed', 'cells', 'width', 'height', 'start_pos',
                  'start_cell', 'unit_team', 'pass_through', 'ai_fog_of_war']
 
-    def __init__(self, start_pos: tuple, grid: list, width: int, height: int, 
+    def __init__(self, start_pos: tuple, grid: list, width: int, height: int,
                  unit_team: str, pass_through: bool, ai_fog_of_war: bool):
         self.open = []
         heapq.heapify(self.open)
@@ -64,7 +64,7 @@ class Djikstra():
         while self.open:
             # pop cell from heap queue
             g, cell = heapq.heappop(self.open)
-            # If we've traveled too far -- always g ordered, so leaving at the 
+            # If we've traveled too far -- always g ordered, so leaving at the
             # first sign of trouble will always work
             if g > movement_left:
                 return {(cell.x, cell.y) for cell in self.closed}
@@ -90,8 +90,8 @@ class Djikstra():
         return {(cell.x, cell.y) for cell in self.closed}
 
 class AStar():
-    def __init__(self, start_pos: tuple, goal_pos: tuple, grid: list, 
-                 width: int, height: int, unit_team: str, 
+    def __init__(self, start_pos: tuple, goal_pos: tuple, grid: list,
+                 width: int, height: int, unit_team: str,
                  pass_through: bool = False, ai_fog_of_war: bool = False):
         self.cells = grid
         self.width = width
@@ -122,7 +122,7 @@ class AStar():
     def set_goal_pos(self, goal_pos):
         self.goal_pos = goal_pos
         self.end_cell = self.get_cell(goal_pos[0], goal_pos[1])
-        self.adj_end = self.get_adjacent_cells(self.end_cell) 
+        self.adj_end = self.get_adjacent_cells(self.end_cell)
 
     def get_heuristic(self, cell) -> float:
         """
@@ -184,7 +184,7 @@ class AStar():
                 return True
         return False
 
-    def process(self, game_board, adj_good_enough: bool = False, 
+    def process(self, game_board, adj_good_enough: bool = False,
                 ally_block: bool = False, limit: int = None) -> list:
         # Add starting cell to open queue
         heapq.heappush(self.open, (self.start_cell.f, self.start_cell))

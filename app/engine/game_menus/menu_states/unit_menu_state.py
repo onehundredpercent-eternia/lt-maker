@@ -1,13 +1,16 @@
-from app.engine.fluid_scroll import FluidScroll
 from typing import Tuple
-from app.engine.game_menus.menu_components.unit_menu.unit_menu import UnitMenuUI
-from app.engine.objects.unit import UnitObject
 
+from app.engine import background
+from app.engine.fluid_scroll import FluidScroll
+from app.engine.game_menus.menu_components.unit_menu.unit_menu import \
+    UnitMenuUI
+from app.engine.game_state import game
+from app.engine.objects.overworld.overworld_entity import OverworldEntityTypes
+from app.engine.objects.unit import UnitObject
 from app.engine.sound import SOUNDTHREAD
 from app.engine.state import State
-from app.engine import background
-from app.engine.game_state import game
 from app.utilities.enums import Direction
+
 
 class UnitMenuState(State):
     name = 'unit_menu'
@@ -22,7 +25,9 @@ class UnitMenuState(State):
         # else, all party units
         if self.in_level: # player is in a level, get deployed
             self.all_player_units = game.get_player_units()
-        elif game.is_displaying_overworld() and game.overworld_controller.selected_entity: # overworld, get all party units
+        elif (game.is_displaying_overworld() and
+              game.overworld_controller.selected_entity and
+              game.overworld_controller.selected_entity.dtype == OverworldEntityTypes.PARTY): # overworld, get all party units
             self.all_player_units = game.get_units_in_party(game.overworld_controller.selected_entity.prefab.nid)
         else: # all player units, everywhere, who are playable
             self.all_player_units = []

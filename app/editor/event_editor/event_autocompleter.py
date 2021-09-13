@@ -15,7 +15,7 @@ class Completer(QCompleter):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.settings = MainSettingsController()
-        
+
         self.setFilterMode(Qt.MatchContains)
         self.activated.connect(self.changeCompletion)
 

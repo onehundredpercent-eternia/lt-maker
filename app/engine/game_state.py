@@ -518,7 +518,7 @@ class GameState():
     @current_party.setter
     def current_party(self, party_nid: NID):
         self._current_party = party_nid
-        if self.overworld_controller:
+        if self.overworld_controller and party_nid:
             self.overworld_controller.select_entity(self._current_party)
 
     @property

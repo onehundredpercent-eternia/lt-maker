@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.sprites import SPRITES
 import re
 from typing import Dict, TYPE_CHECKING, List
 
@@ -854,6 +855,19 @@ class OverworldEntity(Validator):
     @lru_cache()
     def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
         valids = [(party.name, party.nid) for party in DB.parties.values()]
+        return valids
+
+class Sprite(Validator):
+    desc = 'accepts the filename of any sprite resource in the project.'
+
+    def validate(self, text: NID, level: NID):
+        if text in SPRITES.keys():
+            return text
+        return None
+
+    @lru_cache()
+    def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
+        valids = [(sprite_name, sprite_name) for sprite_name in SPRITES.keys()]
         return valids
 
 validators = {validator.__name__: validator for validator in Validator.__subclasses__()}

@@ -27,17 +27,36 @@ class EffectiveTag(ItemComponent):
     expose = (Type.List, Type.Tag)
     value = []
 
+    def _check_negate(self, target) -> bool:  
+        # Returns whether it DOES negate the effectiveness
+        # Still need to check negation (Fili Shield, etc.)
+        if any(skill.negate for skill in target.skills):
+            return True
+        for skill in target.skills:
+            # Do the tags match?
+            if skill.negate_tags and skill.negate_tags.value and \
+                    any(tag in self.value for tag in skill.negate_tags.value):
+                return True
+        # No negation, so proceed with effective damage
+        return False
+
     def dynamic_damage(self, unit, item, target, mode=None) -> int:
         if any(tag in target.tags for tag in self.value):
+            if self._check_negate(target):
+                return 0
             return item.data.get('effective', 0)
         return 0
 
     def item_icon_mod(self, unit, item, target, sprite):
         if any(tag in target.tags for tag in self.value):
+            if self._check_negate(target):
+                return sprite
             sprite = image_mods.make_white(sprite.convert_alpha(), abs(250 - engine.get_time()%500)/250)
         return sprite
 
     def danger(self, unit, item, target) -> bool:
+        if self._check_negate(target):
+            return False
         return any(tag in target.tags for tag in self.value)
 
 class Brave(ItemComponent):

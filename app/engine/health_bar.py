@@ -51,6 +51,8 @@ class HealthBar():
 class CombatHealthBar(HealthBar):
     full_hp_blip = SPRITES.get('full_hp_blip')
     empty_hp_blip = SPRITES.get('empty_hp_blip')
+    overflow_hp_blip = SPRITES.get('overflow_hp_blip')
+    overflowpurple_hp_blip = SPRITES.get('overflowpurple_hp_blip')
     end_hp_blip = engine.subsurface(full_hp_blip, (0, 0, 1, full_hp_blip.get_height()))
     colors = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1]
     speed = utils.frames2ms(2)
@@ -87,12 +89,14 @@ class CombatHealthBar(HealthBar):
         font = FONT['number-small2']
         if self.big_number():
             font = FONT['number-big2']
-        if self.displayed_hp <= 80:
+        if self.displayed_hp <= 240:
             font.blit_right(str(self.displayed_hp), surf, (left, top - 4))
         else:
             font.blit_right('??', surf, (left, top - 4))
 
         full_hp_blip = engine.subsurface(self.full_hp_blip, (self.colors[self.color_tick] * 2, 0, 2, self.full_hp_blip.get_height()))
+        overflow_hp_blip = engine.subsurface(self.overflow_hp_blip, (self.colors[self.color_tick] * 2, 0, 2, self.overflow_hp_blip.get_height()))
+        overflowpurple_hp_blip = engine.subsurface(self.overflowpurple_hp_blip, (self.colors[self.color_tick] * 2, 0, 2, self.overflowpurple_hp_blip.get_height()))
         if self.unit.get_max_hp() <= 40:
             for idx in range(self.displayed_hp):
                 surf.blit(full_hp_blip, (left + idx * 2 + 5, top + 1))
@@ -113,6 +117,35 @@ class CombatHealthBar(HealthBar):
             for idx in range(right - max(40, self.displayed_hp)):
                 surf.blit(self.empty_hp_blip, (left + (idx + max(self.displayed_hp - 40, 0)) * 2 + 5, top - 4))
             surf.blit(self.end_hp_blip, (left + (right - 40) * 2 + 5, top - 4))
+            # These are drawn OVER the previous 40 + 40
+            # Lower 80 Overflow hp
+            for idx in range(utils.clamp(self.displayed_hp - 80, 0, 40)):
+                surf.blit(overflow_hp_blip, (left + idx * 2 + 5, top + 4))
+            right = utils.clamp(self.unit.get_max_hp(), 0, 40)
+            for idx in range(right - max(80, self.displayed_hp)):
+                surf.blit(self.empty_hp_blip, (left + (idx + self.displayed_hp) * 2 + 5, top + 4))
+            surf.blit(self.end_hp_blip, (left + (right - 80) * 2 + 5, top + 4))
+            # Upper 80 Overflow hp
+            for idx in range(utils.clamp(self.displayed_hp - 120, 0, 40)):
+                surf.blit(overflow_hp_blip, (left + idx * 2 + 5, top - 4))
+            right = utils.clamp(self.unit.get_max_hp(), 0, 40)
+            for idx in range(right - max(120, self.displayed_hp)):
+                surf.blit(self.empty_hp_blip, (left + (idx + self.displayed_hp) * 2 + 5, top - 4))
+            surf.blit(self.end_hp_blip, (left + (right - 120) * 2 + 5, top - 4))
+            # Lower 120 Overflowpurple hp
+            for idx in range(utils.clamp(self.displayed_hp - 160, 0, 40)):
+                surf.blit(overflowpurple_hp_blip, (left + idx * 2 + 5, top + 4))
+            right = utils.clamp(self.unit.get_max_hp(), 0, 40)
+            for idx in range(right - max(160, self.displayed_hp)):
+                surf.blit(self.empty_hp_blip, (left + (idx + self.displayed_hp) * 2 + 5, top + 4))
+            surf.blit(self.end_hp_blip, (left + (right - 160) * 2 + 5, top + 4))
+            # Upper 120 Overflowpurple hp
+            for idx in range(utils.clamp(self.displayed_hp - 200, 0, 40)):
+                surf.blit(overflowpurple_hp_blip, (left + idx * 2 + 5, top - 4))
+            right = utils.clamp(self.unit.get_max_hp(), 0, 40)
+            for idx in range(right - max(200, self.displayed_hp)):
+                surf.blit(self.empty_hp_blip, (left + (idx + self.displayed_hp) * 2 + 5, top - 4))
+            surf.blit(self.end_hp_blip, (left + (right - 200) * 2 + 5, top - 4))
 
 class MapHealthBar(HealthBar):
     time_for_change_min = 200

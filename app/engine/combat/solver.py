@@ -249,6 +249,7 @@ class CombatPhaseSolver():
                     if crit_roll < to_crit:
                         crit = True
             if crit:
+                skill_system.before_crit(actions, playback, attacker, item, defender, mode)
                 item_system.on_crit(actions, playback, attacker, item, defender, def_pos, mode, first_item)
                 if defender:
                     playback.append(('mark_crit', attacker, defender, self.attacker, item))

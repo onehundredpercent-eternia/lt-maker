@@ -193,7 +193,7 @@ class UIComponent():
         self.name = name
 
         self.children: List[UIComponent] = []
-        self.manual_surfaces: List[Tuple[Tuple[int, int], engine.Surface, int]] = []
+        self.manual_surfaces: List[Tuple[Tuple[int, int], engine.Surface, int, str]] = []
 
         self.props: ComponentProperties = ComponentProperties(self)
 
@@ -389,7 +389,7 @@ class UIComponent():
         self._frozen_children.clear()
         self._frozen = False
 
-    def add_surf(self, surf: engine.Surface, pos: Tuple[int, int] = (0, 0), z_level: int = 0):
+    def add_surf(self, surf: engine.Surface, pos: Tuple[int, int] = (0, 0), z_level: int = 0, name: str = None):
         """Add a hard-coded surface to this component.
 
         Args:
@@ -397,7 +397,16 @@ class UIComponent():
             pos (Tuple[int, int]): the coordinate position of the top left of surface
         """
         self._should_redraw = True
-        self.manual_surfaces.append((pos, surf, z_level))
+        self.manual_surfaces.append((pos, surf, z_level, name))
+
+    def remove_surf(self, surf_name: str):
+        """remove all surfaces with name from the manual surfaces
+
+        Args:
+            surf_name (str): name of the surface passed in add_surf
+        """
+        self._should_redraw = True
+        self.manual_surfaces = [surf_tup for surf_tup in self.manual_surfaces if not surf_tup[3] == surf_name]
 
     def should_redraw(self) -> bool:
         if not self.enabled:

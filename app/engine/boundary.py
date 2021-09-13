@@ -17,10 +17,10 @@ class BoundaryInterface():
                       'all_attack': SPRITES.get('boundary_purple'),
                       'spell': SPRITES.get('boundary_green'),
                       'all_spell': SPRITES.get('boundary_blue')}
-        
+
         self.width = width
         self.height = height
-        
+
         # grid of sets. Each set contains the unit nids that are capable
         # of attacking that spot
         # The movement portion -- unit's have an area of influence
@@ -277,10 +277,10 @@ class BoundaryInterface():
                         if not game.board.in_vision((x, y)):
                             if game.level_vars['_fog_of_war'] == 2:
                                 image = self.fog_of_war_tile2
-                            else:    
+                            else:
                                 image = self.fog_of_war_tile1
                             self.fog_of_war_surf.blit(image, (x * TILEWIDTH, y * TILEHEIGHT))
-                        
+
             im = engine.subsurface(self.fog_of_war_surf, cull_rect)
             surf.blit(im, (0, 0))
         return surf

@@ -21,6 +21,7 @@ from app.engine.overworld.overworld_map_sprites import (OverworldNodeSprite,
 from app.engine.unit_sound import UnitSound
 from app.resources.sounds import Song
 from app.utilities.typing import NID, Point
+from .overworld_entity import OverworldEntityObject
 
 import logging
 
@@ -46,117 +47,6 @@ class OverworldNodeObject():
         node.prefab = prefab
         node.sprite = OverworldNodeSprite(prefab)
         return node
-
-class OverworldEntityObject():
-    def __init__(self):
-        # an OverworldEntityObject is just a wrapper around a unit that represents a party on the overworld.
-        self.on_node: NID = None                 # NID of node on which the unit is standing
-        self.prefab: PartyObject = None          # party object which this entity represents
-        self.team: NID = 'player'                # team of party. @TODO: Implement non-player entities.
-        self.sprite: OverworldUnitSprite = None    # sprite for the entity
-
-        # private data
-        self.unit: UnitObject | UnitPrefab = None   # Unit data for this entity
-        self._sound: UnitSound = None               # sound associated
-        self.temporary_position: Point = None       # NOTE: because the 'official' position of the entity (see below)
-                                                    # is always on top of a node, this temporary position attribute
-                                                    # is chiefly used in service of animation - when walking along
-                                                    # roads, etc.
-        self._display_position: Point = None        # ditto as above
-        self._nid: NID = None                       # nid if no party is associated
-
-    @classmethod
-    def from_prefab(cls, initial_node: NID, prefab: PartyObject, unit_registry: Dict[NID, UnitObject]):
-        entity = cls()
-        entity.prefab = prefab
-        entity.on_node = initial_node
-
-        # create unit
-        if prefab.leader_nid in unit_registry:
-            entity.unit = unit_registry.get(prefab.leader_nid)
-        elif prefab.leader_nid in DB.units.keys():
-            entity.unit = DB.units.get(prefab.leader_nid)
-        else:
-            entity.unit = DB.units.values()[0]
-            logging.error("OverworldEntityObject cannot find unit %s", prefab.leader_nid)
-        entity.sprite = OverworldUnitSprite(entity.unit, entity)
-        return entity
-
-    @classmethod
-    def dummy_entity(cls, nid: NID, initial_position: Point, unit: UnitPrefab):
-        entity = cls()
-        entity.prefab = None
-        entity.on_node = None
-
-        entity.unit = unit
-        entity.sprite = OverworldUnitSprite(entity.unit, entity)
-        entity.display_position = initial_position
-        entity._nid = nid
-        return entity
-
-    def save(self):
-        s_dict = {'on_node_nid': self.on_node,
-                  'pnid': self.nid,
-
-                  # only used for dummy entities
-                  'position': self.display_position,
-                  'unit_nid': self.unit.nid if self.unit else None,
-                  'team': self.team}
-        return s_dict
-
-    @classmethod
-    def restore(cls, s_dict, game: GameState) -> OverworldEntityObject:
-        prefab_nid = s_dict['pnid']
-        if prefab_nid:
-            party_prefab = game.parties.get(prefab_nid)
-            on_node_nid = s_dict['on_node_nid']
-            entity_object = OverworldEntityObject.from_prefab(on_node_nid, party_prefab, game.unit_registry)
-            entity_object.team = s_dict['team']
-            return entity_object
-        else: # dummy entity
-            nid = s_dict['pnid']
-            pos = s_dict['position']
-            unit_nid = s_dict['unit_nid']
-            entity_object = OverworldEntityObject.dummy_entity(nid, pos, DB.units.get(unit_nid, DB.units.values[0]))
-            return entity_object
-
-    @property
-    def position(self) -> Point:
-        if self.on_node:
-            for overworld in DB.overworlds.values():
-                node = overworld.overworld_nodes.get(self.on_node, None)
-                if node is not None:
-                    return node.pos
-        return None
-
-    @property
-    def display_position(self) -> Point:
-        if self._display_position:
-            return self._display_position
-        elif self.temporary_position:
-            return self.temporary_position
-        elif self.sprite.fake_position:
-            return self.sprite.fake_position
-        else:
-            return self.position
-
-    @display_position.setter
-    def display_position(self, pos: Point):
-        self._display_position = pos
-
-    @property
-    def nid(self) -> NID:
-        if self._nid:
-            return self._nid
-        else:
-            return self.prefab.nid
-
-    @property
-    def sound(self):
-        if not self._sound:
-            from app.engine import unit_sound
-            self._sound = unit_sound.UnitSound(self.unit)
-        return self._sound
 
 class RoadObject():
     def __init__(self):
@@ -265,8 +155,8 @@ class OverworldObject():
         if tilemap_prefab:
             overworld.tilemap = TileMapObject.from_prefab(tilemap_prefab)
         overworld.prefab = prefab
-        for pnid, party in party_registry.items():
-            overworld_party = OverworldEntityObject.from_prefab(None, party, unit_registry)
+        for pnid in party_registry.keys():
+            overworld_party = OverworldEntityObject.from_party_prefab(None, pnid, unit_registry)
             overworld.overworld_entities[pnid] = overworld_party
         return overworld
 

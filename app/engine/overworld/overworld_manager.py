@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
@@ -7,7 +8,7 @@ if TYPE_CHECKING:
 
 from app.engine.objects.overworld import (OverworldEntityObject,
                                           OverworldNodeObject, OverworldObject,
-                                          RoadObject)
+                                          RoadObject, OverworldEntityTypes)
 from app.engine.objects.tilemap import TileMapObject
 from app.utilities.typing import NID, Point
 from app.utilities.algorithms.ltgraph import LTGraph
@@ -71,7 +72,7 @@ class OverworldManager():
             # select the first player party on the map
             for entity in self._overworld.overworld_entities.values():
                 if entity.team == 'player':
-                    if entity.on_node is not None and entity.position:
+                    if entity.on_node is not None and entity.display_position:
                         self._overworld.selected_party_nid = entity.nid
                         break
         return self.entities[self._overworld.selected_party_nid]
@@ -83,9 +84,17 @@ class OverworldManager():
         self._overworld.overworld_entities.pop(entity_nid, None)
 
     def select_entity(self, party: OverworldEntityObject | NID):
+        """This can only select parties.
+        """
+        if not party:
+            return
         if isinstance(party, OverworldEntityObject):
             party = party.nid
-        self._overworld.selected_party_nid = party
+        selected_entity = self._overworld.overworld_entities[party]
+        if selected_entity and selected_entity.dtype == OverworldEntityTypes.PARTY:
+            self._overworld.selected_party_nid = party
+        else:
+            logging.warning('attempted to select non-existent or non-party entity %s', party)
 
     def set_node_property(self, node: OverworldNodeObject | NID, prop: str, unique=False):
         """Add property to a node. If unique is True, it will remove this property
@@ -164,7 +173,7 @@ class OverworldManager():
         if isinstance(pos, OverworldNodeObject):
             pos = pos.position
         for entity in self._overworld.overworld_entities.values():
-            if entity.position == pos:
+            if entity.display_position == pos:
                 return entity
         return None
 

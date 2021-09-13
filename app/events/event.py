@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.sprites import SPRITES
 import logging
 import re
 from typing import Callable, Dict, List, Tuple
@@ -238,6 +239,10 @@ class Event():
         for key in delete:
             del self.portraits[key]
 
+        # draw all uiframework elements
+        ui_surf = self.overlay_ui.to_surf()
+        surf.blit(ui_surf, (0, 0))
+
         sorted_portraits = sorted(self.portraits.values(), key=lambda x: x.priority)
         for portrait in sorted_portraits:
             portrait.draw(surf)
@@ -259,9 +264,6 @@ class Event():
             for dialog_box in to_draw:
                 dialog_box.update()
                 dialog_box.draw(surf)
-            # draw all uiframework elements
-            ui_surf = self.overlay_ui.to_surf()
-            surf.blit(ui_surf, (0, 0))
 
         # Fade to black
         if self.transition_state:
@@ -1311,6 +1313,24 @@ class Event():
 
         elif command.nid == 'move_in_initiative':
             self.move_in_initiative(command)
+
+        elif command.nid == 'draw_overlay_sprite':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            name = values[0]
+            sprite_nid = values[1]
+            z = 0
+            pos = (0, 0)
+            if len(values) > 2:
+                pos = eval(values[2])  # Why do we eval this instead of just reading position like we do elsewhere?
+            if len(values) > 3:
+                z = eval(values[3])  # Why do we eval this also?
+            sprite = SPRITES.get(sprite_nid)
+            self.overlay_ui.add_surf(sprite, pos, z, name)
+
+        elif command.nid == 'remove_overlay_sprite':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            name = values[0]
+            self.overlay_ui.remove_surf(name)
 
     def add_portrait(self, command):
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -2845,7 +2865,6 @@ class Event():
             entity.sprite.set_transition('fade_out')
         entity.on_node = None
         entity.display_position = None
-        entity.temporary_position = None
 
     def overworld_move_unit(self, entity_nid: NID, target_location: Tuple[int, int] | NID,
                             speed_adj: float, path: List[Point], flags={}):
@@ -2854,6 +2873,9 @@ class Event():
 
         # function
         entity = game.overworld_controller.entities.get(entity_nid, None)
+        if not entity.display_position:
+            logging.error("%s: Attempting to move entity %s with no position - is it on the overworld?", 'overworld_move_unit', entity_nid)
+            return
 
         follow = 'no_follow' not in flags
         block = 'no_block' not in flags
@@ -2865,7 +2887,6 @@ class Event():
                 entity.sprite.set_transition('fade_out')
                 entity.on_node = None
                 entity.display_position = None
-                entity.temporary_position = None
         else:
             def disable_func():
                 pass
@@ -2879,6 +2900,9 @@ class Event():
         if path:
             # i'm disabling linger for arbitrary paths as a default, because i think it makes more sense that way
             movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)
+            if self.do_skip: # we are skipping; resolve this instantly
+                entity.display_position = path[-1]
+                return
         elif isinstance(target_location, NID):
             target_node: OverworldNodeObject = game.overworld_controller.nodes.get(target_location, None)
             if entity.on_node: # we're pathfinding to a node
@@ -2891,6 +2915,9 @@ class Event():
         elif isinstance(target_location, Tuple):
             path = [target_location]
             movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)
+            if self.do_skip: # we are skipping; resolve this instantly
+                entity.display_position = path[-1]
+                return
         else:
             logging.error("%s: No valid path or target location specified: path: %s | target_location: %s", "overworld_move_unit", str(path), str(target_location))
             return
@@ -2994,10 +3021,9 @@ class Event():
             return
         if len(values) > 1 and values[1]:
             unit_nid = values[1]
-            unit = DB.units.get(unit_nid)
-            if not unit:
+            if not unit_nid in DB.units.keys():
                 logging.error('%s: No such unit with nid %s', 'create_overworld_entity', unit_nid)
-            new_entity = OverworldEntityObject.dummy_entity(entity_nid, None, unit)
+            new_entity = OverworldEntityObject.from_unit_prefab(entity_nid, None, unit_nid)
             game.overworld_controller.add_entity(new_entity)
 
     def clean_up_roaming(self, command):
