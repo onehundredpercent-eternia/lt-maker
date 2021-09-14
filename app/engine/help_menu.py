@@ -124,6 +124,65 @@ class HelpDialog():
 
         return surf
 
+class StatDialog(HelpDialog):
+    font_green = FONT['text-green']
+    font_red = FONT['text-red']
+
+    def __init__(self, desc, bonuses):
+        self.last_time = self.start_time = 0
+        self.transition_in = False
+        self.transition_out = 0
+
+        self.desc = text_funcs.translate(desc)
+        self.bonuses = bonuses
+        
+        self.lines = text_funcs.line_wrap(self.font, self.desc, 148)
+        self.size_y = self.font.height * (len(self.lines) + len(self.bonuses)) + 16
+
+        self.help_surf = base_surf.create_base_surf(160, self.size_y, 'message_bg_base')
+        self.h_surf = engine.create_surface((160, self.size_y + 3), transparent=True)
+
+    def draw(self, surf, pos, right=False):
+        time = engine.get_time()
+        if time > self.last_time + 1000:  # If it's been at least a second since last update
+            self.start_time = time - 16
+            self.transition_in = True
+            self.transition_out = 0
+        self.last_time = time
+
+        help_surf = engine.copy_surface(self.help_surf)
+        if cf.SETTINGS['text_speed'] > 0:
+            num_characters = int(2 * (time - self.start_time) / float(cf.SETTINGS['text_speed']))
+        else:
+            num_characters = 1000
+        
+        for idx, line in enumerate(self.lines):
+            if num_characters > 0:
+                self.font.blit(line[:num_characters], help_surf, (8, self.font.height * idx + 6))
+                num_characters -= len(line)
+
+        y_height = len(self.lines) * 16
+        for idx, (val, bonus) in enumerate(self.bonuses):
+            if num_characters > 0:
+                top = self.font.height * idx + 6 + y_height
+                if idx == 0:
+                    self.font.blit(str(val), help_surf, (8, top))
+                elif val > 0:
+                    self.font_green.blit("+" + str(val), help_surf, (8, top))
+                elif val < 0:
+                    self.font_red.blit("-" + str(val), help_surf, (8, top))
+                else:
+                    self.font.blit(str(val), help_surf, (8, top))
+                self.font.blit(bonus[:num_characters], help_surf, (32, top))
+                num_characters -= len(bonus)
+
+        if right:
+            surf = self.final_draw(surf, (pos[0] - help_surf.get_width(), pos[1]), time, help_surf)
+        else:
+            surf = self.final_draw(surf, pos, time, help_surf)
+        return surf
+
+
 class ItemHelpDialog(HelpDialog):
     font_blue = FONT['text-blue']
     font_yellow = FONT['text-yellow']
@@ -170,7 +229,6 @@ class ItemHelpDialog(HelpDialog):
         self.h_surf = engine.create_surface((160, size_y + 3), transparent=True)
 
     def draw(self, surf, pos, right=False):
-        time = engine.get_time()
         time = engine.get_time()
         if time > self.last_time + 1000:  # If it's been at least a second since last update
             self.start_time = time - 16

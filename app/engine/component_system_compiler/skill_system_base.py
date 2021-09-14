@@ -154,6 +154,18 @@ def stat_change(unit, stat_nid) -> int:
                     bonus += d.get(stat_nid, 0)
     return bonus
 
+def stat_change_contribution(unit, stat_nid) -> list:
+    contribution = []
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('stat_change'):
+                if component.ignore_conditional or condition(skill, unit):
+                    d = component.stat_change(unit)
+                    val = d.get(stat_nid, 0)
+                    if val != 0:
+                        contribution.append((val, skill.name))
+    return contribution
+
 def growth_change(unit, stat_nid) -> int:
     bonus = 0
     for skill in unit.skills:

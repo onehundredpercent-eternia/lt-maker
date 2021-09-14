@@ -243,6 +243,13 @@ class UnitObject(Prefab):
             bonus += item_system.stat_change(self, weapon, stat_nid)
         return bonus
 
+    def stat_contribution(self, stat_nid: str) -> list:
+        contribution = skill_system.stat_change_contribution(self, stat_nid)
+        weapon = self.equipped_weapon
+        if weapon:
+            contribution += item_system.stat_change_contribution(self, weapon, stat_nid)
+        return contribution
+
     def get_stat(self, stat_nid):
         return self.stats.get(stat_nid, 0) + self.stat_bonus(stat_nid)
 

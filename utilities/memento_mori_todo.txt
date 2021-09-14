@@ -19,9 +19,11 @@ Alternate forms of Chapter 3 and 4
 Overworld
 Implement Skills
 Write Script
+How does pair up work?
+    - Adjacent units can lend an attack, dealing half their normal damage
+    - Higher support bonuses grant stat buffs (or maybe by default and class or stat based?)
+    - Higher support bonuses grant chance to block or limit an attack (crit -> hit, hit -> glance, glance -> miss?)??
 Combat UI
-Implement new Stat Screen aesthetic
-     - Add Stat Icons?
 Implement new Dialogue aesthetic (celtic knot around dialog)
  - Parchment
  - Desaturate units who aren't talking
@@ -38,9 +40,18 @@ Dream conversations
 Title Screen
 Portraits
 Personal Skills / Grave Weapons
-Cursor UI
 Tile Display UI
-Particle Effects
+ - Tile bonuses
+    - Forest (+3 SKL, +3 SPD)
+    - Hill (+1 POW, +2 SKL, +2 SPD)
+    - Mountain (+2 POW, +3 BRV)
+    - River (-3 SPD, -1 DEF)
+    - Pillar (+3 SPD)
+    - Fort (+3 DEF))
+    - Plain (no bonus)
+    - Sand (no bonus)
+    - Snow (no bonus)
+    - Stairs (-2 SPD)
 Playtest playtest playtest
 
 Portraits:

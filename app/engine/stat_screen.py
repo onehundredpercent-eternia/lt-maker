@@ -9,7 +9,7 @@ from app.engine.sprites import SPRITES
 from app.engine.input_manager import INPUT
 from app.engine.state import MapState
 from app.engine import engine, info_menu, \
-    icons, image_mods, item_funcs, menu_options
+    icons, image_mods, item_funcs, menu_options, help_menu
 from app.engine.game_state import game
 from app.engine.fluid_scroll import FluidScroll
 
@@ -181,26 +181,39 @@ class StatScreen():
         self.info_graph.register((50, 80, 30, 16), 'Level_desc', 'all')
         FONT['text-blue'].blit_right(str(self.unit.exp), surf, (110, 80))
         self.info_graph.register((86, 80, 30, 16), 'Exp_desc', 'all')
-        FONT['text-blue'].blit_right(str(self.unit.get_hp()), surf, (86, 96))
+        # FONT['text-blue'].blit_right(str(self.unit.get_hp()), surf, (86, 96))
         self.info_graph.register((50, 96, 72, 16), 'HP_desc', 'all')
         max_hp = self.unit.get_max_hp()
         FONT['text-blue'].blit_right(str(max_hp), surf, (110, 96))
         affinity = DB.affinities.get(self.unit.affinity)
+        # Affinity needs icons!
         if affinity:
             icons.draw_item(surf, affinity, (4, 16))
             self.info_graph.register((4, 24, 16, 16), affinity.desc, 'all')
+
+        # Skills
+        skills = [skill for skill in self.unit.skills if skill.class_skill and not skill.hidden]
+        for idx, skill in enumerate(skills):
+            left_pos = idx * 24
+            icons.draw_skill(surf, skill, (left_pos + 8, 96), compact=True)
+            help_box = help_menu.HelpDialog(skill.desc, name=skill.name)
+            self.info_graph.register((left_pos + 8, 96, 16, 16), help_box, 'all')
+
         return surf
 
     def draw_slide(self, surf):
         if not self.personal_data_surf:
             self.personal_data_surf = self.create_slide()
+        
+        buffer_surf = self.personal_data_surf.copy()
+        FONT['text-blue'].blit_right(str(self.unit.get_hp()), buffer_surf, (86, 96))
 
         # Stick it on the surface
         if self.transparency:
-            im = image_mods.make_translucent(self.personal_data_surf, self.transparency)
+            im = image_mods.make_translucent(buffer_surf, self.transparency)
             surf.blit(im, (0, 0))
         else:
-            surf.blit(self.personal_data_surf, (0, 0))
+            surf.blit(buffer_surf, (0, 0))
 
     def create_slide(self):
         menu_size = STATWIDTH, WINHEIGHT
@@ -231,7 +244,12 @@ class StatScreen():
             # Name
             name = DB.stats.get(stat_nid).name
             FONT['text-yellow'].blit(name, surf, (1 + left, y_pos))
-            self.info_graph.register((1 + left, y_pos, 40, 16), '%s_desc' % stat_nid, 'all')
+            base_value = self.unit.stats.get(stat_nid, 0)
+            contribution = self.unit.stat_contribution(stat_nid)
+            bonuses = [(base_value, 'Base Value')]
+            bonuses += contribution
+            help_box = help_menu.StatDialog('%s_desc' % stat_nid, bonuses)
+            self.info_graph.register((1 + left, y_pos, 40, 16), help_box, 'all')
 
         return surf
 
