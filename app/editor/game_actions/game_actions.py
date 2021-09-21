@@ -1,13 +1,23 @@
 import glob
+import logging
+import traceback
 
 from app.editor.data_editor import DB
-from app.engine import engine, driver, game_state
+from app.editor.settings import MainSettingsController
+from app.engine import driver, engine, game_state
+from PyQt5.QtWidgets import QMessageBox
 
-import logging
 
 def handle_exception(e: Exception):
+    settings = MainSettingsController()
     logging.error("Engine crashed with a fatal error!")
     logging.exception(e)
+    if settings.get_should_display_crash_logs():
+        error_msg = QMessageBox()
+        error_msg.setIcon(QMessageBox.Critical)
+        error_msg.setText("Engine crashed. \nFor more detailed logs, please read debug.log.1 in the saves/ directory.\n\n" + traceback.format_exc())
+        error_msg.setWindowTitle("Engine Fatal Error")
+        error_msg.exec_()
     # Required to close window (reason: Unknown)
     engine.terminate(True)
 
@@ -45,7 +55,7 @@ def test_play_load(level_nid, save_loc=None):
     except Exception as e:
         handle_exception(e)
 
-def test_combat(left_combat_anim, left_weapon_anim, left_palette_name, left_palette, left_item_nid: str, 
+def test_combat(left_combat_anim, left_weapon_anim, left_palette_name, left_palette, left_item_nid: str,
                 right_combat_anim, right_weapon_anim, right_palette_name, right_palette, right_item_nid: str,
                 pose_nid: str):
     try:

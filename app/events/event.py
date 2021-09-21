@@ -279,12 +279,15 @@ class Event():
     def process(self):
         while self.command_idx < len(self.commands) and self.state == 'processing':
             command = self.commands[self.command_idx]
-            if self.handle_conditional(command):
-                if self.do_skip and command.nid in self.skippable:
-                    pass
-                else:
-                    self.run_command(command)
-            self.command_idx += 1
+            try:
+                if self.handle_conditional(command):
+                    if self.do_skip and command.nid in self.skippable:
+                        pass
+                    else:
+                        self.run_command(command)
+                self.command_idx += 1
+            except Exception as e:
+                raise Exception("Event execution failed with error in command %s" % command) from e
 
     def handle_conditional(self, command) -> bool:
         """

@@ -63,7 +63,7 @@ constants = ConstantCatalog([
     Constant('generic_feats', "Generic units will be given random feats when appropriate", bool, False, 'leveling'),
     Constant('min_damage', "Min damage dealt by an attack", int, 0),
     Constant('boss_crit', "Final blow on boss will use critical animation", bool),
-    Constant('convoy_on_death', "Weapons held by dead player units are sent to convoy", bool),
+    Constant('convoy_on_death', "Items held by dead player units are sent to convoy", bool),
     Constant('give_and_take', "Units can give a unit after taking a unit", bool),
     Constant('num_save_slots', "Number of save slots", int, 3, 'title'),
     Constant('attack_zero_hit', "Enemy AI attacks even if Hit is 0", bool, True, 'ai'),
