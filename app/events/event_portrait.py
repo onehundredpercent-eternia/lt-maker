@@ -4,12 +4,14 @@ import random
 
 from app import counters
 from app.utilities import utils
-from app.constants import COLORKEY, MEMENTO_MODE
+from app.constants import COLORKEY
 
 from app.engine import engine, image_mods
 
 class EventPortrait():
     width, height = 128, 112
+    main_portrait_coords = (0, 0, 96, 80)
+    chibi_coords = (96, 16, 32, 32)
 
     halfblink = (96, 48, 32, 16)
     fullblink = (96, 64, 32, 16)
@@ -42,8 +44,8 @@ class EventPortrait():
         self.mirror = mirror
         self.expressions = expressions or set()
 
-        self.main_portrait = engine.subsurface(self.portrait.image, (0, 0, 96, 80))
-        self.chibi = engine.subsurface(self.portrait.image, (96, 16, 32, 32))
+        self.main_portrait = engine.subsurface(self.portrait.image, self.main_portrait_coords)
+        self.chibi = engine.subsurface(self.portrait.image, self.chibi_coords)
 
         self.talk_on = False
         self.remove = False
@@ -71,16 +73,10 @@ class EventPortrait():
         self.last_bop = None
 
     def get_width(self):
-        if MEMENTO_MODE:
-            return 128
-        else:
-            return 96
+        return 96
 
     def get_height(self):
-        if MEMENTO_MODE:
-            return 128
-        else:
-            return 80
+        return 80
 
     def set_expression(self, expression_list):
         self.expressions = expression_list
@@ -273,3 +269,13 @@ class EventPortrait():
         self.transition = True
         self.remove = True
         self.transition_update = engine.get_time()
+
+class MementoEventPortrait(EventPortrait):
+    width, height = 128 + 32, 128
+    main_portrait_coords = 0, 0, 128, 128
+
+    def get_width(self):
+        return 128
+
+    def get_height(self):
+        return 128

@@ -6,11 +6,11 @@ from typing import Callable, Dict, List, Tuple
 
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
-from app.constants import WINHEIGHT, WINWIDTH
+from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
 from app.data.database import DB
 from app.data.level_units import GenericUnit, UniqueUnit
 from app.engine import (action, background, banner, dialog, engine, evaluate,
-                        icons, image_mods, item_funcs, item_system,
+                        icons, image_mods, item_funcs, item_system, memento_dialog,
                         skill_system, static_random, target_system, unit_funcs)
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -21,29 +21,39 @@ from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.overworld.overworld_actions import OverworldMove
-from app.engine.overworld.overworld_map_view import OverworldMapView
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
 from app.engine.sound import SOUNDTHREAD
-from app.engine.game_state import game
 from app.events import event_commands, regions
-from app.events.event_portrait import EventPortrait
+from app.events.event_portrait import EventPortrait, MementoEventPortrait
 from app.resources.resources import RESOURCES
 from app.utilities import str_utils, utils
-from app.utilities.algorithms.interpolation import cubic_easing, tcubic_easing
 from app.utilities.typing import NID, Point
 
-screen_positions = {'OffscreenLeft': -96,
-                    'FarLeft': -24,
-                    'Left': 0,
-                    'MidLeft': 24,
-                    'CenterLeft': 24,
-                    'CenterRight': 120,
-                    'MidRight': 120,
-                    'LevelUpRight': 140,
-                    'Right': 144,
-                    'FarRight': 168,
-                    'OffscreenRight': 240}
+if MEMENTO_MODE:
+    screen_positions = {'OffscreenLeft': -128,
+                        'FarLeft': 0,
+                        'Left': 36,
+                        'MidLeft': 72,
+                        'CenterLeft': 72,
+                        'CenterRight': 184,
+                        'MidRight': 184,
+                        'LevelUpRight': 216,
+                        'Right': 220,
+                        'FarRight': 256,
+                        'OffscreenRight': 384}
+else:
+    screen_positions = {'OffscreenLeft': -96,
+                        'FarLeft': -24,
+                        'Left': 0,
+                        'MidLeft': 24,
+                        'CenterLeft': 24,
+                        'CenterRight': 120,
+                        'MidRight': 120,
+                        'LevelUpRight': 140,
+                        'Right': 144,
+                        'FarRight': 168,
+                        'OffscreenRight': 240}
 
 vertical_screen_positions = {'Top': 0,
                              'Middle': 40,
@@ -71,6 +81,10 @@ class Event():
         self.position = position
         self.region = region
 
+        if MEMENTO_MODE:
+            self.dialog_background = memento_dialog.MementoDialogBackground()
+        else:
+            self.dialog_background = None
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes = []
         self.other_boxes = []
@@ -254,6 +268,8 @@ class Event():
 
         # Draw text/dialog boxes
         # if self.state == 'dialog':
+        if self.dialog_background:
+            self.dialog_background.draw(surf)
         if not self.do_skip:
             to_draw = []
             for dialog_box in reversed(self.text_boxes):
@@ -1353,7 +1369,9 @@ class Event():
             return False
 
         pos = values[1]
-        if len(values) > 4 and values[4]: # there's a vertical position as well
+        if MEMENTO_MODE:
+            vert_pos = 'Top'
+        elif len(values) > 4 and values[4]: # there's a vertical position as well
             vert_pos = values[4]
         else:
             vert_pos = 'Bottom'
@@ -1380,7 +1398,10 @@ class Event():
         if len(values) > 2 and values[2]:
             slide = values[2]
 
-        new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror)
+        if MEMENTO_MODE:
+            new_portrait = MementoEventPortrait(portrait, position, priority, transition, True, mirror)
+        else:
+            new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror)
         self.portraits[name] = new_portrait
 
         if len(values) > 3 and values[3]:
@@ -1515,7 +1536,10 @@ class Event():
             if not width:
                 width = WINWIDTH - 8
 
-        new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant)
+        if MEMENTO_MODE:
+            new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
+        else:
+            new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant)
         self.text_boxes.append(new_dialog)
         self.state = 'dialog'
         # Bring portrait to forefront
