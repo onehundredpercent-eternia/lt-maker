@@ -122,7 +122,7 @@ class ProjectFileBackend():
 
         self.save_progress.setValue(100)
 
-        if not new:
+        if not new and self.settings.get_should_make_backup_save():
             # we have fully saved the current project; remove the backup folder
             if os.path.isdir(self.tmp_proj):
                 shutil.rmtree(self.tmp_proj)

@@ -68,7 +68,7 @@ class MainSettingsController():
     def set_should_make_backup_save(self, value):
         self.state.setValue("should_make_backup_save", value)
 
-    def get_should_make_backup_save(self, fallback=True):
+    def get_should_make_backup_save(self, fallback=False):
         return self.state.value("should_make_backup_save", fallback)
 
     """========== General Control Settings =========="""

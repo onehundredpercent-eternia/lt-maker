@@ -383,6 +383,11 @@ class Event():
         if self.text_boxes:
             self.text_boxes[-1].hurry_up()
 
+    def saturate_portrait(self, portrait):
+        for portrait in self.portraits.values():
+            portrait.desaturate()
+        portrait.saturate()
+
     def run_command(self, command: event_commands.EventCommand):
         logging.info('%s: %s', command.nid, command.values)
         current_time = engine.get_time()
@@ -1538,6 +1543,7 @@ class Event():
 
         if MEMENTO_MODE:
             new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
+            self.saturate_portrait(portrait)
         else:
             new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant)
         self.text_boxes.append(new_dialog)

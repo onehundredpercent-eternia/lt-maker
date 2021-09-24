@@ -31,7 +31,7 @@ class MementoDialogBackground():
         current_time = engine.get_time()
 
         if self.state == 'transition_in':
-            perc = (current_time - self.last_update) / self.transition_speed
+            perc = (current_time - self.last_update) / self.transition_in_speed
             self.transition_progress = utils.clamp(perc, 0, 1)
             if self.transition_progress == 1:
                 self.state = 'normal'

@@ -72,6 +72,10 @@ class EventPortrait():
         self.bop_height = 2
         self.last_bop = None
 
+        # For saturation
+        self.saturation = 1.
+        self.saturation_state = 0
+
     def get_width(self):
         return 96
 
@@ -193,8 +197,16 @@ class EventPortrait():
 
     def update(self) -> bool:
         current_time = engine.get_time()
+        delta_time = engine.get_delta()
         self.update_talk(current_time)
         self.blink_counter.update(current_time)
+
+        if self.saturation_state != 0:
+            self.saturation += self.saturation_state * delta_time / 250
+            self.saturation = utils.clamp(self.saturation, 0, 1)
+            # If reached one of the two extremes
+            if self.saturation == 0 or self.saturation == 1:
+                self.saturation_state = 0
 
         if self.transition:
             # 14 frames for unit face to appear
@@ -247,6 +259,10 @@ class EventPortrait():
         if self.mirror:
             image = engine.flip_horiz(image)
 
+        if self.saturation < 1:
+            blackness = 0.25 * (1 - self.saturation)
+            image = image_mods.make_black_colorkey(image, blackness)
+
         if self.transition:
             if self.slide:
                 image = image_mods.make_translucent(image.convert_alpha(), 1 - self.transition_progress)
@@ -279,3 +295,13 @@ class MementoEventPortrait(EventPortrait):
 
     def get_height(self):
         return 128
+
+    def create_image(self):
+        main_image = self.main_portrait.copy()
+        return main_image
+
+    def saturate(self):
+        self.saturation_state = 1
+
+    def desaturate(self):
+        self.saturation_state = -1
