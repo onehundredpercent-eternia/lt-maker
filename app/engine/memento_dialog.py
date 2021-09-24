@@ -9,22 +9,16 @@ from app.engine import config as cf
 
 class MementoDialogBackground():
     background = SPRITES.get('memento_dialog_background')
-    transition_in_speed = 166  # 10 frames
-    transition_out_speed = 166  # 10 frames
+    transition_in_speed = 1660  # 10 frames
+    transition_out_speed = 1660  # 10 frames
 
     def __init__(self):
-        # transition_in, normal, transition_out
-        self.state = 'transition_in'
+        # off, transition_in, normal, transition_out
+        self.state = 'off'
         self.transition_progress = 0
         self.last_update = engine.get_time()
         self.height = self.background.get_height()
         self.position = (0, WINHEIGHT - self.height)
-
-    def new_dialog(self):
-        if self.state != 'normal':
-            self.state = 'transition_in'
-            self.transition_progress = 0
-            self.last_update = engine.get_time()
 
     def update(self) -> bool:
         # Returns true if in normal state
@@ -36,6 +30,25 @@ class MementoDialogBackground():
             if self.transition_progress == 1:
                 self.state = 'normal'
 
+        elif self.state == 'transition_out':
+            perc = (current_time - self.last_update) / self.transition_out_speed
+            self.transition_progress = utils.clamp(perc, 0, 1)
+            if self.transition_progress == 1:
+                self.state = 'off'
+
+        return self.state == 'normal'
+
+    def start(self):
+        self.state = 'transition_in'
+        self.transition_progress = 0
+        self.last_update = engine.get_time()
+
+    def end(self):
+        self.state = 'transition_out'
+        self.transition_progress = 0
+        self.last_update = engine.get_time()
+
+    def ready(self):
         return self.state == 'normal'
 
     def draw(self, surf):
@@ -44,6 +57,12 @@ class MementoDialogBackground():
             new_height = max(1, self.background.get_height() - 10 + int(10*self.transition_progress))
             bg = engine.transform_scale(self.background, (new_width, new_height))
             bg = image_mods.make_translucent(bg, (1 - self.transition_progress))
+            surf.blit(bg, (self.position[0], self.position[1] + self.height//2 - bg.get_height()//2))
+        elif self.state == 'transition_out':
+            new_width = max(1, self.background.get_width() - 10 - int(10*self.transition_progress))
+            new_height = max(1, self.background.get_height() - 10 - int(10*self.transition_progress))
+            bg = engine.transform_scale(self.background, (new_width, new_height))
+            bg = image_mods.make_translucent(bg, self.transition_progress)
             surf.blit(bg, (self.position[0], self.position[1] + self.height//2 - bg.get_height()//2))
         else:
             surf.blit(self.background, self.position)
@@ -62,6 +81,7 @@ class MementoDialog(dialog.Dialog):
         self.plain_text = text
         self.background = background
         self.portrait = portrait
+        self.speaker = self.portrait.name
         self.font_type = 'convo'
         self.font_color = 'black'
         self.font = FONT[self.font_type + '-' + self.font_color]
@@ -75,7 +95,6 @@ class MementoDialog(dialog.Dialog):
         # done -- No more dialog to show, waiting for the event to clean me up
         # transition_out -- waiting for the dialog box to disappear
         self.state = 'transition_in'
-        self.background.new_dialog()
 
         self.no_wait: bool = False  # Whether to wait for the player to press
         self.text_commands = self.format_text(text)
@@ -226,8 +245,9 @@ class MementoDialog(dialog.Dialog):
         current_time = engine.get_time()
 
         if self.state == 'transition_in':
-            if self.background.update():
+            if self.background.ready():
                 self._next_line()
+                self.state = 'write'
         elif self.state == 'transition_out':
             self.background.update()
         elif self.state == 'write':
@@ -272,19 +292,19 @@ class MementoDialog(dialog.Dialog):
                 font.blit(text, text_surf, (x_pos, y_pos))
                 x_pos += width
 
-        surf.blit(text_surf, (self.position[0] + 20, self.position[1] + WINHEIGHT - 64 - 12))
+        surf.blit(text_surf, (20, WINHEIGHT - 64 - 12))
 
     def draw_nametag(self, surf, name):
         if self.portrait:
             position = self.portrait.position
             x_pos = position[0] - 4
-            y_pos = position[1] - 10
+            y_pos = position[1] + 118
             if x_pos < 0:
-                x_pos = self.position[0] + 16
+                x_pos = position[0] + 16
         else:
             x_pos, y_pos = (8, 8)
-        name_tag_surf = self.name_tag_surf.copy()
-        self.font.blit_center(name, name_tag_surf, (name_tag_surf.get_width()//2, name_tag_surf.get_height()//2 - self.font.height//2))
+        name_tag_surf = self.name_tag.copy()
+        FONT['text-white'].blit_center(name, name_tag_surf, (name_tag_surf.get_width()//2, name_tag_surf.get_height()//2 - self.font.height//2))
         surf.blit(name_tag_surf, (x_pos, y_pos))
         return surf
 
@@ -292,7 +312,7 @@ class MementoDialog(dialog.Dialog):
         if self.state not in ('transition_in', 'transition_out'):
             # Draw nametag
             if self.portrait:
-                self.draw_nametag(surf, self.portrait.name)
+                self.draw_nametag(surf, self.speaker)
             # Draw text
             self.draw_text(surf)
 

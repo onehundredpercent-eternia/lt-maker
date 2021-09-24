@@ -58,6 +58,8 @@ else:
 vertical_screen_positions = {'Top': 0,
                              'Middle': 40,
                              'Bottom': 80}
+if MEMENTO_MODE:
+    vertical_screen_positions['Top'] = 2
 
 class Event():
     _transition_speed = 250
@@ -269,6 +271,7 @@ class Event():
         # Draw text/dialog boxes
         # if self.state == 'dialog':
         if self.dialog_background:
+            self.dialog_background.update()
             self.dialog_background.draw(surf)
         if not self.do_skip:
             to_draw = []
@@ -384,8 +387,8 @@ class Event():
             self.text_boxes[-1].hurry_up()
 
     def saturate_portrait(self, portrait):
-        for portrait in self.portraits.values():
-            portrait.desaturate()
+        for port in self.portraits.values():
+            port.desaturate()
         portrait.saturate()
 
     def run_command(self, command: event_commands.EventCommand):
@@ -475,6 +478,12 @@ class Event():
             self.transition_update = current_time
             self.wait_time = current_time + int(self.transition_speed * 1.33)
             self.state = 'waiting'
+
+        elif command.nid == 'dialog_start':
+            self.dialog_background.start()
+
+        elif command.nid == 'dialog_end':
+            self.dialog_background.end()
 
         elif command.nid == 'speak':
             self.speak(command)
@@ -1404,9 +1413,9 @@ class Event():
             slide = values[2]
 
         if MEMENTO_MODE:
-            new_portrait = MementoEventPortrait(portrait, position, priority, transition, True, mirror)
+            new_portrait = MementoEventPortrait(portrait, position, priority, transition, True, mirror, name)
         else:
-            new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror)
+            new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror, name)
         self.portraits[name] = new_portrait
 
         if len(values) > 3 and values[3]:

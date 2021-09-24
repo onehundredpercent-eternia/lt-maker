@@ -372,6 +372,14 @@ Extra flags:
     optional_keywords = ['ScreenPosition', 'Width', 'DialogVariant']
     flags = ['low_priority']
 
+class DialogStart(EventCommand):
+    nid = 'dialog_start'
+    tag = Tags.DIALOGUE_TEXT
+
+class DialogEnd(EventCommand):
+    nid = 'dialog_end'
+    tag = Tags.DIALOGUE_TEXT
+
 class Narrate(EventCommand):
     nid = "narrate"
     tag = Tags.DIALOGUE_TEXT

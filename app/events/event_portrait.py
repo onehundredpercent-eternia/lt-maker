@@ -27,8 +27,9 @@ class EventPortrait():
     transition_speed = utils.frames2ms(14)
     travel_time = utils.frames2ms(15)
     bop_time = utils.frames2ms(8)
+    saturation_time = utils.frames2ms(60)
 
-    def __init__(self, portrait: Portrait, position: Point, priority, transition=False, slide=None, mirror=False, expressions=None):
+    def __init__(self, portrait: Portrait, position: Point, priority, transition=False, slide=None, mirror=False, name='', expressions=None):
         self.portrait = portrait
         if not self.portrait.image:
             self.portrait.image = engine.image_load(self.portrait.full_path)
@@ -42,6 +43,7 @@ class EventPortrait():
         self.transition_update = engine.get_time()
         self.slide = slide
         self.mirror = mirror
+        self.name = name
         self.expressions = expressions or set()
 
         self.main_portrait = engine.subsurface(self.portrait.image, self.main_portrait_coords)
@@ -202,7 +204,7 @@ class EventPortrait():
         self.blink_counter.update(current_time)
 
         if self.saturation_state != 0:
-            self.saturation += self.saturation_state * delta_time / 250
+            self.saturation += self.saturation_state * delta_time / self.saturation_time
             self.saturation = utils.clamp(self.saturation, 0, 1)
             # If reached one of the two extremes
             if self.saturation == 0 or self.saturation == 1:
@@ -260,7 +262,7 @@ class EventPortrait():
             image = engine.flip_horiz(image)
 
         if self.saturation < 1:
-            blackness = 0.25 * (1 - self.saturation)
+            blackness = 0.5 * (1 - self.saturation)
             image = image_mods.make_black_colorkey(image, blackness)
 
         if self.transition:
@@ -272,9 +274,9 @@ class EventPortrait():
         position = self.position
 
         if self.slide == 'right':
-            position = position[0] - int(24 * self.transition_progress), self.position[1]
+            position = position[0] - int(48 * self.transition_progress), self.position[1]
         elif self.slide == 'left':
-            position = position[0] + int(24 * self.transition_progress), self.position[1]
+            position = position[0] + int(48 * self.transition_progress), self.position[1]
 
         if self.bop_state:
             position = position[0], position[1] + self.bop_height
