@@ -9,8 +9,8 @@ from app.engine import config as cf
 
 class MementoDialogBackground():
     background = SPRITES.get('memento_dialog_background')
-    transition_in_speed = 1660  # 10 frames
-    transition_out_speed = 1660  # 10 frames
+    transition_in_speed = 200  # 12 frames
+    transition_out_speed = 166  # 10 frames
 
     def __init__(self):
         # off, transition_in, normal, transition_out
@@ -53,18 +53,18 @@ class MementoDialogBackground():
 
     def draw(self, surf):
         if self.state == 'transition_in':
-            new_width = max(1, self.background.get_width() - 10 + int(10*self.transition_progress))
+            new_width = int(max(1, self.background.get_width() * self.transition_progress))
             new_height = max(1, self.background.get_height() - 10 + int(10*self.transition_progress))
             bg = engine.transform_scale(self.background, (new_width, new_height))
             bg = image_mods.make_translucent(bg, (1 - self.transition_progress))
-            surf.blit(bg, (self.position[0], self.position[1] + self.height//2 - bg.get_height()//2))
+            surf.blit(bg, (self.position[0] + self.background.get_width()//2 - new_width//2, self.position[1] + self.height//2 - bg.get_height()//2))
         elif self.state == 'transition_out':
             new_width = max(1, self.background.get_width() - 10 - int(10*self.transition_progress))
             new_height = max(1, self.background.get_height() - 10 - int(10*self.transition_progress))
             bg = engine.transform_scale(self.background, (new_width, new_height))
             bg = image_mods.make_translucent(bg, self.transition_progress)
             surf.blit(bg, (self.position[0], self.position[1] + self.height//2 - bg.get_height()//2))
-        else:
+        elif self.state == 'normal':
             surf.blit(self.background, self.position)
 
 class MementoDialog(dialog.Dialog):

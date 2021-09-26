@@ -108,7 +108,7 @@ class StatScreen():
 
     def update(self):
         hover = game.cursor.get_hover()
-        if hover:
+        if hover and game.state.current() == 'free':
             if hover != self.unit:
                 self._next_unit = hover
                 self.transition = 'out'
@@ -246,9 +246,8 @@ class StatScreen():
             FONT['text-yellow'].blit(name, surf, (1 + left, y_pos))
             base_value = self.unit.stats.get(stat_nid, 0)
             contribution = self.unit.stat_contribution(stat_nid)
-            bonuses = [(base_value, 'Base Value')]
-            bonuses += contribution
-            help_box = help_menu.StatDialog('%s_desc' % stat_nid, bonuses)
+            contribution['Base Value'] = base_value
+            help_box = help_menu.StatDialog('%s_desc' % stat_nid, contribution)
             self.info_graph.register((1 + left, y_pos, 40, 16), help_box, 'all')
 
         return surf

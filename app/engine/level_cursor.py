@@ -3,7 +3,7 @@ from typing import Tuple
 
 from app.constants import TILEHEIGHT, TILEWIDTH, STATWIDTH
 from app.counters import generic3counter
-from app.engine import engine, target_system, image_mods
+from app.engine import engine, target_system, image_mods, skill_system
 from app.engine.cursor import BaseCursor
 from app.engine.game_state import GameState
 from app.engine.input_manager import INPUT
@@ -84,7 +84,7 @@ class LevelCursor(BaseCursor):
                 if target_system.check_path(self.cur_unit, self.path):
                     return self.path
 
-        self.path = target_system.get_path(self.cur_unit, self._last_valid_position)
+        self.path = target_system.get_path(self.cur_unit, self._last_valid_position, use_limit=True)
         return self.path
 
     def move(self, dx, dy, mouse=False, sound=True):
@@ -278,12 +278,19 @@ class LevelCursor(BaseCursor):
             for arrow in self.arrows:
                 surf = arrow.draw(surf, cull_rect)
 
-            if self.cur_unit and self.path and \
-                    len(self.path) > 1 and \
-                    self.position == self.path[0]:
+            draw_unit_sprite = False
+            if self.cur_unit:    
+                if self.path and len(self.path) > 1 and \
+                        self.position == self.path[0]:
+                    draw_unit_sprite = True
+                    x_offset = self.path[0][0] - self.path[1][0]
+                    y_offset = self.path[0][1] - self.path[1][1]
+                elif self.position in set(skill_system.witch_warp(self.cur_unit)):
+                    draw_unit_sprite = True
+                    x_offset, y_offset = 0, 0
+
+            if draw_unit_sprite:
                 # Draw unit's sprite
-                x_offset = self.path[0][0] - self.path[1][0]
-                y_offset = self.path[0][1] - self.path[1][1]
                 if x_offset > 0:
                     state = 'right'
                 elif x_offset < 0:

@@ -89,15 +89,19 @@ class MementoTempo(SkillComponent):
 
 class WitchWarp(SkillComponent):
     nid = 'witch_warp'
-    desc = "Allows unit to witch warp to a given unit"
+    desc = "Allows unit to witch warp to the given units"
     tag = 'memento'
 
-    expose = Type.Unit
-    value = None
+    expose = (Type.List, Type.Unit)
 
     def witch_warp(self, unit) -> list:
-        partner_pos = game.board.get_unit(self.value)
-        if partner_pos:
-            return target_system.get_adjacent_positions(partner_pos)
-        else:
-            return []
+        positions = []
+        for val in self.value:
+            u = game.get_unit(val)
+            if u and u.position:
+                partner_pos = u.position
+            else:
+                continue
+            if partner_pos:
+                positions += target_system.get_adjacent_positions(partner_pos)
+        return positions

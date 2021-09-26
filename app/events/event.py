@@ -1413,9 +1413,12 @@ class Event():
             slide = values[2]
 
         if MEMENTO_MODE:
-            new_portrait = MementoEventPortrait(portrait, position, priority, transition, True, mirror, name)
+            new_portrait = MementoEventPortrait(portrait, position, priority, transition, 'right', mirror, name)
         else:
             new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror, name)
+        
+        if 'desaturate' in flags:
+            new_portrait.saturation = 0
         self.portraits[name] = new_portrait
 
         if len(values) > 3 and values[3]:

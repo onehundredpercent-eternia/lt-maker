@@ -107,14 +107,17 @@ class SimpleCombat():
 
         all_units = self._all_units()
 
+        for unit in all_units:
+            if unit.get_hp() > 0:
+                unit.sprite.change_state('normal')
+                unit.sprite.reset()
+
         self.cleanup_combat()
 
         # Handle death
         for unit in all_units:
             if unit.get_hp() <= 0:
                 game.death.should_die(unit)
-            else:
-                unit.sprite.change_state('normal')
 
         self.turnwheel_death_messages(all_units)
 
@@ -141,6 +144,8 @@ class SimpleCombat():
 
         a_broke, d_broke = self.find_broken_items()
         self.handle_broken_items(a_broke, d_broke)
+
+        game.stat_screen.reset_surfs()
 
     def start_event(self, full_animation=False):
         # region is set to True or False depending on whether we are in a battle anim

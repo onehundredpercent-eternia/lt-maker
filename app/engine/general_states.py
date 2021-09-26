@@ -493,10 +493,14 @@ class MoveState(MapState):
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
                     SOUNDTHREAD.play_sfx('Error')
                 else:
+                    witch_warp = set(skill_system.witch_warp(cur_unit))
                     # Sound -- ADD FOOTSTEP SOUNDS
                     if cur_unit.has_attacked or cur_unit.has_traded:
                         cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
+                    elif game.cursor.position in witch_warp:
+                        cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
+                        game.state.change('menu')
                     else:
                         cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                         game.state.change('menu')
@@ -595,6 +599,7 @@ class MenuState(MapState):
         # Play this here because there's a gap in sound while unit is moving
         SOUNDTHREAD.play_sfx('Select 2')
         game.cursor.hide()
+        game.stat_screen.reset_surfs()
         self.cur_unit = game.cursor.cur_unit
         if not self.cur_unit or not self.cur_unit.position:
             # Could happen if unit escaped
@@ -708,6 +713,7 @@ class MenuState(MapState):
                 if self.cur_unit.current_move:
                     action.reverse(self.cur_unit.current_move)
                     self.cur_unit.current_move = None
+                    game.stat_screen.reset_surfs()
                 # game.cursor.set_pos(self.cur_unit.position)
                 game.state.change('move')
                 game.cursor.construct_arrows(game.cursor.path[::-1])

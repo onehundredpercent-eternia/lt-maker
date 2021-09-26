@@ -578,7 +578,7 @@ class RegionType(OptionValidator):
     valid = ['normal', 'event', 'status', 'formation']
 
 class Weather(OptionValidator):
-    valid = ["rain", "sand", "snow", "fire", "light", "dark", "smoke"]
+    valid = ["rain", "sand", "snow", "fire", "light", "dark", "smoke", "fog"]
 
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']

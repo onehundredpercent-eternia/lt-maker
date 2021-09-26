@@ -24,11 +24,7 @@ How does pair up work?
     - Higher support bonuses grant stat buffs (or maybe by default and class or stat based?)
     - Higher support bonuses grant chance to block or limit an attack (crit -> hit, hit -> glance, glance -> miss?)??
 Combat UI
-Implement new Dialogue aesthetic (celtic knot around dialog)
- - Parchment
- - Desaturate units who aren't talking
  - Unit who is talking gets nametag
- - Dissolve fade in and out? Or dissolve scroll fade in and out from middle?
 Implement Wyllt
 Implement Memory Mechanics
 No Free Roam Base:
@@ -40,10 +36,9 @@ Dream conversations
 Title Screen
 Portraits
 Personal Skills / Grave Weapons
-Tile Display UI
  - Tile bonuses
     - Forest (+3 SKL, +3 SPD)
-    - Hill (+1 POW, +2 SKL, +2 SPD)
+    - Hill (+1 POW, +2 BRV)
     - Mountain (+2 POW, +3 BRV)
     - River (-3 SPD, -1 DEF)
     - Pillar (+3 SPD)

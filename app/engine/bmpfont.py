@@ -50,7 +50,7 @@ class BmpFont():
         # string = string.replace('_', ' ')
         return string
 
-    def blit(self, string, surf, pos=(0, 0)):
+    def blit(self, string, surf, pos=(0, 0), reverse=False):
         def normal_render(left, top, string):
             for c in string:
                 if c not in self.memory:
@@ -71,6 +71,31 @@ class BmpFont():
                     subsurf, char_width = self.memory[c]
                 engine.blit(surf, subsurf, (left, top))
                 left += char_width + self.space_offset
+
+        def reverse_render(left, top, string):
+            positions = []
+            for c in string:
+                if c not in self.memory:
+                    try:
+                        char_pos_x = self.chartable[c][0]
+                        char_pos_y = self.chartable[c][1]
+                        char_width = self.chartable[c][2]
+                    except KeyError as e:
+                        char_pos_x = 0
+                        char_pos_y = 0
+                        char_width = 8
+                        print(e)
+                        print("%s is not chartable" % c)
+                        print("string: ", string)
+                    subsurf = engine.subsurface(self.surface, (char_pos_x, char_pos_y, self._width, self.height))
+                    self.memory[c] = (subsurf, char_width)
+                else:
+                    subsurf, char_width = self.memory[c]
+                left += char_width + self.space_offset
+                positions.append((left, subsurf))
+            # Now reversed
+            for left, subsurf in reversed(positions):
+                engine.blit(surf, subsurf, (left, top))
 
         def stacked_render(left, top, string):
             orig_left = left
@@ -107,6 +132,8 @@ class BmpFont():
 
         if self.stacked:
             stacked_render(x, y, string)
+        elif reverse:
+            reverse_render(x, y, string)
         else:
             normal_render(x, y, string)
 

@@ -1,5 +1,5 @@
 import app.engine.config as cf
-from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, STATWIDTH
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, STATWIDTH, MAPWIDTH
 from app.data.database import DB
 from app.data.difficulty_modes import RNGOption
 from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
@@ -146,7 +146,7 @@ class UIView():
                 if right:
                     surf.blit(self.tile_info_disp, (5 - offset, WINHEIGHT - self.tile_info_disp.get_height() - 3)) # Bottomleft
                 else:
-                    xpos = WINWIDTH - self.tile_info_disp.get_width() - 5 + offset
+                    xpos = MAPWIDTH - self.tile_info_disp.get_width() - 5 + offset
                     ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
                     surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
 
@@ -263,16 +263,18 @@ class UIView():
         else:
             bg_surf = SPRITES.get('tile_info_quick_opaque').copy()
             bg_surf = image_mods.make_translucent(bg_surf, .1)
-            tile_def, tile_avoid = 0, 0
+            stat_changes = {}
             if terrain.status:
                 status_prefab = DB.skills.get(terrain.status)
                 for component in status_prefab.components:
-                    if component.defines('tile_def'):
-                        tile_def += component.tile_def()
-                    if component.defines('tile_avoid'):
-                        tile_avoid += component.tile_avoid()
-            FONT['small-white'].blit_right(str(tile_def), bg_surf, (bg_surf.get_width() - 4, 17))
-            FONT['small-white'].blit_right(str(tile_avoid), bg_surf, (bg_surf.get_width() - 4, 25))
+                    if component.defines('stat_change'):
+                        stat_changes.update(component.stat_change())
+            for idx, (stat_nid, stat_change) in enumerate(list(stat_changes.items())[:2]):
+                text = str(stat_change)
+                if stat_change > 0:
+                    text = "+" + text
+                FONT['small-white'].blit(stat_nid, bg_surf, (1, 17 + idx * 8))
+                FONT['small-white'].blit_right(text, bg_surf, (bg_surf.get_width() - 4, 17 + idx * 8))
 
         name = terrain.name
         width, height = FONT['text-white'].size(name)

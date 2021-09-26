@@ -247,7 +247,7 @@ class UnitObject(Prefab):
         contribution = skill_system.stat_change_contribution(self, stat_nid)
         weapon = self.equipped_weapon
         if weapon:
-            contribution += item_system.stat_change_contribution(self, weapon, stat_nid)
+            contribution.update(item_system.stat_change_contribution(self, weapon, stat_nid))
         return contribution
 
     def get_stat(self, stat_nid):
@@ -506,6 +506,7 @@ class UnitObject(Prefab):
     def wait(self):
         game.events.trigger('unit_wait', self, position=self.position)
         action.do(action.Wait(self))
+        game.stat_screen.reset_surfs()
         if game.cursor and game.cursor.cur_unit == self:
             game.cursor.cur_unit = None
 

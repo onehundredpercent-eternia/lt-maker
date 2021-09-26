@@ -11,7 +11,7 @@ class StatChange(SkillComponent):
     expose = (Type.Dict, Type.Stat)
     value = []
 
-    def stat_change(self, unit):
+    def stat_change(self, unit=None):
         return {stat[0]: stat[1] for stat in self.value}
 
     def tile_def(self):

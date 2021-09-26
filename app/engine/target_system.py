@@ -147,10 +147,11 @@ def get_valid_moves(unit, force=False) -> set:
 
     valid_moves = pathfinder.process(game.board, movement_left)
     valid_moves.add(unit.position)
-    valid_moves |= set(skill_system.witch_warp(unit))
+    witch_warp = set(skill_system.witch_warp(unit))
+    valid_moves |= witch_warp
     return valid_moves
 
-def get_path(unit, position, ally_block=False) -> list:
+def get_path(unit, position, ally_block=False, use_limit=False) -> list:
     from app.engine.movement import MovementManager
     mtype = MovementManager.get_movement_group(unit)
     grid = game.board.get_grid(mtype)
@@ -160,7 +161,8 @@ def get_path(unit, position, ally_block=False) -> list:
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
     pathfinder = pathfinding.AStar(unit.position, position, grid, width, height, unit.team, pass_through, ai_fog_of_war)
 
-    path = pathfinder.process(game.board, ally_block=ally_block)
+    limit = unit.movement_left if use_limit else None
+    path = pathfinder.process(game.board, ally_block=ally_block, limit=limit)
     if path is None:
         return []
     return path

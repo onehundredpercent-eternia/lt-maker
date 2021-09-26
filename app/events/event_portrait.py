@@ -273,10 +273,11 @@ class EventPortrait():
 
         position = self.position
 
+        slide_length = 24
         if self.slide == 'right':
-            position = position[0] - int(48 * self.transition_progress), self.position[1]
+            position = position[0] + slide_length - int(slide_length * self.transition_progress), self.position[1]
         elif self.slide == 'left':
-            position = position[0] + int(48 * self.transition_progress), self.position[1]
+            position = position[0] - slide_length + int(slide_length * self.transition_progress), self.position[1]
 
         if self.bop_state:
             position = position[0], position[1] + self.bop_height

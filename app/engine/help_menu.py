@@ -162,7 +162,8 @@ class StatDialog(HelpDialog):
                 num_characters -= len(line)
 
         y_height = len(self.lines) * 16
-        for idx, (val, bonus) in enumerate(self.bonuses):
+        bonuses = sorted(self.bonuses.items(), key=lambda x: x[0] != 'Base Value')
+        for idx, (bonus, val) in enumerate(bonuses):
             if num_characters > 0:
                 top = self.font.height * idx + 6 + y_height
                 if idx == 0:
