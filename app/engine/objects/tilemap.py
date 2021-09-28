@@ -5,7 +5,7 @@ from app.utilities.data import Data, Prefab
 
 from app.resources.resources import RESOURCES
 
-from app.engine import engine, image_mods, particles
+from app.engine import engine, image_mods, particles, animations
 
 class LayerObject():
     transition_speed = 333
@@ -116,6 +116,7 @@ class TileMapObject(Prefab):
     def __init__(self):
         super().__init__()
         self.weather: List[particles.ParticleSystem] = []
+        self.animations: List[animations.MapAnimation] = []
         self.width: int = 0
         self.height: int = 0
         self.nid: NID = None
@@ -188,6 +189,7 @@ class TileMapObject(Prefab):
         self.layers.get('base').visible = True
 
         self.weather = []
+        self.animations = []
 
         return self
 
@@ -236,6 +238,7 @@ class TileMapObject(Prefab):
         s_dict['nid'] = self.nid
         s_dict['layers'] = [layer.save() for layer in self.layers]
         s_dict['weather'] = [weather.save() for weather in self.weather]
+        s_dict['animations'] = [anim.save() for anim in self.animations]
         return s_dict
 
     @classmethod
@@ -245,6 +248,19 @@ class TileMapObject(Prefab):
         self.restore_layers(s_dict['layers'])
         weather = s_dict.get('weather', [])
         self.weather = [particles.create_system(nid, self.width, self.height) for nid in weather]
+        # Handle tile animations
+        anims = s_dict.get('animations', [])
+        self.animations = []
+        for anim in anims:
+            new_anim = animations.MapAnimation(
+                RESOURCES.animations.get(anim['nid']), 
+                anim['pos'], 
+                loop=anim['loop'], 
+                hold=anim['hold'], 
+                reverse=anim['reverse'], 
+                speed_adj=anim['speed_adj'])
+            self.animations.append(new_anim)
+
         return self
 
     def restore_layers(self, layer_list):

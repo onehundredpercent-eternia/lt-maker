@@ -1099,22 +1099,31 @@ class Event():
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             nid = values[0]
             if nid not in RESOURCES.animations.keys():
-                logging.error("Could not find map animtion %s" % nid)
+                logging.error("Could not find map animation %s" % nid)
                 return
             pos = self.parse_pos(values[1])
             if len(values) > 2:
                 speed_mult = int(values[2])
             else:
                 speed_mult = 1
-            anim = RESOURCES.animations.get(nid)
-            anim = MapAnimation(anim, pos, speed_adj=speed_mult)
-            self.animations.append(anim)
+            if 'permanent' in flags:
+                action.do(action.AddMapAnim(nid, pos, speed_mult))
+            else:
+                anim = RESOURCES.animations.get(nid)
+                anim = MapAnimation(anim, pos, speed_adj=speed_mult)
+                self.animations.append(anim)
 
             if 'no_block' in flags or self.do_skip:
                 pass
             else:
                 self.wait_time = engine.get_time() + anim.get_wait()
                 self.state = 'waiting'
+
+        elif command.nid == 'remove_map_anim':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            nid = values[0]
+            pos = self.parse_pos(values[1])
+            action.do(action.RemoveMapAnim(nid, pos))
 
         elif command.nid == 'merge_parties':
             self.merge_parties(command)

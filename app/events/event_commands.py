@@ -1477,10 +1477,18 @@ Stores a given position (*Condition*) as the event's home position. It can later
 class MapAnim(EventCommand):
     nid = 'map_anim'
     tag = Tags.TILEMAP
-    desc = ( 'Plays a map animation denoted by the nid *MapAnim* at *Position*. Optional args: a speed multiplier'
-             ' *Float*, which increases the length of time it takes to play the animation (larger is slower)')
+    desc = ('Plays a map animation denoted by the nid *MapAnim* at *Position*. Optional args: a speed multiplier'
+            ' *Float*, which increases the length of time it takes to play the animation (larger is slower)')
     keywords = ["MapAnim", "Position"]
     optional_keywords = ["Float"]
+    flags = ["no_block", "permanent"]
+
+class RemoveMapAnim(EventCommand):
+    nid = 'remove_map_anim'
+    tag = Tags.TILEMAP
+    desc = ('Removes a map animation denoted by the nid *MapAnim* at *Position*. Only removes MapAnims that were created using'
+            ' the "permanent" flag')
+    keywords = ["MapAnim", "Position"]
 
 class MergeParties(EventCommand):
     nid = 'merge_parties'

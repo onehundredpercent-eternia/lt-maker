@@ -5,8 +5,9 @@ import sys
 
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.data.database import DB
+from app.resources.resources import RESOURCES
 from app.engine import (aura_funcs, banner, equations, item_funcs, item_system,
-                        particles, skill_system, static_random, unit_funcs)
+                        particles, skill_system, static_random, unit_funcs, animations)
 from app.engine.game_state import game
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
@@ -1968,6 +1969,39 @@ class RemoveWeather(Action):
             new_ps = particles.create_system(self.weather_nid, game.tilemap.width, game.tilemap.height)
             game.tilemap.weather.append(new_ps)
 
+class AddMapAnim(Action):
+    def __init__(self, nid, pos, speed_mult):
+        self.nid = nid
+        self.pos = pos
+        self.speed_mult = speed_mult
+
+    def do(self):
+        anim = RESOURCES.animations.get(self.nid)
+        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_mult=self.speed_mult)
+        game.tilemap.animations.append(anim)
+
+    def reverse(self):
+        for anim in game.tilemap.animations[:]:
+            if anim.nid == self.nid and anim.xy_pos == self.pos:
+                game.tilemap.animations.remove(anim)
+                break
+
+class RemoveMapAnim(Action):
+    def __init__(self, nid, pos):
+        self.nid = nid
+        self.pos = pos
+        self.speed_mult = 1
+
+    def do(self):
+        for anim in game.tilemap.animations[:]:
+            if anim.nid == self.nid and anim.xy_pos == self.pos:
+                self.speed_mult = anim.speed_adj
+                game.tilemap.animations.remove(anim)
+
+    def reverse(self):
+        anim = RESOURCES.animations.get(self.nid)
+        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_mult=self.speed_mult)
+        game.tilemap.animations.append(anim)
 
 class ChangeObjective(Action):
     def __init__(self, key, string):
