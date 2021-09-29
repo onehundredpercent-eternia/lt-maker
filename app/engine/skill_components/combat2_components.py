@@ -63,7 +63,8 @@ class Lifetaker(SkillComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit') and p[1] is unit and p[2] and p[2] is not unit and p[2].is_dying]
-        num_playbacks = len(playbacks)
+        unique_units = {p[2] for p in playbacks}
+        num_playbacks = len(unique_units)
         if num_playbacks > 0:
             amount = max(2, int(unit.get_max_hp() * self.value * num_playbacks))
             if amount > 0:

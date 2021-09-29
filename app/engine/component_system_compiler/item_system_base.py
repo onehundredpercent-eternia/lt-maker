@@ -125,13 +125,16 @@ def stat_change(unit, item, stat_nid) -> int:
     return bonus
 
 def stat_change_contribution(unit, item, stat_nid) -> list:
-    contribution = []
+    contribution = {}
     for component in item.components:
         if component.defines('stat_change'):
             d = component.stat_change(unit)
             val = d.get(stat_nid, 0)
             if val != 0:
-                contribution.append((val, item.name))
+                if item.nid in contribution:
+                    contribution[item.nid] += val
+                else:
+                    contribution[item.nid] = val
     return contribution
 
 def is_broken(unit, item) -> bool:
