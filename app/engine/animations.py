@@ -6,11 +6,13 @@ from app.utilities import str_utils, utils
 # Used, for instance, for miss and no damage animations
 
 class Animation():
-    def __init__(self, anim, position, delay=0, loop=False, hold=False, reverse=False, speed_adj: float = 1 ):
+    def __init__(self, anim, position, delay=0, loop=False, hold=False, reverse=False, speed_adj: float = 1):
+        self.nid = anim.nid
         if not anim.image:
             anim.image = engine.image_load(anim.full_path)
             anim.image = anim.image.convert_alpha()
         self.sprite = anim.image
+        self.xy_pos = position
         self.position = position
         self.frame_x, self.frame_y = anim.frame_x, anim.frame_y
         self.num_frames = anim.num_frames
@@ -32,6 +34,14 @@ class Animation():
         self.counter = 0
         self.frames_held = 0
         self.first_update = engine.get_time()
+
+    def save(self) -> tuple:
+        return {'nid': self.nid, 
+                'pos': self.xy_pos,
+                'loop': self.loop,
+                'hold': self.hold, 
+                'reverse': self.reverse, 
+                'speed_adj': self.speed_adj}
 
     @property
     def speed(self):
@@ -129,8 +139,8 @@ class Animation():
         return surf
 
 class MapAnimation(Animation):
-    def __init__(self, anim, position, delay=0, loop=False, hold=False, speed_adj: float = 1):
-        super().__init__(anim, position, delay, loop, hold, speed_adj=speed_adj)
+    def __init__(self, anim, position, delay=0, loop=False, hold=False, reverse=False, speed_adj: float = 1):
+        super().__init__(anim, position, delay, loop, hold, reverse, speed_adj=speed_adj)
         self.position = STATWIDTH + self.position[0] * TILEWIDTH, self.position[1] * TILEHEIGHT
         self.use_center()
 

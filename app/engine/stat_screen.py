@@ -8,7 +8,7 @@ from app.engine.sound import SOUNDTHREAD
 from app.engine.sprites import SPRITES
 from app.engine.input_manager import INPUT
 from app.engine.state import MapState
-from app.engine import engine, info_menu, \
+from app.engine import engine, info_menu, text_funcs \
     icons, image_mods, item_funcs, menu_options, help_menu
 from app.engine.game_state import game
 from app.engine.fluid_scroll import FluidScroll
@@ -234,12 +234,6 @@ class StatScreen():
         for idx, stat_nid in enumerate(stats):
             left = 37 * (idx // 2)
             y_pos = top + 16 * (idx % 2)
-            # highest_stat = DB.stats.get(stat_nid).maximum
-            # max_stat = max_stats.get(stat_nid, 30)
-            # if max_stat > 0:
-            #     total_length = int(max_stat / highest_stat * 24)
-            #     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
-            #     build_groove(surf, (left + 19, y_pos + 8), total_length, frac)
             icons.draw_stat(surf, stat_nid, self.unit, (36 + left, y_pos), compact=True)
             # Name
             name = DB.stats.get(stat_nid).name
@@ -249,6 +243,13 @@ class StatScreen():
             contribution['Base Value'] = base_value
             help_box = help_menu.StatDialog('%s_desc' % stat_nid, contribution)
             self.info_graph.register((1 + left, y_pos, 40, 16), help_box, 'all')
+
+        # Mana / MEM
+        mana = str(self.unit.get_mana())
+        left, y_pos = (37*2, top + 16 * 1)
+        FONT['text-blue'].blit_right(mana, surf, (36 + left, y_pos))
+        FONT['text-yellow'].blit(text_funcs.translate('MANA'), surf, (1 + left, y_pos))
+        self.info_graph.register((1 + left, y_pos, 40, 16), 'MANA_desc', 'all')
 
         return surf
 
