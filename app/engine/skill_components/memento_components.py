@@ -58,7 +58,7 @@ class MementoShove(SkillComponent):
 
 class MementoTempo(SkillComponent):
     nid = 'memento_tempo'
-    desc = "Gives +6 DEF if attacked last player phase, +6 POW otherwise"
+    desc = "Gives +4 DEF if attacked last player phase, +4 POW otherwise"
     tag = 'memento'
 
     def init(self, skill):
@@ -82,9 +82,9 @@ class MementoTempo(SkillComponent):
     def stat_change(self, unit) -> dict:
         if game.turncount > 0:
             if game.turncount > self.skill.data['_last_turn'] + 1:
-                return {'POW': 6}
+                return {'POW': 4}
             else:
-                return {'DEF': 6}
+                return {'DEF': 4}
         return {}
 
 class WitchWarp(SkillComponent):

@@ -171,7 +171,7 @@ class StatDialog(HelpDialog):
                 elif val > 0:
                     self.font_green.blit("+" + str(val), help_surf, (8, top))
                 elif val < 0:
-                    self.font_red.blit("-" + str(val), help_surf, (8, top))
+                    self.font_red.blit(str(val), help_surf, (8, top))
                 else:
                     self.font.blit(str(val), help_surf, (8, top))
                 self.font.blit(bonus[:num_characters], help_surf, (32, top))
