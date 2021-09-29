@@ -53,6 +53,25 @@ class LiveToServe(SkillComponent):
             actions.append(action.ChangeHP(unit, amount))
             actions.append(action.TriggerCharge(unit, self.skill))
 
+class Lifetaker(SkillComponent):
+    nid = 'lifetaker'
+    desc = r"Heal % of total HP after a kill"
+    tag = 'combat2'
+
+    expose = Type.Float
+    value = 0.5
+
+    def end_combat(self, playback, unit, item, target, mode):
+        playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit') and p[1] is unit and p[2] and p[2] is not unit and p[2].is_dying]
+        num_playbacks = len(playbacks)
+        if num_playbacks > 0:
+            amount = max(2, int(unit.get_max_hp() * self.value * num_playbacks))
+            if amount > 0:
+                true_heal = min(amount, unit.get_max_hp() - unit.get_hp())
+                playback.append(('heal_hit', unit, item, unit, true_heal, true_heal))
+                action.do(action.ChangeHP(unit, amount))
+                action.do(action.TriggerCharge(unit, self.skill))
+
 class Lifelink(SkillComponent):
     nid = 'lifelink'
     desc = "Heals user %% of damage dealt"

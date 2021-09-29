@@ -8,7 +8,7 @@ from app.engine.sound import SOUNDTHREAD
 from app.engine.sprites import SPRITES
 from app.engine.input_manager import INPUT
 from app.engine.state import MapState
-from app.engine import engine, info_menu, text_funcs \
+from app.engine import engine, info_menu, text_funcs, \
     icons, image_mods, item_funcs, menu_options, help_menu
 from app.engine.game_state import game
 from app.engine.fluid_scroll import FluidScroll
