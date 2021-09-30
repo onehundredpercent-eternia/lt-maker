@@ -26,7 +26,6 @@ How does pair up work?
 Combat UI
  - Unit who is talking gets nametag
 Implement Wyllt
-Implement Memory Mechanics
 No Free Roam Base:
     - Instead, after every 3rd chapter, forced free roam "dream" sequence where you can talk to each character in the party, and perhaps even dead characters.
     - You can also get items and even find items.
@@ -62,14 +61,14 @@ Tristan (M) Ophie
 Isolde (F) Green hair
 ---
 Aelfwynn (F) Red hair
-Sorrel (M) Dark skin, brown hair
-Clover (F) Dark skin, brown hair
 Eadan (M) Green hair
 Bjorn (M) Blond hair
 Millie (F) Blue hair
 Anna (F) Orange hair
 Willow (F) Black hair
 Wound (Dog)
+Sorrel (M) Dark skin, brown hair
+Clover (F) Dark skin, brown hair
 Rhun (M) Amber hair
-Piper (F) Dark skin, purple hair?
+*Piper (F) Dark skin, purple hair?
 *Rhodri (M) Amber hair, strong lad
