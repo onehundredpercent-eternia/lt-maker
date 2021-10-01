@@ -2,7 +2,7 @@ import functools
 
 from PyQt5.QtWidgets import QPushButton, QLineEdit, \
     QWidget, QDialog, QVBoxLayout, QMessageBox, QListWidgetItem, \
-    QGridLayout
+    QGridLayout, QApplication
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QBrush, QColor, QIcon
 
@@ -311,7 +311,7 @@ class GroupUnitModel(DragDropCollectionModel):
         elif role == Qt.ForegroundRole:
             unit_nid = self._data[index.row()]
             if unit_nid in self.positions:
-                return QBrush()
+                return QBrush(QApplication.palette().text().color())
             else:
                 return QBrush(QColor("red"))
         return None
