@@ -19,8 +19,11 @@ class WeaponType(ItemComponent):
 
     def available(self, unit, item) -> bool:
         klass = DB.classes.get(unit.klass)
-        klass_usable = klass.wexp_gain.get(self.value).usable
-        return unit.wexp[self.value] > 0 and klass_usable
+        wexp_gain = klass.wexp_gain.get(self.value)
+        if wexp_gain:
+            klass_usable = wexp_gain.usable
+            return unit.wexp[self.value] > 0 and klass_usable
+        return False
 
 class WeaponRank(ItemComponent):
     nid = 'weapon_rank'

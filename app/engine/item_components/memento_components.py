@@ -39,6 +39,20 @@ class MementoRuneType(ItemComponent):
     def available(self, unit, item) -> bool:
         return self.value in unit.affinity
 
+class MementoSkillOnHold(ItemComponent):
+    nid = 'memento_skill_on_hold'
+    desc = "Item gives status while in unit's inventory"
+    tag = 'memento'
+
+    expose = Type.Skill  # Nid
+
+    def on_add_item(self, unit, item):
+        if not item.memento_rune_type or item.memento_rune_type.available(unit, item):
+            action.do(action.AddSkill(unit, self.value))
+
+    def on_remove_item(self, unit, item):
+        action.do(action.RemoveSkill(unit, self.value))
+
 class MementoEnemyCleaveAOE(ItemComponent):
     nid = 'memento_enemy_cleave_aoe'
     desc = "Gives Enemy Memento Cleave AOE"

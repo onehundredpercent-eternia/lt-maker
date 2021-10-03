@@ -284,14 +284,29 @@ class StatScreen():
                 surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
                 for subitem in item.subitems:
                     if subitem is accessory:
-                        item_option = menu_options.ItemOption(aidx, subitem)
+                        if not item_funcs.available(self.unit, subitem) and subitem.memento_skill_on_hold:
+                            skill = [s for s in self.unit.skills if s.nid == subitem.memento_skill_on_hold.value][0]
+                            item_option = menu_options.SkillOption(aidx, skill)
+                        else:
+                            item_option = menu_options.MementoAccessoryItemOption(aidx, subitem)
                         break
                 else:  # Shouldn't happen
-                    item_option = menu_options.ItemOption(aidx, item)
+                    if not item_funcs.available(self.unit, subitem) and subitem.memento_skill_on_hold:
+                        skill = [s for s in self.unit.skills if s.nid == subitem.memento_skill_on_hold.value][0]
+                        item_option = menu_options.SkillOption(aidx, skill)
+                    else:
+                        item_option = menu_options.MementoAccessoryItemOption(aidx, subitem)
             else:
                 if item is accessory:
                     surf.blit(SPRITES.get('equipment_highlight'), (2, y_pos + 8))
-                item_option = menu_options.ItemOption(aidx, item)
+                if not item_funcs.available(self.unit, item) and item.memento_skill_on_hold:
+                    skills = [s for s in self.unit.skills if s.nid == item.memento_skill_on_hold.value]
+                    if skills:
+                        item_option = menu_options.SkillOption(aidx, skills[0])
+                    else:
+                        item_option = menu_options.MementoAccessoryItemOption(aidx, item)
+                else:
+                    item_option = menu_options.MementoAccessoryItemOption(aidx, item)
             item_option.draw(surf, 2, y_pos)
             first = (idx == 0 and not self.unit.nonaccessories)
             self.info_graph.register((2, y_pos, 108, 16), item_option.get_help_box(), 'all', first=first)

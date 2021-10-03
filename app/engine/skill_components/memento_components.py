@@ -105,3 +105,13 @@ class WitchWarp(SkillComponent):
             if partner_pos:
                 positions += target_system.get_adjacent_positions(partner_pos)
         return positions
+
+class MementoRuneType(SkillComponent):
+    nid = 'memento_rune_type'
+    desc = "Skill has a rune type and can only be used by those with the right affinity"
+    tag = 'memento'
+
+    expose = Type.Affinity  # Nid
+
+    def available(self, unit, skill) -> bool:
+        return self.value in unit.affinity

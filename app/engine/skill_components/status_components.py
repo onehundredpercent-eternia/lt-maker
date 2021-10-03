@@ -64,6 +64,20 @@ class UpkeepDamage(SkillComponent):
     def on_upkeep(self, actions, playback, unit):
         hp_change = -self.value
         actions.append(action.ChangeHP(unit, hp_change))
+        actions.append(action.TriggerCharge(unit, self.skill))
+
+class EndstepDamage(SkillComponent):
+    nid = 'endstep_damage'
+    desc = "Unit takes damage at endstep"
+    tag = "status"
+
+    expose = Type.Int
+    value = 5
+
+    def on_endstep(self, actions, playback, unit):
+        hp_change = -self.value
+        actions.append(action.ChangeHP(unit, hp_change))
+        actions.append(action.TriggerCharge(unit, self.skill))
 
 class GBAPoison(SkillComponent):
     nid = 'gba_poison'
