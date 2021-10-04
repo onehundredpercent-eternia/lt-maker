@@ -30,7 +30,7 @@ class Heal(ItemComponent):
                 return True
         return False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode=None):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         heal = self._get_heal_amount(unit, target)
         true_heal = min(heal, equations.parser.hitpoints(target) - target.get_hp())
         actions.append(action.ChangeHP(target, heal))
@@ -80,7 +80,7 @@ class Refresh(ItemComponent):
             if s.finished:
                 return True
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         actions.append(action.Reset(target))
         playback.append(('refresh_hit', unit, item, target))
 
@@ -103,7 +103,7 @@ class Restore(ItemComponent):
                 return True
         return False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         for skill in target.skills:
             if self._can_be_restored(skill):
                 actions.append(action.RemoveSkill(target, skill))
@@ -151,7 +151,7 @@ class UnlockStaff(ItemComponent):
                     return True
         return False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         self._did_hit = True
 
     def end_combat(self, playback, unit, item, target, mode):
@@ -210,7 +210,7 @@ class Repair(ItemComponent):
             return True
         return False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         target_item = item.data.get('target_item')
         if target_item:
             actions.append(action.RepairItem(target_item))
@@ -225,7 +225,7 @@ class Trade(ItemComponent):
 
     _did_hit = False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         self._did_hit = True
 
     def end_combat(self, playback, unit, item, target, mode):

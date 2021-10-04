@@ -60,7 +60,7 @@ class MagicAtRange(ItemComponent):
     desc = 'Makes Item use magic damage formula at range'
     tag = 'weapon'
 
-    def dynamic_damage(self, unit, item, target, mode) -> int:
+    def dynamic_damage(self, unit, item, target, mode, attack_info, base_value) -> int:
         running_damage = 0
         if unit.position and target and target.position:
             dist = utils.calculate_distance(unit.position, target.position)
@@ -108,8 +108,8 @@ class Damage(ItemComponent):
                 return True
         return False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
-        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode)
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))
 
@@ -119,8 +119,8 @@ class Damage(ItemComponent):
             playback.append(('hit_sound', 'No Damage'))
             playback.append(('hit_anim', 'MapNoDamage', target))
 
-    def on_glancing_hit(self, actions, playback, unit, item, target, target_pos, mode):
-        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode)
+    def on_glancing_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
         damage = damage // 2
 
         true_damage = min(damage, target.get_hp())
@@ -131,8 +131,8 @@ class Damage(ItemComponent):
         if damage == 0:
             playback.append(('hit_anim', 'MapNoDamage', target))
 
-    def on_crit(self, actions, playback, unit, item, target, target_pos, mode):
-        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, crit=True)
+    def on_crit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info, crit=True)
 
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))

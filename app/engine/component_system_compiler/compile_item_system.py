@@ -108,11 +108,11 @@ def %s(unit, item):
 
     for hook in dynamic_hooks:
         func = """
-def %s(unit, item, target, mode):
+def %s(unit, item, target, mode, attack_info, base_value):
     val = 0
     for component in item.components:
         if component.defines('%s'):
-            val += component.%s(unit, item, target, mode)
+            val += component.%s(unit, item, target, mode, attack_info, base_value)
     return val""" \
             % (hook, hook, hook)
         compiled_item_system.write(func)

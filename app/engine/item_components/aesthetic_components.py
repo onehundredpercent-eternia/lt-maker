@@ -10,7 +10,7 @@ class MapHitAddBlend(ItemComponent):
     expose = Type.Color3
     value = (255, 255, 255)
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('unit_tint_add', target, self.value))
 
 class MapHitSubBlend(ItemComponent):
@@ -21,7 +21,7 @@ class MapHitSubBlend(ItemComponent):
     expose = Type.Color3
     value = (0, 0, 0)
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('unit_tint_sub', target, self.value))
 
 class MapHitSFX(ItemComponent):
@@ -32,7 +32,7 @@ class MapHitSFX(ItemComponent):
     expose = Type.Sound
     value = 'Attack Hit 1'
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('hit_sound', self.value))
 
 class MapCastSFX(ItemComponent):
@@ -43,10 +43,10 @@ class MapCastSFX(ItemComponent):
     expose = Type.Sound
     value = 'Attack Hit 1'
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('cast_sound', self.value))
 
-    def on_miss(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('cast_sound', self.value))
 
 class MapCastAnim(ItemComponent):
@@ -56,10 +56,10 @@ class MapCastAnim(ItemComponent):
 
     expose = Type.MapAnimation
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('cast_anim', self.value))
 
-    def on_miss(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         playback.append(('cast_anim', self.value))
 
 class BattleCastAnim(ItemComponent):

@@ -198,7 +198,7 @@ def can_unlock(unit, region) -> bool:
                         return True
     return False
 
-def before_crit(actions, playback, attacker, item, defender, mode) -> bool:
+def before_crit(actions, playback, attacker, item, defender, mode, attack_info) -> bool:
     for skill in attacker.skills:
         for component in skill.components:
             if component.defines('before_crit'):

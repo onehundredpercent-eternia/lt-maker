@@ -5,6 +5,7 @@ from app.data.database import DB
 
 import app.engine.config as cf
 from app.engine import engine, item_funcs, item_system, skill_system, combat_calcs, unit_funcs
+from app.engine import static_random
 from app.engine.game_state import game
 
 """
@@ -12,7 +13,8 @@ Essentially just a repository that imports a lot of different things so that man
 will be accepted
 """
 
-def evaluate(string: str, unit1=None, unit2=None, item=None, position=None, region=None, mode=None, skill=None) -> bool:
+def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
+             region=None, mode=None, skill=None, attack_info=None, base_value=None) -> bool:
     unit = unit1
     target = unit2
     

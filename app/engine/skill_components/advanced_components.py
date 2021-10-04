@@ -140,7 +140,7 @@ class AttackProc(SkillComponent):
     expose = Type.Skill
     _did_action = False
 
-    def start_sub_combat(self, actions, playback, unit, item, target, mode):
+    def start_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if mode == 'attack' and target and skill_system.check_enemy(unit, target):
             if not get_weapon_filter(self.skill, unit, item):
                 return
@@ -151,7 +151,7 @@ class AttackProc(SkillComponent):
                 playback.append(('attack_proc', unit, act.skill_obj))
                 self._did_action = True
         
-    def end_sub_combat(self, actions, playback, unit, item, target, mode):
+    def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
 
@@ -163,7 +163,7 @@ class DefenseProc(SkillComponent):
     expose = Type.Skill
     _did_action = False
 
-    def start_sub_combat(self, actions, playback, unit, item, target, mode):
+    def start_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if mode == 'defense' and target and skill_system.check_enemy(unit, target):
             if not get_weapon_filter(self.skill, unit, item):
                 return
@@ -174,7 +174,7 @@ class DefenseProc(SkillComponent):
                 playback.append(('defense_proc', unit, act.skill_obj))
                 self._did_action = True
         
-    def end_sub_combat(self, actions, playback, unit, item, target, mode):
+    def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
 

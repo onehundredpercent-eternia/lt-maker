@@ -12,7 +12,7 @@ class Promote(ItemComponent):
 
     _did_hit = False
 
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode):
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         self._did_hit = True
 
     def end_combat(self, playback, unit, item, target, mode):

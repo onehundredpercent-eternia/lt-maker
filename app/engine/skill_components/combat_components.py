@@ -168,7 +168,7 @@ class DamageMultiplier(SkillComponent):
     expose = Type.Float
     value = 0.5
 
-    def damage_multiplier(self, unit, item, target, mode):
+    def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
         return self.value
 
 class ResistMultiplier(SkillComponent):
@@ -179,5 +179,15 @@ class ResistMultiplier(SkillComponent):
     expose = Type.Float
     value = 0.5
 
-    def resist_multiplier(self, unit, item, target, mode):
+    def resist_multiplier(self, unit, item, target, mode, attack_info, base_value):
         return self.value
+
+class PCC(SkillComponent):
+    nid = 'pcc'
+    desc = "Multiplies crit chance by a stat on second strike"
+    tag = 'combat'
+
+    expose = Type.Stat
+
+    def crit_multiplier(self, unit, item, target, mode, attack_info, base_value):
+        return unit.get_stat(self.value) if attack_info[0] > 0 else 1

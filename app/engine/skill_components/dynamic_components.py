@@ -8,11 +8,11 @@ class DynamicDamage(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_damage(self, unit, item, target, mode) -> int:
+    def dynamic_damage(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -23,11 +23,11 @@ class DynamicResist(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_resist(self, unit, item, target, mode) -> int:
+    def dynamic_resist(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -38,11 +38,11 @@ class DynamicAccuracy(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_accuracy(self, unit, item, target, mode) -> int:
+    def dynamic_accuracy(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -53,11 +53,11 @@ class DynamicAvoid(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_avoid(self, unit, item, target, mode) -> int:
+    def dynamic_avoid(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -68,11 +68,11 @@ class DynamicCritAccuracy(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_crit_accuracy(self, unit, item, target, mode) -> int:
+    def dynamic_crit_accuracy(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -83,11 +83,11 @@ class DynamicCritAvoid(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_crit_avoid(self, unit, item, target, mode) -> int:
+    def dynamic_crit_avoid(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -98,11 +98,11 @@ class DynamicAttackSpeed(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_attack_speed(self, unit, item, target, mode) -> int:
+    def dynamic_attack_speed(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -113,11 +113,11 @@ class DynamicDefenseSpeed(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_defense_speed(self, unit, item, target, mode) -> int:
+    def dynamic_defense_speed(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
@@ -128,10 +128,10 @@ class DynamicMultiattacks(SkillComponent):
 
     expose = Type.String
 
-    def dynamic_multiattacks(self, unit, item, target, mode) -> int:
+    def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value) -> int:
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill))
-        except:
+            return int(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0

@@ -1129,12 +1129,12 @@
         ],
         "components": [
             [
-                "combat_condition",
-                "True"
+                "class_skill",
+                null
             ],
             [
-                "damage",
-                30
+                "pcc",
+                "HP"
             ]
         ]
     }

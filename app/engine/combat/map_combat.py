@@ -175,8 +175,8 @@ class MapCombat(SimpleCombat):
         else:
             # P1 on P1
             if self.defender and self.attacker is self.defender:
-                hit = combat_calcs.compute_hit(self.attacker, self.defender, self.main_item, self.def_item, 'attack')
-                mt = combat_calcs.compute_damage(self.attacker, self.defender, self.main_item, self.def_item, 'attack')
+                hit = combat_calcs.compute_hit(self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                mt = combat_calcs.compute_damage(self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo('p1', self.attacker, self.main_item, self.defender, (hit, mt))
                     self.health_bars[self.attacker] = attacker_health
@@ -185,8 +185,8 @@ class MapCombat(SimpleCombat):
 
             # P1 on P2
             elif self.defender:
-                hit = combat_calcs.compute_hit(self.attacker, self.defender, self.main_item, self.def_item, 'attack')
-                mt = combat_calcs.compute_damage(self.attacker, self.defender, self.main_item, self.def_item, 'attack')
+                hit = combat_calcs.compute_hit(self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                mt = combat_calcs.compute_damage(self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo('p1', self.attacker, self.main_item, self.defender, (hit, mt))
                     self.health_bars[self.attacker] = attacker_health
@@ -194,8 +194,8 @@ class MapCombat(SimpleCombat):
                     self.health_bars[self.attacker].update_stats((hit, mt))
 
                 if combat_calcs.can_counterattack(self.attacker, self.main_item, self.defender, self.def_item):
-                    hit = combat_calcs.compute_hit(self.defender, self.attacker, self.def_item, self.main_item, 'defense')
-                    mt = combat_calcs.compute_damage(self.defender, self.attacker, self.def_item, self.main_item, 'defense')
+                    hit = combat_calcs.compute_hit(self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
+                    mt = combat_calcs.compute_damage(self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
                 else:
                     hit, mt = None, None
                 if self.defender not in self.health_bars:
@@ -207,8 +207,8 @@ class MapCombat(SimpleCombat):
             # P1 on single splash
             elif len(self.all_splash) == 1:
                 defender = self.all_splash[0]
-                hit = combat_calcs.compute_hit(self.attacker, defender, self.main_item, None, 'attack')
-                mt = combat_calcs.compute_damage(self.attacker, defender, self.main_item, None, 'attack')
+                hit = combat_calcs.compute_hit(self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
+                mt = combat_calcs.compute_damage(self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo('p1', self.attacker, self.main_item, defender, (hit, mt))
                     self.health_bars[self.attacker] = attacker_health

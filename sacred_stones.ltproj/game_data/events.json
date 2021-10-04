@@ -13094,5 +13094,77 @@
         ],
         "only_once": false,
         "priority": 20
+    },
+    {
+        "name": "Activate Movement Star",
+        "trigger": "unit_wait",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "if",
+                [
+                    "static_random.get_combat() < (unit.get_stat('SPD') * 10) and not unit.get_field('movement_star')"
+                ]
+            ],
+            [
+                "reset",
+                [
+                    "{unit}"
+                ]
+            ],
+            [
+                "set_unit_field",
+                [
+                    "{unit}",
+                    "movement_star",
+                    "True"
+                ]
+            ],
+            [
+                "map_anim",
+                [
+                    "MapSmallHealTrans",
+                    "{unit}"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    },
+    {
+        "name": "Loop Reset Movement Star",
+        "trigger": "turn_change",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "loop_units",
+                [
+                    "game.get_all_units()",
+                    "Reset Movement Star"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    },
+    {
+        "name": "Reset Movement Star",
+        "trigger": null,
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "set_unit_field",
+                [
+                    "{unit}",
+                    "movement_star",
+                    "False"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
     }
 ]

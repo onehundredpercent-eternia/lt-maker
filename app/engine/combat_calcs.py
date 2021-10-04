@@ -297,7 +297,7 @@ def defense_speed(unit, item, item_to_avoid=None):
     speed += skill_system.modify_defense_speed(unit, item_to_avoid)
     return speed
 
-def compute_hit(unit, target, item, def_item, mode):
+def compute_hit(unit, target, item, def_item, mode, attack_info):
     if not item:
         return None
 
@@ -306,7 +306,7 @@ def compute_hit(unit, target, item, def_item, mode):
         return 10000
 
     # Handles things like effective accuracy
-    hit += item_system.dynamic_accuracy(unit, item, target, mode)
+    hit += item_system.dynamic_accuracy(unit, item, target, mode, attack_info, hit)
     
     # Weapon Triangle
     triangle_bonus = 0
@@ -340,12 +340,12 @@ def compute_hit(unit, target, item, def_item, mode):
 
     hit -= avoid(target, def_item, item)
 
-    hit += skill_system.dynamic_accuracy(unit, item, target, mode)
-    hit -= skill_system.dynamic_avoid(target, item, unit, mode)
+    hit += skill_system.dynamic_accuracy(unit, item, target, mode, attack_info, hit)
+    hit -= skill_system.dynamic_avoid(target, item, unit, mode, attack_info, hit)
 
     return utils.clamp(hit, 0, 100)
 
-def compute_crit(unit, target, item, def_item, mode):
+def compute_crit(unit, target, item, def_item, mode, attack_info):
     if not item:
         return None
 
@@ -354,7 +354,7 @@ def compute_crit(unit, target, item, def_item, mode):
         return None
 
     # Handles things like effective accuracy
-    crit += item_system.dynamic_crit_accuracy(unit, item, target, mode)
+    crit += item_system.dynamic_crit_accuracy(unit, item, target, mode, attack_info, crit)
     
     # Weapon Triangle
     triangle_bonus = 0
@@ -388,12 +388,14 @@ def compute_crit(unit, target, item, def_item, mode):
 
     crit -= crit_avoid(target, def_item, item)
 
-    crit += skill_system.dynamic_crit_accuracy(unit, item, target, mode)
-    crit -= skill_system.dynamic_crit_avoid(target, item, unit, mode)
+    crit += skill_system.dynamic_crit_accuracy(unit, item, target, mode, attack_info, crit)
+    crit -= skill_system.dynamic_crit_avoid(target, item, unit, mode, attack_info, crit)
+
+    crit *= skill_system.crit_multiplier(unit, item, target, mode, attack_info, crit)
 
     return utils.clamp(crit, 0, 100)
 
-def compute_damage(unit, target, item, def_item, mode, crit=False):
+def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False):
     if not item:
         return None
 
@@ -402,8 +404,8 @@ def compute_damage(unit, target, item, def_item, mode, crit=False):
         return None
 
     # Handles things like effective damage
-    might += item_system.dynamic_damage(unit, item, target, mode)
-    might += skill_system.dynamic_damage(unit, item, target, mode)
+    might += item_system.dynamic_damage(unit, item, target, mode, attack_info, might)
+    might += skill_system.dynamic_damage(unit, item, target, mode, attack_info, might)
 
     # Weapon Triangle
     triangle_bonus = 0
@@ -438,18 +440,18 @@ def compute_damage(unit, target, item, def_item, mode, crit=False):
     total_might = might
 
     might -= defense(target, def_item, item)
-    might -= skill_system.dynamic_resist(target, item, unit, mode)
+    might -= skill_system.dynamic_resist(target, item, unit, mode, attack_info, might)
 
     if crit or skill_system.crit_anyway(unit):
         might *= equations.parser.crit_mult(unit)
         for _ in range(equations.parser.crit_add(unit)):
             might += total_might
 
-    might *= skill_system.damage_multiplier(unit, item, target, mode)
-    might *= skill_system.resist_multiplier(target, item, unit, mode)
+    might *= skill_system.damage_multiplier(unit, item, target, mode, attack_info, might)
+    might *= skill_system.resist_multiplier(target, item, unit, mode, attack_info, might)
     return int(max(DB.constants.get('min_damage').value, might))
 
-def outspeed(unit, target, item, def_item, mode) -> bool:
+def outspeed(unit, target, item, def_item, mode, attack_info) -> bool:
     if not item:
         return 1
     if not item_system.can_double(unit, item):
@@ -460,7 +462,7 @@ def outspeed(unit, target, item, def_item, mode) -> bool:
     speed = attack_speed(unit, item)
 
     # Handles things like effective damage
-    speed += item_system.dynamic_attack_speed(unit, item, target, mode)
+    speed += item_system.dynamic_attack_speed(unit, item, target, mode, attack_info, speed)
 
     # Weapon Triangle
     triangle_bonus = 0
@@ -494,17 +496,17 @@ def outspeed(unit, target, item, def_item, mode) -> bool:
 
     speed -= defense_speed(target, def_item, item)
 
-    speed += skill_system.dynamic_attack_speed(unit, item, target, mode)
-    speed -= skill_system.dynamic_defense_speed(target, item, unit, mode)
+    speed += skill_system.dynamic_attack_speed(unit, item, target, mode, attack_info, speed)
+    speed -= skill_system.dynamic_defense_speed(target, item, unit, mode, attack_info, speed)
 
     return 2 if speed >= equations.parser.speed_to_double(unit) else 1
 
-def compute_multiattacks(unit, target, item, mode):
+def compute_multiattacks(unit, target, item, mode, attack_info):
     if not item:
         return None
 
     num_attacks = 1
-    num_attacks += item_system.dynamic_multiattacks(unit, item, target, mode)
-    num_attacks += skill_system.dynamic_multiattacks(unit, item, target, mode)
+    num_attacks += item_system.dynamic_multiattacks(unit, item, target, mode, attack_info, num_attacks)
+    num_attacks += skill_system.dynamic_multiattacks(unit, item, target, mode, attack_info, num_attacks)
 
     return num_attacks

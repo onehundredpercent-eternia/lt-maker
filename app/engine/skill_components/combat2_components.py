@@ -21,7 +21,7 @@ class IgnoreDamage(SkillComponent):
     desc = "Unit will ignore all damage"
     tag = 'combat2'
 
-    def after_take_hit(self, actions, playback, unit, item, target, mode):
+    def after_take_hit(self, actions, playback, unit, item, target, mode, attack_info):
         # Remove any acts that reduce my HP!
         did_something = False
         for act in reversed(actions):
@@ -40,7 +40,7 @@ class LiveToServe(SkillComponent):
     expose = Type.Float
     value = 1.0
 
-    def after_hit(self, actions, playback, unit, item, target, mode):
+    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         total_amount_healed = 0
         playbacks = [p for p in playback if p[0] == 'heal_hit' and p[1] is unit and p[3] is not unit]
         for p in playbacks:
@@ -81,7 +81,7 @@ class Lifelink(SkillComponent):
     expose = Type.Float
     value = 0.5
 
-    def after_hit(self, actions, playback, unit, item, target, mode):
+    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         total_damage_dealt = 0
         playbacks = [p for p in playback if p[0] in ('damage_hit', 'damage_crit') and p[1] == unit]
         for p in playbacks:
@@ -214,7 +214,7 @@ class GiveStatusAfterHit(SkillComponent):
 
     expose = Type.Skill
 
-    def after_hit(self, actions, playback, unit, item, target, mode):
+    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         mark_playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit')]
         if target and any(p[3] == unit for p in mark_playbacks):  # Unit is overall attacker
             actions.append(action.AddSkill(target, self.value, unit))
@@ -267,7 +267,7 @@ class DelayInitiativeOrder(SkillComponent):
     value = 1
     author = "KD"
 
-    def after_hit(self, actions, playback, unit, item, target, mode):
+    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         mark_playbacks = [p for p in playback if p[0] in ('mark_miss', 'mark_hit', 'mark_crit')]
         if target and target.get_hp() <= 0 and any(p[3] == unit for p in mark_playbacks):  # Unit is overall attacker
             actions.append(action.MoveInInitiative(target, self.value))

@@ -367,25 +367,25 @@ class UIView():
         # Enemy HP
         blit_num(surf, defender.get_hp(), 20, 19)
         # Self MT
-        mt = combat_calcs.compute_damage(attacker, defender, weapon, defender.get_weapon(), 'attack')
+        mt = combat_calcs.compute_damage(attacker, defender, weapon, defender.get_weapon(), 'attack', (0, 0))
         if grandmaster:
-            hit = combat_calcs.compute_hit(attacker, defender, weapon, defender.get_weapon(), 'attack')
+            hit = combat_calcs.compute_hit(attacker, defender, weapon, defender.get_weapon(), 'attack', (0, 0))
             blit_num(surf, int(mt * float(hit) / 100), 64, 35)
         else:
             blit_num(surf, mt, 64, 35)
-            hit = combat_calcs.compute_hit(attacker, defender, weapon, defender.get_weapon(), 'attack')
+            hit = combat_calcs.compute_hit(attacker, defender, weapon, defender.get_weapon(), 'attack', (0, 0))
             blit_num(surf, hit, 64, 51)
             # Blit crit if applicable
             if crit_flag:
-                c = combat_calcs.compute_crit(attacker, defender, weapon, defender.get_weapon(), 'attack')
+                c = combat_calcs.compute_crit(attacker, defender, weapon, defender.get_weapon(), 'attack', (0, 0))
                 blit_num(surf, c, 64, 67)
         # Enemy Hit and Mt
         if defender.get_weapon() and \
                 combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
-            e_mt = combat_calcs.compute_damage(defender, attacker, defender.get_weapon(), weapon, 'defense')
-            e_hit = combat_calcs.compute_hit(defender, attacker, defender.get_weapon(), weapon, 'defense')
+            e_mt = combat_calcs.compute_damage(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
+            e_hit = combat_calcs.compute_hit(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
             if crit_flag:
-                e_crit = combat_calcs.compute_crit(defender, attacker, defender.get_weapon(), weapon, 'defense')
+                e_crit = combat_calcs.compute_crit(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
             else:
                 e_crit = 0
         else:
@@ -478,8 +478,8 @@ class UIView():
         x2_pos_player = (topleft[0] + 59 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
         x2_pos_enemy = (topleft[0] + 20 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
 
-        my_num = combat_calcs.outspeed(attacker, defender, weapon, defender.get_weapon(), "attack")
-        my_num *= combat_calcs.compute_multiattacks(attacker, defender, weapon, "attack")
+        my_num = combat_calcs.outspeed(attacker, defender, weapon, defender.get_weapon(), "attack", (0, 0))
+        my_num *= combat_calcs.compute_multiattacks(attacker, defender, weapon, "attack", (0, 0))
         my_num = min(my_num, weapon.data.get('uses', 100))
 
         if my_num == 2:
@@ -493,10 +493,10 @@ class UIView():
         eweapon = defender.get_weapon()
         if eweapon and combat_calcs.can_counterattack(attacker, weapon, defender, eweapon):
             if DB.constants.value('def_double') or skill_system.def_double(defender):
-                e_num = combat_calcs.outspeed(defender, attacker, eweapon, weapon, 'defense')
+                e_num = combat_calcs.outspeed(defender, attacker, eweapon, weapon, 'defense', (0, 0))
             else:
                 e_num = 1
-            e_num *= combat_calcs.compute_multiattacks(defender, attacker, eweapon, 'defense')
+            e_num *= combat_calcs.compute_multiattacks(defender, attacker, eweapon, 'defense', (0, 0))
             e_num = min(e_num, eweapon.data.get('uses', 100))
 
             if e_num == 2:
@@ -515,10 +515,10 @@ class UIView():
     def create_spell_info(self, attacker, spell, defender):
         if defender:
             height = 2
-            mt = combat_calcs.compute_damage(attacker, defender, spell, defender.get_weapon(), 'attack')
+            mt = combat_calcs.compute_damage(attacker, defender, spell, defender.get_weapon(), 'attack', (0, 0))
             if mt is not None:
                 height += 1
-            hit = combat_calcs.compute_hit(attacker, defender, spell, defender.get_weapon(), 'attack')
+            hit = combat_calcs.compute_hit(attacker, defender, spell, defender.get_weapon(), 'attack', (0, 0))
             if hit is not None:
                 height += 1
 
@@ -560,7 +560,7 @@ class UIView():
                     position = width - 5 - hit_width, running_height
                     FONT['text-blue'].blit(str(hit), bg_surf, position)
 
-            crit = combat_calcs.compute_crit(attacker, defender, spell, defender.get_weapon(), 'attack')
+            crit = combat_calcs.compute_crit(attacker, defender, spell, defender.get_weapon(), 'attack', (0, 0))
             if DB.constants.value('crit') and crit is not None:
                 running_height += 16
                 FONT['text-yellow'].blit('Crit', bg_surf, (9, running_height))
