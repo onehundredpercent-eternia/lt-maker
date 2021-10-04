@@ -1,6 +1,8 @@
+import logging
 import time, random
+import traceback
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, \
+from PyQt5.QtWidgets import QMessageBox, QWidget, QHBoxLayout, \
     QVBoxLayout, QGridLayout, QPushButton, QSizePolicy, QFrame, QSplitter
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QPixmap, QPainter, QIcon
@@ -84,7 +86,10 @@ class PortraitProperties(QWidget):
         right_section.addWidget(self.smiling_offset)
         self.auto_frame_button = QPushButton("Auto-guess Offsets")
         self.auto_frame_button.clicked.connect(self.auto_guess_offset)
+        self.auto_colorkey_button = QPushButton("Automatically colorkey")
+        self.auto_colorkey_button.clicked.connect(self.auto_colorkey)
         right_section.addWidget(self.auto_frame_button)
+        right_section.addWidget(self.auto_colorkey_button)
         right_section.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         left_frame = QFrame(self)
@@ -134,7 +139,7 @@ class PortraitProperties(QWidget):
             self.last_talk_update = current_time
             chance = random.randint(1, 10)
             if self.talk_state == 0:
-                # 10% chance to skip to state 2    
+                # 10% chance to skip to state 2
                 if chance == 1:
                     self.talk_state = 2
                     self.next_talk_update = random.randint(70, 160)
@@ -214,7 +219,7 @@ class PortraitProperties(QWidget):
 
         final_pix = QPixmap.fromImage(editor_utilities.convert_colorkey(main_portrait))
         self.portrait_view.set_image(final_pix)
-            
+
         self.portrait_view.show_image()
 
     def blinking_changed(self, x, y):
@@ -225,6 +230,15 @@ class PortraitProperties(QWidget):
 
     def auto_guess_offset(self):
         portrait_model.auto_frame_portrait(self.current)
+        self.set_current(self.current)
+
+    def auto_colorkey(self):
+        try:
+            portrait_model.auto_colorkey(self.current)
+        except Exception as e:
+            logging.error("colorkeying failed")
+            logging.exception(e)
+            QMessageBox.warning(self, 'Colorkey Failed', 'Automatic Colorkeying failed with error: \n' + traceback.format_exc())
         self.set_current(self.current)
 
     def talk_button_clicked(self, checked):
