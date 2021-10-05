@@ -13,7 +13,7 @@ class MementoHitBonus(SkillComponent):
     expose = Type.Int
     value = 10
 
-    def dynamic_accuracy(self, unit, item, target, mode):
+    def dynamic_accuracy(self, unit, item, target, mode, attack_info, base_value):
         if mode == 'attack' and target and target.position:
             for other_unit in game.get_all_units():
                 if other_unit is unit:
@@ -52,7 +52,7 @@ class MementoShove(SkillComponent):
                 playback.append(('shove_hit', unit, item, target))
             else:
                 # Do half damage again when you shove into a wall
-                damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode)
+                damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
                 damage = damage // 2
                 action.do(action.ChangeHP(target, -damage))
 

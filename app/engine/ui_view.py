@@ -1,5 +1,5 @@
 import app.engine.config as cf
-from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, STATWIDTH, MAPWIDTH
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, STATWIDTH, MAPWIDTH, MEMENTO_MODE
 from app.data.database import DB
 from app.data.difficulty_modes import RNGOption
 from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
@@ -770,13 +770,16 @@ class ItemDescriptionPanel():
             topleft = (WINWIDTH - 8 - self.surf.get_width(), WINHEIGHT - 8 - self.surf.get_height())
         else:
             cursor_left = True
-            topleft = (8, WINHEIGHT - 8 - self.surf.get_height())
+            topleft = (STATWIDTH + 8, WINHEIGHT - 8 - self.surf.get_height())
 
-        portrait = icons.get_portrait(self.unit)
-        if portrait:
-            if cursor_left:
-                portrait = engine.flip_horiz(portrait)
-            surf.blit(portrait, (topleft[0] + 2, topleft[1] - 76))
+        if MEMENTO_MODE:
+            pass
+        else:
+            portrait = icons.get_portrait(self.unit)
+            if portrait:
+                if cursor_left:
+                    portrait = engine.flip_horiz(portrait)
+                surf.blit(portrait, (topleft[0] + 2, topleft[1] - 76))
 
         surf.blit(self.surf, topleft)
         return surf

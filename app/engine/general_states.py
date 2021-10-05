@@ -1020,6 +1020,7 @@ class WeaponChoiceState(MapState):
         options = self.get_options(self.cur_unit)
         self.menu = menus.Choice(self.cur_unit, options)
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
+        game.stat_screen.reset_surfs()
         self.disp_attacks(self.cur_unit, self.menu.get_current())
 
     def take_input(self, event):
@@ -1033,6 +1034,7 @@ class WeaponChoiceState(MapState):
             current = self.menu.get_current()
             self.item_desc_panel.set_item(current)
             game.highlight.remove_highlights()
+            game.stat_screen.reset_surfs()
             self.disp_attacks(self.cur_unit, current)
 
         elif 'UP' in directions:
@@ -1041,6 +1043,7 @@ class WeaponChoiceState(MapState):
             current = self.menu.get_current()
             self.item_desc_panel.set_item(current)
             game.highlight.remove_highlights()
+            game.stat_screen.reset_surfs()
             self.disp_attacks(self.cur_unit, current)
 
         if event == 'BACK':
