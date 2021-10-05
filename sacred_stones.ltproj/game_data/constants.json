@@ -116,6 +116,14 @@
         false
     ],
     [
+        "reset_mana",
+        false
+    ],
+    [
+        "double_splash",
+        false
+    ],
+    [
         "num_save_slots",
         3
     ],

@@ -494,7 +494,6 @@ class MoveState(MapState):
                     SOUNDTHREAD.play_sfx('Error')
                 else:
                     witch_warp = set(skill_system.witch_warp(cur_unit))
-                    # Sound -- ADD FOOTSTEP SOUNDS
                     if cur_unit.has_attacked or cur_unit.has_traded:
                         cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
