@@ -1070,6 +1070,7 @@ class WeaponChoiceState(MapState):
 
             game.memory['item'] = selection
             game.state.change('combat_targeting')
+            game.stat_screen.reset_surfs()
 
         elif event == 'INFO':
             self.menu.toggle_info()

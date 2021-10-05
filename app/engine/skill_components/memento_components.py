@@ -42,6 +42,18 @@ class MementoShove(SkillComponent):
             return new_position
         return False
 
+    """
+    Do 1.5x damage when the unit would be shoved into an obstacle
+    """
+    def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
+        if not skill_system.ignore_forced_movement(target) and mode != 'splash':
+            new_position = self._check_shove(target, unit.position, 1)
+            if new_position:
+                return 1
+            else:
+                return 1.5
+        return 1
+
     def cleanup_combat(self, playback, unit, item, target, mode):
         marks = [mark[0] for mark in playback if mark[0] in ('mark_hit', 'mark_crit') and mark[1] is unit and mark[2] is target]
         did_hit = len(marks) > 0
@@ -50,11 +62,6 @@ class MementoShove(SkillComponent):
             if new_position:
                 action.do(action.ForcedMovement(target, new_position))
                 playback.append(('shove_hit', unit, item, target))
-            else:
-                # Do half damage again when you shove into a wall
-                damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
-                damage = damage // 2
-                action.do(action.ChangeHP(target, -damage))
 
 class MementoTempo(SkillComponent):
     nid = 'memento_tempo'

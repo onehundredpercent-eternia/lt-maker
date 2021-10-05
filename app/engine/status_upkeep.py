@@ -4,9 +4,7 @@ from app.engine.sound import SOUNDTHREAD
 from app.engine.state import MapState
 from app.engine.game_state import game
 from app.engine import engine, action, skill_system, \
-    health_bar, animations, item_system, item_funcs
-
-import logging
+    health_bar, animations, item_system, item_funcs, gui
 
 class StatusUpkeepState(MapState):
     name = 'status_upkeep'
@@ -108,6 +106,19 @@ class StatusUpkeepState(MapState):
                 if anim:
                     anim = animations.MapAnimation(anim, pos)
                     self.animations.append(anim)
+            elif brush[0] == 'damage_numbers':
+                damage = brush[2]
+                if damage == 0:
+                    continue
+                str_damage = str(abs(damage))
+                target = brush[1]
+                if damage < 0:
+                    color = 'small_cyan'
+                else:
+                    color = 'small_red'
+                for idx, num in enumerate(str_damage):
+                    d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, color)
+                    target.sprite.damage_numbers.append(d)
 
     def check_death(self):
         if self.cur_unit.get_hp() <= 0:
