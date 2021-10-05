@@ -78,7 +78,12 @@ class AttackerState(SolverState):
         skill_system.start_sub_combat(actions, playback, solver.attacker, solver.main_item, solver.defender, 'attack', attack_info)
         for idx, item in enumerate(solver.items):
             defender = solver.defenders[idx]
-            splash = solver.splashes[idx]
+            if DB.constants.value('double_splash'):
+                splash = solver.splashes[idx]
+            elif solver.num_attacks == 0 and solver.num_subattacks == 0:
+                splash = solver.splashes[idx]
+            else:
+                splash = []
             target_pos = solver.target_positions[idx]
             if defender:
                 skill_system.start_sub_combat(actions, playback, defender, defender.get_weapon(), solver.attacker, 'defense', attack_info)

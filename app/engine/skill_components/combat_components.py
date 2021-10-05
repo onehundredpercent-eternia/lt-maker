@@ -171,6 +171,21 @@ class DamageMultiplier(SkillComponent):
     def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
         return self.value
 
+class DynamicDamageMultiplier(SkillComponent):
+    nid = 'dynamic_damage_multiplier'
+    desc = "Multiplies damage given by a fraction"
+    tag = 'combat'
+
+    expose = Type.String
+
+    def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
+        from app.engine import evaluate
+        try:
+            return float(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+        except Exception:
+            print("Couldn't evaluate %s conditional" % self.value)
+            return 1
+
 class ResistMultiplier(SkillComponent):
     nid = 'resist_multiplier'
     desc = "Multiplies damage taken by a fraction"
