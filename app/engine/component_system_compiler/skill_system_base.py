@@ -54,6 +54,14 @@ class Defaults():
         return 1.0
 
     @staticmethod
+    def change_variant(unit) -> str:
+        return unit.variant
+        
+    @staticmethod
+    def change_animation(unit) -> str:
+        return unit.klass
+    
+    @staticmethod
     def steal_icon(unit1, unit2) -> bool:
         return False
 
@@ -202,7 +210,7 @@ def before_crit(actions, playback, attacker, item, defender, mode, attack_info) 
     for skill in attacker.skills:
         for component in skill.components:
             if component.defines('before_crit'):
-                component.before_crit(actions, playback, attacker, item, defender, mode)
+                component.before_crit(actions, playback, attacker, item, defender, mode, attack_info)
 
 def on_upkeep(actions, playback, unit) -> tuple:  # actions, playback
     for skill in unit.skills:

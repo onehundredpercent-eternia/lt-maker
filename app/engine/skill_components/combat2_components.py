@@ -290,7 +290,7 @@ class Recoil(SkillComponent):
 
 class PostCombatDamage(SkillComponent):
     nid = 'post_combat_damage'
-    desc = "Target takes non-lethal damage after combat"
+    desc = "Target takes non-lethal flat damage after combat"
     tag = 'combat2'
 
     expose = Type.Int
@@ -303,14 +303,39 @@ class PostCombatDamage(SkillComponent):
             action.do(action.SetHP(target, max(1, end_health)))
             action.do(action.TriggerCharge(unit, self.skill))
 
+class PostCombatDamagePercent(SkillComponent):
+    nid = 'post_combat_damage_percent'
+    desc = "Target takes non-lethal MaxHP percent damage after combat"
+    tag = 'combat2'
+
+    expose = Type.Float
+    value = 0.2
+    author = 'Lord_Tweed'
+    
+    def end_combat(self, playback, unit, item, target, mode):
+        if target and skill_system.check_enemy(unit, target):
+            end_health = int(target.get_hp() - (target.get_max_hp() * self.value))
+            action.do(action.SetHP(target, max(1, end_health)))
+            action.do(action.TriggerCharge(unit, self.skill))
+
+class PostCombatSplash(SkillComponent):
+    nid = 'post_combat_splash'
+    desc = "Deals flat damage to enemies in a range defined by the PostCombatSplashAOE component"
+    tag = 'combat2'
+    paired_with = ('post_combat_splash_aoe', )
+
+    expose = Type.Int
+    value = 0
+    author = 'Lord_Tweed'
+
     def post_combat_damage(self) -> int:
         return self.value
 
-class PostCombatDamageAOE(SkillComponent):
-    nid = 'post_combat_damage_aoe'
-    desc = 'Post-Combat damage will also hit other enemies within this AOE range.'
+class PostCombatSplashAOE(SkillComponent):
+    nid = 'post_combat_splash_aoe'
+    desc = 'Defines the range for PostCombatSplash damage to hit.'
     tag = 'combat2'
-    paired_with = ('post_combat_damage', )
+    paired_with = ('post_combat_splash', )
 
     expose = Type.Int
     value = 0
@@ -318,7 +343,7 @@ class PostCombatDamageAOE(SkillComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         if target and skill_system.check_enemy(unit, target):
-            r = set(range(self.value))
+            r = set(range(self.value+1))
             locations = target_system.get_shell({target.position}, r, game.tilemap.width, game.tilemap.height)
             damage = get_pc_damage(unit, self.skill)
             if damage > 0:

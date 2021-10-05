@@ -1079,26 +1079,6 @@
         ]
     },
     {
-        "nid": "Mana Eater",
-        "name": "Mana Eater",
-        "desc": "",
-        "icon_nid": "Skills",
-        "icon_index": [
-            10,
-            8
-        ],
-        "components": [
-            [
-                "global",
-                null
-            ],
-            [
-                "mana_on_kill",
-                5
-            ]
-        ]
-    },
-    {
         "nid": "Live to Serve",
         "name": "Live to Serve",
         "desc": "",

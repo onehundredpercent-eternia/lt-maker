@@ -8,7 +8,8 @@ default_behaviours = (
     'ignore_rescue_penalty', 'ignore_forced_movement', 'distant_counter',
     'ignore_fatigue')
 # Takes in unit, returns default value
-exclusive_behaviours = ('can_select', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset', 'num_accessories_offset', 'witch_warp')
+exclusive_behaviours = ('can_select', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset', 'num_accessories_offset', 'change_variant', 'change_animation', 'witch_warp')
+
 exclusive_behaviours += formula
 # Takes in unit and item, returns default value
 item_behaviours = ('modify_buy_price', 'modify_sell_price', 'limit_maximum_range', 'modify_maximum_range')
@@ -31,7 +32,7 @@ simple_event_hooks = ('on_death',)
 # Takes in playback, unit, item, target, mode
 combat_event_hooks = ('start_combat', 'cleanup_combat', 'end_combat', 'pre_combat', 'post_combat', 'test_on', 'test_off')
 # Takes in actions, playback, unit, item, target, mode, attack_info
-subcombat_event_hooks = ('after_hit', 'start_sub_combat', 'end_sub_combat')
+subcombat_event_hooks = ('after_hit', 'after_take_hit', 'start_sub_combat', 'end_sub_combat')
 # Takes in unit, item
 item_event_hooks = ('on_add_item', 'on_remove_item', 'on_equip_item', 'on_unequip_item')
 

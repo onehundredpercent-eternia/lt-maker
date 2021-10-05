@@ -407,6 +407,7 @@ class Event():
                 self.do_skip = False
 
         elif command.nid == 'music':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             music = command.values[0]
             fade = 400
             if len(command.values) > 1 and command.values[1]:
@@ -419,6 +420,7 @@ class Event():
                 SOUNDTHREAD.fade_in(music, fade_in=fade)
 
         elif command.nid == 'music_clear':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             fade = 0
             if len(command.values) > 0 and command.values[0]:
                 fade = int(command.values[0])
@@ -430,6 +432,7 @@ class Event():
                 SOUNDTHREAD.clear()
 
         elif command.nid == 'sound':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             sound = command.values[0]
             volume = 1
             if len(command.values) > 1 and command.values[1]:
@@ -437,6 +440,7 @@ class Event():
             SOUNDTHREAD.play_sfx(sound, volume=volume)
 
         elif command.nid == 'change_music':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             phase = command.values[0]
             music = command.values[1]
             if music == 'None':
@@ -552,6 +556,7 @@ class Event():
             portrait.set_expression(expression_list)
 
         elif command.nid == 'disp_cursor':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             b = command.values[0]
             if b.lower() in self.true_vals:
                 game.cursor.show()
