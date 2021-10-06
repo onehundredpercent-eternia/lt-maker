@@ -86,7 +86,7 @@ class HelpDialog():
         if pos[0] + help_surf.get_width() >= WINWIDTH:
             pos = (WINWIDTH - help_surf.get_width() - 8, pos[1])
         if pos[1] + help_surf.get_height() >= WINHEIGHT:
-            pos = (pos[0], pos[1] - help_surf.get_height() - 16)
+            pos = (pos[0], max(0, pos[1] - help_surf.get_height() - 16))
 
         if self.transition_in:
             h_surf = self.handle_transition_in(time, h_surf)

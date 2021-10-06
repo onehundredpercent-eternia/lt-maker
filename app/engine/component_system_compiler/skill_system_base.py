@@ -171,10 +171,10 @@ def stat_change_contribution(unit, stat_nid) -> dict:
                     d = component.stat_change(unit)
                     val = d.get(stat_nid, 0)
                     if val != 0:
-                        if skill.nid in contribution:
-                            contribution[skill.nid] += val
+                        if skill.name in contribution:
+                            contribution[skill.name] += val
                         else:
-                            contribution[skill.nid] = val
+                            contribution[skill.name] = val
     return contribution
 
 def growth_change(unit, stat_nid) -> int:
