@@ -41,9 +41,12 @@ class ClassBox(ObjBox):
         self.edit.view().setUniformItemSizes(True)
 
 class FactionBox(ObjBox):
-    def __init__(self, parent=None, button=False):
+    def __init__(self, parent=None, button=False, exclude=None):
         from app.editor.faction_editor.faction_model import FactionModel
-        super().__init__("Faction", FactionModel, DB.factions, parent, button)
+        database = DB.factions
+        if exclude:
+            database = Data([d for d in DB.factions if d is not exclude])
+        super().__init__("Faction", FactionModel, database, parent, button)
 
 class ItemBox(ObjBox):
     def __init__(self, parent=None, button=False, exclude=None):
