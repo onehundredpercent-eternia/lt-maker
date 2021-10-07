@@ -1076,12 +1076,20 @@ class Event():
         elif command.nid == 'add_weather':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             nid = values[0].lower()
-            action.do(action.AddWeather(nid))
+            if len(values) > 1 and values[1]:
+                pos = self.parse_pos(values[1])
+            else:
+                pos = None
+            action.do(action.AddWeather(nid, pos))
 
         elif command.nid == 'remove_weather':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             nid = values[0].lower()
-            action.do(action.RemoveWeather(nid))
+            if len(values) > 1 and values[1]:
+                pos = self.parse_pos(values[1])
+            else:
+                pos = None
+            action.do(action.RemoveWeather(nid, pos))
 
         elif command.nid == 'change_objective_simple':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -1112,13 +1120,14 @@ class Event():
             else:
                 speed_mult = 1
             if 'permanent' in flags:
-                action.do(action.AddMapAnim(nid, pos, speed_mult))
+                action.do(action.AddMapAnim(nid, pos, speed_mult, 'blend' in flags))
             else:
                 anim = RESOURCES.animations.get(nid)
                 anim = MapAnimation(anim, pos, speed_adj=speed_mult)
+                anim.set_tint('blend' in flags)
                 self.animations.append(anim)
 
-            if 'no_block' in flags or self.do_skip:
+            if 'no_block' in flags or self.do_skip or 'permanent' in flags:
                 pass
             else:
                 self.wait_time = engine.get_time() + anim.get_wait()

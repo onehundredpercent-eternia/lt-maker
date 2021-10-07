@@ -21,6 +21,7 @@ all_triggers = Data([
     Trigger('other_turn_change'),
     Trigger('unit_death', True, False, False, True),
     Trigger('unit_wait', True, False, False, True),
+    Trigger('event_tile_wait', True, False, False, True, True),
     Trigger('unit_select', True, False, False, True),
     Trigger('unit_level_up', True, True, False, False),
     Trigger('during_unit_level_up', True, True, False, False),
@@ -31,6 +32,7 @@ all_triggers = Data([
     Trigger('on_base_convo', True, True, False, False),
     Trigger('on_turnwheel'),
     Trigger('on_title_screen'),
+    Trigger('time_region_complete', region=True),
 ])
 
 class EventPrefab(Prefab):

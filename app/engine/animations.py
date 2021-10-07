@@ -133,7 +133,7 @@ class Animation():
         else:
             image = self.image
         if self.tint:
-            engine.blit(surf, image, (x, y), image.get_rect(), engine.BLEND_RGB_ADD)
+            engine.blit(surf, image, (x, y), None, engine.BLEND_RGB_ADD)
         else:
             surf.blit(image, (x, y))
         return surf

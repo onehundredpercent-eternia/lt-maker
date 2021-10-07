@@ -1,6 +1,9 @@
-from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, MAPWIDTH
+import math
+
+from app.constants import TILEWIDTH, TILEHEIGHT, STATWIDTH, WINWIDTH, WINHEIGHT, MAPWIDTH
 
 from app.engine import engine
+from app.engine.fonts import FONT
 from app.engine.value_noise import ValueNoise
 from app.engine.game_state import game
 
@@ -69,10 +72,12 @@ class MapView():
         surf = game.boundary.draw_fog_of_war(surf, full_size, cull_rect)
         surf = game.highlight.draw(surf, cull_rect)
 
+        # anim_surf = engine.copy_surface(self._unit_surf)
         game.tilemap.animations = [anim for anim in game.tilemap.animations if not anim.update()]
         for anim in game.tilemap.animations:
-            # anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
-            anim.draw(surf, offset=(-cull_rect[0], -cull_rect[1]))
+            anim.draw(surf, offset=(-game.camera.get_x() - STATWIDTH/TILEWIDTH, -game.camera.get_y()))
+            # anim.draw(anim_surf, offset=(0, 0))
+        # surf.blit(anim_surf, (0, 0))
 
         if subsurface_cull:  # Forced smaller cull rect from animation combat black background
             # Make sure it has a width
@@ -84,6 +89,17 @@ class MapView():
                 pass # Don't draw units
         else:
             self.draw_units(surf, cull_rect)
+
+        # Handle time region text
+        font = FONT['text-yellow']
+        current_time = engine.get_time()
+        for region in game.level.regions:
+            if region.region_type == 'time' and region.position:
+                text = str(region.sub_nid)
+                w = font.width(text)
+                pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
+                pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + math.sin(current_time//500))
+                font.blit(text, surf, pos)
 
         # surf = self._value_noise.draw(surf)
 

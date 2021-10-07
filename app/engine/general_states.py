@@ -60,6 +60,13 @@ class TurnChangeState(MapState):
                 game.state.change('status_upkeep')
                 game.state.change('phase_change')
                 # EVENTS TRIGGER HERE
+                # Update time regions
+                for region in game.level.regions.values()[:]:
+                    if region.region_type == 'time':
+                        region.sub_nid = int(region.sub_nid) - 1
+                        if region.sub_nid <= 0:
+                            action.do(action.RemoveRegion(region))
+                            game.events.trigger('time_region_complete', region=region)
                 game.events.trigger('turn_change')
                 if game.turncount - 1 <= 0:  # Beginning of the level
                     for unit in game.get_all_units_in_party():
