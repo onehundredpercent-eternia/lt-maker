@@ -10,7 +10,6 @@ from app.utilities import utils
 from app.utilities.data import Prefab
 from app.utilities.typing import NID
 
-
 # Main unit object used by engine
 class UnitObject(Prefab):
     def __init__(self):
@@ -505,6 +504,8 @@ class UnitObject(Prefab):
 
     def wait(self):
         game.events.trigger('unit_wait', self, position=self.position)
+        # Wait regions
+        game.trigger_wait(self)
         action.do(action.Wait(self))
         game.stat_screen.reset_surfs()
         if game.cursor and game.cursor.cur_unit == self:

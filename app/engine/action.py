@@ -1940,44 +1940,48 @@ class HideLayer(Action):
 
 
 class AddWeather(Action):
-    def __init__(self, weather_nid):
+    def __init__(self, weather_nid, position):
         self.weather_nid = weather_nid
+        self.position = position
 
     def do(self):
-        new_ps = particles.create_system(self.weather_nid, game.tilemap.width, game.tilemap.height)
+        new_ps = particles.create_system(self.weather_nid, game.tilemap.width, game.tilemap.height, self.position)
         game.tilemap.weather.append(new_ps)
 
     def reverse(self):
-        if any(ps.nid == self.weather_nid for ps in game.tilemap.weather):
-            bad_weather = [ps for ps in game.tilemap.weather if ps.nid == self.weather_nid]
+        bad_weather = [ps for ps in game.tilemap.weather if ps.nid == self.weather_nid and ps.pos == self.position]
+        if bad_weather:
             game.tilemap.weather.remove(bad_weather[0])
 
 
 class RemoveWeather(Action):
-    def __init__(self, weather_nid):
+    def __init__(self, weather_nid, position):
         self.weather_nid = weather_nid
+        self.position = position
         self.did_remove = False
 
     def do(self):
-        if any(ps.nid == self.weather_nid for ps in game.tilemap.weather):
-            bad_weather = [ps for ps in game.tilemap.weather if ps.nid == self.weather_nid]
+        bad_weather = [ps for ps in game.tilemap.weather if ps.nid == self.weather_nid and ps.pos == self.position]
+        if bad_weather:
             game.tilemap.weather.remove(bad_weather[0])
             self.did_remove = True
 
     def reverse(self):
         if self.did_remove:
-            new_ps = particles.create_system(self.weather_nid, game.tilemap.width, game.tilemap.height)
+            new_ps = particles.create_system(self.weather_nid, game.tilemap.width, game.tilemap.height, self.position)
             game.tilemap.weather.append(new_ps)
 
 class AddMapAnim(Action):
-    def __init__(self, nid, pos, speed_mult):
+    def __init__(self, nid, pos, speed_mult, blend):
         self.nid = nid
         self.pos = pos
         self.speed_mult = speed_mult
+        self.blend = blend
 
     def do(self):
         anim = RESOURCES.animations.get(self.nid)
-        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_mult=self.speed_mult)
+        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_adj=self.speed_mult)
+        anim.set_tint(self.blend)
         game.tilemap.animations.append(anim)
 
     def reverse(self):

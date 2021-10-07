@@ -821,6 +821,19 @@ class GameState():
             return legal_spots[0]
         return None
 
+    def trigger_wait(self, unit):
+        from app.engine import evaluate, action
+        for region in game.level.regions:
+            if region.region_type == 'wait' and region.contains(unit.position):
+                try:
+                    truth = evaluate.evaluate(region.condition, unit, position=unit.position, region=region)
+                    if truth:
+                        did_trigger = game.events.trigger('event_tile_wait', unit, position=unit.position, region=region)
+                        if did_trigger and region.only_once:
+                            action.do(action.RemoveRegion(region))
+                except:
+                    logging.error("Region condition {%s} could not be evaluated" % region.condition)
+
     def get_money(self):
         return self.parties[self.current_party].money
 
