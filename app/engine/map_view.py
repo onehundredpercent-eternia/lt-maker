@@ -72,12 +72,9 @@ class MapView():
         surf = game.boundary.draw_fog_of_war(surf, full_size, cull_rect)
         surf = game.highlight.draw(surf, cull_rect)
 
-        # anim_surf = engine.copy_surface(self._unit_surf)
         game.tilemap.animations = [anim for anim in game.tilemap.animations if not anim.update()]
         for anim in game.tilemap.animations:
             anim.draw(surf, offset=(-game.camera.get_x() - STATWIDTH/TILEWIDTH, -game.camera.get_y()))
-            # anim.draw(anim_surf, offset=(0, 0))
-        # surf.blit(anim_surf, (0, 0))
 
         if subsurface_cull:  # Forced smaller cull rect from animation combat black background
             # Make sure it has a width
@@ -100,7 +97,7 @@ class MapView():
                 pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
                 pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + 2*math.sin(current_time//500))
                 font.blit(text, surf, pos)
-
+                
         # surf = self._value_noise.draw(surf)
 
         surf = game.cursor.draw(surf, cull_rect)

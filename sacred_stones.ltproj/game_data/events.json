@@ -6944,6 +6944,19 @@
                 ]
             ],
             [
+                "map_anim",
+                [
+                    "MapMiss",
+                    "Eirika",
+                    "permanent"
+                ],
+                [
+                    "MapMiss",
+                    "Eirika (Eirika)",
+                    "FLAG(permanent)"
+                ]
+            ],
+            [
                 "comment",
                 [
                     "# loop_units;[unit.nid for unit in game.get_player_units()];Trigger"

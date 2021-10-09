@@ -1,31 +1,13 @@
-Enemies:
-Thieves
-Skirmishers
-Brigands
-Mercenaries
-Hunter
-Mage?
-
-Goals:
-
-Open treasure chests
-Save Civilians
-Recruit Skirmisher/Thief Girl (Piper?)
-Recruit Millie
-
 For vertical slice
 Chapter 3 and 4
 Alternate forms of Chapter 3 and 4
 Overworld
 Implement Skills
 Write Script
-How does pair up work?
-    - Adjacent units can lend an attack, dealing half their normal damage
-    - Higher support bonuses grant stat buffs (or maybe by default and class or stat based?)
-    - Higher support bonuses grant chance to block or limit an attack (crit -> hit, hit -> glance, glance -> miss?)??
 Combat UI
  - Unit who is talking gets nametag
-Implement Wyllt
+ - Wait Tree and Snake
+Implement Wyllt (draw Tree Map anim)
 No Free Roam Base:
     - Instead, after every 3rd chapter, forced free roam "dream" sequence where you can talk to each character in the party, and perhaps even dead characters.
     - You can also get items and even find items.
@@ -35,17 +17,6 @@ Dream conversations
 Title Screen
 Portraits
 Personal Skills / Grave Weapons
- - Tile bonuses
-    - Forest (+3 SKL, +3 SPD)
-    - Hill (+1 POW, +2 BRV)
-    - Mountain (+2 POW, +3 BRV)
-    - River (-3 SPD, -1 DEF)
-    - Pillar (+3 SPD)
-    - Fort (+3 DEF))
-    - Plain (no bonus)
-    - Sand (no bonus)
-    - Snow (no bonus)
-    - Stairs (-2 SPD)
 Playtest playtest playtest
 
 Portraits:
