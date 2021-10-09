@@ -398,6 +398,7 @@ class UnitObject(Prefab):
         else:
             self.items.remove(item)
             self.items.insert(0, item)
+        game.stat_screen.reset_surfs()
 
     def insert_item(self, index, item):
         if item in self.items:
@@ -409,6 +410,7 @@ class UnitObject(Prefab):
             # Statuses here
             item_system.on_add_item(self, item)
             skill_system.on_add_item(self, item)
+        game.stat_screen.reset_surfs()
 
     def remove_item(self, item):
         if item is self.equipped_weapon or item is self.equipped_accessory:
@@ -421,6 +423,7 @@ class UnitObject(Prefab):
         # There may be a new item equipped
         self.get_weapon()
         self.get_accessory()
+        game.stat_screen.reset_surfs()
 
     def get_internal_level(self) -> int:
         klass = DB.classes.get(self.klass)
