@@ -178,7 +178,7 @@ class PortraitProperties(QWidget):
         if not self.current:
             return
         if MEMENTO_MODE:
-            main_portrait = self.current.pixmap.copy(0, 0, 128, 128)
+            main_portrait = self.current.pixmap.copy(0, 0, self.current.pixmap.width() - 32, 128)
         else:
             main_portrait = self.current.pixmap.copy(0, 0, 96, 80)
         main_portrait = main_portrait.toImage()

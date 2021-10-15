@@ -90,7 +90,7 @@ class PortraitModel(ResourceCollectionModel):
                 portrait.pixmap = QPixmap(portrait.full_path)
             pixmap = portrait.pixmap
             if MEMENTO_MODE:
-                chibi = pixmap.copy(128, 0, 32, 32)
+                chibi = pixmap.copy(pixmap.width() - 32, 0, 32, 32)
             else:
                 chibi = pixmap.copy(96, 16, 32, 32)
             chibi = QPixmap.fromImage(editor_utilities.convert_colorkey(chibi.toImage()))

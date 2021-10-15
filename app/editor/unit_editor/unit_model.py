@@ -21,7 +21,7 @@ def get_chibi(unit):
     if not res.pixmap:
         res.pixmap = QPixmap(res.full_path)
     if MEMENTO_MODE:
-        pixmap = res.pixmap.copy(128, 0, 32, 32)
+        pixmap = res.pixmap.copy(res.pixmap.width() - 32, 0, 32, 32)
     else:
         pixmap = res.pixmap.copy(96, 16, 32, 32)
     pixmap = QPixmap.fromImage(editor_utilities.convert_colorkey(pixmap.toImage()))
