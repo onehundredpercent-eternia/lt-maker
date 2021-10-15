@@ -14,7 +14,6 @@ No Free Roam Base:
     - Certain choices you make in the free roam section can change things up
     - Then you wake up back in the overworld map
 Dream conversations
-Title Screen
 Portraits
 Personal Skills / Grave Weapons
 Playtest playtest playtest
