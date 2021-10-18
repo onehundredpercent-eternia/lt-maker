@@ -33,6 +33,7 @@ all_triggers = Data([
     Trigger('on_turnwheel'),
     Trigger('on_title_screen'),
     Trigger('time_region_complete', region=True),
+    Trigger('on_overworld_node_select', unit1=True, region=True) # unit1 is entity nid, region is node nid
 ])
 
 class EventPrefab(Prefab):

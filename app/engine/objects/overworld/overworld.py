@@ -161,7 +161,7 @@ class OverworldObject():
         return overworld
 
     def save(self):
-        s_dict = {'tilemap': self.tilemap.save(),
+        s_dict = {'tilemap': self.tilemap.save() if self.tilemap else None,
                   'enabled_nodes': list(self.enabled_nodes),
                   'enabled_roads': list(self.enabled_roads),
                   'prefab_nid': self.nid,
@@ -174,7 +174,7 @@ class OverworldObject():
     @classmethod
     def restore(cls, s_dict: Dict, game: GameState) -> OverworldObject:
         overworld = OverworldObject.from_prefab(DB.overworlds.get(s_dict['prefab_nid']), game.parties, game.unit_registry)
-        overworld.tilemap = TileMapObject.restore(s_dict['tilemap'])
+        overworld.tilemap = TileMapObject.restore(s_dict['tilemap']) if s_dict['tilemap'] else None
         overworld.enabled_nodes = set(s_dict['enabled_nodes'])
         overworld.enabled_roads = set(s_dict['enabled_roads'])
         overworld.node_properties = s_dict.get('node_properties', {})

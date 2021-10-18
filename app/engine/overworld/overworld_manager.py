@@ -17,13 +17,17 @@ class OverworldManager():
     """A wrapper class that contains various functionality for manipulating
     and accessing the overworld data.
     """
-    def __init__(self, overworld: OverworldObject, cursor: OverworldCursor = None):
+    def __init__(self, overworld: OverworldObject, cursor: OverworldCursor = None, next_level: NID = None):
         self._overworld = overworld
         if cursor:
             self.cursor = cursor
             self.cursor.set_overworld_manager(self)
         else:
             self.cursor = None
+
+        # the overworld uses this level to determine what set of overworld events to use on entering
+        self.next_level: NID = next_level
+
         # generate useful structs
         self.nodes: Dict[NID, OverworldNodeObject] = {}
         self.roads: Dict[NID, RoadObject] = {}
@@ -75,6 +79,12 @@ class OverworldManager():
                     if entity.on_node is not None and entity.display_position:
                         self._overworld.selected_party_nid = entity.nid
                         break
+        if not self._overworld.selected_party_nid:
+            # apparently no player parties on the map, select the first one that exists
+            for entity in self._overworld.overworld_entities.values():
+                if entity.team == 'player':
+                    self._overworld.selected_party_nid = entity.nid
+                    break
         return self.entities[self._overworld.selected_party_nid]
 
     def add_entity(self, entity: OverworldEntityObject):

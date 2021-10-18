@@ -1,3 +1,5 @@
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QAction, QDockWidget, QLabel, QFrame
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
@@ -26,14 +28,22 @@ class GlobalEditor(QMainWindow):
             GlobalEditor.__name__, 'selected_level', self.set_current_level)
         self.app_state_manager.subscribe_to_key(
             GlobalEditor.__name__, 'selected_overworld', self.set_current_overworld)
-        
+
         self._render()
-        
+
         # create actions
         self.create_actions()
         self.set_icons()
-        
+
         timer.get_timer().tick_elapsed.connect(self.map_view.update_view)
+        QtWidgets.qApp.focusChanged.connect(self.update_overworld_widget)
+
+    def update_overworld_widget(self):
+        should_be_visible = DB.constants.value('overworld')
+        if should_be_visible:
+            self.overworld_dock.show()
+        else:
+            self.overworld_dock.hide()
 
     def create_left_dock(self):
         self.create_level_dock()
@@ -58,7 +68,7 @@ class GlobalEditor(QMainWindow):
         self.level_dock.setAllowedAreas(Qt.LeftDockWidgetArea)
         self.level_dock.setWidget(self.level_menu)
         self.level_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
-    
+
     def create_statusbar(self):
         self.status_bar = self.statusBar()
         self.position_bar = QLabel("", self)
@@ -94,7 +104,7 @@ class GlobalEditor(QMainWindow):
             "Zoom in", self, shortcut="Ctrl++", triggered=self.map_view.zoom_in)
         self.zoom_out_act = QAction(
             "Zoom out", self, shortcut="Ctrl+-", triggered=self.map_view.zoom_out)
-        
+
         # toolbar actions
         self.modify_level_act = QAction(
             "Edit Level", self, triggered=self.edit_level)

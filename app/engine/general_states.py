@@ -816,21 +816,27 @@ class ItemState(MapState):
         self.menu.update_options(self._get_options())
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
 
+    def _item_desc_update(self):
+        current = self.menu.get_current()
+        self.item_desc_panel.set_item(current)
+
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
 
-        self.menu.handle_mouse()
+        did_move = self.menu.handle_mouse()
+        if did_move:
+            self._item_desc_update()
+
         if 'DOWN' in directions:
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_down(first_push)
-            current = self.menu.get_current()
-            self.item_desc_panel.set_item(current)
+            self._item_desc_update()
+            
         elif 'UP' in directions:
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_up(first_push)
-            current = self.menu.get_current()
-            self.item_desc_panel.set_item(current)
+            self._item_desc_update()
 
         if event == 'BACK':
             if self.menu.info_flag:
@@ -1030,28 +1036,30 @@ class WeaponChoiceState(MapState):
         game.stat_screen.reset_surfs()
         self.disp_attacks(self.cur_unit, self.menu.get_current())
 
+    def _item_desc_update(self):
+        current = self.menu.get_current()
+        self.item_desc_panel.set_item(current)
+        game.highlight.remove_highlights()
+        game.stat_screen.reset_surfs()
+        self.disp_attacks(self.cur_unit, current)
+
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
 
-        self.menu.handle_mouse()
+        did_move = self.menu.handle_mouse()
+        if did_move:
+            self._item_desc_update()
+
         if 'DOWN' in directions:
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_down(first_push)
-            current = self.menu.get_current()
-            self.item_desc_panel.set_item(current)
-            game.highlight.remove_highlights()
-            game.stat_screen.reset_surfs()
-            self.disp_attacks(self.cur_unit, current)
+            self._item_desc_update()
 
         elif 'UP' in directions:
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_up(first_push)
-            current = self.menu.get_current()
-            self.item_desc_panel.set_item(current)
-            game.highlight.remove_highlights()
-            game.stat_screen.reset_surfs()
-            self.disp_attacks(self.cur_unit, current)
+            self._item_desc_update()
 
         if event == 'BACK':
             SOUNDTHREAD.play_sfx('Select 4')

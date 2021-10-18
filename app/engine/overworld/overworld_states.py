@@ -39,14 +39,14 @@ class OverworldState(MapState):
                 game.state.back()
                 return
         game.cursor = OverworldCursor(game.camera)
-        game.overworld_controller = OverworldManager(game.overworld_registry[overworld_to_load], game.cursor)
+        game.overworld_controller = OverworldManager(game.overworld_registry[overworld_to_load], game.cursor, game.game_vars.get('_next_level_nid'))
         game.movement = OverworldMovementManager(game.overworld_controller)
         game.map_view = OverworldMapView(game.overworld_controller, game.cursor)
         game.set_up_game_board(game.overworld_registry[overworld_to_load].tilemap)
 
         # assign the next level
-        if game.game_vars.get('_next_level_nid'):
-            next_level_node_nid = game.overworld_controller.node_by_level(game.game_vars.get('_next_level_nid')).nid
+        if game.overworld_controller.next_level:
+            next_level_node_nid = game.overworld_controller.node_by_level(game.overworld_controller.next_level).nid
             game.overworld_controller.set_node_property(next_level_node_nid, OverworldNodeProperty.IS_NEXT_LEVEL, True)
 
     def start(self):
@@ -54,7 +54,8 @@ class OverworldState(MapState):
         self.begin_time = engine.get_time()
         game.cursor.set_pos(game.overworld_controller.selected_party_node().position)
         game.camera.force_center(*game.overworld_controller.selected_party_node().position)
-        game.events.trigger('overworld_start', level_nid = game.game_vars['_next_level_nid'])
+        if game.overworld_controller.next_level:
+            game.events.trigger('overworld_start', level_nid = game.overworld_controller.next_level)
 
     def begin(self):
         game.cursor.show()
@@ -80,9 +81,14 @@ class OverworldState(MapState):
                 else:   # we selected a node without a party
                     party_node = game.overworld_controller.selected_party_node()
                     if game.overworld_controller.any_path(party_node, selected_node):  # if there is a path from our party to this node
-                        if selected_node.prefab.level == game.game_vars['_next_level_nid']:         # if this is the next level, stop short and trigger event start
+                        # if there is an event that will take place upon reaching this node, or this is the next level, stop short and trigger event start
+                        if game.events.should_trigger('on_overworld_node_select', unit=game.overworld_controller.selected_entity, region=selected_node.nid, level_nid=game.overworld_controller.next_level) or selected_node.prefab.level == game.overworld_controller.next_level:
                             movement = OverworldMove(game.overworld_controller.selected_entity, selected_node, game.overworld_controller, event=True, remove_last=True)
-                            game.state.change('overworld_next_level')
+                            if selected_node.prefab.level == game.overworld_controller.next_level:
+                                game.state.change('overworld_next_level')
+                            else:
+                                game.game_vars['_target_node_nid'] = selected_node.nid
+                                game.state.change('overworld_on_node')
                         else:
                             movement = OverworldMove(game.overworld_controller.selected_entity, selected_node.nid, game.overworld_controller)
                         # queue camera movement to unit
@@ -153,6 +159,27 @@ class OverworldMovementState(State):
             game.state.back()
             return 'repeat'
 
+class OverworldNodeTransition(State):
+    """State for triggering node events
+    """
+    name = 'overworld_on_node'
+    transparent = True
+
+    def start(self):
+        logging.debug("Trigger node arrival event")
+        if not game.events.trigger('on_overworld_node_select', unit=game.overworld_controller.selected_entity.nid, region=game.game_vars['_target_node_nid'], level_nid=game.overworld_controller.next_level):
+            # no events, then just queue the move
+            movement = OverworldMove(game.overworld_controller.selected_entity.nid,
+                                    game.game_vars['_target_node_nid'],
+                                    game.overworld_controller)
+            game.state.change('overworld_movement')
+            movement.queue(game.movement)
+        return 'repeat'
+
+    def update(self):
+        game.state.back()
+        game.game_vars['_target_node_nid'] = None
+
 class OverworldLevelTransition(State):
     """State handling transition events between overworld and
     new level. This state should only last for one or two updates, maximum.
@@ -162,23 +189,23 @@ class OverworldLevelTransition(State):
 
     def start(self):
         logging.debug("Begin Overworld-Level Transition State")
-        if not game.events.trigger('level_select', level_nid=game.game_vars['_next_level_nid']):
+        if not game.events.trigger('level_select', level_nid=game.overworld_controller.next_level):
             # no events, then just queue the move
             movement = OverworldMove(game.overworld_controller.selected_entity.nid,
-                                     game.overworld_controller.node_by_level(game.game_vars['_next_level_nid']).nid,
-                                     game.overworld_controller)
+                                    game.overworld_controller.node_by_level(game.overworld_controller.next_level).nid,
+                                    game.overworld_controller)
             game.state.change('overworld_movement')
             movement.queue(game.movement)
         return 'repeat'
 
     def update(self):
-        self.go_to_next_level(game.game_vars['_next_level_nid'])
+        self.go_to_next_level(game.overworld_controller.next_level)
         return 'repeat'
 
     def go_to_next_level(self, nid=None):
         game.sweep()
         if not nid:
-            next_level_nid = game.game_vars['_next_level_nid']
+            next_level_nid = game.overworld_controller.next_level
         else:
             next_level_nid = nid
 

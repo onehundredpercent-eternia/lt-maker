@@ -232,7 +232,7 @@ class Simple():
         scroll = self.scroll
         idx = utils.clamp(idx, 0, len(self.options) - 1)
         if self.options[idx].ignore:
-            return
+            return False
         while self.current_index < idx:
             self.move_down(True)  # Higher idxs
         while self.current_index > idx:
@@ -333,7 +333,7 @@ class Simple():
     def get_rects(self):
         return NotImplementedError
 
-    def handle_mouse(self):
+    def handle_mouse(self) -> bool:
         mouse_position = INPUT.get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
@@ -342,6 +342,8 @@ class Simple():
                 x, y, width, height = option_rect
                 if x <= mouse_x <= x + width and y <= mouse_y <= y + height:
                     self.mouse_move(idx)
+                    return True
+        return False
 
 class Choice(Simple):
     disp_value = False
@@ -890,8 +892,9 @@ class Trade(Simple):
 
         return surf
 
-    def handle_mouse(self):
+    def handle_mouse(self) -> bool:
         mouse_position = INPUT.get_mouse_position()
+        did_move = False
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             idxs1, option_rects1 = self.menu1.get_rects()
@@ -901,6 +904,7 @@ class Trade(Simple):
                 x, y, width, height = option_rect
                 if x <= mouse_x <= x + width and y <= mouse_y <= y + height:
                     self.menu1.mouse_move(idx)
+                    did_move = True
                     if self.selecting_hand[0] == 1:
                         self.cursor_left()
                     self.selecting_hand = (0, idx)
@@ -909,9 +913,11 @@ class Trade(Simple):
                 x, y, width, height = option_rect
                 if x <= mouse_x <= x + width and y <= mouse_y <= y + height:
                     self.menu2.mouse_move(idx)
+                    did_move = True
                     if self.selecting_hand[0] == 0:
                         self.cursor_right()
                     self.selecting_hand = (1, idx)
+        return did_move
 
 class Table(Simple):
     def __init__(self, owner, options, layout, topleft=None, background='menu_bg_base', info=None):
@@ -1474,8 +1480,9 @@ class Convoy():
         self.right_arrow.draw(surf)
         return surf
 
-    def handle_mouse(self):
+    def handle_mouse(self) -> bool:
         mouse_position = INPUT.get_mouse_position()
+        did_move = False
         if mouse_position:
             mouse_x, mouse_y = mouse_position
 
@@ -1485,6 +1492,7 @@ class Convoy():
                 x, y, width, height = option_rect
                 if x <= mouse_x <= x + width and y <= mouse_y <= y + height:
                     main_menu.mouse_move(idx)
+                    did_move = True
 
             if self.inventory:  # Markets, which inherit from me, don't have inventories
                 idxs, option_rects = self.inventory.get_rects()
@@ -1492,6 +1500,8 @@ class Convoy():
                     x, y, width, height = option_rect
                     if x <= mouse_x <= x + width and y <= mouse_y <= y + height:
                         self.inventory.mouse_move(idx)
+                        did_move = True
+        return did_move
 
 class Market(Convoy):
     def __init__(self, owner, options, topleft, disp_value=None):
