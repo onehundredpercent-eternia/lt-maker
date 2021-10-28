@@ -21,7 +21,7 @@ class WeaponType(ItemComponent):
         klass = DB.classes.get(unit.klass)
         wexp_gain = klass.wexp_gain.get(self.value)
         if wexp_gain:
-            klass_usable = wexp_gain.usable
+            klass_usable = wexp_gain.usable or skill_system.wexp_usable_skill(unit, item)
             return unit.wexp[self.value] > 0 and klass_usable
         return False
 

@@ -244,7 +244,8 @@ class Recordkeeper():
         """
         best_score = -1
         mvp = None
-        for unit in game.get_all_units_in_party():
+        player_units = [unit for unit in game.units if unit.team == 'player' and not unit.generic]
+        for unit in player_units:
             score = self.determine_score(unit.nid, level_nid)
             if score > best_score:
                 best_score = score

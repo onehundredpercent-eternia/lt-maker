@@ -85,7 +85,7 @@ class CombatAnimation():
         s_dict['nid'] = self.nid
         s_dict['weapon_anims'] = [weapon_anim.save() for weapon_anim in self.weapon_anims]
         s_dict['palettes'] = self.palettes[:]
-        return s_dict 
+        return s_dict
 
     @classmethod
     def restore(cls, s_dict):
@@ -101,8 +101,8 @@ class EffectAnimation():
     def __init__(self, nid, full_path=None):
         self.nid = nid
         self.full_path = full_path
-        self.poses = Data()
-        self.frames = Data()
+        self.poses = Data[Pose]()
+        self.frames = Data[Frame]()
         self.palettes = []  # Palette name -> Palette nid
 
         self.pixmap = None
@@ -193,7 +193,7 @@ class CombatEffectCatalog(ManifestCatalog):
 
     def save(self, loc):
         for effect_anim in self:
-            if effect_anim.pixmap:  # Possible that no pixmap is associated with a simple control script
+            if effect_anim.pixmap or effect_anim.full_path:  # Possible that no pixmap is associated with a simple control script
                 self.save_image(loc, effect_anim)
         self.dump(loc)
 

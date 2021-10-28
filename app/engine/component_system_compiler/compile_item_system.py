@@ -22,7 +22,7 @@ modify_hooks = ('modify_damage', 'modify_resist', 'modify_accuracy', 'modify_avo
                 'modify_defense_speed')
 
 # None of these are exclusive
-event_hooks = ('on_use', 'on_end_chapter', 'reverse_use',
+event_hooks = ('on_end_chapter', 'reverse_use',
                'on_equip_item', 'on_unequip_item', 'on_add_item', 'on_remove_item')
 
 combat_event_hooks = ('start_combat', 'end_combat')

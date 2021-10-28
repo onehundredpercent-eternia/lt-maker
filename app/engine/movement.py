@@ -139,6 +139,10 @@ class MovementManager():
                     logging.error("Could not find unit with nid %s", unit_nid)
                     del self.moving_units[unit_nid]
                     continue
+                elif not unit.position:
+                    logging.error("Unit with nid %s is no longer on the map", unit_nid)
+                    del self.moving_units[unit_nid]
+                    continue
 
                 if data.path:
                     new_position = data.path.pop()
@@ -162,7 +166,6 @@ class MovementManager():
                         game.cursor.set_pos(unit.position)
                         if data.event:
                             game.camera.set_center(*unit.position)
-
 
                 else: # Path is empty, so we are done
                     self.done_moving(unit_nid, data, unit)

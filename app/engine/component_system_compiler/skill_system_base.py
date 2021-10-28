@@ -54,13 +54,17 @@ class Defaults():
         return 1.0
 
     @staticmethod
+    def wexp_usable_skill(unit1, unit2) -> float:
+        return False
+
+    @staticmethod
     def change_variant(unit) -> str:
         return unit.variant
-        
+
     @staticmethod
     def change_animation(unit) -> str:
         return unit.klass
-    
+
     @staticmethod
     def steal_icon(unit1, unit2) -> bool:
         return False

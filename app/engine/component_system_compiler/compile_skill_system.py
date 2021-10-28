@@ -12,7 +12,7 @@ exclusive_behaviours = ('can_select', 'movement_type', 'sight_range', 'empower_s
 
 exclusive_behaviours += formula
 # Takes in unit and item, returns default value
-item_behaviours = ('modify_buy_price', 'modify_sell_price', 'limit_maximum_range', 'modify_maximum_range')
+item_behaviours = ('modify_buy_price', 'modify_sell_price', 'limit_maximum_range', 'modify_maximum_range', 'wexp_usable_skill')
 # Takes in unit and target, returns default value
 targeted_behaviours = ('check_ally', 'check_enemy', 'can_trade', 'exp_multiplier', 'enemy_exp_multiplier', 'wexp_multiplier', 'enemy_wexp_multiplier', 'steal_icon', 'has_canto', 'empower_heal')
 # Takes in unit, item returns bonus

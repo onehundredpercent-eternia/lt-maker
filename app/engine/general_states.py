@@ -1957,6 +1957,16 @@ class ShopState(State):
         surf.blit(self.message_bg, (-4, 8))
         if self.current_msg:
             self.current_msg.draw(surf)
+
+        surf.blit(self.portrait, (3, 0))
+        
+        money_bg = SPRITES.get('money_bg')
+        money_bg = image_mods.make_translucent(money_bg, .1)
+        surf.blit(money_bg, (172, 48))
+
+        FONT['text-blue'].blit_right(str(game.get_money()), surf, (223, 48))
+        self.money_counter_disp.draw(surf)
+
         if self.state == 'sell':
             self.sell_menu.draw(surf)
         elif self.state == 'choice' and self.choice_menu.get_current() == 'Sell':
@@ -1965,14 +1975,6 @@ class ShopState(State):
             self.buy_menu.draw(surf)
         if self.state == 'choice' and self.current_msg.is_done_or_wait():
             self.choice_menu.draw(surf)
-        surf.blit(self.portrait, (3, 0))
-
-        money_bg = SPRITES.get('money_bg')
-        money_bg = image_mods.make_translucent(money_bg, .1)
-        surf.blit(money_bg, (172, 48))
-
-        FONT['text-blue'].blit_right(str(game.get_money()), surf, (223, 48))
-        self.money_counter_disp.draw(surf)
 
         return surf
 

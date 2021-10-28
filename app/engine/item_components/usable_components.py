@@ -1,7 +1,7 @@
 from app.data.item_components import ItemComponent
 from app.data.components import Type
 
-from app.engine import action
+from app.engine import action, item_funcs
 
 class Uses(ItemComponent):
     nid = 'uses'
@@ -41,7 +41,10 @@ class Uses(ItemComponent):
 
     def reverse_use(self, unit, item):
         if self.is_broken(unit, item):
-            action.do(action.GiveItem(unit, item))
+            if item_funcs.inventory_full(unit, item):
+                action.do(action.PutItemInConvoy(item))
+            else:
+                action.do(action.GiveItem(unit, item))
         action.do(action.SetObjData(item, 'uses', item.data['uses'] + 1))
         action.do(action.ReverseRecords('item_use', (unit.nid, item.nid)))
 

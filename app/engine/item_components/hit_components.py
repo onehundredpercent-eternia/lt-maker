@@ -100,8 +100,8 @@ class StatusOnHit(ItemComponent):
     def ai_priority(self, unit, item, target, move):
         # Do I add a new status to the target
         if target and self.value not in [skill.nid for skill in target.skills]:
-            accuracy_term = utils.clamp(combat_calcs.compute_hit(unit, target, item, target.get_weapon(), "attack")/100., 0, 1)
-            num_attacks = combat_calcs.outspeed(unit, target, item, target.get_weapon(), "attack")
+            accuracy_term = utils.clamp(combat_calcs.compute_hit(unit, target, item, target.get_weapon(), "attack", (0, 0))/100., 0, 1)
+            num_attacks = combat_calcs.outspeed(unit, target, item, target.get_weapon(), "attack", (0, 0))
             accuracy_term *= num_attacks
             # Tries to maximize distance from target
             distance_term = 0.01 * utils.calculate_distance(move, target.position)
@@ -128,7 +128,7 @@ class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
             act = action.AddSkill(target, self.value, unit)
             action.do(act)
         self._did_hit.clear()
-    
+
 class Shove(ItemComponent):
     nid = 'shove'
     desc = "Item shoves target on hit"
@@ -262,7 +262,7 @@ class PivotTargetRestrict(Pivot, ItemComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         pass
-        
+
 class DrawBack(ItemComponent):
     nid = 'draw_back'
     desc = "Item moves both user and target back on hit."
@@ -339,7 +339,7 @@ class Steal(ItemComponent):
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
         # Unit has item that can be stolen
         attack = equations.parser.steal_atk(unit)
-        defender = game.board.get_unit(def_pos)  
+        defender = game.board.get_unit(def_pos)
         defense = equations.parser.steal_def(defender)
         if attack >= defense:
             for def_item in defender.items:
@@ -439,3 +439,27 @@ class EventAfterCombat(ItemComponent):
             if event_prefab:
                 game.events.add_event(event_prefab.nid, event_prefab.commands, unit=unit, unit2=target, item=item, position=unit.position)
         self._did_hit = False
+
+class EventOnUse(ItemComponent):
+    nid = 'event_on_use'
+    desc = 'Item calls an event on use, before any effects are played'
+    tag = 'special'
+
+    expose = Type.Event
+
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        event_prefab = DB.events.get_from_nid(self.value)
+        if event_prefab:
+            game.events.add_event(event_prefab.nid, event_prefab.commands, unit=unit, item=item, position=unit.position)
+
+class EventAfterUse(ItemComponent):
+    nid = 'event_after_use'
+    desc = 'Item calls an event after use'
+    tag = 'special'
+
+    expose = Type.Event
+
+    def end_combat(self, playback, unit, item, target, mode):
+        event_prefab = DB.events.get_from_nid(self.value)
+        if event_prefab:
+            game.events.add_event(event_prefab.nid, event_prefab.commands, unit=unit, item=item, position=unit.position)

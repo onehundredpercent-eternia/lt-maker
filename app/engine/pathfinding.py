@@ -58,7 +58,7 @@ class Djikstra():
                 return True  # Can always move through what you can't see
         return False
 
-    def process(self, game_board: list, movement_left: int) -> set:
+    def process(self, game_board: list, movement_left: float) -> set:
         # add starting cell to open heap queue
         heapq.heappush(self.open, (self.start_cell.g, self.start_cell))
         while self.open:
@@ -140,6 +140,16 @@ class AStar():
         cross = abs(dx1 * dy2 - dx2 * dy1)
         return h + cross * .001
 
+    def get_simple_heuristic(self, cell) -> float:
+        """
+        Compute the heuristic for this cell
+        h is the approximate distance between this cell and the goal cell
+        """
+        dx1 = cell.x - self.end_cell.x
+        dy1 = cell.y - self.end_cell.y
+        h = abs(dx1) + abs(dy1)
+        return h
+
     def get_cell(self, x, y):
         return self.cells[x * self.height + y]
 
@@ -163,6 +173,7 @@ class AStar():
         adj.h = self.get_heuristic(adj)
         adj.parent = cell
         adj.f = adj.h + adj.g
+        adj.true_f = self.get_simple_heuristic(adj) + adj.g
 
     def return_path(self, cell) -> list:
         path = []
@@ -185,7 +196,7 @@ class AStar():
         return False
 
     def process(self, game_board, adj_good_enough: bool = False,
-                ally_block: bool = False, limit: int = None) -> list:
+                ally_block: bool = False, limit: float = None) -> list:
         # Add starting cell to open queue
         heapq.heappush(self.open, (self.start_cell.f, self.start_cell))
         while self.open:
@@ -195,8 +206,7 @@ class AStar():
             # If this cell is past the limit, just return None
             # Uses f, not g, because g will cut off if first greedy path fails
             # f only cuts off if all cells are bad
-            if limit is not None and cell.f > limit + 1:
-                # limit + 1 to account for diagonal heuristic
+            if limit is not None and cell.true_f > limit:
                 return []
             # if ending cell, display found path
             if cell is self.end_cell or (adj_good_enough and cell in self.adj_end):

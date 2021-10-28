@@ -434,6 +434,8 @@ class Choice(Simple):
 
         if self.horizontal:
             self.cursor.y_offset = 0
+        if did_move and self.show_face():
+            self._bg_surf = None  # Unstore bg
         return did_move
 
     def move_up(self, first_push=True):
@@ -457,7 +459,12 @@ class Choice(Simple):
 
         if self.horizontal:
             self.cursor.y_offset = 0
+        if did_move and self.show_face():
+            self._bg_surf = None  # Unstore bg
         return did_move
+
+    def show_face(self):
+        return self.is_convoy or self.disp_value == 'sell'
 
     def create_bg_surf(self):
         # Handle clear background
@@ -491,7 +498,7 @@ class Choice(Simple):
                 if self.shimmer != 0:
                     sprite = SPRITES.get('menu_shimmer%d' % self.shimmer)
                     surf.blit(sprite, (surf.get_width() - 1 - sprite.get_width(), surf.get_height() - 5 - sprite.get_height()))
-                if self.is_convoy or self.disp_value == 'sell':
+                if self.show_face():
                     # Draw face
                     item = self.get_current()
                     unit = None

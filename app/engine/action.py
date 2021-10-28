@@ -725,7 +725,7 @@ class PutItemInConvoy(Action):
         party = game.get_party(self.party_nid)
         party.convoy.append(self.item)
 
-    def reverse(self, gameStateObj):
+    def reverse(self):
         party = game.get_party(self.party_nid)
         party.convoy.remove(self.item)
         self.item.change_owner(self.owner_nid)
@@ -1670,28 +1670,40 @@ class ChangeTeam(Action):
         self.old_team = self.unit.team
         self.action = Reset(self.unit)
         self.ai_action = ChangeAI(self.unit, 'None')
+        self.fog_action1 = UpdateFogOfWar(self.unit)
+        self.fog_action2 = UpdateFogOfWar(self.unit)
 
     def do(self):
+        true_pos = self.unit.position
         if self.unit.position:
             game.leave(self.unit)
+        self.unit.position = None  # Remove from map so update fog of war will remove from map
+        self.fog_action1.do()  # Remove unit from the fog grid for its old team
         self.unit.team = self.team
         self.action.do()
         if self.team == 'player':
             # Make sure player unit's don't keep their AI
             self.ai_action.do()
+        self.unit.position = true_pos  # Add unit back to map
         if self.unit.position:
             game.arrive(self.unit)
+        self.fog_action2.do()  # Add to fog of war with new team
         if game.boundary:
             game.boundary.reset_unit(self.unit)
         self.unit.sprite.load_sprites()
 
     def reverse(self):
+        true_pos = self.unit.position
         if self.unit.position:
             game.leave(self.unit)
+        self.unit.position = None
+        self.fog_action2.reverse()  # Remove new team's FOW
         self.unit.team = self.old_team
         if self.team == 'player':
             self.ai_action.reverse()
         self.action.reverse()
+        self.fog_action1.reverse()  # Put unit back onto map
+        self.unit.position = true_pos
         if self.unit.position:
             game.arrive(self.unit)
         if game.boundary:

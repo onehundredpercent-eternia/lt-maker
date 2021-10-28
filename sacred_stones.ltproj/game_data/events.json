@@ -6894,15 +6894,17 @@
         "condition": "True",
         "commands": [
             [
-                "comment",
+                "level_var",
                 [
-                    "#level_var;_fog_of_war;1"
+                    "_fog_of_war",
+                    "1"
                 ]
             ],
             [
-                "comment",
+                "level_var",
                 [
-                    "#level_var;_fog_of_war_radius;3"
+                    "_fog_of_war_radius",
+                    "3"
                 ]
             ],
             [
@@ -6954,6 +6956,42 @@
                     "MapMiss",
                     "Eirika (Eirika)",
                     "FLAG(permanent)"
+                ]
+            ],
+            [
+                "wait",
+                [
+                    "1000"
+                ]
+            ],
+            [
+                "move_unit",
+                [
+                    "Eirika",
+                    "13,7",
+                    "normal",
+                    "closest",
+                    "no_block"
+                ]
+            ],
+            [
+                "wait",
+                [
+                    "500"
+                ]
+            ],
+            [
+                "remove_unit",
+                [
+                    "Eirika",
+                    "fade"
+                ]
+            ],
+            [
+                "change_team",
+                [
+                    "Seth",
+                    "player"
                 ]
             ],
             [

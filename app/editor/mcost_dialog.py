@@ -249,7 +249,7 @@ class RowHeaderView(QHeaderView):
 class McostDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QLineEdit(parent)
-        validator = QDoubleValidator(0.1, 99, 2)
+        validator = QDoubleValidator(1, 99, 2)
         validator.setNotation(QDoubleValidator.StandardNotation)
         editor.setValidator(validator)
         return editor

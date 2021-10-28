@@ -4,7 +4,7 @@ from app.engine import target_system, line_of_sight
 from app.engine.game_state import game
 
 class Node():
-    __slots__ = ['reachable', 'cost', 'x', 'y', 'parent', 'g', 'h', 'f']
+    __slots__ = ['reachable', 'cost', 'x', 'y', 'parent', 'g', 'h', 'f', 'true_f']
 
     def __init__(self, x: int, y: int, reachable: bool, cost: float):
         """
@@ -23,6 +23,7 @@ class Node():
         self.g = 0
         self.h = 0
         self.f = 0
+        self.true_f = 0
 
     def __gt__(self, n):
         return self.cost > n

@@ -1,7 +1,7 @@
 from app.data.skill_components import SkillComponent
 from app.data.components import Type
 
-from app.engine import equations, action, item_funcs
+from app.engine import equations, action, item_funcs, item_system
 from app.engine.game_state import game
 
 # status plugins
@@ -107,6 +107,19 @@ class WexpMultiplier(SkillComponent):
 
     def wexp_multiplier(self, unit1, unit2):
         return self.value
+
+class CanUseWeaponType(SkillComponent):
+    nid = 'wexp_usable_skill'
+    desc = 'Unit can use this weapon type, regardless of class'
+    tag = 'base'
+
+    expose = Type.WeaponType
+
+    def wexp_usable_skill(self, unit, item):
+        try: # get type from item and then compare
+            return item_system.weapon_type(unit, item) == self.value
+        except: # sometimes you just want to see if unit can use item TYPE
+            return item == self.value
 
 class EnemyWexpMultiplier(SkillComponent):
     nid = 'enemy_wexp_multiplier'

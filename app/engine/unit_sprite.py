@@ -187,6 +187,9 @@ class UnitSprite():
     def set_transition(self, new_state):
         self.transition_state = new_state
         self.transition_counter = self.transition_time  # 400
+        if self.state == 'moving':
+            self.change_state('normal')
+            self.reset()
 
         if self.transition_state == 'normal':
             self.offset = [0, 0]

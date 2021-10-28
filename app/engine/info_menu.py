@@ -802,7 +802,7 @@ class InfoMenuState(State):
         counter = 0
         for idx, weapon in enumerate(self.unit.wexp.keys()):
             value = self.unit.wexp[weapon]
-            if value > 0 and class_obj.wexp_gain.get(weapon).usable:
+            if value > 0 and (class_obj.wexp_gain.get(weapon).usable or skill_system.wexp_usable_skill(self.unit, weapon)):
                 weapon_rank = DB.weapon_ranks.get_rank_from_wexp(value)
                 next_weapon_rank = DB.weapon_ranks.get_next_rank_from_wexp(value)
                 if not weapon_rank:
