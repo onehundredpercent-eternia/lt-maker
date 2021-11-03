@@ -14,8 +14,8 @@ class StatusUpkeepState(MapState):
         if DB.constants.value('initiative'):
             self.units = [game.initiative.get_current_unit()]
         else:
-            self.units = [unit for unit in game.units if 
-                          unit.position and 
+            self.units = [unit for unit in game.units if
+                          unit.position and
                           unit.team == game.phase.get_current() and
                           not unit.dead]
         self.cur_unit = None
@@ -41,6 +41,10 @@ class StatusUpkeepState(MapState):
             if self.cur_unit:
                 self.actions.clear()
                 self.playback.clear()
+                if self.cur_unit.traveler and not self.cur_unit.built_guard:
+                    action.do(action.IncGauge(self.cur_unit, -self.cur_unit.get_gauge_inc()))
+                if self.cur_unit.built_guard:
+                    action.do(action.BuiltGuard(self.cur_unit))
                 if self.name == 'status_endstep':
                     skill_system.on_endstep(self.actions, self.playback, self.cur_unit)
                     for item in item_funcs.get_all_items(self.cur_unit):

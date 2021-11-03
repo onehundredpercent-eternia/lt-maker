@@ -179,3 +179,14 @@ class TileMapModel(ResourceCollectionModel):
         for level in DB.levels:
             if level.tilemap == old_nid:
                 level.tilemap = new_nid
+
+    def duplicate(self, tilemap):
+        idx = self._data.index(tilemap.nid)
+        new_nid = str_utils.get_next_name(tilemap.nid, self._data.keys())
+        # Duplicate by serializing and then deserializing
+        ser_tilemap = tilemap.save()
+        new_tilemap = TileMapPrefab.restore(ser_tilemap)
+        new_tilemap.nid = new_nid
+        self._data.insert(idx + 1, new_tilemap)
+        create_tilemap_pixmap(new_tilemap)
+        self.layoutChanged.emit()

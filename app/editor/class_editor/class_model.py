@@ -51,7 +51,7 @@ class ClassModel(DragDropCollectionModel):
         elif role == Qt.DecorationRole:
             klass = self._data[index.row()]
             num = timer.get_timer().passive_counter.count
-            if hasattr(self.window, 'view'):
+            if hasattr(self.window, 'view') and self.window.view:
                 active = index == self.window.view.currentIndex()
             else:
                 active = False

@@ -101,7 +101,16 @@ class SimpleMapView(QGraphicsView):
             for unit in current_level.units:
                 if not unit.starting_position:
                     continue
-                self.draw_unit(painter, unit, unit.starting_position)
+                if unit.starting_traveler:
+                    partner = current_level.units.get(unit.starting_traveler)
+                    if partner:
+                        pos = unit.starting_position
+                        self.draw_unit(painter, partner, (pos[0] + 0.1875, pos[1] - 0.1875))
+                        self.draw_unit(painter, unit, (pos[0] - 0.1875, pos[1] + 0.1875))
+                    else:
+                        self.draw_unit(painter, unit, unit.starting_position)
+                else:
+                    self.draw_unit(painter, unit, unit.starting_position)
             painter.end()
 
     def show_map(self):
@@ -194,7 +203,16 @@ class GlobalModeLevelMapView(SimpleMapView):
                     if not unit.starting_position:
                         continue
                     if unit.generic or unit.nid in DB.units.keys():
-                        self.draw_unit(painter, unit, unit.starting_position)
+                        if unit.starting_traveler:
+                            partner = self.current_level.units.get(unit.starting_traveler)
+                            if partner:
+                                pos = unit.starting_position
+                                self.draw_unit(painter, partner, (pos[0] + 0.1875, pos[1] - 0.1875))
+                                self.draw_unit(painter, unit, (pos[0] - 0.1875, pos[1] + 0.1875))
+                            else:
+                                self.draw_unit(painter, unit, unit.starting_position)
+                        else:
+                            self.draw_unit(painter, unit, unit.starting_position)
 
     def update_view(self, _=None):
         if self.current_level and not self.current_map:
@@ -330,7 +348,16 @@ class NewMapView(SimpleMapView):
                 if not unit.starting_position:
                     continue
                 if unit.generic or unit.nid in DB.units.keys():
-                    self.draw_unit(painter, unit, unit.starting_position)
+                    if unit.starting_traveler:
+                        partner = self.current_level.units.get(unit.starting_traveler)
+                        if partner:
+                            pos = unit.starting_position
+                            self.draw_unit(painter, partner, (pos[0] + 0.1875, pos[1] - 0.1875))
+                            self.draw_unit(painter, unit, (pos[0] - 0.1875, pos[1] + 0.1875))
+                        else:
+                            self.draw_unit(painter, unit, unit.starting_position)
+                    else:
+                        self.draw_unit(painter, unit, unit.starting_position)
             # Highlight current unit with cursor
             current_unit = self.main_editor.unit_painter_menu.get_current()
             if current_unit and current_unit.starting_position:
@@ -459,6 +486,10 @@ class NewMapView(SimpleMapView):
                             current_unit.starting_position = pos
                             message = "Placed unit %s at (%d, %d)" % (
                                 current_unit.nid, pos[0], pos[1])
+                            # Remove from pairup
+                            for unit in self.current_level.units:
+                                if unit.starting_traveler == current_unit.nid:
+                                    unit.starting_traveler = None
                             self.main_editor.set_message(message)
                         self.update_view()
                 elif event.button() == self.settings.get_select_button(Qt.LeftButton):
@@ -487,10 +518,11 @@ class NewMapView(SimpleMapView):
                 elif event.button() == self.settings.get_select_button(Qt.LeftButton):
                     current_group = self.main_editor.group_painter_menu.get_current()
                     under_unit_nid = None
-                    for unit_nid, position in current_group.positions.items():
-                        if pos == position:
-                            under_unit_nid = unit_nid
-                            break
+                    if current_group:
+                        for unit_nid, position in current_group.positions.items():
+                            if pos == position:
+                                under_unit_nid = unit_nid
+                                break
                     for group in self.main_editor.current_level.unit_groups:
                         if under_unit_nid:
                             break

@@ -77,10 +77,11 @@ class DamageNumber():
             surf.blit(self.image, true_pos)
 
 class SkillIcon():
-    def __init__(self, skill, right, small=False):
+    def __init__(self, skill, right, small=False, center=False):
         # small doesn't seem to be ever used
         self.skill = skill
         self.right = right
+        self.center = center
         self.small = small
         self.font = FONT['text-white']
         self.text = self.skill.name
@@ -90,8 +91,11 @@ class SkillIcon():
             if self.small:
                 self.surf = icon
             else:
-                self.surf = engine.create_surface((self.text_width + 22, 16), transparent=True)
-                if self.right:
+                self.surf = engine.create_surface((self.text_width + 22, 32), transparent=True)
+                if self.center:
+                    self.font.blit(self.text, self.surf, (10, 0))
+                    self.surf.blit(icon, (self.text_width//2 + 4, 16))
+                elif self.right:
                     self.font.blit(self.text, self.surf, (20, 0))
                     self.surf.blit(icon, (0, 0))
                 else:
@@ -99,7 +103,9 @@ class SkillIcon():
                     self.surf.blit(icon, (self.text_width + 4, 0))
         else:
             self.surf = engine.create_surface((self.text_width + 22, 16), transparent=True)
-            if self.right:
+            if self.center:
+                self.font.blit(self.text, self.surf, (10, 0))
+            elif self.right:
                 self.font.blit(self.text, self.surf, (20, 0))
             else:
                 self.font.blit(self.text, self.surf, (0, 0))
@@ -146,7 +152,9 @@ class SkillIcon():
             pos = pos[0] + self.left_pos - self.text_width//2 - 8, pos[1]
             surf.blit(self.image, pos)
         else:
-            if self.right:
+            if self.center:
+                x_pos = (WINWIDTH - 26 - self.text_width + self.left_pos)//2
+            elif self.right:
                 x_pos = WINWIDTH - 26 - self.text_width + self.left_pos
             else:
                 x_pos = self.left_pos + 4

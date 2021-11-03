@@ -465,7 +465,18 @@ class UnitSprite():
         # Each image has (self.image.get_width() - 32)//2 buggers on the
         # left and right of it, to handle any off tile spriting
         topleft = left - max(0, (image.get_width() - 16)//2), top - 24
-        surf.blit(image, topleft)
+
+        if DB.constants.value('pairup') and self.unit.traveler:
+            partner = game.get_unit(self.unit.traveler)
+            partner_image = partner.sprite.create_image(self.image_state)
+            partner_image = partner_image.convert_alpha()
+            surf.blit(partner_image, (topleft[0] + 3, topleft[1] - 3))
+            gray_version = image_mods.make_gray(partner_image)
+            translucent_gray = image_mods.make_translucent(gray_version, 0.25)
+            surf.blit(translucent_gray, (topleft[0] + 3, topleft[1] - 3))
+            surf.blit(image, (topleft[0] - 3, topleft[1] + 3))
+        else:
+            surf.blit(image, topleft)
 
         # Draw animations
         self.animations = {k: v for (k, v) in self.animations.items() if not v.update()}
@@ -506,6 +517,10 @@ class UnitSprite():
 
         frame = (engine.get_time() // 100) % 8
         offset = [0, 0, 0, 1, 2, 2, 2, 1][frame]
+        if game.level.roam and game.state.current() == 'free_roam' and game.state.state[-1].can_talk() and \
+                (self.unit.nid, cur_unit.nid) in game.talk_options:
+            talk_marker = engine.subsurface(map_markers, (0, 0, 24, 16))
+            surf.blit(talk_marker, (topleft[0], topleft[1] + offset))
         if (cur_unit.nid, self.unit.nid) in game.talk_options:
             talk_marker = engine.subsurface(map_markers, (0, 0, 24, 16))
             surf.blit(talk_marker, (topleft[0], topleft[1] + offset))
@@ -567,7 +582,8 @@ class UnitSprite():
             boss_icon = SPRITES.get('boss_icon')
             surf.blit(boss_icon, (left - 8, top - 8))
 
-        if self.unit.traveler and self.transition_state == 'normal' and not self.unit.is_dying:
+        if self.unit.traveler and self.transition_state == 'normal' and \
+                not self.unit.is_dying and not DB.constants.value('pairup'):
             if game.get_unit(self.unit.traveler).team == 'player':
                 rescue_icon = SPRITES.get('rescue_icon_blue')
             else:

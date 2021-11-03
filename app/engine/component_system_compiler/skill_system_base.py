@@ -355,3 +355,15 @@ def deactivate_all_combat_arts(unit):
         for component in skill.components:
             if component.defines('on_deactivation'):
                 component.on_deactivation(unit)
+
+def on_pairup(unit, leader):
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('on_pairup'):
+                component.on_pairup(unit, leader)
+
+def on_separate(unit, leader):
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('on_separate'):
+                component.on_separate(unit, leader)

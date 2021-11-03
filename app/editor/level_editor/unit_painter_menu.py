@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton, QLineEdit, \
     QWidget, QStyledItemDelegate, QDialog, QSpinBox, \
-    QVBoxLayout, QHBoxLayout, QMessageBox, QApplication
+    QVBoxLayout, QHBoxLayout, QMessageBox, QApplication, QCheckBox
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QIcon, QBrush, QColor, QFontMetrics
 
@@ -13,7 +13,7 @@ from app.editor import timer
 
 from app.extensions.custom_gui import PropertyBox, ComboBox, Dialog, RightClickListView
 from app.editor.base_database_gui import DragDropCollectionModel
-from app.editor.custom_widgets import UnitBox, ClassBox, FactionBox, AIBox
+from app.editor.custom_widgets import UnitBox, ClassBox, FactionBox, AIBox, ObjBox
 from app.editor.class_editor import class_model
 from app.editor.item_editor import item_model
 from app.editor.unit_editor import unit_tab
@@ -204,6 +204,8 @@ class AllUnitModel(DragDropCollectionModel):
             unit = self._data[index.row()]
             if unit.starting_position:
                 return QBrush(QApplication.palette().text().color())
+            elif any(u.starting_traveler == unit.nid for u in self._data):
+                return QBrush(QColor("cyan"))
             else:
                 return QBrush(QColor("red"))
         return None
@@ -214,6 +216,9 @@ class AllUnitModel(DragDropCollectionModel):
         current_level = self.window.current_level
         for unit_group in current_level.unit_groups:
             unit_group.remove(unit.nid)
+        for u in self._data:
+            if u.starting_traveler == unit.nid:
+                u.starting_traveler = None
 
         # Just delete unit from any groups the unit is a part of
         super().delete(idx)
@@ -296,12 +301,45 @@ class InventoryDelegate(QStyledItemDelegate):
                         left, top, pixmap.width(), pixmap.height())
                 painter.drawImage(left, top, pixmap.toImage())
 
+def valid_partners(units, unit) -> list:
+    if not unit.starting_position:  # Don't bother for units not on map
+        return []
+    # Must be same team and not on the board and not a traveler unless your my traveler
+    partners = {u.starting_traveler for u in units}
+    return [u for u in units if 
+            u.team == unit.team 
+            and not u.starting_position
+            and (unit.starting_traveler == u.nid 
+                 or u.nid not in partners)]
+
+def build_traveler_box(self):
+    self.traveler_box = ObjBox("Paired With", AllUnitModel, valid_partners(self.window.current_level.units, self.current), self)
+    self.traveler_box.edit.setIconSize(QSize(32, 32))
+    self.traveler_box.edit.view().setUniformItemSizes(True)
+    if self.current.starting_traveler:
+        partners = valid_partners(self.window.current_level.units, self.current)
+        idx = [u.nid for u in partners].index(self.current.starting_traveler)
+        self.traveler_box.edit.setCurrentIndex(idx)
+    self.traveler_box.edit.activated.connect(self.traveler_changed)
+    self.traveler_box.setEnabled(False)
+    self.traveler_button = QCheckBox()
+    if self.current.starting_traveler:
+        self.traveler_button.setChecked(True)
+        self.traveler_box.setEnabled(True)
+    else:
+        self.traveler_button.setChecked(False)
+    self.traveler_button.stateChanged.connect(self.traveler_check)
+    traveler_layout = QHBoxLayout()
+    traveler_layout.addWidget(self.traveler_button)
+    traveler_layout.addWidget(self.traveler_box)
+    return traveler_layout
 
 class LoadUnitDialog(Dialog):
     def __init__(self, parent=None, current=None):
         super().__init__(parent)
         self.setWindowTitle("Load Unit")
         self.window = parent
+        self.view = None
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -342,6 +380,15 @@ class LoadUnitDialog(Dialog):
         ai_layout.addWidget(self.ai_group_box)
         layout.addLayout(ai_layout)
 
+        traveler_layout = build_traveler_box(self)
+        layout.addLayout(traveler_layout)
+        if DB.constants.value('pairup') and valid_partners(self.window.current_level.units, self.current):
+            self.traveler_box.show()
+            self.traveler_button.show()
+        else:
+            self.traveler_box.hide()
+            self.traveler_button.hide()
+
         layout.addWidget(self.buttonbox)
 
     def team_changed(self, val):
@@ -356,14 +403,40 @@ class LoadUnitDialog(Dialog):
     def ai_group_changed(self, text):
         self.current.ai_group = text
 
+    def traveler_check(self, val):
+        if bool(val):
+            self.traveler_box.setEnabled(True)
+            partners = valid_partners(self.window.current_level.units, self.current)
+            idx = self.traveler_box.edit.currentIndex()
+            text = partners[idx].nid
+            self.current.starting_traveler = text
+        else:
+            self.traveler_box.setEnabled(False)
+            self.current.starting_traveler = None
+
+    def traveler_changed(self, idx):
+        partners = valid_partners(self.window.current_level.units, self.current)
+        text = partners[idx].nid
+        self.current.starting_traveler = text
+
     def access_units(self):
         unit, ok = unit_tab.get(self.current.nid)
         if ok:
             self.nid_changed(unit.nid)
 
     def nid_changed(self, nid):
+        old_nid = self.current.nid
         self.current.nid = nid
         self.current.prefab = DB.units.get(nid)
+        # Swap level units
+        self.window.current_level.units.update_nid(self.current, self.current.nid)
+        # Swap level unit groups
+        for unit_group in self.window.current_level.unit_groups:
+            unit_group.swap(old_nid, self.current.nid)
+        # Swap travelers
+        for unit in self.window.current_level.units:
+            if unit.starting_traveler == old_nid:
+                unit.starting_traveler = self.current.nid
 
     # def set_current(self, current):
     #     self.current = current
@@ -392,6 +465,7 @@ class GenericUnitDialog(Dialog):
         self.setLayout(layout)
 
         self.averages_dialog = None
+        self.view = None
 
         self._data = self.window._data
         if unit:
@@ -459,6 +533,15 @@ class GenericUnitDialog(Dialog):
         ai_layout.addWidget(self.ai_group_box)
         layout.addLayout(ai_layout)
 
+        traveler_layout = build_traveler_box(self)
+        layout.addLayout(traveler_layout)
+        if DB.constants.value('pairup') and valid_partners(self.window.current_level.units, self.current):
+            self.traveler_box.show()
+            self.traveler_button.show()
+        else:
+            self.traveler_box.hide()
+            self.traveler_button.hide()
+
         self.item_widget = ItemListWidget("Items", self)
         self.item_widget.items_updated.connect(self.items_changed)
         layout.addWidget(self.item_widget)
@@ -496,6 +579,10 @@ class GenericUnitDialog(Dialog):
         # Swap level unit groups
         for unit_group in self.window.current_level.unit_groups:
             unit_group.swap(old_nid, self.current.nid)
+        # Swap travelers
+        for unit in self.window.current_level.units:
+            if unit.starting_traveler == old_nid:
+                unit.starting_traveler = self.current.nid
 
     def team_changed(self, val):
         self.current.team = self.team_box.edit.currentText()
@@ -531,6 +618,22 @@ class GenericUnitDialog(Dialog):
 
     def ai_group_changed(self, text):
         self.current.ai_group = text
+
+    def traveler_check(self, val):
+        if bool(val):
+            self.traveler_box.setEnabled(True)
+            partners = valid_partners(self.window.current_level.units, self.current)
+            idx = self.traveler_box.edit.currentIndex()
+            text = partners[idx].nid
+            self.current.starting_traveler = text
+        else:
+            self.traveler_box.setEnabled(False)
+            self.current.starting_traveler = None
+
+    def traveler_changed(self, idx):
+        partners = valid_partners(self.window.current_level.units, self.current)
+        text = partners[idx].nid
+        self.current.starting_traveler = text
 
     # def check_color(self):
     #     # See which ones can actually be wielded
@@ -579,6 +682,12 @@ class GenericUnitDialog(Dialog):
             self.ai_group_box.edit.setText(current.ai_group)
         else:
             self.ai_group_box.edit.clear()
+        if current.starting_traveler:
+            self.traveler_button.setChecked(True)
+            self.traveler_box.edit.setValue(current.starting_traveler)
+        else:
+            self.traveler_button.setChecked(False)
+            self.traveler_box.edit.clear()
         self.item_widget.set_current(current.starting_items)
         if self.averages_dialog:
             self.averages_dialog.set_current(current)

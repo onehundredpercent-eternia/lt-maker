@@ -83,6 +83,16 @@ class BattleAnimationMusic(ItemComponent):
     def battle_music(self, unit, item, target, mode):
         return self.value
 
+class PreCombatEffect(ItemComponent):
+    nid = 'pre_combat_effect'
+    desc = "Item plays a combat effect right before combat."
+    tag = 'aesthetic'
+
+    expose = Type.EffectAnimation
+
+    def combat_effect(self, unit, item, target, mode):
+        return self.value
+
 class Warning(ItemComponent):
     nid = 'warning'
     desc = "Yellow warning sign appears above wielder's head"

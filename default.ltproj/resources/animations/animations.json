@@ -7,6 +7,20 @@
         "speed": "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"
     },
     {
+        "nid": "BlueDot",
+        "frame_x": 1,
+        "frame_y": 8,
+        "num_frames": 8,
+        "speed": "80"
+    },
+    {
+        "nid": "RedDot",
+        "frame_x": 1,
+        "frame_y": 8,
+        "num_frames": 8,
+        "speed": "80"
+    },
+    {
         "nid": "HitSpark",
         "frame_x": 3,
         "frame_y": 5,

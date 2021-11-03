@@ -1481,7 +1481,7 @@ class MapAnim(EventCommand):
     tag = Tags.TILEMAP
     desc = ('Plays a map animation denoted by the nid *MapAnim* at *Position*. Optional args: a speed multiplier'
             ' *Float*, which increases the length of time it takes to play the animation (larger is slower)')
-    keywords = ["MapAnim", "Position"]
+    keywords = ["MapAnim", "FloatPosition"]
     optional_keywords = ["Float"]
     flags = ["no_block", "permanent", "blend"]
 
@@ -1589,7 +1589,7 @@ class DrawOverlaySprite(EventCommand):
     desc = \
 """
 Draws a sprite on the screen at the specified position. Position defaults to 0, 0.
-Will always draw immediately behind the dialog. 
+Will always draw immediately behind the dialog.
 You can control the order that multiple siimultaneous overlays are drawn by choosing a custom z-level.
 Higher z-level sprites will cover lower z-level sprites occupying the same positions.
 """
@@ -1818,6 +1818,20 @@ class MoveInInitiative(EventCommand):
     desc = "Moves the initiative of the specified unit."
 
     keywords = ["Unit", "Integer"]
+
+class PairUp(EventCommand):
+    nid = 'pair_up'
+    tag = Tags.MISCELLANEOUS
+    desc = "Pairs the first unit into the second"
+
+    keywords = ["Unit", "Unit"]
+
+class Separate(EventCommand):
+    nid = 'separate'
+    tag = Tags.MISCELLANEOUS
+    desc = "Sets the unit's traveler to none. Does not place that partner on the map."
+
+    keywords = ["Unit"]
 
 class StartOverworldCinematic(EventCommand):
     nid = 'overworld_cinematic'

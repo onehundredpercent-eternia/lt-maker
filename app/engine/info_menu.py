@@ -722,9 +722,11 @@ class InfoMenuState(State):
             help_box = help_menu.StatDialog('%s_desc' % stat_nid, contribution)
             self.info_graph.register((96 + 72, 16 * idx + 24, 64, 16), help_box, state)
 
-        other_stats = ['AID', 'TRV', 'RAT']
+        other_stats = ['TRV', 'AID', 'RAT']
         if self.unit.get_max_mana() > 0:
             other_stats.insert(0, 'MANA')
+        if DB.constants.value('pairup'):
+            other_stats.insert(2, 'GAUGE')
         other_stats = other_stats[:6 - len(right_stats)]
 
         for idx, stat in enumerate(other_stats):
@@ -772,6 +774,12 @@ class InfoMenuState(State):
                 FONT['text-blue'].blit_right(mana, surf, (111, 16 * true_idx + 24))
                 FONT['text-yellow'].blit(text_funcs.translate('MANA'), surf, (72, 16 * true_idx + 24))
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'MANA_desc', state)
+
+            elif stat == 'GAUGE':
+                gge = str(self.unit.get_guard_gauge()) + '/' + str(self.unit.get_max_guard_gauge())
+                FONT['text-blue'].blit_right(gge, surf, (111, 16 * true_idx + 24))
+                FONT['text-yellow'].blit(text_funcs.translate('GAUGE'), surf, (72, 16 * true_idx + 24))
+                self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'GAUGE_desc', state)
 
             if DB.constants.value('lead'):
                 FONT['text-yellow'].blit('Lead', surf, (72, 120))

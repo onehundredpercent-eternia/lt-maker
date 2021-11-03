@@ -11,12 +11,12 @@
         ],
         "bases": {
             "HP": 16,
-            "STR": 20,
+            "STR": 0,
             "MAG": 2,
             "SKL": 8,
             "SPD": 13,
             "LCK": 5,
-            "DEF": 3,
+            "DEF": 20,
             "CON": 5,
             "MOV": 5,
             "RES": 1,
@@ -43,6 +43,14 @@
             [
                 "Rapier",
                 false
+            ],
+            [
+                "Iron Sword",
+                false
+            ],
+            [
+                "Brave Sword",
+                false
             ]
         ],
         "learned_skills": [
@@ -52,7 +60,7 @@
             ],
             [
                 1,
-                "Smush"
+                "AttackStanceCrit"
             ]
         ],
         "unit_notes": [
@@ -80,7 +88,7 @@
         "wexp_gain": {
             "Sword": [
                 true,
-                1
+                181
             ],
             "Lance": [
                 false,

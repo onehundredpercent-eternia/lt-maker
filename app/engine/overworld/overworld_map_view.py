@@ -70,6 +70,10 @@ class OverworldMapView():
         # draw the map objects: roads, nodes, and entities
         self.draw_roads(surf, full_size, cull_rect)
         self.draw_nodes(surf, cull_rect)
+        self.overworld.tilemap.animations = [anim for anim in self.overworld.tilemap.animations if not anim.update()]
+        for anim in self.overworld.tilemap.animations:
+            anim.draw(surf, offset=(-self.overworld.camera.get_x(), -self.overworld.camera.get_y()))
+
         self.draw_entities(surf, cull_rect)
 
         if self.cursor:

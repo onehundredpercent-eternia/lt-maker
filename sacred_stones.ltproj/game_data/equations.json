@@ -102,5 +102,17 @@
     {
         "nid": "MAX_FATIGUE",
         "expression": "HP"
+    },
+    {
+        "nid": "MAX_GUARD",
+        "expression": "10"
+    },
+    {
+        "nid": "Gauge_increase",
+        "expression": "2"
+    },
+    {
+        "nid": "guard_exp",
+        "expression": "6"
     }
 ]

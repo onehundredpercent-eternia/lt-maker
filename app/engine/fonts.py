@@ -28,13 +28,7 @@ runes.colors['yellow'] = ((248, 240, 136, 255), (168, 168, 72, 255), (72, 64, 8,
 runes.colors['brown'] = ((248, 248, 248, 255), (144, 112, 88, 255), (80, 40, 0, 255))
 
 narrow = FontType('narrow', 'white')
-narrow.colors['white'] = ((248, 248, 248, 255), (160, 136, 216, 255), (56, 48, 40, 255))
-narrow.colors['blue'] = ((192, 248, 248, 255), (80, 112, 248, 255), (24, 24, 88, 255))
-narrow.colors['green'] = ((72, 232, 32, 255), (112, 160, 72, 255), (24, 88, 24, 255))
-narrow.colors['red'] = ((224, 96, 80, 255), (160, 88, 72, 255), (88, 24, 24, 255))
-narrow.colors['grey'] = ((184, 176, 176, 255), (136, 128, 120, 255), (56, 48, 40, 255))
-narrow.colors['yellow'] = ((248, 240, 136, 255), (168, 168, 72, 255), (72, 64, 8, 255))
-narrow.colors['brown'] = ((248, 248, 248, 255), (144, 112, 88, 255), (80, 40, 0, 255))
+narrow.colors = text.colors
 
 small = FontType('small', 'white')
 small.colors = text.colors

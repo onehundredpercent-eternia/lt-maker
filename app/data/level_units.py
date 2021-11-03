@@ -19,6 +19,7 @@ class GenericUnit(Prefab):
     ai_group: str = None
 
     starting_position: list = None  # 2-tuple
+    starting_traveler: list = None  # unit nid
 
     name: str = None
     desc: str = None
@@ -54,6 +55,7 @@ class UniqueUnit(Prefab):
     faction: str = None  # Always None
 
     starting_position: list = None  # 2-tuple
+    starting_traveler: list = None  # Unit nid
 
     generic: bool = False
 
@@ -74,6 +76,7 @@ class UniqueUnit(Prefab):
         s_dict['ai'] = self.ai
         s_dict['ai_group'] = self.ai_group
         s_dict['starting_position'] = self.starting_position
+        s_dict['starting_traveler'] = self.starting_traveler
         s_dict['generic'] = self.generic
         return s_dict
 

@@ -32,6 +32,20 @@ class AuraTarget(SkillComponent):
     expose = Type.String
     value = 'unit'
 
+class PairUpBonus(SkillComponent):
+    nid = 'pairup_bonus'
+    desc = "Grants a child skill to lead units while in guard stance."
+    tag = 'status'
+
+    expose = Type.Skill
+
+    def on_pairup(self, unit, leader):
+        action.do(action.AddSkill(leader, self.value))
+
+    def on_separate(self, unit, leader):
+        if self.value in [skill.nid for skill in leader.skills]:
+            action.do(action.RemoveSkill(leader, self.value))
+
 class Regeneration(SkillComponent):
     nid = 'regeneration'
     desc = "Unit restores %% of HP at beginning of turn"

@@ -760,8 +760,11 @@ class GameState():
             terrain = DB.terrain.get(terrain_nid)
             if terrain and terrain.status:
                 skill_obj = item_funcs.create_skill(unit, terrain.status)
-                game.register_skill(skill_obj)
-                self.register_terrain_status(terrain_key, skill_obj.uid)
+                if skill_obj:
+                    game.register_skill(skill_obj)
+                    self.register_terrain_status(terrain_key, skill_obj.uid)
+                else:
+                    logging.error("Could not create skill with nid: %s" % terrain.status)
 
         if skill_obj:
             # Only bother adding if not already present

@@ -12908,6 +12908,17 @@
                 "name": null,
                 "desc": null,
                 "generic": true
+            },
+            {
+                "nid": "Nia",
+                "team": "player",
+                "ai": "None",
+                "ai_group": null,
+                "starting_position": [
+                    11,
+                    18
+                ],
+                "generic": false
             }
         ],
         "regions": [

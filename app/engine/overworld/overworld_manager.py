@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.engine.camera import Camera
 import logging
 
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
@@ -17,7 +18,7 @@ class OverworldManager():
     """A wrapper class that contains various functionality for manipulating
     and accessing the overworld data.
     """
-    def __init__(self, overworld: OverworldObject, cursor: OverworldCursor = None, next_level: NID = None):
+    def __init__(self, overworld: OverworldObject, cursor: OverworldCursor = None, next_level: NID = None, camera: Camera = None):
         self._overworld = overworld
         if cursor:
             self.cursor = cursor
@@ -25,6 +26,7 @@ class OverworldManager():
         else:
             self.cursor = None
 
+        self.camera = camera
         # the overworld uses this level to determine what set of overworld events to use on entering
         self.next_level: NID = next_level
 

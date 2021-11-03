@@ -453,6 +453,10 @@ class MoveState(MapState):
         if cur_unit.previous_position != cur_unit.position:
             action.do(action.SetPreviousPosition(cur_unit))
 
+        # To keep track of for swapping
+        if cur_unit.traveler:
+            cur_unit.lead_unit = True
+
         if cur_unit.has_traded:
             self.valid_moves = target_system.get_valid_moves(cur_unit)
             game.highlight.display_moves(self.valid_moves, light=False)
@@ -599,7 +603,7 @@ class MoveCameraState(MapState):
 class MenuState(MapState):
     name = 'menu'
     menu = None
-    normal_options = {'Item', 'Wait', 'Take', 'Give', 'Rescue', 'Trade', 'Drop', 'Visit', 'Armory', 'Vendor', 'Spells', 'Attack', 'Steal', 'Shove'}
+    normal_options = {'Item', 'Wait', 'Take', 'Give', 'Rescue', 'Trade', 'Drop', 'Visit', 'Armory', 'Vendor', 'Spells', 'Attack', 'Steal', 'Shove', 'Pair Up', 'Swap', 'Separate', 'Transfer'}
 
     def begin(self):
         # Play this here because there's a gap in sound while unit is moving
@@ -712,17 +716,28 @@ class MenuState(MapState):
                     game.state.change('move')
                     game.cursor.place_arrows()
                 else:
+                    print(1)
                     game.state.clear()
                     game.state.change('free')
                     self.cur_unit.wait()
             else:
-                if self.cur_unit.current_move:
-                    action.reverse(self.cur_unit.current_move)
-                    self.cur_unit.current_move = None
+                # Reverse Swap here
+                if not self.cur_unit.lead_unit and self.cur_unit.traveler:
+                    self.cur_unit.lead_unit = False
+                    u = game.get_unit(self.cur_unit.traveler)
+                    act = action.SwapPaired(self.cur_unit, u)
+                    act.execute()
+                    self.cur_unit = u
+                    game.cursor.cur_unit = u
                     game.stat_screen.reset_surfs()
-                # game.cursor.set_pos(self.cur_unit.position)
-                game.state.change('move')
-                game.cursor.construct_arrows(game.cursor.path[::-1])
+                else:
+                    if self.cur_unit.current_move:
+                        action.reverse(self.cur_unit.current_move)
+                        self.cur_unit.current_move = None
+                        game.stat_screen.reset_surfs()
+                    # game.cursor.set_pos(self.cur_unit.position)
+                    game.state.change('move')
+                    game.cursor.construct_arrows(game.cursor.path[::-1])
 
         elif event == 'INFO':
             pass
@@ -1185,7 +1200,10 @@ class TargetingState(MapState):
             SOUNDTHREAD.play_sfx('Select 1')
             unit = game.cursor.get_hover()
             if self.traveler_mode:
-                game.memory['trade_partner'] = game.get_unit(unit.traveler)
+                if unit.traveler:
+                    game.memory['trade_partner'] = game.get_unit(unit.traveler)
+                else:
+                    game.memory['trade_partner'] = unit
             else:
                 game.memory['trade_partner'] = unit
             self.ability.do(self.cur_unit)
@@ -1261,7 +1279,8 @@ class TargetingState(MapState):
         elif self.ability.name == 'Trade':
             unit = game.cursor.get_hover()
             if self.traveler_mode:
-                game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
+                if unit.traveler:
+                    game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
             else:
                 game.ui_view.draw_trade_preview(unit, surf)
         elif self.ability.name == 'Steal':
@@ -1306,6 +1325,9 @@ class CombatTargetingState(MapState):
         closest_pos = self.selection.get_closest(game.cursor.position)
         game.cursor.set_pos(closest_pos)
 
+        # Sets dual strike variables and chooses attacker dual strike
+        self.find_strike_partners(closest_pos)
+
         # Reset these
         game.memory['sequence_item_index'] = 0
         game.memory['prev_targets'] = []
@@ -1326,6 +1348,22 @@ class CombatTargetingState(MapState):
         if self._process_next_target_asap:
             self._process_next_target_asap = False
             self._get_next_target()
+
+    def find_strike_partners(self, target, atk=True):
+        if atk:
+            self.attacker_assist = None
+        self.defender_assist = None
+        attacker = self.cur_unit
+        if isinstance(target, tuple):
+            defender = game.board.get_unit(target)
+        else:
+            defender = None
+        partners = target_system.find_strike_partners(attacker, defender, self.item)
+        atk_result, self.defender_assist = partners
+        if self.attacker_assist:
+            pass  # Attacker assistant already chosen!
+        else:
+            self.attacker_assist = atk_result
 
     def display_single_attack(self):
         game.highlight.remove_highlights()
@@ -1360,6 +1398,13 @@ class CombatTargetingState(MapState):
             else:
                 targets = self.prev_targets
 
+        # Find strike partner for first target
+        self.find_strike_partners(targets[0], atk=False)
+        self.cur_unit.strike_partner = self.attacker_assist
+        if len(self.prev_targets) == 1:
+            defender = game.board.get_unit(targets[0])
+            defender.strike_partner = self.defender_assist
+
         combat = interaction.engage(self.cur_unit, targets, main_item)
         game.combat_instance.append(combat)
         game.state.change('combat')
@@ -1373,6 +1418,7 @@ class CombatTargetingState(MapState):
                 self.selection.remove_target(game.cursor.position)
                 closest_pos = self.selection.get_closest(game.cursor.position)
                 game.cursor.set_pos(closest_pos)
+
             self.begin()
             self.display_single_attack()
         elif self.parent_item and self.sequence_item_index < len(self.parent_item.sequence_item.value) - 1:
@@ -1407,11 +1453,20 @@ class CombatTargetingState(MapState):
             game.cursor.set_pos(mouse_position)
 
         if event == 'AUX':
-            new_position = self.selection.get_next(game.cursor.position)
-            game.cursor.set_pos(new_position)
-            SOUNDTHREAD.play_sfx('Select 6')
-            game.ui_view.reset_info()
-            self.display_single_attack()
+            adj_allies = target_system.get_adj_allies(self.cur_unit)
+            if not DB.constants.value('pairup'):
+                new_position = self.selection.get_next(game.cursor.position)
+                game.cursor.set_pos(new_position)
+                SOUNDTHREAD.play_sfx('Select 6')
+                game.ui_view.reset_info()
+                self.display_single_attack()
+            # Switch chosen pairup with AUX
+            elif len(adj_allies) > 1 and self.num_targets == 1:
+                i = adj_allies.index(self.attacker_assist)
+                # Hardset attacker
+                self.attacker_assist = adj_allies[(i + 1) % len(adj_allies)]
+                game.ui_view.reset_info()
+                self.display_single_attack()
 
         elif event == 'BACK':
             SOUNDTHREAD.play_sfx('Select 4')
@@ -1456,7 +1511,7 @@ class CombatTargetingState(MapState):
             if item_system.targets_items(self.cur_unit, self.item):
                 game.ui_view.draw_trade_preview(target_unit, surf)
             elif item_system.is_weapon(self.cur_unit, self.item):
-                game.ui_view.draw_attack_info(surf, self.cur_unit, self.item, target_unit)
+                game.ui_view.draw_attack_info(surf, self.cur_unit, self.item, target_unit, self.attacker_assist, self.defender_assist)
             else:
                 game.ui_view.draw_spell_info(surf, self.cur_unit, self.item, target_unit)
 

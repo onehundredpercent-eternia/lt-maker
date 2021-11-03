@@ -191,11 +191,11 @@
         "learned_skills": [
             [
                 1,
-                "Riposte"
+                "TLT_Riposte"
             ],
             [
                 5,
-                "Vantage"
+                "TLT_Vantage"
             ],
             [
                 8,
@@ -321,7 +321,7 @@
             ],
             [
                 5,
-                "Critical"
+                "TLT_Critical"
             ],
             [
                 8,
@@ -445,11 +445,11 @@
         "learned_skills": [
             [
                 1,
-                "Initiative"
+                "TLT_Initiative"
             ],
             [
                 5,
-                "Poise"
+                "TLT_Poise"
             ],
             [
                 8,
@@ -575,7 +575,7 @@
             ],
             [
                 5,
-                "Sol"
+                "TLT_Sol"
             ],
             [
                 8,
@@ -703,7 +703,7 @@
             ],
             [
                 5,
-                "Steal"
+                "TLT_Steal"
             ],
             [
                 8,
@@ -829,7 +829,7 @@
             ],
             [
                 5,
-                "Ghost"
+                "Pass"
             ],
             [
                 8,
@@ -953,7 +953,7 @@
         "learned_skills": [
             [
                 1,
-                "Synergy"
+                "TLT_Synergy"
             ],
             [
                 5,
@@ -1083,7 +1083,7 @@
             ],
             [
                 5,
-                "Luna"
+                "TLT_Luna"
             ],
             [
                 8,
@@ -1341,7 +1341,7 @@
             ],
             [
                 5,
-                "Charisma"
+                "TLT_Charisma"
             ],
             [
                 8,
@@ -1465,7 +1465,7 @@
         "learned_skills": [
             [
                 1,
-                "Provoke"
+                "TLT_Provoke"
             ],
             [
                 5,
@@ -1595,7 +1595,7 @@
             ],
             [
                 5,
-                "Slow"
+                "TLT_Slow"
             ],
             [
                 8,
@@ -1719,11 +1719,11 @@
         "learned_skills": [
             [
                 1,
-                "Fleet_of_Foot"
+                "TLT_Fleet_of_Foot"
             ],
             [
                 5,
-                "Evasion"
+                "TLT_Evasion"
             ],
             [
                 8,
@@ -1849,7 +1849,7 @@
             ],
             [
                 5,
-                "Charge"
+                "TLT_Charge"
             ],
             [
                 8,
@@ -1973,7 +1973,7 @@
         "learned_skills": [
             [
                 1,
-                "Cleave"
+                "TLT_Cleave"
             ],
             [
                 5,
@@ -2103,7 +2103,7 @@
             ],
             [
                 5,
-                "Heavy Hitter"
+                "TLT_Heavy Hitter"
             ],
             [
                 8,
@@ -2227,11 +2227,11 @@
         "learned_skills": [
             [
                 1,
-                "Prescience"
+                "TLT_Prescience"
             ],
             [
                 5,
-                "Critical"
+                "TLT_Critical"
             ],
             [
                 8,
@@ -2357,7 +2357,7 @@
             ],
             [
                 5,
-                "Longshot"
+                "TLT_Longshot"
             ],
             [
                 8,
@@ -2481,11 +2481,11 @@
         "learned_skills": [
             [
                 1,
-                "Inspiration"
+                "TLT_Inspiration"
             ],
             [
                 5,
-                "Skill_Aura"
+                "TLT_Skill_Aura"
             ],
             [
                 8,
@@ -2613,7 +2613,7 @@
             ],
             [
                 5,
-                "Rally"
+                "TLT_Rally"
             ],
             [
                 8,
@@ -2737,11 +2737,11 @@
         "learned_skills": [
             [
                 1,
-                "Healtouch"
+                "TLT_Healtouch"
             ],
             [
                 5,
-                "Miracle"
+                "TLT_Miracle"
             ],
             [
                 8,
@@ -2867,7 +2867,7 @@
             ],
             [
                 5,
-                "Purity"
+                "TLT_Purity"
             ],
             [
                 8,
@@ -2991,11 +2991,11 @@
         "learned_skills": [
             [
                 1,
-                "Focus"
+                "TLT_Focus"
             ],
             [
                 5,
-                "Conductance"
+                "TLT_Conductance"
             ],
             [
                 8,
@@ -3121,7 +3121,7 @@
             ],
             [
                 5,
-                "Metamagic"
+                "TLT_Metamagic"
             ],
             [
                 8,
@@ -3245,11 +3245,11 @@
         "learned_skills": [
             [
                 1,
-                "Hex"
+                "TLT_Hex"
             ],
             [
                 5,
-                "Empowered"
+                "TLT_Empowered"
             ],
             [
                 8,
@@ -3375,7 +3375,7 @@
             ],
             [
                 5,
-                "Metamagic"
+                "TLT_Metamagic"
             ],
             [
                 8,
@@ -3499,7 +3499,7 @@
         "learned_skills": [
             [
                 1,
-                "Prescience"
+                "TLT_Prescience"
             ],
             [
                 5,
@@ -3760,7 +3760,7 @@
             ],
             [
                 5,
-                "Empowered"
+                "TLT_Empowered"
             ],
             [
                 8,
@@ -3889,7 +3889,7 @@
             ],
             [
                 5,
-                "Defense_Aura"
+                "TLT_Defense_Aura"
             ],
             [
                 8,
@@ -4011,7 +4011,7 @@
         "learned_skills": [
             [
                 1,
-                "Fleet_of_Foot"
+                "TLT_Fleet_of_Foot"
             ],
             [
                 5,
@@ -4137,11 +4137,11 @@
         "learned_skills": [
             [
                 1,
-                "Patience"
+                "TLT_Patience"
             ],
             [
                 5,
-                "Defense_Aura"
+                "TLT_Defense_Aura"
             ],
             [
                 8,
@@ -4504,7 +4504,7 @@
         "learned_skills": [
             [
                 1,
-                "Ghost"
+                "Pass"
             ]
         ],
         "wexp_gain": {

@@ -39,7 +39,7 @@ class OverworldState(MapState):
                 game.state.back()
                 return
         game.cursor = OverworldCursor(game.camera)
-        game.overworld_controller = OverworldManager(game.overworld_registry[overworld_to_load], game.cursor, game.game_vars.get('_next_level_nid'))
+        game.overworld_controller = OverworldManager(game.overworld_registry[overworld_to_load], game.cursor, game.game_vars.get('_next_level_nid'), game.camera)
         game.movement = OverworldMovementManager(game.overworld_controller)
         game.map_view = OverworldMapView(game.overworld_controller, game.cursor)
         game.set_up_game_board(game.overworld_registry[overworld_to_load].tilemap)

@@ -11,9 +11,11 @@ from app.engine import engine, gui, image_mods, background
 from app.engine.animations import Animation
 
 class MockCombat():
-    def __init__(self, left_anim, right_anim, at_range=0, pose='Attack'):
+    def __init__(self, left_anim, right_anim, at_range=0, pose='Attack', lp_anim=None, rp_anim=None):
         self.left_battle_anim = left_anim
+        self.lp_battle_anim = lp_anim
         self.right_battle_anim = right_anim
+        self.rp_battle_anim = rp_anim
         self.current_battle_anim = self.right_battle_anim
 
         self.at_range = at_range
@@ -108,6 +110,10 @@ class MockCombat():
         # Update battle anims
         self.left_battle_anim.update()
         self.right_battle_anim.update()
+        if self.lp_battle_anim:
+            self.lp_battle_anim.update()
+        if self.rp_battle_anim:
+            self.rp_battle_anim.update()
 
         # Update shake
         if self.current_shake:
@@ -234,7 +240,7 @@ class MockCombat():
             self.no_damage()
 
     def no_damage(self):
-        if self.current_battle_anim is self.right_battle_anim:
+        if self.current_battle_anim is self.right_battle_anim or self.current_battle_anim is self.rp_battle_anim:
             position = (52, 21)
             team = self.right_team()
         else:
@@ -272,13 +278,13 @@ class MockCombat():
     def _shake(self, num):
         self.current_shake = 1
         if num == 1: # Normal Hit
-            self.shake_set = [(3, 3), (0, 0), (0, 0), (-3, -3), (0, 0), (0, 0), (3, 3), (0, 0), (-3, -3), (0, 0), 
+            self.shake_set = [(3, 3), (0, 0), (0, 0), (-3, -3), (0, 0), (0, 0), (3, 3), (0, 0), (-3, -3), (0, 0),
                               (3, 3), (0, 0), (-3, -3), (3, 3), (0, 0)]
         elif num == 2: # No Damage
             self.shake_set = [(1, 1), (1, 1), (1, 1), (-1, -1), (-1, -1), (-1, -1), (0, 0)]
         elif num == 3: # Spell Hit
             self.shake_set = [(0, 0), (-3, -3), (0, 0), (0, 0), (0, 0), (3, 3), (0, 0), (0, 0), (-3, -3), (0, 0),
-                              (0, 0), (3, 3), (0, 0), (-3, -3), (0, 0), (3, 3), (0, 0), (-3, -3), (3, 3), (3, 3), 
+                              (0, 0), (3, 3), (0, 0), (-3, -3), (0, 0), (3, 3), (0, 0), (-3, -3), (3, 3), (3, 3),
                               (0, 0)]
         elif num == 4: # Critical Hit
             self.shake_set = [(-6, -6), (0, 0), (0, 0), (0, 0), (6, 6), (0, 0), (0, 0), (-6, -6), (0, 0), (0, 0),
@@ -389,9 +395,15 @@ class MockCombat():
             self.draw_ui(surf)
         shake = (-total_shake_x, total_shake_y)
 
+        lp_range_offset = left_range_offset - 20
+        rp_range_offset = right_range_offset + 20
         self.left_battle_anim.draw_under(surf, shake, left_range_offset, self.pan_offset)
         self.right_battle_anim.draw_under(surf, shake, right_range_offset, self.pan_offset)
+        if self.lp_battle_anim:
+            self.lp_battle_anim.draw(surf, shake, lp_range_offset, self.pan_offset)
         self.left_battle_anim.draw(surf, shake, left_range_offset, self.pan_offset)
+        if self.rp_battle_anim:
+            self.rp_battle_anim.draw(surf, shake, rp_range_offset, self.pan_offset)
         self.right_battle_anim.draw(surf, shake, right_range_offset, self.pan_offset)
         self.right_battle_anim.draw_over(surf, shake, right_range_offset, self.pan_offset)
         self.left_battle_anim.draw_over(surf, shake, left_range_offset, self.pan_offset)

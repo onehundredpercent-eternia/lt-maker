@@ -556,7 +556,7 @@
         ]
     },
     {
-        "nid": "Steal",
+        "nid": "TLT_Steal",
         "name": "Steal",
         "desc": "Can steal items from enemies with lower speed.",
         "icon_nid": "Skills",
@@ -624,7 +624,7 @@
         ]
     },
     {
-        "nid": "Void Curse",
+        "nid": "TLT_Void Curse",
         "name": "Void Curse",
         "desc": "No exp gained for attacking this unit.",
         "icon_nid": "Skills",
@@ -664,7 +664,7 @@
         ]
     },
     {
-        "nid": "Poison",
+        "nid": "TLT_Poison",
         "name": "Poisoned",
         "desc": "All stats lowered by 2.",
         "icon_nid": "Skills",
@@ -717,7 +717,7 @@
         ]
     },
     {
-        "nid": "Hexed",
+        "nid": "TLT_Hexed",
         "name": "Hexed",
         "desc": "All stats lowered by 3.",
         "icon_nid": "Skills",
@@ -799,7 +799,7 @@
         ]
     },
     {
-        "nid": "Resistant",
+        "nid": "TLT_Resistant",
         "name": "Resistant",
         "desc": "Grants increased magical resistance.",
         "icon_nid": "Skills",
@@ -833,7 +833,7 @@
         ]
     },
     {
-        "nid": "Barkskin",
+        "nid": "TLT_Barkskin",
         "name": "Barkskin",
         "desc": "Grants DEF +5, but inflicts SPD -4.",
         "icon_nid": "Skills",
@@ -862,7 +862,7 @@
         ]
     },
     {
-        "nid": "Fortune",
+        "nid": "TLT_Fortune",
         "name": "Good Fortune",
         "desc": "Grants hit +50.",
         "icon_nid": "Skills",
@@ -902,7 +902,7 @@
         ]
     },
     {
-        "nid": "Dazzle",
+        "nid": "TLT_Dazzle",
         "name": "Dazzled",
         "desc": "Inflicts Hit -10.",
         "icon_nid": "Skills",
@@ -926,7 +926,7 @@
         ]
     },
     {
-        "nid": "Blinded",
+        "nid": "TLT_Blinded",
         "name": "Blinded",
         "desc": "Inflicts Hit -50.",
         "icon_nid": "Skills",
@@ -954,7 +954,7 @@
         ]
     },
     {
-        "nid": "Chill",
+        "nid": "TLT_Chill",
         "name": "Chilled",
         "desc": "Inflicts Avoid -10.",
         "icon_nid": "Skills",
@@ -978,7 +978,7 @@
         ]
     },
     {
-        "nid": "Frostbite",
+        "nid": "TLT_Frostbite",
         "name": "Frostbite",
         "desc": "Inflicts SPD -3.",
         "icon_nid": "Skills",
@@ -1385,7 +1385,36 @@
         ]
     },
     {
-        "nid": "Aetherguard",
+        "nid": "Strength -4",
+        "name": "Strength -4",
+        "desc": "Grants STR -4",
+        "icon_nid": "Skills",
+        "icon_index": [
+            8,
+            9
+        ],
+        "components": [
+            [
+                "negative",
+                null
+            ],
+            [
+                "time",
+                1
+            ],
+            [
+                "stat_change",
+                [
+                    [
+                        "STR",
+                        -4
+                    ]
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "TLT_Aetherguard",
         "name": "Aetherguard",
         "desc": "Grants SPD +2, DEF +2, and RES +2.",
         "icon_nid": "Skills",
@@ -1414,7 +1443,7 @@
         ]
     },
     {
-        "nid": "Underdog",
+        "nid": "TLT_Underdog",
         "name": "Underdog",
         "desc": "Grants Damage +2 and Damage Taken -2 against enemies with greater max HP.",
         "icon_nid": "Skills",
@@ -1455,7 +1484,7 @@
         ]
     },
     {
-        "nid": "Swordbreaker",
+        "nid": "TLT_Swordbreaker",
         "name": "Swordbreaker",
         "desc": "Grants Hit/Avoid +30 against enemies wielding Swords.",
         "icon_nid": "Skills",
@@ -1475,7 +1504,7 @@
         ]
     },
     {
-        "nid": "Lancebreaker",
+        "nid": "TLT_Lancebreaker",
         "name": "Lancebreaker",
         "desc": "Grants Hit/Avoid +30 against enemies wielding Lances.",
         "icon_nid": "Skills",
@@ -1495,7 +1524,7 @@
         ]
     },
     {
-        "nid": "Axebreaker",
+        "nid": "TLT_Axebreaker",
         "name": "Axebreaker",
         "desc": "Grants Hit/Avoid +30 against enemies wielding Axes.",
         "icon_nid": "Skills",
@@ -1515,7 +1544,7 @@
         ]
     },
     {
-        "nid": "Imperial Wards",
+        "nid": "TLT_Imperial Wards",
         "name": "Imperial Ward",
         "desc": "Grants STR/MAG/SKL/SPD/DEF/RES +5.",
         "icon_nid": "Skills",
@@ -1596,8 +1625,8 @@
         ]
     },
     {
-        "nid": "Ghost",
-        "name": "Ghost",
+        "nid": "Pass",
+        "name": "Pass",
         "desc": "Move through enemy units.",
         "icon_nid": "Skills",
         "icon_index": [
@@ -1616,7 +1645,7 @@
         ]
     },
     {
-        "nid": "Fleet_of_Foot",
+        "nid": "TLT_Fleet_of_Foot",
         "name": "Fleet of Foot",
         "desc": "Ignore some terrain movement penalties.",
         "icon_nid": "Skills",
@@ -1627,6 +1656,10 @@
         "components": [
             [
                 "class_skill",
+                null
+            ],
+            [
+                "ignore_terrain",
                 null
             ]
         ]
@@ -1652,7 +1685,7 @@
         ]
     },
     {
-        "nid": "Evasion",
+        "nid": "TLT_Evasion",
         "name": "Evasion",
         "desc": "Area of Effect attacks always miss this unit.",
         "icon_nid": "Skills",
@@ -1672,7 +1705,7 @@
         ]
     },
     {
-        "nid": "Prescience",
+        "nid": "TLT_Prescience",
         "name": "Prescience",
         "desc": "If attacking, grants Hit/Avoid +15 and Damage +1.",
         "icon_nid": "Skills",
@@ -1700,7 +1733,7 @@
         ]
     },
     {
-        "nid": "Patience",
+        "nid": "TLT_Patience",
         "name": "Patience",
         "desc": "If attacked, grants Hit/Avoid +15 and Damage +1.",
         "icon_nid": "Skills",
@@ -1728,7 +1761,7 @@
         ]
     },
     {
-        "nid": "Riposte",
+        "nid": "TLT_Riposte",
         "name": "Riposte",
         "desc": "If attacked, grants Damage +3.",
         "icon_nid": "Skills",
@@ -1748,7 +1781,7 @@
         ]
     },
     {
-        "nid": "Initiative",
+        "nid": "TLT_Initiative",
         "name": "Initiative",
         "desc": "If attacking, grants Avoid +30.",
         "icon_nid": "Skills",
@@ -1768,7 +1801,7 @@
         ]
     },
     {
-        "nid": "Overwhelm",
+        "nid": "TLT_Overwhelm",
         "name": "Overwhelm",
         "desc": "If attacking and damage would defeat enemy, grants Hit +30.",
         "icon_nid": "Skills",
@@ -1788,7 +1821,7 @@
         ]
     },
     {
-        "nid": "Poise",
+        "nid": "TLT_Poise",
         "name": "Poise",
         "desc": "If attacking, DEF/RES +5.",
         "icon_nid": "Skills",
@@ -1808,7 +1841,7 @@
         ]
     },
     {
-        "nid": "Empowered",
+        "nid": "TLT_Empowered",
         "name": "Empowered",
         "desc": "If attacking, Damage +3.",
         "icon_nid": "Skills",
@@ -1828,7 +1861,7 @@
         ]
     },
     {
-        "nid": "Shimmer",
+        "nid": "TLT_Shimmer",
         "name": "Shimmer",
         "desc": "Grants Avoid +30 against non-adjacent attackers.",
         "icon_nid": "Skills",
@@ -1848,7 +1881,7 @@
         ]
     },
     {
-        "nid": "Rex_Aegis",
+        "nid": "TLT_Rex_Aegis",
         "name": "Rex Aegis",
         "desc": "Grants Avoid +500 and Defense +100 vs. enemies more than two tiles away.",
         "icon_nid": "Skills",
@@ -1868,7 +1901,7 @@
         ]
     },
     {
-        "nid": "Heavy Hitter",
+        "nid": "TLT_Heavy Hitter",
         "name": "Heavy Hitter",
         "desc": "Adds half weapon weight to damage.",
         "icon_nid": "Skills",
@@ -1888,7 +1921,7 @@
         ]
     },
     {
-        "nid": "Charge",
+        "nid": "TLT_Charge",
         "name": "Charge",
         "desc": "Adds (distance moved - 2) this turn to damage.",
         "icon_nid": "Skills",
@@ -1908,7 +1941,7 @@
         ]
     },
     {
-        "nid": "Focus",
+        "nid": "TLT_Focus",
         "name": "Focus",
         "desc": "Grants Hit/Avoid +20 if no allies are within 3 tiles.",
         "icon_nid": "Skills",
@@ -1932,7 +1965,7 @@
         ]
     },
     {
-        "nid": "Synergy",
+        "nid": "TLT_Synergy",
         "name": "Synergy",
         "desc": "Grants Hit/Avoid +10 if an ally is within 3 tiles.",
         "icon_nid": "Skills",
@@ -1960,7 +1993,7 @@
         ]
     },
     {
-        "nid": "Futuresight",
+        "nid": "TLT_Futuresight",
         "name": "Futuresight",
         "desc": "Grants Hit/Avoid +30 if HP is under half.",
         "icon_nid": "Skills",
@@ -1984,7 +2017,7 @@
         ]
     },
     {
-        "nid": "Purity",
+        "nid": "TLT_Purity",
         "name": "Purity",
         "desc": "Unit is not affected by negative statuses.",
         "icon_nid": "Skills",
@@ -2004,7 +2037,7 @@
         ]
     },
     {
-        "nid": "Conductance",
+        "nid": "TLT_Conductance",
         "name": "Conductance",
         "desc": "Grants Hit +15 and Damage +1 against enemies wielding metal weapons.",
         "icon_nid": "Skills",
@@ -2028,7 +2061,7 @@
         ]
     },
     {
-        "nid": "Miracle",
+        "nid": "TLT_Miracle",
         "name": "Miracle",
         "desc": "Once per chapter, if this unit would die, instead they survive with 1 HP.",
         "icon_nid": "Skills",
@@ -2052,7 +2085,7 @@
         ]
     },
     {
-        "nid": "Healtouch",
+        "nid": "TLT_Healtouch",
         "name": "Healtouch",
         "desc": "Heal +5 HP when healing an ally.",
         "icon_nid": "Skills",
@@ -2072,7 +2105,7 @@
         ]
     },
     {
-        "nid": "Vantage",
+        "nid": "TLT_Vantage",
         "name": "Vantage",
         "desc": "If 4 more attack speed than enemy, double counterattack while defending.",
         "icon_nid": "Skills",
@@ -2092,7 +2125,7 @@
         ]
     },
     {
-        "nid": "Critical",
+        "nid": "TLT_Critical",
         "name": "Critical",
         "desc": "Combat Art. Doubles total damage.",
         "icon_nid": "Skills",
@@ -2156,7 +2189,7 @@
         ]
     },
     {
-        "nid": "Cleave",
+        "nid": "TLT_Cleave",
         "name": "Cleave",
         "desc": "Combat Art. Prereq: Axe. Damages all adjacent enemy units.",
         "icon_nid": "Skills",
@@ -2228,7 +2261,7 @@
         ]
     },
     {
-        "nid": "Metamagic",
+        "nid": "TLT_Metamagic",
         "name": "Metamagic",
         "desc": "Automatic Art. When charged, next attack has increased area of blast +1.",
         "icon_nid": "Skills",
@@ -2332,7 +2365,7 @@
         ]
     },
     {
-        "nid": "Rally",
+        "nid": "TLT_Rally",
         "name": "Rally",
         "desc": "Activated. Grant all allies within a 3 tile radius +4 to all stats for one turn.",
         "icon_nid": "Skills",
@@ -2360,7 +2393,7 @@
         ]
     },
     {
-        "nid": "Luna",
+        "nid": "TLT_Luna",
         "name": "Luna",
         "desc": "Combat Art. Ignore enemy's Defense or Resistance.",
         "icon_nid": "Skills",
@@ -2420,7 +2453,7 @@
         ]
     },
     {
-        "nid": "Sol",
+        "nid": "TLT_Sol",
         "name": "Sol",
         "desc": "Combat Art. Recover HP equal to damage dealt to enemy.",
         "icon_nid": "Skills",
@@ -2480,7 +2513,7 @@
         ]
     },
     {
-        "nid": "Longshot",
+        "nid": "TLT_Longshot",
         "name": "Longshot",
         "desc": "While wielding a bow, attack range +1.",
         "icon_nid": "Skills",
@@ -2500,7 +2533,7 @@
         ]
     },
     {
-        "nid": "Slow",
+        "nid": "TLT_Slow",
         "name": "Slow",
         "desc": "Slow enemies struck by your weapons.",
         "icon_nid": "Skills",
@@ -2520,7 +2553,7 @@
         ]
     },
     {
-        "nid": "Skill_Aura",
+        "nid": "TLT_Skill_Aura",
         "name": "Skill Aura",
         "desc": "Aura. Grants allies SKL +3.",
         "icon_nid": "Skills",
@@ -2548,7 +2581,7 @@
         ]
     },
     {
-        "nid": "Defense_Aura",
+        "nid": "TLT_Defense_Aura",
         "name": "Defense Aura",
         "desc": "Aura. Grants allies DEF +2.",
         "icon_nid": "Skills",
@@ -2576,8 +2609,8 @@
         ]
     },
     {
-        "nid": "Inspiration",
-        "name": "Inspiration",
+        "nid": "TLT_Inspiration",
+        "name": "TLT_Inspiration",
         "desc": "Aura. Grants allies Damage +1 and Damage Taken -1.",
         "icon_nid": "Skills",
         "icon_index": [
@@ -2604,7 +2637,7 @@
         ]
     },
     {
-        "nid": "Charisma",
+        "nid": "TLT_Charisma",
         "name": "Charisma",
         "desc": "Aura. Grants allies Hit/Avoid +15.",
         "icon_nid": "Skills",
@@ -2632,7 +2665,7 @@
         ]
     },
     {
-        "nid": "Hex",
+        "nid": "TLT_Hex",
         "name": "Hex",
         "desc": "Aura. Inflicts Avoid -15 on enemies.",
         "icon_nid": "Skills",
@@ -2660,7 +2693,7 @@
         ]
     },
     {
-        "nid": "Provoke",
+        "nid": "TLT_Provoke",
         "name": "Provoke",
         "desc": "After battle, inflicts Hit -30 and Damage -2 when attacking other units.",
         "icon_nid": "Skills",
@@ -2846,7 +2879,7 @@
         ]
     },
     {
-        "nid": "Slowed",
+        "nid": "TLT_Slowed",
         "name": "Slowed",
         "desc": "Inflicts MOV -3.",
         "icon_nid": "Skills",
@@ -2928,7 +2961,7 @@
         ]
     },
     {
-        "nid": "Enervated",
+        "nid": "TLT_Enervated",
         "name": "Enervated",
         "desc": "All stats lowered.",
         "icon_nid": "Skills",
@@ -3051,6 +3084,781 @@
                         -5
                     ]
                 ]
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Adept",
+        "name": "Adept",
+        "desc": "Saga of Spirits: Gain an additional attack when the battle begins, but cannot double.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "cost_mana",
+                7
+            ],
+            [
+                "combat_art",
+                "SoS_adept_item_mod"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_adept_item_mod",
+        "name": "SoS_adept_item_mod",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "attack_speed",
+                99
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Pressure",
+        "name": "Pressure Performer",
+        "desc": "Saga of Spirits: Gain +3 Skl and Spd when below 50% health.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "condition",
+                "unit.get_hp() < unit.stats['HP']//2"
+            ],
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "stat_change",
+                [
+                    [
+                        "SKL",
+                        3
+                    ],
+                    [
+                        "SPD",
+                        3
+                    ]
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Vantage",
+        "name": "Vantage",
+        "desc": "Saga of Spirits: If this unit can double an attacking enemy, this unit will attack first.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "condition",
+                "combat_calcs.outspeed(unit, target, unit.get_weapon(), target.get_weapon(), 'attack')"
+            ],
+            [
+                "vantage",
+                null
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Rally_Infantry",
+        "name": "Rally Infantry",
+        "desc": "Saga of Spirits: Infantry allies within two spaces gain +4 to all non-movement stats.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "ability",
+                "so_Rally_Inf"
+            ],
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "cost_mana",
+                11
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Rally_Inf_Child",
+        "name": "Rallied",
+        "desc": "Grants +3 to all stats.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            10,
+            1
+        ],
+        "components": [
+            [
+                "stat_change",
+                [
+                    [
+                        "STR",
+                        3
+                    ],
+                    [
+                        "MAG",
+                        3
+                    ],
+                    [
+                        "SKL",
+                        3
+                    ],
+                    [
+                        "SPD",
+                        3
+                    ],
+                    [
+                        "LCK",
+                        3
+                    ],
+                    [
+                        "DEF",
+                        3
+                    ],
+                    [
+                        "RES",
+                        3
+                    ]
+                ]
+            ],
+            [
+                "time",
+                1
+            ],
+            [
+                "hidden",
+                null
+            ],
+            [
+                "condition",
+                "'Mounted' not in unit.tags"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Fervor",
+        "name": "Fervor",
+        "desc": "Saga of Spirits: For every 4 health lost, gain 1 additional damage.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "dynamic_damage",
+                "(unit.stats['HP'] - unit.get_hp())//4"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Focus_Strike",
+        "name": "Focus Strike",
+        "desc": "SoS: The might of the unit's weapon doubles. Cannot double, and -4 STR for one turn.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "cost_mana",
+                12
+            ],
+            [
+                "combat_art",
+                "SoS_Focus_Strike_item_mod"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Focus_Strike_item_mod",
+        "name": "SoS_Focus_Strike_item_mod",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "cannot_double",
+                null
+            ],
+            [
+                "eval_damage",
+                "item_system.damage(unit, unit.get_weapon())"
+            ],
+            [
+                "gain_skill_after_attack",
+                "Strength -4"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Unyielding_Will",
+        "name": "Unyielding Will",
+        "desc": "Saga of Spirits: +2 damage and +2 DEF/RES if the target is at full HP.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "dynamic_resist",
+                "2 if target.get_hp() == target.stats['HP'] else 0"
+            ],
+            [
+                "dynamic_damage",
+                "2 if target.get_hp() == target.stats['HP'] else 0"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Marauder",
+        "name": "Marauder",
+        "desc": "SoS: Grants the ability to move through high peaks and sea, along with easier movement through mountains.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "movement_type",
+                "Pirates"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Block",
+        "name": "Block",
+        "desc": "SoS: Add weapon MT to DEF. Cannot counterattack for the remainder of your turn.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "combat_art",
+                "SoS_Block_item_mod"
+            ],
+            [
+                "cost_mana",
+                4
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Block_item_mod",
+        "name": "SoS_Block_item_mod",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "dynamic_resist",
+                "item_system.damage(unit, unit.get_weapon())"
+            ],
+            [
+                "gain_skill_after_attack",
+                "SoS_Block_no_counter"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Block_no_counter",
+        "name": "Cannot Counter",
+        "desc": "Cannot counterattack until their next turn",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "cannot_use_items",
+                null
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Deliverer",
+        "name": "Deliverer",
+        "desc": "SoS: Gain +2 movement when carrying a unit.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "condition",
+                "unit.traveler"
+            ],
+            [
+                "stat_change",
+                [
+                    [
+                        "MOV",
+                        2
+                    ]
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Snipe",
+        "name": "Snipe",
+        "desc": "SoS: Gain +35 hit if the unit has not moved.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "hit",
+                35
+            ],
+            [
+                "condition",
+                "unit.movement_left == unit.stats['MOV']"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Shade",
+        "name": "Shade",
+        "desc": "For one turn, nearby units suffer massive penalties when attacking this unit.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            5
+        ],
+        "components": [
+            [
+                "ability",
+                "so_Shade"
+            ],
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "cost_mana",
+                5
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Shade_child",
+        "name": "Shaded",
+        "desc": "Hit -100 when attacking the shaded unit.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            5
+        ],
+        "components": [
+            [
+                "dynamic_accuracy",
+                "-100 if (target.nid == skill.initiator_nid and mode == 'attack') else 0"
+            ],
+            [
+                "negative",
+                null
+            ],
+            [
+                "unit_anim",
+                "MapProvoke"
+            ],
+            [
+                "lost_on_end_chapter",
+                null
+            ],
+            [
+                "time",
+                2
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Overkill",
+        "name": "Overkill",
+        "desc": "SoS: If a unit's hit were to exceed the 100, all extra hit is converted to crit.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "combat_art",
+                "SoS_Overkill_item_mod"
+            ],
+            [
+                "cost_mana",
+                7
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Overkill_item_mod",
+        "name": "SoS_Overkill_item_mod",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "dynamic_crit_accuracy",
+                "max(0, (combat_calcs.accuracy(unit) - combat_calcs.avoid(target)) - 100)"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Exploit",
+        "name": "Exploit",
+        "desc": "SoS: Gain +3 damage if this unit attacks an enemy who cannot counterattack.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "dynamic_damage",
+                "3 if not combat_calcs.can_counterattack(unit, unit.get_weapon(), target, target.get_weapon()) else 0"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Provoke",
+        "name": "Provoke",
+        "desc": "SoS: Nearby enemies are forced to attack this unit for one enemy phase.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            5
+        ],
+        "components": [
+            [
+                "ability",
+                "so_Shade"
+            ],
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "cost_mana",
+                9
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Provoke_child",
+        "name": "Provoked",
+        "desc": "Hit -100 when not attacking the provoking unit.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            5
+        ],
+        "components": [
+            [
+                "dynamic_accuracy",
+                "-100 if (target.nid != skill.initiator_nid and mode == 'attack') else 0"
+            ],
+            [
+                "negative",
+                null
+            ],
+            [
+                "unit_anim",
+                "MapProvoke"
+            ],
+            [
+                "lost_on_end_chapter",
+                null
+            ],
+            [
+                "time",
+                2
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Divine_Intervention",
+        "name": "Divine Intervention",
+        "desc": "SoS: Add your Luck to your critical chance for your next attack, and this turn area of effect attacks can critical.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "combat_art",
+                "SoS_Divine_item_mod"
+            ],
+            [
+                "cost_mana",
+                6
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Divine_item_mod",
+        "name": "SoS_Divine_item_mod",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "dynamic_crit_accuracy",
+                "unit.stats['LCK']"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Paragon",
+        "name": "Paragon",
+        "desc": "SoS: 1.5x EXP gain",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "exp_multiplier",
+                1.5
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Blessing",
+        "name": "Blessing",
+        "desc": "SoS: Restore 5 health to all non-enemies in 2 spaces every turn",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "aura",
+                "SoS_Blessing_aura_child"
+            ],
+            [
+                "aura_range",
+                2
+            ],
+            [
+                "aura_target",
+                "ally"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Blessing_aura_child",
+        "name": "Blessed",
+        "desc": "Regenerates 5 HP at the start of each turn",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "upkeep_damage",
+                -5
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Dark_Drain",
+        "name": "Dark Drain",
+        "desc": "SoS: Heal 50% of the HP lost by the enemy in the battle.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "combat_art",
+                "SoS_Dark_Drain_item_mod"
+            ],
+            [
+                "cost_mana",
+                9
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Dark_Drain_item_mod",
+        "name": "SoS_Dark_Drain_item_mod",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "lifelink",
+                0.5
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Opportunist",
+        "name": "Opportunist",
+        "desc": "SoS: Gain +5 damage if this unit attacks an enemy who cannot counterattack.",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "dynamic_damage",
+                "5 if not combat_calcs.can_counterattack(unit, unit.get_weapon(), target, target.get_weapon()) else 0"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Willpower",
+        "name": "Willpower",
+        "desc": "SoS: If this unit's HP is at 100%, gain +3 DEF and RES.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            9,
+            5
+        ],
+        "components": [
+            [
+                "dynamic_resist",
+                "3 if unit.stats['HP'] == unit.get_hp() else 0"
+            ]
+        ]
+    },
+    {
+        "nid": "SoS_Air_Support",
+        "name": "Air Support",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "dynamic_damage",
+                "15 if (game.tilemap.get_terrain(target.position) == '2') else 20 if (game.tilemap.get_terrain(target.position) == '3') else 0"
+            ],
+            [
+                "dynamic_accuracy",
+                "15 if (game.tilemap.get_terrain(target.position) == '2') else 20 if (game.tilemap.get_terrain(target.position) == '3') else 0"
             ]
         ]
     }

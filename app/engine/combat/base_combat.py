@@ -13,7 +13,7 @@ class BaseCombat(SimpleCombat):
     Handles in base and in prep screen "use" of items
     """
 
-    def __init__(self, attacker: UnitObject, main_item: ItemObject, 
+    def __init__(self, attacker: UnitObject, main_item: ItemObject,
                  main_target: UnitObject, script):
         self.attacker = attacker
         self.defender = main_target
@@ -62,6 +62,14 @@ class BaseCombat(SimpleCombat):
     def end_combat(self):
         skill_system.end_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
         item_system.end_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
+        if self.attacker.strike_partner:
+            skill_system.end_combat(self.full_playback, self.attacker.strike_partner, self.main_item, self.defender, 'attack')
+            item_system.end_combat(self.full_playback, self.attacker.strike_partner, self.main_item, self.defender, 'attack')
+            self.attacker.strike_partner = None
+        if self.defender.strike_partner:
+            skill_system.end_combat(self.full_playback, self.defender.strike_partner, self.main_item, self.defender, 'attack')
+            item_system.end_combat(self.full_playback, self.defender.strike_partner, self.main_item, self.defender, 'attack')
+            self.attacker.strike_partner = None
         if self.attacker is not self.defender:
             skill_system.end_combat(self.full_playback, self.defender, self.def_item, self.attacker, 'defense')
             if self.def_item:

@@ -401,7 +401,6 @@ class Position(Validator):
             return None
         else:
             return text
-        return None
 
     @lru_cache()
     def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
@@ -430,6 +429,37 @@ class Position(Validator):
         party_nids = {party.name: party.nid for party in DB.parties.values()}
         nids.update(party_nids)
         return nids
+
+class FloatPosition(Position, Validator):
+    desc = """accepts a valid `(x, y)` position, but also allows fractional positions,
+    such as (1.5, 2.6). You use a unit's nid to use their position.
+    Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`, `{position}`)"""
+
+    def validate(self, text, level):
+        text = text.split(',')
+        if len(text) == 1:
+            text = text[0]
+            if level and text in level.units.keys():
+                return text
+            elif text in ('{unit}', '{unit1}', '{unit2}', '{position}'):
+                return text
+            elif text in self.valid_overworld_nids().values():
+                return text
+            return None
+        if len(text) > 2:
+            return None
+        if not all(str_utils.is_float(t) for t in text):
+            return None
+        if level and level.tilemap:
+            tilemap = RESOURCES.tilemaps.get(level.tilemap)
+            x, y = text
+            x = float(x)
+            y = float(y)
+            if 0 <= x < tilemap.width and 0 <= y < tilemap.height:
+                return text
+            return None
+        else:
+            return text
 
 class PositionOffset(Validator):
     desc = "accepts a valid `(x, y)` position offset."

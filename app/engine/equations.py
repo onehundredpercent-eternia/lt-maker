@@ -8,7 +8,7 @@ class Parser():
         for equation in DB.equations.values():
             if equation.expression:
                 self.equations[equation.nid] = self.tokenize(equation.expression)
-        
+
         self.replacement_dict = self.create_replacement_dict()
 
         for nid in list(self.equations.keys()):
@@ -70,6 +70,24 @@ class Parser():
         else:
             return 0
 
+    def get_max_guard(self, unit):
+        if hasattr(self, 'max_guard'):
+            return self.max_guard(unit)
+        else:
+            return 10
+
+    def get_gauge_inc(self, unit):
+        if hasattr(self, 'gauge_increase'):
+            return self.gauge_increase(unit)
+        else:
+            return 2
+
+    def get_guard_exp(self, unit):
+        if hasattr(self, 'guard_exp'):
+            return self.guard_exp(unit)
+        else:
+            return 10
+
 PARSER = Parser()
 
 def __getattr__(name):
@@ -79,7 +97,7 @@ def __getattr__(name):
 
 def clear():
     """
-    Recreate the parser. Necessary in order to update equations after the user 
+    Recreate the parser. Necessary in order to update equations after the user
     updates them in the equation editor
     """
     global PARSER

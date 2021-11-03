@@ -1117,5 +1117,49 @@
                 "HP"
             ]
         ]
+    },
+    {
+        "nid": "TestforSOS",
+        "name": "TestforSOS",
+        "desc": "",
+        "icon_nid": "Axe",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "automatic_combat_art",
+                "Strength +2"
+            ],
+            [
+                "condition",
+                "game.phase.get_current() == 'enemy'"
+            ]
+        ]
+    },
+    {
+        "nid": "AttackStanceCrit",
+        "name": "AttackStanceCrit",
+        "desc": "guard stance",
+        "icon_nid": "Axe",
+        "icon_index": [
+            0,
+            16
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "pairup_bonus",
+                "Defense +5"
+            ]
+        ]
     }
 ]

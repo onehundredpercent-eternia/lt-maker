@@ -322,5 +322,13 @@
     {
         "nid": "_attribution",
         "text": "created by rainlash"
+    },
+    {
+        "nid": "GAUGE",
+        "text": ""
+    },
+    {
+        "nid": "GAUGE_desc",
+        "text": "The unit's guard gauge. At max, the next attack is nullified"
     }
 ]

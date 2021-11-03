@@ -12,12 +12,12 @@ from app.engine.combat.simple_combat import SimpleCombat
 
 class MapCombat(SimpleCombat):
     alerts: bool = True
-    
+
     def __init__(self, attacker, main_item, items, positions, main_target_positions, splash_positions, script):
         self._full_setup(attacker, main_item, items, positions, main_target_positions, splash_positions)
         self.state_machine = CombatPhaseSolver(
-            attacker, self.main_item, self.items, 
-            self.defenders, self.splashes, self.target_positions, 
+            attacker, self.main_item, self.items,
+            self.defenders, self.splashes, self.target_positions,
             self.defender, self.def_item, script)
 
         self.last_update = engine.get_time()
@@ -37,8 +37,12 @@ class MapCombat(SimpleCombat):
     def skip(self):
         self._skip = True
         self.attacker.sprite.reset()
+        if self.attacker.strike_partner:
+            self.attacker.strike_partner.sprite.reset()
         if self.defender:
             self.defender.sprite.reset()
+            if self.defender.strike_partner:
+                self.defender.strike_partner.sprite.reset()
 
     def update(self) -> bool:
         current_time = engine.get_time() - self.last_update
@@ -72,7 +76,7 @@ class MapCombat(SimpleCombat):
                 self.first_phase = False
 
             # Camera
-            if self.get_from_playback('defender_phase'):
+            if self.get_from_playback('defender_phase') or self.get_from_playback('defender_partner_phase'):
                 game.cursor.set_pos(self.attacker.position)
             else:
                 if self.defender:
@@ -83,14 +87,26 @@ class MapCombat(SimpleCombat):
                 game.state.change('move_camera')
 
             # Sprites
-            if self.get_from_playback('defender_phase'):
+            if self.get_from_playback('defender_phase') or self.get_from_playback('defender_partner_phase'):
                 if self.defender:
-                    self.defender.sprite.change_state('combat_attacker')
+                    if self.get_from_playback('defender_phase'):
+                        self.defender.sprite.change_state('combat_attacker')
+                    elif self.get_from_playback('defender_partner_phase'):
+                        self.defender.strike_partner.sprite.change_state('combat_attacker')
                 self.attacker.sprite.change_state('combat_counter')
+                if self.attacker.strike_partner:
+                    self.attacker.strike_partner.sprite.change_state('combat_counter')
             else:
-                self.attacker.sprite.change_state('combat_attacker')
+                if self.get_from_playback('defender_partner_phase'):
+                    self.attacker.strike_partner.sprite.change_state('combat_attacker')
+                else:
+                    self.attacker.sprite.change_state('combat_attacker')
+                    if self.attacker.strike_partner:
+                        self.attacker.strike_partner.sprite.change_state('combat_counter')
                 if self.defender:
                     self.defender.sprite.change_state('combat_defender')
+                    if self.defender.strike_partner:
+                        self.defender.strike_partner.sprite.change_state('combat_defender')
             self.state = 'red_cursor'
 
         elif self.state == 'red_cursor':
@@ -119,8 +135,15 @@ class MapCombat(SimpleCombat):
 
         elif self.state == 'sound':
             if self._skip or current_time > 250:
-                if self.defender and self.defender.sprite.state == 'combat_attacker':
+                if self.defender and self.defender.sprite.state == 'combat_attacker' and \
+                        self.get_from_playback('defender_phase'):
                     self.defender.sprite.change_state('combat_anim')
+                elif self.defender and self.defender.strike_partner and \
+                        self.defender.strike_partner.sprite.state == 'combat_attacker' and \
+                        self.get_from_playback('defender_partner_phase'):
+                    self.defender.strike_partner.sprite.change_state('combat_anim')
+                elif self.get_from_playback('attacker_partner_phase'):
+                    self.attacker.strike_partner.sprite.change_state('combat_anim')
                 else:
                     self.attacker.sprite.change_state('combat_anim')
                 sound_brushes = self.get_from_playback('cast_sound')
@@ -151,6 +174,12 @@ class MapCombat(SimpleCombat):
             if self._skip or current_time > 550:
                 if self.defender and self.defender.sprite.state == 'combat_anim':
                     self.defender.sprite.change_state('combat_attacker')
+                elif self.defender and self.defender.strike_partner and \
+                        self.defender.strike_partner.sprite.state == 'combat_anim':
+                    self.defender.strike_partner.sprite.change_state('combat_attacker')
+                elif self.attacker.strike_partner and \
+                        self.attacker.strike_partner.sprite.state == 'combat_anim':
+                    self.attacker.strike_partner.sprite.change_state('combat_attacker')
                 else:
                     self.attacker.sprite.change_state('combat_attacker')
                 self._end_phase()
@@ -314,7 +343,7 @@ class MapCombat(SimpleCombat):
         self.animations = [anim for anim in self.animations if not anim.update()]
         for anim in self.animations:
             anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
-        
+
         for hp_bar in self.health_bars.values():
             hp_bar.draw(surf)
 

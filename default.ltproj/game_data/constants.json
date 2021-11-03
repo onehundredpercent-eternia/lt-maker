@@ -20,6 +20,10 @@
         false
     ],
     [
+        "pairup",
+        false
+    ],
+    [
         "lead",
         false
     ],
@@ -85,6 +89,14 @@
     ],
     [
         "auto_promote",
+        false
+    ],
+    [
+        "promote_level_reset",
+        true
+    ],
+    [
+        "class_change_level_reset",
         false
     ],
     [
@@ -206,5 +218,13 @@
     [
         "heal_min",
         5
+    ],
+    [
+        "dark_sprites",
+        false
+    ],
+    [
+        "glancing_hit",
+        false
     ]
 ]

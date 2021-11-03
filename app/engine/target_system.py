@@ -1,6 +1,6 @@
 from app.data.database import DB
 from app.engine import (equations, item_funcs, item_system, line_of_sight,
-                        pathfinding, skill_system)
+                        pathfinding, skill_system, combat_calcs)
 from app.engine.game_state import game
 from app.utilities import utils
 
@@ -259,3 +259,45 @@ def get_all_spell_targets(unit) -> set:
     for spell in spells:
         targets |= get_valid_targets(unit, spell)
     return targets
+
+def find_strike_partners(attacker, defender, item):
+    '''Finds and returns a tuple of strike partners for the specified units
+    First item in tuple is attacker partner, second is target partner
+    Returns a tuple of None if no valid partner'''
+    if not DB.constants.value('pairup'):
+        return None, None
+    if not attacker or not defender:
+        return None, None
+    if skill_system.check_ally(attacker, defender): # If targeting same team
+        return None, None
+    if attacker.traveler or defender.traveler: # Dual guard cancels
+        return None, None
+    if not item_system.is_weapon(attacker, item): # If you're healing someone else
+        return None, None
+
+    attacker_partner = None
+    defender_partner = None
+    attacker_adj_allies = get_adj_allies(attacker)
+    attacker_adj_allies = [ally for ally in attacker_adj_allies if ally.get_weapon()]
+    defender_adj_allies = get_adj_allies(defender)
+    defender_adj_allies = [ally for ally in defender_adj_allies if ally.get_weapon()]
+    attacker_partner = strike_partner_formula(attacker_adj_allies, attacker, defender, 'attack', (0, 0))
+    defender_partner = strike_partner_formula(defender_adj_allies, defender, attacker, 'defense', (0, 0))
+
+    if attacker_partner is defender_partner:
+        # If both attacker and defender have the same partner something is weird
+        return None, None
+    return attacker_partner, defender_partner
+
+def strike_partner_formula(allies: list, attacker, defender, mode, attack_info):
+    '''This is the formula for the best choice to make
+    when autoselecting strike partners
+    It returns a new list!'''
+    if not allies:
+        return None
+    damage = [combat_calcs.compute_assist_damage(ally, defender, ally.get_weapon(), defender.get_weapon(), mode, attack_info) for ally in allies]
+    accuracy = [utils.clamp(combat_calcs.compute_hit(ally, defender, ally.get_weapon(), defender.get_weapon(), mode, attack_info)/100., 0, 1) for ally in allies]
+    score = [dam * acc for dam, acc in zip(damage, accuracy)]
+    max_score = max(score)
+    max_index = score.index(max_score)
+    return allies[max_index]

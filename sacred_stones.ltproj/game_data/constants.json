@@ -20,6 +20,14 @@
         false
     ],
     [
+        "pairup",
+        true
+    ],
+    [
+        "limit_attack_stance",
+        false
+    ],
+    [
         "lead",
         false
     ],

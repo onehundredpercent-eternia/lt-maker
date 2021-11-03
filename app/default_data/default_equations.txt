@@ -12,6 +12,7 @@ DEFENSE = DEF
 MAGIC_DAMAGE = MAG
 MAGIC_DEFENSE = RES
 CRIT_ADD = 0
+THRACIA_CRIT = 0
 CRIT_MULT = 3
 RATING = (HP - 10)//2 + max(STR, MAG) + SKL + SPD + LCK//2 + DEF + RES
 # Rescue when RESCUE_AID is greater than opponent's RESCUE_WEIGHT

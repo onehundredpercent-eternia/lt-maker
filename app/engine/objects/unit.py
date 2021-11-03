@@ -79,7 +79,6 @@ class UnitObject(Prefab):
                     self._fields[key] = value
         self.starting_position = self.position
 
-
         method = unit_funcs.get_leveling_method(self)
 
         if method == GrowthOption.FIXED:
@@ -91,8 +90,12 @@ class UnitObject(Prefab):
         self.current_mana = 0
         self.current_fatigue = 0
         self.movement_left = 0
+        self.current_guard_gauge = 0
 
-        self.traveler = None
+        self.traveler: str = prefab.starting_traveler  # Always a nid of a unit
+        self.strike_partner = None # Not saved because only used for solver
+        self.lead_unit: bool = False # I don't need to save this because it's only for move/menu states
+        self.built_guard: bool = False # A bool to check if guard should be subtracted at turn end
 
         # -- Other properties
         self.dead = False
@@ -128,6 +131,7 @@ class UnitObject(Prefab):
         self.current_mana = self.get_max_mana()
         self.current_fatigue = 0
         self.movement_left = equations.parser.movement(self)
+        self.current_guard_gauge = 0
 
         # -- Equipped Items
         self.equipped_weapon = self.get_weapon()
@@ -213,6 +217,18 @@ class UnitObject(Prefab):
 
     def set_fatigue(self, val):
         self.current_fatigue = int(max(val, 0))
+
+    def get_guard_gauge(self):
+        return self.current_guard_gauge
+
+    def get_max_guard_gauge(self):
+        return equations.parser.get_max_guard(self)
+
+    def set_guard_gauge(self, val):
+        self.current_guard_gauge = int(utils.clamp(val, 0, self.get_max_guard_gauge()))
+
+    def get_gauge_inc(self):
+        return equations.parser.get_gauge_inc(self)
 
     def get_field(self, key, default='FIELD_NOT_DEFINED'):
         if not getattr(self, '_fields'):
@@ -505,6 +521,8 @@ class UnitObject(Prefab):
         self.has_taken = False
         self.has_given = False
 
+        self.strike_partner = None
+
     def wait(self):
         game.events.trigger('unit_wait', self, position=self.position)
         # Wait regions
@@ -547,6 +565,8 @@ class UnitObject(Prefab):
                   'current_mana': self.current_mana,
                   'current_fatigue': self.current_fatigue,
                   'traveler': self.traveler,
+                  'current_guard_gauge': self.current_guard_gauge,
+                  'built_guard': self.built_guard,
                   'dead': self.dead,
                   'action_state': self.get_action_state(),
                   'ai_group_active': self.ai_group_active,
@@ -603,8 +623,12 @@ class UnitObject(Prefab):
         self.current_mana = s_dict['current_mana']
         self.current_fatigue = s_dict['current_fatigue']
         self.movement_left = equations.parser.movement(self)
+        self.current_guard_gauge = s_dict.get('current_guard_gauge', 0)
 
         self.traveler = s_dict['traveler']
+        self.strike_partner = None
+        self.lead_unit = False
+        self.built_guard = s_dict.get('built_guard', False)
 
         self.equipped_weapon = self.get_weapon()
         self.equipped_accessory = self.get_accessory()

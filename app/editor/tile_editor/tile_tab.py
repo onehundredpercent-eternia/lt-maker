@@ -34,7 +34,7 @@ class TileTab(QWidget):
         self.view.setMovement(QListView.Static)
         self.view.setGridSize(QSize(120, 120))
 
-        self.layout.addWidget(self.view, 0, 0, 1, 2)
+        self.layout.addWidget(self.view, 0, 0, 1, 3)
         self.button = QPushButton("Add New %s..." % self.title)
         self.button.clicked.connect(self.model.append)
         self.layout.addWidget(self.button, 1, 0, 1, 1)
@@ -55,6 +55,9 @@ class TileTab(QWidget):
             obj = self.model._data[index.row()]
             return obj
         return None
+
+    def duplicate(self):
+        self.model.duplicate(self.current)
 
 class TileSetDatabase(TileTab):
     @classmethod
@@ -79,6 +82,10 @@ class TileMapDatabase(TileTab):
         dialog.edit_button = QPushButton("Edit Current %s..." % dialog.title)
         dialog.edit_button.clicked.connect(dialog.edit_current)
         dialog.layout.addWidget(dialog.edit_button, 1, 1, 1, 1)
+
+        dialog.duplicate_button = QPushButton("Duplicate Current %s" % dialog.title)
+        dialog.duplicate_button.clicked.connect(dialog.duplicate)
+        dialog.layout.addWidget(dialog.duplicate_button, 1, 2, 1, 1)
         return dialog
 
     def edit_current(self):

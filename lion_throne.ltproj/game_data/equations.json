@@ -90,5 +90,9 @@
     {
         "nid": "ZERO",
         "expression": "0"
+    },
+    {
+        "nid": "MANA",
+        "expression": "20"
     }
 ]

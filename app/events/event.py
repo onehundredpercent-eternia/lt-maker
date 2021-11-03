@@ -67,7 +67,7 @@ class Event():
 
     true_vals = ('t', 'true', '1', 'y', 'yes')
 
-    skippable = {"speak", "transition", "wait", "bop_portrait",
+    skippable = {"speak", "wait", "bop_portrait",
                  "sound", "location_card", "credits", "ending"}
 
     def __init__(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None):
@@ -482,9 +482,11 @@ class Event():
                 self.transition_color = tuple(int(_) for _ in values[2].split(','))
             else:
                 self.transition_color = self._transition_color
-            self.transition_update = current_time
-            self.wait_time = current_time + int(self.transition_speed * 1.33)
-            self.state = 'waiting'
+                
+            if not self.do_skip:
+                self.transition_update = current_time
+                self.wait_time = current_time + int(self.transition_speed * 1.33)
+                self.state = 'waiting'
 
         elif command.nid == 'dialog_start':
             self.dialog_background.start()
@@ -600,7 +602,7 @@ class Event():
                     # we are using a custom camera speed
                     duration = int(values[1])
                     game.camera.do_slow_pan(duration)
-                game.camera.set_center(*position)
+                    game.camera.set_center(*position)
                 game.state.change('move_camera')
                 self.state = 'paused'  # So that the message will leave the update loop
 
@@ -1117,7 +1119,7 @@ class Event():
             if nid not in RESOURCES.animations.keys():
                 logging.error("Could not find map animation %s" % nid)
                 return
-            pos = self.parse_pos(values[1])
+            pos = self.parse_pos(values[1], True)
             if len(values) > 2:
                 speed_mult = int(values[2])
             else:
@@ -1372,6 +1374,12 @@ class Event():
 
         elif command.nid == 'move_in_initiative':
             self.move_in_initiative(command)
+
+        elif command.nid == 'pair_up':
+            self.pair_up(command)
+
+        elif command.nid == 'separate':
+            self.separate(command)
 
         elif command.nid == 'draw_overlay_sprite':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -3122,10 +3130,24 @@ class Event():
         offset = int(values[1])
         action.do(action.MoveInInitiative(unit, offset))
 
-    def parse_pos(self, text):
+    def pair_up(self, command):
+        values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+        unit = self.get_unit(values[0])
+        unit2 = self.get_unit(values[1])
+        action.do(action.PairUp(unit, unit2))
+
+    def separate(self, command):
+        values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+        unit = self.get_unit(values[0])
+        action.do(action.RemovePartner(unit))
+
+    def parse_pos(self, text, is_float=False):
         position = None
         if ',' in text:
-            position = tuple(int(_) for _ in text.split(','))
+            if is_float:
+                position = tuple(float(_) for _ in text.split(','))
+            else:
+                position = tuple(int(_) for _ in text.split(','))
         elif text == '{position}':
             position = self.position
         elif not game.is_displaying_overworld() and self.get_unit(text):

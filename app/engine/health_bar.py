@@ -59,9 +59,9 @@ class CombatHealthBar(HealthBar):
     time_for_change_min = 0
 
     def __init__(self, unit):
-        super().__init__(unit) 
+        super().__init__(unit)
         self.color_tick = 0
-        self.heal_sound_update = 0   
+        self.heal_sound_update = 0
 
     def update(self, skip=False):
         if self.displayed_hp < self.unit.get_hp():

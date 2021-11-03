@@ -86,6 +86,9 @@ class UnitModel(DragDropCollectionModel):
                 level.units.remove_key(old_nid)
             for unit_group in level.unit_groups:
                 unit_group.remove(old_nid)
+            for unit in level.units:
+                if unit.starting_traveler == old_nid:
+                    unit.starting_traveler = None
         for party in DB.parties:
             if party.leader == old_nid:
                 party.leader == new_nid
@@ -99,6 +102,9 @@ class UnitModel(DragDropCollectionModel):
                     level.units.update_nid(unit, new_nid)
             for unit_group in level.unit_groups:
                 unit_group.swap(old_nid, new_nid)
+            for unit in level.units:
+                if unit.starting_traveler == old_nid:
+                    unit.starting_traveler = new_nid
         for party in DB.parties:
             if party.leader == old_nid:
                 party.leader = new_nid

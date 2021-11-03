@@ -109,7 +109,12 @@ class Damage(ItemComponent):
         return False
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
+        playback_nids = [_[0] for _ in playback]
+        if 'attacker_partner_phase' in playback_nids or 'defender_partner_phase' in playback_nids:
+            damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info)
+        else:
+            damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
+
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))
 
@@ -120,8 +125,12 @@ class Damage(ItemComponent):
             playback.append(('hit_anim', 'MapNoDamage', target))
 
     def on_glancing_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
-        damage = damage // 2
+        playback_nids = [_[0] for _ in playback]
+        if 'attacker_partner_phase' in playback_nids or 'defender_partner_phase' in playback_nids:
+            damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info)
+        else:
+            damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
+        damage = damage // 2  # Because glancing hit
 
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))
@@ -132,7 +141,11 @@ class Damage(ItemComponent):
             playback.append(('hit_anim', 'MapNoDamage', target))
 
     def on_crit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info, crit=True)
+        playback_nids = [_[0] for _ in playback]
+        if 'attacker_partner_phase' in playback_nids or 'defender_partner_phase' in playback_nids:
+            damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info, crit=True)
+        else:
+            damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info, crit=True)
 
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))

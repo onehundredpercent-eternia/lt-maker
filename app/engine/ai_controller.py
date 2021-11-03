@@ -110,6 +110,11 @@ class AIController():
                 game.highlight.display_possible_spell_attacks({self.goal_target})
                 game.highlight.display_possible_spell_attacks(splash_positions, light=True)
 
+            primary_target = game.board.get_unit(self.goal_target)
+            if primary_target:
+                self.unit.strike_partner, primary_target.strike_partner = \
+                    target_system.find_strike_partners(self.unit, primary_target, self.goal_item)
+
             # Used for steal
             if item_system.targets_items(self.unit, self.goal_item):
                 # Choose most expensive item that is legal

@@ -380,6 +380,26 @@
                 [
                     "Seth"
                 ]
+            ],
+            [
+                "pair_up",
+                [
+                    "Joshua",
+                    "Eirika"
+                ],
+                [
+                    "Joshua (Joshua)",
+                    "Eirika (Eirika)"
+                ]
+            ],
+            [
+                "separate",
+                [
+                    "Eirika"
+                ],
+                [
+                    "Eirika (Eirika)"
+                ]
             ]
         ],
         "only_once": false,
@@ -6946,45 +6966,33 @@
                 ]
             ],
             [
-                "map_anim",
+                "comment",
                 [
-                    "MapMiss",
-                    "Eirika",
-                    "permanent"
-                ],
-                [
-                    "MapMiss",
-                    "Eirika (Eirika)",
-                    "FLAG(permanent)"
+                    "#map_anim;MapMiss;Eirika (Eirika);FLAG(permanent)"
                 ]
             ],
             [
-                "wait",
+                "comment",
                 [
-                    "1000"
+                    "#wait;1000"
                 ]
             ],
             [
-                "move_unit",
+                "comment",
                 [
-                    "Eirika",
-                    "13,7",
-                    "normal",
-                    "closest",
-                    "no_block"
+                    "#move_unit;Eirika;13,7;normal;closest;no_block"
                 ]
             ],
             [
-                "wait",
+                "comment",
                 [
-                    "500"
+                    "#wait;500"
                 ]
             ],
             [
-                "remove_unit",
+                "comment",
                 [
-                    "Eirika",
-                    "fade"
+                    "#remove_unit;Eirika;fade"
                 ]
             ],
             [

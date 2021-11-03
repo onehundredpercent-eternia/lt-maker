@@ -5895,5 +5895,161 @@
                 null
             ]
         ]
+    },
+    {
+        "nid": "so_Rally_Inf",
+        "name": "Rally Infantry",
+        "desc": "I done broked something.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            10,
+            1
+        ],
+        "components": [
+            [
+                "spell",
+                null
+            ],
+            [
+                "target_ally",
+                null
+            ],
+            [
+                "ally_blast_aoe",
+                3
+            ],
+            [
+                "status_on_hit",
+                "SoS_Rally_Inf_Child"
+            ],
+            [
+                "map_cast_anim",
+                "AOE_Rally"
+            ],
+            [
+                "map_hit_sfx",
+                "Rally"
+            ],
+            [
+                "map_hit_add_blend",
+                [
+                    0,
+                    0,
+                    248
+                ]
+            ],
+            [
+                "map_hit_sub_blend",
+                [
+                    128,
+                    0,
+                    0
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "so_Shade",
+        "name": "Shade",
+        "desc": "I done broked something.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            10,
+            5
+        ],
+        "components": [
+            [
+                "spell",
+                null
+            ],
+            [
+                "target_unit",
+                null
+            ],
+            [
+                "enemy_blast_aoe",
+                6
+            ],
+            [
+                "status_on_hit",
+                "SoS_Shade_child"
+            ],
+            [
+                "map_cast_anim",
+                "AOE_Wyrmsfire"
+            ],
+            [
+                "map_hit_sfx",
+                "Stone"
+            ],
+            [
+                "map_hit_add_blend",
+                [
+                    158,
+                    93,
+                    255
+                ]
+            ],
+            [
+                "map_hit_sub_blend",
+                [
+                    176,
+                    49,
+                    44
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "so_Provoke",
+        "name": "Provoke",
+        "desc": "I done broked something.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            10,
+            5
+        ],
+        "components": [
+            [
+                "spell",
+                null
+            ],
+            [
+                "target_unit",
+                null
+            ],
+            [
+                "enemy_blast_aoe",
+                6
+            ],
+            [
+                "status_on_hit",
+                "SoS_Provoke_child"
+            ],
+            [
+                "map_cast_anim",
+                "AOE_Wyrmsfire"
+            ],
+            [
+                "map_hit_sfx",
+                "Stone"
+            ],
+            [
+                "map_hit_add_blend",
+                [
+                    158,
+                    93,
+                    255
+                ]
+            ],
+            [
+                "map_hit_sub_blend",
+                [
+                    176,
+                    49,
+                    44
+                ]
+            ]
+        ]
     }
 ]
