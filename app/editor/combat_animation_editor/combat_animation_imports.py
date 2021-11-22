@@ -336,7 +336,8 @@ def import_from_gba(current, fn):
         "*.txt" file to read from
     """
     weapon_types = {'Sword', 'Lance', 'Axe', 'Disarmed', 'Unarmed', 'Handaxe',
-                    'Bow', 'Magic', 'Staff', 'Monster', 'Dragonstone', 'Refresh'}
+                    'Bow', 'Magic', 'Staff', 'Monster', 'Dragonstone', 'Refresh',
+                    'Transform', 'Revert'}
     logging.info("Import GBA weapon animation from script %s", fn)
     head, tail = os.path.split(fn)
     # if any(bad_char in head for bad_char in ('[', ']', '*', '?', '!')):
@@ -425,6 +426,13 @@ def import_from_gba(current, fn):
         weapon_anim.poses.append(stand_pose)
         weapon_anim.poses.append(dodge_pose)
 
+    def transform_pose_setup(weapon_anim):
+        stand_pose = weapon_anim.poses.get('Stand')
+        transform_pose = weapon_anim.poses.get('Attack')
+        weapon_anim.poses.clear()
+        weapon_anim.poses.append(stand_pose)
+        weapon_anim.poses.append(transform_pose)
+
     def add_weapon(weapon_anim):
         if weapon_anim.nid in current.weapon_anims.keys():
             current.weapon_anims.remove_key(weapon_anim.nid)
@@ -480,6 +488,16 @@ def import_from_gba(current, fn):
         melee_weapon_anim.nid = "Unarmed"
         unarmed_pose_setup(melee_weapon_anim)
         add_weapon(melee_weapon_anim)
+    elif weapon_type == 'Transform':
+        melee_weapon_anim.nid = "Transform"
+        # Make sure we only use stand and attack poses
+        transform_pose_setup(melee_weapon_anim)
+        add_weapon(melee_weapon_anim)
+    elif weapon_type == 'Revert':
+        melee_weapon_anim.nid = "Revert"
+        # Make sure we only use stand and attack poses
+        transform_pose_setup(melee_weapon_anim)
+        add_weapon(melee_weapon_anim)
 
     # Need to save the full image somewhere
     settings = MainSettingsController()
@@ -522,7 +540,7 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
                 return None, None
         # Only certain modes allowed for transforming and reverting
         if weapon_type in ('Transform', 'Revert'):
-            if mode not in (1, 9, 11):
+            if mode not in (1, 9):
                 return None, None
         if mode in (1, 2):
             return 'Attack', melee_weapon_anim

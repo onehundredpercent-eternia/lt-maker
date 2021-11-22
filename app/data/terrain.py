@@ -10,6 +10,7 @@ class Terrain(Prefab):
     color: tuple = (0, 0, 0)
     minimap: str = None
     platform: str = None
+    background: str = None
 
     mtype: str = None
     opaque: bool = False

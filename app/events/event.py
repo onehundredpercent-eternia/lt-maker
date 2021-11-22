@@ -72,7 +72,7 @@ class Event():
 
     def __init__(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None):
         self.nid = nid
-        self.commands = commands.copy()
+        self.commands: List[event_commands.EventCommand] = commands.copy()
         self.command_idx = 0
 
         self.background = None
@@ -303,7 +303,9 @@ class Event():
             command = self.commands[self.command_idx]
             try:
                 if self.handle_conditional(command):
-                    if self.do_skip and command.nid in self.skippable:
+                    if self.handle_loop(command):
+                        pass  # Just builds the next commands
+                    elif self.do_skip and command.nid in self.skippable:
                         pass
                     else:
                         self.run_command(command)
@@ -311,10 +313,60 @@ class Event():
             except Exception as e:
                 raise Exception("Event execution failed with error in command %s" % command) from e
 
+    def handle_loop(self, command) -> bool:
+        """
+        Returns true if a loop was found
+        """
+        if command.nid == 'for':
+            logging.info('%s: %s', command.nid, command.values)
+            iterator_nid = command.values[0]
+            arg_list_str = command.values[1]
+            try:
+                arg_list = evaluate.evaluate(arg_list_str)
+                arg_list = [str(arg) for arg in arg_list]
+            except Exception as e:
+                logging.error("%s: Could not evaluate {%s}" % (e, arg_list_str))
+                return False
+            if not arg_list:
+                logging.warning("Arg list is empty for: %s" % (arg_list_str))
+                return False
+
+            # template and paste all commands inside the for loop
+            # to find the correct endf, we'll need to make sure that
+            # every nested for-loop is accounted for
+            internal_fors = 0
+
+            curr_idx = self.command_idx + 1
+            curr_command = self.commands[curr_idx]
+            looped_commands: List[event_commands.EventCommand] = []
+            while curr_command.nid != 'endf' or internal_fors > 0:
+                if curr_command.nid == 'for':
+                    internal_fors += 1
+                if curr_command.nid == 'endf':
+                    internal_fors -= 1
+                looped_commands.append(curr_command)
+                curr_idx += 1
+                if curr_idx > len(self.commands):
+                    logging.error("%s: could not find end command for loop %s" % ('handle_conditional', arg_list_str))
+                    return False
+                curr_command = self.commands[curr_idx]
+
+            # remove the initial for-loop, as we've templated out all the child fors
+            self.commands = self.commands[:self.command_idx + 1] + self.commands[curr_idx:]
+            for arg in reversed(arg_list):
+                for command in reversed(looped_commands):
+                    new_command = command.__class__.copy(command)
+                    if iterator_nid:
+                        new_command.values = [value.replace('{' + iterator_nid + '}', arg) for value in new_command.values]
+                    self.commands.insert(self.command_idx + 1, new_command)
+            return True
+        return False
+
     def handle_conditional(self, command) -> bool:
         """
         Returns true if the processor should be processing this command
         """
+
         if command.nid == 'if':
             logging.info('%s: %s', command.nid, command.values)
             if not self.if_stack or self.if_stack[-1]:
@@ -482,7 +534,7 @@ class Event():
                 self.transition_color = tuple(int(_) for _ in values[2].split(','))
             else:
                 self.transition_color = self._transition_color
-                
+
             if not self.do_skip:
                 self.transition_update = current_time
                 self.wait_time = current_time + int(self.transition_speed * 1.33)
@@ -1208,6 +1260,24 @@ class Event():
             game.state.change('player_choice')
             self.state = 'paused'
 
+        elif command.nid == 'text_entry':
+            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            nid = values[0]
+            header = values[1]
+            limit = 16
+            illegal_characters = []
+            force_entry = False
+            if len(values) > 2 and values[2]:
+                limit = int(values[2])
+            if len(values) > 3 and values[3]:
+                illegal_characters = values[3].split(',')
+            if 'force_entry' in flags:
+                force_entry = True
+
+            game.memory['text_entry'] = (nid, header, limit, illegal_characters, force_entry)
+            game.state.change('text_entry')
+            self.state = 'paused'
+
         elif command.nid == 'chapter_title':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             if len(values) > 0 and values[0]:
@@ -1327,6 +1397,10 @@ class Event():
 
         elif command.nid == 'trigger_script':
             self.trigger_script(command)
+
+        elif command.nid == 'trigger_script_with_args':
+            values, flags = event_commands.convert_parse(command)
+            self.trigger_script_with_args(*values, flags=flags)
 
         elif command.nid == 'loop_units':
             self.loop_units(command)
@@ -1509,8 +1583,42 @@ class Event():
             self.wait_time = engine.get_time() + portrait.travel_time + 66
             self.state = 'waiting'
 
+    def _evaluate_args(self, text) -> str:
+        to_evaluate = re.findall(r'\{[1-5]\}', text)
+        evaluated = []
+        for to_eval in to_evaluate:
+            try:
+                if to_eval == '{1}':
+                    if not isinstance(self.unit, str):
+                        logging.error("{1} is not a string. If you wish to access {unit}, use that tag instead. Evaluating to %s" % str(self.unit))
+                    value = str(self.unit)
+                elif to_eval == '{2}':
+                    if not isinstance(self.unit2, str):
+                        logging.error("{2} is not a string. If you wish to access {unit2}, use that tag instead. Evaluating to %s" % str(self.unit2))
+                    value = str(self.unit2)
+                elif to_eval == '{3}':
+                    if not isinstance(self.item, str):
+                        logging.error("{3} is not a string. Evaluating to %s" % str(self.item))
+                    value = str(self.item)
+                elif to_eval == '{4}':
+                    if not isinstance(self.position, str):
+                        logging.error("{4} is not a string. Evaluating to %s" % str(self.position))
+                    value = str(self.position)
+                elif to_eval == '{5}':
+                    if not isinstance(self.region, str):
+                        logging.error("{5} is not a string. Evaluating to %s" % str(self.region))
+                    value = str(self.region)
+                evaluated.append(value)
+            except Exception as e:
+                logging.error("Could not evaluate %s (%s)" % (to_eval, e))
+                evaluated.append('??')
+        for idx in range(len(to_evaluate)):
+            text = text.replace(to_evaluate[idx], evaluated[idx])
+        return text
+
     def _evaluate_evals(self, text) -> str:
         # Set up variables so evals work well
+        text = self._evaluate_args(text)
         to_evaluate = re.findall(r'\{eval:[^{}]*\}', text)
         evaluated = []
         for to_eval in to_evaluate:
@@ -1525,6 +1633,7 @@ class Event():
         return text
 
     def _evaluate_vars(self, text) -> str:
+        text = self._evaluate_args(text)
         to_evaluate = re.findall(r'\{var:[^{}]*\}', text)
         evaluated = []
         for to_eval in to_evaluate:
@@ -2173,7 +2282,6 @@ class Event():
             starting_items = values[7].split(',')
         else:
             starting_items = []
-
         level_unit_prefab = GenericUnit(unit_nid, variant, level, klass, faction, starting_items, team, ai_nid)
         new_unit = UnitObject.from_prefab(level_unit_prefab)
         new_unit.party = game.current_party
@@ -2633,7 +2741,17 @@ class Event():
             return
 
         game.memory['current_unit'] = unit
-        if new_klass:
+        silent = 'silent' in flags
+        if silent and new_klass:
+            swap_class = action.ClassChange(unit, new_klass)
+            action.do(swap_class)
+            _, new_wexp = swap_class.get_data()
+            # check for weapon experience gain
+            if new_wexp:
+                for weapon_nid, value in new_wexp.items():
+                    action.do(action.AddWexp(unit, weapon_nid, value))
+            action.do(action.UpdateRecords('level_gain', (unit.nid, unit.level, unit.klass)))
+        elif new_klass:
             game.memory['next_class'] = new_klass
             game.state.change('class_change')
             game.state.change('transition_out')
@@ -2801,6 +2919,17 @@ class Event():
             if event_prefab.only_once:
                 action.do(action.OnlyOnceEvent(event_prefab.nid))
 
+        if not valid_events:
+            logging.error("Couldn't find any valid events matching name %s" % trigger_script)
+
+    def trigger_script_with_args(self, event_name: str, arg1: str = None, arg2: str = None, arg3: str = None, arg4: str = None, arg5: str = None):
+        trigger_script = event_name
+        valid_events = [event_prefab for event_prefab in DB.events.values() if event_prefab.name == trigger_script and (not event_prefab.level_nid or (game.level and event_prefab.level_nid == game.level.nid))]
+        for event_prefab in valid_events:
+            game.events.add_event(event_prefab.nid, event_prefab.commands, arg1, arg2, arg3, arg4, arg5)
+            self.state = 'paused'
+            if event_prefab.only_once:
+                action.do(action.OnlyOnceEvent(event_prefab.nid))
         if not valid_events:
             logging.error("Couldn't find any valid events matching name %s" % trigger_script)
             return

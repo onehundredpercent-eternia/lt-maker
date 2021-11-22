@@ -61,12 +61,8 @@ class ChangeAI(SkillComponent):
 
     expose = Type.AI
 
-    def on_add(self, unit, skill):
-        self.prev_ai = unit.ai
-        unit.ai = self.value
-
-    def on_remove(self, unit, skill):
-        unit.ai = self.prev_ai
+    def change_ai(self, unit):
+        return self.value
 
 class ChangeBuyPrice(SkillComponent):
     nid = 'change_buy_price'

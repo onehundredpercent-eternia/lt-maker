@@ -1,19 +1,20 @@
-import os
 import json
+import logging
+import os
 
-from app.data import constants, stats, equations, tags, weapons, factions, terrain, mcost, \
-    minimap, items, klass, units, parties, ai, difficulty_modes, translations, skills, levels, \
-    lore, supports, overworld, overworld_node
+from app.data import (ai, constants, difficulty_modes, equations, factions,
+                      items, klass, levels, lore, mcost, minimap, overworld,
+                      overworld_node, parties, raw_data, skills, stats,
+                      supports, tags, terrain, translations, units, weapons)
 from app.events import event_prefab
 
-import logging
 
 class Database(object):
     save_data_types = ("constants", "stats", "equations", "mcost", "terrain", "weapon_ranks",
-                       "weapons", "factions", "items", "skills", "tags", "classes", 
+                       "weapons", "factions", "items", "skills", "tags", "classes",
                        "support_constants", "support_ranks", "affinities", "units", "support_pairs",
                        "ai", "parties", "difficulty_modes",
-                       "translations", "lore", "levels", "events", "overworlds")
+                       "translations", "lore", "levels", "events", "overworlds", "raw_data")
 
     def __init__(self):
         self.constants = constants.constants
@@ -42,7 +43,7 @@ class Database(object):
         self.parties = parties.PartyCatalog()
         self.ai = ai.AICatalog()
         self.difficulty_modes = difficulty_modes.DifficultyModeCatalog()
-        
+
         self.overworlds = overworld.OverworldCatalog()
 
         self.levels = levels.LevelCatalog()
@@ -50,6 +51,8 @@ class Database(object):
 
         self.translations = translations.TranslationCatalog()
         self.lore = lore.LoreCatalog()
+
+        self.raw_data = raw_data.RawDataCatalog()
 
     # === Saving and loading important data functions ===
     def restore(self, save_obj):

@@ -8,7 +8,7 @@ default_behaviours = (
     'ignore_rescue_penalty', 'ignore_forced_movement', 'distant_counter',
     'ignore_fatigue')
 # Takes in unit, returns default value
-exclusive_behaviours = ('can_select', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset', 'num_accessories_offset', 'change_variant', 'change_animation', 'witch_warp')
+exclusive_behaviours = ('can_select', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset', 'num_accessories_offset', 'change_variant', 'change_animation', 'change_ai', 'witch_warp')
 
 exclusive_behaviours += formula
 # Takes in unit and item, returns default value

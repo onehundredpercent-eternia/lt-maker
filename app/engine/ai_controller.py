@@ -52,7 +52,7 @@ class AIController():
         self.goal_target = None
 
     def set_next_behaviour(self):
-        behaviours = DB.ai.get(self.unit.ai).behaviours
+        behaviours = DB.ai.get(self.unit.get_ai()).behaviours
         if self.behaviour_idx < len(behaviours):
             self.behaviour = behaviours[self.behaviour_idx]
             self.behaviour_idx += 1
@@ -201,7 +201,7 @@ class AIController():
 
             if self.state == 'Init':
                 self.start_time = engine.get_time()
-                logging.info("Starting AI with nid: %s, position: %s, class: %s, AI: %s", self.unit.nid, self.unit.position, self.unit.klass, self.unit.ai)
+                logging.info("Starting AI with nid: %s, position: %s, class: %s, AI: %s", self.unit.nid, self.unit.position, self.unit.klass, self.unit.get_ai())
                 self.clean_up()
                 # Get next behaviour
                 self.set_next_behaviour()
@@ -565,7 +565,7 @@ class PrimaryAI():
 
         logging.info("Damage: %.2f, Accuracy: %.2f, Crit Accuracy: %.2f", lethality, accuracy, crit_accuracy)
         logging.info("Offense: %.2f, Defense: %.2f, Distance: %.2f", offense_term, defense_term, distance_term)
-        ai_prefab = DB.ai.get(self.unit.ai)
+        ai_prefab = DB.ai.get(self.unit.get_ai())
         offense_bias = ai_prefab.offense_bias
         offense_weight = offense_bias * (1 / (offense_bias + 1))
         defense_weight = 1 - offense_weight

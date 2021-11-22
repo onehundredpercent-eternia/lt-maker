@@ -38,7 +38,7 @@ class SpriteBackground():
         self.state = 'out'
 
 class PanoramaBackground():
-    def __init__(self, panorama, speed=125, loop=True, fade_out=False):
+    def __init__(self, panorama, speed=125, loop=True):
         self.counter = 0
         self.panorama = panorama
         if not self.panorama.images:
@@ -47,11 +47,30 @@ class PanoramaBackground():
 
         self.speed = speed
         self.loop = loop
-        self.fade_out = fade_out
+        self.fade_state = 'normal'
+        self.fade_time = 0
+        self.transition = 0
+        self.bg_black = SPRITES.get('bg_black').copy()
 
         self.last_update = engine.get_time()
 
     def update(self):
+        if self.fade_state == 'normal' or self.fade_state == 'off':
+            pass
+        else:
+            self.transition += engine.get_delta() / (self.fade_time * 0.5)
+            if self.transition >= 1:
+                self.transition = 0
+                if self.fade_state == 'to_black':
+                    self.fade_state = 'to_image'
+                elif self.fade_state == 'to_image':
+                    self.fade_state = 'normal'
+                elif self.fade_state == 'from_image':
+                    self.fade_state = 'from_black'
+                elif self.fade_state == 'from_black':
+                    self.fade_state = 'off'
+
+        # For procession of frames
         if engine.get_time() - self.last_update > self.speed:
             self.counter += 1
             if self.counter >= self.panorama.num_frames:
@@ -61,36 +80,71 @@ class PanoramaBackground():
                 return True
         return False
 
+    def _draw(self, surf, image):
+        engine.blit_center(surf, image)
+
     def draw(self, surf):
         image = self.panorama.images[self.counter]
-        if image:
+        if self.fade_state == 'normal':
+            if image:
+                self._draw(surf, image)
+        elif self.fade_state == 'off':
+            pass
+        elif self.fade_state == 'to_black':
+            image = image_mods.make_translucent(self.bg_black, 1 - self.transition)
+            engine.blit_center(surf, image)
+        elif self.fade_state == 'to_image':
+            if image:
+                self._draw(surf, image)
+                image = image_mods.make_translucent(self.bg_black, self.transition)
+                engine.blit_center(surf, image)
+        elif self.fade_state == 'from_image':
+            if image:
+                self._draw(surf, image)
+                image = image_mods.make_translucent(self.bg_black, 1 - self.transition)
+                engine.blit_center(surf, image)
+        elif self.fade_state == 'from_black':
+            image = image_mods.make_translucent(self.bg_black, self.transition)
             engine.blit_center(surf, image)
 
         return self.update()
 
+    def set_off(self):
+        self.fade_state = "off"
+        self.transition = 0
+
+    def set_normal(self):
+        self.fade_state = "normal"
+        self.transition = 0
+
+    def fade_in(self, time_ms):
+        self.fade_state = 'to_black'
+        self.fade_time = time_ms
+        self.transition = 0
+
+    def fade_out(self, time_ms):
+        self.fade_state = 'from_image'
+        self.fade_time = time_ms
+        self.transition = 0
+
 class ScrollingBackground(PanoramaBackground):
     scroll_speed = 25
 
-    def __init__(self, panorama, speed=125, loop=True, fade_out=False):
-        super().__init__(panorama, speed, loop, fade_out)
+    def __init__(self, panorama, speed=125, loop=True):
+        super().__init__(panorama, speed, loop)
         self.x_index = 0
         self.scroll_counter = 0
         self.last_scroll_update = 0
 
-    def draw(self, surf):
+    def _draw(self, surf, image):
+        # Handle scroll
         current_time = engine.get_time()
-        image = self.panorama.images[self.counter]
-    
-        if image:
-            # Handle scroll
-            width = image.get_width()
-            self.scroll_counter = (current_time / self.scroll_speed) % width
-            x_counter = -self.scroll_counter
-            while x_counter < WINWIDTH:
-                surf.blit(image, (x_counter, 0))
-                x_counter += width
-
-        return self.update()
+        width = image.get_width()
+        self.scroll_counter = (current_time / self.scroll_speed) % width
+        x_counter = -self.scroll_counter
+        while x_counter < WINWIDTH:
+            surf.blit(image, (x_counter, 0))
+            x_counter += width
 
 class TransitionBackground():
     speed = 25

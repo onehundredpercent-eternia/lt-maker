@@ -21,7 +21,7 @@
     ],
     [
         "pairup",
-        true
+        false
     ],
     [
         "limit_attack_stance",
@@ -113,6 +113,10 @@
     ],
     [
         "boss_crit",
+        false
+    ],
+    [
+        "battle_platforms",
         false
     ],
     [

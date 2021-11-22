@@ -30,7 +30,7 @@ class StateMachine():
             turnwheel, game_over, settings, info_menu, prep, base, trade, promotion, \
             status_upkeep, debug_mode, chapter_title, player_choice, feat_choice, \
             victory_screen, objective_menu, minimap, roam_state, game_menus, dialog_log, \
-            stat_screen
+            text_entry, stat_screen
         from app.engine.overworld import overworld_states
         from app.events import event_state
         self.all_states = \
@@ -95,6 +95,8 @@ class StateMachine():
              'chapter_title': chapter_title.ChapterTitleState,
              'event': event_state.EventState,
              'player_choice': player_choice.PlayerChoiceState,
+             'text_entry': text_entry.TextEntryState,
+             'text_confirm': text_entry.TextConfirmState,
              'victory': victory_screen.VictoryState,
              'minimap': minimap.MinimapState,
              'status_upkeep': status_upkeep.StatusUpkeepState,

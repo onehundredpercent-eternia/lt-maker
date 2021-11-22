@@ -620,7 +620,7 @@ class MenuState(MapState):
         skill_system.deactivate_all_combat_arts(self.cur_unit)
 
         if not self.cur_unit.has_attacked:
-            self.cur_unit.sprite.change_state('menu')
+            self.cur_unit.sprite.change_state('chosen')
         else:
             self.cur_unit.sprite.change_state('selected')
         game.cursor.set_pos(self.cur_unit.position)
@@ -1403,7 +1403,8 @@ class CombatTargetingState(MapState):
         self.cur_unit.strike_partner = self.attacker_assist
         if len(self.prev_targets) == 1:
             defender = game.board.get_unit(targets[0])
-            defender.strike_partner = self.defender_assist
+            if defender:
+                defender.strike_partner = self.defender_assist
 
         combat = interaction.engage(self.cur_unit, targets, main_item)
         game.combat_instance.append(combat)
@@ -1731,7 +1732,7 @@ class AIState(MapState):
                 # Sort by distance to closest enemy (ascending)
                 group_units = sorted(group_units, key=lambda unit: target_system.distance_to_closest_enemy(unit))
                 # Sort by priority
-                group_units = sorted(group_units, key=lambda unit: DB.ai.get(unit.ai).priority, reverse=True)
+                group_units = sorted(group_units, key=lambda unit: DB.ai.get(unit.get_ai()).priority, reverse=True)
                 group_units.reverse()
                 return group_units.pop()
             else:
@@ -1740,7 +1741,7 @@ class AIState(MapState):
         # Sort by distance to closest enemy (ascending)
         valid_units = sorted(valid_units, key=lambda unit: target_system.distance_to_closest_enemy(unit))
         # Sort by ai priority
-        valid_units = sorted(valid_units, key=lambda unit: DB.ai.get(unit.ai).priority, reverse=True)
+        valid_units = sorted(valid_units, key=lambda unit: DB.ai.get(unit.get_ai()).priority, reverse=True)
         # Reverse, because we will be popping them off at the end
         valid_units.reverse()
         return valid_units.pop()

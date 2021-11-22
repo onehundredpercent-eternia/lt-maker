@@ -356,6 +356,10 @@
             [
                 "Iron Lance",
                 false
+            ],
+            [
+                "Javelin",
+                false
             ]
         ],
         "learned_skills": [],

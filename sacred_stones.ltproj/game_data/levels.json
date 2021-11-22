@@ -3629,8 +3629,8 @@
             "win": "Don't Crash",
             "loss": "Crash"
         },
-        "roam": false,
-        "roam_unit": null,
+        "roam": true,
+        "roam_unit": "Eirika",
         "go_to_overworld": false,
         "units": [
             {
@@ -3665,7 +3665,7 @@
                 "faction": "Soldier",
                 "starting_items": [
                     [
-                        "Iron Lance",
+                        "Steel Lance",
                         false
                     ],
                     [
@@ -3872,6 +3872,54 @@
                 "starting_position": [
                     2,
                     7
+                ],
+                "starting_traveler": null,
+                "name": null,
+                "desc": null,
+                "generic": true
+            },
+            {
+                "nid": "109",
+                "variant": null,
+                "level": 1,
+                "klass": "Mage",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Fire",
+                        false
+                    ]
+                ],
+                "team": "player",
+                "ai": "None",
+                "ai_group": null,
+                "starting_position": [
+                    4,
+                    6
+                ],
+                "starting_traveler": null,
+                "name": null,
+                "desc": null,
+                "generic": true
+            },
+            {
+                "nid": "110",
+                "variant": null,
+                "level": 1,
+                "klass": "Manakete",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Dragonstone",
+                        false
+                    ]
+                ],
+                "team": "player",
+                "ai": "None",
+                "ai_group": null,
+                "starting_position": [
+                    4,
+                    8
                 ],
                 "starting_traveler": null,
                 "name": null,

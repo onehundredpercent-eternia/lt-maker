@@ -19,8 +19,8 @@ class EventManager():
         if level_nid:
             event_source_nid = level_nid
         else:
-            if game.level:
-                event_source_nid = game.level.nid
+            if game.level_nid:
+                event_source_nid = game.level_nid
             else:
                 return []
         for event_prefab in DB.events.get(trigger, event_source_nid):

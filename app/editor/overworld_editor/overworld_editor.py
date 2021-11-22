@@ -173,7 +173,10 @@ class OverworldEditor(QMainWindow):
             return
         else:
             # create a node and select it
-            nids = [node.nid for node in self.current_overworld.overworld_nodes]
+            nids = []
+            for overworld in DB.overworlds:
+                for node in overworld.overworld_nodes:
+                    nids.append(node.nid)
             next_nid = str(str_utils.get_next_int("0", nids))
             new_node = OverworldNodePrefab(next_nid, 'New Location', (x, y))
             self.current_overworld.overworld_nodes.append(new_node)

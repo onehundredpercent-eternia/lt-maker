@@ -511,6 +511,13 @@ class GameState():
         return self.current_level
 
     @property
+    def level_nid(self):
+        if self.is_displaying_overworld():
+            return self.overworld_controller.next_level
+        elif self.level:
+            return self.level.nid
+
+    @property
     def current_party(self):
         if self.is_displaying_overworld() and self.overworld_controller.selected_entity.nid:
             self._current_party = self.overworld_controller.selected_entity.nid
@@ -596,6 +603,9 @@ class GameState():
     def register_region(self, region):
         logging.debug("Registering region %s", region.nid)
         self.region_registry[region.nid] = region
+
+    def get_data(self, raw_data_nid):
+        return DB.raw_data.get(str(raw_data_nid)).value
 
     def get_unit(self, unit_nid):
         """

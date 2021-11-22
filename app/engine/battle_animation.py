@@ -63,6 +63,8 @@ class BattleAnimation():
         if not anim_prefab.image and anim_prefab.frames:
             self.load_full_image()
 
+        self._transform = anim_prefab.nid in ('Transform', 'Revert')
+
         # Apply palette to frames
         if image_directory:
             self.image_directory = image_directory
@@ -178,6 +180,13 @@ class BattleAnimation():
         self.over_frame = None
         self.reset_frames()
 
+    def is_transform(self) -> bool:
+        return self._transform
+
+    def initiate_transform(self):
+        if self.has_pose('Attack'):
+            self.start_anim('Attack')
+
     def get_stand(self):
         if self.at_range:
             self.current_pose = 'RangedStand'
@@ -234,7 +243,8 @@ class BattleAnimation():
         return self.loop or self.state == 'wait'
 
     def done(self) -> bool:
-        return self.state == 'inert' or (self.state == 'run' and self.current_pose in self.idle_poses)
+        return self.state == 'inert' or (self.state == 'run' and self.current_pose in self.idle_poses) or \
+            (self.is_transform() and self.state == 'run' and self.script_idx >= len(self.script) - 1)
 
     def dodge(self):
         if self.at_range:
@@ -330,6 +340,10 @@ class BattleAnimation():
         else:
             self.skip_next_loop += 1
 
+    @property
+    def script(self):
+        return self.poses[self.current_pose].timeline
+
     def update(self):
         if self.state == 'run':
             # Read script
@@ -337,11 +351,12 @@ class BattleAnimation():
                 self.processing = True
                 self.read_script()
             if self.current_pose in self.poses:
-                script = self.poses[self.current_pose].timeline
-                if self.script_idx >= len(script):
+                if self.script_idx >= len(self.script):
                     # Check whether we should loop or end
                     if self.current_pose in self.idle_poses:
                         self.script_idx = 0  # Loop
+                    elif self.is_transform():
+                        self.script_idx = len(self.script) - 1  # Just stay on last frame
                     else:
                         self.end_current_pose()
             else:
@@ -385,9 +400,8 @@ class BattleAnimation():
     def read_script(self):
         if not self.has_pose(self.current_pose):
             return
-        script = self.poses[self.current_pose].timeline
-        while self.script_idx < len(script) and self.processing:
-            command = script[self.script_idx]
+        while self.script_idx < len(self.script) and self.processing:
+            command = self.script[self.script_idx]
             self.run_command(command)
             self.script_idx += 1
 
@@ -789,7 +803,7 @@ def get_palette(anim_prefab: CombatAnimation, unit) -> tuple:
     current_palette = RESOURCES.combat_palettes.get(palette_nid)
     return palette_name, current_palette
 
-def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False) -> BattleAnimation:
+def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False, allow_transform=False, allow_revert=False) -> BattleAnimation:
     # Find the right combat animation
     if klass:
         class_obj = DB.classes.get(klass)
@@ -817,6 +831,10 @@ def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False) -
     # Get the correct weapon anim
     if not item:
         weapon_anim_nid = "Unarmed"
+    elif allow_transform and item_system.transforms(unit, item):
+        weapon_anim_nid = "Transform"
+    elif allow_revert and item_system.transforms(unit, item):
+        weapon_anim_nid = "Revert"
     else:
         weapon_type = item_system.weapon_type(unit, item)
         weapon_prefab = DB.weapons.get(weapon_type)
@@ -841,6 +859,7 @@ def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False) -
             weapon_anim_nid = weapon_type
         if magic and weapon_anim_nid not in res.weapon_anims.keys():
             weapon_anim_nid = 'MagicGeneric'
+    
     weapon_anim = res.weapon_anims.get(weapon_anim_nid)
     if not weapon_anim and weapon_anim_nid.startswith('Ranged'):
         weapon_anim = res.weapon_anims.get(weapon_anim_nid[6:])

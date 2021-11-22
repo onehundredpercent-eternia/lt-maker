@@ -321,6 +321,9 @@ class UnitObject(Prefab):
         class_tags = DB.classes.get(self.klass).tags
         return unit_tags + class_tags
 
+    def get_ai(self):
+        return skill_system.change_ai(self)
+
     @property
     def accessories(self):
         return [item for item in self.items if item_system.is_accessory(self, item)]
@@ -375,6 +378,8 @@ class UnitObject(Prefab):
                 if item_system.is_accessory(self, item) and \
                         item_funcs.available(self, item) and \
                         item_system.equippable(self, item):
+                    # Rediscovered each time if necessary
+                    self.equip(item)
                     return item
         return None
 

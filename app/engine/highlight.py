@@ -84,8 +84,8 @@ class HighlightController():
     def display_highlights(self, unit, light=False):
         valid_moves = target_system.get_valid_moves(unit)
 
-        if DB.constants.value('zero_move') and unit.ai and not unit.ai_group_active:
-            ai_prefab = DB.ai.get(unit.ai)
+        if DB.constants.value('zero_move') and unit.get_ai() and not unit.ai_group_active:
+            ai_prefab = DB.ai.get(unit.get_ai())
             guard = ai_prefab.guard_ai()
             if guard:
                 valid_moves = {unit.position}

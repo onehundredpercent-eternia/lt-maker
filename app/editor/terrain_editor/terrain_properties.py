@@ -64,6 +64,13 @@ class TerrainProperties(QWidget):
         self.platform_box.edit.setIconSize(QSize(87, 40))
         self.platform_box.edit.currentIndexChanged.connect(self.platform_changed)
 
+        self.background_box = PropertyBox("Combat Background", ComboBox, self)
+        for panorama in RESOURCES.panoramas:
+            icon = QIcon(panorama.get_all_paths()[0])
+            self.background_box.edit.addItem(icon, panorama.nid)
+        self.background_box.edit.setIconSize(QSize(240, 160))
+        self.background_box.edit.currentIndexChanged.connect(self.background_changed)
+
         movement_section = QHBoxLayout()
         self.movement_box = MovementCostBox(self, button=True)
         self.movement_box.edit.currentIndexChanged.connect(self.movement_changed)
@@ -89,6 +96,7 @@ class TerrainProperties(QWidget):
         main_section.addLayout(movement_section)
         main_section.addWidget(self.opaque_box)
         main_section.addWidget(self.status_box)
+        main_section.addWidget(self.background_box)
 
         total_section = QVBoxLayout()
         self.setLayout(total_section)
@@ -118,6 +126,9 @@ class TerrainProperties(QWidget):
 
     def platform_changed(self, index):
         self.current.platform = self.platform_box.edit.currentText()
+
+    def background_changed(self, index):
+        self.current.background = self.background_box.edit.currentText()
 
     def movement_changed(self, index):
         self.current.mtype = self.movement_box.edit.currentText()
@@ -150,6 +161,7 @@ class TerrainProperties(QWidget):
         self.name_box.edit.setText(current.name)
         self.minimap_box.edit.setValue(current.minimap)
         self.platform_box.edit.setValue(current.platform)
+        self.background_box.edit.setValue(current.background)
         self.movement_box.edit.setValue(current.mtype)
         self.opaque_box.edit.setChecked(bool(current.opaque))
         if current.status:

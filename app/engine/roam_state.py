@@ -175,8 +175,7 @@ class FreeRoamState(MapState):
         units = []
         for unit in game.units:
             if unit.position and unit is not self.roam_unit and self.roam_unit and \
-                    utils.calculate_distance(self.roam_unit.position, unit.position) < 1 and \
-                    unit.team in ('player', 'other'):
+                    utils.calculate_distance(self.roam_unit.position, unit.position) < 1:
                 units.append(unit)
         units = list(sorted(units, key=lambda unit: utils.calculate_distance(self.roam_unit.position, unit.position)))
         if units:

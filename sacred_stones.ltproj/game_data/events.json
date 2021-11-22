@@ -7003,6 +7003,57 @@
                 ]
             ],
             [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "Right"
+                ]
+            ],
+            [
+                "if",
+                [
+                    "False"
+                ]
+            ],
+            [
+                "for",
+                [
+                    "it",
+                    "range(5)"
+                ]
+            ],
+            [
+                "if",
+                [
+                    "{it}%2 == 0"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "Hi, {it}"
+                ]
+            ],
+            [
+                "end",
+                []
+            ],
+            [
+                "endf",
+                []
+            ],
+            [
+                "end",
+                []
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika"
+                ]
+            ],
+            [
                 "comment",
                 [
                     "# loop_units;[unit.nid for unit in game.get_player_units()];Trigger"

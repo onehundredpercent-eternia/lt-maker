@@ -1445,7 +1445,6 @@ class ApplyGrowthChanges(Action):
         negative_changes = {k: -v for k, v in self.stat_changes.items()}
         unit_funcs.apply_growth_changes(self.unit, negative_changes)
 
-
 class Promote(Action):
     def __init__(self, unit, new_class_nid):
         self.unit = unit
@@ -1603,8 +1602,10 @@ class AddWexp(Action):
         self.wexp_gain = wexp_gain
 
     def increase_wexp(self):
+        old_value = self.unit.wexp[self.weapon_type]
         self.unit.wexp[self.weapon_type] += self.wexp_gain
-        return self.unit.wexp[self.weapon_type] - self.wexp_gain, self.unit.wexp[self.weapon_type]
+        self.unit.wexp[self.weapon_type] = max(0, self.unit.wexp[self.weapon_type])  # Can't be less than 0
+        return old_value, self.unit.wexp[self.weapon_type]
 
     def do(self):
         self.old_value, self.current_value = self.increase_wexp()
@@ -2423,7 +2424,7 @@ class AddSkill(Action):
         self.unit.skills.append(self.skill_obj)
         skill_system.on_add(self.unit, self.skill_obj)
 
-        if self.skill_obj.aura and self.unit.position:
+        if self.skill_obj.aura and self.unit.position and game.board and game.tilemap:
             aura_funcs.propagate_aura(self.unit, self.skill_obj, game)
 
         # Handle affects movement
@@ -2444,7 +2445,7 @@ class AddSkill(Action):
         for action in self.subactions:
             action.reverse()
 
-        if self.skill_obj.aura and self.unit.position:
+        if self.skill_obj.aura and self.unit.position and game.board and game.tilemap:
             aura_funcs.release_aura(self.unit, self.skill_obj, game)
 
 
@@ -2467,7 +2468,7 @@ class RemoveSkill(Action):
                         skill_system.on_true_remove(self.unit, skill)
                     skill.owner_nid = None
                     self.removed_skills.append(skill)
-                    if skill.aura and self.unit.position:
+                    if skill.aura and self.unit.position and game.board and game.tilemap:
                         aura_funcs.release_aura(self.unit, skill, game)
         else:
             if self.skill in self.unit.skills:
@@ -2477,7 +2478,7 @@ class RemoveSkill(Action):
                     skill_system.on_true_remove(self.unit, self.skill)
                 self.skill.owner_nid = None
                 self.removed_skills.append(self.skill)
-                if self.skill.aura and self.unit.position:
+                if self.skill.aura and self.unit.position and game.board and game.tilemap:
                     aura_funcs.release_aura(self.unit, self.skill, game)
             else:
                 logging.warning("Skill %s not in %s's skills", self.skill.nid, self.unit)
@@ -2501,7 +2502,7 @@ class RemoveSkill(Action):
             skill.owner_nid = self.unit.nid
             self.unit.skills.append(skill)
             skill_system.on_add(self.unit, skill)
-            if skill.aura and self.unit.position:
+            if skill.aura and self.unit.position and game.board and game.tilemap:
                 aura_funcs.propagate_aura(self.unit, skill, game)
 
 

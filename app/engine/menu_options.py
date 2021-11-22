@@ -84,6 +84,10 @@ class HorizOption(BasicOption):
     def width(self):
         return FONT[self.color].width(self.display_text)
 
+class SingleCharacterOption(BasicOption):
+    def width(self):
+        return 8
+
 class TitleOption():
     def __init__(self, idx, text, option_bg_name):
         self.idx = idx

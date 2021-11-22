@@ -153,7 +153,7 @@ class AllAlliesAOE(ItemComponent):
 
     def splash_positions(self, unit, item, position) -> set:
         # All positions
-        splash = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
+        splash = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
         return splash
 
 class AllAlliesExceptSelfAOE(ItemComponent):
@@ -168,7 +168,7 @@ class AllAlliesExceptSelfAOE(ItemComponent):
 
     def splash_positions(self, unit, item, position) -> set:
         # All positions
-        splash = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
+        splash = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
         return splash
 
 class AllEnemiesAOE(ItemComponent):

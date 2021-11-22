@@ -185,6 +185,10 @@ def apply_stat_changes(unit, stat_changes: dict):
     if current_max_mana > old_max_mana:
         unit.set_mana(current_max_mana - old_max_mana + unit.get_mana())
 
+def apply_growth_changes(unit, growth_changes: dict):
+    for nid, value in growth_changes.items():
+        unit.growths[nid] += value
+
 def get_starting_skills(unit) -> list:
     # Class skills
     klass_obj = DB.classes.get(unit.klass)

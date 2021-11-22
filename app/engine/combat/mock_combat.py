@@ -33,6 +33,7 @@ class MockCombat():
         platform_full_loc = RESOURCES.platforms.get(platform_type + suffix)
         self.left_platform = engine.image_load(platform_full_loc)
         self.right_platform = engine.flip_horiz(self.left_platform.copy())
+        self.battle_background = None
 
         self.setup_dark()
         self.setup_ui()
@@ -358,13 +359,15 @@ class MockCombat():
         total_shake_x = self.shake_offset[0] + self.platform_shake_offset[0]
         total_shake_y = self.shake_offset[1] + self.platform_shake_offset[1]
         # Platform
-        top = platform_top + (platform_trans - self.bar_offset * platform_trans) + total_shake_y
-        if self.at_range:
-            surf.blit(self.left_platform, (9 - self.pan_max + total_shake_x + self.pan_offset, top))
-            surf.blit(self.right_platform, (131 + self.pan_max + total_shake_x + self.pan_offset, top))
-        else:
-            surf.blit(self.left_platform, (WINWIDTH // 2 - self.left_platform.get_width() + total_shake_x, top))
-            surf.blit(self.right_platform, (WINWIDTH // 2 + total_shake_x, top))
+        from app.data.database import DB
+        if not self.battle_background or DB.constants.value('battle_platforms'):
+            top = platform_top + (platform_trans - self.bar_offset * platform_trans) + total_shake_y
+            if self.at_range:
+                surf.blit(self.left_platform, (9 - self.pan_max + total_shake_x + self.pan_offset, top))
+                surf.blit(self.right_platform, (131 + self.pan_max + total_shake_x + self.pan_offset, top))
+            else:
+                surf.blit(self.left_platform, (WINWIDTH // 2 - self.left_platform.get_width() + total_shake_x, top))
+                surf.blit(self.right_platform, (WINWIDTH // 2 + total_shake_x, top))
         # Animation
         if self.at_range:
             right_range_offset = 24 + self.pan_max

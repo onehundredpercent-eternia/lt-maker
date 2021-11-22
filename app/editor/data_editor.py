@@ -182,10 +182,11 @@ class SingleResourceEditor(QDialog):
         self.grid = QGridLayout(self)
         self.setLayout(self.grid)
 
-        self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply, Qt.Horizontal, self)
         self.grid.addWidget(self.buttonbox, 1, 1)
         self.buttonbox.accepted.connect(self.accept)
         self.buttonbox.rejected.connect(self.reject)
+        self.buttonbox.button(QDialogButtonBox.Apply).clicked.connect(self.apply)
 
         self.tab = tab.create(self)
         self.grid.addWidget(self.tab, 0, 0, 1, 2)
@@ -217,6 +218,12 @@ class SingleResourceEditor(QDialog):
         super().reject()
         self.close()
 
+    def apply(self):
+        current_proj = self.settings.get_current_project()
+        if current_proj:
+            RESOURCES.save(current_proj, self.resource_types)
+        self.save_geometry()
+
     def closeEvent(self, event):
         self.save_geometry()
         super().closeEvent(event)
@@ -242,10 +249,11 @@ class MultiResourceEditor(SingleResourceEditor):
         self.grid = QGridLayout(self)
         self.setLayout(self.grid)
 
-        self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply, Qt.Horizontal, self)
         self.grid.addWidget(self.buttonbox, 1, 1)
         self.buttonbox.accepted.connect(self.accept)
         self.buttonbox.rejected.connect(self.reject)
+        self.buttonbox.button(QDialogButtonBox.Apply).clicked.connect(self.apply)
 
         self.tab_bar = QTabWidget(self)
         self.grid.addWidget(self.tab_bar, 0, 0, 1, 2)

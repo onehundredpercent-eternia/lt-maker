@@ -128,7 +128,7 @@ class PropertiesMenu(QWidget):
         form.addWidget(self.free_roam_box)
 
         self.unit_box = UnitBox(self, button=True, title="Roaming Unit")
-        self.unit_box.edit.currentIndexChanged.connect(self.unit_changed)
+        self.unit_box.edit.activated.connect(self.unit_changed)
         self.unit_box.button.clicked.connect(self.access_units)
         form.addWidget(self.unit_box)
 
@@ -249,12 +249,13 @@ class PropertiesMenu(QWidget):
         self.current.roam = bool(state)
         if self.current.roam:
             self.unit_box.show()
+            self.unit_changed()
         else:
             self.unit_box.hide()
 
     def overworld_box_changed(self, state):
         self.current.go_to_overworld = bool(state)
 
-    def unit_changed(self, idx):
-        self.current.roam_unit = DB.units[idx].nid
+    def unit_changed(self):
+        self.current.roam_unit = self.unit_box.edit.currentText()
         self.unit_box.edit.setValue(self.current.roam_unit)

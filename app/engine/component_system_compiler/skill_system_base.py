@@ -66,6 +66,10 @@ class Defaults():
         return unit.klass
 
     @staticmethod
+    def change_ai(unit) -> str:
+        return unit.ai
+
+    @staticmethod
     def steal_icon(unit1, unit2) -> bool:
         return False
 

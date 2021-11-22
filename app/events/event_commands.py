@@ -1,8 +1,11 @@
-from enum import Enum
-from typing import Callable, List
-from app.utilities.data import Prefab
+from __future__ import annotations
 
 import logging
+from enum import Enum
+from typing import Callable, List
+
+from app.utilities.data import Prefab
+
 
 class Tags(Enum):
     FLOW_CONTROL = 'Flow Control'
@@ -57,6 +60,13 @@ class EventCommand(Prefab):
     def __repr__(self):
         return self.to_plain_text()
 
+    @classmethod
+    def copy(cls, command) -> EventCommand:
+        new_command = cls()
+        new_command.values = command.values.copy()
+        new_command.display_values = command.display_values.copy()
+        return new_command
+
 class Comment(EventCommand):
     nid = "comment"
     nickname = '#'
@@ -65,6 +75,7 @@ class Comment(EventCommand):
         """
 **Lines** starting with '#' will be ignored.
         """
+
     def to_plain_text(self) -> str:
         if self.values and not self.values[0].startswith('#'):
             self.values[0] = '#' + self.values[0]
@@ -155,6 +166,35 @@ class End(EventCommand):
         """
 Ends a conditional block. Refer to the **if** command for more information.
         """
+
+class For(EventCommand):
+    nid = "for"
+    tag = Tags.FLOW_CONTROL
+    desc = \
+    """The Expression will be evaluated, and it should return a list of strings.
+For every string in this list, the events below will be ran once, with the contents of the string accessible via the bracketed `{$(nid)}` tag.
+
+Remember to end your **for** blocks with **endf**.
+
+Example: this will give every unit in the party the Inspiration skill silently
+
+```
+for;PARTY_UNIT;[unit.nid for unit in game.get_units_in_party()]
+    give_skill;{PARTY_UNIT};Inspiration;no_banner
+endf
+```
+    """
+    keywords = ['Nid', 'Expression']
+
+class Endf(EventCommand):
+    nid = "endf"
+    tag = Tags.FLOW_CONTROL
+    desc = \
+        """
+Ends a for block. Refer to the **for** command for more information.
+        """
+
+
 
 class Break(EventCommand):
     nid = "break"
@@ -485,6 +525,7 @@ Causes the cursor to briefly blink on and off at the indicated *Position*.
 
 class GameVar(EventCommand):
     nid = 'game_var'
+    nickname = 'set'
     tag = Tags.GAME_VARS
 
     desc = \
@@ -498,6 +539,7 @@ The *Nid* is the variable's identifier, and the *Condition* is the value that is
 
 class IncGameVar(EventCommand):
     nid = 'inc_game_var'
+    nickname = 'inc'
     tag = Tags.GAME_VARS
 
     desc = \
@@ -627,6 +669,9 @@ Fabricates a new generic unit from scratch. This does not place instances of the
 The required keywords are in the following order: nid to be given to the unit (*String*),
 the unit's class (*Klass*), the unit's level (*String*), and the unit's *Team*.
 
+**If the NID field is left empty, then the event's `{unit}` will be overwritten to refer to the result of MakeGeneric.
+Therefore, if you must refer to the current {unit} in the rest of the event, save it to a `game_var` or a `level_var`.**
+
 Several optional keywords can also be provided to further modify the new unit:
 *AI* defines an AI preset to be given to the unit, *Faction* assignes the unit
 to one of the factions for the chapter, the unit can be given an animation variant
@@ -645,6 +690,9 @@ class CreateUnit(EventCommand):
         """
 Creates a new instance of a unit and, optionally, places it on the map.
 *Unit* points to the unit template to be used. A new nid can be assigned using *String* (can be empty: '').
+
+**If the NID field is left empty, then the event's `{unit}` will be overwritten to refer to the result of CreateUnit.
+Therefore, if you must refer to the current {unit} in the rest of the event, save it to a `game_var` or a `level_var`.**
 
 Several optional keywords can be provided to modify the unit and/or place it on the map.
 
@@ -1197,10 +1245,12 @@ class ChangeClass(EventCommand):
     desc = \
         """
 Changes *GlobalUnit* into a specified class (*Klass*) or, if no *Klass* is given, the unit class changes as normal using its alternative class data.
+If the *silent* flag is given, the unit will change class immediately into the specified class (*Klass*).
         """
 
     keywords = ["GlobalUnit"]
     optional_keywords = ["Klass"]
+    flags = ["silent"]
 
 class AddTag(EventCommand):
     nid = 'add_tag'
@@ -1570,6 +1620,27 @@ The optional *Orientation* keyword specifies whether the options are displayed a
     keywords = ['Nid', 'Text', 'StringList']
     optional_keywords = ['Orientation']
 
+class TextEntry(EventCommand):
+    nid = 'text_entry'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Presents the player with a menu in which they can enter text. An example use-case would be to create a tactician name.
+
+*Nid* is the name of this entry, which can be checked later to recall the player's input.
+For instance, if nid was "tactician", use `{var:tactician}` anywhere in events to replace it with the user's entry.
+*Text* is the text describing the choice, such as "Please enter a name."
+*Integer* is the character limit. If not set, defaults to 16.
+*StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
+
+If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
+        """
+
+    keywords = ['Nid', 'Text']
+    optional_keywords = ['Integer', 'IllegalCharacterList']
+    flags = ['force_entry']
+
 class ChapterTitle(EventCommand):
     nid = 'chapter_title'
     tag = Tags.MISCELLANEOUS
@@ -1764,6 +1835,17 @@ Executes the event script specified by *Event*. Can optionally feed two *GlobalU
 
     keywords = ["Event"]
     optional_keywords = ["GlobalUnit", "GlobalUnit"]
+class TriggerScriptWithArgs(EventCommand):
+    nid = 'trigger_script_with_args'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Executes the event script specified by *Event*. Can feed up to five arguments of your choice to the new event. These args can be accessed via {1}, {2}, {3}, {4}, and {5}.
+        """
+
+    keywords = ["Event"]
+    optional_keywords = ["String", "String", "String", "String", "String"]
 
 class LoopUnits(EventCommand):
     nid = 'loop_units'
@@ -1938,6 +2020,7 @@ def parse_text(text: str, strict=False) -> EventCommand:
     Returns:
         EventCommand: parsed command
     """
+    text = text.lstrip()
     if text.startswith('#'):
         return Comment([text])
     arguments = text.split(';')
@@ -1957,7 +2040,7 @@ def parse_text(text: str, strict=False) -> EventCommand:
                     cmd_keyword = "N/A"
                 # if parentheses exists, then they contain the "true" arg, with everything outside parens essentially as comments
                 # we do NOT want to use this with evals, hence the '{' and '}' stoppage
-                if '(' in arg and ')' in arg and '{' not in arg and '}' not in arg and ('FLAG' in arg or not (cmd_keyword in ['Condition', 'Text', 'StringList', 'PointList', 'DashList'])):
+                if '(' in arg and ')' in arg and '{' not in arg and '}' not in arg and ('FLAG' in arg or not (cmd_keyword in ['Expression', 'Condition', 'String', 'Text', 'StringList', 'PointList', 'DashList'])):
                     true_arg = arg[arg.find("(")+1:arg.find(")")]
                     true_cmd_args.append(true_arg)
                 else:
@@ -1982,7 +2065,7 @@ def parse(command, _eval_evals: Callable[[str], str] = None, _eval_vars: Callabl
         true_values = [_eval_vars(value) for value in true_values]
     return true_values, flags
 
-def convert_parse(command: EventCommand):
+def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = None, _eval_vars: Callable[[str], str] = None):
     from app.events.event_validators import convert
     values = command.values
     num_keywords = len(command.keywords)
@@ -2000,4 +2083,8 @@ def convert_parse(command: EventCommand):
             if kwd_idx < len(true_values):
                 true_values[kwd_idx] = convert(command.optional_keywords[okeyword_idx], okeyword)
         kwd_idx += 1
+    if _eval_evals:
+        true_values = [_eval_evals(value) for value in true_values if isinstance(value, str)]
+    if _eval_vars:
+        true_values = [_eval_vars(value) for value in true_values if isinstance(value, str)]
     return true_values, flags

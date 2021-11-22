@@ -109,10 +109,14 @@ class BaseCursor():
 
     def set_pos(self, pos):
         logging.debug("New position %s", pos)
-        self.position = pos
-        self.offset_x, self.offset_y = 0, 0
-        if self.camera:
-            self.camera.set_xy(*self.position)
+        bounds = self.get_bounds()
+        if bounds[0] <= pos[0] <= bounds[2] and bounds[1] <= pos[1] <= bounds[3]:
+            self.position = pos
+            self.offset_x, self.offset_y = 0, 0
+            if self.camera:
+                self.camera.set_xy(*self.position)
+        else:
+            logging.error("Attempted to set cursor's position out of bounds! %s", pos)
 
     def move(self, dx, dy, mouse=False, sound=True):
         x, y = self.position

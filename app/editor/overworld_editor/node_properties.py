@@ -61,6 +61,27 @@ class NodePropertiesMenu(QWidget):
             self.current_node.name = text
             self.state_manager.change_and_broadcast('ui_refresh_signal', None)
 
+    def nid_changed(self, text):
+        if(self.current_node):
+            self.current_node.nid = text
+            self.state_manager.change_and_broadcast('ui_refresh_signal', None)
+
+    def nid_done_editing(self):
+        other_nids = []
+        for overworld in DB.overworlds:
+            for node in overworld.overworld_nodes:
+                if node is not self.current_node:
+                    other_nids.append(node.nid)
+        if self.current_node.nid in other_nids:
+            QMessageBox.warning(
+                self, 'Warning', 'Node ID %s already in use' % self.current_node.nid)
+            self.current_node.nid = str_utils.get_next_int(
+                self.current_node.nid, other_nids)
+        for overworld in DB.overworlds:
+            overworld.overworld_nodes.update_nid(self.current_node, self.current_node.nid)
+        self.state_manager.change_and_broadcast('ui_refresh_signal', None)
+
+
     def level_changed(self, index):
         if(self.current_node):
             self.current_node.level = self.level_box.edit.itemData(index)
@@ -70,7 +91,9 @@ class NodePropertiesMenu(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setAlignment(Qt.AlignTop)
 
-        self.nid_box = PropertyBox("Node ID", QLabel, self)
+        self.nid_box = PropertyBox("Node ID", QLineEdit, self)
+        self.nid_box.edit.textChanged.connect(self.nid_changed)
+        self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
         self.layout.addWidget(self.nid_box)
 
         self.title_box = PropertyBox("Location Name", QLineEdit, self)

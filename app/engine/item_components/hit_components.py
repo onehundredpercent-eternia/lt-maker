@@ -70,7 +70,9 @@ class WexpChange(ItemComponent):
     expose = (Type.Dict, Type.WeaponType)
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        actions.append(action.WexpChange(target, self.value))
+        wexp_changes = {k: v for (k, v) in self.value}
+        for weapon_type, wexp_change in wexp_changes.items():
+            actions.append(action.AddWexp(target, weapon_type, wexp_change))
         playback.append(('hit', unit, item, target))
 
 class FatigueOnHit(ItemComponent):

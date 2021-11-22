@@ -188,7 +188,7 @@ class UnitSprite():
         self.transition_state = new_state
         self.transition_counter = self.transition_time  # 400
         if self.state == 'moving':
-            self.change_state('normal')
+            # self.change_state('normal')
             self.reset()
 
         if self.transition_state == 'normal':
@@ -303,8 +303,13 @@ class UnitSprite():
             self.offset[0] = utils.clamp(self.net_position[0], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
             self.offset[1] = utils.clamp(self.net_position[1], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
         elif self.state == 'chosen':
-            self.net_position = game.cursor.position[0] - self.unit.position[0], game.cursor.position[1] - self.unit.position[1]
-            self.handle_net_position(self.net_position)
+            test_position = game.cursor.position[0] - self.unit.position[0], game.cursor.position[1] - self.unit.position[1]
+            if test_position != (0, 0):
+                self.net_position = test_position
+            if self.net_position:
+                self.handle_net_position(self.net_position)
+            else:
+                self.image_state = 'down'
         elif self.state == 'moving':
             next_position = game.movement.get_next_position(self.unit.nid)
             if not next_position:
