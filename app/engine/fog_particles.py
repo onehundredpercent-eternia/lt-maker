@@ -20,9 +20,10 @@ class FogParticle():
     time_offset: float = 0
 
 class FogParticleSystem():
-    def __init__(self, nid, abundance, bounds, size):
+    def __init__(self, nid, abundance, bounds, size, position=None):
         width, height = size
         self.nid = nid
+        self.pos = position
         self.abundance = int(abundance * width * height)
         self.particles = []
         self.remove_me_flag = False

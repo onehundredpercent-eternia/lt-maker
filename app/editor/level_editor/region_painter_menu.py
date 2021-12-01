@@ -248,7 +248,7 @@ class ModifyRegionWidget(QWidget):
             self.condition_box.hide()
             self.only_once_box.hide()
             self.status_box.show()
-        elif self.current.region_type in ('event', 'wait'):
+        elif self.current.region_type == 'event':
             self.sub_nid_box.show()
             self.condition_box.show()
             self.only_once_box.show()

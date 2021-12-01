@@ -2800,6 +2800,7 @@ class Event():
         if 'only_once' in flags:
             new_region.only_once = True
 
+        game.register_region(new_region)
         action.do(action.AddRegion(new_region))
 
     def merge_parties(self, command):
