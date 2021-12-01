@@ -1,4 +1,5 @@
 from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 
 from app.constants import COLORKEY
 from app.data.palettes import enemy_colors, other_colors, enemy2_colors, \
@@ -142,3 +143,7 @@ def get_bbox(image):
                     max_y = y
     # Returns x, y, width, height rect
     return (min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
+
+
+def qtkey_to_string(qtkey: Qt.Key):
+    return QtGui.QKeySequence(qtkey).toString()

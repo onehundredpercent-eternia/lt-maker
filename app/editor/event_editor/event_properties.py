@@ -16,7 +16,7 @@ from app.extensions.custom_gui import (ComboBox, PropertyBox, PropertyCheckBox,
 from app.resources.resources import RESOURCES
 from app.utilities import str_utils
 from PyQt5.QtCore import (QRect, QRegularExpression, QSize,
-                          QSortFilterProxyModel, QStringListModel, Qt)
+                          QSortFilterProxyModel, QStringListModel, Qt, pyqtSignal)
 from PyQt5.QtGui import (QColor, QFont, QFontMetrics, QIcon, QPainter,
                          QPalette, QSyntaxHighlighter, QTextCharFormat,
                          QTextCursor)
@@ -203,6 +203,10 @@ class LineNumberArea(QWidget):
         self.editor.lineNumberAreaPaintEvent(event)
 
 class CodeEditor(QPlainTextEdit):
+    clicked = pyqtSignal()
+    def mouseReleaseEvent(self, event):
+        self.clicked.emit()
+
     def __init__(self, parent):
         super().__init__(parent)
         self.window = parent
@@ -235,6 +239,7 @@ class CodeEditor(QPlainTextEdit):
             self.setCompleter(event_autocompleter.Completer(parent=self))
             self.textChanged.connect(self.complete)
             self.textChanged.connect(self.display_function_hint)
+            self.clicked.connect(self.display_function_hint)
             self.prev_keyboard_press = None
 
             # function helper
@@ -272,9 +277,9 @@ class CodeEditor(QPlainTextEdit):
         tc = self.textCursor()
         line = tc.block().text()
         cursor_pos = tc.positionInBlock()
-        if len(line) != cursor_pos:
+        if len(line) != cursor_pos and line[cursor_pos-1] !=';':
             self.function_annotator.hide()
-            return  # Only do function hint on end of line
+            return  # Only do function hint on end of line or when clicking at the beginning of a field
         if tc.blockNumber() <= 0 and cursor_pos <= 0:  # don't do hint if cursor is at the very top left of event
             self.function_annotator.hide()
             return

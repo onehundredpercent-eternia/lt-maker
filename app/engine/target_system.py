@@ -268,11 +268,13 @@ def find_strike_partners(attacker, defender, item):
         return None, None
     if not attacker or not defender:
         return None, None
-    if skill_system.check_ally(attacker, defender): # If targeting same team
+    if skill_system.check_ally(attacker, defender): # If targeting an ally
         return None, None
     if attacker.traveler or defender.traveler: # Dual guard cancels
         return None, None
     if not item_system.is_weapon(attacker, item): # If you're healing someone else
+        return None, None
+    if attacker.team == defender.team: # If you are the same team. Catches components who define their own check_ally function
         return None, None
 
     attacker_partner = None

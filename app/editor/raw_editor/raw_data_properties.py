@@ -106,17 +106,22 @@ class RawDataProperties(QWidget):
         self.layout().addWidget(self.sheet_box)
         self.sheet_box.set_current(self.current.lovalue)
 
+    def add_column(self, col_name):
+        attr = str(col_name)
+        if attr in self.current.oattrs:
+            return
+        self.current.oattrs.append(attr)
+        for o in self.current.lovalue:
+            try:
+                getattr(o, attr)
+            except:
+                setattr(o, attr, "")
+        self.rerender_sheet_widget()
+
     def add_column_dialog(self):
         text, ok = QInputDialog.getText(self, 'New Column', 'New Column Name:')
         if ok:
-            attr = str(text)
-            self.current.oattrs.append(attr)
-            for o in self.current.lovalue:
-                try:
-                    getattr(o, attr)
-                except:
-                    setattr(o, attr, "")
-            self.rerender_sheet_widget()
+            self.add_column(text)
 
     def get_attrs(self, obj) -> List[str]:
         attributes = dir(obj)

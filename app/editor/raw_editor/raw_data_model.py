@@ -17,7 +17,7 @@ class RawDataModel(DragDropCollectionModel):
 
     def create_new(self):
         nids = [d.nid for d in self._data]
-        nid = str_utils.get_next_name("New Raw", nids)
+        nid = str_utils.get_next_generic_nid("New Raw", nids)
         new_data = raw_data.RawDataPrefab(nid, "str")
         DB.raw_data.append(new_data)
         return new_data

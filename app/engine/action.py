@@ -1634,6 +1634,18 @@ class ChangeHP(Action):
     def reverse(self):
         self.unit.set_hp(self.old_hp)
 
+class SetName(Action):
+    def __init__(self, unit, new_name):
+        self.unit = unit
+        self.new_name = new_name
+        self.old_name = self.unit.name
+
+    def do(self):
+        self.unit.name = self.new_name
+
+    def reverse(self):
+        self.unit.name = self.old_name
+
 class SetHP(Action):
     def __init__(self, unit, new_hp):
         self.unit = unit

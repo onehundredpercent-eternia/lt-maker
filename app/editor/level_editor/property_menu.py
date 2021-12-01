@@ -249,7 +249,7 @@ class PropertiesMenu(QWidget):
         self.current.roam = bool(state)
         if self.current.roam:
             self.unit_box.show()
-            self.unit_changed()
+            # self.unit_changed() - This line seems only to cause issues due to it reseting the roam_unit in line 265. Functionality appears to work correctly with it removed
         else:
             self.unit_box.hide()
 

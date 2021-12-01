@@ -1,9 +1,13 @@
+from app.utilities import str_utils
 from dataclasses import dataclass, field
 from typing import List
 
 from app.utilities.data import Data, Prefab
 
 valid_types = ["str", "list", "kv"]
+
+class RawListDataObjectBase():
+    nid: str = None
 
 @dataclass
 class RawDataPrefab(Prefab):
@@ -12,7 +16,7 @@ class RawDataPrefab(Prefab):
     svalue: str = field(default_factory=str)                    # arbitrary string data
     kvvalue: list = field(default_factory=list)                 # arbitrary key-value pair
     lovalue: list = field(default_factory=list)                 # list of arbitrary objects
-    oattrs: List[str] = field(default_factory=list)             # official object attributes for objs in lovalue
+    oattrs: List[str] = field(default_factory=lambda:['nid'])             # official object attributes for objs in lovalue; all objects should have nid (see RawListDataObjectBase)
 
     def __repr__(self):
         return vars(self)
@@ -33,7 +37,7 @@ class RawDataPrefab(Prefab):
         elif self.dtype == "kv":
             return dict(self.kvvalue)
         elif self.dtype == "list":
-            return self.lovalue
+            return Data(self.lovalue)
         return ""
 
     def restore_attr(self, name, value):
@@ -41,11 +45,20 @@ class RawDataPrefab(Prefab):
             if value:
                 lovalue = []
                 for obj_dict in value:
-                    obj = type('', (), {})()
+                    obj = RawListDataObjectBase()
                     for k, v in obj_dict.items():
                         setattr(obj, k, v)
                     lovalue.append(obj)
+                    # for backwards compatability
+                    if not getattr(obj, 'nid'):
+                        nids = [o.nid for o in lovalue]
+                        nid = str_utils.get_next_generic_nid("key", nids)
+                        setattr(obj, 'nid', nid)
                 return lovalue
+        if name == 'oattrs':
+            if 'nid' not in value:
+                value = ['nid'] + value
+            return value
         else:
             return super().restore_attr(name, value)
 

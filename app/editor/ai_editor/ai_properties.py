@@ -153,7 +153,10 @@ class EventSpecification(QWidget):
         self.window.current.target_spec = event
 
     def set_current(self, target_spec):
-        self.box.setText(target_spec)
+        try:
+            self.box.setText(target_spec)
+        except: # spec isn't compatible
+            pass
 
 class PositionSpecification(QWidget):
     def __init__(self, parent=None):
@@ -387,7 +390,7 @@ class AIProperties(QWidget):
             self.current.nid = str_utils.get_next_name(self.current.nid, other_nids)
         self.model.on_nid_changed(self._data.find_key(self.current), self.current.nid)
         self._data.update_nid(self.current, self.current.nid)
-        self.window.update_list()   
+        self.window.update_list()
 
     def priority_changed(self, val):
         self.current.priority = int(val)

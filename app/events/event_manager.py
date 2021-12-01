@@ -13,8 +13,6 @@ class EventManager():
     def get_triggered_events(self, trigger, unit=None, unit2=None, item=None, position=None, region=None, level_nid=None):
         """returns a list of all events that are triggered according to the conditions supplied in the arg
         """
-        # this line allows unit1 to be used in the eval
-        unit1 = unit  # noqa: F841
         triggered_events = []
         if level_nid:
             event_source_nid = level_nid
@@ -44,13 +42,26 @@ class EventManager():
         new_event = False
         sorted_events = sorted(triggered_events, key=lambda x: x.priority)
         for event_prefab in sorted_events:
-            self.add_event(event_prefab.nid, event_prefab.commands, unit, unit2, item, position, region)
+            self._add_event(event_prefab.nid, event_prefab.commands, unit, unit2, item, position, region)
             new_event = True
             if event_prefab.only_once:
                 action.do(action.OnlyOnceEvent(event_prefab.nid))
         return new_event
 
-    def add_event(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None):
+    def trigger_specific_event(self, event_nid, unit=None, unit2=None, item=None, position=None, region=None, force=False):
+        event_prefab = DB.events.get_from_nid(event_nid)
+
+        # filter OnlyOnceEvents
+        if not force:
+            if event_prefab.nid in game.already_triggered_events:
+                return False
+
+        self._add_event(event_prefab.nid, event_prefab.commands, unit, unit2, item, position, region)
+        if event_prefab.only_once:
+            action.do(action.OnlyOnceEvent(event_prefab.nid))
+        return True
+
+    def _add_event(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None):
         event = Event(nid, commands, unit, unit2, item, position, region)
         self.all_events.append(event)
         self.event_stack.append(event)

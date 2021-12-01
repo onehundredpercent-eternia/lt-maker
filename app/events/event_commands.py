@@ -176,6 +176,9 @@ For every string in this list, the events below will be ran once, with the conte
 
 Remember to end your **for** blocks with **endf**.
 
+Flags:
+The *no_warn* flag will suppress warnings, but not errors. Use this flag only if you know why you're using it.
+
 Example: this will give every unit in the party the Inspiration skill silently
 
 ```
@@ -185,6 +188,8 @@ endf
 ```
     """
     keywords = ['Nid', 'Expression']
+
+    flags = ['no_warn']
 
 class Endf(EventCommand):
     nid = "endf"
@@ -806,6 +811,17 @@ A *CombatScript* can optionally be provided to ensure a pre-set outcome to the b
 
     keywords = ["Unit", "Unit"]
     optional_keywords = ["CombatScript", "Ability"]
+
+class SetName(EventCommand):
+    nid = 'set_name'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Sets *Unit*'s name to *String*. This is permanent.
+        """
+
+    keywords = ["Unit", "String"]
 
 class SetCurrentHP(EventCommand):
     nid = 'set_current_hp'

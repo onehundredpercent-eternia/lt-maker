@@ -15,8 +15,8 @@ will be accepted
 
 def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
              region=None, mode=None, skill=None, attack_info=None, base_value=None) -> bool:
-    unit = unit1
-    target = unit2
+    unit = unit1  # noqa: F841
+    target = unit2  # noqa: F841
     
     def check_pair(s1: str, s2: str) -> bool:
         """

@@ -1,3 +1,4 @@
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import QDialog, QGridLayout, QDialogButtonBox, QTabWidget, \
     QSizePolicy
 from PyQt5.QtCore import Qt
@@ -28,6 +29,12 @@ class SingleDatabaseEditor(QDialog):
         state = self.settings.component_controller.get_state(self._type())
         if state:
             self.tab.splitter.restoreState(state)
+
+    def keyPressEvent(self, keypress: QtGui.QKeyEvent) -> None:
+        if keypress.key() == self.settings.get_editor_close_button():
+            self.reject()
+        else:
+            pass
 
     def set_up(self):
         self.setStyleSheet("font: 10pt;")
@@ -71,14 +78,14 @@ class SingleDatabaseEditor(QDialog):
 
     def restore(self):
         DB.restore(self.saved_data)
-        # Make sure we use the new restored database as the level 
+        # Make sure we use the new restored database as the level
         # in the level editors
         if self.main_editor:
             state_manager = self.main_editor.app_state_manager
             current_level_nid = state_manager.state.selected_level
             state_manager.change_and_broadcast(
                 'selected_level', current_level_nid)
-        
+
     def apply(self):
         self.save()
 
