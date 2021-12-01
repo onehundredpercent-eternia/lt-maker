@@ -1110,7 +1110,9 @@ class Event():
         elif command.nid == 'remove_region':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             nid = values[0]
-            if nid in game.level.regions.keys():
+            if nid == '{region}' and self.region:
+                action.do(action.RemoveRegion(self.region))
+            elif nid in game.level.regions.keys():
                 region = game.level.regions.get(nid)
                 action.do(action.RemoveRegion(region))
             else:

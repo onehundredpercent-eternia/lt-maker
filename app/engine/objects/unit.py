@@ -529,9 +529,7 @@ class UnitObject(Prefab):
         self.strike_partner = None
 
     def wait(self):
-        game.events.trigger('unit_wait', self, position=self.position)
-        # Wait regions
-        game.trigger_wait(self)
+        game.events.trigger('unit_wait', self, position=self.position, region=game.get_region_under_pos(self.position))
         action.do(action.Wait(self))
         game.stat_screen.reset_surfs()
         if game.cursor and game.cursor.cur_unit == self:

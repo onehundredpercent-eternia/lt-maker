@@ -716,7 +716,6 @@ class MenuState(MapState):
                     game.state.change('move')
                     game.cursor.place_arrows()
                 else:
-                    print(1)
                     game.state.clear()
                     game.state.change('free')
                     self.cur_unit.wait()
@@ -771,6 +770,8 @@ class MenuState(MapState):
                 for region in self.valid_regions:
                     if region.sub_nid == selection:
                         did_trigger = game.events.trigger(selection, self.cur_unit, position=self.cur_unit.position, region=region)
+                        if not did_trigger: # maybe this uses the more dynamic region trigger
+                            did_trigger = game.events.trigger('on_region_interact', self.cur_unit, position=self.cur_unit.position, region=region)
                         if did_trigger:
                             self.menu = None  # Remove menu for a little (Don't worry, it will come back)
                         if did_trigger and region.only_once:
@@ -847,7 +848,7 @@ class ItemState(MapState):
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_down(first_push)
             self._item_desc_update()
-            
+
         elif 'UP' in directions:
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_up(first_push)
@@ -2015,7 +2016,7 @@ class ShopState(State):
             self.current_msg.draw(surf)
 
         surf.blit(self.portrait, (3, 0))
-        
+
         money_bg = SPRITES.get('money_bg')
         money_bg = image_mods.make_translucent(money_bg, .1)
         surf.blit(money_bg, (172, 48))

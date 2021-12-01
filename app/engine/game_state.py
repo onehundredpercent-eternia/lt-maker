@@ -632,6 +632,11 @@ class GameState():
         region = self.region_registry.get(region_nid)
         return region
 
+    def get_region_under_pos(self, pos: Tuple[int, int]) -> Region:
+        for region in self.region_registry.values():
+            if region.contains(pos):
+                return region
+
     def get_all_units(self) -> List[UnitObject]:
         return [unit for unit in self.units if unit.position and not unit.dead and not unit.is_dying and 'Tile' not in unit.tags]
 
@@ -833,19 +838,6 @@ class GameState():
         if legal_spots:
             return legal_spots[0]
         return None
-
-    def trigger_wait(self, unit):
-        from app.engine import evaluate, action
-        for region in game.level.regions:
-            if region.region_type == 'wait' and region.contains(unit.position):
-                try:
-                    truth = evaluate.evaluate(region.condition, unit, position=unit.position, region=region)
-                    if truth:
-                        did_trigger = game.events.trigger('event_tile_wait', unit, position=unit.position, region=region)
-                        if did_trigger and region.only_once:
-                            action.do(action.RemoveRegion(region))
-                except:
-                    logging.error("Region condition {%s} could not be evaluated" % region.condition)
 
     def get_money(self):
         return self.parties[self.current_party].money
