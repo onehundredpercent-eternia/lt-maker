@@ -1669,6 +1669,12 @@ class Event():
 
         speaker = values[0]
         text = values[1]
+        # special char: this is a unicode single-line break.
+        # basically equivalent to {br}
+        # the first char shouldn't be one of these
+        if text[0] == '\u2028':
+            text = text[1:]
+        text = text.replace('\u2028', '{sub_break}')  # sub break to distinguish it
 
         if len(values) > 2 and values[2]:
             position = self.parse_pos(values[2])

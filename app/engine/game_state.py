@@ -633,9 +633,10 @@ class GameState():
         return region
 
     def get_region_under_pos(self, pos: Tuple[int, int]) -> Region:
-        for region in self.region_registry.values():
-            if region.contains(pos):
-                return region
+        if pos:
+            for region in self.region_registry.values():
+                if region.contains(pos):
+                    return region
 
     def get_all_units(self) -> List[UnitObject]:
         return [unit for unit in self.units if unit.position and not unit.dead and not unit.is_dying and 'Tile' not in unit.tags]

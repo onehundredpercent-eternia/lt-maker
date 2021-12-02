@@ -211,13 +211,15 @@ class Tag(Validator):
 class ScreenPosition(Validator):
     valid_positions = ["OffscreenLeft", "FarLeft", "Left", "MidLeft", "CenterLeft", "CenterRight", "MidRight", "LevelUpRight", "Right", "FarRight", "OffscreenRight"]
 
-    desc = ("determines where to add the portrait to the screen."
-            "Available options are (`OffscreenLeft`, `FarLeft`, "
-            "`Left`, `MidLeft`, `MidRight`, `Right`, `FarRight`, "
-            "`OffscreenRight`). Alternatively, specify a position in "
-            "pixels (`x,y`) for the topleft of the portrait. If the portrait"
-            "is placed on the left side of the screen to start, it will be facing "
-            "right, and vice versa.")
+    desc = """
+Determines where to add the portrait to the screen.
+Available options are (`OffscreenLeft`,
+`FarLeft`, `Left`, `MidLeft`, `MidRight`, `Right`, `FarRight`, `OffscreenRight`).
+Alternately, specify a position in pixels (`x,y`)
+for the topleft of the portrait.
+If the portrait is placed on the left side of the screen to start,
+it will be facing right, and vice versa.
+"""
 
     def validate(self, text, level):
         if text in self.valid_positions:
@@ -275,7 +277,7 @@ class ExpressionList(Validator):
     def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
         valids = [(None, option) for option in self.valid_expressions]
         return valids
-        
+
 class IllegalCharacterList(Validator):
     valid_sets = ["uppercase", "lowercase", "uppercase_UTF8", "lowercase_UTF8", "numbers_and_punctuation"]
     desc = "expects a comma-delimited list of character sets to ban. Valid options are: ('uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'). Example: `uppercase,lowercase`"

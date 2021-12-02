@@ -81,6 +81,7 @@ class Highlighter(QSyntaxHighlighter):
         self.highlight_rules.append(self.comment_rule)
 
     def highlightBlock(self, text):
+        text = text.replace('\u2028', ' ')
         for rule in self.highlight_rules:
             match_iterator = rule.pattern.globalMatch(text)
             while match_iterator.hasNext():
@@ -928,8 +929,11 @@ class EventProperties(QWidget):
 
     def text_changed(self):
         self.current.commands.clear()
-        text = self.text_box.toPlainText()
-        lines = [line.strip() for line in text.splitlines()]
+        lines = []
+        for doc_idx in range(self.text_box.document().blockCount()):
+            line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
+            if line:
+                lines.append(line)
         for line in lines:
             command = event_commands.parse_text(line)
             if command:

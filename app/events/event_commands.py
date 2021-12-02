@@ -2048,6 +2048,9 @@ def parse_text(text: str, strict=False) -> EventCommand:
             true_cmd_args = []
             command_info = command()
             for idx, arg in enumerate(cmd_args):
+                # remove line break chars. speak has its own handling, so keep them
+                if command_info.nid != 'speak':
+                    arg = arg.replace('\u2028', '')
                 if idx < len(command_info.keywords):
                     cmd_keyword = command_info.keywords[idx]
                 elif idx - len(command_info.keywords) < len(command_info.optional_keywords):
@@ -2065,10 +2068,12 @@ def parse_text(text: str, strict=False) -> EventCommand:
             return copy
     if strict:
         return None
+    elif not text:
+        return None
     else:
         return Comment([text])
 
-def parse(command, _eval_evals: Callable[[str], str] = None, _eval_vars: Callable[[str], str] = None):
+def parse(command: EventCommand, _eval_evals: Callable[[str], str] = None, _eval_vars: Callable[[str], str] = None):
     values = command.values
     num_keywords = len(command.keywords)
     true_values = values[:num_keywords]
