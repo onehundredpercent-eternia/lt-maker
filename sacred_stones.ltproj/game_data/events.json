@@ -7003,54 +7003,24 @@
                 ]
             ],
             [
-                "add_portrait",
+                "wait",
+                [
+                    "2000"
+                ]
+            ],
+            [
+                "interact_unit",
                 [
                     "Eirika",
-                    "Right"
-                ]
-            ],
-            [
-                "if",
-                [
-                    "False"
-                ]
-            ],
-            [
-                "for",
-                [
-                    "it",
-                    "range(5)"
-                ]
-            ],
-            [
-                "if",
-                [
-                    "{it}%2 == 0"
-                ]
-            ],
-            [
-                "speak",
+                    "2,5",
+                    "",
+                    "Iron Sword"
+                ],
                 [
                     "Eirika",
-                    "Hi, {it}"
-                ]
-            ],
-            [
-                "end",
-                []
-            ],
-            [
-                "endf",
-                []
-            ],
-            [
-                "end",
-                []
-            ],
-            [
-                "remove_portrait",
-                [
-                    "Eirika"
+                    "2,5",
+                    "",
+                    "Iron Sword (Iron Sword)"
                 ]
             ],
             [

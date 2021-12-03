@@ -804,12 +804,12 @@ class InteractUnit(EventCommand):
 
     desc = \
         """
-Initiates a battle between two units.
+Initiates a battle. The *Unit* will target the *Position* to start the combat.
 A *CombatScript* can optionally be provided to ensure a pre-set outcome to the battle.
 *Ability* can be used to specify which item or ability the attacker will use.
         """
 
-    keywords = ["Unit", "Unit"]
+    keywords = ["Unit", "Position"]
     optional_keywords = ["CombatScript", "Ability"]
 
 class SetName(EventCommand):

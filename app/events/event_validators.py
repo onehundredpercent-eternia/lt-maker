@@ -626,7 +626,7 @@ class RemoveType(OptionValidator):
     valid = ['fade', 'immediate', 'warp', 'swoosh']
 
 class RegionType(OptionValidator):
-    valid = ['normal', 'event', 'status', 'formation', 'wait', 'time']
+    valid = ['normal', 'event', 'status', 'formation', 'time']
 
 class Weather(OptionValidator):
     valid = ["rain", "sand", "snow", "fire", "light", "dark", "smoke", "fog", "event_tile"]

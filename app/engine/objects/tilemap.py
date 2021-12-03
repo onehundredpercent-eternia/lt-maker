@@ -247,7 +247,12 @@ class TileMapObject(Prefab):
         self = cls.from_prefab(prefab)
         self.restore_layers(s_dict['layers'])
         weather = s_dict.get('weather', [])
-        self.weather = [particles.create_system(nid, self.width, self.height, pos) for nid, pos in weather]
+        for save_w in weather:
+            if isinstance(save_w, tuple):
+                nid, pos = save_w
+                self.weather.append(particles.create_system(nid, self.width, self.height, pos))
+            else:
+                self.weather.append(particles.create_system(save_w, self.width, self.height))
         # Handle tile animations
         anims = s_dict.get('animations', [])
         self.animations = []

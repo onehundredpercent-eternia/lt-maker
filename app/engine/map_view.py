@@ -97,7 +97,7 @@ class MapView():
                 pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
                 pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + 2*math.sin(current_time//500))
                 font.blit(text, surf, pos)
-                
+    
         # surf = self._value_noise.draw(surf)
 
         surf = game.cursor.draw(surf, cull_rect)

@@ -1,6 +1,6 @@
 from app.utilities.data import Prefab
 
-region_types = ['normal', 'status', 'event', 'formation', 'wait', 'time']
+region_types = ['normal', 'status', 'event', 'formation', 'time']
 
 class Region(Prefab):
     def __init__(self, nid):

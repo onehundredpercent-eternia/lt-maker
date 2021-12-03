@@ -1875,13 +1875,13 @@ class Event():
 
     def interact_unit(self, command):
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-        unit1 = self.get_unit(values[0])
-        unit2 = self.get_unit(values[1])
-        if not unit1 or not unit1.position:
-            logging.error("Couldn't find %s" % unit1)
+        actor = self.get_unit(values[0])
+        if not actor or not actor.position:
+            logging.error("Couldn't find %s" % actor)
             return
-        if not unit2 or not unit2.position:
-            logging.error("Couldn't find %s" % unit2)
+        target = self.parse_pos(values[1])
+        if not target:
+            logging.error("Couldn't find target %s" % values[1])
             return
 
         if len(values) > 2 and values[2]:
@@ -1889,7 +1889,7 @@ class Event():
         else:
             script = None
 
-        items = item_funcs.get_all_items(unit1)
+        items = item_funcs.get_all_items(actor)
         item = None
         # Get item
         if len(values) > 3 and values[3]:
@@ -1914,7 +1914,7 @@ class Event():
                 logging.error("Unit does not have item!")
                 return
 
-        interaction.start_combat(unit1, unit2.position, item, event_combat=True, script=script)
+        interaction.start_combat(actor, target, item, event_combat=True, script=script)
         self.state = "paused"
 
     def add_group(self, command):
