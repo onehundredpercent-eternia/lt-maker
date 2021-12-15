@@ -7,7 +7,6 @@ Write Script
 Combat UI
  - Unit who is talking gets nametag
  - Wait Tree and Snake
-Implement Wyllt (draw Tree Map anim)
 No Free Roam Base:
     - Instead, after every 3rd chapter, forced free roam "dream" sequence where you can talk to each character in the party, and perhaps even dead characters.
     - You can also get items and even find items.
@@ -34,9 +33,9 @@ Aelfwynn (F) Red hair
 Eadan (M) Green hair
 Bjorn (M) Blond hair
 Millie (F) Blue hair
-Anna (F) Orange hair
+**Anna (F) Orange hair
 *Willow (F) Black hair
-Wound (Wolf, with large scar across one eye)
+*Wound (Wolf, with large scar across one eye)
 *Sorrel (M) Dark skin, brown hair
 Clover (F) Dark skin, brown hair light clothes, revealing, seductive, self-assured and curious. Some jewelry, roman aesthetic? some green highlights... Needs lacy clothes, I think... new body...
 *Iskander (M) Purple hair, rich
