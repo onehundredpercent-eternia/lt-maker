@@ -360,6 +360,8 @@ class GameState():
             for subitem_uid in item.subitem_uids:
                 subitem = self.item_registry.get(subitem_uid)
                 item.subitems.append(subitem)
+                for component in subitem.components:
+                    component.item = item
                 subitem.parent_item = item
         # Handle subskill
         for skill in self.skill_registry.values():
@@ -616,6 +618,11 @@ class GameState():
         unit = self.unit_registry.get(unit_nid)
         return unit
 
+    def get_convoy_inventory(self, party=None):
+        if not party:
+            party = self.party
+        return party.convoy
+
     def get_item(self, item_uid):
         item = self.item_registry.get(item_uid)
         return item
@@ -854,6 +861,18 @@ class GameState():
 
     def set_bexp(self, amount):
         self.parties[self.current_party].bexp = amount
+
+    def get_random(self, a: int, b: int):
+        """
+        Canonical method for getting a random number from within an event
+        without screwing up the turnwheel
+        """
+        from app.engine import action
+        old = static_random.get_other_random_state()
+        result = static_random.get_other(a, b)
+        new = static_random.get_other_random_state()
+        action.do(action.RecordOtherRandomState(old, new))
+        return result
 
 game = GameState()
 

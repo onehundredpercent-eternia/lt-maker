@@ -1,4 +1,5 @@
 import random
+from typing import Set, Tuple
 
 class Defaults():
     @staticmethod
@@ -188,6 +189,18 @@ def target_restrict(unit, item, def_pos, splash) -> bool:
             if not component.target_restrict(unit, item, def_pos, splash):
                 return False
     return True
+
+def range_restrict(unit, item) -> Tuple[Set, bool]:
+    restricted_range = set()
+    any_defined = False
+    for component in item.components:
+        if component.defines('range_restrict'):
+            any_defined = True
+            restricted_range |= component.range_restrict(unit, item)
+    if any_defined:
+        return restricted_range
+    else:
+        return None
 
 def item_restrict(unit, item, defender, def_item) -> bool:
     for component in item.components:

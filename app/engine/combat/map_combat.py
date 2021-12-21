@@ -13,12 +13,12 @@ from app.engine.combat.simple_combat import SimpleCombat
 class MapCombat(SimpleCombat):
     alerts: bool = True
 
-    def __init__(self, attacker, main_item, items, positions, main_target_positions, splash_positions, script):
+    def __init__(self, attacker, main_item, items, positions, main_target_positions, splash_positions, script, total_rounds=1):
         self._full_setup(attacker, main_item, items, positions, main_target_positions, splash_positions)
         self.state_machine = CombatPhaseSolver(
             attacker, self.main_item, self.items,
             self.defenders, self.splashes, self.target_positions,
-            self.defender, self.def_item, script)
+            self.defender, self.def_item, script, total_rounds)
 
         self.last_update = engine.get_time()
         self.state = 'init'

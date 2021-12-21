@@ -100,14 +100,30 @@
                 "speak",
                 [
                     "Seth",
-                    "\u2028Princess Eirika! This way!\u2028I can see no more of Grado's men.{w}\u2028If we've made it this far, we've \u2028surely earned a moment's rest.{w}\u2028Please forgive my grabbing you \u2028so...brusquely earlier."
+                    "\u2028Princess Eirika! This way!\u2028I can see no more of Grado's men.{w}\u2028If we've made it this far, we've \u2028surely earned a moment's rest.{w}\u2028Please forgive my grabbing you \u2028so...brusquely earlier.",
+                    "hold",
+                    "no_popup"
+                ],
+                [
+                    "Seth",
+                    "\u2028Princess Eirika! This way!\u2028I can see no more of Grado's men.{w}\u2028If we've made it this far, we've \u2028surely earned a moment's rest.{w}\u2028Please forgive my grabbing you \u2028so...brusquely earlier.",
+                    "hold",
+                    "FLAG(no_popup)"
                 ]
             ],
             [
                 "speak",
                 [
                     "Eirika",
-                    "Don't be foolish, Seth.|If it weren't for you, I would never have made it out of the castle.|You are the reason I'm still alive. You have my gratitude."
+                    "Don't be foolish, Seth.|If it weren't for you, I would never have made it out of the castle.|You are the reason I'm still alive. You have my gratitude.",
+                    "hold",
+                    "no_popup"
+                ],
+                [
+                    "Eirika",
+                    "Don't be foolish, Seth.|If it weren't for you, I would never have made it out of the castle.|You are the reason I'm still alive. You have my gratitude.",
+                    "hold",
+                    "FLAG(no_popup)"
                 ]
             ],
             [
@@ -149,7 +165,8 @@
                 "speak",
                 [
                     "Eirika",
-                    "Yes, of course. You're right.|Until I'm reunited with my father and brother, I must not despair.|Come, Seth. Let us go."
+                    "Yes, of course. You're right.|Until I'm reunited with my father and brother, I must not despair.|Come, Seth. Let us go.",
+                    "hold"
                 ]
             ],
             [
@@ -186,7 +203,8 @@
                 "speak",
                 [
                     "Seth",
-                    "\u2028Once we cross that bridge, we will\u2028be in Frelia, near Border Mulan.{w}\u2028Let us proceed, Princess Eirika."
+                    "\u2028Once we cross that bridge, we will\u2028be in Frelia, near Border Mulan.{w}\u2028Let us proceed, Princess Eirika.",
+                    "hold"
                 ]
             ],
             [
@@ -6934,6 +6952,13 @@
                 ]
             ],
             [
+                "give_money",
+                [
+                    "2000",
+                    "no_banner"
+                ]
+            ],
+            [
                 "add_lore",
                 [
                     "Eirika"
@@ -7003,24 +7028,15 @@
                 ]
             ],
             [
-                "wait",
+                "comment",
                 [
-                    "2000"
+                    "#wait;2000"
                 ]
             ],
             [
-                "interact_unit",
+                "comment",
                 [
-                    "Eirika",
-                    "2,5",
-                    "",
-                    "Iron Sword"
-                ],
-                [
-                    "Eirika",
-                    "2,5",
-                    "",
-                    "Iron Sword (Iron Sword)"
+                    "#interact_unit;Eirika (Eirika);Bone (Bone);;Iron Sword (Iron Sword);2"
                 ]
             ],
             [
@@ -7343,6 +7359,443 @@
                     "{unit}",
                     "Iron Sword,Slim Sword,Iron Lance,Slim Lance,Iron Axe",
                     "armory"
+                ]
+            ],
+            [
+                "transition",
+                [
+                    "Open"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    },
+    {
+        "name": "Arena",
+        "trigger": "Arena",
+        "level_nid": "DEBUG",
+        "condition": "True",
+        "commands": [
+            [
+                "comment",
+                [
+                    "# GBA style arena"
+                ]
+            ],
+            [
+                "transition",
+                [
+                    "Close"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "# Determine Enemy's class, level, and item, along with associated Wager"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "EntrantClass",
+                    "DB.classes.get(unit.klass)"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaEnemyKlassList",
+                    "[k.nid for k in DB.classes if 'ArenaIgnore' not in k.tags and k.tier == game.level_vars['EntrantClass'].tier]"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "KlassRNG",
+                    "game.get_random(0, len(game.level_vars['ArenaEnemyKlassList']) - 1)"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaEnemyKlass",
+                    "game.level_vars['ArenaEnemyKlassList'][game.level_vars['KlassRNG']]"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "low_level",
+                    "max(1, unit.level - 4)"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "high_level",
+                    "min(DB.classes.get(unit.klass).max_level, unit.level + 4)"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaEnemyLevel",
+                    "game.get_random(game.level_vars['low_level'], game.level_vars['high_level'])"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaPercent",
+                    "(game.level_vars['ArenaEnemyLevel'] - game.level_vars['low_level']) / float(game.level_vars['high_level'] - game.level_vars['low_level'])"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaWager",
+                    "int(min(550 + game.level_vars['ArenaPercent'] * (1100 - 550), game.get_money()))"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaWexpGain",
+                    "DB.classes.get(game.level_vars['ArenaEnemyKlass']).wexp_gain"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaItemDict",
+                    "{'Sword': 'Iron Sword', 'Lance': 'Iron Lance', 'Axe': 'Iron Axe', 'Bow': 'Iron Bow', 'Staff': 'Heal', 'Light': 'Lightning', 'Anima': 'Fire', 'Dark': 'Flux'}"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaWexpGainMaxNid",
+                    "max(game.level_vars['ArenaWexpGain'].items(), key=lambda x: x[1].wexp_gain)[0]"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "ArenaItem",
+                    "game.level_vars['ArenaItemDict'][game.level_vars['ArenaWexpGainMaxNid']]"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "# Actually instantiate unit"
+                ]
+            ],
+            [
+                "make_generic",
+                [
+                    "",
+                    "{var:ArenaEnemyKlass}",
+                    "{var:ArenaEnemyLevel}",
+                    "enemy"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "#make_generic;;Mercenary;{var:ArenaEnemyLevel};enemy"
+                ]
+            ],
+            [
+                "add_unit",
+                [
+                    "{created_unit}",
+                    "{unit}",
+                    "immediate",
+                    "closest"
+                ]
+            ],
+            [
+                "give_item",
+                [
+                    "{created_unit}",
+                    "{var:ArenaItem}",
+                    "no_banner"
+                ],
+                [
+                    "{created_unit}",
+                    "{var:ArenaItem}",
+                    "FLAG(no_banner)"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "#give_item;{created_unit};Iron Sword;FLAG(no_banner)"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "# Ask question"
+                ]
+            ],
+            [
+                "change_background",
+                [
+                    "Arena"
+                ]
+            ],
+            [
+                "draw_overlay_sprite",
+                [
+                    "Dialogue",
+                    "menu_bg_clear",
+                    "-4,8",
+                    "0"
+                ]
+            ],
+            [
+                "draw_overlay_sprite",
+                [
+                    "ArenaPortrait",
+                    "arena_portrait",
+                    "4,4",
+                    "1"
+                ]
+            ],
+            [
+                "table",
+                [
+                    "GoldDisplay",
+                    "[game.get_money()]",
+                    "",
+                    "",
+                    "60",
+                    "right",
+                    "funds_display",
+                    "expression"
+                ]
+            ],
+            [
+                "transition",
+                [
+                    "open"
+                ]
+            ],
+            [
+                "if",
+                [
+                    "unit.get_weapon()"
+                ]
+            ],
+            [
+                "choice",
+                [
+                    "ArenaChoice",
+                    "Would you like to wager {var:ArenaWager} gold?",
+                    "Yes,No",
+                    "",
+                    "horizontal"
+                ]
+            ],
+            [
+                "if",
+                [
+                    "game.game_vars['ArenaChoice'] == 'Yes'"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "# Take money"
+                ]
+            ],
+            [
+                "sound",
+                [
+                    "GoldExchange"
+                ]
+            ],
+            [
+                "give_money",
+                [
+                    "{eval:-game.level_vars['ArenaWager']}",
+                    "no_banner"
+                ],
+                [
+                    "{eval:-game.level_vars['ArenaWager']}",
+                    "FLAG(no_banner)"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Narrator",
+                    "Good luck. Don't get yourself killed.",
+                    "60,8",
+                    "160",
+                    "clear"
+                ]
+            ],
+            [
+                "transition",
+                [
+                    "close"
+                ]
+            ],
+            [
+                "interact_unit",
+                [
+                    "{unit}",
+                    "{created_unit}",
+                    "",
+                    "",
+                    "20",
+                    "arena",
+                    "force_animation"
+                ],
+                [
+                    "{unit}",
+                    "{created_unit}",
+                    "",
+                    "",
+                    "20",
+                    "FLAG(arena)",
+                    "FLAG(force_animation)"
+                ]
+            ],
+            [
+                "if",
+                [
+                    "unit2.is_dying or unit2.dead"
+                ]
+            ],
+            [
+                "transition",
+                [
+                    "Open"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Narrator",
+                    "So you won, eh? Here's your prize. {eval:2*game.level_vars['ArenaWager']} gold.",
+                    "60,8",
+                    "160",
+                    "clear"
+                ]
+            ],
+            [
+                "sound",
+                [
+                    "GoldExchange"
+                ]
+            ],
+            [
+                "give_money",
+                [
+                    "{eval:2*game.level_vars['ArenaWager']}",
+                    "no_banner"
+                ],
+                [
+                    "{eval:2*game.level_vars['ArenaWager']}",
+                    "FLAG(no_banner)"
+                ]
+            ],
+            [
+                "wait",
+                [
+                    "200"
+                ]
+            ],
+            [
+                "end",
+                []
+            ],
+            [
+                "has_attacked",
+                [
+                    "{unit}"
+                ]
+            ],
+            [
+                "else",
+                []
+            ],
+            [
+                "speak",
+                [
+                    "Narrator",
+                    "What are you wasting my time for?",
+                    "60,8",
+                    "160",
+                    "clear"
+                ]
+            ],
+            [
+                "end",
+                []
+            ],
+            [
+                "else",
+                []
+            ],
+            [
+                "speak",
+                [
+                    "Narrator",
+                    "What! You don't have a weapon! Get out of here!",
+                    "60,8",
+                    "160",
+                    "clear"
+                ]
+            ],
+            [
+                "end",
+                []
+            ],
+            [
+                "transition",
+                [
+                    "Close"
+                ]
+            ],
+            [
+                "change_background",
+                []
+            ],
+            [
+                "comment",
+                [
+                    "# Clean up"
+                ]
+            ],
+            [
+                "remove_unit",
+                [
+                    "{created_unit}",
+                    "immediate"
+                ]
+            ],
+            [
+                "rmtable",
+                [
+                    "GoldDisplay"
+                ]
+            ],
+            [
+                "remove_overlay_sprite",
+                [
+                    "Dialogue"
+                ]
+            ],
+            [
+                "remove_overlay_sprite",
+                [
+                    "ArenaPortrait"
                 ]
             ],
             [

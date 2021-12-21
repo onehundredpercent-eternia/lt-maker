@@ -3651,8 +3651,8 @@
                 "ai": "None",
                 "ai_group": null,
                 "starting_position": [
-                    2,
-                    6
+                    7,
+                    3
                 ],
                 "starting_traveler": null,
                 "generic": false
@@ -3941,6 +3941,21 @@
                 ],
                 "sub_nid": "Armory",
                 "condition": "True",
+                "only_once": false
+            },
+            {
+                "nid": "Arena",
+                "region_type": "event",
+                "position": [
+                    7,
+                    2
+                ],
+                "size": [
+                    1,
+                    1
+                ],
+                "sub_nid": "Arena",
+                "condition": "not unit.has_attacked",
                 "only_once": false
             },
             {

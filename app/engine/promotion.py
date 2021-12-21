@@ -45,6 +45,7 @@ class PromotionChoiceState(State):
         display_options = self._get_choices()
 
         self.menu = menus.Choice(self.unit, display_options, (14, 13))
+        self.menu.set_limit(5)
         self.child_menu = None
 
         self.animations = []
@@ -226,7 +227,7 @@ class PromotionState(State, MockCombat):
     def start(self):
         self.create_background()
 
-        music = 'music_%s' % self.name 
+        music = 'music_%s' % self.name
         self.promotion_song = None
         if DB.constants.value(music):
             self.promotion_song = \
@@ -246,7 +247,7 @@ class PromotionState(State, MockCombat):
         platform = RESOURCES.platforms[platform_type + '-Melee']
         self.left_platform = engine.image_load(platform)
         self.right_platform = engine.flip_horiz(self.left_platform.copy())
-        
+
         # Name tag
         self.name_tag = SPRITES.get('combat_name_right_' + color).copy()
         width = FONT['text-brown'].width(self.unit.name)
@@ -308,7 +309,7 @@ class PromotionState(State, MockCombat):
                 if self.promotion_song:
                     SOUNDTHREAD.fade_back()
                 return 'repeat'
-        
+
         if self.state != self.current_state:
             self.last_update = engine.get_time()
 

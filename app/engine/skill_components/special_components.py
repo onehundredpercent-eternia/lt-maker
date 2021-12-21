@@ -1,3 +1,4 @@
+from app.engine.objects.unit import UnitObject
 from app.data.skill_components import SkillComponent
 from app.data.components import Type
 
@@ -56,3 +57,15 @@ class ManaOnKill(SkillComponent):
         if target and target.is_dying:
             return self.value
         return 0
+
+class EventAfterInitiatedCombat(SkillComponent):
+    nid = 'event_after_initiated_combat'
+    desc = 'calls event after combat initated by user'
+    tag = 'advanced'
+
+    expose = Type.Event
+    value = ''
+
+    def post_combat(self, playback, unit: UnitObject, item, target: UnitObject, mode):
+        if mode == 'attack':
+            game.events.trigger_specific_event(self.value, unit, target, item, unit.position)

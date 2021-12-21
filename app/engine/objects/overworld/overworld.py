@@ -41,6 +41,10 @@ class OverworldNodeObject():
     def nid(self) -> NID:
         return self.prefab.nid
 
+    @property
+    def name(self) -> str:
+        return self.prefab.name
+
     @classmethod
     def from_prefab(cls, prefab: OverworldNodePrefab):
         node = cls()

@@ -1,29 +1,54 @@
+from __future__ import annotations
+from typing import FrozenSet, TYPE_CHECKING
+from functools import lru_cache
+
 from app.data.database import DB
-from app.engine import (equations, item_funcs, item_system, line_of_sight,
-                        pathfinding, skill_system, combat_calcs)
+from app.engine import (combat_calcs, equations, item_funcs, item_system,
+                        line_of_sight, pathfinding, skill_system)
 from app.engine.game_state import game
 from app.utilities import utils
 
+if TYPE_CHECKING:
+    from app.engine.objects.unit import UnitObject
+    from app.engine.objects.item import ItemObject
+
 
 # Consider making these sections faster
-def get_shell(valid_moves: set, potential_range: set, width: int, height: int) -> set:
+def get_shell(valid_moves: set, potential_range: set, width: int, height: int, manhattan_restriction: set = None) -> set:
     valid_attacks = set()
-    for valid_move in valid_moves:
-        valid_attacks |= find_manhattan_spheres(potential_range, valid_move[0], valid_move[1])
+    if manhattan_restriction:
+        for valid_move in valid_moves:
+            valid_attacks |= restricted_manhattan_spheres(potential_range, valid_move[0], valid_move[1], manhattan_restriction)
+    else:
+        for valid_move in valid_moves:
+            valid_attacks |= find_manhattan_spheres(potential_range, valid_move[0], valid_move[1])
     return {pos for pos in valid_attacks if 0 <= pos[0] < width and 0 <= pos[1] < height}
+
+def restricted_manhattan_spheres(rng: set, x: int, y: int, manhattan_restriction: set) -> set:
+    sphere = cached_base_manhattan_spheres(frozenset(rng))
+    sphere = {(a + x, b + y) for (a, b) in sphere if (a, b) in manhattan_restriction}
+    return sphere
 
 # Consider making these sections faster -- use memory?
 def find_manhattan_spheres(rng: set, x: int, y: int) -> set:
+    sphere = cached_base_manhattan_spheres(frozenset(rng))
+    sphere = {(a + x, b + y) for (a, b) in sphere}
+    return sphere
+
+@lru_cache(1024)
+def cached_base_manhattan_spheres(rng: FrozenSet[int]) -> set:
     _range = range
     _abs = abs
-    main_set = set()
+    sphere = set()
     for r in rng:
-        # Finds manhattan spheres of radius r
-        for i in _range(-r, r + 1):
+        for i in _range(-r, r+1):
             magn = _abs(i)
-            main_set.add((x + i, y + r - magn))
-            main_set.add((x + i, y - r + magn))
-    return main_set
+            dx = i
+            dy = r - magn
+            sphere.add((dx, dy))
+            sphere.add((dx, -dy))
+    return sphere
+
 
 def get_nearest_open_tile(unit, position):
     r = 0
@@ -57,7 +82,7 @@ def get_adjacent_positions(pos):
 def get_adj_units(unit) -> list:
     adj_positions = get_adjacent_positions(unit.position)
     adj_units = [game.board.get_unit(pos) for pos in adj_positions]
-    adj_units = [_ for _ in adj_units if _]
+    adj_units = [u for u in adj_units if u]
     return adj_units
 
 def get_adj_allies(unit) -> list:
@@ -65,7 +90,7 @@ def get_adj_allies(unit) -> list:
     adj_allies = [u for u in adj_units if skill_system.check_ally(unit, u)]
     return adj_allies
 
-def get_attacks(unit, item=None, force=False) -> set:
+def get_attacks(unit: UnitObject, item: ItemObject = None, force=False) -> set:
     """
     Determines all possible positions the unit could attack
     Does not attempt to determine if an enemy is actually in that place
@@ -76,43 +101,46 @@ def get_attacks(unit, item=None, force=False) -> set:
         item = unit.get_weapon()
     if not item:
         return set()
+    no_attack_after_move = item_system.no_attack_after_move(unit, item) or skill_system.no_attack_after_move(unit)
+    if no_attack_after_move and unit.has_moved_any_distance:
+        return set()
 
     item_range = item_funcs.get_range(unit, item)
     if max(item_range) >= 99:
         attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
     else:
-        attacks = get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height)
+        manhattan_restriction = item_system.range_restrict(unit, item)
+        attacks = get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+
+    return attacks
+
+def _get_possible_attacks(unit, valid_moves, items):
+    attacks = set()
+    max_range = 0
+    for item in items:
+        no_attack_after_move = item_system.no_attack_after_move(unit, item) or skill_system.no_attack_after_move(unit)
+        if no_attack_after_move and unit.has_moved_any_distance:
+            continue
+        item_range = item_funcs.get_range(unit, item)
+        max_range = max(max_range, max(item_range))
+        if max_range >= 99:
+            attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
+        else:
+            manhattan_restriction = item_system.range_restrict(unit, item)
+            if no_attack_after_move:
+                attacks |= get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+            else:
+                attacks |= get_shell(valid_moves, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+
+    if DB.constants.value('line_of_sight'):
+        attacks = set(line_of_sight.line_of_sight(valid_moves, attacks, max_range))
     return attacks
 
 def get_possible_attacks(unit, valid_moves) -> set:
-    attacks = set()
-    max_range = 0
-    for item in get_all_weapons(unit):
-        item_range = item_funcs.get_range(unit, item)
-        max_range = max(max_range, max(item_range))
-        if max_range >= 99:
-            attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
-        else:
-            attacks |= get_shell(valid_moves, item_range, game.tilemap.width, game.tilemap.height)
-
-    if DB.constants.value('line_of_sight'):
-        attacks = set(line_of_sight.line_of_sight(valid_moves, attacks, max_range))
-    return attacks
+    return _get_possible_attacks(unit, valid_moves, get_all_weapons(unit))
 
 def get_possible_spell_attacks(unit, valid_moves) -> set:
-    attacks = set()
-    max_range = 0
-    for item in get_all_spells(unit):
-        item_range = item_funcs.get_range(unit, item)
-        max_range = max(max_range, max(item_range))
-        if max_range >= 99:
-            attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
-        else:
-            attacks |= get_shell(valid_moves, item_range, game.tilemap.width, game.tilemap.height)
-
-    if DB.constants.value('line_of_sight'):
-        attacks = set(line_of_sight.line_of_sight(valid_moves, attacks, max_range))
-    return attacks
+    return _get_possible_attacks(unit, valid_moves, get_all_spells(unit))
 
 # Uses all weapons the unit has access to to find its potential range
 def find_potential_range(unit, weapon=True, spell=False, boundary=False) -> set:
@@ -209,6 +237,9 @@ def get_valid_targets(unit, item=None) -> set:
     if not item:
         item = unit.get_weapon()
     if not item:
+        return set()
+    if ((item_system.no_attack_after_move(unit, item) or skill_system.no_attack_after_move(unit))
+         and unit.has_moved_any_distance):
         return set()
 
     # Check sequence item targeting

@@ -951,7 +951,10 @@ class Transfer(Action):
             self.other.set_guard_gauge(val)
             self.unit.set_guard_gauge(self.unit.get_guard_gauge() + val)
 
-        logging.info(self.unit.traveler + " was paired with " + self.unit.nid + " but transfered to " + self.other.nid)
+        if self.unit.traveler:
+            logging.info(self.unit.traveler + " was paired with " + self.unit.nid + " but transfered to " + self.other.nid)
+        else:
+            logging.info(self.other.traveler + " was paired with " + self.other.nid + " but transfered to " + self.unit.nid)
 
         self.unit.traveler, self.other.traveler = self.other.traveler, self.unit.traveler
 
@@ -2003,7 +2006,7 @@ class ChangePortrait(Action):
         self.unit.portrait_nid = self.new_portrait
 
     def reverse(self):
-        self.unit.portrait.nid = self.old_portrait
+        self.unit.portrait_nid = self.old_portrait
 
 
 class AddTag(Action):
@@ -2338,6 +2341,21 @@ class RecordRandomState(Action):
 
     def reverse(self):
         static_random.set_combat_random_state(self.old)
+
+
+class RecordOtherRandomState(Action):
+    def __init__(self, old, new):
+        self.old = old
+        self.new = new
+
+    def do(self):
+        pass
+
+    def execute(self):
+        static_random.set_other_random_state(self.new)
+
+    def reverse(self):
+        static_random.set_other_random_state(self.old)
 
 
 class TriggerCharge(Action):

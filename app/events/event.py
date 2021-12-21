@@ -1,8 +1,9 @@
 from __future__ import annotations
-from app.sprites import SPRITES
+
+import ast
 import logging
 import re
-from typing import Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
@@ -14,8 +15,15 @@ from app.engine import (action, background, banner, dialog, engine, evaluate,
                         skill_system, static_random, target_system, unit_funcs)
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
+from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper import \
+    SimpleMenuUI
 from app.engine.game_state import game
 from app.engine.graphics.dialog.narration_dialogue import NarrationDialogue
+from app.engine.graphics.ui_framework.premade_animations.animation_templates import \
+    translate_anim
+from app.engine.graphics.ui_framework.ui_framework import UIComponent
+from app.engine.graphics.ui_framework.ui_framework_animation import \
+    InterpolationType
 from app.engine.objects.item import ItemObject
 from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.tilemap import TileMapObject
@@ -27,7 +35,9 @@ from app.engine.sound import SOUNDTHREAD
 from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait, MementoEventPortrait
 from app.resources.resources import RESOURCES
+from app.sprites import SPRITES
 from app.utilities import str_utils, utils
+from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
 
 if MEMENTO_MODE:
@@ -88,8 +98,8 @@ class Event():
         else:
             self.dialog_background = None
         self.portraits: Dict[str, EventPortrait] = {}
-        self.text_boxes = []
-        self.other_boxes = []
+        self.text_boxes: List[dialog.Dialog] = []
+        self.other_boxes: List[Tuple[NID, Any]] = []
         self.overlay_ui = uif.UIComponent.create_base_component()
 
         self.prev_state = None
@@ -267,8 +277,8 @@ class Event():
             portrait.draw(surf)
 
         # Draw other boxes
-        self.other_boxes = [box for box in self.other_boxes if box.update()]
-        for box in self.other_boxes:
+        self.other_boxes = [(nid, box) for (nid, box) in self.other_boxes if box.update()]
+        for _, box in self.other_boxes:
             box.draw(surf)
 
         # Draw text/dialog boxes
@@ -369,7 +379,6 @@ class Event():
         """
         Returns true if the processor should be processing this command
         """
-
         if command.nid == 'if':
             logging.info('%s: %s', command.nid, command.values)
             if not self.if_stack or self.if_stack[-1]:
@@ -552,6 +561,10 @@ class Event():
         elif command.nid == 'speak':
             self.speak(command)
 
+        elif command.nid == 'unhold':
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.unhold(*values, flags)
+
         elif command.nid == 'add_portrait':
             self.add_portrait(command)
 
@@ -680,8 +693,8 @@ class Event():
             try:
                 val = evaluate.evaluate(to_eval, self.unit, self.unit2, self.item, self.position, self.region)
                 action.do(action.SetGameVar(nid, val))
-            except:
-                logging.error("Could not evaluate {%s}" % to_eval)
+            except Exception as e:
+                logging.error("Could not evaluate %s (%s)" % (to_eval, e))
 
         elif command.nid == 'inc_game_var':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -691,8 +704,8 @@ class Event():
                 try:
                     val = evaluate.evaluate(to_eval, self.unit, self.unit2, self.item, self.position, self.region)
                     action.do(action.SetGameVar(nid, game.game_vars.get(nid, 0) + val))
-                except:
-                    logging.error("Could not evaluate {%s}" % to_eval)
+                except Exception as e:
+                    logging.error("Could not evaluate %s (%s)" % (to_eval, e))
             else:
                 action.do(action.SetGameVar(nid, game.game_vars.get(nid, 0) + 1))
 
@@ -703,8 +716,8 @@ class Event():
             try:
                 val = evaluate.evaluate(to_eval, self.unit, self.unit2, self.item, self.position, self.region)
                 action.do(action.SetLevelVar(nid, val))
-            except:
-                logging.error("Could not evaluate {%s}" % to_eval)
+            except Exception as e:
+                logging.error("Could not evaluate %s (%s)" % (to_eval, e))
                 return
             # Need to update fog of war when we change it
             if nid in ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius'):
@@ -720,8 +733,8 @@ class Event():
                 try:
                     val = evaluate.evaluate(to_eval, self.unit, self.unit2, self.item, self.position, self.region)
                     action.do(action.SetLevelVar(nid, game.level_vars.get(nid, 0) + val))
-                except:
-                    logging.error("Could not evaluate {%s}" % to_eval)
+                except Exception as e:
+                    logging.error("Could not evaluate %s (%s)" % (to_eval, e))
             else:
                 action.do(action.SetLevelVar(nid, game.level_vars.get(nid, 0) + 1))
 
@@ -884,6 +897,12 @@ class Event():
 
         elif command.nid == 'set_stats':
             self.set_stats(command)
+
+        elif command.nid == 'change_growths':
+            self.change_growths(command)
+
+        elif command.nid == 'set_growths':
+            self.set_growths(command)
 
         elif command.nid == 'autolevel_to':
             self.autolevel_to(command)
@@ -1217,29 +1236,12 @@ class Event():
             self.arrange_formation()
 
         elif command.nid == 'prep':
-            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            if values and values[0].lower() in self.true_vals:
-                b = True
-            else:
-                b = False
-            action.do(action.SetLevelVar('_prep_pick', b))
-            if len(values) > 1 and values[1]:
-                action.do(action.SetGameVar('_prep_music', values[1]))
-            game.state.change('prep_main')
-            self.state = 'paused'  # So that the message will leave the update loop
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.prep(*values, flags)
 
         elif command.nid == 'base':
-            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            panorama_nid = values[0]
-            action.do(action.SetGameVar('_base_bg_name', panorama_nid))
-            if len(values) > 1 and values[1]:
-                action.do(action.SetGameVar('_base_music', values[1]))
-            if 'show_map' in flags:
-                action.do(action.SetGameVar('_base_transparent', True))
-            else:
-                action.do(action.SetGameVar('_base_transparent', False))
-            game.state.change('base_main')
-            self.state = 'paused'
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.base(*values, flags)
 
         elif command.nid == 'shop':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -1260,19 +1262,19 @@ class Event():
             self.state = 'paused'
 
         elif command.nid == 'choice':
-            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            nid = values[0]
-            header = values[1]
-            options_list = values[2].split(',')
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.choice(*values, flags)
 
-            orientation = 'vertical'
-            if len(values) > 3 and values[3]:
-                if values[3].lower() in ('h', 'horiz', 'horizontal'):
-                    orientation = 'horizontal'
-
-            game.memory['player_choice'] = (nid, header, options_list, orientation)
-            game.state.change('player_choice')
-            self.state = 'paused'
+        elif command.nid == 'unchoice':
+            try:
+                prev_state = game.state.get_prev_state()
+                if prev_state.name == 'player_choice':
+                    prev_state_nid = prev_state.nid
+                    unchoose_prev_state = game.memory[prev_state_nid + '_unchoice']
+                    if unchoose_prev_state:
+                        unchoose_prev_state()
+            except Exception as e:
+                logging.error("Unchoice failed: " + e)
 
         elif command.nid == 'text_entry':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -1291,6 +1293,15 @@ class Event():
             game.memory['text_entry'] = (nid, header, limit, illegal_characters, force_entry)
             game.state.change('text_entry')
             self.state = 'paused'
+
+        elif command.nid == 'table':
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.display_table(*values, flags)
+
+        elif command.nid == 'rmtable':
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            nid = values[0]
+            self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
         elif command.nid == 'chapter_title':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -1356,7 +1367,7 @@ class Event():
             custom_string = values[0]
 
             new_location_card = dialog.LocationCard(custom_string)
-            self.other_boxes.append(new_location_card)
+            self.other_boxes.append((None, new_location_card))
 
             self.wait_time = engine.get_time() + new_location_card.exist_time
             self.state = 'waiting'
@@ -1369,7 +1380,7 @@ class Event():
             center = 'center' in flags
 
             new_credits = dialog.Credits(title, credits, wait, center)
-            self.other_boxes.append(new_credits)
+            self.other_boxes.append((None, new_credits))
 
             self.wait_time = engine.get_time() + new_credits.wait_time()
             self.state = 'waiting'
@@ -1470,22 +1481,63 @@ class Event():
             self.separate(command)
 
         elif command.nid == 'draw_overlay_sprite':
-            values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
             name = values[0]
             sprite_nid = values[1]
             z = 0
             pos = (0, 0)
-            if len(values) > 2:
-                pos = eval(values[2])  # Why do we eval this instead of just reading position like we do elsewhere?
-            if len(values) > 3:
-                z = eval(values[3])  # Why do we eval this also?
+            if values[2]: # position
+                pos = tuple(str_utils.intify(values[2]))
+            if values[3]: # z-level
+                z = int(values[3])
+            anim_dir = values[4]
+
             sprite = SPRITES.get(sprite_nid)
-            self.overlay_ui.add_surf(sprite, pos, z, name)
+            component = UIComponent.from_existing_surf(sprite)
+            component.name = name
+            component.disable()
+            x, y = pos
+            if anim_dir:
+                if anim_dir == 'west':
+                    start_x = -component.width
+                    start_y = y
+                elif anim_dir == 'east':
+                    start_x = WINWIDTH
+                    start_y = y
+                elif anim_dir == 'north':
+                    start_x = x
+                    start_y = -component.height
+                elif anim_dir == 'south':
+                    start_x = x
+                    start_y = WINHEIGHT
+                enter_anim = translate_anim((start_x, start_y), (x, y), 750, interp_mode=InterpolationType.CUBIC)
+                exit_anim = translate_anim((x, y), (start_x, start_y), 750, disable_after=True, interp_mode=InterpolationType.CUBIC)
+                component.save_animation(enter_anim, '!enter')
+                component.save_animation(exit_anim, '!exit')
+
+            self.overlay_ui.add_child(component)
+            if self.do_skip:
+                component.enable()
+                return
+            else:
+                component.enter()
+
+            if anim_dir and 'no_block' not in flags:
+                self.wait_time = engine.get_time() + 750
+                self.state = 'waiting'
 
         elif command.nid == 'remove_overlay_sprite':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             name = values[0]
-            self.overlay_ui.remove_surf(name)
+            component = self.overlay_ui.get_child(name)
+            if component:
+                if self.do_skip:
+                    component.disable()
+                else:
+                    component.exit()
+                    if component.is_animating() and 'no_block' not in flags:
+                        self.wait_time = engine.get_time() + 750
+                        self.state = 'waiting'
 
     def add_portrait(self, command):
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -1677,7 +1729,10 @@ class Event():
         text = text.replace('\u2028', '{sub_break}')  # sub break to distinguish it
 
         if len(values) > 2 and values[2]:
-            position = self.parse_pos(values[2])
+            if values[2] == 'center':
+                position = 'center'
+            else:
+                position = self.parse_pos(values[2])
         else:
             position = None
         if len(values) > 3 and values[3]:
@@ -1688,11 +1743,17 @@ class Event():
             variant = values[4]
         else:
             variant = None
+        if len(values) > 5 and values[5]:
+            nid = values[5]
+        else:
+            nid = None
 
         portrait = self.portraits.get(speaker)
         bg = 'message_bg_base'
         if variant == 'noir':
             bg = 'menu_bg_dark'
+        elif variant == 'clear':
+            bg = None
         elif variant == 'cinematic':
             bg = None
             if not position:
@@ -1720,13 +1781,23 @@ class Event():
             new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
             self.saturate_portrait(portrait)
         else:
-            new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant)
+            autosize = 'fit' in flags
+            new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant, nid=nid, autosize=autosize)
+            new_dialog.hold = 'hold' in flags
+            if 'no_popup' in flags:
+                new_dialog.last_update = engine.get_time() - 10000
+
         self.text_boxes.append(new_dialog)
         self.state = 'dialog'
         # Bring portrait to forefront
         if portrait and 'low_priority' not in flags:
             portrait.priority = self.priority_counter
             self.priority_counter += 1
+
+    def unhold(self, unhold_nid, flags):
+        for box in self.text_boxes:
+            if box.nid == unhold_nid:
+                box.hold = False
 
     def _place_unit(self, unit, position, entry_type):
         if self.do_skip:
@@ -1889,6 +1960,11 @@ class Event():
         else:
             script = None
 
+        if len(values) > 4 and values[4]:
+            total_rounds = utils.clamp(int(values[4]), 1, 99)
+        else:
+            total_rounds = 1
+
         items = item_funcs.get_all_items(actor)
         item = None
         # Get item
@@ -1908,13 +1984,17 @@ class Event():
                 item_system.init(item)
                 game.register_item(item)
         else:
-            if items:
+            if actor.get_weapon():
+                item = actor.get_weapon()
+            elif items:
                 item = items[0]
             else:
                 logging.error("Unit does not have item!")
                 return
 
-        interaction.start_combat(actor, target, item, event_combat=True, script=script)
+        interaction.start_combat(
+            actor, target, item, event_combat=True, script=script, total_rounds=total_rounds,
+            arena='arena' in flags, force_animation='force_animation' in flags)
         self.state = "paused"
 
     def add_group(self, command):
@@ -2134,6 +2214,9 @@ class Event():
                     action.do(action.LeaveMap(unit))
 
     def check_placement(self, unit, position, placement):
+        if not game.board.check_bounds(position):
+            logging.error("%s: position out of bounds %s", 'check_placement', position)
+            return None
         current_occupant = game.board.get_unit(position)
         if current_occupant:
             if placement == 'giveup':
@@ -2307,7 +2390,8 @@ class Event():
         new_unit.party = game.current_party
         game.full_register(new_unit)
         if assign_unit:
-            self.unit = new_unit
+            self.unit2 = new_unit
+            self.created_unit = new_unit
 
     def create_unit(self, command):
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -2360,7 +2444,8 @@ class Event():
         new_unit.party = game.current_party
         game.full_register(new_unit)
         if assign_unit:
-            self.unit = new_unit
+            self.unit2 = new_unit
+            self.created_unit = new_unit
         if DB.constants.value('initiative'):
             action.do(action.InsertInitiative(unit))
 
@@ -2859,6 +2944,84 @@ class Event():
             action.execute(action.ArriveOnMap(unit, position))
             action.execute(action.Reset(unit))
 
+    def base(self, panorama_nid: str, music_nid: str, other_options_list: str,
+             other_options_enabled: str, other_options_events: str, flags: list):
+        # set panorama
+        action.do(action.SetGameVar('_base_bg_name', panorama_nid))
+        # set music
+        if music_nid:
+            action.do(action.SetGameVar('_base_music', music_nid))
+
+        if other_options_list:
+            options_list = other_options_list.split(',')
+            options_enabled = [False for option in options_list]
+            options_events = [None for option in options_list]
+
+            enabled_strs = other_options_enabled.split(',') if other_options_enabled else []
+            if len(enabled_strs) <= len(options_enabled):
+                for idx, is_enabled in enumerate(enabled_strs):
+                    if is_enabled in self.true_vals:
+                        options_enabled[idx] = True
+                action.do(action.SetGameVar('_base_options_enabled', options_enabled))
+            else:
+                logging.error("base: too many bools in option enabled list: ", other_options_enabled)
+                return
+
+            event_nids = other_options_events.split(',') if other_options_events else []
+            if len(event_nids) <= len(options_events):
+                for idx, event_nid in enumerate(event_nids):
+                    options_events[idx] = event_nid
+                action.do(action.SetGameVar('_base_options_events', options_events))
+            else:
+                logging.error("base: too many events in option event list: ", other_options_events)
+                return
+            action.do(action.SetGameVar('_base_additional_options', options_list))
+
+        if 'show_map' in flags:
+            action.do(action.SetGameVar('_base_transparent', True))
+        else:
+            action.do(action.SetGameVar('_base_transparent', False))
+
+        game.state.change('base_main')
+        self.state = 'paused'
+
+    def prep(self, pick_units_enabled: str, music_nid: str, other_options_list: str,
+             other_options_enabled: str, other_options_events: str, flags: dict):
+        if pick_units_enabled and pick_units_enabled.lower() in self.true_vals:
+            b = True
+        else:
+            b = False
+        action.do(action.SetLevelVar('_prep_pick', b))
+        if music_nid:
+            action.do(action.SetGameVar('_prep_music', music_nid))
+
+        if other_options_list:
+            options_list = other_options_list.split(',')
+            options_enabled = [False for option in options_list]
+            options_events = [None for option in options_list]
+
+            enabled_strs = other_options_enabled.split(',') if other_options_enabled else []
+            if len(enabled_strs) <= len(options_enabled):
+                for idx, is_enabled in enumerate(enabled_strs):
+                    if is_enabled in self.true_vals:
+                        options_enabled[idx] = True
+                action.do(action.SetGameVar('_prep_options_enabled', options_enabled))
+            else:
+                logging.error("base: too many bools in option enabled list: ", other_options_enabled)
+                return
+
+            event_nids = other_options_events.split(',') if other_options_events else []
+            if len(event_nids) <= len(options_events):
+                for idx, event_nid in enumerate(event_nids):
+                    options_events[idx] = event_nid
+                action.do(action.SetGameVar('_prep_options_events', options_events))
+            else:
+                logging.error("base: too many events in option event list: ", other_options_events)
+                return
+            action.do(action.SetGameVar('_prep_additional_options', options_list))
+        game.state.change('prep_main')
+        self.state = 'paused'  # So that the message will leave the update loop
+
     def find_unlock(self, command):
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
         unit = self.get_unit(values[0])
@@ -2920,6 +3083,119 @@ class Event():
                 game.alerts.append(banner.BrokenItem(unit, chosen_item))
                 game.state.change('alert')
                 self.state = 'paused'
+
+    def display_table(self, nid: NID, contents: str, desc: str,
+                      row_col_size: str, width: str, alignment: str, bg: str, entry_type: str, flags: Dict):
+        box_nids = [nid for nid, _ in self.other_boxes]
+        if nid in box_nids:
+            logging.error("UI element with nid %s already exists" % nid)
+            return
+
+        # default args
+        if not row_col_size:
+            row_col_size = "0, 1"
+        if not width:
+            width = '-1'
+        if not bg:
+            bg = 'menu_bg_base'
+
+        rows, cols = tuple(int(i) for i in row_col_size.split(','))
+        row_width = int(width)
+
+        # determine data type
+        dtype = 'str'
+        if entry_type:
+            dtype = entry_type
+
+        # figure out function or list of NIDs
+        if 'expression' in flags:
+            try:
+                # eval once to make sure it's eval-able
+                ast.parse(contents)
+                def tryexcept(callback_expr):
+                    try:
+                        val = eval(callback_expr)
+                        if isinstance(val, list):
+                            return val
+                        else:
+                            return [str(val)]
+                    except:
+                        logging.error("display_table: failed to eval %s", callback_expr)
+                        return [""]
+                data = lambda: tryexcept(contents)
+            except:
+                logging.error('%s is not a valid python expression' % contents)
+        else: # list of NIDs
+            data = contents.split(',')
+            data = [s.strip() for s in data]
+
+        align = Alignments.TOP_LEFT
+        if alignment:
+            align = Alignments(alignment)
+        table_ui = SimpleMenuUI(data, dtype, title=desc, rows=rows, cols=cols, row_width=row_width, alignment=align, bg=bg)
+        self.other_boxes.append((nid, table_ui))
+
+    def choice(self, nid: NID, desc: str, choices: str, width: str, orientation: str,
+               alignment: str, bg: str, event_nid: str, entry_type: str, dims: str, flags: Dict):
+        nid = nid
+        header = desc
+
+        if not width:
+            width = '-1'
+        if not bg:
+            bg = 'menu_bg_base'
+
+        # determine data type
+        dtype = 'str'
+        if entry_type:
+            dtype = entry_type
+
+        # figure out function or list of NIDs
+        if 'expression' in flags:
+            try:
+                ast.parse(choices)
+                def tryexcept(callback_expr):
+                    try:
+                        val = eval(callback_expr)
+                        if isinstance(val, list):
+                            return val
+                        else:
+                            return [str(val)]
+                    except:
+                        return [""]
+                data = lambda: tryexcept(choices)
+            except:
+                logging.error('%s is not a valid python expression' % choices)
+        else: # list of NIDs
+            data = choices.split(',')
+            data = [s.strip() for s in data]
+
+        row_width = int(width)
+
+        if not orientation:
+            orientation = 'vertical'
+        else:
+            if orientation in ('h', 'horiz', 'horizontal'):
+                orientation = 'horizontal'
+            else:
+                orientation = 'vertical'
+
+        if not alignment:
+            align = Alignments.CENTER
+        else:
+            align = Alignments(alignment)
+
+        size = None
+        if dims:
+            size = tuple([int(x) for x in dims.split(',')])
+
+        should_persist = False
+        if 'persist' in flags:
+            should_persist = True
+
+        game.memory['player_choice'] = (nid, header, data, row_width, orientation, dtype, should_persist, align, bg, event_nid, size)
+        game.state.change('player_choice')
+        self.state = 'paused'
 
     def trigger_script(self, command):
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -3001,8 +3277,8 @@ class Event():
         # save level state
         self.prev_game_boundary = game.boundary
         self.prev_board = game.board
-        from app.engine.overworld.overworld_states import OverworldState
-        OverworldState.set_up_overworld_game_state(overworld_nid)
+        from app.engine.overworld.overworld_states import OverworldFreeState
+        OverworldFreeState.set_up_overworld_game_state(overworld_nid)
 
     def set_overworld_position(self, entity_nid: NID, location: NID | Tuple[float, float], flags={}):
         if isinstance(location, tuple): # setting to a direct coordinate
@@ -3033,7 +3309,7 @@ class Event():
                 # both exist and node is enabled
                 # move the entity
                 entity.on_node = node.nid
-        if not 'no_animate' in flags:
+        if 'no_animate' not in flags:
             entity.sprite.set_transition('fade_in')
 
     def reveal_overworld_node(self, command):
@@ -3086,7 +3362,7 @@ class Event():
         if not entity:
             logging.error("%s: No such entity exists with nid %s", "disable_overworld_entity", values[0])
             return
-        if not 'no_animate' in flags:
+        if 'no_animate' not in flags:
             entity.sprite.set_transition('fade_out')
         entity.on_node = None
         entity.display_position = None
@@ -3094,7 +3370,8 @@ class Event():
     def overworld_move_unit(self, entity_nid: NID, target_location: Tuple[int, int] | NID,
                             speed_adj: float, path: List[Point], flags={}):
         # default values
-        if speed_adj is None: speed_adj = 5
+        if speed_adj is None:
+            speed_adj = 5
 
         # function
         entity = game.overworld_controller.entities.get(entity_nid, None)
@@ -3246,7 +3523,7 @@ class Event():
             return
         if len(values) > 1 and values[1]:
             unit_nid = values[1]
-            if not unit_nid in DB.units.keys():
+            if unit_nid not in DB.units.keys():
                 logging.error('%s: No such unit with nid %s', 'create_overworld_entity', unit_nid)
             new_entity = OverworldEntityObject.from_unit_prefab(entity_nid, None, unit_nid)
             game.overworld_controller.add_entity(new_entity)
@@ -3314,6 +3591,8 @@ class Event():
             return self.unit
         elif text == '{unit2}':
             return self.unit2
+        elif text == '{created_unit}':
+            return self.created_unit
         else:
             return game.get_unit(text)
 
@@ -3329,3 +3608,40 @@ class Event():
                 if node_at_nid:
                     return node_at_nid
         return None
+
+    def _apply_growth_changes(self, unit, growth_changes):
+        action.do(action.ApplyGrowthChanges(unit, growth_changes))
+
+    def change_growths(self, command):
+        values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+        unit = self.get_unit(values[0])
+        if not unit:
+            logging.error("Couldn't find unit %s" % values[0])
+            return
+
+        s_list = values[1].split(',')
+        growth_changes = {}
+        for idx in range(len(s_list)//2):
+            stat_nid = s_list[idx*2]
+            stat_value = int(s_list[idx*2 + 1])
+            growth_changes[stat_nid] = stat_value
+
+        self._apply_growth_changes(unit, growth_changes)
+
+    def set_growths(self, command):
+        values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
+        unit = self.get_unit(values[0])
+        if not unit:
+            logging.error("Couldn't find unit %s" % values[0])
+            return
+
+        s_list = values[1].split(',')
+        growth_changes = {}
+        for idx in range(len(s_list)//2):
+            stat_nid = s_list[idx*2]
+            stat_value = int(s_list[idx*2 + 1])
+            if stat_nid in unit.growths:
+                current = unit.growths[stat_nid]
+                growth_changes[stat_nid] = stat_value - current
+
+        self._apply_growth_changes(unit, growth_changes)

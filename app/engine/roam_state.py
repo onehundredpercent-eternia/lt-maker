@@ -79,6 +79,8 @@ class FreeRoamState(MapState):
                 self.roam_unit.sprite.change_state('moving')
                 self.roam_unit.sprite.handle_net_position((0, 0.2))
 
+        game.camera.force_center(*self.roam_unit.position)
+
         if event == 'SELECT':
             other_unit = self.can_talk()
             region = self.can_visit()

@@ -523,9 +523,10 @@ class MoveState(MapState):
         game.cursor.remove_arrows()
         game.highlight.remove_highlights()
 
-class MovementState(MapState):
+class MovementState(State):
     # Responsible for moving units that need to be moved
     name = 'movement'
+    transparent = True
 
     def begin(self):
         game.cursor.hide()
@@ -588,7 +589,8 @@ class CantoWaitState(MapState):
 
     def draw(self, surf):
         surf = super().draw(surf)
-        surf = self.menu.draw(surf)
+        if hasattr(self, 'menu') and self.menu:
+            surf = self.menu.draw(surf)
         return surf
 
 class MoveCameraState(MapState):
@@ -1622,8 +1624,8 @@ class CombatState(MapState):
                 self.skip = True
                 self.combat.skip()
         elif event == 'BACK':
-            # Arena
-            pass
+            if self.combat.arena_combat:
+                self.combat.stop_arena()  # So that we are forced out next time
 
     def update(self):
         super().update()

@@ -24,6 +24,10 @@
         true
     ],
     [
+        "limit_attack_stance",
+        false
+    ],
+    [
         "lead",
         false
     ],
@@ -112,12 +116,24 @@
         false
     ],
     [
+        "battle_platforms",
+        true
+    ],
+    [
         "convoy_on_death",
         true
     ],
     [
         "give_and_take",
         true
+    ],
+    [
+        "reset_mana",
+        false
+    ],
+    [
+        "double_splash",
+        false
     ],
     [
         "num_save_slots",

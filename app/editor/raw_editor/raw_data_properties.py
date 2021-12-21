@@ -6,7 +6,7 @@ from app.extensions.generic_attr_object_delegate import (
     GenericObjectDelegate, GenericObjectListModel)
 from app.extensions.key_value_delegate import (KeyValueDelegate,
                                                KeyValueDoubleListModel)
-from app.extensions.list_widgets import AppendMultiListWidget
+from app.extensions.list_widgets import AppendMultiListWidget, MutableAppendMultiListWidget
 from app.utilities import str_utils
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics
@@ -47,7 +47,8 @@ class RawDataProperties(QWidget):
         self.add_column_button.clicked.connect(self.add_column_dialog)
         self.add_column_button.hide()
 
-        self.sheet_box = AppendMultiListWidget([], "Raw Data Sheet", tuple(self.current.oattrs) if self.current else (), GenericObjectDelegate, self, model=GenericObjectListModel)
+        self.sheet_box = MutableAppendMultiListWidget([], "Raw Data Sheet", tuple(self.current.oattrs) if self.current else (), GenericObjectDelegate, self, model=GenericObjectListModel,
+                                                      rename_column_action=self.rename_column_dialog, delete_column_action=self.remove_column)
         self.sheet_box.hide()
 
         total_section = QVBoxLayout()
@@ -102,7 +103,8 @@ class RawDataProperties(QWidget):
 
     def rerender_sheet_widget(self):
         self.sheet_box.setParent(None)
-        self.sheet_box = AppendMultiListWidget([], "Raw Data", tuple(self.current.oattrs), GenericObjectDelegate, self, model=GenericObjectListModel)
+        self.sheet_box = MutableAppendMultiListWidget([], "Raw Data", tuple(self.current.oattrs), GenericObjectDelegate, self, model=GenericObjectListModel,
+                                                      rename_column_action=self.rename_column_dialog, delete_column_action=self.remove_column)
         self.layout().addWidget(self.sheet_box)
         self.sheet_box.set_current(self.current.lovalue)
 
@@ -117,6 +119,34 @@ class RawDataProperties(QWidget):
             except:
                 setattr(o, attr, "")
         self.rerender_sheet_widget()
+
+    def remove_column(self, col_idx):
+        if (col_idx >= len(self.current.oattrs)
+            or col_idx == 0): # can't delete nid column
+            return
+        attr = self.current.oattrs[col_idx]
+        self.current.oattrs.remove(attr)
+        self.rerender_sheet_widget()
+
+    def rename_column(self, col_idx, text):
+        new_attr = text
+        old_attr = self.current.oattrs[col_idx]
+        self.current.oattrs[col_idx] = text
+        for o in self.current.lovalue:
+            try:
+                old_val = getattr(o, old_attr)
+                setattr(o, new_attr, old_val)
+            except:
+                setattr(o, new_attr, "")
+        self.rerender_sheet_widget()
+
+    def rename_column_dialog(self, col_idx):
+        if (col_idx >= len(self.current.oattrs)
+            or col_idx == 0): # can't rename nid column
+            return
+        text, ok = QInputDialog.getText(self, 'Rename Column', 'Column Name:')
+        if ok:
+            self.rename_column(col_idx, text)
 
     def add_column_dialog(self):
         text, ok = QInputDialog.getText(self, 'New Column', 'New Column Name:')

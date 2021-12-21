@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from app.engine.game_counters import ANIMATION_COUNTERS
 from app.constants import WINWIDTH, WINHEIGHT
 from app.utilities import utils
@@ -26,6 +27,43 @@ class BaseMainState(State):
         super().__init__(name)
         self.fluid = FluidScroll()
 
+    def populate_options(self) -> Tuple[List[str], List[str], List[str]]:
+        """return (options, ignore, events), which should all be the same size
+        """
+        # basic options
+        options = ['Manage', 'Convos', 'Codex', 'Options', 'Save', 'Continue']
+        ignore = [False, True, False, False, False, self.is_from_overworld]
+
+        # options from environment
+        if game.base_convos:
+            ignore[1] = False
+        if game.game_vars.get('_supports') and DB.support_constants.value('base_convos'):
+            options.insert(2, 'Supports')
+            ignore.insert(2, False)
+        if DB.constants.value('bexp'):
+            options.insert(2, 'Bonus EXP')
+            ignore.insert(2, False)
+        if game.game_vars.get('_base_market'):
+            options.insert(1, 'Market')
+            if game.market_items:
+                ignore.insert(1, False)
+            else:
+                ignore.insert(1, True)
+        if cf.SETTINGS['debug']:
+            options.insert(0, 'Debug')
+            ignore.insert(0, False)
+
+        # initialize custom options and events
+        events = [None for option in options]
+        additional_options = game.game_vars.get('_base_additional_options')
+        additional_ignore = game.game_vars.get('_base_options_enabled')
+        additional_events = game.game_vars.get('_base_options_events')
+
+        options = options + additional_options if additional_options else options
+        ignore = ignore + additional_ignore if additional_options else ignore
+        events = events + additional_events if additional_events else events
+        return options, ignore, events
+
     def start(self):
         base_music = game.game_vars.get('_base_music')
         if base_music:
@@ -49,25 +87,8 @@ class BaseMainState(State):
 
         self.is_from_overworld = game.is_displaying_overworld()
 
-        options = ['Manage', 'Convos', 'Codex', 'Options', 'Save', 'Continue']
-        ignore = [False, True, False, False, False, self.is_from_overworld]
-        if game.base_convos:
-            ignore[1] = False
-        if game.game_vars.get('_supports') and DB.support_constants.value('base_convos'):
-            options.insert(2, 'Supports')
-            ignore.insert(2, False)
-        if DB.constants.value('bexp'):
-            options.insert(2, 'Bonus EXP')
-            ignore.insert(2, False)
-        if game.game_vars.get('_base_market'):
-            options.insert(1, 'Market')
-            if game.market_items:
-                ignore.insert(1, False)
-            else:
-                ignore.insert(1, True)
-        if cf.SETTINGS['debug']:
-            options.insert(0, 'Debug')
-            ignore.insert(0, False)
+        options, ignore, events_on_options = self.populate_options()
+        self.events_on_option_select = events_on_options
 
         topleft = 4, WINHEIGHT // 2 - (len(options) * 16 + 8) // 2
         self.menu = menus.Choice(None, options, topleft=topleft)
@@ -129,6 +150,13 @@ class BaseMainState(State):
             elif selection == 'Bonus EXP':
                 game.memory['next_state'] = 'base_bexp_select'
                 game.state.change('transition_to')
+            else:
+                option_index = self.menu.get_current_index()
+                if self.events_on_option_select[option_index]:
+                    event_to_trigger = self.events_on_option_select[option_index]
+                    valid_events = DB.events.get_by_nid_or_name(event_to_trigger, game.level.nid)
+                    for event_prefab in valid_events:
+                        game.events.trigger_specific_event(event_prefab.nid)
 
     def update(self):
         super().update()

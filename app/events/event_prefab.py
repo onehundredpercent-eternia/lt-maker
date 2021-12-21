@@ -1,7 +1,9 @@
-from app.utilities.typing import NID
 from typing import List
-from app.utilities.data import Data, Prefab
+
 from app.events import event_commands
+from app.utilities.data import Data, Prefab
+from app.utilities.typing import NID
+
 
 class Trigger(object):
     def __init__(self, nid, unit1=False, unit2=False, item=False, position=False, region=False):

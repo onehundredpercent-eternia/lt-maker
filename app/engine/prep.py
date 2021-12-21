@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
 
 # from app.resources.resources import RESOURCES
@@ -22,6 +23,29 @@ class PrepMainState(MapState):
     bg = None
     menu = None
 
+    def populate_options(self) -> Tuple[List[str], List[str], List[str]]:
+        """return (options, ignore, events), which should all be the same size
+        """
+        # basic options
+        options = ['Manage', 'Formation', 'Options', 'Save', 'Fight']
+        if game.level_vars.get('_prep_pick'):
+            options.insert(0, 'Pick Units')
+        if cf.SETTINGS['debug']:
+            options.insert(0, 'Debug')
+        ignore = [False for option in options]
+
+        # initialize custom options and events
+        events = [None for option in options]
+        additional_options = game.game_vars.get('_prep_additional_options')
+        additional_ignore = game.game_vars.get('_prep_options_enabled')
+        additional_events = game.game_vars.get('_prep_options_events')
+
+        options = options + additional_options if additional_options else options
+        ignore = ignore + additional_ignore if additional_options else ignore
+        events = events + additional_events if additional_events else events
+
+        return options, ignore, events
+
     def start(self):
         prep_music = game.game_vars.get('_prep_music')
         if prep_music:
@@ -32,12 +56,11 @@ class PrepMainState(MapState):
 
         self.create_background()
 
-        options = ['Manage', 'Formation', 'Options', 'Save', 'Fight']
-        if game.level_vars.get('_prep_pick'):
-            options.insert(0, 'Pick Units')
-        if cf.SETTINGS['debug']:
-            options.insert(0, 'Debug')
+        options, ignore, events_on_options = self.populate_options()
+        self.events_on_option_select = events_on_options
+
         self.menu = menus.Choice(None, options, topleft='center')
+        self.menu.set_ignore(ignore)
 
         # Force place any required units
         for unit in game.get_units_in_party():
@@ -105,6 +128,13 @@ class PrepMainState(MapState):
                     alert = banner.Custom("Must select at least one unit!")
                     game.alerts.append(alert)
                     game.state.change('alert')
+            else:
+                option_index = self.menu.get_current_index()
+                if self.events_on_option_select[option_index]:
+                    event_to_trigger = self.events_on_option_select[option_index]
+                    valid_events = DB.events.get_by_nid_or_name(event_to_trigger, game.level.nid)
+                    for event_prefab in valid_events:
+                        game.events.trigger_specific_event(event_prefab.nid)
 
     def update(self):
         super().update()

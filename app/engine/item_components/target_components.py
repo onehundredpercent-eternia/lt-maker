@@ -1,10 +1,14 @@
+from __future__ import annotations
+
+import logging
+from functools import lru_cache
+
+from app.data.components import Type
+from app.data.item_components import ItemComponent
+from app.engine import item_funcs, skill_system, target_system
+from app.engine.game_state import game
 from app.utilities import utils
 
-from app.data.item_components import ItemComponent
-from app.data.components import Type
-
-from app.engine import skill_system, target_system, item_funcs
-from app.engine.game_state import game 
 
 class TargetsAnything(ItemComponent):
     nid = 'target_tile'
@@ -37,12 +41,12 @@ class TargetsEnemies(ItemComponent):
     tag = 'target'
 
     def ai_targets(self, unit, item):
-        return {other.position for other in game.units if other.position and 
+        return {other.position for other in game.units if other.position and
                 skill_system.check_enemy(unit, other)}
 
     def valid_targets(self, unit, item) -> set:
-        targets = {other.position for other in game.units if other.position and 
-                   skill_system.check_enemy(unit, other)}        
+        targets = {other.position for other in game.units if other.position and
+                   skill_system.check_enemy(unit, other)}
         return {t for t in targets if utils.calculate_distance(unit.position, t) in item_funcs.get_range(unit, item)}
 
 class TargetsAllies(ItemComponent):
@@ -51,13 +55,49 @@ class TargetsAllies(ItemComponent):
     tag = 'target'
 
     def ai_targets(self, unit, item):
-        return {other.position for other in game.units if other.position and 
+        return {other.position for other in game.units if other.position and
                 skill_system.check_ally(unit, other)}
 
     def valid_targets(self, unit, item) -> set:
-        targets = {other.position for other in game.units if other.position and 
-                   skill_system.check_ally(unit, other)}        
+        targets = {other.position for other in game.units if other.position and
+                   skill_system.check_ally(unit, other)}
         return {t for t in targets if utils.calculate_distance(unit.position, t) in item_funcs.get_range(unit, item)}
+
+class EvalSpecialRange(ItemComponent):
+    nid = 'eval_special_range'
+    desc = "Use this to restrict range to specific tiles around the unit"
+    tag = 'target'
+
+    expose = Type.String
+    value = ''
+
+    # if the range is large, the calculation will be large; let's not repeat this more than necessary.
+    # luckily, the calculation is trivial.
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def calculate_range_restrict(condition, max_rng):
+        valid_range_squares = set()
+        try:
+            # neat performance trick
+            cond_as_func = eval('lambda x, y:' + condition)
+            for x in range(-max_rng, max_rng+1):
+                for y in range(-max_rng, max_rng+1):
+                    if cond_as_func(x, y):
+                        valid_range_squares.add((x, y))
+        except Exception as e:
+            logging.error("eval_special_range failed for condition %s with error %s", condition, str(e))
+        return valid_range_squares
+
+    def range_restrict(self, unit, item):
+        rng = item_funcs.get_range(unit, item)
+        return EvalSpecialRange.calculate_range_restrict(self.value, max(rng))
+
+    def target_restrict(self, unit, item, def_pos, splash) -> bool:
+        net_pos = (def_pos[0] - unit.position[0], def_pos[1] - unit.position[1])
+        range_restriction = self.range_restrict(unit, item)
+        if net_pos in range_restriction:
+            return True
+        return False
 
 class EvalTargetRestrict(ItemComponent):
     nid = 'eval_target_restrict'

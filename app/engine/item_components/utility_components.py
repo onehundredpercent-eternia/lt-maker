@@ -242,3 +242,11 @@ class MenuAfterCombat(ItemComponent):
 
     def menu_after_combat(self, unit, item):
         return True
+
+class NoAttackAfterMove(ItemComponent):
+    nid = 'no_attack_after_move'
+    desc = "Cannot be used after moving"
+    tag = 'utility'
+
+    def no_attack_after_move(self, unit, item):
+        return True

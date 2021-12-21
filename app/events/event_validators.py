@@ -10,6 +10,7 @@ from app.data.database import DB
 from app.events import event_commands
 from app.resources.resources import RESOURCES
 from app.utilities import str_utils
+from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
 
 
@@ -208,6 +209,25 @@ class Tag(Validator):
         valids = [(None, tag.nid) for tag in DB.tags.values()]
         return valids
 
+class TextPosition(Validator):
+    valid_positions = ['center']
+
+    desc = """
+Determines position to place text. Supports either pixels (`x,y`) or the `center` position.
+"""
+    def validate(self, text, level):
+        if text in self.valid_positions:
+            return text
+        elif ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
+            return text
+        return None
+
+    @lru_cache()
+    def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
+        valids = [(None, option) for option in self.valid_positions]
+        return valids
+
+
 class ScreenPosition(Validator):
     valid_positions = ["OffscreenLeft", "FarLeft", "Left", "MidLeft", "CenterLeft", "CenterRight", "MidRight", "LevelUpRight", "Right", "FarRight", "OffscreenRight"]
 
@@ -295,7 +315,7 @@ class IllegalCharacterList(Validator):
         return valids
 
 class DialogVariant(OptionValidator):
-    valid = ["thought_bubble", "noir", "hint", "narration", "narration_top", "cinematic"]
+    valid = ["thought_bubble", "noir", "hint", "narration", "narration_top", "cinematic", "clear"]
 
 class StringList(Validator):
     desc = "must be delimited by commas. For example: `Water,Earth,Fire,Air`"
@@ -393,6 +413,10 @@ class Bool(OptionValidator):
 
 class ShopFlavor(OptionValidator):
     valid = ['armory', 'vendor']
+
+class TableEntryType(OptionValidator):
+    valid = ['type_skill', 'type_base_item', 'type_game_item', 'type_unit', 'type_class', 'type_icon']
+
 
 class Position(Validator):
     desc = "accepts a valid `(x, y)` position. You use a unit's nid to use their position. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`, `{position}`)"
@@ -631,6 +655,9 @@ class RegionType(OptionValidator):
 class Weather(OptionValidator):
     valid = ["rain", "sand", "snow", "fire", "light", "dark", "smoke", "fog", "event_tile"]
 
+class Align(OptionValidator):
+    valid = [align.value for align in Alignments]
+
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
     desc = "specifies the order and type of actions in combat. Valid actions: (`hit1`, `hit2`, `crit1`, `crit2`, `miss1`, `miss2`, `--`, `end`)."
@@ -818,17 +845,16 @@ class Tilemap(Validator):
         return valids
 
 class Event(Validator):
-    desc = "accepts the name of an event. Will run the event appropriate for the level if more than one event with the same name exists."
+    desc = "accepts the name or nid of an event. Will run the event appropriate for the level if more than one event with the same name exists."
 
     def validate(self, text, level):
-        for event in DB.events:
-            if event.name == text and (not event.level_nid or not level or event.level_nid == level.nid):
-                return text
+        if DB.events.get_by_nid_or_name(text, level.nid):
+            return text
         return None
 
     @lru_cache()
     def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
-        valids = [(event.name, event.nid) for event in DB.events.values() if (level is None or event.level_nid == level or event.level_nid is None)]
+        valids = [(event.name, event.nid) for event in DB.events.get_by_level(level)]
         return valids
 
 class OverworldNID(Validator):

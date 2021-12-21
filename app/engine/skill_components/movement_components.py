@@ -74,3 +74,11 @@ class Grounded(SkillComponent):
 
     def ignore_forced_movement(self, unit):
         return True
+
+class NoAttackAfterMove(SkillComponent):
+    nid = 'no_attack_after_move'
+    desc = 'Unit can either move or attack, but not both'
+    tag = 'movement'
+
+    def no_attack_after_move(self, unit):
+        return True

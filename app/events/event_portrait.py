@@ -46,6 +46,7 @@ class EventPortrait():
         self.name = name
         self.expressions = expressions or set()
 
+        self.transition_progress = 0
         self.main_portrait = engine.subsurface(self.portrait.image, self.main_portrait_coords)
         self.chibi = engine.subsurface(self.portrait.image, self.chibi_coords)
 

@@ -6,7 +6,7 @@ default_behaviours = (
     'pass_through', 'vantage', 'ignore_terrain', 'crit_anyway',
     'ignore_region_status', 'no_double', 'def_double', 'alternate_splash',
     'ignore_rescue_penalty', 'ignore_forced_movement', 'distant_counter',
-    'ignore_fatigue')
+    'ignore_fatigue', 'no_attack_after_move')
 # Takes in unit, returns default value
 exclusive_behaviours = ('can_select', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset', 'num_accessories_offset', 'change_variant', 'change_animation', 'change_ai', 'witch_warp')
 

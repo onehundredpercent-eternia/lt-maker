@@ -13,7 +13,7 @@ from app.engine.game_state import game
 
 class Dialog():
     num_lines = 2
-    solo_flag = True
+    solo_flag = False
     cursor = SPRITES.get('waiting_cursor')
     cursor_offset = [0]*20 + [1]*2 + [2]*8 + [1]*2
     draw_cursor_flag = True
@@ -22,13 +22,15 @@ class Dialog():
 
     aesthetic_commands = ('{red}', '{/red}', '{black}', '{/black}', '{white}', '{/white}', '{green}', '{/green}')
 
-    def __init__(self, text, portrait=None, background=None, position=None, width=None, speaker=None, variant=None):
+    def __init__(self, text, portrait=None, background=None, position=None, width=None, speaker=None, variant=None, nid=None, autosize=False):
         self.plain_text = text
         self.portrait = portrait
         self.speaker = speaker
         self.variant = variant
         self.font_type = 'convo'
-        if self.variant in ('noir', 'narration', 'narration_top'):
+        self.nid = nid
+        self.autosize = autosize
+        if self.variant in ('noir', 'narration', 'narration_top', 'clear'):
             self.font_color = 'white'
         else:
             self.font_color = 'black'
@@ -38,6 +40,8 @@ class Dialog():
             self.font_type = 'chapter'
             self.font_color = 'grey'
             self.num_lines = 5
+            self.draw_cursor_flag = False
+        elif self.variant == 'clear':
             self.draw_cursor_flag = False
         self.font = FONT[self.font_type + '-' + self.font_color]
 
@@ -54,7 +58,7 @@ class Dialog():
             self.width -= self.width%8
             self.text_width = max(8, self.width - 24)
             self.determine_height()
-        elif self.portrait:
+        elif self.portrait or self.autosize:
             self.determine_size()
         else:
             self.text_width, self.text_height = (WINWIDTH - 24, self.num_lines * 16)
@@ -104,6 +108,8 @@ class Dialog():
         # For state transitions
         self.transition_progress = 0
         self.last_update = engine.get_time()
+
+        self.hold = False
 
         # For sound
         self.last_sound_update = 0
@@ -272,7 +278,7 @@ class Dialog():
         """
         Should no longer be drawn
         """
-        return self.state == 'done'
+        return self.state == 'done' and not self.hold
 
     def is_done(self):
         """

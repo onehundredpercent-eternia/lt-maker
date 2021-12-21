@@ -241,6 +241,7 @@ class CodeEditor(QPlainTextEdit):
             self.textChanged.connect(self.complete)
             self.textChanged.connect(self.display_function_hint)
             self.clicked.connect(self.display_function_hint)
+            self.cursorPositionChanged.connect(self.display_function_hint)
             self.prev_keyboard_press = None
 
             # function helper
@@ -300,8 +301,15 @@ class CodeEditor(QPlainTextEdit):
 
         hint_words = []
         hint_words.append(command.nid)
-        hint_words = hint_words + command.keywords
-        hint_words = hint_words + command.optional_keywords
+        all_keywords = command.keywords + command.optional_keywords
+        all_keyword_names = command.keyword_names
+        for idx, keyword in enumerate(all_keywords):
+            keyword_name = ""
+            if idx < len(all_keyword_names):
+                keyword_name = all_keyword_names[idx]
+                hint_words.append(keyword_name + '=' + keyword)
+            else:
+                hint_words.append(keyword)
         if command.flags:
             hint_words.append('FLAGS')
         hint_cmd = ""
@@ -312,15 +320,19 @@ class CodeEditor(QPlainTextEdit):
             return
         else:
             try:
-                arg_idx = hint_words.index(validator.__name__)
-                hint_words[arg_idx] = '<b>' + hint_words[arg_idx] + '</b>'
-                hint_desc = hint_words[arg_idx] + ' ' + validator().desc
+                arg_idx = line.count(';', 0, cursor_pos)
+                if arg_idx != len(hint_words) - 1:
+                    hint_words[arg_idx] = '<b>' + hint_words[arg_idx] + '</b>'
+                    hint_desc = validator.__name__ + ' ' + validator().desc
+                elif cursor_pos > 0 and command.flags:
+                    hint_words[-1] = '<b>' + hint_words[-1] + '</b>'
+                    hint_desc = 'Must be one of (`' + str.join('`,`', flags) + '`)'
             except:
                 if cursor_pos > 0 and command.flags:
                     hint_words[-1] = '<b>' + hint_words[-1] + '</b>'
                     hint_desc = 'Must be one of (`' + str.join('`,`', flags) + '`)'
 
-        hint_cmd = str.join(';', hint_words)
+        hint_cmd = str.join(';\u200b', hint_words)
         # style both components
         hint_cmd = '<div class="command_text">' + hint_cmd + '</div>'
         hint_desc = '<div class="desc_text">' + hint_desc + '</div>'
@@ -337,6 +349,7 @@ class CodeEditor(QPlainTextEdit):
         if self.settings.get_event_autocomplete_desc():
             hint_text += '<hr>' + hint_command_desc
         self.function_annotator.setText(hint_text)
+        self.function_annotator.setWordWrap(True)
         self.function_annotator.adjustSize()
 
         # offset the position and display

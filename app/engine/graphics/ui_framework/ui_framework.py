@@ -303,7 +303,7 @@ class UIComponent():
         """
         if isinstance(bg, engine.Surface):
             self.props.bg = bg
-        elif isinstance(bg, Color4):
+        elif isinstance(bg, Tuple):
             self.props.bg_color = bg
         # set this to none; the next time we render,
         # the component will regenerate the background.
@@ -481,6 +481,8 @@ class UIComponent():
         """
         for child in self.children:
             child.exit(False)
+        if '!exit' not in self.saved_animations:
+            self.enabled = False
         if not is_top_level:
             return
         if self.any_children_animating() or self.is_animating():

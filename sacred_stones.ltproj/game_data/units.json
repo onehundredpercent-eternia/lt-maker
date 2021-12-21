@@ -11,12 +11,12 @@
         ],
         "bases": {
             "HP": 16,
-            "STR": 0,
+            "STR": 5,
             "MAG": 2,
             "SKL": 8,
             "SPD": 13,
             "LCK": 5,
-            "DEF": 20,
+            "DEF": 3,
             "CON": 5,
             "MOV": 5,
             "RES": 1,
@@ -46,10 +46,6 @@
             ],
             [
                 "Iron Sword",
-                false
-            ],
-            [
-                "Brave Sword",
                 false
             ]
         ],

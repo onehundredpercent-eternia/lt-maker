@@ -12,6 +12,7 @@ from app.engine.objects.item import ItemObject
 class SimpleCombat():
     ai_combat: bool = False
     event_combat: bool = False
+    arena_combat: bool = False
     alerts: bool = False  # Whether to show end of combat alerts
     """
     Does the simple mechanical effects of combat without any effects
@@ -52,12 +53,12 @@ class SimpleCombat():
         if self.defender:
             self.def_item = self.defender.get_weapon()
 
-    def __init__(self, attacker, main_item, items, positions, main_target_positions, splash_positions, script):
+    def __init__(self, attacker, main_item, items, positions, main_target_positions, splash_positions, script, total_rounds=1):
         self._full_setup(attacker, main_item, items, positions, main_target_positions, splash_positions)
         self.state_machine = CombatPhaseSolver(
             attacker, self.main_item, self.items,
             self.defenders, self.splashes, self.target_positions,
-            self.defender, self.def_item, script)
+            self.defender, self.def_item, script, total_rounds)
 
         self.full_playback = []
         self.playback = []
@@ -82,6 +83,9 @@ class SimpleCombat():
 
     def end_skip(self):
         pass
+
+    def stop_arena(self):
+        self.state_machine.total_rounds = 0  # So that we are forced out next time
 
     def update(self) -> bool:
         self.clean_up()
@@ -524,7 +528,7 @@ class SimpleCombat():
         """
         If you blocked an attacker get exp
         """
-        # if not item:  # 
+        # if not item:  #
             # return 0
         marks = self.get_from_full_playback('mark_hit')
         marks += self.get_from_full_playback('mark_crit')
@@ -601,10 +605,12 @@ class SimpleCombat():
                         act.do()
 
     def handle_death(self, units):
-        for unit in units:
-            if unit.is_dying:
-                game.state.change('dying')
-                break
+        if not self.arena_combat:
+            for unit in units:
+                if unit.is_dying:
+                    game.state.change('dying')
+                    break
+
         for unit in units:
             if unit.is_dying:
                 killer = game.records.get_killer(unit.nid, game.level.nid if game.level else None)
@@ -612,3 +618,8 @@ class SimpleCombat():
                     killer = game.get_unit(killer)
                 game.events.trigger('unit_death', unit, killer, position=unit.position)
                 skill_system.on_death(unit)
+
+        if self.arena_combat:
+            for unit in units:
+                if unit.is_dying:
+                    game.death.force_death(unit)

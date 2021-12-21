@@ -212,8 +212,14 @@ class OverworldManager():
                 return node
         return None
 
+    def move_party_to_node(self, entity_nid: NID, node_nid: NID):
+        entity = self.entities[entity_nid]
+        entity.on_node = node_nid
+
     def selected_party_node(self) -> OverworldNodeObject:
-        return self.nodes[self.selected_entity.on_node]
+        if self.selected_entity.on_node:
+            return self.nodes[self.selected_entity.on_node]
+        return None
 
     def any_path(self, n1: OverworldNodeObject | NID,
                  n2: OverworldNodeObject | NID, force: bool = False) -> bool:
