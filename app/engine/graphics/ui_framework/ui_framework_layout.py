@@ -32,16 +32,16 @@ def convert_align(align: Alignments) -> Tuple[HAlignment, VAlignment]:
         return (HAlignment.RIGHT, VAlignment.BOTTOM)
 
 class HAlignment(Enum):
-    LEFT = 0
-    CENTER = 1
-    RIGHT = 2
-    NONE = 3
+    LEFT = 'left'
+    CENTER = 'center'
+    RIGHT = 'right'
+    NONE = 'none'
 
 class VAlignment(Enum):
-    TOP = 3
-    CENTER = 4
-    BOTTOM = 5
-    NONE = 6
+    TOP = 'top'
+    CENTER = 'center'
+    BOTTOM = 'bottom'
+    NONE = 'none'
 
 class UILayoutType(Enum):
     """Enum for distinguishing the types of layouts for a component.

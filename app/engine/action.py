@@ -2123,7 +2123,7 @@ class AddRegion(Action):
                 for unit in game.units:
                     if unit.position and self.region.contains(unit.position):
                         new_skill = DB.skills.get(self.region.sub_nid)
-                        self.subactions.append(AddSkill(unit, new_skill))
+                        self.subactions.append(AddSkill(unit, new_skill.nid))
             for act in self.subactions:
                 act.do()
 

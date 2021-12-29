@@ -386,6 +386,23 @@ Changes a portrait's facial expression.
 
     keywords = ['Portrait', 'ExpressionList']
 
+class SpeakStyle(EventCommand):
+    nid = "speak_style"
+    tag = Tags.DIALOGUE_TEXT
+
+    desc = \
+"""
+Automatically formats all `speak` commands with NID equal to the style's NID with the style.
+
+A style consists of all parameters that one can apply to individual speak commands, including flags.
+
+A style only applies to `speak` commands inside this event.
+"""
+
+    keywords = ['Nid']
+    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'DialogVariant', 'Float']
+    flags = ['low_priority', 'hold', 'no_popup', 'fit']
+
 class Speak(EventCommand):
     nid = "speak"
     nickname = "s"
@@ -397,6 +414,8 @@ Causes the *Speaker* to speak some *Text*. If *Speaker* is a portrait nid that i
 *Text* will appear in a speech bubble from that portrait. If *Speaker* is left blank,
 *Text* will appear in a box with no name label. For all other values of *Speaker*,
 *Text* will appear in a box with the *Speaker* as the name label.
+
+*Float* indicates the speed of the text - higher numbers are slower.
 
 The pipe | symbol can be used within the *Text* body to insert a line break.
 
@@ -414,11 +433,12 @@ Extra flags:
 2. *hold*: The dialog box will remain even after the player has pressed A (useful for narration).
 3. *no_popup*: The dialog box will not transition in, but rather will appear immediately.
 4. *fit*: The dialog box will shrink to fit the text.
+5. *no_block*: the speak command will not block event execution.
         """
 
     keywords = ['Speaker', 'Text']
-    optional_keywords = ['TextPosition', 'Width', 'DialogVariant', 'Nid']
-    flags = ['low_priority', 'hold', 'no_popup', 'fit']
+    optional_keywords = ['TextPosition', 'Width', 'DialogVariant', 'Nid', 'Float']
+    flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
 class EndHoldSpeak(EventCommand):
     nid = "unhold"
@@ -430,7 +450,7 @@ Remove a speak command from the screen. This is useful if you used the `hold` fl
 This will 'unhold' the speak command with the specified NID.
     """
 
-    keywords = ['NID']
+    keywords = ['Nid']
 
 class DialogStart(EventCommand):
     nid = 'dialog_start'
@@ -1716,6 +1736,7 @@ Optional args:
 * The *Event* keyword gives you the option to call an event on selection, if you should so choose. The new event will have the same args {unit}, {unit2} etc. as the current event.
 * The *Type* keyword specifies the specific type of the options, and will change the way the entries are displayed.
 * The *Dimensions* keyword allows you to specify the size of the list in `(rows, columns)`.
+* The *TextAlign* keyword specifies the alignment of the choice text
 
 * *type_skill* will interpret all options as skill NIDs
 * *type_base_item* will interpret all options as item NIDs
@@ -1723,17 +1744,22 @@ Optional args:
 * *type_unit* will interpret all options as unit NIDs
 * *type_class* will interpret all options as class NIDs.
 * *type_icon* will use the following syntax: `iconsheetnid-iconx-icony-choicetext`, and will display the specific icon16 alongside the choice.
+* *type_sprite* will interpret the options as sprite NIDs.
 
 * The *persist* flag indicates whether or not the choice ends after you make a selection. If *persist* is true, then the choice can only be exited
 via hitting the back button, and the event will go on as normal.
 
 * The *expression* flag indicates that the provided table data should be be continually parsed as a python expression and updated.
+* The *no_bg* flag removes the bg.
+* *no_cursor* removes the cursor.
+* *arrows* adds pulsing left/right arrows.
+* *scroll_bar* adds a vertical scroll bar
  """
 
     keywords = ['Nid', 'Text', 'String']
-    optional_keywords = ['Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size']
-    keyword_names = ['NID', 'Title', 'Choices', 'RowWidth', 'Orientation', 'Alignment', 'BG', 'EventName', 'Type', 'Dimensions']
-    flags = ['persist', 'expression']
+    optional_keywords = ['Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
+    keyword_names = ['NID', 'Title', 'Choices', 'RowWidth', 'Orientation', 'Alignment', 'BG', 'EventName', 'Type', 'Dimensions', 'TextAlign']
+    flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar']
 
 class NoChoice(EventCommand):
     nid = 'unchoice'
@@ -1765,6 +1791,7 @@ expression would automatically update the gold.
 * The *Alignment* keyword specifies where on the screen the choice box will be displayed.
 * The *BG* keyword specifies what base image to use as background. menu_bg images will be tiled, while other sprites will not.
 * The *Type* keyword specifies the specific type of the options, and will change the way the entries are displayed.
+* The *TextAlign* keyword specifies the alignment of the choice text
 
 * *type_skill* will interpret all options as skill NIDs
 * *type_base_item* will interpret all options as item NIDs
@@ -1772,14 +1799,16 @@ expression would automatically update the gold.
 * *type_unit* will interpret all options as unit NIDs
 * *type_class* will interpret all options as class NIDs.
 * *type_icon* will use the following syntax: `iconsheetnid-iconx-icony-choicetext`, and will display the specific icon16 alongside the choice.
+* *type_sprite* will interpret the options as sprite NIDs.
 
 * The *expression* flag indicates that the provided table data should be be continually parsed as a python expression and updated.
+* The *no_bg* flag removes the bg.
     """
 
     keywords = ['Nid', 'String']
-    optional_keywords = ['Text', 'Size', 'Width', 'Align', 'Sprite', 'TableEntryType']
-    keyword_names = ['NID', 'TableData', 'Title', 'Dimensions', 'RowWidth', 'Alignment', 'BG', 'Type']
-    flags = ['expression']
+    optional_keywords = ['Text', 'Size', 'Width', 'Align', 'Sprite', 'TableEntryType', 'HAlign']
+    keyword_names = ['NID', 'TableData', 'Title', 'Dimensions', 'RowWidth', 'Alignment', 'BG', 'Type', 'TextAlign']
+    flags = ['expression', 'no_bg']
 
 class TextEntry(EventCommand):
     nid = 'text_entry'
@@ -2164,6 +2193,20 @@ class ToggleNarrationMode(EventCommand):
 
     keywords = ['Direction']
     optional_keywords = ['Speed']
+
+class SetOverworldMenuOptionEnabled(EventCommand):
+    nid = 'set_overworld_menu_option_enabled'
+    tag = Tags.OVERWORLD
+    desc = ('Toggle whether the specified node menu option can be accessed by the player. Note that even if enabled, it must also be visible for the player to access it.')
+
+    keywords = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Bool']
+
+class SetOverworldMenuOptionVisible(EventCommand):
+    nid = 'set_overworld_menu_option_visible'
+    tag = Tags.OVERWORLD
+    desc = ('Toggle whether the specified node menu option can be seen by the player. Note that even if visible, it must also be enabled for the player to access it.')
+
+    keywords = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Bool']
 
 def get_commands():
     return EventCommand.__subclasses__()

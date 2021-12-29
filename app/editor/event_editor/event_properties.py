@@ -552,12 +552,17 @@ class EventCollection(QWidget):
         self.model = collection_model(self._data, self)
         self.proxy_model = table_model.ProxyModel()
         self.proxy_model.setSourceModel(self.model)
-        self.view = view_type(self)
+        self.view: TableView = view_type(self)
         self.view.setAlternatingRowColors(True)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.view.setModel(self.proxy_model)
         # self.view.setModel(self.model)
         self.view.setSortingEnabled(True)
+        # sort is stored as (col, dir)
+        # see leaveEvent
+        sort = self.settings.component_controller.get_sort(self.__class__.__name__)
+        if sort:
+            self.view.sortByColumn(sort[0], sort[1])
         # self.view.clicked.connect(self.on_single_click)
         # Remove edit on double click
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -731,6 +736,12 @@ class EventCollection(QWidget):
         # self.model.layoutChanged.emit()
         # self.proxy_model.invalidate()
         self.proxy_model.layoutChanged.emit()
+
+    def leaveEvent(self, event) -> None:
+        sort_dir = self.view.horizontalHeader().sortIndicatorOrder()
+        sort_col = self.view.horizontalHeader().sortIndicatorSection()
+        self.settings.component_controller.set_sort(self.__class__.__name__, (sort_col, sort_dir))
+        return super().leaveEvent(event)
 
 class EventProperties(QWidget):
     def __init__(self, parent, current=None):

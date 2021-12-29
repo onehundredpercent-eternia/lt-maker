@@ -332,6 +332,21 @@ class OverworldPartyOptionMenu(State):
         info_desc = ['Convoy_desc']
         ignore = [False]
 
+        self.events = [None for option in options]
+        current_node = game.overworld_controller.selected_party_node()
+        all_options = current_node.menu_options
+        
+        additional_option_names = [option.option_name for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_ignore = [not game.overworld_controller.menu_option_enabled(current_node.nid, option.nid) for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_events = [option.event for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_info = [None for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        
+        options += additional_option_names
+        ignore += additional_ignore
+        self.events += additional_events
+        #Options seem to need info_descs, no idea what to do with those. They're just None for now to prevent crashes
+        info_desc += additional_info
+        
         self.menu = menus.Choice(None, options, info=info_desc)
         self.menu.set_ignore(ignore)
 
@@ -357,6 +372,13 @@ class OverworldPartyOptionMenu(State):
             if selection == 'Base Camp':
                 game.memory['next_state'] = 'base_main'
                 game.state.change('transition_to')
+            else:
+                game.state.back()
+                selected_index = self.menu.get_current_index()
+                event_to_trigger = self.events[selected_index]
+                valid_events = DB.events.get_by_nid_or_name(event_to_trigger, None)
+                for event_prefab in valid_events:
+                    game.events.trigger_specific_event(event_prefab.nid)
 
         elif event == 'INFO':
             self.menu.toggle_info()

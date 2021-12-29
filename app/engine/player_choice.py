@@ -6,6 +6,7 @@ from app.engine.game_menus.menu_components.generic_menu.choice_table_wrapper imp
 from app.engine.game_state import game
 from app.engine.sound import SOUNDTHREAD
 from app.engine.state import MapState
+from app.utilities.enums import Orientation
 
 class PlayerChoiceState(MapState):
     name = 'player_choice'
@@ -14,8 +15,9 @@ class PlayerChoiceState(MapState):
     def start(self):
         self.nid, self.header, options_list, self.row_width, self.orientation, \
             self.data_type, self.should_persist, self.alignment, self.bg, self.event_on_choose, \
-            self.size = \
+            self.size, self.no_cursor, self.arrows, self.scroll_bar, self.text_align = \
             game.memory['player_choice']
+        self.tsize = [0, 0]
         if self.size:
             rows, ncols = self.size
         else:
@@ -28,7 +30,10 @@ class PlayerChoiceState(MapState):
                 self.size = (nrows, 1)
                 rows, ncols = self.size
         self.menu = ChoiceMenuUI(options_list, data_type=self.data_type, rows=rows, row_width=self.row_width,
-                                 title=self.header, cols=ncols, alignment=self.alignment, bg=self.bg)
+                                 title=self.header, cols=ncols, alignment=self.alignment, bg=self.bg,
+                                 orientation=Orientation(self.orientation), text_align=self.text_align)
+        self.menu.set_scrollbar(self.scroll_bar)
+        self.menu.set_arrows(self.arrows)
 
         self.made_choice = False
 
@@ -41,16 +46,16 @@ class PlayerChoiceState(MapState):
         self.made_choice = False
 
     def take_input(self, event):
-        if (event == 'RIGHT' and self.size[1] > 1):
+        if (event == 'RIGHT' and (self.orientation == 'horizontal' or self.size[0] > 1)):
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_right()
-        elif (event == 'DOWN' and self.size[0] > 1):
+        elif (event == 'DOWN' and (self.orientation == 'vertical' or self.size[1] > 1)):
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_down()
-        elif (event == 'LEFT' and self.size[1] > 1):
+        elif (event == 'LEFT' and (self.orientation == 'horizontal' or self.size[0] > 1)):
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_left()
-        elif(event == 'UP'and self.size[0] > 1):
+        elif(event == 'UP' and (self.orientation == 'vertical' or self.size[1] > 1)):
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_up()
         elif event == 'BACK':
@@ -81,6 +86,8 @@ class PlayerChoiceState(MapState):
 
     def draw(self, surf):
         self.menu.update()
-        should_update_cursor = 1 if game.state.current_state() == self else 2
-        self.menu.draw(surf, should_update_cursor)
+        focus = 0
+        if not self.no_cursor:
+            focus = 1 if game.state.current_state() == self else 2
+        self.menu.draw(surf, focus)
         return surf

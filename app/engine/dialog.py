@@ -22,7 +22,8 @@ class Dialog():
 
     aesthetic_commands = ('{red}', '{/red}', '{black}', '{/black}', '{white}', '{/white}', '{green}', '{/green}')
 
-    def __init__(self, text, portrait=None, background=None, position=None, width=None, speaker=None, variant=None, nid=None, autosize=False):
+    def __init__(self, text, portrait=None, background=None, position=None, width=None,
+                 speaker=None, variant=None, nid=None, autosize=False, speed=1):
         self.plain_text = text
         self.portrait = portrait
         self.speaker = speaker
@@ -30,6 +31,7 @@ class Dialog():
         self.font_type = 'convo'
         self.nid = nid
         self.autosize = autosize
+        self.speed = speed
         if self.variant in ('noir', 'narration', 'narration_top', 'clear'):
             self.font_color = 'white'
         else:
@@ -322,7 +324,7 @@ class Dialog():
                 self._next_line()
         elif self.state == 'process':
             if cf.SETTINGS['text_speed'] > 0:
-                num_updates = engine.get_delta() / float(cf.SETTINGS['text_speed'])
+                num_updates = engine.get_delta() / (float(cf.SETTINGS['text_speed']) * self.speed)
                 self.total_num_updates += num_updates
                 while self.total_num_updates >= 1 and self.state == 'process':
                     self.total_num_updates -= 1

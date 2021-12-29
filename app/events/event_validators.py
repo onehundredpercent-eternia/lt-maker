@@ -1,14 +1,15 @@
 from __future__ import annotations
-from app.sprites import SPRITES
-import re
-from typing import Dict, TYPE_CHECKING, List
 
+import re
 from functools import lru_cache
-from typing import List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from app.data.database import DB
+from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
+                                                                  VAlignment)
 from app.events import event_commands
 from app.resources.resources import RESOURCES
+from app.sprites import SPRITES
 from app.utilities import str_utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
@@ -415,7 +416,7 @@ class ShopFlavor(OptionValidator):
     valid = ['armory', 'vendor']
 
 class TableEntryType(OptionValidator):
-    valid = ['type_skill', 'type_base_item', 'type_game_item', 'type_unit', 'type_class', 'type_icon']
+    valid = ['type_skill', 'type_base_item', 'type_game_item', 'type_unit', 'type_class', 'type_icon', 'type_portrait']
 
 
 class Position(Validator):
@@ -657,6 +658,12 @@ class Weather(OptionValidator):
 
 class Align(OptionValidator):
     valid = [align.value for align in Alignments]
+
+class HAlign(OptionValidator):
+    valid = [align.value for align in HAlignment]
+
+class VAlign(OptionValidator):
+    valid = [align.value for align in VAlignment]
 
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
@@ -921,6 +928,24 @@ class OverworldNodeNID(Validator):
         valids = []
         for overworld in DB.overworlds.values():
             valids = valids + [(node.name, node.nid) for node in overworld.overworld_nodes.values()]
+        return valids
+
+class OverworldNodeMenuOption(Validator):
+    desc = "accepts the nid of an overworld node menu option only"
+
+    def validate(self, text, level):
+        for overworld in DB.overworlds.values():
+            for node in overworld.overworld_nodes:
+                if text in [option.nid for option in node.menu_options]:
+                    return text
+        return None
+
+    @lru_cache()
+    def valid_entries(self, level: NID = None) -> List[Tuple[str, NID]]:
+        valids = []
+        for overworld in DB.overworlds.values():
+            for node in overworld.overworld_nodes:
+                valids = valids + [(option.option_name, option.nid) for option in node.menu_options]
         return valids
 
 class OverworldEntity(Validator):

@@ -314,9 +314,9 @@ class Simple():
         elif isinstance(self.topleft, Simple):
             parent_topleft = self.topleft.get_topleft()
             if parent_topleft[0] < WINWIDTH//2:
-                return (parent_topleft[0] - 20 + self.topleft.get_menu_width(), parent_topleft[1] + self.topleft.current_index * 16 + 4)
+                return (parent_topleft[0] - 20 + self.topleft.get_menu_width(), parent_topleft[1] + self.topleft.current_index * 16 + 4 - self.topleft.scroll * 16)
             else:
-                return (WINWIDTH - 40 - self.topleft.get_menu_width(), parent_topleft[1] + self.topleft.current_index * 16 + 8)
+                return (WINWIDTH - 40 - self.topleft.get_menu_width(), parent_topleft[1] + self.topleft.current_index * 16 + 8 - self.topleft.scroll * 16)
         else:
             return self.topleft
 
@@ -1783,7 +1783,7 @@ class KeyboardMenu(Table):
         self.illegal_characters = illegal_characters
         self.name = ''
         self.topleft = (9, 42)
-        
+
         self.all_characters = {}
         self.all_characters['uppercase'] = string.ascii_uppercase
         self.all_characters['lowercase'] = string.ascii_lowercase
@@ -1804,7 +1804,7 @@ class KeyboardMenu(Table):
 
         # Build background
         self.backsurf = SPRITES.get('NamingScreen')
-        
+
         super().__init__(None, self.options, (7, 26), self.topleft, self.backsurf, None)
 
     def create_options(self, options, info_descs=None):

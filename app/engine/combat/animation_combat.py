@@ -620,9 +620,14 @@ class AnimationCombat(BaseCombat, MockCombat):
         self._apply_actions()
         self._handle_playback()
 
+        hp_brushes = ('damage_hit', 'damage_crit', 'heal_hit')
+        if not any(brush[0] in hp_brushes for brush in self.playback):
+            self.current_battle_anim.resume()
+
     def _handle_playback(self, sound=True):
+        hp_brushes = ('damage_hit', 'damage_crit', 'heal_hit')
         for brush in self.playback:
-            if brush[0] in ('damage_hit', 'damage_crit', 'heal_hit'):
+            if brush[0] in hp_brushes:
                 self.last_update = engine.get_time()
                 self.state = 'hp_change'
                 self.handle_damage_numbers(brush)

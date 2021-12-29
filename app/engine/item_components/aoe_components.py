@@ -57,7 +57,7 @@ class EnemyBlastAOE(BlastAOE, ItemComponent):
         else:
             # regular blast
             splash = [game.board.get_unit(s) for s in splash if s != position]
-            splash = [s.position for s in splash if s and skill_system.check_enemy(unit)]
+            splash = [s.position for s in splash if s and skill_system.check_enemy(unit, s)]
             return position if game.board.get_unit(position) else None, splash
 
     def splash_positions(self, unit, item, position) -> set:
@@ -96,6 +96,14 @@ class EquationBlastAOE(BlastAOE, ItemComponent):
         value = equations.parser.get(self.value, unit)
         empowered_splash = skill_system.empower_splash(unit)
         return value + 1 + empowered_splash
+
+class AllyBlastEquationAOE(AllyBlastAOE, EquationBlastAOE, ItemComponent):
+    nid = 'ally_equation_blast_aoe'
+    desc = "Gives Equation-Sized Blast AOE that only hits allies"
+    tag = 'aoe'
+
+    expose = Type.Equation  # Radius
+    value = None
 
 class EnemyCleaveAOE(ItemComponent):
     nid = 'enemy_cleave_aoe'

@@ -100,30 +100,14 @@
                 "speak",
                 [
                     "Seth",
-                    "\u2028Princess Eirika! This way!\u2028I can see no more of Grado's men.{w}\u2028If we've made it this far, we've \u2028surely earned a moment's rest.{w}\u2028Please forgive my grabbing you \u2028so...brusquely earlier.",
-                    "hold",
-                    "no_popup"
-                ],
-                [
-                    "Seth",
-                    "\u2028Princess Eirika! This way!\u2028I can see no more of Grado's men.{w}\u2028If we've made it this far, we've \u2028surely earned a moment's rest.{w}\u2028Please forgive my grabbing you \u2028so...brusquely earlier.",
-                    "hold",
-                    "FLAG(no_popup)"
+                    "\u2028Princess Eirika! This way!\u2028I can see no more of Grado's men.{w}\u2028If we've made it this far, we've \u2028surely earned a moment's rest.{w}\u2028Please forgive my grabbing you \u2028so...brusquely earlier."
                 ]
             ],
             [
                 "speak",
                 [
                     "Eirika",
-                    "Don't be foolish, Seth.|If it weren't for you, I would never have made it out of the castle.|You are the reason I'm still alive. You have my gratitude.",
-                    "hold",
-                    "no_popup"
-                ],
-                [
-                    "Eirika",
-                    "Don't be foolish, Seth.|If it weren't for you, I would never have made it out of the castle.|You are the reason I'm still alive. You have my gratitude.",
-                    "hold",
-                    "FLAG(no_popup)"
+                    "Don't be foolish, Seth.|If it weren't for you, I would never have made it out of the castle.|You are the reason I'm still alive. You have my gratitude."
                 ]
             ],
             [

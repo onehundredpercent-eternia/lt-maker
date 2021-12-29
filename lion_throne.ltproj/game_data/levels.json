@@ -13203,14 +13203,22 @@
                     [
                         "Restore",
                         false
+                    ],
+                    [
+                        "Stun",
+                        false
+                    ],
+                    [
+                        "Heal",
+                        false
                     ]
                 ],
                 "team": "player",
                 "ai": "None",
                 "ai_group": null,
                 "starting_position": [
-                    0,
-                    11
+                    12,
+                    12
                 ],
                 "starting_traveler": null,
                 "name": null,

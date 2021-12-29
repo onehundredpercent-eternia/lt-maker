@@ -471,10 +471,10 @@ class BattleAnimation():
             if self.partner_anim:
                 self.partner_anim.dodge()
         elif command.nid == 'spell_hit':
-            self.owner.shake()
-            self.owner.spell_hit()
             self.state = 'wait'
             self.processing = False
+            self.owner.shake()
+            self.owner.spell_hit()
 
         elif command.nid == 'effect':
             effect = values[0]

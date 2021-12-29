@@ -74,3 +74,7 @@ class Alignments(Enum):
     BOT_LEFT = "bottom_left"
     BOT = "bottom"
     BOT_RIGHT = "bottom_right"
+
+class Orientation(Enum):
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'

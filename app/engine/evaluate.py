@@ -9,7 +9,7 @@ from app.engine import static_random
 from app.engine.game_state import game
 
 """
-Essentially just a repository that imports a lot of different things so that many different eval calls 
+Essentially just a repository that imports a lot of different things so that many different eval calls
 will be accepted
 """
 
@@ -17,7 +17,7 @@ def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
              region=None, mode=None, skill=None, attack_info=None, base_value=None) -> bool:
     unit = unit1  # noqa: F841
     target = unit2  # noqa: F841
-    
+
     def check_pair(s1: str, s2: str) -> bool:
         """
         Determines whether two units are in combat with one another
@@ -39,7 +39,6 @@ def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
             return unit1.nid not in t1
         else:
             return False
-
     return eval(string)
 
 def eval_string(text: str) -> str:

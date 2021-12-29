@@ -29,7 +29,7 @@ class Spell(ItemComponent):
 
 class Weapon(ItemComponent):
     nid = 'weapon'
-    desc = "Item will be treated as a normal weapon (can double, counterattack, be equipped, etc.)" 
+    desc = "Item will be treated as a normal weapon (can double, counterattack, be equipped, etc.)"
     tag = 'base'
 
     def is_weapon(self, unit, item):
@@ -107,7 +107,7 @@ class Value(ItemComponent):
     nid = 'value'
     desc = "Item has a value and can be bought and sold. Items sell for half their value."
     tag = 'base'
-    
+
     expose = Type.Int
     value = 0
 

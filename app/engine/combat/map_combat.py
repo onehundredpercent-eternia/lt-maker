@@ -3,7 +3,7 @@ from app.resources.resources import RESOURCES
 from app.engine.combat.solver import CombatPhaseSolver
 
 from app.engine.sound import SOUNDTHREAD
-from app.engine import engine, combat_calcs, gui, action
+from app.engine import engine, combat_calcs, gui, action, item_system
 from app.engine.health_bar import MapCombatInfo
 from app.engine.animations import MapAnimation
 from app.engine.game_state import game
@@ -69,7 +69,8 @@ class MapCombat(SimpleCombat):
             if not self.actions and not self.playback:
                 self.state_machine.setup_next_state()
                 return False
-            self._build_health_bars()
+            if not item_system.no_map_hp_display(self.attacker, self.main_item):
+                self._build_health_bars()
             if self.first_phase:
                 self.set_up_pre_proc_animation('attack_pre_proc')
                 self.set_up_pre_proc_animation('defense_pre_proc')

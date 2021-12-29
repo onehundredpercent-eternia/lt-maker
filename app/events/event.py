@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 import logging
 import re
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Set, Tuple
 
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
@@ -24,6 +24,7 @@ from app.engine.graphics.ui_framework.premade_animations.animation_templates imp
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_animation import \
     InterpolationType
+from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment
 from app.engine.objects.item import ItemObject
 from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.tilemap import TileMapObject
@@ -71,6 +72,17 @@ vertical_screen_positions = {'Top': 0,
 if MEMENTO_MODE:
     vertical_screen_positions['Top'] = 2
 
+class SpeakStyle():
+    def __init__(self, nid: NID = None, speaker: NID = None, text_position: str | Tuple[int, int]=None,
+                 width: int = None, dialog_variant: str = None, speed: int = None, flags: Set[str] = None):
+        self.nid: NID = nid
+        self.speaker: NID = speaker
+        self.text_position: str | Tuple[int, int] = text_position
+        self.width: int = width
+        self.dialog_variant: str = dialog_variant
+        self.speed: int = speed
+        self.flags: Set[str] = flags
+
 class Event():
     _transition_speed = 250
     _transition_color = (0, 0, 0)
@@ -97,6 +109,7 @@ class Event():
             self.dialog_background = memento_dialog.MementoDialogBackground()
         else:
             self.dialog_background = None
+        self.speak_styles: Dict[NID, SpeakStyle] = {}
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
         self.other_boxes: List[Tuple[NID, Any]] = []
@@ -181,7 +194,8 @@ class Event():
         self.should_update = {name: to_update for name, to_update in self.should_update.items() if not to_update(self.do_skip)}
 
         # Update movement so that no_block works correctly
-        game.movement.update()
+        if game.movement:
+            game.movement.update()
 
         # Can move through its own internal state up to 5 times in a frame
         counter = 0
@@ -383,9 +397,12 @@ class Event():
             logging.info('%s: %s', command.nid, command.values)
             if not self.if_stack or self.if_stack[-1]:
                 try:
-                    truth = bool(evaluate.evaluate(command.values[0], self.unit, self.unit2, self.item, self.position, self.region))
+                    cond = command.values[0]
+                    cond = self._evaluate_vars(cond)
+                    cond = self._evaluate_evals(cond)
+                    truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region))
                 except Exception as e:
-                    logging.error("%s: Could not evaluate {%s}" % (e, command.values[0]))
+                    logging.error("%s: Could not evaluate {%s}" % (e, cond))
                     truth = False
                 logging.info("Result: %s" % truth)
                 self.if_stack.append(truth)
@@ -402,9 +419,12 @@ class Event():
             # If we haven't encountered a truth yet
             if not self.parse_stack[-1]:
                 try:
-                    truth = bool(evaluate.evaluate(command.values[0], self.unit, self.unit2, self.item, self.position, self.region))
+                    cond = command.values[0]
+                    cond = self._evaluate_vars(cond)
+                    cond = self._evaluate_evals(cond)
+                    truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region))
                 except Exception as e:
-                    logging.error("Could not evaluate {%s}" % command.values[0])
+                    logging.error("Could not evaluate {%s}" % cond)
                     truth = False
                 self.if_stack[-1] = truth
                 self.parse_stack[-1] = truth
@@ -475,10 +495,10 @@ class Event():
 
         elif command.nid == 'music':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            music = command.values[0]
+            music = values[0]
             fade = 400
-            if len(command.values) > 1 and command.values[1]:
-                fade = int(command.values[1])
+            if len(values) > 1 and values[1]:
+                fade = int(values[1])
             if self.do_skip:
                 fade = 0
             if music == 'None':
@@ -489,8 +509,8 @@ class Event():
         elif command.nid == 'music_clear':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
             fade = 0
-            if len(command.values) > 0 and command.values[0]:
-                fade = int(command.values[0])
+            if len(values) > 0 and values[0]:
+                fade = int(values[0])
             if self.do_skip:
                 fade = 0
             if fade > 0:
@@ -500,16 +520,16 @@ class Event():
 
         elif command.nid == 'sound':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            sound = command.values[0]
+            sound = values[0]
             volume = 1
-            if len(command.values) > 1 and command.values[1]:
-                volume = float(command.values[1])
+            if len(values) > 1 and values[1]:
+                volume = float(values[1])
             SOUNDTHREAD.play_sfx(sound, volume=volume)
 
         elif command.nid == 'change_music':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            phase = command.values[0]
-            music = command.values[1]
+            phase = values[0]
+            music = values[1]
             if music == 'None':
                 action.do(action.ChangePhaseMusic(phase, None))
             else:
@@ -559,7 +579,12 @@ class Event():
             self.dialog_background.end()
 
         elif command.nid == 'speak':
-            self.speak(command)
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.speak(*values, flags)
+
+        elif command.nid == 'speak_style':
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.speak_style(*values, flags)
 
         elif command.nid == 'unhold':
             values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -630,7 +655,7 @@ class Event():
 
         elif command.nid == 'disp_cursor':
             values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-            b = command.values[0]
+            b = values[0]
             if b.lower() in self.true_vals:
                 game.cursor.show()
             else:
@@ -1465,6 +1490,14 @@ class Event():
         elif command.nid == 'create_overworld_entity':
             self.create_overworld_entity(command)
 
+        elif command.nid == 'set_overworld_menu_option_enabled':
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.set_overworld_menu_option_enabled(*values, flags)
+            
+        elif command.nid == 'set_overworld_menu_option_visible':
+            values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
+            self.set_overworld_menu_option_visible(*values, flags)
+        
         elif command.nid == 'clean_up_roaming':
             self.clean_up_roaming(command)
 
@@ -1716,11 +1749,8 @@ class Event():
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
 
-    def speak(self, command):
-        values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
-
-        speaker = values[0]
-        text = values[1]
+    def speak(self, speaker, text, text_position, width, dialog_variant,
+              nid, speed, flags):
         # special char: this is a unicode single-line break.
         # basically equivalent to {br}
         # the first char shouldn't be one of these
@@ -1728,25 +1758,45 @@ class Event():
             text = text[1:]
         text = text.replace('\u2028', '{sub_break}')  # sub break to distinguish it
 
-        if len(values) > 2 and values[2]:
-            if values[2] == 'center':
+        if 'no_block' in flags:
+            text += '{no_wait}'
+
+        speak_style = None
+        if nid and nid in self.speak_styles:
+            speak_style = self.speak_styles[nid]
+
+
+        if not speaker:
+            if speak_style:
+                speaker = speak_style.speaker
+
+        position = None
+        if text_position:
+            if text_position == 'center':
                 position = 'center'
             else:
-                position = self.parse_pos(values[2])
+                position = self.parse_pos(text_position)
+        elif speak_style:
+                position = speak_style.text_position
+
+        width = None
+        if width:
+            width = int(width)
+        elif speak_style:
+            width = speak_style.width
+
+        variant = None
+        if dialog_variant:
+            variant = dialog_variant
+        elif speak_style:
+            variant = speak_style.dialog_variant
+
+        if speed:
+            speed = float(speed)
+        elif speak_style:
+            speed = speak_style.speed
         else:
-            position = None
-        if len(values) > 3 and values[3]:
-            width = int(values[3])
-        else:
-            width = None
-        if len(values) > 4 and values[4]:
-            variant = values[4]
-        else:
-            variant = None
-        if len(values) > 5 and values[5]:
-            nid = values[5]
-        else:
-            nid = None
+            speed = 1
 
         portrait = self.portraits.get(speaker)
         bg = 'message_bg_base'
@@ -1777,22 +1827,50 @@ class Event():
             if not width:
                 width = WINWIDTH - 8
 
+        if speak_style and speak_style.flags:
+            flags = speak_style.flags.union(flags)
+            
         if MEMENTO_MODE:
             new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
             self.saturate_portrait(portrait)
         else:
             autosize = 'fit' in flags
-            new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant, nid=nid, autosize=autosize)
+            new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant, nid=nid, autosize=autosize, speed=speed)
             new_dialog.hold = 'hold' in flags
             if 'no_popup' in flags:
                 new_dialog.last_update = engine.get_time() - 10000
 
         self.text_boxes.append(new_dialog)
-        self.state = 'dialog'
+        if 'no_block' not in flags:
+            self.state = 'dialog'
         # Bring portrait to forefront
         if portrait and 'low_priority' not in flags:
             portrait.priority = self.priority_counter
             self.priority_counter += 1
+
+    def speak_style(self, nid, speaker, text_position, width,
+                    dialog_variant, speed, flags):
+        if nid in self.speak_styles:
+            style = self.speak_styles[nid]
+        else:
+            style = SpeakStyle(nid=nid)
+        # parse everything
+        if speaker:
+            style.speaker = speaker
+        if text_position:
+            if text_position == 'center':
+                style.text_position = text_position
+            else:
+                style.text_position  = self.parse_pos(text_position)
+        if width:
+            style.width = int(width)
+        if dialog_variant:
+            style.dialog_variant = dialog_variant
+        if speed:
+            style.speed = float(speed)
+        if flags:
+            style.flags = flags
+        self.speak_styles[nid] = style
 
     def unhold(self, unhold_nid, flags):
         for box in self.text_boxes:
@@ -3085,7 +3163,7 @@ class Event():
                 self.state = 'paused'
 
     def display_table(self, nid: NID, contents: str, desc: str,
-                      row_col_size: str, width: str, alignment: str, bg: str, entry_type: str, flags: Dict):
+                      row_col_size: str, width: str, alignment: str, bg: str, entry_type: str, text_align: str, flags: Dict):
         box_nids = [nid for nid, _ in self.other_boxes]
         if nid in box_nids:
             logging.error("UI element with nid %s already exists" % nid)
@@ -3098,6 +3176,8 @@ class Event():
             width = '-1'
         if not bg:
             bg = 'menu_bg_base'
+        if 'no_bg' in flags:
+            bg = None
 
         rows, cols = tuple(int(i) for i in row_col_size.split(','))
         row_width = int(width)
@@ -3132,11 +3212,15 @@ class Event():
         align = Alignments.TOP_LEFT
         if alignment:
             align = Alignments(alignment)
-        table_ui = SimpleMenuUI(data, dtype, title=desc, rows=rows, cols=cols, row_width=row_width, alignment=align, bg=bg)
+
+        talign = HAlignment.LEFT
+        if text_align:
+            talign = HAlignment(text_align)
+        table_ui = SimpleMenuUI(data, dtype, title=desc, rows=rows, cols=cols, row_width=row_width, alignment=align, bg=bg, text_align=text_align)
         self.other_boxes.append((nid, table_ui))
 
     def choice(self, nid: NID, desc: str, choices: str, width: str, orientation: str,
-               alignment: str, bg: str, event_nid: str, entry_type: str, dims: str, flags: Dict):
+               alignment: str, bg: str, event_nid: str, entry_type: str, dims: str, text_align: str, flags: Dict):
         nid = nid
         header = desc
 
@@ -3144,6 +3228,8 @@ class Event():
             width = '-1'
         if not bg:
             bg = 'menu_bg_base'
+        if 'no_bg' in flags:
+            bg = None
 
         # determine data type
         dtype = 'str'
@@ -3185,15 +3271,23 @@ class Event():
         else:
             align = Alignments(alignment)
 
+        talign = HAlignment.LEFT
+        if text_align:
+            talign = HAlignment(text_align)
+
         size = None
         if dims:
             size = tuple([int(x) for x in dims.split(',')])
 
-        should_persist = False
-        if 'persist' in flags:
-            should_persist = True
+        should_persist = 'persist' in flags
+        no_cursor = 'no_cursor' in flags
+        arrows = 'arrows' in flags and orientation == 'horizontal'
+        scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
 
-        game.memory['player_choice'] = (nid, header, data, row_width, orientation, dtype, should_persist, align, bg, event_nid, size)
+        game.memory['player_choice'] = (nid, header, data, row_width,
+                                        orientation, dtype, should_persist,
+                                        align, bg, event_nid, size, no_cursor,
+                                        arrows, scroll_bar, talign)
         game.state.change('player_choice')
         self.state = 'paused'
 
@@ -3528,6 +3622,14 @@ class Event():
             new_entity = OverworldEntityObject.from_unit_prefab(entity_nid, None, unit_nid)
             game.overworld_controller.add_entity(new_entity)
 
+    def set_overworld_menu_option_enabled(self, node_nid: NID, option_nid: NID, setting: bool, flags: Dict):
+        overworld = game.overworld_controller
+        overworld.toggle_menu_option_enabled(node_nid, option_nid, not setting)
+        
+    def set_overworld_menu_option_visible(self, node_nid: NID, option_nid: NID, setting: bool, flags: Dict):
+        overworld = game.overworld_controller
+        overworld.toggle_menu_option_visible(node_nid, option_nid, setting)
+    
     def clean_up_roaming(self, command):
         # WARNING: Not currently turnwheel combatible
         values, flags = event_commands.parse(command, self._evaluate_evals, self._evaluate_vars)
