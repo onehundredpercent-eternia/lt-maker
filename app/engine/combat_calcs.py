@@ -459,15 +459,8 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
 
 def compute_assist_damage(unit, target, item, def_item, mode, attack_info, crit=False):
     return compute_damage(unit, target, item, def_item, mode, attack_info, crit, assist=True)
-    
-def outspeed(unit, target, item, def_item, mode, attack_info) -> bool:
-    if not item:
-        return 1
-    if not item_system.can_double(unit, item):
-        return 1
-    if skill_system.no_double(unit):
-        return 1
 
+def compute_true_speed(unit, target, item, def_item, mode, attack_info) -> int:
     speed = attack_speed(unit, item)
 
     # Handles things like effective damage
@@ -507,6 +500,17 @@ def outspeed(unit, target, item, def_item, mode, attack_info) -> bool:
 
     speed += skill_system.dynamic_attack_speed(unit, item, target, mode, attack_info, speed)
     speed -= skill_system.dynamic_defense_speed(target, item, unit, mode, attack_info, speed)
+    return speed
+
+def outspeed(unit, target, item, def_item, mode, attack_info) -> bool:
+    if not item:
+        return 1
+    if not item_system.can_double(unit, item):
+        return 1
+    if skill_system.no_double(unit):
+        return 1
+
+    speed = compute_true_speed(unit, target, item, def_item, mode, attack_info)
 
     return 2 if speed >= equations.parser.speed_to_double(unit) else 1
 

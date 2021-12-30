@@ -18,11 +18,17 @@ def main(name: str):
     driver.run(game)
 
 def test_play(name: str):
+    if not os.path.exists(name + '.ltproj'):
+        raise ValueError("Could not locate LT project %s" % (name + '.ltproj'))
     RESOURCES.load(name + '.ltproj')
     DB.load(name + '.ltproj')
     title = DB.constants.value('title')
     driver.start(title, from_editor=True)
-    game = game_state.start_level('DEBUG')
+    if 'DEBUG' in DB.levels:
+        game = game_state.start_level('DEBUG')
+    else:
+        first_level_nid = DB.levels[0].nid
+        game = game_state.start_level(first_level_nid)
     driver.run(game)
 
 def inform_error():
@@ -56,7 +62,8 @@ if __name__ == '__main__':
         # find_and_run_project()
         # main('lion_throne')
         # test_play('lion_throne')
-        test_play('sacred_stones')
+        # test_play('sacred_stones')
+        test_play('../memento-mori/memento_mori')
     except Exception as e:
         logging.exception(e)
         inform_error()

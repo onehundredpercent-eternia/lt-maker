@@ -326,11 +326,14 @@ class UIView():
 
         grandmaster = game.mode.rng_choice == RNGOption.GRANDMASTER
         crit_flag = DB.constants.value('crit')
+        as_flag = DB.constants.value('display_attack_speed')
 
         # Choose attack info background
         prefix = 'attack_info_'
         if grandmaster:
             infix = 'grandmaster'
+        elif crit_flag and as_flag:
+            infix = 'dbl'
         elif crit_flag:
             infix = 'crit'
         else:
@@ -411,6 +414,8 @@ class UIView():
         FONT['text-white'].blit(attacker.name, surf, (43 - width//2, 3))
         # Enemy name
         y_pos = 84
+        if as_flag:
+            y_pos += 16
         if not crit_flag:
             y_pos -= 16
         if grandmaster:
@@ -421,6 +426,8 @@ class UIView():
         if defender.get_weapon():
             width = FONT['text-white'].width(defender.get_weapon().name)
             y_pos = 100
+            if as_flag:
+                y_pos += 16
             if not crit_flag:
                 y_pos -= 16
             if grandmaster:
@@ -444,6 +451,10 @@ class UIView():
             if crit_flag:
                 c = combat_calcs.compute_crit(attacker, defender, weapon, defender.get_weapon(), 'attack', (0, 0))
                 blit_num(surf, c, 64, 67)
+        if as_flag:
+            dbl = combat_calcs.compute_true_speed(attacker, defender, weapon, defender.get_weapon(), 'attack', (0, 0))
+            blit_num(surf, dbl, 64, 83)
+
         # Enemy Hit and Mt
         if defender.get_weapon() and \
                 combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
@@ -453,10 +464,15 @@ class UIView():
                 e_crit = combat_calcs.compute_crit(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
             else:
                 e_crit = 0
+            if as_flag:
+                e_dbl = combat_calcs.compute_true_speed(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
+            else:
+                e_dbl = 0
         else:
             e_mt = '--'
             e_hit = '--'
             e_crit = '--'
+            e_dbl = '--'
 
         if grandmaster:
             if e_mt == '--' or e_hit == '--':
@@ -468,6 +484,8 @@ class UIView():
             blit_num(surf, e_hit, 20, 51)
             if crit_flag:
                 blit_num(surf, e_crit, 20, 67)
+            if as_flag:
+                blit_num(surf, e_dbl, 20, 83)
 
         return surf
 
@@ -496,7 +514,8 @@ class UIView():
             self.attack_info_disp = self.create_attack_info(attacker, weapon, defender, a_assist, d_assist)
 
         grandmaster = game.mode.rng_choice == RNGOption.GRANDMASTER
-        crit = DB.constants.get('crit').value
+        crit_flag = DB.constants.value('crit')
+        as_flag = DB.constants.value('display_attack_speed')
 
         if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
             topleft = (STATWIDTH + 8 - self.attack_info_offset, 4)
@@ -523,7 +542,9 @@ class UIView():
             if icon:
                 icon = item_system.item_icon_mod(defender, eweapon, attacker, icon)
                 y_pos = topleft[1] + 83
-                if not crit:
+                if as_flag:
+                    y_pos += 16
+                if not crit_flag:
                     y_pos -= 16
                 if grandmaster:
                     y_pos -= 16
@@ -534,7 +555,9 @@ class UIView():
             self.draw_adv_arrows(surf, attacker, defender, weapon, defender.get_weapon(), (topleft[0] + 13, topleft[1] + 8))
 
             y_pos = topleft[1] + 105
-            if not crit:
+            if as_flag:
+                y_pos += 16
+            if not crit_flag:
                 y_pos -= 16
             if not grandmaster:
                 y_pos -= 16

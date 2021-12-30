@@ -741,7 +741,7 @@ class MenuState(MapState):
                     game.cursor.construct_arrows(game.cursor.path[::-1])
 
         elif event == 'INFO':
-            pass
+            stat_screen.handle_info()
 
         elif event == 'SELECT':
             SOUNDTHREAD.play_sfx('Select 1')
