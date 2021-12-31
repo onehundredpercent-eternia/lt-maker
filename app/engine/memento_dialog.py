@@ -69,9 +69,10 @@ class MementoDialogBackground():
 
 class MementoDialog(dialog.Dialog):
     solo_flag = True
-    cursor = SPRITES.get('waiting_cursor')
+    cursor_sprite = SPRITES.get('waiting_cursor_red')
+    dragon_sigil_sprite = SPRITES.get('dragon_sigil')
     name_tag = SPRITES.get('memento_nametag')
-    draw_cursor_flag = False
+    draw_cursor_flag = True
     pause_before_wait_time = 150  # 9 frames
     pause_time = 150  # 9 frames
     text_width = WINWIDTH - 40
@@ -108,6 +109,13 @@ class MementoDialog(dialog.Dialog):
         self.text_index = 0
         self.text_lines = []
         self.total_num_updates = 0
+
+        self.cursor = engine.subsurface(self.cursor_sprite, (0, 0, 32, 32))
+        self.cursor_anims = [engine.subsurface(self.cursor_sprite, (i*32, 0, 32, 32)) for i in range(1, self.cursor_sprite.get_width()//32)]
+        self.cursor_anim_counter = 0
+
+        self.dragon_sigils = [engine.subsurface(self.dragon_sigil, ((i%4)*48, (i//4)*64, 48, 64)) for i in range(8)]
+        self.dragon_sigil_counter = 0
 
         # For state transitions
         self.last_update = engine.get_time()
@@ -240,6 +248,8 @@ class MementoDialog(dialog.Dialog):
             else:
                 self._next_block()
                 self.state = 'write'
+                # Start the cursor animation
+                self.cursor_anim_counter = 1
 
     def update(self):
         current_time = engine.get_time()
@@ -316,8 +326,26 @@ class MementoDialog(dialog.Dialog):
             # Draw text
             self.draw_text(surf)
 
-            if self.state == 'wait' and self.draw_cursor_flag:
-                cursor_pos = WINWIDTH//2 - self.cursor.get_width()//2, WINHEIGHT - 24
-                surf.blit(self.cursor, cursor_pos)
+            if self.draw_cursor_flag:
+                if self.cursor_anim_counter:
+                    cursor = self.cursor_anims[self.cursor_anim_counter - 1]
+                    cursor_pos = WINWIDTH//2 - cursor.get_width()//2, WINHEIGHT - 24
+                    surf.blit(cursor, cursor_pos)
+                    self.cursor_anim_counter += 1
+                    if self.cursor_anim_counter >= len(self.cursor_anims):
+                        self.cursor_anim_counter = 0
+                else:
+                    cursor_pos = WINWIDTH//2 - self.cursor.get_width()//2, WINHEIGHT - 24
+                    surf.blit(self.cursor, cursor_pos)
+
+                # Draw dragon sigil
+                if self.state == 'wait' and self.text_index >= len(self.text_commands):
+                    dragon_sigil = self.dragon_sigils[self.dragon_sigil_counter]
+                    dragon_sigil = image_mods.make_translucent(dragon_sigil, 0.5)
+                    cursor_pos = WINWIDTH//2 - dragon_sigil.get_width()//2, WINHEIGHT - dragon_sigil.get_height()
+                    surf.blit(dragon_sigil, cursor_pos)
+                    self.dragon_sigil_counter += 1
+                    if self.dragon_sigil_counter >= len(self.dragon_sigils):
+                        self.dragon_sigil_counter = len(self.dragon_sigils) - 1
 
         return surf
