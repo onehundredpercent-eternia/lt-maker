@@ -1456,7 +1456,10 @@ class CombatTargetingState(MapState):
         if mouse_position:
             game.cursor.set_pos(mouse_position)
 
-        if event == 'AUX':
+        if event == 'INFO':
+            stat_screen.handle_info()
+
+        elif event == 'AUX':
             adj_allies = target_system.get_adj_allies(self.cur_unit)
             if not DB.constants.value('pairup'):
                 new_position = self.selection.get_next(game.cursor.position)
