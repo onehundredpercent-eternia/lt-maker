@@ -577,6 +577,8 @@ class Event():
 
         elif command.nid == 'dialog_end':
             self.dialog_background.end()
+            if self.text_boxes:
+                self.text_boxes[-1].end()
 
         elif command.nid == 'speak':
             values, flags = event_commands.convert_parse(command, self._evaluate_evals, self._evaluate_vars)
@@ -1765,7 +1767,6 @@ class Event():
         if nid and nid in self.speak_styles:
             speak_style = self.speak_styles[nid]
 
-
         if not speaker:
             if speak_style:
                 speaker = speak_style.speaker
@@ -1777,7 +1778,7 @@ class Event():
             else:
                 position = self.parse_pos(text_position)
         elif speak_style:
-                position = speak_style.text_position
+            position = speak_style.text_position
 
         width = None
         if width:

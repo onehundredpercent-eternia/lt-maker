@@ -89,7 +89,7 @@ def run(game):
         while repeat:  # Let's the game traverse through state chains
             surf, repeat = game.state.update([], surf)
 
-        if cf.SETTINGS['debug']:
+        if cf.SETTINGS['display_fps']:
             draw_fps(surf, fps_records)
 
         SOUNDTHREAD.update(raw_events)

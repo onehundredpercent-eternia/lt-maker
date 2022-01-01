@@ -27,7 +27,7 @@ class EventPortrait():
     transition_speed = utils.frames2ms(14)
     travel_time = utils.frames2ms(15)
     bop_time = utils.frames2ms(8)
-    saturation_time = utils.frames2ms(60)
+    saturation_time = utils.frames2ms(10)
 
     def __init__(self, portrait: Portrait, position: Point, priority, transition=False, slide=None, mirror=False, name='', expressions=None):
         self.portrait = portrait

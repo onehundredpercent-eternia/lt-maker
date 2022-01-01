@@ -5,8 +5,6 @@ Overworld
 Implement Skills
 Write Script
 Combat UI
- - Unit who is talking gets nametag
- - Wait Tree and Snake
 No Free Roam Base:
     - Instead, after every 3rd chapter, forced free roam "dream" sequence where you can talk to each character in the party, and perhaps even dead characters.
     - You can also get items and even find items.

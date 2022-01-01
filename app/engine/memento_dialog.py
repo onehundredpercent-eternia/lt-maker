@@ -1,6 +1,7 @@
 import re
 
 from app.utilities import utils
+from app.utilities.algorithms.interpolation import lerp
 from app.constants import WINWIDTH, WINHEIGHT
 from app.engine.fonts import FONT
 from app.engine.sprites import SPRITES
@@ -9,8 +10,9 @@ from app.engine import config as cf
 
 class MementoDialogBackground():
     background = SPRITES.get('memento_dialog_background')
-    transition_in_speed = 200  # 12 frames
-    transition_out_speed = 166  # 10 frames
+    background = background.convert_alpha()
+    transition_in_speed = utils.frames2ms(12)
+    transition_out_speed = utils.frames2ms(10)
 
     def __init__(self):
         # off, transition_in, normal, transition_out
@@ -67,16 +69,151 @@ class MementoDialogBackground():
         elif self.state == 'normal':
             surf.blit(self.background, self.position)
 
+class MementoDialogNametag():
+    sprite = SPRITES.get('memento_nametag')
+    sprite = sprite.convert_alpha()
+    transition_in_speed = utils.frames2ms(12)
+    transition_out_speed = utils.frames2ms(10)
+    movement_speed = 32
+    default_pos = (WINWIDTH//2 - sprite.get_width(), 120)
+
+    def __init__(self):
+        self.state = 'off'  # off, transition_in, on, transition_out
+        self.font = FONT['text-white']
+        self.last_update = engine.get_time()
+        self.transition_progress = 0
+        self.current_position = self.default_pos
+
+    def start(self):
+        self.last_update = engine.get_time()
+        self.state = 'transition_in'
+
+    def end(self):
+        self.last_update = engine.get_time()
+        self.state = 'transition_out'
+
+    def update(self, portrait):
+        current_time = engine.get_time()
+        if self.state == 'off':
+            if portrait:
+                self.start()
+        elif self.state == 'transition_in':
+            perc = (current_time - self.last_update) / self.transition_in_speed
+            self.transition_progress = utils.clamp(perc, 0, 1)
+            if self.transition_progress == 1:
+                self.state = 'on'
+        elif self.state == 'transition_out':
+            perc = (current_time - self.last_update) / self.transition_out_speed
+            self.transition_progress = utils.clamp(perc, 0, 1)
+            if self.transition_progress == 1:
+                self.state = 'off'
+                self.current_position = self.default_pos
+        elif self.state == 'on':
+            if not portrait:
+                self.end()
+
+    def draw(self, surf, portrait, name):
+        if self.state == 'off':
+            return surf
+
+        if portrait:
+            position = portrait.position
+            x_pos = position[0] + 16
+            y_pos = position[1] + 118
+            if x_pos < 0:
+                x_pos = position[0] + 32
+        else:
+            x_pos, y_pos = self.default_pos
+        # Move sprite
+        desired_position = x_pos, y_pos
+        if desired_position != self.current_position:
+            x_offset = desired_position[0] - self.current_position[0]
+            y_offset = desired_position[1] - self.current_position[1]
+            x_speed = utils.sign(x_offset) * self.movement_speed
+            y_speed = utils.sign(y_offset) * self.movement_speed
+            self.current_position = int(self.current_position[0] + x_speed), int(self.current_position[1] + y_speed)
+            if abs(x_offset) < self.movement_speed:
+                self.current_position = (desired_position[0], self.current_position[1])
+            if abs(y_offset) < self.movement_speed:
+                self.current_position = (self.current_position[0], desired_position[1])
+
+        name_tag_surf = self.sprite.copy()
+
+        self.font.blit_center(name, name_tag_surf, (name_tag_surf.get_width()//2, name_tag_surf.get_height()//2 - self.font.height//2))
+        if self.state == 'transition_in':
+            name_tag_surf = image_mods.make_translucent(name_tag_surf, 1 - self.transition_progress)
+        elif self.state == 'transition_out':
+            name_tag_surf = image_mods.make_translucent(name_tag_surf, self.transition_progress)
+        surf.blit(name_tag_surf, self.current_position)
+        return surf
+
+class MementoDialogCursor():
+    sprite = SPRITES.get('waiting_cursor_red')
+    sprite = sprite.convert_alpha()
+    pulse_sprite = SPRITES.get('waiting_cursor_pulse')
+    cursor_offset = [0]*20 + [1]*2 + [2]*8 + [1]*2
+
+    def __init__(self):
+        self.main_image = engine.subsurface(self.sprite, (0, 0, 32, 32))
+        self.anims = [engine.subsurface(self.sprite, (i*32, 0, 32, 32)) for i in range(1, self.sprite.get_width()//32)]
+        self.anim_counter = 0
+        self.waiting = False
+        self.last_update = engine.get_time()
+        self.wait_start_time = 0
+
+    def start(self):
+        self.anim_counter = 4
+        self.waiting = False
+
+    def flip(self):
+        self.anim_counter = 1
+        self.waiting = False
+
+    def wait(self):
+        self.waiting = True
+        self.wait_start_time = engine.get_time()
+
+    def draw(self, surf):
+        if engine.get_time() - self.last_update > 1000:
+            self.start()
+        self.last_update = engine.get_time()
+
+        # if self.waiting:
+        #     current_time = engine.get_time()
+        #     y_offset = self.cursor_offset[int(current_time / FRAMERATE) % len(self.cursor_offset)]
+        # else:
+        y_offset = 0
+
+        if self.waiting:
+            current_time = engine.get_time() - self.wait_start_time
+            progress = utils.model_wave(current_time, 1500, 1000)
+            size = int(lerp(32, 64, progress))
+            im = self.pulse_sprite.copy()
+            im = engine.transform_scale(im, (size, size))
+            x, y = WINWIDTH//2 - size//2, WINHEIGHT - 8 - size//2
+            # surf.blit(im, (x, y))
+            engine.blit(surf, im, (x, y), None, engine.BLEND_RGB_ADD)
+
+        if self.anim_counter:
+            im = self.anims[self.anim_counter - 1]
+            pos = WINWIDTH//2 - im.get_width()//2, WINHEIGHT - 24 + y_offset
+            surf.blit(im, pos)
+            self.anim_counter += 1
+            if self.anim_counter >= len(self.anims):
+                self.anim_counter = 0
+        else:
+            pos = WINWIDTH//2 - self.main_image.get_width()//2, WINHEIGHT - 24 + y_offset
+            surf.blit(self.main_image, pos)
+
 class MementoDialog(dialog.Dialog):
     solo_flag = True
-    cursor_sprite = SPRITES.get('waiting_cursor_red')
-    dragon_sigil_sprite = SPRITES.get('dragon_sigil')
-    name_tag = SPRITES.get('memento_nametag')
     draw_cursor_flag = True
     pause_before_wait_time = 150  # 9 frames
     pause_time = 150  # 9 frames
     text_width = WINWIDTH - 40
     text_height = 64
+    name_tag = MementoDialogNametag()  # Shared with all dialogs
+    cursor = MementoDialogCursor()
 
     def __init__(self, text, background, portrait=None):
         self.plain_text = text
@@ -109,13 +246,6 @@ class MementoDialog(dialog.Dialog):
         self.text_index = 0
         self.text_lines = []
         self.total_num_updates = 0
-
-        self.cursor = engine.subsurface(self.cursor_sprite, (0, 0, 32, 32))
-        self.cursor_anims = [engine.subsurface(self.cursor_sprite, (i*32, 0, 32, 32)) for i in range(1, self.cursor_sprite.get_width()//32)]
-        self.cursor_anim_counter = 0
-
-        self.dragon_sigils = [engine.subsurface(self.dragon_sigil, ((i%4)*48, (i//4)*64, 48, 64)) for i in range(8)]
-        self.dragon_sigil_counter = 0
 
         # For state transitions
         self.last_update = engine.get_time()
@@ -232,6 +362,7 @@ class MementoDialog(dialog.Dialog):
         self.last_update = engine.get_time()
 
     def pause_before_wait(self):
+        self.cursor.wait()
         self.state = 'pause_before_wait'
         self.last_update = engine.get_time()
 
@@ -248,8 +379,10 @@ class MementoDialog(dialog.Dialog):
             else:
                 self._next_block()
                 self.state = 'write'
-                # Start the cursor animation
-                self.cursor_anim_counter = 1
+            self.cursor.flip()
+
+    def end(self):
+        self.state = 'transition_out'
 
     def update(self):
         current_time = engine.get_time()
@@ -304,48 +437,15 @@ class MementoDialog(dialog.Dialog):
 
         surf.blit(text_surf, (20, WINHEIGHT - 64 - 12))
 
-    def draw_nametag(self, surf, name):
-        if self.portrait:
-            position = self.portrait.position
-            x_pos = position[0] - 4
-            y_pos = position[1] + 118
-            if x_pos < 0:
-                x_pos = position[0] + 16
-        else:
-            x_pos, y_pos = (8, 8)
-        name_tag_surf = self.name_tag.copy()
-        FONT['text-white'].blit_center(name, name_tag_surf, (name_tag_surf.get_width()//2, name_tag_surf.get_height()//2 - self.font.height//2))
-        surf.blit(name_tag_surf, (x_pos, y_pos))
-        return surf
-
     def draw(self, surf):
         if self.state not in ('transition_in', 'transition_out'):
             # Draw nametag
-            if self.portrait:
-                self.draw_nametag(surf, self.speaker)
+            self.name_tag.update(self.portrait)
+            self.name_tag.draw(surf, self.portrait, self.speaker)
             # Draw text
             self.draw_text(surf)
 
             if self.draw_cursor_flag:
-                if self.cursor_anim_counter:
-                    cursor = self.cursor_anims[self.cursor_anim_counter - 1]
-                    cursor_pos = WINWIDTH//2 - cursor.get_width()//2, WINHEIGHT - 24
-                    surf.blit(cursor, cursor_pos)
-                    self.cursor_anim_counter += 1
-                    if self.cursor_anim_counter >= len(self.cursor_anims):
-                        self.cursor_anim_counter = 0
-                else:
-                    cursor_pos = WINWIDTH//2 - self.cursor.get_width()//2, WINHEIGHT - 24
-                    surf.blit(self.cursor, cursor_pos)
-
-                # Draw dragon sigil
-                if self.state == 'wait' and self.text_index >= len(self.text_commands):
-                    dragon_sigil = self.dragon_sigils[self.dragon_sigil_counter]
-                    dragon_sigil = image_mods.make_translucent(dragon_sigil, 0.5)
-                    cursor_pos = WINWIDTH//2 - dragon_sigil.get_width()//2, WINHEIGHT - dragon_sigil.get_height()
-                    surf.blit(dragon_sigil, cursor_pos)
-                    self.dragon_sigil_counter += 1
-                    if self.dragon_sigil_counter >= len(self.dragon_sigils):
-                        self.dragon_sigil_counter = len(self.dragon_sigils) - 1
+                self.cursor.draw(surf)
 
         return surf

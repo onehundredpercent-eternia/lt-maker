@@ -23,6 +23,7 @@ control_order = ('key_SELECT', 'key_BACK', 'key_INFO', 'key_AUX', 'key_LEFT', 'k
 
 config = [('animation', ['Always', 'Your Turn', 'Combat Only', 'Never'], 0),
           ('screen_size', [1, 2, 3, 4, 5], 18),
+          ('display_fps', bool, 2),
           ('battle_bg', bool, 17),
           ('unit_speed', list(reversed(range(15, 180, 15))), 1),
           ('text_speed', cf.text_speed_options, 2),
@@ -38,7 +39,8 @@ config = [('animation', ['Always', 'Your Turn', 'Combat Only', 'Never'], 0),
           ('talk_boop', bool, 16),
           ('autoend_turn', bool, 14),
           ('confirm_end', bool, 14),
-          ('display_hints', bool, 3)]
+          ('display_hints', bool, 3),
+          ]
 
 config_icons = [engine.subsurface(SPRITES.get('settings_icons'), (0, c[2] * 16, 16, 16)) for c in config]
 
