@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, TILEX
+from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, TILEX, MEMENTO_MODE
 from app.data.database import DB
 
 from app.engine.sprites import SPRITES
@@ -263,8 +263,12 @@ class OptionMenuState(MapState):
 
     def start(self):
         game.cursor.hide()
-        options = ['Unit', 'Objective', 'Options']
-        info_desc = ['Unit_desc', 'Objective_desc', 'Options_desc']
+        if MEMENTO_MODE:
+            options = ['Unit', 'Options']
+            info_desc = ['Unit_desc', 'Options_desc']
+        else:
+            options = ['Unit', 'Objective', 'Options']
+            info_desc = ['Unit_desc', 'Objective_desc', 'Options_desc']
         ignore = [False, False, False]
         if game.current_mode.permadeath:
             options.append('Suspend')

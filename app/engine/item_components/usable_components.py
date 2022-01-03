@@ -129,6 +129,32 @@ class ManaCost(ItemComponent):
     def reverse_use(self, unit, item):
         action.do(action.ChangeMana(unit, self.value))
 
+class EvalManaCost(ItemComponent):
+    nid = 'eval_mana_cost'
+    desc = "Item costs mana to use, the amount is eval'd at runtime"
+    tag = 'uses'
+
+    expose = Type.String
+
+    def _check_value(self, unit, item) -> int:
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, unit, item=item))
+        except:
+            print("Couldn't evaluate %s conditional" % self.value)
+        return 0
+
+    def available(self, unit, item) -> bool:
+        return unit.get_mana() >= self._check_value(unit, item)
+
+    def start_combat(self, playback, unit, item, target, mode):
+        value = self._check_value(unit, item)
+        action.do(action.ChangeMana(unit, -value))
+
+    def reverse_use(self, unit, item):
+        value = self._check_value(unit, item)
+        action.do(action.ChangeMana(unit, value))
+
 class Cooldown(ItemComponent):
     nid = 'cooldown'
     desc = "After use, item cannot be used until X turns have passed"

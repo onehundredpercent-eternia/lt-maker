@@ -1,10 +1,9 @@
-For vertical slice
+For vertical slice:
 Chapter 3 and 4
 Alternate forms of Chapter 3 and 4
 Overworld
 Implement Skills
 Write Script
-Combat UI
 No Free Roam Base:
     - Instead, after every 3rd chapter, forced free roam "dream" sequence where you can talk to each character in the party, and perhaps even dead characters.
     - You can also get items and even find items.
@@ -14,6 +13,10 @@ Dream conversations
 Portraits
 Personal Skills / Grave Weapons
 Playtest playtest playtest
+Controls display on the bottom of the screen
+Advice pennant on the bottom of the screen
+---
+Animation Combat UI (for much later along)
 
 Portraits:
 Ash (M) Pale skin, dark colors
@@ -27,8 +30,8 @@ Istrid (F) Witch, Purple hair
 Tristan (M) Ophie 
 Isolde (F) Purple hair
 ---
-Aelfwynn (F) Red hair
-Eadan (M) Green hair, wiry
+**Aelfwynn (F) Red hair
+**Eadan (M) Green hair, wiry
 **Bjorn (M) Blond hair mop, a little chunky, ruined blue/green armor, jovial looking
 **Millie (F) Blue hair
 **Anna (F) Orange hair
@@ -40,3 +43,5 @@ Clover (F) Dark skin, brown hair light clothes, revealing, seductive, self-assur
 *Rhun (M) Amber hair, military looking, red/gray armor, crusader tunic, modify armor slightly, modify face more
 *Piper (F) Amber hair, dark clothes, religious iconography, slight build, thief, midriff clothing correct, face needs update
 **Rhodri (M) Amber hair, strong lad, bandit looking
+
+Ina (F) Nerdy looking mage

@@ -245,7 +245,10 @@ class StatScreen():
             self.info_graph.register((1 + left, y_pos, 40, 16), help_box, 'all')
 
         # Mana / MEM
-        mana = str(self.unit.get_mana())
+        if self.unit.generic:
+            mana = '--'
+        else:
+            mana = str(self.unit.get_mana())
         left, y_pos = (37*2, top + 16 * 1)
         FONT['text-blue'].blit_right(mana, surf, (36 + left, y_pos))
         FONT['text-yellow'].blit(text_funcs.translate('MANA'), surf, (1 + left, y_pos))
