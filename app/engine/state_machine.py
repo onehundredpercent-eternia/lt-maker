@@ -165,6 +165,9 @@ class StateMachine():
     def clear(self):
         self.temp_state.append('clear')
 
+    def clear_except_events(self):
+        self.temp_state.append('clear_except_events')
+
     def refresh(self):
         # Clears all states except the top one
         self.state = self.state[-1:]
@@ -203,6 +206,13 @@ class StateMachine():
                 for state in reversed(self.state):
                     self.exit_state(state)
                 self.state.clear()
+            elif transition == 'clear_except_events':
+                for state in reversed(self.state):
+                    if state.name == 'event':
+                        pass
+                    else:
+                        self.exit_state(state)
+                self.state = [state for state in self.state if state.name == 'event']
             else:
                 new_state = self.all_states[transition](transition)
                 self.state.append(new_state)

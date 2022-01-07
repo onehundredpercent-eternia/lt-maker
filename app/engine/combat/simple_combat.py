@@ -303,9 +303,9 @@ class SimpleCombat():
             else:
                 game.state.change('wait')
         elif self.attacker.is_dying:
-            game.state.clear()
-            game.state.change('free')
-            game.state.change('wait')
+            game.state.clear_except_events()
+            game.state.insert('wait')
+            game.state.insert('free')
         else:
             if not self.attacker.has_attacked or \
                     (self.attacker.team == 'player' and item_system.menu_after_combat(self.attacker, self.main_item)):
@@ -316,9 +316,9 @@ class SimpleCombat():
                 game.cursor.place_arrows()
 
             else:
-                game.state.clear()
-                game.state.change('free')
-                game.state.change('wait')
+                game.state.clear_except_events()
+                game.state.insert('wait')
+                game.state.insert('free')
 
     def handle_item_gain(self, all_units):
         enemies = all_units.copy()
