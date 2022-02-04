@@ -184,11 +184,12 @@ class InfoGraph():
             # right = self.current_bb.aabb[0] >= int(0.75 * WINWIDTH)
             right = False
             pos = (max(0, self.current_bb.aabb[0] - 32), self.current_bb.aabb[1] + 13)
-            self.current_bb.help_box.draw(surf, pos, right)
 
             cursor_pos = (max(0, self.current_bb.aabb[0] - 4), self.current_bb.aabb[1])
             self.cursor.update()
             self.cursor.draw(surf, *cursor_pos)
+
+            self.current_bb.help_box.draw(surf, pos, right)
 
 def build_groove(surf, topleft, width, fill):
     bg = SPRITES.get('groove_back')
