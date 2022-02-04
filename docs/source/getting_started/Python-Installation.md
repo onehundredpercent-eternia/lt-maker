@@ -38,16 +38,16 @@ You should be able to right-click in the File Explorer and open Git Bash by left
 
 ![GitConfig3](../Images/InstallationGit3.png)
 
-A command line terminal should pop up. 
+A command line terminal should pop up.
 
 Type `git --version` to make sure git responds.
 
-Then navigate to where you want the engine to live and type 
+Then navigate to where you want the engine to live and type
 
 ```
 git clone https://gitlab.com/rainlash/lt-maker.git
 ```
- 
+
 This will clone the repository to your machine, where you'll have access to it.
 
 <details><summary><strong>Updating the Engine</strong></summary><p>
@@ -73,7 +73,7 @@ I highly highly **HIGHLY** recommend adding Python 3.7 to PATH. This makes so ma
 
 ![PythonConfig1](../Images/InstallationPython1.png)
 
-Now you should have Python installed on your machine. Open a new Git Bash somewhere on your machine and type `python --version` or `py --version` or `python3 --version` to confirm that Python works. 
+Now you should have Python installed on your machine. Open a new Git Bash somewhere on your machine and type `python --version` or `py --version` or `python3 --version` to confirm that Python works.
 
 Whichever one works (`python` or `py` or `python3`) will be the command you will use in the future to call Python. In the rest of this tutorial, I will be using `python` because that is how it is on my machine, but if `py` or `python3` works for you, use that one instead.
 
@@ -95,15 +95,15 @@ Newer versions of Python like the one you installed generally live in `C:\Users\
 
 If you navigate to there, you should see a python.exe executable. This is the actual python you would be running if the PATH was set up correctly.
 
-In Windows 10, type "env" in the search bar and click the "Edit the System Environment Variables" option. 
+In Windows 10, type "env" in the search bar and click the "Edit the System Environment Variables" option.
 
 ![PythonPath1](../Images/PythonPath1.png)
 
-A dialog box will pop up. Click "Environment Variables...". 
+A dialog box will pop up. Click "Environment Variables...".
 
 ![PythonPath2](../Images/PythonPath2.png)
 
-Under User Variables (the top table), click on the "Path" row, then click "Edit...". 
+Under User Variables (the top table), click on the "Path" row, then click "Edit...".
 
 ![PythonPath3](../Images/PythonPath3.png)
 
@@ -120,29 +120,30 @@ Now click OK, exit out of the whole thing, and open a new Git Bash. Try running 
 
 Pip is the Python package manager. It means from here on out, we don't need to download stuff off random websites to get the rest of our tools. These days, if you install Python with the defaults, pip comes bundled with Python.
 
-Make sure it's available by typing 
+Make sure it's available by typing
 ```
 pip --version
-``` 
-or 
+```
+or
 ```
 python -m pip --version
-``` 
+```
 in the command line.
 
 > If during any of the installations, you find that you need administrator privileges to install for all users, you can install for just yourself with `pip install {package_name} --user`.
 
-## Installing Pygame
+## Installing Requirements
 
 ```
-pip install pygame==1.9.6
+pip install -r requirements_editor.txt
 ```
- or 
+ or
 ```
-python -m pip install pygame==1.9.6
+python -m pip install -r requirements_editor.txt
 ```
 
-Wow, that was easy. It should've installed pygame version 1.9.6, which is the version I use. Do not use Pygame 2.0+. Pygame 2.0+ is a newer version of Pygame, but as of May 1, 2021 it still has several outstanding bugs. 
+Wow, that was easy. It should've installed, along with all other dependencies, pygame version 1.9.6, which is the version I use.
+Do not use Pygame 2.0+. Pygame 2.0+ is a newer version of Pygame, but as of May 1, 2021 it still has several outstanding bugs.
 
 Test if it works
 
@@ -150,7 +151,7 @@ Test if it works
 python -m pygame.examples.aliens
 ```
 
-Now test if the engine works by typing 
+Now test if the engine works by typing
 ```
 python run_engine.py
 ```
@@ -160,25 +161,7 @@ The engine main screen should pop up and you should be able to play the Lion Thr
 
 ![TitleScreen](../Images/TitleScreen.png)
 
-## Installing PyQt5
-
-If you want to be able to use the LT-Maker editors and make your own game, you will also need the Python binding to the Qt GUI framework, "PyQt5".
-
-If you have a Windows system, this will work fine:
-
-```
-pip install PyQt5
-```
-or 
-```
-python -m pip install PyQt5
-```
-
-Capitalization matters.
-
-> Some users have reported that on Linux systems (specifically Ubuntu), this method does not work. In that case, try: `sudo apt-get install python3-pyqt5` instead.
-
-Now test if LT-Maker works by typing 
+Now test if LT-Maker works by typing
 ```
 python run_editor.py
 ```
@@ -188,18 +171,6 @@ The editor should pop up and you should be able to begin making your own fangame
 
 ![EditorScreen](../Images/EditorScreen.png)
 
-## Installing PyInstaller
-
-You only need to install PyInstaller if you are planning to distribute your project as a frozen executable.
-
-If you have a Windows system, this will work fine:
-
-```
-pip install PyInstaller==3.6
-```
-or 
-```
-python -m pip install PyInstaller==3.6
-```
+> Some users have reported that on Linux systems (specifically Ubuntu), PyQt5 installation does not work. In that case, try: `sudo apt-get install python3-pyqt5` instead.
 
 Once installed, you can follow the second part of the [Build Engine](Build-Engine) guide to distribute your project as an executable.

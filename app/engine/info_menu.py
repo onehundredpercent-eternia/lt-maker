@@ -816,7 +816,8 @@ class InfoMenuState(State):
         height = 16 * 2 + 4
 
         surf = engine.create_surface((WINWIDTH - 96, height), transparent=True)
-
+        if not wexp_to_draw:
+            return surf
         counter = 0
         for y in range(0, 32, 16):
             for x in range(0, 2):
