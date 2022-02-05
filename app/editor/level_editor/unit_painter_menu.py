@@ -581,7 +581,7 @@ class GenericUnitDialog(Dialog):
             unit_group.swap(old_nid, self.current.nid)
         # Swap travelers
         for unit in self.window.current_level.units:
-            if unit.starting_traveler == old_nid:
+            if unit.starting_traveler == old_nid and old_nid:
                 unit.starting_traveler = self.current.nid
 
     def team_changed(self, val):
