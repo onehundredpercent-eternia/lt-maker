@@ -6,7 +6,8 @@ build_app:
     stage: generate
     image: "python:3.7.9" 
     except:
-        - merge_requests
+        refs:
+            - merge_requests
     before_script:
         - python --version
         - pip install -r requirements_editor.txt
@@ -44,7 +45,8 @@ release:
     - job: build_app
       artifacts: true
     except:
-        - merge_requests
+        refs:
+            - merge_requests
     script:
         - echo 'running release'
     release:
