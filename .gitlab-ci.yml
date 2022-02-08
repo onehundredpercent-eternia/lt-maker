@@ -5,10 +5,11 @@ stages:
 build_app:
     stage: generate
     image: "python:3.7.9" 
-    rules:
-        - if: $CI_COMMIT_TAG
-          when: never                                  # Do not run this job when a tag is created manually
-        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH  # Should only run when commit is actually made
+    except:
+        refs:
+            - merge_requests
+    only:
+        - master
     before_script:
         - python --version
         - pip install -r requirements_editor.txt
@@ -45,10 +46,11 @@ release:
     needs:
     - job: build_app
       artifacts: true
-    rules:
-        - if: $CI_COMMIT_TAG
-          when: never                                  # Do not run this job when a tag is created manually
-        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    except:
+        refs:
+            - merge_requests
+    only:
+        - master
     script:
         - echo 'running release'
     release:
@@ -59,4 +61,3 @@ release:
             links:
                 - name: 'Built_Editor'
                   url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/pipeline-test/download?job=build_app"
-                  #filepath: "./downloadable/"
