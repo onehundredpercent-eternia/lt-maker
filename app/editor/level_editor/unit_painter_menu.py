@@ -567,7 +567,7 @@ class GenericUnitDialog(Dialog):
         other_nids = [d.nid for d in self._data.values()
                       if d is not self.current]
         other_nids += DB.units.keys()  # Can't use these either
-        if self.current.nid in other_nids:
+        if not self.current.nid or self.current.nid in other_nids:
             QMessageBox.warning(self.window, 'Warning',
                                 'Unit ID %s already in use' % self.current.nid)
             new_nid = str_utils.get_next_generic_nid("101", other_nids)
