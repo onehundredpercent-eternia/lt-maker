@@ -141,6 +141,24 @@ class DropDownItemComponent(BoolItemComponent):
     def on_value_changed(self, val):
         self._data.value = self.options[val]
 
+# class EvalHelperItemComponent(BoolItemComponent):
+#     def __init__(self, data, parent, options):
+#         self.options = options if options else ['N/A']
+#         super().__init__(data, parent)
+
+#     def create_editor(self, hbox):
+#         self.editor = QComboBox(self)
+#         self.editor.setMaximumWidth(320)
+#         self.editor.addItems(self.options)
+#         if not self._data.value:
+#             self._data.value = self.options[0]
+#         self.editor.setCurrentIndex(self.options.index(self._data.value))
+#         self.editor.currentIndexChanged.connect(self.on_value_changed)
+#         hbox.addWidget(self.editor)
+
+#     def on_value_changed(self, val):
+#         self._data.value = self.options[val]
+
 class WeaponTypeItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
