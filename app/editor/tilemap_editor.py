@@ -56,9 +56,9 @@ def draw_tilemap(tilemap, show_full_map = False, current_layer_index=-1, fade=2,
                 if pix:
                     if current_layer_index > -1:
                         painter.setOpacity(calculate_layer_fade(current_layer_index, index, fade))
-                    painter.drawImage(coord[0] * TILEWIDTH,
-                                      coord[1] * TILEHEIGHT,
-                                      pix.toImage())
+                    painter.drawPixmap(coord[0] * TILEWIDTH,
+                                       coord[1] * TILEHEIGHT,
+                                       pix)
     painter.end()
     return image
 
