@@ -399,6 +399,10 @@ class StatDelegate(UnitDelegate):
 class WeaponTypeDelegate(UnitDelegate):
     data = DB.weapons
     name = "Weapon Type"
+ 
+class SkillDelegate(UnitDelegate):
+    data = DB.skills
+    name = "Skill"
 
 class ListItemComponent(BoolItemComponent):
     delegate = None
@@ -497,6 +501,8 @@ def get_display_widget(component, parent):
             delegate = StatDelegate
         elif component.expose[1] == Type.WeaponType:
             delegate = WeaponTypeDelegate
+        elif component.expose[1] == Type.Skill:
+            delegate = SkillDelegate
 
         if component.expose[0] == Type.List:
             c = ListItemComponent(component, parent, delegate)

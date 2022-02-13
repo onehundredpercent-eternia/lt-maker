@@ -1,4 +1,5 @@
 import random, re
+from typing import Dict
 
 from app.utilities import utils
 from app.data.database import DB
@@ -14,7 +15,8 @@ will be accepted
 """
 
 def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
-             region=None, mode=None, skill=None, attack_info=None, base_value=None) -> bool:
+             region=None, mode=None, skill=None, attack_info=None, base_value=None,
+             local_args: Dict = None) -> bool:
     unit = unit1  # noqa: F841
     target = unit2  # noqa: F841
 
@@ -55,6 +57,8 @@ def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
         'base_value': base_value,
         'check_pair': check_pair,
         'check_default': check_default})
+    if local_args:
+        temp_globals.update(local_args)
     return eval(string, temp_globals)
 
 def eval_string(text: str) -> str:

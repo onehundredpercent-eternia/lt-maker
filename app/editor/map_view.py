@@ -6,12 +6,11 @@ from app.data.database import DB
 from app.editor import timer, tilemap_editor
 from app.editor.class_editor import class_model
 from app.editor.settings import MainSettingsController
-from app.editor.tile_editor import tile_model
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import utils
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPixmap
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
 
 

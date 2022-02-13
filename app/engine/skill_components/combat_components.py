@@ -206,3 +206,16 @@ class PCC(SkillComponent):
 
     def crit_multiplier(self, unit, item, target, mode, attack_info, base_value):
         return unit.get_stat(self.value) if attack_info[0] > 0 else 1
+
+
+class PCCStatic(SkillComponent):
+    nid = 'pcc_static'
+    desc = "Multiplies crit chance by a fixed value on second strike"
+    tag = 'combat'
+    author = 'BigMood'
+
+    expose = Type.Float
+    value = 1
+
+    def crit_multiplier(self, unit, item, target, mode, attack_info, base_value):
+        return self.value if attack_info[0] > 0 else 1
