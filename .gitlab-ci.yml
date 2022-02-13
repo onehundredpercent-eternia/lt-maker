@@ -9,6 +9,9 @@ run_tests:
     only:
         refs:
             - merge_requests
+    before_script:
+        - python --version
+        - pip install -r requirements_editor.txt
     script:
         - python -m unittest app/tests/*.py  
 
