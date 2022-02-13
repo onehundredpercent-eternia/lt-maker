@@ -253,7 +253,7 @@ class ItemOption(BasicOption):
         uses_string = '--'
         if self.item.uses:
             uses_string = str(self.item.data['uses'])
-        elif self.item.parent_item and self.item.parent_item.data['uses']:
+        elif self.item.parent_item and self.item.parent_item.uses and self.item.parent_item.data['uses']:
             uses_string = str(self.item.parent_item.data['uses'])
         elif self.item.c_uses:
             uses_string = str(self.item.data['c_uses'])

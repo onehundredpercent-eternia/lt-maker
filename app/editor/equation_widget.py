@@ -68,7 +68,7 @@ class EquationMultiModel(MultiAttrListModel):
             from app.engine import equations as parse
             from app.engine.objects import unit
             parser = parse.Parser()
-            test_unit = unit.UnitObject(DB.units[0])
+            test_unit = unit.UnitObject.from_prefab(DB.units[0])
             test_unit.stats = {k: v for (k, v) in test_unit.bases.items()}
             test_unit.stat_bonus = lambda x: 0
             result = parser.get(equation.nid, test_unit)

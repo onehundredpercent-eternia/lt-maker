@@ -386,3 +386,12 @@ def get_pc_damage(unit, skill) -> int:
         if component.defines('post_combat_damage'):
             return component.post_combat_damage()
     return 0  # 0 is default
+    
+class AllBrave(SkillComponent):
+    nid = 'all_brave'
+    desc = "All items multi-attack"
+    tag = 'combat2'
+    author = 'BigMood'
+
+    def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value):
+        return 1

@@ -578,7 +578,7 @@ class MainEditor(QMainWindow):
                           "<p>Check out <a href='https://lt-maker.readthedocs.io/'>https://lt-maker.readthedocs.io/</a> "
                           "for more information and helpful tutorials.</p>"
                           "<p>This program has been freely distributed under the MIT License.</p>"
-                          "<p>Copyright 2014-2021 rainlash.</p>")
+                          "<p>Copyright 2014-2022 rainlash.</p>")
 
     def check_for_updates(self):
         # Only check for updates in frozen version

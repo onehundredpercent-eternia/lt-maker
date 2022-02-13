@@ -135,14 +135,14 @@ The item components in this dictionary are broken down by icon going from left t
 | **Draw Back Target Restrict** | Works the same as draw back but will not allow the item to be selected if the action cannot be performed. |
 | **Steal** | On hit the user may steal any non-equipped item from the target. |
 | **GBASteal** | On hit the user may steal non-weapon and non-spell item from the target. |
-| **Event On Hit** | The selected event plays before a hit, if the unit will hit with this item. |
+| **Event On Hit** | The selected event plays before a hit, if the unit will hit with this item. The event is triggered with args (`unit1`=attacking unit, `unit2`=target, `item`=item, `position`=attacking unit's position, `region`=targeted position) |
 | **Event After Combat** | The selected event plays at the end of combat so long as an attack in combat hit. |
 
 ## Alternate Formulas
 
 Each of the alternate formulas here replace the specified stat with a selected equation from the equations editor. Most are self explanatory.
 
-Resist - Resist refers to both defense and resistance. Increasing a unit's resist will decrease the damage they take, regardless of magic/physical damage. Magic items essentially use this component, by swapping the enemy's normal DEFENSE equation for the alternate resist formula of MAGIC_DEFENSE. 
+Resist - Resist refers to both defense and resistance. Increasing a unit's resist will decrease the damage they take, regardless of magic/physical damage. Magic items essentially use this component, by swapping the enemy's normal DEFENSE equation for the alternate resist formula of MAGIC_DEFENSE.
 
 Attack vs Defense Speed - Lex Talionis can calculate speed when being attacked differently than speed when attacking. These two components are part of this distinction.
 
