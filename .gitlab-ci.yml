@@ -13,7 +13,7 @@ run_tests:
         - python --version
         - pip install -r requirements_editor.txt
     script:
-        - export PYTHONPATH=$PYTHONPATH:$CI_PROJECT_DIR
+        - python app/engine/component_system_compiler/source_generator.py
         - python -m unittest app/tests/*.py  
 
 build_app:
