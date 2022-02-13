@@ -6,9 +6,9 @@ stages:
 run_tests:
     stage: test
     image: "python:3.7.9"
-    #only:
-    #    refs:
-    #        - merge_requests
+    only:
+        refs:
+            - merge_requests
     before_script:
         - python --version
         - pip install -r requirements_editor.txt
