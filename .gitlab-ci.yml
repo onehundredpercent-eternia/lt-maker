@@ -1,6 +1,16 @@
 stages:
+    - test
     - generate
     - release
+
+run_tests:
+    stage: test
+    image: "python:3.7.9"
+    only:
+        refs:
+            - merge_requests
+    script:
+        - python -m unittest app/tests/*.py  
 
 build_app:
     stage: generate
