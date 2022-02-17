@@ -1,17 +1,24 @@
 import logging
-from app.engine.text_evaluator import TextEvaluator
+from typing import Any, Dict, List, Tuple
+
 import app.engine.config as cf
 from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database import DB
 from app.data.difficulty_modes import RNGOption
+from app.data.ui_prefab import UIObjectPrefab
 from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
                         icons, image_mods, item_funcs, item_system,
                         menu_options, skill_system, text_funcs)
 from app.engine.fonts import FONT
 from app.engine.game_counters import ANIMATION_COUNTERS
 from app.engine.game_state import game
+from app.engine.graphics.ingame_ui import ui_components
+from app.engine.interfaces.idrawable import IDrawable
+from app.engine.objects.ui_object import UIObject
 from app.engine.sprites import SPRITES
+from app.engine.text_evaluator import TextEvaluator
 from app.utilities import utils
+from app.utilities.typing import NID
 
 
 class UIView():
@@ -45,6 +52,8 @@ class UIView():
         self.prev_unit_info_top = False
         self.obj_top = False
 
+        self.other_boxes: List[Tuple[NID, IDrawable]] = []
+
     def remove_unit_display(self):
         self.remove_unit_info = True
 
@@ -77,6 +86,7 @@ class UIView():
                     self.tile_transition_state = 'normal'
         else:
             self.current_tile_pos = game.cursor.position
+        self.other_boxes = [(nid, box) for (nid, box) in self.other_boxes if box.update()]
 
     def draw(self, surf):
         self.update()
@@ -181,6 +191,9 @@ class UIView():
 
         if self.initiative_info_disp:
             surf.blit(self.initiative_info_disp, (0, 0))
+        if game.state.current() in self.legal_states:
+            for _, box in self.other_boxes:
+                box.draw(surf)
 
         return surf
 
@@ -211,52 +224,17 @@ class UIView():
         return surf
 
     def create_unit_info(self, unit):
-        font = FONT['info-grey']
-        dimensions = (112, 40)
-        width, height = dimensions
-        surf = SPRITES.get('unit_info_bg').copy()
-        top, left = 4, 6
-        if unit.generic:
-            icons.draw_faction(surf, DB.factions.get(unit.faction), (left + 1, top + 4))
-        else:
-            portrait_nid = unit.portrait_nid
-            icons.draw_chibi(surf, portrait_nid, (left + 1, top + 4))
-
-        name = unit.name
-        if unit.generic:
-            short_name = DB.classes.get(unit.klass).name
-            name = short_name + ' ' + str(unit.level)
-        pos = (left + width//2 + 6 - font.width(name)//2, top + 4)
-        font.blit(name, surf, pos)
-
-        # Health text
-        surf.blit(SPRITES.get('unit_info_hp'), (left + 34, top + height - 20))
-        surf.blit(SPRITES.get('unit_info_slash'), (left + 66, top + height - 19))
-        current_hp = unit.get_hp()
-        max_hp = equations.parser.hitpoints(unit)
-        font.blit_right(str(current_hp), surf, (left + 66, top + 16))
-        font.blit_right(str(max_hp), surf, (left + 90, top + 16))
-
-        # Health BG
-        bg_surf = SPRITES.get('health_bar2_bg')
-        surf.blit(bg_surf, (left + 36, top + height - 10))
-
-        # Health Bar
-        hp_ratio = utils.clamp(current_hp / float(max_hp), 0, 1)
-        if hp_ratio > 0:
-            hp_surf = SPRITES.get('health_bar2')
-            idx = int(hp_ratio * hp_surf.get_width())
-            hp_surf = engine.subsurface(hp_surf, (0, 0, idx, 2))
-            surf.blit(hp_surf, (left + 37, top + height - 9))
-
-        # Weapon Icon
-        weapon = unit.get_weapon()
-        icon = icons.get_icon(weapon)
-        if icon:
-            pos = (left + width - 20, top + height//2 - 8)
-            # icon = item_system.item_icon_mod(unit, weapon, defender, icon)
-            surf.blit(icon, pos)
-        return surf
+        minimug = UIObject.from_prefab(DB.custom_ui.get("minimug"), {'cursor_unit': unit})
+        def _eval_unit(arg: str, local_args: Dict):
+            try:
+                _value = evaluate.evaluate(arg[5:], local_args=local_args) if (isinstance(arg, str) and arg.startswith("eval:")) else arg
+            except:
+                print("Error: Could not evaluate %", arg)
+            else:
+                return _value
+            return arg
+        minimug_surf = ui_components.draw_component_surf(minimug, _eval_unit, log_errors=minimug.log_errors)
+        return minimug_surf
 
     def create_tile_info(self, coord):
         terrain_nid = game.tilemap.get_terrain(coord)
@@ -763,7 +741,6 @@ class UIView():
         surf.blit(unit_sprite, (topleft[0] - 12, topleft[1] - 16))
 
         return surf
-
 
 class ItemDescriptionPanel():
     """

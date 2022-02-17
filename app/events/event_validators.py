@@ -504,9 +504,6 @@ class DashList(Validator):
             pass
         return None
 
-    def convert(self, text: str) -> List:
-        return text.split('-')
-
 class PointList(Validator):
     desc = "A list of points separated by dashes. E.g. (1, 1)-(3.5, 3)-(24,-6)"
     decimal_converter = re.compile(r'[^\d.]+')
@@ -572,6 +569,23 @@ class Color3(Validator):
         if all(str_utils.is_int(t) and 0 <= int(t) <= 255 for t in text):
             return text
         return None
+
+class Font(Validator):
+    desc = "Any font that is loaded in the game from the fonts folder"
+
+    def validate(self, text, level):
+        from app.engine.fonts import FONT
+        # try to enforce using the new style fonts, not the deprecated fonts
+        valid_fonts = [font_name for font_name in FONT.keys() if '-' not in font_name]
+        if text in valid_fonts:
+            return text
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        from app.engine.fonts import FONT
+        # try to enforce using the new style fonts, not the deprecated fonts
+        valids = [(None, font_name) for font_name in FONT.keys() if '-' not in font_name]
+        return valids
 
 class Bool(OptionValidator):
     valid = ['t', 'true', '1', 'y', 'yes', 'f', 'false', '0', 'n', 'no']
@@ -835,8 +849,21 @@ class GlobalUnitOrConvoy(Validator):
         valids.append((None, "convoy"))
         return valids
 
+class UIObject(Validator):
+    desc = "accepts a ui element's nid"
+
+    def validate(self, text, level):
+        if text in DB.custom_ui.keys():
+            return text
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        valids = [(None, ui.nid) for ui in DB.custom_ui.values()]
+        return valids
+
 class AnimationType(OptionValidator):
     valid = ['north', 'east', 'west', 'south', 'fade']
+
 class CardinalDirection(OptionValidator):
     valid = ['north', 'east', 'west', 'south']
 

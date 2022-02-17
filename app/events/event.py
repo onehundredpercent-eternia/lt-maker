@@ -54,7 +54,7 @@ class Event():
     def _generic_setup(self):
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
-        self.other_boxes: List[Tuple[NID, Any]] = []
+        self.other_boxes: List[Tuple[NID, IDrawable]] = []
         self.overlay_ui = uif.UIComponent.create_base_component()
 
         self.prev_state = None

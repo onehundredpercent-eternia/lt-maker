@@ -1,4 +1,5 @@
 from __future__ import annotations
+from ast import keyword
 
 import logging
 from enum import Enum
@@ -2059,6 +2060,56 @@ expression would automatically update the gold.
     optional_keywords = ['Title', 'Dimensions', 'RowWidth', 'Alignment', 'BG', 'EntryType', 'TextAlign']
     keyword_types = ['Nid', 'String', 'String', 'Size', 'Width', 'Align', 'Sprite', 'TableEntryType', 'HAlign']
     _flags = ['expression', 'no_bg']
+
+class DisplayUI(EventCommand):
+    nid = 'display_ui'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+"""
+Display a UI element at certain positions (adjusting for cursor). This will remain on-screen until `rm_ui` is called, or the event ends.
+Alternately, using the `persistent` keyword will add this to the remainder of the level.
+
+Both positions and arguments come in pairs of `a1,a2-b1,b2`, or `key1,value1-key2,value2`.
+
+Example: display_ui;minimug;12,12-50,50;mug_unit,eval:unit
+"""
+    keywords = ['UI NID', 'PositionList', 'ArgsList']
+    keyword_types = ['UIObject', 'DashList', 'DashList']
+    _flags = ['persistent']
+
+class RmUI(EventCommand):
+    nid = 'rmui'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+"""
+Removes UI with given NID from the screen, if it exists.
+"""
+    keywords = ['NID']
+    keyword_types = ['UIObject']
+
+class TextEntry(EventCommand):
+    nid = 'text_entry'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Presents the player with a menu in which they can enter text. An example use-case would be to create a tactician name.
+
+*Nid* is the name of this entry, which can be checked later to recall the player's input.
+For instance, if nid was "tactician", use `{var:tactician}` anywhere in events to replace it with the user's entry.
+*Text* is the text describing the choice, such as "Please enter a name."
+*PositiveInteger* is the character limit. If not set, defaults to 16.
+*StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
+
+If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
+        """
+
+    keywords = ['Nid', 'Text']
+    optional_keywords = ['PositiveInteger', 'IllegalCharacterList']
+    _flags = ['force_entry']
+
 
 class RemoveTable(EventCommand):
     nid = 'remove_table'
