@@ -30,7 +30,10 @@ def get_icon(item) -> engine.Surface:
     if not image.image:
         image.image = engine.image_load(image.full_path)
     image = engine.subsurface(image.image, (item.icon_index[0] * 16, item.icon_index[1] * 16, 16, 16))
-    image = image.convert()
+    try:
+        image = image.convert()
+    except:
+        pass
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
     return image
 
@@ -155,7 +158,10 @@ def draw_chibi(surf, nid, topleft=None, bottomright=None):
     if not image.image:
         image.image = engine.image_load(image.full_path)
     image = engine.subsurface(image.image, (96, 16, 32, 32))
-    image = image.convert()
+    try:
+        image = image.convert()
+    except:
+        pass
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
 
     if topleft:

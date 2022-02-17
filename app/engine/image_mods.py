@@ -10,6 +10,13 @@ def color_convert(image, conversion_dict):
     px_array.close()
     return image
 
+def simple_color_convert(image, conversion_dict):
+    px_array = engine.make_pixel_array(image)
+    for old_color, new_color in conversion_dict.items():
+        px_array.replace(old_color, new_color)
+    px_array.close()
+    return image
+
 def color_convert_alpha(image, conversion_dict):
     px_array = engine.make_pixel_array(image)
     for old_color, new_color in conversion_dict.items():

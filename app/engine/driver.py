@@ -14,9 +14,6 @@ def start(title, from_editor=False):
     icon = engine.image_load('favicon.ico')
     engine.set_icon(icon)
 
-    from app.engine import sprites
-    sprites.load_images()
-
     # Hack to get icon to show up in windows
     try:
         import ctypes

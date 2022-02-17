@@ -3,8 +3,6 @@ import logging
 import os
 import shutil
 from datetime import datetime
-from pathlib import Path
-from time import time_ns
 
 from app.constants import VERSION
 from app.data.database import DB, Database

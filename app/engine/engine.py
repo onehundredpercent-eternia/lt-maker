@@ -28,6 +28,9 @@ def init():
 def simple_init():
     pygame.init()
 
+def simple_quit():
+    pygame.quit()
+
 def set_icon(icon):
     pygame.display.set_icon(icon)
 
@@ -109,7 +112,9 @@ def create_surface(size, transparent=False) -> pygame.Surface:
         surf = surf.convert()
     return surf
 
-def create_simple_surface(size) -> pygame.Surface:
+def create_simple_surface(size, transparent=False) -> pygame.Surface:
+    if transparent:
+        return pygame.Surface(size, pygame.SRCALPHA, 32)
     return pygame.Surface(size)
 
 def copy_surface(surf):

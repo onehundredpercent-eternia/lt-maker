@@ -243,7 +243,8 @@ class MainEditor(QMainWindow):
                             "Supports": self.edit_supports,
                             "Lore": LoreDatabase.edit,
                             "Raw Data": RawDataDatabase.edit,
-                            "Translations": self.edit_translations
+                            "Translations": self.edit_translations,
+                            "UI Elements": self.edit_ui
                             }
         self.database_actions = {}
         for name, func in database_actions.items():
@@ -556,6 +557,12 @@ class MainEditor(QMainWindow):
 
     def edit_preferences(self):
         dialog = PreferencesDialog(self)
+        dialog.exec_()
+
+    def edit_ui(self, parent=None):
+        # this has import issues so we have to import it later...
+        from app.editor.ui_editor.ui_tab import UIEditor
+        dialog = UIEditor(self)
         dialog.exec_()
 
     def render_editor(self, main_editor_mode):
