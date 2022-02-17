@@ -1,0 +1,192 @@
+[
+   {
+      "arguments": {
+         "font" : "info",
+         "color": "grey",
+         "source": "eval:unit",
+         "width": 92,
+         "alignment": "center"
+      },
+      "nid":"name",
+      "size":[
+         92,
+         16
+      ],
+      "generic":true,
+      "locked": true,
+      "bg_sprite":null,
+      "subcomponents":[
+      ]
+   },
+   {
+      "arguments": {
+         "font" : "text",
+         "color": "white",
+         "text": "text",
+         "width": 24,
+         "alignment": "center"
+      },
+      "nid":"text",
+      "size":[
+         24,
+         16
+      ],
+      "generic":true,
+      "locked": true,
+      "bg_sprite":null,
+      "subcomponents":[
+      ]
+   },
+   {
+      "arguments": {"unit": "eval:unit"},
+      "nid":"chibi",
+      "size": [
+         32,
+         32
+      ],
+      "generic": true,
+      "locked": true,
+      "bg_sprite":null,
+      "subcomponents":[
+      ]
+   },
+   {
+      "arguments":{
+         "curr_stat": "eval:unit.get_hp()",
+         "max_stat": "eval:unit.get_max_hp()",
+         "color": "yellow",
+         "stat_name": "health"
+      },
+      "bg_sprite":null,
+      "generic":true,
+      "locked":true,
+      "nid":"stat_bar",
+      "size":[
+         54,
+         14
+      ],
+      "subcomponents":[
+      ]
+   },
+   {
+      "arguments": {
+         "source": "eval:unit.get_weapon()"
+      },
+      "bg_sprite":null,
+      "generic":true,
+      "locked":true,
+      "nid":"icon",
+      "size":[
+         16,
+         16
+      ],
+      "subcomponents":[
+      ]
+   },
+   {
+      "argtypes":["unit"],
+      "arguments":{
+         "cursor_unit": "eval:unit"
+      },
+      "bg_sprite":"unit_info_bg",
+      "can_be_invalid":false,
+      "generic":false,
+      "locked":true,
+      "nid":"minimug",
+      "size":[
+         122,
+         48
+      ],
+      "subcomponents":[
+         [
+            [
+               7,
+               8
+            ],
+            {
+               "arguments": {"unit": "eval:cursor_unit"},
+               "bg_sprite":null,
+               "can_be_invalid":false,
+               "generic":false,
+               "locked":false,
+               "nid":"chibi",
+               "size":[
+                  32,
+                  32
+               ],
+               "subcomponents":[]
+            }
+         ],
+         [
+            [
+               22,
+               7
+            ],
+            {
+               "arguments": {
+                  "font" : "info",
+                  "color": "grey",
+                  "source": "eval:cursor_unit",
+                  "width": 92,
+                  "alignment": "center"
+               },
+               "bg_sprite":null,
+               "can_be_invalid":false,
+               "generic":false,
+               "locked":false,
+               "nid":"name",
+               "size":[
+                  92,
+                  16
+               ],
+               "subcomponents":[]
+            }
+         ],
+         [
+            [
+               40,
+               24
+            ],
+            {
+               "arguments":{
+                  "curr_stat": "eval:cursor_unit.get_hp()",
+                  "max_stat": "eval:cursor_unit.get_max_hp()",
+                  "color": "yellow",
+                  "stat_name": "health"
+               },
+               "bg_sprite":null,
+               "can_be_invalid":false,
+               "generic":false,
+               "locked":false,
+               "nid":"stat_bar",
+               "size":[
+                  54,
+                  14
+               ],
+               "subcomponents":[]
+            }
+         ],
+         [
+            [
+               98,
+               16
+            ],
+            {
+               "arguments": {
+                  "source": "eval:cursor_unit.get_weapon()"
+               },
+               "bg_sprite":null,
+               "can_be_invalid":false,
+               "generic":false,
+               "locked":true,
+               "nid":"icon",
+               "size":[
+                  16,
+                  16
+               ],
+               "subcomponents":[]
+            }
+         ]
+      ]
+   }
+]

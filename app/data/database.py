@@ -10,7 +10,7 @@ from typing import Any, Dict, List
 from app.data import (ai, constants, difficulty_modes, equations, factions,
                       items, klass, levels, lore, mcost, minimap, overworld,
                       overworld_node, parties, raw_data, skills, stats, varslot,
-                      supports, tags, terrain, translations, units, weapons)
+                      supports, tags, terrain, translations, ui_prefab, units, weapons)
 from app.events import event_prefab
 
 
@@ -19,7 +19,7 @@ class Database(object):
                        "weapons", "factions", "items", "skills", "tags", "game_var_slots", "classes",
                        "support_constants", "support_ranks", "affinities", "units", "support_pairs",
                        "ai", "parties", "difficulty_modes",
-                       "translations", "lore", "levels", "events", "overworlds", "raw_data")
+                       "translations", "lore", "levels", "events", "overworlds", "raw_data", 'custom_ui')
     save_as_chunks = ("events", 'items', 'skills', 'units', 'classes', 'levels')
 
     def __init__(self):
@@ -62,6 +62,7 @@ class Database(object):
         self.lore = lore.LoreCatalog()
 
         self.raw_data = raw_data.RawDataCatalog()
+        self.custom_ui = ui_prefab.UIObjectCatalog()
 
     # Disk Interaction Functions
     def json_save(self, save_loc: str, value: Any):
@@ -111,8 +112,11 @@ class Database(object):
     # === Saving and loading important data functions ===
     def restore(self, save_obj):
         for data_type in self.save_data_types:
-            logging.info("Database: Restoring %s..." % (data_type))
-            getattr(self, data_type).restore(save_obj[data_type])
+            logging.info("Database: Restoring %s..." % data_type)
+            if data_type != 'custom_ui':
+                getattr(self, data_type).restore(save_obj[data_type])
+            else:
+                self.custom_ui.update_restore(save_obj[data_type])
 
     def save(self):
         # import time

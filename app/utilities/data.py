@@ -155,7 +155,11 @@ class Prefab():
     def save_attr(self, name, value):
         if isinstance(value, Data):
             value = value.save()
-        else:  # int, str, float, list, dict
+        elif isinstance(value, list):
+            value = value[:]
+        elif isinstance(value, dict):
+            value = value.copy()
+        else:  # int, str, float, dict
             value = value
         return value
 
