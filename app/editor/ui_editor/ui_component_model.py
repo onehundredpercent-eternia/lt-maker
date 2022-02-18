@@ -33,7 +33,7 @@ class ComponentModel(DragDropCollectionModel):
     def create_new(self):
         nids = [d.nid for d in self._data]
         nid = str_utils.get_next_name("New UI component", nids)
-        new_ui = ui_prefab.UIObjectPrefab(nid, (50, 24), False)
+        new_ui = ui_prefab.UIObjectPrefab(nid, size=(50, 24))
         DB.custom_ui.append(new_ui)
         self.layoutChanged.emit()
         return new_ui

@@ -10,6 +10,7 @@ from app.utilities.byte_utils import rgba32_to_rgba64
 from PyQt5 import QtGui
 from PyQt5.QtGui import QPixmap
 
+import logging
 
 def manual_colorkey(surf):
     return image_mods.simple_color_convert(surf, {COLORKEY: (0, 0, 0, 0)})
@@ -24,8 +25,8 @@ class PygameQtRenderer(object):
         def surf_eval(arg, local_args):
             try:
                 return evaluate(arg[5:], local_args=local_args) if (isinstance(arg, str) and arg.startswith("eval:")) else arg
-            except:
-                pass
+            except Exception as e:
+                logging.error("Failed to eval", arg[5:], repr(e))
         surf = draw_component_surf(ui_object, surf_eval, engine.create_simple_surface, manual_colorkey, {'unit': unit}, True)
         width, height = surf.get_size()
 

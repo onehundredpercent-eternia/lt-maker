@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from app.data.units import UnitPrefab
+from app.utilities.typing import NID
 from app.engine.objects.ui_object import UIObject
 from app.engine.interfaces.idrawable import IDrawable
 from app.engine.evaluate import evaluate
@@ -27,15 +29,20 @@ class ChibiPortrait(SurfComponent):
     """
     Component prefab for drawing chibi portraits
     """
-    def __init__(self, unit: UnitObject=None):
-        self.unit: UnitObject = unit
+    def __init__(self, unit: UnitObject | NID=None):
+        if isinstance(unit, NID):
+            self.unit: UnitPrefab = DB.units.get(unit)
+            self.game_unit = False
+        else:
+            self.unit: UnitObject = unit
+            self.game_unit = True
 
     def to_surf(self, create_surface=engine.create_surface) -> engine.Surface:
         chibi_dimensions = (32, 32)
         surf = create_surface(chibi_dimensions, transparent=True)
 
         # Draw portrait/faction on surf
-        if self.unit.generic:
+        if self.game_unit and self.unit.generic:
             icons.draw_faction(surf, DB.factions.get(self.unit.faction), (0, 0))
         else:
             icons.draw_chibi(surf, self.unit.portrait_nid, (0, 0))
@@ -149,8 +156,14 @@ class Icon(SurfComponent):
 
     args = ['Item/Skill']
 
-    def __init__(self, source: ItemPrefab | SkillPrefab=None):
-        self.source: ItemPrefab | SkillPrefab = source
+    def __init__(self, source: ItemPrefab | SkillPrefab | NID=None):
+        if isinstance(source, NID):
+            if source in DB.items.keys():
+                self.source = DB.items.get(source)
+            elif source in DB.skills.keys():
+                self.source = DB.skills.get(source)
+        else:
+            self.source: ItemPrefab | SkillPrefab = source
 
     def to_surf(self, create_surface=engine.create_surface) -> engine.Surface:
         icon_dimensions = (16, 16)
