@@ -60,17 +60,3 @@ def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
     if local_args:
         temp_globals.update(local_args)
     return eval(string, temp_globals)
-
-def eval_string(text: str) -> str:
-    to_evaluate = re.findall(r'\{eval:[^{}]*\}', text)
-    evaluated = []
-    for to_eval in to_evaluate:
-        try:
-            val = evaluate(to_eval[6:-1])
-            evaluated.append(str(val))
-        except Exception as e:
-            print("Could not evaluate %s (%s)" % (to_eval[1:-1], e))
-            evaluated.append('??')
-    for idx in range(len(to_evaluate)):
-        text = text.replace(to_evaluate[idx], evaluated[idx])
-    return text
