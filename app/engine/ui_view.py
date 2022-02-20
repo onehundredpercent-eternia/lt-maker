@@ -1,3 +1,5 @@
+import logging
+from app.engine.text_evaluator import TextEvaluator
 import app.engine.config as cf
 from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database import DB
@@ -283,7 +285,8 @@ class UIView():
     def create_obj_info(self):
         font = FONT['text']
         obj = game.level.objective['simple']
-        text_lines = evaluate.eval_string(obj).split(',')
+        text_parser = TextEvaluator(logging.getLogger(), game)
+        text_lines = text_parser._evaluate_all(obj).split(',')
         longest_surf_width = text_funcs.get_max_width(font, text_lines)
         bg_surf = base_surf.create_base_surf(longest_surf_width + 16, 16 * len(text_lines) + 8)
 
