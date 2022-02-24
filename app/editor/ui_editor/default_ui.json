@@ -3,7 +3,7 @@
       "arguments": {
          "font" : "info",
          "color": "grey",
-         "source": "eval:unit",
+         "source": "unit",
          "width": 92,
          "alignment": "center"
       },
@@ -38,7 +38,7 @@
       ]
    },
    {
-      "arguments": {"unit": "eval:unit"},
+      "arguments": {"unit": "unit"},
       "nid":"chibi",
       "size": [
          32,
@@ -52,8 +52,8 @@
    },
    {
       "arguments":{
-         "curr_stat": "eval:unit.get_hp()",
-         "max_stat": "eval:unit.get_max_hp()",
+         "curr_stat": "unit.get_hp()",
+         "max_stat": "unit.get_max_hp()",
          "color": "yellow",
          "stat_name": "health"
       },
@@ -70,7 +70,7 @@
    },
    {
       "arguments": {
-         "source": "eval:unit.get_weapon()"
+         "source": "unit.get_weapon()"
       },
       "bg_sprite":null,
       "generic":true,
@@ -86,7 +86,7 @@
    {
       "argtypes":["unit"],
       "arguments":{
-         "cursor_unit": "eval:unit"
+         "cursor_unit": "unit"
       },
       "bg_sprite":"unit_info_bg",
       "can_be_invalid":false,
@@ -104,7 +104,7 @@
                8
             ],
             {
-               "arguments": {"unit": "eval:cursor_unit"},
+               "arguments": {"unit": "cursor_unit"},
                "bg_sprite":null,
                "can_be_invalid":false,
                "generic":false,
@@ -126,7 +126,7 @@
                "arguments": {
                   "font" : "info",
                   "color": "grey",
-                  "source": "eval:cursor_unit",
+                  "source": "cursor_unit",
                   "width": 92,
                   "alignment": "center"
                },
@@ -149,8 +149,8 @@
             ],
             {
                "arguments":{
-                  "curr_stat": "eval:cursor_unit.get_hp()",
-                  "max_stat": "eval:cursor_unit.get_max_hp()",
+                  "curr_stat": "cursor_unit.get_hp()",
+                  "max_stat": "cursor_unit.get_max_hp()",
                   "color": "yellow",
                   "stat_name": "health"
                },
@@ -173,7 +173,7 @@
             ],
             {
                "arguments": {
-                  "source": "eval:cursor_unit.get_weapon()"
+                  "source": "cursor_unit.get_weapon()"
                },
                "bg_sprite":null,
                "can_be_invalid":false,

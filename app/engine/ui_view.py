@@ -5,8 +5,7 @@ import app.engine.config as cf
 from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database import DB
 from app.data.difficulty_modes import RNGOption
-from app.data.ui_prefab import UIObjectPrefab
-from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
+from app.engine import (base_surf, combat_calcs, engine, equations,
                         icons, image_mods, item_funcs, item_system,
                         menu_options, skill_system, text_funcs)
 from app.engine.fonts import FONT
@@ -225,15 +224,8 @@ class UIView():
 
     def create_unit_info(self, unit):
         minimug = UIObject.from_prefab(DB.custom_ui.get("minimug"), {'cursor_unit': unit})
-        def _eval_unit(arg: str, local_args: Dict):
-            try:
-                _value = evaluate.evaluate(arg[5:], local_args=local_args) if (isinstance(arg, str) and arg.startswith("eval:")) else arg
-            except:
-                print("Error: Could not evaluate %", arg)
-            else:
-                return _value
-            return arg
-        minimug_surf = ui_components.draw_component_surf(minimug, _eval_unit, log_errors=minimug.log_errors)
+        evaler = TextEvaluator(logging.getLogger(), game, unit)
+        minimug_surf = ui_components.draw_component_surf(minimug, log_errors=minimug.log_errors, evaler=evaler)
         return minimug_surf
 
     def create_tile_info(self, coord):

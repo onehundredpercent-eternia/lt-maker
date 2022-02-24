@@ -1,3 +1,4 @@
+from app.engine.text_evaluator import TextEvaluator
 import ctypes
 
 from app.constants import COLORKEY
@@ -17,17 +18,19 @@ def manual_colorkey(surf):
 
 class PygameQtRenderer(object):
     def __init__(self) -> None:
-        pass
+        self.local_units = None
 
     def render_ui_object(self, ui_object: UIObjectPrefab) -> QPixmap:
-        from app.engine.objects.unit import UnitObject
-        unit = UnitObject.from_prefab(DB.units[0])
-        def surf_eval(arg, local_args):
-            try:
-                return evaluate(arg[5:], local_args=local_args) if (isinstance(arg, str) and arg.startswith("eval:")) else arg
-            except Exception as e:
-                logging.error("Failed to eval", arg[5:], repr(e))
-        surf = draw_component_surf(ui_object, surf_eval, engine.create_simple_surface, manual_colorkey, {'unit': unit}, True)
+        if not self.local_units:
+            from app.engine.objects.unit import UnitObject
+            self.local_units = {}
+            for unit in DB.units:
+                new_unit = UnitObject.from_prefab(unit)
+                self.local_units[new_unit.nid] = new_unit
+        local_args = {'unit': list(self.local_units.values())[0]}
+        local_args.update(self.local_units)
+        evaler = TextEvaluator(logging.getLogger(), None, unit=list(self.local_units.values())[0])
+        surf = draw_component_surf(ui_object, engine.create_simple_surface, manual_colorkey, local_args, True, evaler)
         width, height = surf.get_size()
 
         buff = ctypes.create_string_buffer(rgba32_to_rgba64(engine.surf_to_raw(surf, 'RGBA')))

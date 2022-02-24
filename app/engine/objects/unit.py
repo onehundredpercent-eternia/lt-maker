@@ -207,7 +207,10 @@ class UnitObject(Prefab):
         if is_level_unit:
             items = item_funcs.create_items(self, prefab.starting_items)
             for item in items:
+            if is_level_unit:
                 self.add_item(item)
+            else:
+                self.simple_add_item(item)
 
             if self.generic:
                 self.calculate_needed_wexp_from_items()
@@ -260,6 +263,7 @@ class UnitObject(Prefab):
             skill_system.on_add(self, skill)
 
         # -- Equipped Items
+        if is_level_unit:
         self.equipped_weapon = self.get_weapon()
         self.equipped_accessory = self.get_accessory()
 
@@ -490,6 +494,12 @@ class UnitObject(Prefab):
     def add_item(self, item):
         index = len(self.items)
         self.insert_item(index, item)
+
+    def simple_add_item(self, item):
+        index = len(self.items)
+        if item in self.items:
+            self.items.remove(item)
+        self.items.insert(index, item)
 
     def bring_to_top_item(self, item):
         if item_system.is_accessory(self, item):

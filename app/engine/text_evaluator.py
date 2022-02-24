@@ -29,7 +29,7 @@ class TextEvaluator():
         self.local_args['created_unit'] = created
 
     def _object_to_str(self, obj) -> str:
-        if hasattr(obj, 'uid'):
+        if hasattr(obj, 'uid') and self.game:
             return str(obj.uid)
         elif hasattr(obj, 'nid'):
             return str(obj.nid)
@@ -51,10 +51,13 @@ class TextEvaluator():
             return self._evaluate_skill_db(text)
         elif re.match(r'\{i:[^{}]*\}', text) or re.match(r'\{item:[^{}]*\}', text):
             return self._evaluate_item_db(text)
+        elif re.match(r'\{u:[^{}]*\}', text) or re.match(r'\{unit:[^{}]*\}', text):
+            return self._evaluate_unit(text)
         else:
             return text
 
     def _evaluate_all(self, text: str) -> str:
+        text = str(text)
         def recursive_parse(parse_list) -> str:
             copy = [""] * len(parse_list)
             for idx, nested in enumerate(parse_list):
@@ -126,7 +129,50 @@ class TextEvaluator():
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
 
-    def _evaluate_unit_fields(self, text) -> str:
+    def _evaluate_unit(self, text: str) -> str:
+        to_evaluate: List[str] = re.findall(r'\{u:[^{}]*\}', text) + re.findall(r'\{unit:[^{}]*\}', text)
+        evaluated = []
+        for to_eval in to_evaluate:
+            to_eval = self.trim_eval_tags(to_eval)
+            args = to_eval.split('.')
+            try:
+                unit_nid = args[0]
+
+                if unit_nid == 'unit':
+                    unit = self.unit
+                elif unit_nid == 'unit2':
+                    unit = self.unit2
+                elif self.game:
+                    unit = self.game.get_unit(unit_nid)
+                else:
+                    unit = None
+                if not unit:
+                    self.logger.error("eval of {u:%s} failed, unknown unit: %s", to_eval, unit_nid)
+                    evaluated.append('??')
+                    continue
+
+                # let's only support single-level no arg properties for now, but this shouldn't be hard to extend
+                attr = args[1]
+                attr = attr.replace('(', '').replace(')', '')
+                if hasattr(unit, attr):
+                    value = getattr(unit, attr)
+                    if callable(value):
+                        evaluated.append(self._object_to_str(value()))
+                    else:
+                        evaluated.append(self._object_to_str(value))
+                else:
+                    self.logger.error("eval of {u:%s} failed, unknown attribute: %s, %s", to_eval, attr, unit)
+                    evaluated.append('??')
+                    continue
+
+            except Exception as e:
+                self.logger.error("Could not evaluate %s (%s)" % (to_eval, e))
+                evaluated.append('??')
+        for idx in range(len(to_evaluate)):
+            text = text.replace(to_evaluate[idx], evaluated[idx])
+        return text
+
+    def _evaluate_unit_fields(self, text: str) -> str:
         # find unit fields {f:}
         to_evaluate: List[str] = re.findall(r'\{f:[^{}]*\}', text) + re.findall(r'\{field:[^{}]*\}', text)
         evaluated = []
@@ -136,16 +182,16 @@ class TextEvaluator():
             if ',' in to_eval:
                 field_text, fallback = to_eval.split(',', 1)
             else:
-                field_text, fallback = to_eval, " "
+                field_text, fallback = to_eval, "??"
 
             if '.' in to_eval: # possible unit tag?
                 unit_nid, field = field_text.split('.', 1)
             else:
-                unit_nid, field = '_unit', field_text
+                unit_nid, field = 'unit', field_text
 
-            if unit_nid == '_unit':
+            if unit_nid == 'unit':
                 unit = self.unit
-            elif unit_nid == '_unit2':
+            elif unit_nid == 'unit2':
                 unit = self.unit2
             elif self.game:
                 unit = self.game.get_unit(unit_nid)
@@ -220,7 +266,7 @@ class TextEvaluator():
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
 
-    def _evaluate_evals(self, text) -> str:
+    def _evaluate_evals(self, text: str) -> str:
         # Set up variables so evals work well
         to_evaluate = re.findall(r'\{e:[^{}]*\}', text) + re.findall(r'\{eval:[^{}]*\}', text)
         evaluated = []
@@ -236,7 +282,7 @@ class TextEvaluator():
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
 
-    def _evaluate_vars(self, text) -> str:
+    def _evaluate_vars(self, text: str) -> str:
         if not self.game:
             return "??"
         to_evaluate = re.findall(r'\{v:[^{}]*\}', text) + re.findall(r'\{var:[^{}]*\}', text)
@@ -258,3 +304,7 @@ class TextEvaluator():
     def trim_eval_tags(self, text: str) -> str:
         colon_idx = text.index(':')
         return text[colon_idx+1:-1]
+
+    def evaluate_as_object(self, text: str) -> str:
+        text_eval = self._evaluate_all(text)
+        return evaluate.evaluate(text_eval, self.unit, self.unit2, self.item, self.position, self.region, local_args=self.local_args, game=self.game)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from app.engine.text_evaluator import TextEvaluator
 from app.data.units import UnitPrefab
 from app.utilities.typing import NID
 from app.engine.objects.ui_object import UIObject
@@ -73,7 +74,7 @@ class Name(SurfComponent):
     '''
     Component prefab for drawing unit/item/skill name text
     '''
-    def __init__(self, font: str='info', color: str='grey', source: ItemPrefab | SkillPrefab | UnitObject=None, width: int='92', alignment: str='center'):
+    def __init__(self, font: str='info', color: str='grey', source: ItemPrefab | SkillPrefab | UnitObject = None, width: int='92', alignment: str='center'):
         self.font: str = font
         self.color: str = color
         self.width: int = int(width)
@@ -84,12 +85,12 @@ class Name(SurfComponent):
         name: str = None
         if isinstance(self.source, UnitObject):
             name = self.get_unit_name(self.source)
-
-        if isinstance(self.source, ItemPrefab):
+        elif isinstance(self.source, ItemPrefab):
             name = self.source.name
-
-        if isinstance(self.source, SkillPrefab):
+        elif isinstance(self.source, SkillPrefab):
             name = self.source.name
+        else:
+            name = str(self.source)
 
         return Text(self.font, self.color, name, self.width, self.alignment).to_surf(create_surface)
 
@@ -181,11 +182,12 @@ COMPONENT_MAP: Dict[str, Type[SurfComponent]] = {
     'icon' : Icon
 }
 
-def draw_component_surf(ui_object: UIObject, _eval_func: Callable[[str, Dict], str] = None, create_surface: Callable[[], engine.Surface]=engine.create_surface,
-                        post_process: Callable[[engine.Surface], engine.Surface]=None, local_args: Dict[str, Any] = None, log_errors = True) -> engine.Surface:
+def draw_component_surf(ui_object: UIObject, create_surface: Callable[[], engine.Surface]=engine.create_surface,
+                        post_process: Callable[[engine.Surface], engine.Surface]=None, local_args: Dict[str, Any] = None,
+                        log_errors = True, evaler: TextEvaluator = None) -> engine.Surface:
     # default eval
-    if not _eval_func:
-        _eval_func = lambda arg, lc: evaluate(arg[5:], local_args=lc) if isinstance(arg, str) and arg.startswith("eval:") else arg
+    if not evaler:
+        evaler = TextEvaluator(logging.getLogger(), None)
 
     # Create the base surface
     surf = create_surface(ui_object.size, transparent=True)
@@ -197,9 +199,14 @@ def draw_component_surf(ui_object: UIObject, _eval_func: Callable[[str, Dict], s
 
     ui_args = {}
     sublocal_args = local_args.copy() if local_args else {}
+    evaler.local_args = local_args
     for argtype, argvalue in ui_object.arguments.items():
-        ui_args[argtype] = _eval_func(argvalue, local_args)
-        sublocal_args[argtype] = _eval_func(argvalue, local_args)
+        try:
+            val = evaler.evaluate_as_object(argvalue) if isinstance(argvalue, str) else argvalue
+        except:
+            val = evaler._evaluate_all(argvalue) if isinstance(argvalue, str) else argvalue
+        ui_args[argtype] = val
+        sublocal_args[argtype] = val
 
     # If this UI object has a value and its nid references a corresponding component, blit it to the surf
     if ui_object.nid in COMPONENT_MAP.keys():
@@ -211,7 +218,7 @@ def draw_component_surf(ui_object: UIObject, _eval_func: Callable[[str, Dict], s
     # Iterate through each subcomponent and draw each one
     for pos, component in ui_object.subcomponents:
         try:
-            subsurf = draw_component_surf(component, _eval_func, create_surface, post_process, sublocal_args, log_errors)
+            subsurf = draw_component_surf(component, create_surface, post_process, sublocal_args, log_errors, evaler)
             surf.blit(subsurf, pos)
         except Exception as e:
             if log_errors:
