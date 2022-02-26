@@ -172,7 +172,7 @@ class PhaseIn():
             t = int(diff * 16)
 
         for x in range(0, WINWIDTH, 16):
-            for y in range(0, 64, 16):
+            for y in range(0, WINHEIGHT//2 - 16, 16):
                 i, j = x//16, y//16
                 k1 = int(t * 1.5 - (i - j%2)/2 + j/2 - 4)
                 k2 = int(t * 1.5 - (i - j%2)/2 + j/2 - 1)

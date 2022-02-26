@@ -41,6 +41,8 @@ class BoundaryInterface():
 
         self.surf = None
         self.fog_of_war_surf = None
+        self.should_reset_surf: bool = False
+        self.frozen: bool = False  # Whether I should update my display surf (generally False, for immediate updates)
 
     def init_grid(self):
         cells = []
@@ -63,12 +65,15 @@ class BoundaryInterface():
             self.displaying_units.discard(unit.nid)
         else:
             self.displaying_units.add(unit.nid)
-        self.surf = None
+        self.reset_surf()
 
     def reset_unit(self, unit):
         if unit.nid in self.displaying_units:
             self.displaying_units.discard(unit.nid)
-            self.surf = None
+            self.reset_surf()
+
+    def reset_surf(self):
+        self.should_reset_surf = True
 
     def reset_fog_of_war(self):
         self.fog_of_war_surf = None
@@ -89,8 +94,8 @@ class BoundaryInterface():
             for x in range(self.width):
                 for y in range(self.height):
                     self.grids[m][x * self.height + y].clear()
-        self.surf = None
-        self.fog_of_war_surf = None
+        self.reset_surf()
+        self.reset_fog_of_war()
 
     def _add_unit(self, unit):
         valid_moves = target_system.get_valid_moves(unit, force=True)
@@ -110,7 +115,7 @@ class BoundaryInterface():
         area_of_influence = {pos for pos in area_of_influence if self.check_bounds(pos)}
         self._set(area_of_influence, 'movement', unit.nid)
 
-        self.surf = None
+        self.reset_surf()
 
     def _remove_unit(self, unit):
         for mode, grid in self.grids.items():
@@ -118,7 +123,7 @@ class BoundaryInterface():
                 for (x, y) in self.dictionaries[mode][unit.nid]:
                     grid[x * self.height + y].discard(unit.nid)
                 # del self.dictionaries[mode][unit.nid]
-        self.surf = None
+        self.reset_surf()
 
     def recalculate_unit(self, unit):
         if unit.team in self.enemy_teams:
@@ -136,11 +141,16 @@ class BoundaryInterface():
             other_units = {game.get_unit(nid) for nid in self.grids['movement'][x * self.height + y]}
             other_units = {other_unit for other_unit in other_units if not utils.compare_teams(unit.team, other_unit.team)}
 
+            # Set unit's position to non-existent for a brief momement
+            game.board.remove_unit(unit.position, unit)
+            unit.position = None
             for other_unit in other_units:
                 self._remove_unit(other_unit)
             for other_unit in other_units:
                 if other_unit.position:
                     self._add_unit(other_unit)
+            unit.position = (x, y)  # Reset it back for future
+            game.board.set_unit(unit.position, unit)
 
     def arrive(self, unit):
         if unit.position:
@@ -174,15 +184,19 @@ class BoundaryInterface():
 
     def show_all_enemy_attacks(self):
         self.all_on_flag = True
-        self.surf = None
+        self.reset_surf()
 
     def clear_all_enemy_attacks(self):
         self.all_on_flag = False
-        self.surf = None
+        self.reset_surf()
 
     def draw(self, surf, full_size, cull_rect):
         if not self.draw_flag:
             return surf
+
+        if self.should_reset_surf and not self.frozen:
+            self.surf = None
+            self.should_reset_surf = False
 
         if not self.surf:
             self.surf = engine.create_surface(full_size, transparent=True)

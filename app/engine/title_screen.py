@@ -74,7 +74,7 @@ class TitleStartState(State):
         if self.press_start:
             self.press_start.update()
             self.press_start.draw(surf)
-        FONT['text-white'].blit(text_funcs.translate('_attribution'), surf, (4, WINHEIGHT - 16))
+        FONT['text'].blit(text_funcs.translate('_attribution'), surf, (4, WINHEIGHT - 16))
         return surf
 
 class TitleMainState(State):
@@ -300,7 +300,7 @@ class TitleModeState(State):
             self.dialog = ModeDialog(text)
             self.dialog.position = (140, 34)
             self.dialog.text_width = WINWIDTH - 142 - 12
-            self.dialog.font = FONT['text-white']
+            self.dialog.font = FONT['text']
             self.dialog.font_type = 'text'
             self.dialog.font_color = 'white'
 

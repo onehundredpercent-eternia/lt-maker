@@ -83,7 +83,7 @@ class SkillIcon():
         self.right = right
         self.center = center
         self.small = small
-        self.font = FONT['text-white']
+        self.font = FONT['text']
         self.text = self.skill.name
         self.text_width = self.font.width(self.text)
         icon = icons.get_icon(self.skill)

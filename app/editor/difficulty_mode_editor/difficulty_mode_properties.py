@@ -34,7 +34,7 @@ class DifficultyModeProperties(QWidget):
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
 
         self.name_box = PropertyBox("Display Name", QLineEdit, self)
-        self.name_box.edit.setMaxLength(20)
+
         self.name_box.edit.textChanged.connect(self.name_changed)
 
         self.color_box = PropertyBox("Color", ComboBox, self)

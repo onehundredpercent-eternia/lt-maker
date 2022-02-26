@@ -1,0 +1,20 @@
+[
+    {
+        "name": "Reset Movement Star",
+        "trigger": null,
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "set_unit_field",
+                [
+                    "{unit}",
+                    "movement_star",
+                    "False"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

@@ -8,12 +8,13 @@ from app.engine.cursor import BaseCursor
 from app.engine.game_state import GameState
 from app.engine.input_manager import INPUT
 from app.engine.sprites import SPRITES
-from app.utilities.utils import frames2ms
+from app.utilities.utils import frames2ms, tclamp
 from app.engine.engine import Surface
 
 class LevelCursor(BaseCursor):
     def __init__(self, game: GameState):
         super().__init__(camera=game.camera, tilemap=game.tilemap)
+        # this is frame-accurate to GBA
         self.cursor_counter = generic3counter(frames2ms(20), frames2ms(2), frames2ms(8))
         self.game = game
         self.cur_unit = None
@@ -228,9 +229,11 @@ class LevelCursor(BaseCursor):
                 from_mouse = True
                 new_pos = (mouse_pos[0] - STATWIDTH) // TILEWIDTH, mouse_pos[1] // TILEHEIGHT
                 new_pos = int(new_pos[0] + self.game.camera.get_x()), int(new_pos[1] + self.game.camera.get_y())
+                new_pos = tclamp(new_pos, self.get_bounds()[:2], self.get_bounds()[2:])
                 dpos = new_pos[0] - self.position[0], new_pos[1] - self.position[1]
                 dx = dpos[0]
                 dy = dpos[1]
+                # self._transition_speed = 2
 
         if dx != 0 or dy != 0:
             # adjust camera accordingly

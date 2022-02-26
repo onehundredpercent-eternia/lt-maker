@@ -398,7 +398,6 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         elif self.state == 'end_phase':
             self._end_phase()
-            self.state_machine.setup_next_state()
             self.state = 'begin_phase'
 
         elif self.state == 'end_combat':
@@ -643,6 +642,8 @@ class AnimationCombat(BaseCombat, MockCombat):
         """
         for act in self.actions:
             action.do(act)
+        # Now nothing else should be using the current state, so we can move the state
+        self.state_machine.setup_next_state()
 
     def _end_phase(self):
         if self.llast_gauge == self.left.get_guard_gauge():
@@ -850,9 +851,9 @@ class AnimationCombat(BaseCombat, MockCombat):
     def pan_back(self):
         next_state = self.state_machine.get_next_state()
         if next_state:
-            if next_state == 'attacker':
+            if next_state.startswith('attacker'):
                 self.focus_right = (self.attacker is self.right)
-            elif next_state == 'defender':
+            elif next_state.startswith('defender'):
                 self.focus_right = (self.defender is self.right)
         else:
             self.focus_exp()
@@ -904,7 +905,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                     anim_order = [(self.lp_battle_anim, left_range_offset, self.left_battle_anim, lp_range_offset),
                                   (self.right_battle_anim, right_range_offset, self.rp_battle_anim, rp_range_offset)]
                 else:  # Normal right anim
-                    anim_order = [(self.left_battle_anim, left_range_offset, self.lp_battle_anim, lp_range_offset), 
+                    anim_order = [(self.left_battle_anim, left_range_offset, self.lp_battle_anim, lp_range_offset),
                                   (self.right_battle_anim, right_range_offset, self.rp_battle_anim, rp_range_offset)]
                 self.draw_battle_anims(surf, shake, anim_order, y_offset)
             # Right partner is main boi
@@ -1058,7 +1059,8 @@ class AnimationCombat(BaseCombat, MockCombat):
         if self.defender and self.def_item and not self.defender.is_dying:
             self.handle_wexp(self.defender, self.def_item, self.attacker)
 
-        self.handle_exp()
+        self.handle_mana(all_units)
+        self.handle_exp(self)
 
     def clean_up2(self):
         game.state.back()
@@ -1081,6 +1083,7 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         self.handle_death(all_units)
 
+        self.attacker.built_guard = True
         if self.defender:
             self.defender.strike_partner = None
             self.defender.built_guard = True

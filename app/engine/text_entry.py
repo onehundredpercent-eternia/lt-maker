@@ -22,11 +22,11 @@ class TextEntryState(MapState):
         return 'repeat'
     
     def create_bg_surf(self):
-        width_of_header = FONT['text-white'].width(self.header) + 16
+        width_of_header = FONT['text'].width(self.header) + 16
         menu_width = self.menu.get_menu_width()
         width = max(width_of_header, menu_width)
         menu_height = self.menu.get_menu_height()
-        height = menu_height + FONT['text-white'].height
+        height = menu_height + FONT['text'].height
         bg_surf = base_surf.create_base_surf(width, height, 'menu_bg_base')
         topleft = (9, 42)
         return bg_surf, topleft
@@ -117,14 +117,14 @@ class TextConfirmState(MapState):
         self.orientation = 'vertical'
         self.menu = menus.Choice(None, options_list, 'center', None)
         self.bg_surf, self.topleft = self.create_bg_surf()
-        self.menu.topleft = (self.topleft[0], self.topleft[1] + FONT['text-white'].height)
+        self.menu.topleft = (self.topleft[0], self.topleft[1] + FONT['text'].height)
 
     def create_bg_surf(self):
-        width_of_header = FONT['text-white'].width(self.header) + 16
+        width_of_header = FONT['text'].width(self.header) + 16
         menu_width = self.menu.get_menu_width()
         width = max(width_of_header, menu_width)
-        menu_height = self.menu.get_menu_height() if self.orientation == 'vertical' else FONT['text-white'].height + 8
-        height = menu_height + FONT['text-white'].height
+        menu_height = self.menu.get_menu_height() if self.orientation == 'vertical' else FONT['text'].height + 8
+        height = menu_height + FONT['text'].height
         bg_surf = base_surf.create_base_surf(width, height, 'menu_bg_base')
         topleft = (WINWIDTH//2 - width//2, WINHEIGHT//2 - height//2)
         return bg_surf, topleft
@@ -159,7 +159,7 @@ class TextConfirmState(MapState):
 
     def draw(self, surf):
         surf.blit(self.bg_surf, self.topleft)
-        FONT['text-white'].blit(self.header, surf, (self.topleft[0] + 4, self.topleft[1] + 4))
+        FONT['text'].blit(self.header, surf, (self.topleft[0] + 4, self.topleft[1] + 4))
 
         # Place Menu on background
         self.menu.draw(surf)

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 
 from app.data.weapons import WexpGain
@@ -18,18 +18,18 @@ class UnitPrefab(Prefab):
     tags: list = None
     bases: dict = None
     growths: dict = None
-    starting_items: list = None  # of tuples (ItemPrefab, droppable)
+    starting_items: list = field(default_factory=list)  # of tuples (ItemPrefab, droppable)
 
     learned_skills: list = None
-    unit_notes: list = None
-    wexp_gain: dict = None
+    unit_notes: list = field(default_factory=list)
+    wexp_gain: dict = field(default_factory=dict)
 
-    alternate_classes: list = None
+    alternate_classes: list = field(default_factory=list)
 
     portrait_nid: str = None
     affinity: str = None
 
-    fields: list = None # arbitrary field, allow players to fill out anything they want
+    fields: list = field(default_factory=list) # arbitrary field, allow players to fill out anything they want
 
     def get_stat_titles(self):
         return ["Bases", "Growths"]

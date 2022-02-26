@@ -1,0 +1,19 @@
+[
+    {
+        "name": "Loop Reset Movement Star",
+        "trigger": "turn_change",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "loop_units",
+                [
+                    "game.get_all_units()",
+                    "Reset Movement Star"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

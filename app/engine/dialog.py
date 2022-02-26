@@ -45,7 +45,7 @@ class Dialog():
             self.draw_cursor_flag = False
         elif self.variant == 'clear':
             self.draw_cursor_flag = False
-        self.font = FONT[self.font_type + '-' + self.font_color]
+        self.font = FONT[self.font_type]
 
         # States: process, transition, pause, wait, done, new_line
         self.state = 'transition'
@@ -81,10 +81,10 @@ class Dialog():
                 pos_x += 4
             if pos_x == 0:
                 pos_x = 4
-            pos_y = 24
+            pos_y =  WINHEIGHT - self.height - 80
         else:
             pos_x = 4
-            pos_y = 110
+            pos_y = WINHEIGHT - self.height - 4
         self.position = pos_x, pos_y
 
         if background:
@@ -389,9 +389,9 @@ class Dialog():
             line_chunks, current_color = self.chunkify(line, current_color)
             for chunk in line_chunks:
                 text, color = chunk
-                font = FONT[self.font_type + '-' + color]
+                font = FONT[self.font_type]
                 width = font.width(text)
-                font.blit(text, text_surf, (x_pos, y_pos))
+                font.blit(text, text_surf, (x_pos, y_pos), color)
                 x_pos += width
 
         display_lines = self.text_lines[-self.num_lines:]
@@ -406,9 +406,9 @@ class Dialog():
             line_chunks, current_color = self.chunkify(line, current_color)
             for chunk in line_chunks:
                 text, color = chunk
-                font = FONT[self.font_type + '-' + color]
+                font = FONT[self.font_type]
                 width = font.width(text)
-                font.blit(text, text_surf, (x_pos, y_set))
+                font.blit(text, text_surf, (x_pos, y_set), color)
                 x_pos += width
 
             end_x_pos = self.position[0] + 8 + x_pos
@@ -442,7 +442,7 @@ class Dialog():
         if x_pos < 0:
             x_pos = self.position[0] + 16
         name_tag_surf = self.name_tag_surf.copy()
-        self.font.blit_center(name, name_tag_surf, (name_tag_surf.get_width()//2, name_tag_surf.get_height()//2 - self.font.height//2))
+        self.font.blit_center(name, name_tag_surf, (name_tag_surf.get_width()//2, name_tag_surf.get_height()//2 - self.font.height//2), self.font_color)
         surf.blit(name_tag_surf, (x_pos, y_pos))
         return surf
 
@@ -482,7 +482,7 @@ class LocationCard():
 
     def __init__(self, text, background='menu_bg_brown'):
         self.plain_text = text
-        self.font = FONT['text-white']
+        self.font = FONT['text']
 
         self.text_lines = self.format_text(text)
         self.determine_size()
@@ -636,7 +636,7 @@ class Ending():
         self.title = title
         self.plain_text = text
         self.unit = unit
-        self.font = FONT['text-white']
+        self.font = FONT['text']
 
         # Build dialog
         class EndingDialog(Dialog):
@@ -647,7 +647,7 @@ class Ending():
         self.dialog.position = (8, 40)
         self.dialog.text_width = WINWIDTH - 32
         self.dialog.width = self.dialog.text_width + 16
-        self.dialog.font = FONT['text-white']
+        self.dialog.font = FONT['text']
         self.dialog.font_type = 'text'
         self.dialog.font_color = 'white'
 

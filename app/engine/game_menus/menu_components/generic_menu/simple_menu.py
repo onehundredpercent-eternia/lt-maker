@@ -77,7 +77,7 @@ class SimpleIconTable(UIComponent):
         self.column_components: List[HeaderList] = [HeaderList('', self, None, []) for _ in range(num_cols)]
         self.table_container.children.clear()
         for col in self.column_components:
-            col.overflow = (20, 20, 0, 0)
+            col.overflow = (20, 20, 12, 0)
             self.table_container.add_child(col)
 
     def construct_row(self, datum: str | Tuple[engine.Surface | UIComponent, str]

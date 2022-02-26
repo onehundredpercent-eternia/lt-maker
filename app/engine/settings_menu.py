@@ -26,7 +26,7 @@ class ControlOption(menu_options.BasicOption):
         return 16
 
     def draw(self, surf, x, y, active=False, get_input=False):
-        name_font = 'text-white'
+        name_font = 'text'
         key_font = 'text-blue'
         if active and get_input:
             name_font = 'text-yellow'
@@ -97,7 +97,7 @@ class SliderOption(ConfigOption):
     def draw(self, surf, x, y, active=False):
         self.counter = (self.counter + 1) % len(self.anim)
         surf.blit(self.icon, (x + 16, y))
-        name_font = 'text-white'
+        name_font = 'text'
         FONT[name_font].blit(self.display_name, surf, (x + 32, y))
         slider_bar = SPRITES.get('health_bar_bg')
         if not slider_bar:
@@ -146,7 +146,7 @@ class ChoiceOption(ConfigOption):
 
     def draw(self, surf, x, y, active=False):
         surf.blit(self.icon, (x + 16, y))
-        name_font = FONT['text-white']
+        name_font = FONT['text']
         name_font.blit(self.display_name, surf, (x + 32, y))
         value_font = FONT['text-blue']
         value = cf.SETTINGS[self.name]
@@ -167,10 +167,10 @@ class SimpleOption(ConfigOption):
 
     def draw(self, surf, x, y, active=False):
         surf.blit(self.icon, (x + 16, y))
-        name_font = FONT['text-white']
+        name_font = FONT['text']
         name_font.blit(self.display_name, surf, (x + 32, y))
         value = str(cf.SETTINGS[self.name])
-        
+
         running_width = 0
         for choice in self.values:
             if choice == value:
@@ -188,10 +188,10 @@ class ScreenSizeOption(SimpleOption):
 
     def draw(self, surf, x, y, active=False):
         surf.blit(self.icon, (x + 16, y))
-        name_font = FONT['text-white']
+        name_font = FONT['text']
         name_font.blit(self.display_name, surf, (x + 32, y))
         value = int(cf.SETTINGS[self.name])
-        
+
         running_width = 0
         for choice in self.values:
             if choice == value:
@@ -240,10 +240,10 @@ class BoolOption(ConfigOption):
 
     def draw(self, surf, x, y, active=False):
         surf.blit(self.icon, (x + 16, y))
-        name_font = FONT['text-white']
+        name_font = FONT['text']
         name_font.blit(self.display_name, surf, (x + 32, y))
         value = cf.SETTINGS[self.name]
-        
+
         if value:
             on_font = FONT['text-blue']
             off_font = FONT['text-grey']
@@ -253,12 +253,12 @@ class BoolOption(ConfigOption):
         on_str = text_funcs.translate('ON') + '    '
         on_font.blit(on_str, surf, (x + 112, y))
         off_font.blit(text_funcs.translate('OFF'), surf, (x + 112 + on_font.width(on_str), y))
-    
+
 class Controls(menus.Simple):
     def __init__(self, owner, options, background, icons, info=None):
         self.icons = icons
         super().__init__(owner, options, None, background, info)
-        self.set_limit(6)
+        self.set_limit((WINHEIGHT - 64)// 16)
 
     def create_options(self, options, info_descs=None):
         self.options.clear()
@@ -278,7 +278,7 @@ class Controls(menus.Simple):
         pass
 
     def draw(self, surf, get_input=False):
-        topleft = (8, 34)
+        topleft = ((WINWIDTH - self.get_menu_width()) // 2, (WINHEIGHT - self.get_menu_height()) // 2 + 8)
         bg_surf = base_surf.create_base_surf(self.get_menu_width(), self.get_menu_height(), self.background)
         bg_surf = image_mods.make_translucent(bg_surf, .1)
         surf.blit(bg_surf, topleft)

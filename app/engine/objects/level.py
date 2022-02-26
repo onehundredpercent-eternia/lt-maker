@@ -1,3 +1,4 @@
+from app.engine.objects.difficulty_mode import DifficultyModeObject
 from app.utilities.data import Data
 
 from app.engine.objects.unit import UnitObject
@@ -23,7 +24,7 @@ class LevelObject():
         self.unit_groups = Data()
 
     @classmethod
-    def from_prefab(cls, prefab, tilemap, unit_registry):
+    def from_prefab(cls, prefab, tilemap, unit_registry, current_mode: DifficultyModeObject):
         level = cls()
         level.nid = prefab.nid
         level.name = prefab.name
@@ -47,7 +48,7 @@ class LevelObject():
                     unit.position = None
                 level.units.append(unit)
             else:
-                new_unit = UnitObject.from_prefab(unit_prefab)
+                new_unit = UnitObject.from_prefab(unit_prefab, current_mode)
                 level.units.append(new_unit)
 
         level.regions = Data([p for p in prefab.regions])

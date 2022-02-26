@@ -177,7 +177,8 @@ def %s(actions, playback, unit, item, target, mode, attack_info):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                component.%s(actions, playback, unit, item, target, mode, attack_info)""" \
+                if component.ignore_conditional or condition(skill, unit):
+                    component.%s(actions, playback, unit, item, target, mode, attack_info)""" \
             % (hook, hook, hook)
         compiled_skill_system.write(func)
         compiled_skill_system.write('\n')
@@ -188,7 +189,8 @@ def %s(unit, item):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                component.%s(unit, item)""" \
+                if component.ignore_conditional or condition(skill, unit):
+                    component.%s(unit, item)""" \
             % (hook, hook, hook)
         compiled_skill_system.write(func)
         compiled_skill_system.write('\n')

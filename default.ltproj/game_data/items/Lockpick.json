@@ -1,0 +1,33 @@
+[
+    {
+        "nid": "Lockpick",
+        "name": "Lockpick",
+        "desc": "Opens chests and doors.",
+        "icon_nid": "Consumable",
+        "icon_index": [
+            0,
+            10
+        ],
+        "components": [
+            [
+                "value",
+                1200
+            ],
+            [
+                "uses",
+                15
+            ],
+            [
+                "can_unlock",
+                "True"
+            ],
+            [
+                "prf_class",
+                [
+                    "Thief",
+                    "Assassin"
+                ]
+            ]
+        ]
+    }
+]

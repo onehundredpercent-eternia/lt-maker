@@ -148,6 +148,9 @@ def condition(skill, unit) -> bool:
                 return False
     return True
 
+def hidden(skill, unit) -> bool:
+    return skill.hidden or (skill.hidden_if_inactive and not condition(skill, unit))
+
 def available(unit, item) -> bool:
     """
     If any hook reports false, then it is false

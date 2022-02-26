@@ -64,7 +64,7 @@ def read_config_file():
             elif v.startswith('K_'):  # pygame key constant
                 lines[k] = getattr(engine.pygame, v)
         else:  # convert to int
-            lines[k] = int(v) 
+            lines[k] = int(v)
 
     return lines
 

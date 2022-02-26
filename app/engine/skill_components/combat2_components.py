@@ -95,6 +95,31 @@ class Lifelink(SkillComponent):
 
         actions.append(action.TriggerCharge(unit, self.skill))
 
+class AllyLifelink(SkillComponent):
+    nid = 'ally_lifelink'
+    desc = "Heals adjacent allies %% of damage dealt"
+    tag = 'combat2'
+
+    expose = Type.Float
+    value = 0.5
+
+    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        total_damage_dealt = 0
+        playbacks = [p for p in playback if p[0] in ('damage_hit', 'damage_crit') and p[1] == unit]
+        for p in playbacks:
+            total_damage_dealt += p[5]
+
+        damage = utils.clamp(total_damage_dealt, 0, target.get_hp())
+        true_damage = int(damage * self.value)
+        adj_positions = target_system.get_adjacent_positions(unit.position)
+        for adj_pos in adj_positions:
+            other = game.board.get_unit(adj_pos)
+            if other.team == unit.team:
+                actions.append(action.ChangeHP(other, true_damage))
+                playback.append(('heal_hit', unit, item, other, true_damage, true_damage))
+
+        actions.append(action.TriggerCharge(unit, self.skill))
+
 class LimitMaximumRange(SkillComponent):
     nid = 'limit_maximum_range'
     desc = "limits unit's maximum allowed range"
@@ -116,6 +141,21 @@ class ModifyMaximumRange(SkillComponent):
 
     def modify_maximum_range(self, unit, item):
         return self.value
+
+class EvalMaximumRange(SkillComponent):
+    nid = 'eval_range'
+    desc = "Gives +X range solved using evaluate"
+    tag = 'combat2'
+
+    expose = Type.String
+
+    def modify_maximum_range(self, unit, item):
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, unit, item=item))
+        except:
+            print("Couldn't evaluate %s conditional" % self.value)
+        return 0
 
 class CannotDouble(SkillComponent):
     nid = 'cannot_double'
@@ -156,21 +196,6 @@ class DistantCounter(SkillComponent):
 
     def distant_counter(self, unit):
         return True
-
-class Oversplash(SkillComponent):
-    nid = 'oversplash'
-    desc = "Grants unit +X area of effect for regular and blast items"
-    tag = 'combat2'
-
-    expose = Type.Int
-    value = 1
-
-    def empower_splash(self, unit):
-        return self.value
-
-    def alternate_splash(self, unit):
-        from app.engine.item_components.aoe_components import BlastAOE
-        return BlastAOE(0)
 
 class Cleave(SkillComponent):
     nid = 'Cleave'
@@ -361,3 +386,12 @@ def get_pc_damage(unit, skill) -> int:
         if component.defines('post_combat_damage'):
             return component.post_combat_damage()
     return 0  # 0 is default
+    
+class AllBrave(SkillComponent):
+    nid = 'all_brave'
+    desc = "All items multi-attack"
+    tag = 'combat2'
+    author = 'BigMood'
+
+    def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value):
+        return 1

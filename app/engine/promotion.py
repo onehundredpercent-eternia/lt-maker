@@ -97,7 +97,7 @@ class PromotionChoiceState(State):
         elif 'UP' in directions:
             SOUNDTHREAD.play_sfx('Select 6')
             if self.child_menu:
-                self.menu.move_up(first_push)
+                self.child_menu.move_up(first_push)
             else:
                 self.menu.move_up(first_push)
                 self.target_anim_offset = True

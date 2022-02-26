@@ -10,6 +10,7 @@
         ],
         "minimap": "Grass",
         "platform": "Plains",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -25,6 +26,7 @@
         ],
         "minimap": "Wall",
         "platform": "Wall",
+        "background": null,
         "mtype": "Fence",
         "opaque": false,
         "status": null
@@ -40,6 +42,7 @@
         ],
         "minimap": "Forest",
         "platform": "Forest",
+        "background": null,
         "mtype": "Forest",
         "opaque": false,
         "status": "Forest"
@@ -55,6 +58,7 @@
         ],
         "minimap": "Thicket",
         "platform": "Thicket",
+        "background": null,
         "mtype": "Thicket",
         "opaque": false,
         "status": "Peak"
@@ -70,6 +74,7 @@
         ],
         "minimap": "Bridge",
         "platform": "Bridge",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -85,6 +90,7 @@
         ],
         "minimap": "Floor",
         "platform": "Floor",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -100,6 +106,7 @@
         ],
         "minimap": "Floor",
         "platform": "Floor",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -115,6 +122,7 @@
         ],
         "minimap": "Sand",
         "platform": "Road",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -130,6 +138,7 @@
         ],
         "minimap": "Pillar",
         "platform": "Pillar",
+        "background": null,
         "mtype": "Pillar",
         "opaque": false,
         "status": "Forest"
@@ -145,6 +154,7 @@
         ],
         "minimap": "Wall",
         "platform": "Wall",
+        "background": null,
         "mtype": "Wall",
         "opaque": true,
         "status": null
@@ -160,6 +170,7 @@
         ],
         "minimap": "Wall",
         "platform": "Wall",
+        "background": null,
         "mtype": "Fence",
         "opaque": false,
         "status": null
@@ -175,6 +186,7 @@
         ],
         "minimap": "Sea",
         "platform": "Lake",
+        "background": null,
         "mtype": "Sea",
         "opaque": false,
         "status": "Avoid10"
@@ -190,6 +202,7 @@
         ],
         "minimap": "Sea",
         "platform": "Sea",
+        "background": null,
         "mtype": "Sea",
         "opaque": false,
         "status": "Avoid10"
@@ -205,6 +218,7 @@
         ],
         "minimap": "River",
         "platform": "River",
+        "background": null,
         "mtype": "River",
         "opaque": false,
         "status": null
@@ -220,6 +234,7 @@
         ],
         "minimap": "Hill",
         "platform": "Hill",
+        "background": null,
         "mtype": "Hill",
         "opaque": false,
         "status": "Mountain"
@@ -235,6 +250,7 @@
         ],
         "minimap": "Mountain",
         "platform": "Mountain",
+        "background": null,
         "mtype": "Mountain",
         "opaque": false,
         "status": "Peak"
@@ -250,6 +266,7 @@
         ],
         "minimap": "Cliff",
         "platform": "Cliff",
+        "background": null,
         "mtype": "Cliff",
         "opaque": false,
         "status": null
@@ -265,6 +282,7 @@
         ],
         "minimap": "Wall",
         "platform": "Deck",
+        "background": null,
         "mtype": "Fence",
         "opaque": false,
         "status": null
@@ -280,6 +298,7 @@
         ],
         "minimap": "House",
         "platform": "House",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -295,6 +314,7 @@
         ],
         "minimap": "Fort",
         "platform": "Fort",
+        "background": null,
         "mtype": "Fort",
         "opaque": false,
         "status": "Fort"
@@ -310,6 +330,7 @@
         ],
         "minimap": "Throne",
         "platform": "Gate",
+        "background": null,
         "mtype": "Throne",
         "opaque": false,
         "status": "Throne"
@@ -325,6 +346,7 @@
         ],
         "minimap": "Shop",
         "platform": "Armory",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -340,6 +362,7 @@
         ],
         "minimap": "Shop",
         "platform": "Vendor",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -355,6 +378,7 @@
         ],
         "minimap": "Shop",
         "platform": "Arena",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -370,6 +394,7 @@
         ],
         "minimap": "House",
         "platform": "Village",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -385,6 +410,7 @@
         ],
         "minimap": "Chest",
         "platform": "Chest",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -400,6 +426,7 @@
         ],
         "minimap": "Door",
         "platform": "Floor",
+        "background": null,
         "mtype": "Wall",
         "opaque": false,
         "status": null
@@ -415,6 +442,7 @@
         ],
         "minimap": "Throne",
         "platform": "Throne",
+        "background": null,
         "mtype": "Throne",
         "opaque": false,
         "status": "Throne"
@@ -430,6 +458,7 @@
         ],
         "minimap": "Ruins",
         "platform": "Ruins",
+        "background": null,
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -445,6 +474,7 @@
         ],
         "minimap": "Ruins",
         "platform": "Ruins",
+        "background": null,
         "mtype": "Fort",
         "opaque": false,
         "status": null

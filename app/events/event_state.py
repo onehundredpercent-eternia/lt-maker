@@ -22,10 +22,11 @@ class EventState(State):
                 game.cursor.hide()
 
     def take_input(self, event):
-        if self.event.state == 'dialog' and event == 'INFO':
-            game.state.change('dialog_log')
-        else:
-            self.event.take_input(event)
+        if self.event:
+            if self.event.state == 'dialog' and event == 'INFO':
+                game.state.change('dialog_log')
+            else:
+                self.event.take_input(event)
 
     def update(self):
         if self.game_over:
@@ -53,9 +54,9 @@ class EventState(State):
         current_level_nid = game.level.nid
         game.memory['_prev_level_nid'] = current_level_nid
         current_level_index = DB.levels.index(game.level.nid)
-        should_go_to_overworld = DB.levels.get(game.level.nid).go_to_overworld
+        should_go_to_overworld = DB.levels.get(game.level.nid).go_to_overworld and DB.constants.value('overworld')
         game.clean_up()
-        if current_level_index < len(DB.levels) - 1:
+        if current_level_index < len(DB.levels) - 1 or game.game_vars.get('_goto_level'):
             game.game_vars['_should_go_to_overworld'] = should_go_to_overworld
             if should_go_to_overworld:
                 if game.game_vars['_go_to_overworld_nid']:
@@ -121,12 +122,14 @@ class EventState(State):
             game.state.change('transition_to')
 
         elif self.event.battle_save_flag:
+            game.state.back()
             game.memory['save_kind'] = 'battle'
             game.memory['next_state'] = 'in_chapter_save'
             game.state.change('transition_to')
             self.event.battle_save_flag = False
 
         elif self.event.turnwheel_flag:
+            game.state.back()
             game.state.change('turnwheel')
             if self.event.turnwheel_flag == 2:
                 game.memory['force_turnwheel'] = True

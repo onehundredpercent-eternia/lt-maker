@@ -67,6 +67,12 @@ class AIController():
         logging.info("AI Act!")
 
         change = False
+        if game.movement.check_region_interrupt(self.unit):
+            self.move_ai_complete = True
+            self.attack_ai_complete = True
+            self.canto_ai_complete = True
+            game.movement.remove_interrupt_regions(self.unit)
+
         if not self.move_ai_complete:
             if self.think():
                 change = self.move()
@@ -85,8 +91,6 @@ class AIController():
     def move(self):
         if self.goal_position and self.goal_position != self.unit.position:
             path = target_system.get_path(self.unit, self.goal_position)
-            # if self.unit.has_attacked:
-            #     self.unit.wait()
             game.state.change('movement')
             action.do(action.Move(self.unit, self.goal_position, path))
             return True
@@ -96,7 +100,11 @@ class AIController():
     def attack(self):
         # Attacking or supporting
         if self.goal_target:  # Target is a position tuple
-            if self.goal_item and self.goal_item in item_funcs.get_all_items(self.unit):
+            if not self.goal_item:
+                return False
+            if not item_funcs.available(self.unit, self.goal_item):
+                return False
+            if self.goal_item in item_funcs.get_all_items(self.unit):
                 self.unit.equip(self.goal_item)
             # Highlights
             if item_system.is_weapon(self.unit, self.goal_item):
@@ -124,6 +132,7 @@ class AIController():
                 self.goal_item.data['target_item'] = items[-1]
 
             # Combat
+            # Checks to make sure the unit wasn't interrupted during movement
             interaction.start_combat(self.unit, self.goal_target, self.goal_item, ai_combat=True, skip=self.do_skip)
             return True
         # Interacting with regions
@@ -280,7 +289,8 @@ class AIController():
                     action.do(action.AIGroupPing(unit))
 
     def build_primary(self):
-        if self.behaviour.view_range == -1:  # Guard AI
+        # Guard AI
+        if self.behaviour.view_range == -1 and not self.unit.ai_group_active:
             valid_moves = {self.unit.position}
         else:
             valid_moves = self.get_true_valid_moves()

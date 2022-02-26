@@ -1,3 +1,4 @@
+from typing import Dict
 from app.data.skill_components import SkillComponent
 from app.data.components import Type
 from app.data.database import DB
@@ -90,7 +91,18 @@ class LostOnEndCombat(SkillComponent):
     desc = "Remove after combat"
     tag = "time"
 
+    expose = (Type.MultipleOptions)
+
+    value = [["LostOnSelf (T/F)", "F", 'Lost after self combat (e.g. vulnerary)']]
+
+    @property
+    def values(self) -> Dict[str, str]:
+        return {value[0]: value[1] for value in self.value}
+
     def post_combat(self, playback, unit, item, target, mode):
+        if self.values['LostOnSelf (T/F)'] == 'F':
+            if unit == target:
+                return
         action.do(action.RemoveSkill(unit, self.skill))
 
     def on_end_chapter(self, unit, skill):

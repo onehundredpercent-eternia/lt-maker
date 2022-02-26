@@ -119,7 +119,8 @@ class DropAbility(Ability):
         else:
             game.state.change('free')
             game.cursor.set_pos(unit.position)
-            unit.wait()
+            game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
+            action.do(action.Wait(unit))
 
 class RescueAbility(Ability):
     name = "Rescue"
@@ -143,7 +144,8 @@ class RescueAbility(Ability):
         else:
             game.state.change('free')
             game.cursor.set_pos(unit.position)
-            unit.wait()
+            game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
+            action.do(action.Wait(unit))
 
 class TakeAbility(Ability):
     name = 'Take'
@@ -228,7 +230,8 @@ class SeparateAbility(Ability):
         action.do(action.Separate(unit, u, game.cursor.position))
         game.state.change('free')
         game.cursor.set_pos(unit.position)
-        unit.wait()
+        game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
+        action.do(action.Wait(unit))
 
 class SwapAbility(Ability):
     name = 'Swap'

@@ -47,6 +47,7 @@ config_icons = [engine.subsurface(SPRITES.get('settings_icons'), (0, c[2] * 16, 
 class SettingsMenuState(State):
     name = 'settings_menu'
     in_level = False
+    header_width = 112
 
     def start(self):
         self.fluid = FluidScroll(128)
@@ -79,8 +80,8 @@ class SettingsMenuState(State):
         mouse_position = INPUT.get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
-            top_left_rect = (4, 4, 112, 24)
-            top_right_rect = (WINWIDTH//2 + 4, 4, 112, 24)
+            top_left_rect = (4, 4, self.header_width, 24)
+            top_right_rect = (WINWIDTH//2 + 4, 4, self.header_width, 24)
             # Test left rect
             x, y, width, height = top_left_rect
             if x <= mouse_x <= x + width and y <= mouse_y <= y + height:
@@ -195,7 +196,6 @@ class SettingsMenuState(State):
         self.update_sound()
         # if game.cursor is not None:
         #     game.cursor.fluid.update_speed(cf.SETTINGS['cursor_speed'])
-            
         game.state.change('transition_pop')
 
     def update_sound(self):
@@ -207,19 +207,20 @@ class SettingsMenuState(State):
         self.top_cursor.update()
 
     def draw_top_menu(self, surf):
-        bg = base_surf.create_base_surf(112, 24, 'menu_bg_clear')
-        surf.blit(bg, (4, 4))
-        surf.blit(bg, (WINWIDTH//2 + 4, 4))
+        bg = base_surf.create_base_surf(self.header_width, 24, 'menu_bg_clear')
+        offset = (WINWIDTH // 2 - self.header_width) // 2
+        surf.blit(bg, (offset, 4))
+        surf.blit(bg, (WINWIDTH//2 + offset, 4))
         if self.current_menu is self.config_menu:
-            FONT['text-yellow'].blit_center('Config', surf, (4 + 112//2, 8))
-            FONT['text-grey'].blit_center('Controls', surf, (WINWIDTH//2 + 4 + 112//2, 8))
+            FONT['text-yellow'].blit_center('Config', surf, (offset + self.header_width//2, 8))
+            FONT['text-grey'].blit_center('Controls', surf, (WINWIDTH//2 + offset + self.header_width//2, 8))
             if self.state in ('top_menu_left', 'top_menu_right'):
-                self.top_cursor.draw(surf, 112//2 - 16, 8)
+                self.top_cursor.draw(surf, self.header_width//2 - 16, 8)
         else:
-            FONT['text-grey'].blit_center('Config', surf, (4 + 112/2, 8))
-            FONT['text-yellow'].blit_center('Controls', surf, (WINWIDTH//2 + 4 + 112//2, 8))
+            FONT['text-grey'].blit_center('Config', surf, (offset + self.header_width/2, 8))
+            FONT['text-yellow'].blit_center('Controls', surf, (WINWIDTH//2 + offset + self.header_width//2, 8))
             if self.state in ('top_menu_left', 'top_menu_right'):
-                self.top_cursor.draw(surf, WINWIDTH//2 + 2 + 112//2 - 16, 8)
+                self.top_cursor.draw(surf, WINWIDTH//2 + 2 + self.header_width//2 - 16, 8)
 
     def draw_info_banner(self, surf):
         height = 16
@@ -237,11 +238,14 @@ class SettingsMenuState(State):
         else:
             text = 'keymap_desc'
         text = text_funcs.translate(text)
-        FONT['text-white'].blit_center(text, surf, (WINWIDTH//2, WINHEIGHT - height))
-    
+        FONT['text'].blit_center(text, surf, (WINWIDTH//2, WINHEIGHT - height))
+
     def draw(self, surf):
         if self.bg:
             self.bg.draw(surf)
+        else:
+            # settings menu shouldn't be transparent
+            surf.blit(SPRITES.get('bg_black'), (0, 0))
 
         self.draw_top_menu(surf)
         if self.state == 'get_input':

@@ -135,7 +135,7 @@ class SimpleCombat():
         if not self.attacker.is_dying:
             self.handle_wexp(self.attacker, self.main_item, self.defender)
 
-        if DB.constants.value('pairup'):
+        if DB.constants.value('pairup') and self.main_item:
             if self.attacker.strike_partner:
                 self.handle_wexp(self.attacker.strike_partner, self.main_item, self.defender)
             if self.attacker.traveler:
@@ -144,7 +144,7 @@ class SimpleCombat():
         if self.defender and self.def_item and not self.defender.is_dying:
             self.handle_wexp(self.defender, self.def_item, self.attacker)
 
-        if DB.constants.value('pairup'):
+        if DB.constants.value('pairup') and self.def_item:
             if self.defender and self.defender.strike_partner:
                 self.handle_wexp(self.defender.strike_partner, self.def_item, self.attacker)
             if self.defender and self.defender.traveler:
@@ -156,6 +156,11 @@ class SimpleCombat():
         self.handle_records(self.full_playback, all_units)
 
         self.end_combat()
+        
+        self.attacker.built_guard = True
+        if self.defender:
+            self.defender.strike_partner = None
+            self.defender.built_guard = True
 
         self.handle_death(all_units)
 
@@ -200,9 +205,6 @@ class SimpleCombat():
     def cleanup_combat(self):
         skill_system.cleanup_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
         already_pre = [self.attacker]
-        if self.defender:
-            self.defender.strike_partner = None
-            self.defender.built_guard = True
         for idx, defender in enumerate(self.defenders):
             if defender and defender not in already_pre:
                 already_pre.append(defender)
@@ -311,6 +313,9 @@ class SimpleCombat():
         else:
             if not self.attacker.has_attacked or \
                     (self.attacker.team == 'player' and item_system.menu_after_combat(self.attacker, self.main_item)):
+                if item_system.can_attack_after_combat(self.attacker, self.main_item):
+                    action.do(action.HasNotAttacked(self.attacker))
+                    action.do(action.HasTraded(self.attacker))
                 game.state.change('menu')
             elif skill_system.has_canto(self.attacker, self.defender):
                 game.cursor.set_pos(self.attacker.position)
@@ -426,7 +431,7 @@ class SimpleCombat():
             mana_gain = skill_system.mana(self.full_playback, self.defender, self.def_item, self.attacker)
             game.mana_instance.append((self.defender, mana_gain))
 
-    def handle_exp(self):
+    def handle_exp(self, combat_object=None):
         # handle exp
         if self.attacker.team == 'player' and not self.attacker.is_dying:
             exp = self.calculate_exp(self.attacker, self.main_item)
@@ -436,11 +441,11 @@ class SimpleCombat():
             else:
                 exp = int(utils.clamp(exp, DB.constants.value('min_exp'), 100))
 
-            if DB.constants.value('pairup'):
+            if DB.constants.value('pairup') and self.main_item:
                 self.handle_paired_exp(self.attacker)
 
             if (self.alerts and exp > 0) or exp + self.attacker.exp >= 100:
-                game.exp_instance.append((self.attacker, exp, None, 'init'))
+                game.exp_instance.append((self.attacker, exp, combat_object, 'init'))
                 game.state.change('exp')
                 game.ai.end_skip()
             elif not self.alerts and exp > 0:
@@ -450,11 +455,11 @@ class SimpleCombat():
             exp = self.calculate_exp(self.defender, self.def_item)
             exp = int(utils.clamp(exp, DB.constants.value('min_exp'), 100))
 
-            if DB.constants.value('pairup'):
+            if DB.constants.value('pairup') and self.def_item:
                 self.handle_paired_exp(self.defender)
 
             if (self.alerts and exp > 0) or exp + self.defender.exp >= 100:
-                game.exp_instance.append((self.defender, exp, None, 'init'))
+                game.exp_instance.append((self.defender, exp, combat_object, 'init'))
                 game.state.change('exp')
                 game.ai.end_skip()
             elif not self.alerts and exp > 0:

@@ -2,7 +2,6 @@ from typing import List
 
 from app.events import event_commands
 from app.utilities.data import Data, Prefab
-from app.utilities.typing import NID
 
 
 class Trigger(object):

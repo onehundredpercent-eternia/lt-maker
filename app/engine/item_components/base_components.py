@@ -95,12 +95,23 @@ class UsableInBase(ItemComponent):
     def can_use_in_base(self, unit, item):
         return True
 
+    def simple_target_restrict(self, unit, item):
+        return True
+
 class Unrepairable(ItemComponent):
     nid = 'unrepairable'
     desc = "Item cannot be repaired"
     tag = 'base'
 
     def unrepairable(self, unit, item):
+        return True
+
+class Unsplashable(ItemComponent):
+    nid = 'unsplashable'
+    desc = "Item cannot have its targeting affected by splash"
+    tag = 'base'
+
+    def unsplashable(self, unit, item):
         return True
 
 class Value(ItemComponent):

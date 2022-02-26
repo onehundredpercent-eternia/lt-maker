@@ -154,7 +154,8 @@ class DecreasingSightRangeBonus(SkillComponent):
     expose = Type.Int
     value = 3
 
-    def init(self):
+    def init(self, skill):
+        self.skill = skill
         self.skill.data['torch_counter'] = 0
 
     def sight_range(self, unit):

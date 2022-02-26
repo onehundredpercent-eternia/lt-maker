@@ -1,6 +1,6 @@
 import math, random
 
-from app.constants import WINWIDTH, WINHEIGHT, TILEWIDTH, TILEHEIGHT
+from app.constants import TILEX, WINWIDTH, WINHEIGHT, TILEWIDTH, TILEHEIGHT
 from app.engine.sprites import SPRITES
 
 from app.engine import engine, image_mods
@@ -20,7 +20,7 @@ class ParticleSystem():
 
         self.lx, self.ux, self.ly, self.uy = bounds
         self.blend = blend
-    
+
     def save(self):
         return self.nid, self.pos
 
@@ -93,7 +93,7 @@ class Smoke(Particle):
     def update(self):
         self.x += random.randint(self.speed//2, self.speed)
         self.y -= random.randint(self.speed//2, self.speed)
-        if game.tilemap and (self.x > game.tilemap.width * TILEWIDTH or self.y < -32):
+        if game.tilemap and (self.x > max(TILEX, game.tilemap.width) * TILEWIDTH or self.y < -32):
             self.remove_me_flag = True
         elif self.x > WINWIDTH:
             self.remove_me_flag = True

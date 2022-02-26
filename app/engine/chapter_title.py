@@ -127,7 +127,7 @@ class ChapterTitleState(State):
         if self.state in ('ribbon_fade_in', 'wait', 'ribbon_close', 'sigil_out', 'end'):
             new_ribbon = engine.copy_surface(self.ribbon)
             name_width = FONT['chapter-yellow'].width(self.title)
-            position = (WINWIDTH//2 - name_width//2, self.ribbon.get_height()//2 - 6)
+            position = (new_ribbon.get_width()//2 - name_width//2, self.ribbon.get_height()//2 - 6)
             FONT['chapter-yellow'].blit(self.title, new_ribbon, position)
             rect = (0, (self.ribbon.get_height() - self.banner_grow_y)//2, self.ribbon.get_width(), self.banner_grow_y)
             new_ribbon = engine.subsurface(new_ribbon, rect)

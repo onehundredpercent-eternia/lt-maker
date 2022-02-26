@@ -2,7 +2,7 @@ from app.data.item_components import ItemComponent
 from app.data.components import Type
 
 from app.utilities import utils
-from app.engine import action, combat_calcs, image_mods, engine
+from app.engine import action, combat_calcs, image_mods, engine, item_system
 
 class Effective(ItemComponent):
     nid = 'effective'

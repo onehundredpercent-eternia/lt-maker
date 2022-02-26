@@ -1,19 +1,23 @@
 from functools import partial
 
-from PyQt5.QtWidgets import QComboBox, QWidget, QLabel, QToolButton, QDoubleSpinBox, \
-    QSpinBox, QHBoxLayout, QListWidgetItem, QItemDelegate, QLineEdit
-from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtCore import Qt
-
-from app.resources.resources import RESOURCES
-from app.data.database import DB
 from app.data.components import Type
-
-from app.extensions.color_icon import ColorIcon, AlphaColorIcon
-from app.extensions.custom_gui import ComboBox
-from app.extensions.widget_list import WidgetList
+from app.data.database import DB
 from app.extensions import list_models
-from app.extensions.list_widgets import AppendMultiListWidget, AppendSingleListWidget
+from app.extensions.color_icon import AlphaColorIcon, ColorIcon
+from app.extensions.custom_gui import ComboBox
+from app.extensions.key_value_delegate import (FixedKeyMutableValueDelegate,
+                                               KeyValueDoubleListModel)
+from app.extensions.list_widgets import (AppendMultiListWidget,
+                                         AppendSingleListWidget,
+                                         BasicMultiListWidget)
+from app.extensions.widget_list import WidgetList
+from app.resources.resources import RESOURCES
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor, QIcon
+from PyQt5.QtWidgets import (QComboBox, QDoubleSpinBox, QHBoxLayout,
+                             QItemDelegate, QLabel, QLineEdit, QListWidgetItem,
+                             QSpinBox, QToolButton, QWidget)
+
 
 class ComponentList(WidgetList):
     def add_component(self, component):
@@ -140,6 +144,29 @@ class DropDownItemComponent(BoolItemComponent):
 
     def on_value_changed(self, val):
         self._data.value = self.options[val]
+
+class OptionsItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        if not self._data.value:
+            self._data.value = []
+        title = self._data.name
+        self.editor = BasicMultiListWidget(self._data.value, title, ("Setting", "Value", "Desc"), self.KeyValueDescDelegate, self, model=KeyValueDoubleListModel)
+        self.editor.view.setColumnWidth(0, 150)
+        self.editor.view.setColumnWidth(1, 50)
+        self.editor.view.setColumnWidth(2, 150)
+        self.editor.view.setMaximumHeight(75)
+        self.editor.model.nid_column = 0
+        hbox.addWidget(self.editor)
+
+    class KeyValueDescDelegate(FixedKeyMutableValueDelegate):
+        desc_column = 2
+        def createEditor(self, parent, option, index):
+            if index.column() == self.desc_column:
+                editor = QLineEdit(parent)
+                editor.setDisabled(True)
+                return editor
+            else:
+                return super().createEditor(parent, option, index)
 
 class WeaponTypeItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
@@ -400,6 +427,10 @@ class WeaponTypeDelegate(UnitDelegate):
     data = DB.weapons
     name = "Weapon Type"
 
+class SkillDelegate(UnitDelegate):
+    data = DB.skills
+    name = "Skill"
+
 class ListItemComponent(BoolItemComponent):
     delegate = None
 
@@ -418,7 +449,7 @@ class DictItemComponent(BoolItemComponent):
 
     def create_editor(self, hbox):
         if not self._data.value:
-            self.data.value = []
+            self._data.value = []
         title = self._data.name
         self.modify_delegate()
         self.editor = AppendMultiListWidget(self._data.value, title, (self.delegate.name, "Value"), self.delegate, self, model=list_models.DoubleListModel)
@@ -481,6 +512,9 @@ def get_display_widget(component, parent):
         c = EventItemComponent(component, parent)
     elif component.expose == Type.MovementType:
         c = MovementTypeItemComponent(component, parent)
+    elif component.expose == Type.MultipleOptions:
+        c = OptionsItemComponent(component, parent)
+
     elif isinstance(component.expose, tuple):
         delegate = None
         if component.expose[1] == Type.Unit:
@@ -497,6 +531,8 @@ def get_display_widget(component, parent):
             delegate = StatDelegate
         elif component.expose[1] == Type.WeaponType:
             delegate = WeaponTypeDelegate
+        elif component.expose[1] == Type.Skill:
+            delegate = SkillDelegate
 
         if component.expose[0] == Type.List:
             c = ListItemComponent(component, parent, delegate)

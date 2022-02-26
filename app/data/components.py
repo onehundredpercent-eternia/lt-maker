@@ -31,6 +31,7 @@ class Type(IntEnum):
     Dict = 101  # Item followed by integer
     FloatDict = 102  # Item followed by floating
     MultipleChoice = 103 # item is a string value from a number of choices
+    MultipleOptions = 104 # item is a dict of string options with types that can be individually configured
 
 class Component():
     nid: str = None
@@ -42,7 +43,8 @@ class Component():
     value = None
 
     def __init__(self, value=None):
-        self.value = value
+        if value is not None:
+            self.value = value
 
     @property
     def name(self):

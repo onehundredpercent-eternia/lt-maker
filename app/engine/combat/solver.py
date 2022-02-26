@@ -71,6 +71,10 @@ class AttackerState(SolverState):
                 return None
             else:
                 return self.process_command(command)
+        elif solver.attacker_alive() and not solver.defender:
+            if solver.attacker.strike_partner and (solver.num_attacks == 1 or not DB.constants.value('limit_attack_stance')):
+                solver.num_subattacks = 0
+                return 'attacker_partner'
         else:
             return 'done'
 
@@ -153,11 +157,19 @@ class AttackerPartnerState(SolverState):
         skill_system.start_sub_combat(actions, playback, atk_p, solver.main_item, solver.defender, 'attack', attack_info)
         for idx, item in enumerate(solver.items):
             defender = solver.defenders[idx]
+            splash = solver.splashes[idx]
             target_pos = solver.target_positions[idx]
             if defender:
                 skill_system.start_sub_combat(actions, playback, defender, defender.get_weapon(), atk_p, 'defense', attack_info)
                 solver.process(actions, playback, atk_p, defender, target_pos, item, defender.get_weapon(), 'attack', attack_info, assist=True)
                 skill_system.end_sub_combat(actions, playback, defender, defender.get_weapon(), atk_p, 'defense', attack_info)
+            for target in splash:
+                skill_system.start_sub_combat(actions, playback, target, None, atk_p, 'defense', attack_info)
+                solver.process(actions, playback, atk_p, target, target_pos, item, None, 'attack', attack_info, assist=True)
+                skill_system.end_sub_combat(actions, playback, target, None, atk_p, 'defense', attack_info)
+            # Make sure that we run on_hit even if otherwise unavailable
+            if not defender and not splash:
+                solver.simple_process(actions, playback, atk_p, atk_p, target_pos, item, None, None, None)
 
         solver.num_subattacks += 1
         # End check attack proc
@@ -365,7 +377,7 @@ class CombatPhaseSolver():
 
     def process(self, actions, playback, attacker, defender, def_pos, item, def_item, mode, attack_info, assist=False):
         # Is the item I am processing the first one?
-        first_item = item is self.main_item or item is self.items[0]
+        first_item = item in (self.main_item, self.def_item, self.items[0])
         if assist:
             item = attacker.get_weapon()
 

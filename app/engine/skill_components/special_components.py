@@ -31,6 +31,22 @@ class Oversplash(SkillComponent):
         from app.engine.item_components.aoe_components import BlastAOE
         return BlastAOE(0)
 
+class EnemyOversplash(Oversplash, SkillComponent):
+    nid = 'enemy_oversplash'
+    desc = "Grants unit +X area of effect for regular and blast items that only affects enemies"
+
+    def alternate_splash(self, unit):
+        from app.engine.item_components.aoe_components import EnemyBlastAOE
+        return EnemyBlastAOE(0)
+
+class SmartOversplash(Oversplash, SkillComponent):
+    nid = 'smart_oversplash'
+    desc = "Grants unit +X area of effect for regular and blast items"
+
+    def alternate_splash(self, unit):
+        from app.engine.item_components.aoe_components import SmartBlastAOE
+        return SmartBlastAOE(0)
+
 class EmpowerHeal(SkillComponent):
     nid = 'empower_heal'
     desc = "Gives +X extra healing"
@@ -46,6 +62,21 @@ class EmpowerHeal(SkillComponent):
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
+class ManaOnHit(SkillComponent):
+    nid = 'mana_on_hit'
+    desc = 'Gives +X mana on hit'
+    tag = 'advanced'
+    author = 'BigMood'
+
+    expose = Type.Int
+
+    def mana(self, playback, unit, item, target):
+        mark_playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit')]
+
+        if target and any(p[2] == target for p in mark_playbacks):
+            return self.value
+        return 0
+        
 class ManaOnKill(SkillComponent):
     nid = 'mana_on_kill'
     desc = 'Gives +X mana on kill'
@@ -58,6 +89,7 @@ class ManaOnKill(SkillComponent):
             return self.value
         return 0
 
+
 class EventAfterInitiatedCombat(SkillComponent):
     nid = 'event_after_initiated_combat'
     desc = 'calls event after combat initated by user'
@@ -66,6 +98,6 @@ class EventAfterInitiatedCombat(SkillComponent):
     expose = Type.Event
     value = ''
 
-    def post_combat(self, playback, unit: UnitObject, item, target: UnitObject, mode):
+    def end_combat(self, playback, unit: UnitObject, item, target: UnitObject, mode):
         if mode == 'attack':
             game.events.trigger_specific_event(self.value, unit, target, item, unit.position)

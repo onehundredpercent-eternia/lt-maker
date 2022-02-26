@@ -107,7 +107,12 @@ class ProjectFileBackend():
                 # autosave doesn't have metadata, autosave doesn't exist, etc.
                 # just copy the previous save
                 pass
-            shutil.copytree(most_recent_path, self.tmp_proj)
+            def copyonly(dirpath, contents):
+                copied_patterns = ['game_data', 'resources', 'metadata.json']
+                return set(contents) - set(
+                    shutil.ignore_patterns(*copied_patterns)(dirpath, contents),
+                    )
+            shutil.copytree(most_recent_path, self.tmp_proj, ignore=copyonly)
         self.save_progress.setLabelText("Saving project to %s" % self.current_proj)
         self.save_progress.setValue(10)
 
@@ -130,17 +135,26 @@ class ProjectFileBackend():
         return True
 
     def new(self):
-        if self.maybe_save():
-            result = NewGameDialog.get()
-            if result:
-                identifier, title = result
-
-                RESOURCES.load('default.ltproj')
-                DB.load('default.ltproj')
-                DB.constants.get('game_nid').set_value(identifier)
-                DB.constants.get('title').set_value(title)
-            return result
-        return False
+        if not self.maybe_save():
+            return False
+        result = NewGameDialog.get()
+        if not result:
+            return False
+        identifier, title = result
+        curr_path = QDir()
+        curr_path.cdUp()
+        starting_path = curr_path.path() + '/' + title + '.ltproj'
+        fn, ok = QFileDialog.getSaveFileName(self.parent, "Save Project", starting_path,
+                                                "All Files (*)")
+        if not ok:
+            return
+        shutil.copytree(QDir.currentPath() + '/' + 'default.ltproj', fn)
+        self.current_proj = fn
+        self.settings.set_current_project(fn)
+        self.load()
+        DB.constants.get('game_nid').set_value(identifier)
+        DB.constants.get('title').set_value(title)
+        return result
 
     def open(self):
         if self.maybe_save():
@@ -152,6 +166,10 @@ class ProjectFileBackend():
             fn = QFileDialog.getExistingDirectory(
                 self.parent, "Open Project Directory", starting_path)
             if fn:
+                if not fn.endswith('.ltproj'):
+                    QMessageBox.warning(self.parent, "Incorrect directory type",
+                                        "%s is not an .ltproj." % fn)
+                    return False
                 self.current_proj = fn
                 self.settings.set_current_project(self.current_proj)
                 logging.info("Opening project %s" % self.current_proj)
@@ -177,7 +195,7 @@ class ProjectFileBackend():
                 self.load()
                 return True
             except Exception as e:
-                logging.error(e)
+                logging.exception(e)
                 backup_project_name = path + '.lttmp'
                 corrupt_project_name = path + '.ltcorrupt'
                 logging.warning("Failed to load project at %s. Likely that project is corrupted.", path)

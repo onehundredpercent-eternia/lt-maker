@@ -17,7 +17,8 @@ class SkillOption(menu_options.BasicOption):
         self.idx = idx
         self.skill = skill
         self.help_box = None
-        self.color = 'text-white'
+        self.font = 'text'
+        self.color = None
         self.ignore = False
 
     def get(self):
@@ -36,12 +37,12 @@ class SkillOption(menu_options.BasicOption):
         return 16
 
     def get_color(self):
-        main_font = 'text-grey'
+        main_color = 'grey'
         if self.ignore:
             pass
-        elif self.color:
-            main_font = self.color
-        return main_font
+        if not self.ignore and self.color:
+            main_color = self.color
+        return main_color
 
     def get_help_box(self):
         return help_menu.HelpDialog(self.skill.desc, name=self.skill.name)
@@ -50,8 +51,8 @@ class SkillOption(menu_options.BasicOption):
         icon = icons.get_icon(self.skill)
         if icon:
             surf.blit(icon, (x + 2, y))
-        main_font = self.get_color()
-        FONT[main_font].blit(self.skill.name, surf, (x + 20, y))
+        color = self.get_color()
+        FONT[self.font].blit(self.skill.name, surf, (x + 20, y), color)
 
 class FeatChoice(menus.Table):
     def create_options(self, options, info_desc=None):
@@ -133,9 +134,9 @@ class FeatChoiceState(MapState):
 
     def draw_label(self, surf):
         label = text_funcs.translate('Feat Choice')
-        label_width = FONT['text-white'].width(label) + 16
+        label_width = FONT['text'].width(label) + 16
         bg_surf = base_surf.create_base_surf(label_width, 24)
-        FONT['text-white'].blit_center(label, bg_surf, (bg_surf.get_width()//2, 4))
+        FONT['text'].blit_center(label, bg_surf, (bg_surf.get_width()//2, 4))
         surf.blit(bg_surf, (0, 0))
 
     def draw(self, surf):

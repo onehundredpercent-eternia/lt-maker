@@ -1,0 +1,27 @@
+# Trigger Reference
+
+This page contains a description of all triggers currently in the editor, along with their usable properties.
+
+| Trigger | Description | `unit1` | `unit2` | `item` | `position` | `region` | Notes |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+|  `level_start`  |  Occurs at the very beginning of a level. The chapter screen and title is usually displayed here, as well as introductory cinematics.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `level_end`  |  This occurs once `win_game` is set in another event. This is called at the end of gameplay, and usually handles end cinematics before going to the save screen or overworld.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `overworld_start`  |  Occurs upon entering the overworld.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `level_select`  |  Occurs when an entity is about to issue a move to the node containing the next level.  | **--**  | **--**  | **--**  | **--**  | **--**  | Because of implementation detail, when this event occurs, it supersedes any queued moves. Therefore, the entity will _not move_ to the selected node. Any events that use this trigger should include a scripted move if movement is desired.|
+|  `on_overworld_node_select`  |  Occurs when an entity is about to issue a move to a node.  | **Y**  | **--**  | **--**  | **--**  | **Y**  |  `unit1` represents the entity which is about to move.   `region` represents the NID of the node. Because of implementation detail, when this event occurs, it supersedes any queued moves. Therefore, the entity will _not move_ to the selected node. Any events that use this trigger should include a scripted move if movement is desired. |
+|  `turn_change`  |  Occurs immediately before turn changes to Player Phase. Useful for dialogue or reinforcements.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `enemy_turn_change`  |  Occurs immediately before the turn changes to Enemy phase. Useful for "same turn reinforcements" and other evil deeds.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `enemy2_turn_change`  |  Occurs immediately before the turn changes to the Second Enemy's phase.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `other_turn_change`  |  Occurs immediately before the turn changes to the Other faction's phase.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `unit_death`  |  Occurs when any unit dies, including generics.  | **Y**  | **Y**  | **--**  | **Y**  | **--**  |  `unit1` is the unit that died. `unit2` is the unit that killed them. `position` contains the location of their death.  |
+|  `unit_wait`  |  Occurs when any unit waits.  | **Y**  | **--**  | **--**  | **Y**  | **--**  |  `unit1` the unit that waited.   `position` contains their location.  |
+|  `unit_select`  |  Occurs when a unit is selected by the cursor.  | **Y**  | **--**  | **--**  | **Y**  | **--**  |  `unit1` is the unit that was selected.   `position` contains their location.  |
+|  `unit_level_up`  |  Occurs after a unit levels up.  | **Y**  | **Y**  | **--**  | **--**  | **--**  |  `unit1` is the unit that leveled up.   `unit2` is a `Dict[str, int]` containing their stat changes.  |
+|  `during_unit_level_up`  |  Occurs during a unit's level-up screen, immediately after stat changes are granted. This event is useful for implementing level-up quotes.  | **Y**  | **Y**  | **--**  | **--**  | **--**  |  `unit1` is the unit that leveled up.   `unit2` is a `Dict[str, int]` containing their stat changes.  |
+|  `combat_start`  |  Occurs when non-scripted combat is begun between any two units. Useful for boss quotes.  | **Y**  | **Y**  | **Y**  | **Y**  | **Y**  |  `unit` is the unit who initiated combat.   `unit2` is the target.   `item` contains the item equipped by `unit1`   `position` contains the position of `unit1`   `region` contains a boolean denoting whether or not we are in an actual animation or merely a map animation.  |
+|  `combat_end`  |  This trigger fires at the end of combat. Useful for checking win or loss conditions.  | **Y**  | **Y**  | **Y**  | **Y**  | **--**  |  `unit` is the unit who initiated combat.   `unit2` is the target.   `item` contains the item equipped by `unit1`   `position` contains the position of `unit1`  |
+|  `on_talk`  |  This trigger fires when two units "Talk" to one another.  | **Y**  | **Y**  | **--**  | **Y**  | **--**  |  `unit1` is the talk initiator.   `unit2` is the talk receiver.   `position` is the position of `unit1`  |
+|  `on_support`  |  This trigger fires when two units "Support" to one another.  | **Y**  | **Y**  | **Y**  | **Y**  | **--**  |  `unit1` is the support initiator.   `unit2` is the support receiver.   `item` contains the nid of the support rank (e.g. `A`, `B`, `C`, or `S`)   `position` is the position of `unit1`  |
+|  `on_base_convo`  |  This trigger fires when the player selects a base conversation to view.  | **Y**  | **--**  | **--**  | **--**  | **--**  |  `unit1` contains the NID of the base conversation.  |
+|  `on_turnwheel`  |  This trigger fires after the turnwheel is used.  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |
+|  `on_title_screen`  |  ?????????  | **--**  | **--**  | **--**  | **--**  | **--**  | -- |

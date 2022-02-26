@@ -1,0 +1,26 @@
+[
+    {
+        "nid": "TestforSOS",
+        "name": "TestforSOS",
+        "desc": "",
+        "icon_nid": "Axe",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "automatic_combat_art",
+                "Strength +2"
+            ],
+            [
+                "condition",
+                "game.phase.get_current() == 'enemy'"
+            ]
+        ]
+    }
+]

@@ -40,7 +40,7 @@ class TerrainProperties(QWidget):
         name_section.addWidget(self.nid_box)
 
         self.name_box = PropertyBox("Display Name", QLineEdit, self)
-        self.name_box.edit.setMaxLength(13)
+
         self.name_box.edit.textChanged.connect(self.name_changed)
         name_section.addWidget(self.name_box)
 

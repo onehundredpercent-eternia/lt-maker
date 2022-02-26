@@ -68,24 +68,16 @@ class Regeneration(SkillComponent):
             else:
                 name = 'MapSmallHealTrans'
             playback.append(('cast_anim', name, unit))
+            
+class ManaRegeneration(SkillComponent):
+    nid = 'mana_regeneration'
+    desc = "Unit restores X mana at beginning of turn"
+    tag = "status"
 
-def _playback_processing(self, playback, unit, hp_change):
-    # Playback
-    if hp_change < 0:
-        playback.append(('hit_sound', 'Attack Hit ' + str(random.randint(1, 5))))
-        playback.append(('unit_tint_add', unit, (255, 255, 255)))
-        playback.append(('damage_numbers', unit, self.value))
-    elif hp_change > 0:
-        playback.append(('hit_sound', 'MapHeal'))
-        if hp_change >= 30:
-            name = 'MapBigHealTrans'
-        elif hp_change >= 15:
-            name = 'MapMediumHealTrans'
-        else:
-            name = 'MapSmallHealTrans'
-        playback.append(('cast_anim', name, unit))
-        playback.append(('damage_numbers', unit, self.value))
+    expose = Type.Int
 
+    def on_upkeep(self, actions, playback, unit):
+        actions.append(action.ChangeMana(unit, self.value))
 
 class UpkeepDamage(SkillComponent):
     nid = 'upkeep_damage'

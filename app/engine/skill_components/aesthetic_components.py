@@ -72,7 +72,7 @@ class StealIcon(SkillComponent):
         return False
 
     def _item_restrict(self, unit, defender, def_item) -> bool:
-        if item_system.locked(defender, def_item):
+        if item_system.unstealable(defender, def_item):
             return False
         if item_funcs.inventory_full(unit, def_item):
             return False
@@ -84,7 +84,7 @@ class GBAStealIcon(StealIcon, SkillComponent):
     nid = 'gba_steal_icon'
 
     def _item_restrict(self, unit, defender, def_item) -> bool:
-        if item_system.locked(defender, def_item):
+        if item_system.unstealable(defender, def_item):
             return False
         if item_funcs.inventory_full(unit, def_item):
             return False
@@ -126,3 +126,13 @@ class ChangeAnimation(SkillComponent):
 
     def change_animation(self, unit):
         return self.value
+
+class MapCastAnim(SkillComponent):
+    nid = 'map_cast_anim'
+    desc = "Adds a map animation on cast"
+    tag = 'aesthetic'
+
+    expose = Type.MapAnimation
+
+    def start_combat(self, playback, unit, item, target, mode):
+        playback.append(('cast_anim', self.value))

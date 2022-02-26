@@ -41,17 +41,17 @@ class StatusUpkeepState(MapState):
             if self.cur_unit:
                 self.actions.clear()
                 self.playback.clear()
-                if self.cur_unit.traveler and not self.cur_unit.built_guard:
-                    action.do(action.IncGauge(self.cur_unit, -self.cur_unit.get_gauge_inc()))
-                if self.cur_unit.built_guard:
-                    action.do(action.BuiltGuard(self.cur_unit))
                 if self.name == 'status_endstep':
                     skill_system.on_endstep(self.actions, self.playback, self.cur_unit)
                     for item in item_funcs.get_all_items(self.cur_unit):
                         item_system.on_endstep(self.actions, self.playback, self.cur_unit, item)
+                    for item in skill_system.get_extra_abilities(self.cur_unit).values():
+                        item_system.on_endstep(self.actions, self.playback, self.cur_unit, item)
                 else:
                     skill_system.on_upkeep(self.actions, self.playback, self.cur_unit)
                     for item in item_funcs.get_all_items(self.cur_unit):
+                        item_system.on_upkeep(self.actions, self.playback, self.cur_unit, item)
+                    for item in skill_system.get_extra_abilities(self.cur_unit).values():
                         item_system.on_upkeep(self.actions, self.playback, self.cur_unit, item)
                 if self.playback and self.cur_unit.position:
                     game.cursor.set_pos(self.cur_unit.position)

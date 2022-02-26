@@ -12,6 +12,7 @@ class Region(Prefab):
         self.sub_nid = None
         self.condition = 'True'
         self.only_once = False
+        self.interrupt_move = False
 
     @property
     def area(self):

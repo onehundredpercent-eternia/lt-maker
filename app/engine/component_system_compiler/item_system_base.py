@@ -248,7 +248,7 @@ def splash(unit, item, position) -> tuple:
     else: # DEFAULT
         from app.engine import skill_system
         alternate_splash_component = skill_system.alternate_splash(unit)
-        if alternate_splash_component:
+        if alternate_splash_component and not unsplashable(unit, item):
             main_target, splash = alternate_splash_component.splash(unit, item, position)
             return main_target, splash
         else:
@@ -263,7 +263,7 @@ def splash_positions(unit, item, position) -> set:
     if not positions:
         from app.engine import skill_system
         alternate_splash_component = skill_system.alternate_splash(unit)
-        if alternate_splash_component:
+        if alternate_splash_component and not unsplashable(unit, item):
             positions = alternate_splash_component.splash_positions(unit, item, position)
             return positions
         else:

@@ -409,7 +409,7 @@ class UIComponent():
         self.manual_surfaces = [surf_tup for surf_tup in self.manual_surfaces if not surf_tup[3] == surf_name]
 
     def should_redraw(self) -> bool:
-        return self._should_redraw or any([child.should_redraw() for child in self.children])
+        return self._should_redraw or any([child.should_redraw() for child in self.children if child.enabled])
 
     def did_redraw(self):
         pass

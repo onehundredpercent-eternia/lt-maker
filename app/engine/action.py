@@ -112,6 +112,7 @@ class Move(Action):
     def do(self):
         if self.path is None:
             self.path = game.cursor.path[:]
+        game.boundary.frozen = True
         game.movement.begin_move(self.unit, self.path, self.event, self.follow)
 
     def execute(self):
@@ -449,6 +450,11 @@ class Wait(Action):
         self.unit.current_move = None
         self.unit.sprite.change_state('normal')
         self.update_fow_action.do()
+        if game.cursor and game.cursor.cur_unit == self.unit:
+            game.cursor.cur_unit = None
+        if self.unit.traveler:
+            self.unit.lead_unit = True
+            game.get_unit(self.unit.traveler).lead_unit = False
 
     def reverse(self):
         self.unit.set_action_state(self.action_state)
@@ -464,11 +470,13 @@ class UpdateFogOfWar(Action):
         # Handle fog of war
         if game.level_vars.get('_fog_of_war'):
             self.prev_pos = game.board.fow_vantage_point.get(self.unit.nid)
+            ai_fog_of_war_radius = game.level_vars.get('_ai_fog_of_war_radius', game.level_vars.get('_fog_of_war_radius', 0))
             if self.unit.team == 'player':
                 fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+            elif self.unit.team == 'other':
+                fog_of_war_radius = game.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius)
             else:
-                fog_of_war_radius = game.level_vars.get('_ai_fog_of_war_radius',
-                                                        game.level_vars.get('_fog_of_war_radius', 0))
+                fog_of_war_radius = ai_fog_of_war_radius
             sight_range = skill_system.sight_range(self.unit) + fog_of_war_radius
             game.board.update_fow(self.unit.position, self.unit, sight_range)
             game.boundary.reset_fog_of_war()
@@ -476,11 +484,13 @@ class UpdateFogOfWar(Action):
     def reverse(self):
         # Handle fog of war
         if game.level_vars.get('_fog_of_war'):
+            ai_fog_of_war_radius = game.level_vars.get('_ai_fog_of_war_radius', game.level_vars.get('_fog_of_war_radius', 0))
             if self.unit.team == 'player':
                 fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+            elif self.unit.team == 'other':
+                fog_of_war_radius = game.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius)
             else:
-                fog_of_war_radius = game.level_vars.get('_ai_fog_of_war_radius',
-                                                        game.level_vars.get('_fog_of_war_radius', 0))
+                fog_of_war_radius = ai_fog_of_war_radius
             sight_range = skill_system.sight_range(self.unit) + fog_of_war_radius
             game.board.update_fow(self.prev_pos, self.unit, sight_range)
             game.boundary.reset_fog_of_war()
@@ -515,6 +525,16 @@ class SetPreviousPosition(Action):
     def reverse(self):
         self.unit.previous_position = self.old_previous_position
 
+class SetPersistent(Action):
+    def __init__(self, unit):
+        self.unit = unit
+        self.old_persistent = self.unit.persistent
+
+    def do(self):
+        self.unit.persistent = True
+
+    def reverse(self):
+        self.unit.persistent = self.old_persistent
 
 class Reset(Action):
     def __init__(self, unit):
@@ -552,6 +572,9 @@ class HasTraded(Reset):
     def do(self):
         self.unit.has_traded = True
 
+class HasNotAttacked(Reset):
+    def do(self):
+        self.unit.has_attacked = False
 
 class HasNotTraded(Reset):
     def do(self):
@@ -842,7 +865,7 @@ class Separate(Action):
 
         skill_system.on_separate(self.droppee, self.unit)
 
-        if utils.calculate_distance(self.unit.position, self.pos) == 1:
+        if self.unit.position and self.pos and utils.calculate_distance(self.unit.position, self.pos) == 1 and not self.unit.is_dying:
             self.droppee.sprite.set_transition('fake_in')
             self.droppee.sprite.offset = [(self.unit.position[0] - self.pos[0]) * TILEWIDTH,
                                           (self.unit.position[1] - self.pos[1]) * TILEHEIGHT]
@@ -1424,16 +1447,17 @@ class GrowthPointChange(Action):
 
 
 class ApplyStatChanges(Action):
-    def __init__(self, unit, stat_changes):
+    def __init__(self, unit, stat_changes, increase_current_stats: bool = True):
         self.unit = unit
         self.stat_changes = stat_changes
+        self.increase_current_stats = increase_current_stats
 
     def do(self):
-        unit_funcs.apply_stat_changes(self.unit, self.stat_changes)
+        unit_funcs.apply_stat_changes(self.unit, self.stat_changes, self.increase_current_stats)
 
     def reverse(self):
         negative_changes = {k: -v for k, v in self.stat_changes.items()}
-        unit_funcs.apply_stat_changes(self.unit, negative_changes)
+        unit_funcs.apply_stat_changes(self.unit, negative_changes, self.increase_current_stats)
 
 
 class ApplyGrowthChanges(Action):
@@ -1649,6 +1673,32 @@ class SetName(Action):
     def reverse(self):
         self.unit.name = self.old_name
 
+class SetNid(Action):
+    """Changes the NID of a UnitObject.
+
+    This is extremely dangerous, and should only be used for
+    converting generic NIDs into unique NIDs. That is why
+    we only allow this operation to be carried out on generics.
+    """
+    def __init__(self, unit, new_nid):
+        self.unit = unit
+        self.new_nid = new_nid
+        self.old_nid = self.unit.nid
+
+    def do(self):
+        if self.unit.generic:
+            if self.unit.nid in game.unit_registry:
+                del game.unit_registry[self.unit.nid]
+            self.unit.nid = self.new_nid
+            game.register_unit(self.unit)
+
+    def reverse(self):
+        if self.unit.generic:
+            if self.unit.nid in game.unit_registry:
+                del game.unit_registry[self.unit.nid]
+            self.unit.nid = self.old_nid
+            game.register_unit(self.unit)
+
 class SetHP(Action):
     def __init__(self, unit, new_hp):
         self.unit = unit
@@ -1758,6 +1808,8 @@ class Die(Action):
             else:
                 self.drop = Drop(self.unit, drop_me, self.unit.position)
             self.drop.do()
+            if game.phase.get_current() != drop_me.team:
+                Reset(drop_me).do()
             # TODO Drop Sound
 
         if DB.constants.value('initiative') and self.initiative_action:
@@ -2122,10 +2174,9 @@ class AddRegion(Action):
             if self.region.region_type == 'status':
                 for unit in game.units:
                     if unit.position and self.region.contains(unit.position):
-                        new_skill = DB.skills.get(self.region.sub_nid)
-                        self.subactions.append(AddSkill(unit, new_skill.nid))
-            for act in self.subactions:
-                act.do()
+                        add_skill_action =  game.add_region_status(unit, self.region, False)
+                        if add_skill_action:
+                            self.subactions.append(add_skill_action)
 
     def reverse(self):
         if self.did_add:
@@ -2301,7 +2352,7 @@ class RemoveMapAnim(Action):
 
     def reverse(self):
         anim = RESOURCES.animations.get(self.nid)
-        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_mult=self.speed_mult)
+        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_adj=self.speed_mult)
         game.tilemap.animations.append(anim)
 
 class ChangeObjective(Action):
@@ -2490,9 +2541,8 @@ class RemoveSkill(Action):
     def _remove(self, true_remove=True):
         self.removed_skills.clear()
         if isinstance(self.skill, str):
-            for skill in self.unit.skills[:]:
+            for skill in self.unit.skills:
                 if skill.nid == self.skill:
-                    self.unit.skills.remove(skill)
                     skill_system.on_remove(self.unit, skill)
                     if true_remove:
                         skill_system.on_true_remove(self.unit, skill)
@@ -2500,6 +2550,7 @@ class RemoveSkill(Action):
                     self.removed_skills.append(skill)
                     if skill.aura and self.unit.position and game.board and game.tilemap:
                         aura_funcs.release_aura(self.unit, skill, game)
+            self.unit.skills = [skill for skill in self.unit.skills if skill.nid != self.skill]
         else:
             if self.skill in self.unit.skills:
                 self.unit.skills.remove(self.skill)

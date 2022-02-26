@@ -83,6 +83,27 @@ class AllyBlastAOE(BlastAOE, ItemComponent):
         splash = [s.position for s in splash if s and skill_system.check_ally(unit, s)]
         return None, splash
 
+class SmartBlastAOE(BlastAOE, ItemComponent):
+    nid = 'smart_blast_aoe'
+    desc = "Gives Enemy Blast AOE for items that target enemies, and Ally Blast AOE for items that target allies"
+    tag = 'aoe'
+
+    def splash(self, unit, item, position) -> tuple:
+        if 'target_ally' in item.components.keys():
+            return AllyBlastAOE.splash(self, unit, item, position)
+        elif 'target_enemy' in item.components.keys():
+            return EnemyBlastAOE.splash(self, unit, item, position)
+        else:
+            return BlastAOE.splash(self, unit, item, position)
+
+    def splash_positions(self, unit, item, position) -> set:
+        if 'target_ally' in item.components.keys():
+            return AllyBlastAOE.splash_positions(self, unit, item, position)
+        elif 'target_enemy' in item.components.keys():
+            return EnemyBlastAOE.splash_positions(self, unit, item, position)
+        else:
+            return BlastAOE.splash_positions(self, unit, item, position)
+
 class EquationBlastAOE(BlastAOE, ItemComponent):
     nid = 'equation_blast_aoe'
     desc = "Gives Equation-Sized Blast AOE"

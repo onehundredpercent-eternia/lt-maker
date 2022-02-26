@@ -1,0 +1,38 @@
+[
+    {
+        "name": "Level Up Quote",
+        "trigger": "unit_level_up",
+        "level_nid": "DEBUG",
+        "condition": "unit.nid == 'Eirika'",
+        "commands": [
+            [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "Right"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "I leveled up!"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika"
+                ]
+            ],
+            [
+                "comment",
+                [
+                    "#"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

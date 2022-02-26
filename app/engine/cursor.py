@@ -10,7 +10,7 @@ from app.engine.objects.tilemap import TileMapObject
 from app.engine.sound import SOUNDTHREAD
 from app.engine.sprites import SPRITES
 from app.utilities.enums import Direction
-from app.utilities.utils import frames2ms, tclamp, tmult
+from app.utilities.utils import frames2ms, tclamp, tmult, tuple_sub
 from app.engine.engine import Surface
 
 class BaseCursor():
@@ -19,6 +19,7 @@ class BaseCursor():
     Camera and Tilemap are optional, but unlock some additional functionality
     such as automatic camera manipulation, and cursor movement boundaries.
     """
+    TRANSITION_FRAMES = 4
     def __init__(self, camera: Camera = None, tilemap: TileMapObject = None):
         # internal scroll controller
         self.fluid: FluidScroll = FluidScroll(frames2ms(4), 3.25)
@@ -38,8 +39,9 @@ class BaseCursor():
         self._sprite_dim: Tuple[int, int] = (32, 32)
 
         # used for animating between squares
+        # gba formula: 4 frames, linear interpolation
         self.offset_x, self.offset_y = 0, 0
-        self._transition_duration = frames2ms(4)
+        self._transition_duration = frames2ms(self.TRANSITION_FRAMES)
         self._transition_speed = 1
         self._transition_remaining: Tuple[int, int] = (0, 0)
         self._transition_direction: Tuple[Direction, Direction] = (Direction.LEFT, Direction.UP)
@@ -73,8 +75,7 @@ class BaseCursor():
 
     @property
     def transition_progress(self):
-        remaining_transition = tmult(self._transition_remaining, 1 / self.transition_duration)
-        return tclamp(remaining_transition, (0, 0), (1, 1))
+        return tclamp(tmult(self._transition_remaining, 1 / self.transition_duration), (0, 0), (2, 2))
 
     def get_image(self) -> Surface:
         """Returns the current image of the cursor.
@@ -120,7 +121,6 @@ class BaseCursor():
 
     def move(self, dx, dy, mouse=False, sound=True):
         x, y = self.position
-        self.position = x + dx, y + dy
 
         # Cursor Sound
         if mouse:
@@ -136,14 +136,34 @@ class BaseCursor():
             duration = self.transition_duration / 2
         else:
             duration = self.transition_duration
-        if dx != 0:
+        final_x, final_y = x, y
+        if dx != 0 and self._transition_remaining[0] == 0: # stationary, queued another move
             self._transition_direction = (Direction.parse_map_direction(dx, 0), self._transition_direction[1])
             self._transition_remaining = (duration, self._transition_remaining[1])
             self._transition_start = (transition_start, self._transition_start[1])
-        if dy != 0:
+            final_x = x + dx
+        elif (dx != 0 and
+              self._transition_remaining[0] >= 0 and
+              self._transition_remaining[0] <= self.transition_duration):
+            this_transition_direction = (Direction.parse_map_direction(dx, 0), self._transition_direction[1])
+            if this_transition_direction == self._transition_direction: # in motion; start a "slide"
+                self._transition_start = (self._transition_start[0] + duration, self._transition_start[1])
+                final_x = x + dx
+
+        if dy != 0 and self._transition_remaining[1] == 0:
             self._transition_direction = (self._transition_direction[0], Direction.parse_map_direction(0, dy))
             self._transition_remaining = (self._transition_remaining[0], duration)
             self._transition_start = (self._transition_start[0], transition_start)
+            final_y = y + dy
+        elif (dy != 0 and
+              self._transition_remaining[1] >= 0 and
+              self._transition_remaining[1] <= self.transition_duration):
+            this_transition_direction = (self._transition_direction[0], Direction.parse_map_direction(0, dy))
+            if this_transition_direction == self._transition_direction: # in motion; start a "slide"
+                self._transition_start = (self._transition_start[0], self._transition_start[1] + duration)
+                final_y = y + dy
+
+        self.position = final_x, final_y
 
     def take_input(self):
         self.fluid.update()
@@ -177,9 +197,11 @@ class BaseCursor():
                 from_mouse = True
                 new_pos = mouse_pos[0] // TILEWIDTH, mouse_pos[1] // TILEHEIGHT
                 new_pos = int(new_pos[0] + self.camera.get_x()), int(new_pos[1] + self.camera.get_y())
+                new_pos = tclamp(new_pos, self.get_bounds()[:2], self.get_bounds()[2:])
                 dpos = new_pos[0] - self.position[0], new_pos[1] - self.position[1]
                 dx = dpos[0]
                 dy = dpos[1]
+                # self._transition_speed = 2
 
         if dx != 0 or dy != 0:
             # adjust camera accordingly
@@ -200,13 +222,14 @@ class BaseCursor():
             xdt = current_time - self._transition_start[0]
             ydt = current_time - self._transition_start[1]
             self._transition_remaining = (
-                max(0, self._transition_remaining[0] - xdt),
-                max(0, self._transition_remaining[1] - ydt))
+                max(0, self.transition_duration - xdt),
+                max(0, self.transition_duration - ydt))
             # update offset based on progress
             ox = TILEWIDTH * self.transition_progress[0] * Direction.which_horizontal_dir(self._transition_direction[0])
             oy = TILEHEIGHT * -1 * self.transition_progress[1] * Direction.which_vertical_dir(self._transition_direction[1])
-            self.offset_x, self.offset_y = ox * 0.75, oy * 0.75
+            self.offset_x, self.offset_y = ox, oy
         else:
+            # self._transition_speed = 1
             self.offset_x, self.offset_y = 0, 0
 
     def draw(self, surf: Surface, cull_rect: Tuple[int, int, int, int]):

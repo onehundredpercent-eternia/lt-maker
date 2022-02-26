@@ -306,10 +306,10 @@ def valid_partners(units, unit) -> list:
         return []
     # Must be same team and not on the board and not a traveler unless your my traveler
     partners = {u.starting_traveler for u in units}
-    return [u for u in units if 
-            u.team == unit.team 
+    return [u for u in units if
+            u.team == unit.team
             and not u.starting_position
-            and (unit.starting_traveler == u.nid 
+            and (unit.starting_traveler == u.nid
                  or u.nid not in partners)]
 
 def build_traveler_box(self):
@@ -567,7 +567,7 @@ class GenericUnitDialog(Dialog):
         other_nids = [d.nid for d in self._data.values()
                       if d is not self.current]
         other_nids += DB.units.keys()  # Can't use these either
-        if self.current.nid in other_nids:
+        if not self.current.nid or self.current.nid in other_nids:
             QMessageBox.warning(self.window, 'Warning',
                                 'Unit ID %s already in use' % self.current.nid)
             new_nid = str_utils.get_next_generic_nid("101", other_nids)
@@ -581,7 +581,7 @@ class GenericUnitDialog(Dialog):
             unit_group.swap(old_nid, self.current.nid)
         # Swap travelers
         for unit in self.window.current_level.units:
-            if unit.starting_traveler == old_nid:
+            if old_nid and unit.starting_traveler == old_nid:
                 unit.starting_traveler = self.current.nid
 
     def team_changed(self, val):
@@ -608,10 +608,7 @@ class GenericUnitDialog(Dialog):
 
     def faction_changed(self, index):
         faction_nid = self.faction_box.edit.currentText()
-        faction = DB.factions.get(faction_nid)
         self.current.faction = faction_nid
-        self.current.name = faction.name
-        self.current.desc = faction.desc
 
     def ai_changed(self, val):
         self.current.ai = self.ai_box.edit.currentText()

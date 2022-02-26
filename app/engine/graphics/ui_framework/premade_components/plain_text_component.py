@@ -24,8 +24,8 @@ class TextProperties(ComponentProperties):
         super().__init__(parent)
         # self-explanatory: the font (BmpFont)
         # font_name (str of the font name) is more encouraged to be used, but either works
-        self.font: BmpFont = FONT['text-white']
-        self.font_name: str = 'text-white'
+        self.font: BmpFont = FONT['text']
+        self.font_name: str = 'text'
         # maximum number of lines in a multiline component the text over, if max_width is set.
         # if 0, then it will split as many as necessary.
         self.max_lines: int = 0
@@ -45,7 +45,7 @@ class PlainTextLine(UIComponent):
         font_name: str = ""
 
     """A component that represents a single line of text. You shouldn't assign size to this component"""
-    def __init__(self, name: str = "", parent: UIComponent = None, text: str = "", font_name: str = "text-white"):
+    def __init__(self, name: str = "", parent: UIComponent = None, text: str = "", font_name: str = "text"):
         super().__init__(name=name, parent=parent)
         self.prev_rprops = self._RProps()
         self.props: TextProperties = TextProperties(self)
@@ -89,7 +89,7 @@ class PlainTextComponent(UIComponent):
         num_visible_chars: int = 0
         font_name: str = ""
 
-    def __init__(self, name: str, parent: UIComponent = None, text: str = "", font_name: str = "text-white"):
+    def __init__(self, name: str, parent: UIComponent = None, text: str = "", font_name: str = "text"):
         super().__init__(name=name, parent=parent)
         self.prev_rprops = self._RProps()
         self.props: TextProperties = TextProperties(self)

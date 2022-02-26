@@ -6,6 +6,11 @@ class Hidden(SkillComponent):
     desc = "Skill will not show up on screen"
     tag = "attribute"
 
+class HiddenIfInactive(SkillComponent):
+    nid = 'hidden_if_inactive'
+    desc = 'Skill will not show up on info menu if condition is not fulfilled'
+    tag = 'attribute'
+
 class ClassSkill(SkillComponent):
     nid = 'class_skill'
     desc = "Skill will show up on first page of info menu"
@@ -35,10 +40,10 @@ class Negate(SkillComponent):
     nid = 'negate'
     desc = "Skill negates Effective component"
     tag = "attribute"
-    
+
 class NegateTags(SkillComponent):
     nid = 'negate_tags'
     desc = "Skill negates Effective component on specific Tags"
     tag = "attribute"
-    
+
     expose = (Type.List, Type.Tag)

@@ -137,7 +137,11 @@ class WexpGainMultiAttrModel(DefaultMultiAttrListModel):
             if value > 0 and not usable:
                 self.on_attr_changed(data, 'usable', usable, True)
                 setattr(data, 'usable', True)
-        self.on_attr_changed(data, attr, current_value, value)
-        setattr(data, attr, value)
+        elif attr == 'usable':
+            self.on_attr_changed(data, 'usable', current_value, value)
+            if value == Qt.Checked:
+                setattr(data, 'usable', True)
+            else:
+                setattr(data, 'usable', False)
         self.dataChanged.emit(index, index)
         return True

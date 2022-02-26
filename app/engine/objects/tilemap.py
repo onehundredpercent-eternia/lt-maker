@@ -258,11 +258,11 @@ class TileMapObject(Prefab):
         self.animations = []
         for anim in anims:
             new_anim = animations.MapAnimation(
-                RESOURCES.animations.get(anim['nid']), 
-                anim['pos'], 
-                loop=anim['loop'], 
-                hold=anim['hold'], 
-                reverse=anim['reverse'], 
+                RESOURCES.animations.get(anim['nid']),
+                anim['pos'],
+                loop=anim['loop'],
+                hold=anim['hold'],
+                reverse=anim['reverse'],
                 speed_adj=anim['speed_adj'])
             self.animations.append(new_anim)
 

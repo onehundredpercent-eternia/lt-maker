@@ -26,6 +26,8 @@ class Tags(Enum):
     OVERWORLD = 'Overworld'
     HIDDEN = 'Hidden'
 
+UNIVERSAL_FLAGS = ['no_warn']
+
 class EventCommand(Prefab):
     nid: str = None
     nickname: str = None
@@ -35,7 +37,7 @@ class EventCommand(Prefab):
     keyword_names: list = []
     keywords: list = []
     optional_keywords: list = []
-    flags: list = []
+    _flags: list = []
 
     values: list = []
     display_values: list = []
@@ -66,6 +68,10 @@ class EventCommand(Prefab):
         new_command.values = command.values.copy()
         new_command.display_values = command.display_values.copy()
         return new_command
+
+    @property
+    def flags(self) -> List[str]:
+        return self._flags + UNIVERSAL_FLAGS
 
 class Comment(EventCommand):
     nid = "comment"
@@ -189,8 +195,6 @@ endf
     """
     keywords = ['Nid', 'Expression']
 
-    flags = ['no_warn']
-
 class Endf(EventCommand):
     nid = "endf"
     tag = Tags.FLOW_CONTROL
@@ -297,7 +301,7 @@ Extra flags:
 
     keywords = ['Portrait', 'ScreenPosition']
     optional_keywords = ['Slide', 'ExpressionList', 'VerticalScreenPosition']
-    flags = ["mirror", "low_priority", "immediate", "no_block", "desaturate"]
+    _flags = ["mirror", "low_priority", "immediate", "no_block", "desaturate"]
 
 class MultiAddPortrait(EventCommand):
     nid = "multi_add_portrait"
@@ -328,7 +332,7 @@ Extra flags:
         """
 
     keywords = ['Portrait']
-    flags = ["immediate", "no_block"]
+    _flags = ["immediate", "no_block"]
 
 class MultiRemovePortrait(EventCommand):
     nid = "multi_remove_portrait"
@@ -358,7 +362,7 @@ Extra flags:
         """
 
     keywords = ['Portrait', 'ScreenPosition']
-    flags = ["immediate", "no_block"]
+    _flags = ["immediate", "no_block"]
 
 class BopPortrait(EventCommand):
     nid = "bop_portrait"
@@ -372,7 +376,7 @@ If the *no_block* flag is set, portrait bopping will not pause execution of even
         """
 
     keywords = ['Portrait']
-    flags = ["no_block"]
+    _flags = ["no_block"]
 
 class Expression(EventCommand):
     nid = "expression"
@@ -401,7 +405,7 @@ A style only applies to `speak` commands inside this event.
 
     keywords = ['Nid']
     optional_keywords = ['Speaker', 'TextPosition', 'Width', 'DialogVariant', 'Float']
-    flags = ['low_priority', 'hold', 'no_popup', 'fit']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit']
 
 class Speak(EventCommand):
     nid = "speak"
@@ -438,7 +442,7 @@ Extra flags:
 
     keywords = ['Speaker', 'Text']
     optional_keywords = ['TextPosition', 'Width', 'DialogVariant', 'Nid', 'Float']
-    flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
 class EndHoldSpeak(EventCommand):
     nid = "unhold"
@@ -475,7 +479,7 @@ Extra flags:
         """
 
     keywords = ['Speaker', 'Text']
-    flags = ['no_block']
+    _flags = ['no_block']
 
 class Transition(EventCommand):
     nid = "transition"
@@ -505,7 +509,7 @@ Displayed portraits are also removed unless the *keep_portraits* flag is set.
         """
 
     optional_keywords = ['Panorama']
-    flags = ["keep_portraits"]
+    _flags = ["keep_portraits"]
 
 class DispCursor(EventCommand):
     nid = "disp_cursor"
@@ -534,7 +538,7 @@ Extra flags:
 
     keywords = ["Position"]
     optional_keywords = ['Speed']
-    flags = ["immediate"]
+    _flags = ["immediate"]
 
 
 class CenterCursor(EventCommand):
@@ -548,7 +552,7 @@ Similar to **move_cursor** except that it attempts to center the screen on the n
 
     keywords = ["Position"]
     optional_keywords = ['Speed']
-    flags = ["immediate"]
+    _flags = ["immediate"]
 
 class FlickerCursor(EventCommand):
     nid = 'flicker_cursor'
@@ -561,7 +565,7 @@ Causes the cursor to briefly blink on and off at the indicated *Position*.
         """
 
     keywords = ["Position"]
-    flags = ["immediate"]
+    _flags = ["immediate"]
 
 class GameVar(EventCommand):
     nid = 'game_var'
@@ -683,7 +687,7 @@ they cannot turn time back past the point when this command was executed.
     # How much to offset placed units by
     # Which tilemap to load the unit positions from
     optional_keywords = ["Tilemap", "PositionOffset", "Tilemap"]
-    flags = ["reload"]  # Should place units in previously recorded positions
+    _flags = ["reload"]  # Should place units in previously recorded positions
 
 class LoadUnit(EventCommand):
     nid = 'load_unit'
@@ -783,7 +787,7 @@ The *no_follow* flag prevents the camera from tracking the unit as it moves.
 
     keywords = ["Unit"]
     optional_keywords = ["Position", "MovementType", "Placement"]
-    flags = ['no_block', 'no_follow']
+    _flags = ['no_block', 'no_follow']
 
 class RemoveUnit(EventCommand):
     nid = 'remove_unit'
@@ -810,7 +814,7 @@ The *immediate* flag causes this to occur instantly without the normal map death
         """
 
     keywords = ["Unit"]
-    flags = ['immediate']
+    _flags = ['immediate']
 
 class RemoveAllUnits(EventCommand):
     nid = 'remove_all_units'
@@ -847,7 +851,7 @@ The *force_animation* flag tells the engine to ignore the player's settings and 
 
     keywords = ["Unit", "Position"]
     optional_keywords = ["CombatScript", "Ability", "PositiveInteger"]
-    flags = ["arena", "force_animation"]
+    _flags = ["arena", "force_animation"]
 
 class SetName(EventCommand):
     nid = 'set_name'
@@ -907,7 +911,7 @@ Please try to avoid using `increment_mode` with non-numerical fields. That would
     """
     keyword_names = ['unit_nid', 'key', 'value']
     keywords = ['Unit', 'String', 'String']
-    flags = ['increment_mode']
+    _flags = ['increment_mode']
 
 class Resurrect(EventCommand):
     nid = 'resurrect'
@@ -953,6 +957,23 @@ Sets the unit's state as having already traded this turn. The unit can still att
 
     keywords = ['Unit']
 
+class RecruitGeneric(EventCommand):
+    nid = 'recruit_generic'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+"""
+Convert a generic into a permanent party member.
+
+You will have to rename this generic with a unique NID and a name.
+
+Be extremely careful with this function. The new NID *must* be unique across every level.
+
+Otherwise extremely undefined behavior can occur.
+"""
+
+    keywords = ['Nid', 'Nid', 'String']
+
 class AddGroup(EventCommand):
     nid = 'add_group'
     tag = Tags.UNIT_GROUPS
@@ -968,7 +989,7 @@ If the *create* flag is set, a copy of each unit will be created and deployed in
 
     keywords = ["Group"]
     optional_keywords = ["StartingGroup", "EntryType", "Placement"]
-    flags = ["create"]
+    _flags = ["create"]
 
 class SpawnGroup(EventCommand):
     nid = 'spawn_group'
@@ -985,7 +1006,7 @@ If the *create* flag is set, a copy of each unit will be created and deployed in
 
     keywords = ["Group", "CardinalDirection", "StartingGroup"]
     optional_keywords = ["EntryType", "Placement"]
-    flags = ["create", "no_block", 'no_follow']
+    _flags = ["create", "no_block", 'no_follow']
 
 class MoveGroup(EventCommand):
     nid = 'move_group'
@@ -1003,7 +1024,7 @@ If the *no_block* flag is set, the script will continue to execute while the uni
 
     keywords = ["Group", "StartingGroup"]
     optional_keywords = ["MovementType", "Placement"]
-    flags = ['no_block', 'no_follow']
+    _flags = ['no_block', 'no_follow']
 
 class RemoveGroup(EventCommand):
     nid = 'remove_group'
@@ -1031,7 +1052,7 @@ The *droppable* flag determines whether the item is set as a "droppable" item (g
         """
 
     keywords = ["GlobalUnit", "Item"]
-    flags = ['no_banner', 'no_choice', 'droppable']
+    _flags = ['no_banner', 'no_choice', 'droppable']
 
 class RemoveItem(EventCommand):
     nid = 'remove_item'
@@ -1044,7 +1065,7 @@ If the *no_banner* flag is set, there will not be a banner announcing that "X un
         """
 
     keywords = ["GlobalUnit", "Item"]
-    flags = ['no_banner']
+    _flags = ['no_banner']
 
 class ChangeItemName(EventCommand):
     nid = 'change_item_name'
@@ -1105,7 +1126,7 @@ If the *no_banner* flag is set, there will not be a banner announcing that the p
 
     keywords = ["Integer"]
     optional_keywords = ["Party"]
-    flags = ['no_banner']
+    _flags = ['no_banner']
 
 class GiveBexp(EventCommand):
     nid = 'give_bexp'
@@ -1122,7 +1143,7 @@ If the *no_banner* flag is set, the player will not be informed that the bonus e
 
     keywords = ["Condition"]
     optional_keywords = ["Party", "Text"]
-    flags = ['no_banner']
+    _flags = ['no_banner']
 
 class GiveExp(EventCommand):
     nid = 'give_exp'
@@ -1156,7 +1177,7 @@ Gives a *PositiveInteger* amount of weapon experience in *WeaponType* to *Global
         """
 
     keywords = ["GlobalUnit", "WeaponType", "Integer"]
-    flags = ['no_banner']
+    _flags = ['no_banner']
 
 class GiveSkill(EventCommand):
     nid = 'give_skill'
@@ -1168,7 +1189,7 @@ class GiveSkill(EventCommand):
         """
 
     keywords = ["GlobalUnit", "Skill"]
-    flags = ['no_banner']
+    _flags = ['no_banner']
 
 class RemoveSkill(EventCommand):
     nid = 'remove_skill'
@@ -1180,7 +1201,7 @@ class RemoveSkill(EventCommand):
         """
 
     keywords = ["GlobalUnit", "Skill"]
-    flags = ['no_banner']
+    _flags = ['no_banner']
 
 class ChangeAI(EventCommand):
     nid = 'change_ai'
@@ -1236,7 +1257,7 @@ Changes the stats (STR, SKL, etc.) of *GlobalUnit*. The *StatList* defines the c
         """
 
     keywords = ["GlobalUnit", "StatList"]
-    flags = ['immediate']
+    _flags = ['immediate']
 
 class SetStats(EventCommand):
     nid = 'set_stats'
@@ -1248,7 +1269,7 @@ Sets the stats (STR, SKL, etc.) of *GlobalUnit* to specific values defined in *S
         """
 
     keywords = ["GlobalUnit", "StatList"]
-    flags = ['immediate']
+    _flags = ['immediate']
 
 class ChangeGrowths(EventCommand):
     nid = 'change_growths'
@@ -1286,7 +1307,7 @@ If the *hidden* flag is set, the unit still gains the effects of the indicated l
     # Second argument is level that is eval'd
     keywords = ["GlobalUnit", "Condition"]
     # Whether to actually change the unit's level
-    flags = ["hidden"]
+    _flags = ["hidden"]
 
 class SetModeAutolevels(EventCommand):
     nid = 'set_mode_autolevels'
@@ -1299,7 +1320,7 @@ Changes the number of additional levels that enemy units gain from the difficult
 
     keywords = ["Condition"]
     # Whether to actually change the unit's level
-    flags = ["hidden"]
+    _flags = ["hidden"]
 
 class Promote(EventCommand):
     nid = 'promote'
@@ -1325,7 +1346,7 @@ If the *silent* flag is given, the unit will change class immediately into the s
 
     keywords = ["GlobalUnit"]
     optional_keywords = ["Klass"]
-    flags = ["silent"]
+    _flags = ["silent"]
 
 class AddTag(EventCommand):
     nid = 'add_tag'
@@ -1480,12 +1501,14 @@ class AddRegion(EventCommand):
         """
 Adds a new region to the map that can be referenced by events. *Nid* will be the new regions identifier. *Position* is the map coordinate desired for the upper-left corner of the new region. *Size* is the dimensions of the new region. *RegionType* defines the type of region that is created (status region, etc.).
 
-The optional *String* keyword can be used to specify the sub-region type. When set, the *only_once* flag prevents multiples of the same region from being created.
+The optional *String* keyword can be used to specify the sub-region type.
+
+When set, the *only_once* flag prevents multiples of the same region from being created. The *interrupt_move* flag halts a unit's movement once they move into the region.
         """
 
     keywords = ["Nid", "Position", "Size", "RegionType"]
     optional_keywords = ["String"]
-    flags = ["only_once"]
+    _flags = ["only_once", "interrupt_move"]
 
 class RegionCondition(EventCommand):
     nid = 'region_condition'
@@ -1608,7 +1631,7 @@ class MapAnim(EventCommand):
             ' *Float*, which increases the length of time it takes to play the animation (larger is slower)')
     keywords = ["MapAnim", "FloatPosition"]
     optional_keywords = ["Float"]
-    flags = ["no_block", "permanent", "blend"]
+    _flags = ["no_block", "permanent", "blend"]
 
 class RemoveMapAnim(EventCommand):
     nid = 'remove_map_anim'
@@ -1683,7 +1706,7 @@ Flags:
     keywords = ["Panorama"]
     optional_keywords = ["Music", "StringList", "StringList", "StringList"]
     keyword_names = ['Background', 'BGM', 'OtherOptions', 'OtherOptionsSelectable', 'OtherOptionsOnSelect']
-    flags = ["show_map"]
+    _flags = ["show_map"]
 
 class Shop(EventCommand):
     nid = 'shop'
@@ -1759,7 +1782,7 @@ via hitting the back button, and the event will go on as normal.
     keywords = ['Nid', 'Text', 'String']
     optional_keywords = ['Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
     keyword_names = ['NID', 'Title', 'Choices', 'RowWidth', 'Orientation', 'Alignment', 'BG', 'EventName', 'Type', 'Dimensions', 'TextAlign']
-    flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar']
+    _flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar']
 
 class NoChoice(EventCommand):
     nid = 'unchoice'
@@ -1808,7 +1831,7 @@ expression would automatically update the gold.
     keywords = ['Nid', 'String']
     optional_keywords = ['Text', 'Size', 'Width', 'Align', 'Sprite', 'TableEntryType', 'HAlign']
     keyword_names = ['NID', 'TableData', 'Title', 'Dimensions', 'RowWidth', 'Alignment', 'BG', 'Type', 'TextAlign']
-    flags = ['expression', 'no_bg']
+    _flags = ['expression', 'no_bg']
 
 class TextEntry(EventCommand):
     nid = 'text_entry'
@@ -1829,7 +1852,7 @@ If the force_entry flag is set, the player will not be able to exit text entry b
 
     keywords = ['Nid', 'Text']
     optional_keywords = ['Integer', 'IllegalCharacterList']
-    flags = ['force_entry']
+    _flags = ['force_entry']
 
 
 class RemoveTable(EventCommand):
@@ -1967,7 +1990,7 @@ Display a line of credits. The first *Text* specifies the credit type ("Director
         """
 
     keywords = ["Text", "Text"]
-    flags = ['wait', 'center', 'no_split']
+    _flags = ['wait', 'center', 'no_split']
 
 class Ending(EventCommand):
     nid = 'ending'
@@ -2134,7 +2157,7 @@ class OverworldSetPosition(EventCommand):
     desc = "Sets the position of a specific party in the overworld to a specific coordinate or node in the overworld"
 
     keywords = ['OverworldEntity', 'OverworldLocation']
-    flags = ['no_animate']
+    _flags = ['no_animate']
 
 class OverworldMoveUnit(EventCommand):
     nid = 'overworld_move_unit'
@@ -2147,7 +2170,7 @@ class OverworldMoveUnit(EventCommand):
 
     keywords = ["OverworldEntity"]
     optional_keywords = ['OverworldLocation', 'Float', 'PointList']
-    flags = ['no_block', 'no_follow', 'disable_after', 'no_sound']
+    _flags = ['no_block', 'no_follow', 'disable_after', 'no_sound']
 
 class OverworldRevealNode(EventCommand):
     nid = 'reveal_overworld_node'
@@ -2176,7 +2199,7 @@ class CreateOverworldEntity(EventCommand):
 
     keywords = ['Nid']
     optional_keywords = ['Unit']
-    flags = ['delete']
+    _flags = ['delete']
 
 class DisableOverworldEntity(EventCommand):
     nid = 'disable_overworld_entity'
@@ -2184,7 +2207,7 @@ class DisableOverworldEntity(EventCommand):
     desc = ('remove an overworld entity from the map, with or without animation')
 
     keywords = ['Nid']
-    flags = ['no_animate']
+    _flags = ['no_animate']
 
 class ToggleNarrationMode(EventCommand):
     nid = 'toggle_narration_mode'
@@ -2277,7 +2300,7 @@ def parse_text(text: str, strict=False) -> EventCommand:
     else:
         return Comment([text])
 
-def parse(command: EventCommand, _eval_evals: Callable[[str], str] = None, _eval_vars: Callable[[str], str] = None):
+def parse(command: EventCommand, _eval_evals: Callable[[str], str] = None):
     values = command.values
     num_keywords = len(command.keywords)
     true_values = values[:num_keywords]
@@ -2286,11 +2309,9 @@ def parse(command: EventCommand, _eval_evals: Callable[[str], str] = None, _eval
     true_values += optional_keywords
     if _eval_evals:
         true_values = [_eval_evals(value) for value in true_values]
-    if _eval_vars:
-        true_values = [_eval_vars(value) for value in true_values]
     return true_values, flags
 
-def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = None, _eval_vars: Callable[[str], str] = None):
+def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = None):
     from app.events.event_validators import convert
     values = command.values
     num_keywords = len(command.keywords)
@@ -2309,7 +2330,4 @@ def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = Non
         kwd_idx += 1
     if _eval_evals:
         true_values = [_eval_evals(value) if isinstance(value, str) else value for value in true_values]
-    if _eval_vars:
-        true_values = [_eval_vars(value) if isinstance(value, str) else value for value in true_values]
-
     return true_values, flags

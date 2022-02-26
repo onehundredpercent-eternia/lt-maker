@@ -166,7 +166,7 @@ def auto_level(unit, num_levels, starting_level=1, difficulty_growths=False):
     unit.set_hp(1000)  # Go back to full hp
     unit.set_mana(1000)  # Go back to full mana
 
-def apply_stat_changes(unit, stat_changes: dict):
+def apply_stat_changes(unit, stat_changes: dict, increase_current_stats: bool = True):
     """
     Assumes stat changes are valid!
     """
@@ -179,11 +179,12 @@ def apply_stat_changes(unit, stat_changes: dict):
 
     current_max_hp = unit.get_max_hp()
     current_max_mana = unit.get_max_mana()
-
-    if current_max_hp > old_max_hp:
-        unit.set_hp(current_max_hp - old_max_hp + unit.get_hp())
-    if current_max_mana > old_max_mana:
-        unit.set_mana(current_max_mana - old_max_mana + unit.get_mana())
+    
+    if increase_current_stats:
+        if current_max_hp > old_max_hp:
+            unit.set_hp(current_max_hp - old_max_hp + unit.get_hp())
+        if current_max_mana > old_max_mana:
+            unit.set_mana(current_max_mana - old_max_mana + unit.get_mana())
 
 def apply_growth_changes(unit, growth_changes: dict):
     for nid, value in growth_changes.items():

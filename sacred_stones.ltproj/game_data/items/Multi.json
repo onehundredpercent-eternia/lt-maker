@@ -1,0 +1,26 @@
+[
+    {
+        "nid": "Multi",
+        "name": "Multi",
+        "desc": "",
+        "icon_nid": "Light",
+        "icon_index": [
+            0,
+            4
+        ],
+        "components": [
+            [
+                "value",
+                8000
+            ],
+            [
+                "multi_item",
+                [
+                    "Lightning",
+                    "Shine",
+                    "Divine"
+                ]
+            ]
+        ]
+    }
+]

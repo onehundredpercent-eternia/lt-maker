@@ -123,6 +123,14 @@ class ManaCost(ItemComponent):
     def available(self, unit, item) -> bool:
         return unit.get_mana() >= self.value
 
+    def is_broken(self, unit, item) -> bool:
+        return unit.get_mana() < self.value
+
+    def on_broken(self, unit, item) -> bool:
+        if unit.equipped_weapon is item:
+            action.do(action.UnequipItem(unit, item))
+        return False
+
     def start_combat(self, playback, unit, item, target, mode):
         action.do(action.ChangeMana(unit, -self.value))
 
@@ -195,7 +203,7 @@ class Cooldown(ItemComponent):
 
     def on_upkeep(self, actions, playback, unit, item):
         if item.data['cooldown'] > 0:
-            # Doesn't use actions list in order to prevent 
+            # Doesn't use actions list in order to prevent
             # requiring the status phase to show health bar
             action.do(action.SetObjData(item, 'cooldown', item.data['cooldown'] - 1))
 
@@ -249,4 +257,15 @@ class Locked(ItemComponent):
     tag = 'uses'
 
     def locked(self, unit, item) -> bool:
+        return True
+
+    def unstealable(self, unit, item) -> bool:
+        return True
+
+class Unstealable(ItemComponent):
+    nid = 'unstealable'
+    desc = 'Item cannot be stolen'
+    tag = 'uses'
+
+    def unstealable(self, unit, item) -> bool:
         return True

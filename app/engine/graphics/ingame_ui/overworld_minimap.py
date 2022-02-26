@@ -89,7 +89,6 @@ class OverworldMinimap(uif.UIComponent):
             return (int(true_minimap_pos[0]), int(true_minimap_pos[1]))
         return (0, 0)
 
-
     def get_entity_positions(self) -> List[Tuple[bool, Point]]:
         entity_positions = []
         if self.overworld:

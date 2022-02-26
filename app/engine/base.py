@@ -180,7 +180,7 @@ class BaseMarketSelectState(prep.PrepManageState):
     def create_quick_disp(self):
         sprite = SPRITES.get('buttons')
         buttons = [sprite.subsurface(0, 66, 14, 13)]
-        font = FONT['text-white']
+        font = FONT['text']
         commands = ['Market']
         commands = [text_funcs.translate(c) for c in commands]
         size = (49 + max(font.width(c) for c in commands), 24)
@@ -440,7 +440,7 @@ class SupportDisplay():
 
                 map_sprites.append(image)
                 # Blit name
-                FONT['text-white'].blit(name, bg_surf, (25, idx * 16 + 20))
+                FONT['text'].blit(name, bg_surf, (25, idx * 16 + 20))
                 # Blit affinity
                 if affinity:
                     icons.draw_item(bg_surf, affinity, (72, idx * 16 + 19))
@@ -456,7 +456,7 @@ class SupportDisplay():
                         if rank in pair.locked_ranks:
                             fnt = FONT['text-green']
                         elif rank in pair.unlocked_ranks:
-                            fnt = FONT['text-white']
+                            fnt = FONT['text']
                         else:
                             fnt = FONT['text-grey']
                         fnt.blit(rank, bg_surf, (90 + ridx * 10, idx * 16 + 20))
@@ -700,7 +700,7 @@ class LoreDisplay():
             dialog = LoreDialog(text[idx])
             dialog.position = self.topleft[0], self.topleft[1] + 12
             dialog.text_width = WINWIDTH - 100
-            dialog.font = FONT['text-white']
+            dialog.font = FONT['text']
             dialog.font_type = 'text'
             dialog.font_color = 'white'
             self.dialogs.append(dialog)
@@ -1088,7 +1088,7 @@ class BaseBEXPSelectState(prep.PrepManageState):
     def create_quick_disp(self):
         sprite = SPRITES.get('buttons')
         buttons = [sprite.subsurface(0, 66, 14, 13)]
-        font = FONT['text-white']
+        font = FONT['text']
         commands = ['Manage']
         commands = [text_funcs.translate(c) for c in commands]
         size = (49 + max(font.width(c) for c in commands), 24)
@@ -1152,7 +1152,7 @@ class BaseBEXPAllocateState(State):
                         SPRITES.get('buttons').subsurface(1, 4, 13, 12),
                         SPRITES.get('buttons').subsurface(1, 50, 12, 13),
                         SPRITES.get('buttons').subsurface(1, 34, 12, 13)]
-        self.font = FONT['text-white']
+        self.font = FONT['text']
         self.commands = ['+1 EXP', '-1 EXP', 'To Next Level', 'Reset']
         pos = (
             33 + self.font.size(self.commands[2])[0] + 4, self.font.size(self.commands[2])[1] * len(self.commands) + 8)

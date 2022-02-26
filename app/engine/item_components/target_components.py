@@ -122,6 +122,16 @@ class EvalTargetRestrict(ItemComponent):
             return True
         return False
 
+    def simple_target_restrict(self, unit, item):
+        from app.engine import evaluate
+        try:
+            if evaluate.evaluate(self.value, unit):
+                return True
+        except Exception as e:
+            print("Could not evaluate %s (%s)" % (self.value, e))
+            return True
+        return False
+
 class EmptyTileTargetRestrict(ItemComponent):
     nid = 'empty_tile_target_restrict'
     desc = "Item will only target tiles without units on them"
@@ -163,8 +173,11 @@ class MaximumEquationRange(ItemComponent):
 
     def maximum_range(self, unit, item) -> int:
         from app.engine import equations
-        value = equations.parser.get(self.value, unit)
-        return int(value)
+        if unit:
+            value = equations.parser.get(self.value, unit)
+            return int(value)
+        else:
+            return -1
 
 class GlobalRange(ItemComponent):
     nid = 'global_range'

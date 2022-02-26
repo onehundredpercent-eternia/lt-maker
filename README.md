@@ -4,8 +4,8 @@
 ![AOE](/utilities/readme/aoe.gif)
 ![ActivatedSkill](/utilities/readme/activated_skill.gif)
 ![Turnwheel](/utilities/readme/turnwheel.gif)
-![Conversation](/utilities/readme/conversation.png) 
-![EnemyRange](/utilities/readme/enemy_range.png) 
+![Conversation](/utilities/readme/conversation.png)
+![EnemyRange](/utilities/readme/enemy_range.png)
 ![MultiPromotion](/utilities/readme/multi_promotion.png)
 ![Aura](/utilities/readme/aura.png)
 ![Base](/utilities/readme/base.png)
@@ -24,14 +24,14 @@ Visit the Discord server for more information and help: https://discord.gg/dC6VW
 
 # Installation
 
-## Executable Version 
+## Executable Version
 > Recommended for beginners and those without programming experience
 
 > **LT-maker** can be run directly as an executable on Windows. Download it here:   https://www.dropbox.com/s/q8ii1e4rd3e97et/lt_editor.zip?dl=1
 . Unzip the downloaded files, and then double-click *double_click_to_run.bat* to begin creating your own game.
 
 ## Python Version
-If you have Python programming experience and want to make direct changes to the code itself, you can download the Python version of the engine and start tinkering today. The code is entirely open-source and can be changed to meet your needs. Follow these instructions to get the python version up and running: https://gitlab.com/rainlash/lt-maker/-/wikis/Python-Installation
+If you have Python programming experience and want to make direct changes to the code itself, you can download the Python version of the engine and start tinkering today. The code is entirely open-source and can be changed to meet your needs. Follow these instructions to get the python version up and running: https://lt-maker.readthedocs.io/en/latest/source/getting_started/Python-Installation.html
 
 ## Features
 

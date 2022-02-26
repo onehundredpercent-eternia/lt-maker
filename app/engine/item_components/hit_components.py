@@ -16,16 +16,22 @@ class PermanentStatChange(ItemComponent):
 
     expose = (Type.Dict, Type.Stat)
 
-    def target_restrict(self, unit, item, def_pos, splash) -> bool:
-        # Ignore's splash
-        defender = game.board.get_unit(def_pos)
-        if not defender:
-            return False
+    def _target_restrict(self, defender):
         klass = DB.classes.get(defender.klass)
         for stat, inc in self.value:
             if inc <= 0 or defender.stats[stat] < klass.max_stats.get(stat, 30):
                 return True
         return False
+
+    def target_restrict(self, unit, item, def_pos, splash) -> bool:
+        # Ignore's splash
+        defender = game.board.get_unit(def_pos)
+        if not defender:
+            return False
+        return self._target_restrict(defender)
+        
+    def simple_target_restrict(self, unit, item):
+        return self._target_restrict(unit)
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         stat_changes = {k: v for (k, v) in self.value}
@@ -87,6 +93,19 @@ class FatigueOnHit(ItemComponent):
         actions.append(action.ChangeFatigue(target, self.value))
         playback.append(('hit', unit, item, target))
 
+def ai_status_priority(unit, target, item, move, status_nid) -> float:
+    if target and status_nid not in [skill.nid for skill in target.skills]:
+        accuracy_term = utils.clamp(combat_calcs.compute_hit(unit, target, item, target.get_weapon(), "attack", (0, 0))/100., 0, 1)
+        num_attacks = combat_calcs.outspeed(unit, target, item, target.get_weapon(), "attack", (0, 0))
+        accuracy_term *= num_attacks
+        # Tries to maximize distance from target
+        distance_term = 0.01 * utils.calculate_distance(move, target.position)
+        if skill_system.check_enemy(unit, target):
+            return 0.5 * accuracy_term + distance_term
+        else:
+            return -0.5 * accuracy_term
+    return 0
+
 class StatusOnHit(ItemComponent):
     nid = 'status_on_hit'
     desc = "Item gives status to target when it hits"
@@ -101,17 +120,28 @@ class StatusOnHit(ItemComponent):
 
     def ai_priority(self, unit, item, target, move):
         # Do I add a new status to the target
-        if target and self.value not in [skill.nid for skill in target.skills]:
-            accuracy_term = utils.clamp(combat_calcs.compute_hit(unit, target, item, target.get_weapon(), "attack", (0, 0))/100., 0, 1)
-            num_attacks = combat_calcs.outspeed(unit, target, item, target.get_weapon(), "attack", (0, 0))
-            accuracy_term *= num_attacks
-            # Tries to maximize distance from target
-            distance_term = 0.01 * utils.calculate_distance(move, target.position)
-            if skill_system.check_enemy(unit, target):
-                return 0.5 * accuracy_term + distance_term
-            else:
-                return -0.5 * accuracy_term
-        return 0
+        return ai_status_priority(unit, target, item, move, self.value)
+
+class StatusesOnHit(ItemComponent):
+    nid = 'statuses_on_hit'
+    desc = "Item gives statuses to target when it hits"
+    tag = 'special'
+    author = 'BigMood'
+
+    expose = (Type.List, Type.Skill)  # Nid
+
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        for status_nid in self.value:
+            act = action.AddSkill(target, status_nid, unit)
+            actions.append(act)
+        playback.append(('status_hit', unit, item, target, self.value))
+
+    def ai_priority(self, unit, item, target, move):
+        # Do I add a new status to the target
+        total = 0
+        for status_nid in self.value:
+            total += ai_status_priority(unit, target, item, move, status_nid)
+        return total
 
 class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
     nid = 'status_after_combat_on_hit'
@@ -130,6 +160,10 @@ class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
             act = action.AddSkill(target, self.value, unit)
             action.do(act)
         self._did_hit.clear()
+
+    def ai_priority(self, unit, item, target, move):
+        # Do I add a new status to the target
+        return ai_status_priority(unit, target, item, move, self.value)
 
 class Shove(ItemComponent):
     nid = 'shove'
@@ -363,7 +397,7 @@ class Steal(ItemComponent):
         return True
 
     def item_restrict(self, unit, item, defender, def_item) -> bool:
-        if item_system.locked(defender, def_item):
+        if item_system.unstealable(defender, def_item):
             return False
         if item_funcs.inventory_full(unit, def_item):
             return False
@@ -403,7 +437,7 @@ class GBASteal(Steal, ItemComponent):
     tag = 'special'
 
     def item_restrict(self, unit, item, defender, def_item) -> bool:
-        if item_system.locked(defender, def_item):
+        if item_system.unstealable(defender, def_item):
             return False
         if item_funcs.inventory_full(unit, def_item):
             return False
@@ -421,7 +455,7 @@ class EventOnHit(ItemComponent):
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit, target, item, target_pos)
+            game.events.trigger_specific_event(event_prefab.nid, unit, target, item, unit.position, target_pos)
 
 class EventAfterCombat(ItemComponent):
     nid = 'event_after_combat'
@@ -434,12 +468,13 @@ class EventAfterCombat(ItemComponent):
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         self._did_hit = True
+        self.target_pos = target_pos
 
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_hit and target:
             event_prefab = DB.events.get_from_nid(self.value)
             if event_prefab:
-                game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position)
+                game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=self.target_pos)
         self._did_hit = False
 
 class EventOnUse(ItemComponent):
@@ -452,7 +487,7 @@ class EventOnUse(ItemComponent):
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit=unit, item=item, position=unit.position)
+            game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=target_pos)
 
 class EventAfterUse(ItemComponent):
     nid = 'event_after_use'
@@ -461,7 +496,10 @@ class EventAfterUse(ItemComponent):
 
     expose = Type.Event
 
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        self.target_pos = target_pos
+
     def end_combat(self, playback, unit, item, target, mode):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit=unit, item=item, position=unit.position)
+            game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=self.target_pos)

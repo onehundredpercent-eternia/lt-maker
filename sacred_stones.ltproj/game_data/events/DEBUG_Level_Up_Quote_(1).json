@@ -1,0 +1,52 @@
+[
+    {
+        "name": "Level Up Quote (1)",
+        "trigger": "during_unit_level_up",
+        "level_nid": "DEBUG",
+        "condition": "unit.nid == 'Eirika'",
+        "commands": [
+            [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "LevelUpRight",
+                    "immediate"
+                ],
+                [
+                    "Eirika",
+                    "LevelUpRight",
+                    "FLAG(immediate)"
+                ]
+            ],
+            [
+                "level_var",
+                [
+                    "num_levelups",
+                    "sum(unit2.values())"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "I gained {red}{var:num_levelups}{/red} stats!",
+                    "4,4",
+                    "232"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika",
+                    "immediate"
+                ],
+                [
+                    "Eirika",
+                    "FLAG(immediate)"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

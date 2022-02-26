@@ -1,5 +1,7 @@
+from typing import Dict
 from app.resources.resources import RESOURCES
 from app.engine import bmpfont, image_mods
+from app.utilities.typing import NID
 
 class FontType():
     def __init__(self, name, default):
@@ -63,14 +65,17 @@ chapter.colors['green'] = ((232, 232, 232, 255), (144, 224, 160, 255), (128, 208
 font_types = [text, narrow, small, info, convo, chapter, runes]
 
 # Load in default, uncolored fonts
-FONT = {}
+FONT: Dict[NID, bmpfont.BmpFont] = {}
 for font in RESOURCES.fonts.values():
     title = font.nid.split('-')[0]
     idx_path = font.full_path.replace(font.nid, title).replace('.png', '.idx')
     FONT[font.nid] = bmpfont.BmpFont(font.full_path, idx_path)
+    # new, general font objects
+    FONT[title] = bmpfont.BmpFont(font.full_path, idx_path)
 
 # Convert colors
 for font_type in font_types:
+    FONT[font_type.name].surfaces[font_type.default] = FONT[font_type.name].surfaces['default']
     for color, value in font_type.colors.items():
         if color == font_type.default:
             continue
@@ -78,4 +83,10 @@ for font_type in font_types:
         new_text = font_type.name + '-' + color
         FONT[new_text] = bmpfont.BmpFont(text.png_path, text.idx_path)
         dic = {a: b for a, b in zip(font_type.colors[font_type.default], font_type.colors[color])}
-        FONT[new_text].surface = image_mods.color_convert_alpha(FONT[new_text].surface, dic)
+        color_surf = image_mods.color_convert_alpha(FONT[new_text].surfaces['default'], dic)
+        FONT[new_text].surfaces['default'] = color_surf
+
+        # new: add colors to new, generalized font objects
+        # the above code is left intact for legacy purposes
+        title = font_type.name
+        FONT[title].surfaces[color] = color_surf

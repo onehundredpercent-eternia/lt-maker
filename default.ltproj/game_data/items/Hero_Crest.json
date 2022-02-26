@@ -1,0 +1,50 @@
+[
+    {
+        "nid": "Hero Crest",
+        "name": "Hero Crest",
+        "desc": "Promotes infantry classes.",
+        "icon_nid": "Boosters",
+        "icon_index": [
+            0,
+            9
+        ],
+        "components": [
+            [
+                "usable",
+                null
+            ],
+            [
+                "target_ally",
+                null
+            ],
+            [
+                "uses",
+                1
+            ],
+            [
+                "usable_in_base",
+                null
+            ],
+            [
+                "value",
+                10000
+            ],
+            [
+                "promote",
+                null
+            ],
+            [
+                "eval_target_restrict",
+                "unit.level >= 10"
+            ],
+            [
+                "prf_class",
+                [
+                    "Myrmidon",
+                    "Mercenary",
+                    "Fighter"
+                ]
+            ]
+        ]
+    }
+]

@@ -127,6 +127,11 @@ class UnitSprite():
         self.offset = [0, 0]
         ANIMATION_COUNTERS.attack_movement_counter.reset()
 
+    def get_round_fake_pos(self):
+        if self.fake_position:
+            return int(round(self.fake_position[0])), int(round(self.fake_position[1]))
+        return None
+
     def add_animation(self, animation_nid):
         anim = RESOURCES.animations.get(animation_nid)
         if anim:
@@ -250,7 +255,10 @@ class UnitSprite():
             self.handle_net_position(self.net_position)
         elif self.state == 'combat_counter':
             attacker = game.memory['current_combat'].defender
-            self.net_position = attacker.position[0] - self.unit.position[0], attacker.position[1] - self.unit.position[1]
+            if attacker:
+                self.net_position = attacker.position[0] - self.unit.position[0], attacker.position[1] - self.unit.position[1]
+            else:
+                self.net_position = 0, 0
             self.handle_net_position(self.net_position)
         elif self.state == 'fake_transition_in':
             pos = (self.unit.position[0] + utils.clamp(self.offset[0], -1, 1),
@@ -312,7 +320,7 @@ class UnitSprite():
                 self.image_state = 'down'
         elif self.state == 'moving':
             next_position = game.movement.get_next_position(self.unit.nid)
-            if not next_position:
+            if not next_position or not self.unit.position:
                 self.set_transition('normal')
                 return
             self.net_position = (next_position[0] - self.unit.position[0], next_position[1] - self.unit.position[1])
@@ -460,9 +468,10 @@ class UnitSprite():
                 color = (0, int(diff * .5), 0)  # Tint image green at magnitude depending on diff
                 image = image_mods.change_color(image.convert_alpha(), color)
 
-        for flicker_tint in self.flicker_tint:
+        for idx, flicker_tint in enumerate(self.flicker_tint):
             color, period, width = flicker_tint
-            diff = utils.model_wave(current_time, period, width)
+            offset = idx * period / len(self.flicker_tint)
+            diff = utils.model_wave(current_time + offset, period, width)
             diff = utils.clamp(diff, 0, 1)
             color = tuple([int(c * diff) for c in color])
             image = image_mods.add_tint(image.convert_alpha(), color)

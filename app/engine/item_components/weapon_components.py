@@ -201,3 +201,13 @@ class StatChange(ItemComponent):
 
     def stat_change(self, unit):
         return {stat[0]: stat[1] for stat in self.value}
+
+class CannotDS(ItemComponent):
+    nid = 'exempt_from_dual_strike'
+    desc = 'Disallows the item\'s wielder from having or being a dual strike partner while equipped'
+    tag = 'weapon'
+
+    author = 'KD'
+    
+    def cannot_dual_strike(self, unit, item):
+        return True

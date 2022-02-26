@@ -1,0 +1,22 @@
+[
+    {
+        "nid": "AttackStanceCrit",
+        "name": "AttackStanceCrit",
+        "desc": "guard stance",
+        "icon_nid": "Axe",
+        "icon_index": [
+            0,
+            16
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "pairup_bonus",
+                "Defense +5"
+            ]
+        ]
+    }
+]

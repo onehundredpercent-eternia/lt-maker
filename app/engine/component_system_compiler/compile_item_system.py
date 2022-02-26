@@ -1,10 +1,13 @@
 # HOOK CATALOG
-# All false hooks are exclusive
-false_hooks = ('is_weapon', 'is_spell', 'is_accessory', 'equippable',
-               'can_counter', 'can_be_countered', 'can_double',
-               'can_use', 'can_use_in_base', 'locked', 'allow_same_target',
-               'ignore_weapon_advantage', 'unrepairable', 'targets_items',
-               'menu_after_combat', 'transforms', 'no_attack_after_move', 'no_map_hp_display')
+# false priority hooks default to false
+# and will be false if any single component returns false
+false_priority_hooks = \
+    ('is_weapon', 'is_spell', 'is_accessory', 'equippable',
+     'can_counter', 'can_be_countered', 'can_double',
+     'can_use', 'can_use_in_base', 'locked', 'unstealable', 'allow_same_target',
+     'ignore_weapon_advantage', 'unrepairable', 'unsplashable', 'targets_items',
+     'menu_after_combat', 'transforms', 'no_attack_after_move', 'no_map_hp_display',
+     'cannot_dual_strike', 'can_attack_after_combat', 'simple_target_restrict')
 # All default hooks are exclusive
 formula = ('damage_formula', 'resist_formula', 'accuracy_formula', 'avoid_formula',
            'crit_accuracy_formula', 'crit_avoid_formula', 'attack_speed_formula', 'defense_speed_formula')
@@ -30,7 +33,7 @@ aesthetic_combat_hooks = ('battle_music', 'combat_effect')
 
 status_event_hooks = ('on_upkeep', 'on_endstep')
 
-exclusive_hooks = false_hooks + default_hooks
+exclusive_hooks = false_priority_hooks + default_hooks
 
 def compile_item_system():
     import os
@@ -48,13 +51,17 @@ def compile_item_system():
         compiled_item_system.write(line)
 
     # compile item system
-    for hook in false_hooks:
+    for hook in false_priority_hooks:
         func = """
 def %s(unit, item):
+    all_true = False
     for component in item.components:
         if component.defines('%s'):
-            return component.%s(unit, item)
-    return False""" \
+            if not component.%s(unit, item):
+                return False
+            else:
+                all_true = True
+    return all_true""" \
             % (hook, hook, hook)
         compiled_item_system.write(func)
         compiled_item_system.write('\n')

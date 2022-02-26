@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from app.utilities.data import Prefab
 
-@dataclass 
+@dataclass
 class GenericUnit(Prefab):
     nid: str = None
     variant: str = None
@@ -21,9 +21,17 @@ class GenericUnit(Prefab):
     starting_position: list = None  # 2-tuple
     starting_traveler: list = None  # unit nid
 
-    name: str = None
-    desc: str = None
     generic: bool = True
+
+    @property
+    def name(self):
+        from app.data.database import DB
+        return DB.factions.get(self.faction).name
+
+    @property
+    def desc(self):
+        from app.data.database import DB
+        return DB.factions.get(self.faction).desc
 
     def replace_item_nid(self, old_nid, new_nid):
         for item in self.starting_items:

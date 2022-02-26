@@ -136,5 +136,5 @@ class TextColor(ItemComponent):
 
     def text_color(self, unit, item):
         if self.value not in NORMAL_FONT_COLORS:
-            return 'text-white'
-        return 'text-' + self.value
+            return 'white'
+        return self.value

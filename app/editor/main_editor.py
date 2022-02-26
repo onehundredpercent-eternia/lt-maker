@@ -433,7 +433,6 @@ class MainEditor(QMainWindow):
         if self.project_save_load_handler.new():
             # if we made a new game:
             self.set_window_title('Untitled')
-            self.project_save_load_handler.save(True)
             title = os.path.split(self.settings.get_current_project())[-1]
             self.set_window_title(title)
 
@@ -576,10 +575,10 @@ class MainEditor(QMainWindow):
     def about(self):
         QMessageBox.about(self, "About Lex Talionis Game Maker",
                           "<p>This is the <b>Lex Talionis</b> Game Maker.</p>"
-                          "<p>Check out <a href='https://gitlab.com/rainlash/lex-talionis/wikis/home'>https://gitlab.com/rainlash/lex-talionis/wikis/home</a> "
+                          "<p>Check out <a href='https://lt-maker.readthedocs.io/'>https://lt-maker.readthedocs.io/</a> "
                           "for more information and helpful tutorials.</p>"
                           "<p>This program has been freely distributed under the MIT License.</p>"
-                          "<p>Copyright 2014-2021 rainlash.</p>")
+                          "<p>Copyright 2014-2022 rainlash.</p>")
 
     def check_for_updates(self):
         # Only check for updates in frozen version

@@ -1,7 +1,7 @@
 from app.data.database import DB
 
 from app.utilities import utils
-from app.engine import item_system, skill_system
+from app.engine import item_system, skill_system, text_funcs
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
 
@@ -58,7 +58,7 @@ def sell_price(unit, item):
 #             return False
 #     return True
 
-def create_item(unit, item_nid, droppable=False):
+def create_item(unit, item_nid, droppable=False, parent: ItemObject = None):
     item_prefab = DB.items.get(item_nid)
     if not item_prefab:
         logging.error("Couldn't find %s" % item_nid)
@@ -66,29 +66,23 @@ def create_item(unit, item_nid, droppable=False):
     item = ItemObject.from_prefab(item_prefab)
     if unit:
         item.owner_nid = unit.nid
-    item.droppable = droppable
     item_system.init(item)
-
-    def create_subitem(subitem_nid):
-        subitem_prefab = DB.items.get(subitem_nid)
-        subitem = ItemObject.from_prefab(subitem_prefab)
-        # Make self.item in components always point to parent item
-        for component in subitem.components:
-            component.item = item
-        if unit:
-            subitem.owner_nid = unit.nid
-        item_system.init(subitem)
-        item.subitem_uids.append(subitem.uid)
-        item.subitems.append(subitem)
-        subitem.parent_item = item
+    if parent: # sub item specific operations
+        for component in item.components:
+            component.item = parent
+        parent.subitem_uids.append(item.uid)
+        parent.subitems.append(item)
+        item.parent_item = parent
+    else: # main item specific operations
+        item.droppable = droppable
 
     if item.multi_item:
         for subitem_nid in item.multi_item.value:
-            create_subitem(subitem_nid)
+            create_item(unit, subitem_nid, parent=item)
 
     elif item.sequence_item:
         for subitem_nid in item.sequence_item.value:
-            create_subitem(subitem_nid)
+            create_item(unit, subitem_nid, parent=item)
 
     elif item.memento_staff:
         for subitem_nid in item.memento_staff.value:
@@ -158,6 +152,7 @@ def get_range(unit, item) -> set:
                 max_range = component.maximum_range(unit, item)
                 break
 
+    max_range = max(0, max_range)
     max_range += skill_system.modify_maximum_range(unit, item)
     limit_max = skill_system.limit_maximum_range(unit, item)
     max_range = utils.clamp(max_range, 0, limit_max)
@@ -174,6 +169,8 @@ def get_range_string(unit, item):
         max_range = item_system.maximum_range(None, item)
     if max_range >= 99:
         rng = '%d+' % min_range
+    elif max_range < 0:
+        rng = text_funcs.translate('Varies')
     elif min_range != max_range:
         rng = '%d-%d' % (min_range, max_range)
     else:
@@ -192,10 +189,13 @@ def create_skill(unit, skill_nid):
 
     def create_subskill(subskill_nid):
         subskill_prefab = DB.skills.get(subskill_nid)
+        if not subskill_prefab:
+            logging.error("Couldn't find skill %s" % skill_nid)
+            return None
         subskill = SkillObject.from_prefab(subskill_prefab)
         # Child skills are not owned by their parent skill unit
         # Since they are given to others
-        # if unit:  
+        # if unit:
         #     subskill.owner_nid = unit.nid
         skill_system.init(subskill)
         skill.subskill_uid = subskill.uid

@@ -5,7 +5,7 @@ from app.resources.resources import RESOURCES
 from app.data.database import DB
 
 from app.utilities import utils
-from app.engine import engine, image_mods, icons, unit_funcs, action, banner
+from app.engine import engine, image_mods, icons, unit_funcs, action, banner, skill_system
 from app.engine.sprites import SPRITES
 from app.engine.sound import SOUNDTHREAD
 from app.engine.fonts import FONT
@@ -66,7 +66,7 @@ class ExpState(State):
         self.stat_changes = None
         self.new_wexp = None
 
-        if self.unit.level >= self.unit_klass.max_level and not (self.auto_promote or self.starting_state == 'promote'):
+        if self.unit.level >= self.unit_klass.max_level and not (self.auto_promote or self.starting_state in ('promote', 'class_change')):
             # We're done here
             game.state.back()
             return 'repeat'
@@ -123,14 +123,13 @@ class ExpState(State):
         # Increment exp until done or 100 exp is reached
         elif self.state.get_state() == 'exp0':
             progress = (current_time - self.start_time)/float(self.total_time_for_exp)
+            progress = utils.clamp(progress, 0, 1)
             exp_set = self.old_exp + progress * self.exp_gain
-            exp_set = min(self.old_exp + self.exp_gain, exp_set)
             self.exp_bar.update(exp_set)
             exp_set = int(exp_set)
 
             if self.mana_bar:
                 mana_set = self.old_mana + progress * self.mana_to_gain
-                mana_set = min(self.old_mana + self.mana_to_gain, mana_set)
                 self.mana_bar.update(mana_set)
                 mana_set = int(mana_set)
 
@@ -191,7 +190,7 @@ class ExpState(State):
                 self.stat_changes = unit_funcs.get_next_level_up(self.unit, self.method)
                 action.do(action.GrowthPointChange(self.unit, old_growth_points, self.unit.growth_points))
                 action.do(action.IncLevel(self.unit))
-                action.do(action.ApplyStatChanges(self.unit, self.stat_changes))
+                action.do(action.ApplyStatChanges(self.unit, self.stat_changes, False))
                 action.do(action.UpdateRecords('level_gain', (self.unit.nid, self.unit.level, self.unit.klass)))
                 self.create_level_up_logo()
                 self.state.clear()
@@ -322,7 +321,7 @@ class ExpState(State):
                 else:
                     act = action.AddSkill(unit, class_skill)
                     action.do(act)
-                    if act.skill_obj:
+                    if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
                         game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
                         game.state.change('alert')
 
@@ -339,7 +338,7 @@ class ExpState(State):
                 else:
                     act = action.AddSkill(unit, personal_skill)
                     action.do(act)
-                    if act.skill_obj:
+                    if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
                         game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
                         game.state.change('alert')
 
@@ -380,11 +379,17 @@ class LevelUpScreen():
             return Animation(anim, topleft)
         return None
 
-    def get_position(self, i):
+    def topleft(self):
+        return (6 - self.screen_scroll_offset, WINHEIGHT - 8 - self.height)
+
+    def get_position(self, i, absolute=False):
+        tl_offset = (0, 0)
+        if absolute:
+            tl_offset = self.topleft()
         if i >= 4:
-            position = (self.width//2 + 8, (i - 4) * 16 + 35)
+            position = (self.width//2 + 8 + tl_offset[0], (i - 4) * 16 + 35 + tl_offset[1])
         else:
-            position = (10, i * 16 + 35)
+            position = (10 + tl_offset[0], i * 16 + 35 + tl_offset[1])
         return position
 
     def inc_spark(self):
@@ -449,8 +454,10 @@ class LevelUpScreen():
                 if anim:
                     arrow_animation = Animation(anim, (pos[0] + 45, pos[1] - 11), hold=True)
                     self.arrow_animations.append(arrow_animation)
+
+                offset_pos = self.get_position(self.current_spark, True)
                 # Spark
-                spark_pos = pos[0] + 14, pos[1] + 26
+                spark_pos = offset_pos[0] + 8, offset_pos[1] - 19
                 spark_anim = self.make_spark(spark_pos)
                 if spark_anim:
                     self.animations.append(spark_anim)
@@ -460,7 +467,7 @@ class LevelUpScreen():
                 elif increase < 0:
                     anim = RESOURCES.animations.get('LevelDownNumber' + str(-increase))
                 if anim:
-                    number_animation = Animation(anim, (pos[0] + 43, pos[1] + 49), delay=80, hold=True)
+                    number_animation = Animation(anim, (offset_pos[0] + 37, offset_pos[1] + 4), delay=80, hold=True)
                     self.animations.append(number_animation)
 
                 SOUNDTHREAD.play_sfx('Stat Up')
@@ -488,7 +495,7 @@ class LevelUpScreen():
 
         # Render top
         klass = DB.classes.get(self.unit.klass)
-        FONT['text-white'].blit(klass.name, sprite, (12, 3))
+        FONT['text'].blit(klass.name, sprite, (12, 3))
         FONT['text-yellow'].blit('Lv', sprite, (self.width//2 + 12, 3))
         if self.state in ('scroll_in', 'init_wait'):
             level = str(self.old_level)

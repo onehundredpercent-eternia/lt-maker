@@ -310,11 +310,16 @@ def find_strike_partners(attacker, defender, item):
     attacker_partner = None
     defender_partner = None
     attacker_adj_allies = get_adj_allies(attacker)
-    attacker_adj_allies = [ally for ally in attacker_adj_allies if ally.get_weapon()]
+    attacker_adj_allies = [ally for ally in attacker_adj_allies if ally.get_weapon() and not item_system.cannot_dual_strike(ally, ally.get_weapon())]
     defender_adj_allies = get_adj_allies(defender)
-    defender_adj_allies = [ally for ally in defender_adj_allies if ally.get_weapon()]
+    defender_adj_allies = [ally for ally in defender_adj_allies if ally.get_weapon() and not item_system.cannot_dual_strike(ally, ally.get_weapon())]
     attacker_partner = strike_partner_formula(attacker_adj_allies, attacker, defender, 'attack', (0, 0))
     defender_partner = strike_partner_formula(defender_adj_allies, defender, attacker, 'defense', (0, 0))
+    
+    if item_system.cannot_dual_strike(attacker, item):
+        attacker_partner = None
+    if defender.get_weapon() and item_system.cannot_dual_strike(defender, defender.get_weapon()):
+        defender_partner = None
 
     if attacker_partner is defender_partner:
         # If both attacker and defender have the same partner something is weird
