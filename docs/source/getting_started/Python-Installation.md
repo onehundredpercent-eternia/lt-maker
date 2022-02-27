@@ -45,7 +45,7 @@ Type `git --version` to make sure git responds.
 Then navigate to where you want the engine to live and type
 
 ```
-git clone https://gitlab.com/rainlash/lt-maker.git
+git clone --depth=1 https://gitlab.com/rainlash/lt-maker.git
 ```
 
 This will clone the repository to your machine, where you'll have access to it.

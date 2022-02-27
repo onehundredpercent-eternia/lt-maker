@@ -7,7 +7,6 @@ from app.data.database import DB
 import app.engine.config as cf
 from app.engine import engine, item_funcs, item_system, skill_system, combat_calcs, unit_funcs, target_system
 from app.engine import static_random
-from app.engine.game_state import game
 
 """
 Essentially just a repository that imports a lot of different things so that many different eval calls
@@ -16,9 +15,12 @@ will be accepted
 
 def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
              region=None, mode=None, skill=None, attack_info=None, base_value=None,
-             local_args: Dict = None) -> bool:
+             local_args: Dict = None, game=None) -> bool:
     unit = unit1  # noqa: F841
     target = unit2  # noqa: F841
+
+    if not game:
+        from app.engine.game_state import game
 
     def check_pair(s1: str, s2: str) -> bool:
         """
@@ -56,7 +58,9 @@ def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
         'attack_info': attack_info,
         'base_value': base_value,
         'check_pair': check_pair,
-        'check_default': check_default})
+        'check_default': check_default,
+        'game': game
+    })
     if local_args:
         temp_globals.update(local_args)
     return eval(string, temp_globals)

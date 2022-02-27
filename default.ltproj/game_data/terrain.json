@@ -5,12 +5,11 @@
         "color": [
             192,
             224,
-            48,
-            255
+            48
         ],
         "minimap": "Grass",
         "platform": "Plains",
-        "background": null,
+        "background": "combat_plains",
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -21,12 +20,11 @@
         "color": [
             0,
             0,
-            0,
-            255
+            0
         ],
         "minimap": "Wall",
         "platform": "Wall",
-        "background": null,
+        "background": "BlackBackground",
         "mtype": "Fence",
         "opaque": false,
         "status": null
@@ -37,12 +35,11 @@
         "color": [
             64,
             128,
-            64,
-            255
+            64
         ],
         "minimap": "Forest",
         "platform": "Forest",
-        "background": null,
+        "background": "combat_forest",
         "mtype": "Forest",
         "opaque": false,
         "status": "Forest"
@@ -53,12 +50,11 @@
         "color": [
             0,
             32,
-            0,
-            255
+            0
         ],
         "minimap": "Thicket",
         "platform": "Thicket",
-        "background": null,
+        "background": "combat_swamp",
         "mtype": "Thicket",
         "opaque": false,
         "status": "Peak"
@@ -69,12 +65,11 @@
         "color": [
             170,
             170,
-            127,
-            255
+            127
         ],
         "minimap": "Bridge",
         "platform": "Bridge",
-        "background": null,
+        "background": "combat_riverbed",
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -85,12 +80,11 @@
         "color": [
             84,
             24,
-            84,
-            255
+            84
         ],
         "minimap": "Floor",
         "platform": "Floor",
-        "background": null,
+        "background": "combat_castle3",
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -101,12 +95,11 @@
         "color": [
             84,
             84,
-            84,
-            255
+            84
         ],
         "minimap": "Floor",
         "platform": "Floor",
-        "background": null,
+        "background": "combat_castle2",
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -117,12 +110,11 @@
         "color": [
             240,
             240,
-            128,
-            255
+            128
         ],
         "minimap": "Sand",
         "platform": "Road",
-        "background": null,
+        "background": "combat_plains",
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -133,12 +125,11 @@
         "color": [
             64,
             56,
-            40,
-            255
+            40
         ],
         "minimap": "Pillar",
         "platform": "Pillar",
-        "background": null,
+        "background": "combat_castle4",
         "mtype": "Pillar",
         "opaque": false,
         "status": "Forest"
@@ -149,12 +140,11 @@
         "color": [
             40,
             40,
-            40,
-            255
+            40
         ],
         "minimap": "Wall",
         "platform": "Wall",
-        "background": null,
+        "background": "combat_castle4",
         "mtype": "Wall",
         "opaque": true,
         "status": null
@@ -165,12 +155,11 @@
         "color": [
             64,
             40,
-            40,
-            255
+            40
         ],
         "minimap": "Wall",
         "platform": "Wall",
-        "background": null,
+        "background": "combat_plains",
         "mtype": "Fence",
         "opaque": false,
         "status": null
@@ -181,12 +170,11 @@
         "color": [
             0,
             160,
-            248,
-            255
+            248
         ],
         "minimap": "Sea",
         "platform": "Lake",
-        "background": null,
+        "background": "combat_river",
         "mtype": "Sea",
         "opaque": false,
         "status": "Avoid10"
@@ -197,12 +185,11 @@
         "color": [
             0,
             104,
-            160,
-            255
+            160
         ],
         "minimap": "Sea",
         "platform": "Sea",
-        "background": null,
+        "background": "combat_sea",
         "mtype": "Sea",
         "opaque": false,
         "status": "Avoid10"
@@ -213,12 +200,11 @@
         "color": [
             0,
             160,
-            248,
-            255
+            248
         ],
         "minimap": "River",
         "platform": "River",
-        "background": null,
+        "background": "combat_river",
         "mtype": "River",
         "opaque": false,
         "status": null
@@ -229,12 +215,11 @@
         "color": [
             112,
             84,
-            56,
-            255
+            56
         ],
         "minimap": "Hill",
         "platform": "Hill",
-        "background": null,
+        "background": "combat_hill",
         "mtype": "Hill",
         "opaque": false,
         "status": "Mountain"
@@ -245,12 +230,11 @@
         "color": [
             80,
             48,
-            40,
-            255
+            40
         ],
         "minimap": "Mountain",
         "platform": "Mountain",
-        "background": null,
+        "background": "combat_hill",
         "mtype": "Mountain",
         "opaque": false,
         "status": "Peak"
@@ -261,12 +245,11 @@
         "color": [
             136,
             136,
-            104,
-            255
+            104
         ],
         "minimap": "Cliff",
         "platform": "Cliff",
-        "background": null,
+        "background": "combat_hill",
         "mtype": "Cliff",
         "opaque": false,
         "status": null
@@ -277,12 +260,11 @@
         "color": [
             168,
             104,
-            56,
-            255
+            56
         ],
         "minimap": "Wall",
         "platform": "Deck",
-        "background": null,
+        "background": "combat_sea",
         "mtype": "Fence",
         "opaque": false,
         "status": null
@@ -293,12 +275,11 @@
         "color": [
             168,
             88,
-            80,
-            255
+            80
         ],
         "minimap": "House",
         "platform": "House",
-        "background": null,
+        "background": "combat_village",
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -309,12 +290,11 @@
         "color": [
             168,
             80,
-            168,
-            255
+            168
         ],
         "minimap": "Fort",
         "platform": "Fort",
-        "background": null,
+        "background": "combat_outside_castle",
         "mtype": "Fort",
         "opaque": false,
         "status": "Fort"
@@ -325,12 +305,11 @@
         "color": [
             32,
             96,
-            216,
-            255
+            216
         ],
         "minimap": "Throne",
         "platform": "Gate",
-        "background": null,
+        "background": "combat_outside_castle",
         "mtype": "Throne",
         "opaque": false,
         "status": "Throne"
@@ -341,12 +320,11 @@
         "color": [
             168,
             1,
-            4,
-            255
+            4
         ],
         "minimap": "Shop",
         "platform": "Armory",
-        "background": null,
+        "background": "combat_plains",
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -357,12 +335,11 @@
         "color": [
             160,
             1,
-            4,
-            255
+            4
         ],
         "minimap": "Shop",
         "platform": "Vendor",
-        "background": null,
+        "background": "combat_plains",
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -373,12 +350,11 @@
         "color": [
             152,
             1,
-            4,
-            255
+            4
         ],
         "minimap": "Shop",
         "platform": "Arena",
-        "background": null,
+        "background": "combat_arena",
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -389,12 +365,11 @@
         "color": [
             85,
             0,
-            0,
-            255
+            0
         ],
         "minimap": "House",
         "platform": "Village",
-        "background": null,
+        "background": "combat_village",
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -405,12 +380,11 @@
         "color": [
             255,
             247,
-            0,
-            255
+            0
         ],
         "minimap": "Chest",
         "platform": "Chest",
-        "background": null,
+        "background": "combat_castle3",
         "mtype": "Normal",
         "opaque": false,
         "status": null
@@ -421,12 +395,11 @@
         "color": [
             80,
             0,
-            0,
-            255
+            0
         ],
         "minimap": "Door",
         "platform": "Floor",
-        "background": null,
+        "background": "combat_castle3",
         "mtype": "Wall",
         "opaque": false,
         "status": null
@@ -437,12 +410,11 @@
         "color": [
             150,
             0,
-            77,
-            255
+            77
         ],
         "minimap": "Throne",
         "platform": "Throne",
-        "background": null,
+        "background": "combat_castle3",
         "mtype": "Throne",
         "opaque": false,
         "status": "Throne"
@@ -453,12 +425,11 @@
         "color": [
             32,
             32,
-            32,
-            255
+            32
         ],
         "minimap": "Ruins",
         "platform": "Ruins",
-        "background": null,
+        "background": "combat_ruins",
         "mtype": "Normal",
         "opaque": false,
         "status": "Avoid10"
@@ -469,12 +440,11 @@
         "color": [
             72,
             64,
-            64,
-            255
+            64
         ],
         "minimap": "Ruins",
         "platform": "Ruins",
-        "background": null,
+        "background": "combat_ruins",
         "mtype": "Fort",
         "opaque": false,
         "status": null

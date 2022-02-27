@@ -377,6 +377,19 @@ If the *no_block* flag is set, portrait bopping will not pause execution of even
 
     keywords = ['Portrait']
     _flags = ["no_block"]
+    
+class MirrorPortrait(EventCommand):
+    nid = "mirror"
+    nickname = "mirror"
+    tag = Tags.PORTRAIT
+
+    desc = \
+        """
+The direction of the portrait is flipped across the Y axis.
+        """
+
+    keywords = ['Portrait']
+    _flags = ["no_block"]
 
 class Expression(EventCommand):
     nid = "expression"
@@ -881,10 +894,10 @@ class SetCurrentMana(EventCommand):
 
     desc = \
         """
-Sets *Unit*'s mana to *PositiveInteger*.
+Sets *Unit*'s mana to *PositiveIntegerOrZero*.
         """
 
-    keywords = ["Unit", "PositiveInteger"]
+    keywords = ["Unit", "PositiveIntegerOrZero"]
 
 class AddFatigue(EventCommand):
     nid = 'add_fatigue'
@@ -1162,10 +1175,10 @@ class SetExp(EventCommand):
 
     desc = \
         """
-Sets *GlobalUnit*'s current experience amount to *PositiveInteger*.
+Sets *GlobalUnit*'s current experience amount to *PositiveIntegerOrZero*.
         """
 
-    keywords = ["GlobalUnit", "PositiveInteger"]
+    keywords = ["GlobalUnit", "PositiveIntegerOrZero"]
 
 class GiveWexp(EventCommand):
     nid = 'give_wexp'
@@ -1176,7 +1189,7 @@ class GiveWexp(EventCommand):
 Gives a *PositiveInteger* amount of weapon experience in *WeaponType* to *GlobalUnit*. If the *no_banner* flag is set, the player will not be informed that weapon experience was awarded.
         """
 
-    keywords = ["GlobalUnit", "WeaponType", "Integer"]
+    keywords = ["GlobalUnit", "WeaponType", "PositiveInteger"]
     _flags = ['no_banner']
 
 class GiveSkill(EventCommand):
@@ -1844,14 +1857,14 @@ Presents the player with a menu in which they can enter text. An example use-cas
 *Nid* is the name of this entry, which can be checked later to recall the player's input.
 For instance, if nid was "tactician", use `{var:tactician}` anywhere in events to replace it with the user's entry.
 *Text* is the text describing the choice, such as "Please enter a name."
-*Integer* is the character limit. If not set, defaults to 16.
+*PositiveInteger* is the character limit. If not set, defaults to 16.
 *StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
 
 If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
         """
 
     keywords = ['Nid', 'Text']
-    optional_keywords = ['Integer', 'IllegalCharacterList']
+    optional_keywords = ['PositiveInteger', 'IllegalCharacterList']
     _flags = ['force_entry']
 
 

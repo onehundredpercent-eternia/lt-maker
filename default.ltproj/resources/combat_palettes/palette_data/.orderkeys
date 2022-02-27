@@ -229,5 +229,8 @@
     "PromoDustDown_Image": 227,
     "PromoYellowReticule_Image": 228,
     "PromoBoltFast_Image": 229,
-    "PromoWhiteOrb_Image": 230
+    "PromoWhiteOrb_Image": 230,
+    "DragonMyrrh": 231,
+    "ManaketeMyrrh": 232,
+    "TransformMyrrh": 233
 }

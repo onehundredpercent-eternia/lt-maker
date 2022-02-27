@@ -642,6 +642,10 @@ class Event():
 
         elif command.nid == 'move_portrait':
             self.move_portrait(command)
+            
+        elif command.nid == 'mirror':
+            values, flags = event_commands.convert_parse(command, self._evaluate_all)
+            self.mirror(*values, flags)
 
         elif command.nid == 'bop_portrait':
             values, flags = event_commands.parse(command, self._evaluate_all)
@@ -1276,7 +1280,7 @@ class Event():
         elif command.nid == 'remove_map_anim':
             values, flags = event_commands.parse(command, self._evaluate_all)
             nid = values[0]
-            pos = self.parse_pos(values[1])
+            pos = self.parse_pos(values[1], True)
             action.do(action.RemoveMapAnim(nid, pos))
 
         elif command.nid == 'merge_parties':
@@ -1711,6 +1715,19 @@ class Event():
             pass
         else:
             self.wait_time = engine.get_time() + portrait.travel_time + 66
+            self.state = 'waiting'
+            
+    def mirror(self, name, flags):
+        portrait = self.portraits.get(name)
+        if not portrait or name not in self.portraits:
+            return False
+
+        self.portraits[name] = EventPortrait(self.portraits[name].portrait, self.portraits[name].position, self.portraits[name].priority, False, None, not self.portraits[name].mirror)
+
+        if 'no_block' in flags or self.do_skip:
+            pass
+        else:
+            self.wait_time = engine.get_time() + portrait.transition_speed + 33
             self.state = 'waiting'
 
     def _object_to_str(self, obj) -> str:

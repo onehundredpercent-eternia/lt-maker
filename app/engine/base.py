@@ -1177,7 +1177,7 @@ class BaseBEXPAllocateState(State):
 
     def determine_needed_bexp(self, level):
         self.bexp_needed = 50 * level + 50
-        self.exp_increment = int(self.bexp_needed / 100)
+        self.exp_increment = max(int(self.bexp_needed / 100), 1)  # always at least one bonus exp required to be spent
 
     # Player input is handled here
     def take_input(self, event):

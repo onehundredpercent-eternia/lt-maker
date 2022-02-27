@@ -162,6 +162,14 @@ class PositiveInteger(Validator):
             return int(text)
         return None
 
+class PositiveIntegerOrZero(Validator):
+    desc = "must be a whole number"
+
+    def validate(self, text, level):
+        if str_utils.is_int(text) and int(text) >= 0:
+            return int(text)
+        return None
+
 class String(Validator):
     """
     Any string will do
