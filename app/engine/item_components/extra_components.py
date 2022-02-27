@@ -196,6 +196,23 @@ class StatusOnEquip(ItemComponent):
     def on_unequip_item(self, unit, item):
         action.do(action.RemoveSkill(unit, self.value))
 
+class MultiStatusOnEquip(ItemComponent):
+    nid = 'multi_status_on_equip'
+    desc = "Item gives these statuses while equipped"
+    tag = 'extra'
+
+    expose = (Type.List, Type.Skill)  # Nid
+
+    def on_equip_item(self, unit, item):
+        for skl in self.value:
+            if skl not in [skill.nid for skill in unit.skills]:
+                act = action.AddSkill(unit, skl)
+                action.do(act)
+
+    def on_unequip_item(self, unit, item):
+        for skl in self.value:
+            action.do(action.RemoveSkill(unit, skl))
+
 class StatusOnHold(ItemComponent):
     nid = 'status_on_hold'
     desc = "Item gives status while in unit's inventory"

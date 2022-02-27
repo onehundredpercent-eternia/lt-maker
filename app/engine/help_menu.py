@@ -109,7 +109,7 @@ class HelpDialog():
 
         help_surf = engine.copy_surface(self.help_surf)
         if self.name:
-            self.font.blit(self.name, help_surf, (8, 8))
+            self.font.blit(self.name, help_surf, (8, 8), 'white')
 
         if cf.SETTINGS['text_speed'] > 0:
             num_characters = int(2 * (time - self.start_time) / float(cf.SETTINGS['text_speed']))
@@ -117,7 +117,8 @@ class HelpDialog():
             num_characters = 1000
         for idx, line in enumerate(self.lines):
             if num_characters > 0:
-                self.font.blit(line[:num_characters], help_surf, (8, self.font.height * idx + 8 + (16 if self.name else 0)))
+                pos = (8, self.font.height * idx + 8 + (16 if self.name else 0))
+                self.font.blit(line[:num_characters], help_surf, pos, 'white')
                 num_characters -= len(line)
 
         if right:
@@ -139,8 +140,8 @@ class HelpDialog():
         return total_lines
 
 class StatDialog(HelpDialog):
-    font_green = FONT['text-green']
-    font_red = FONT['text-red']
+    text_font = FONT['text']
+    runic_font = FONT['runes']
 
     def __init__(self, desc, bonuses):
         self.last_time = self.start_time = 0
@@ -172,7 +173,7 @@ class StatDialog(HelpDialog):
 
         for idx, line in enumerate(self.lines):
             if num_characters > 0:
-                self.font.blit(line[:num_characters], help_surf, (8, self.font.height * idx + 6))
+                self.font.blit(line[:num_characters], help_surf, (8, self.font.height * idx + 6), 'white')
                 num_characters -= len(line)
 
         y_height = len(self.lines) * 16
@@ -181,14 +182,18 @@ class StatDialog(HelpDialog):
             if num_characters > 0:
                 top = self.font.height * idx + 6 + y_height
                 if idx == 0:
-                    self.font.blit(str(val), help_surf, (8, top))
+                    self.text_font.blit(str(val), help_surf, (8, top), 'white')
                 elif val > 0:
-                    self.font_green.blit("+" + str(val), help_surf, (8, top))
+                    self.text_font.blit("+" + str(val), help_surf, (8, top), 'green')
                 elif val < 0:
-                    self.font_red.blit(str(val), help_surf, (8, top))
+                    self.text_font.blit(str(val), help_surf, (8, top), 'red')
                 else:
-                    self.font.blit(str(val), help_surf, (8, top))
-                self.font.blit(bonus[:num_characters], help_surf, (32, top))
+                    self.text_font.blit(str(val), help_surf, (8, top), 'white')
+                if bonus.isupper():
+                    current_font = self.runic_font
+                else:
+                    current_font = self.font
+                current_font.blit(bonus[:num_characters], help_surf, (32, top), 'white')
                 num_characters -= len(bonus)
 
         if right:
@@ -199,8 +204,7 @@ class StatDialog(HelpDialog):
 
 
 class ItemHelpDialog(HelpDialog):
-    font_blue = FONT['text-blue']
-    font_yellow = FONT['text-yellow']
+    text_font = FONT['text']
 
     def __init__(self, item):
         self.last_time = self.start_time = 0
@@ -255,7 +259,7 @@ class ItemHelpDialog(HelpDialog):
         weapon_type = item_system.weapon_type(self.unit, self.item)
         if weapon_type:
             icons.draw_weapon(help_surf, weapon_type, (8, 6))
-        self.font_blue.blit_right(str(self.vals[0]), help_surf, (50, 6))
+        self.text_font.blit_right(str(self.vals[0]), help_surf, (50, 6), 'blue')
 
         name_positions = [(56, 6), (106, 6), (8, 22), (56, 22), (106, 22)]
         name_positions.reverse()
@@ -265,9 +269,9 @@ class ItemHelpDialog(HelpDialog):
         for v, n in zip(self.vals[1:], names):
             if v is not None:
                 name_pos = name_positions.pop()
-                self.font_yellow.blit(n, help_surf, name_pos)
+                self.text_font.blit(n, help_surf, name_pos, 'yellow')
                 val_pos = val_positions.pop()
-                self.font_blue.blit_right(str(v), help_surf, val_pos)
+                self.text_font.blit_right(str(v), help_surf, val_pos, 'blue')
 
         if cf.SETTINGS['text_speed'] > 0:
             num_characters = int(2 * (time - self.start_time) / float(cf.SETTINGS['text_speed']))
@@ -277,7 +281,7 @@ class ItemHelpDialog(HelpDialog):
         y_height = 32 if self.num_present > 3 else 16
         for idx, line in enumerate(self.lines):
             if num_characters > 0:
-                self.font.blit(line[:num_characters], help_surf, (8, self.font.height * idx + 6 + y_height))
+                self.font.blit(line[:num_characters], help_surf, (8, self.font.height * idx + 6 + y_height), 'white')
                 num_characters -= len(line)
 
         if right:

@@ -6,7 +6,7 @@ import app.map_maker.utilities as map_utils
 class MapPrefab(Prefab):
     def __init__(self, nid):
         self.nid = nid
-        self.width, self.height = TILEX, TILEY
+        self.width, self.height = int(TILEX), int(TILEY)
         self.autotile_fps = 29
 
         self.pixmap = None

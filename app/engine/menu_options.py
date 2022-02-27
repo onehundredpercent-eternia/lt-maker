@@ -263,27 +263,31 @@ class ItemOption(BasicOption):
         FONT[self.font].blit_right(uses_string, surf, (left, y), uses_color)
 
 class MementoAccessoryItemOption(ItemOption):
+    def __init__(self, idx, item):
+        super().__init__(idx, item)
+        self.font = 'runes'
+
     def get_color(self):
         owner = game.get_unit(self.item.owner_nid)
-        main_font = 'runes-grey'
-        uses_font = 'runes-grey'
+        main_color = 'grey'
+        uses_color = 'grey'
         if self.ignore:
             pass
         elif self.color:
-            main_font = self.color
+            main_color = self.color
             if owner and not item_funcs.available(owner, self.item):
                 pass
             else:
-                uses_font = 'runes-blue'
+                uses_color = 'blue'
         elif self.item.droppable:
-            main_font = 'runes-green'
-            uses_font = 'runes-green'
+            main_color = 'green'
+            uses_color = 'green'
         elif not owner or (not self.item.memento_rune_type or self.item.memento_rune_type.available(owner, self.item)):
-            main_font = 'runes-white'
-            uses_font = 'runes-blue'
-        return main_font, uses_font
+            main_color = 'white'
+            uses_color = 'blue'
+        return main_color, uses_color
 
-class SkillOption(ItemOption):
+class MementoSkillOption(ItemOption):
     """
     Skill Objects, not Skill Prefabs
     """
@@ -295,6 +299,7 @@ class SkillOption(ItemOption):
         self.skill = skill
         self.help_box = None
         self.ignore = False
+        self.font = FONT['runes']
 
     def get(self):
         return self.skill
@@ -313,14 +318,14 @@ class SkillOption(ItemOption):
 
     def get_color(self):
         owner = game.get_unit(self.skill.owner_nid)
-        main_font = 'runes-grey'
-        uses_font = 'runes-grey'
+        main_color = 'grey'
+        uses_color = 'grey'
         if self.ignore:
             pass
         elif not owner or (not self.skill.memento_rune_type or self.skill.memento_rune_type.available(owner, self.skill)):
-            main_font = 'runes-white'
-            uses_font = 'runes-blue'
-        return main_font, uses_font
+            main_color = 'white'
+            uses_color = 'blue'
+        return main_color, uses_color
 
     def get_help_box(self):
         return help_menu.HelpDialog(self.skill.desc)
@@ -329,14 +334,14 @@ class SkillOption(ItemOption):
         icon = icons.get_icon(self.skill)
         if icon:
             surf.blit(icon, (x + 2, y))
-        main_font, uses_font = self.get_color()
-        FONT[main_font].blit(self.skill.name, surf, (x + 20, y))
+        main_color, uses_color = self.get_color()
+        self.font.blit(self.skill.name, surf, (x + 20, y), main_color)
         uses_string = '--'
         text = skill_system.get_text(self.skill)
         if text:
             uses_string = text
         left = x + 99
-        FONT[uses_font].blit_right(uses_string, surf, (left, y))
+        self.font.blit_right(uses_string, surf, (left, y), uses_color)
 
 class ConvoyItemOption(ItemOption):
     def __init__(self, idx, item, owner):
@@ -388,7 +393,7 @@ class FullItemOption(ItemOption):
         elif self.item.data.get('cooldown') is not None:
             uses_string_a = str(self.item.data['cooldown'])
             uses_string_b = str(self.item.data['starting_cooldown'])
-            
+
         FONT[main_font].blit_right(uses_string_a, surf, (x + 96, y), uses_color)
         FONT['text'].blit("/", surf, (x + 98, y))
         FONT[main_font].blit_right(uses_string_b, surf, (x + 120, y), uses_color)

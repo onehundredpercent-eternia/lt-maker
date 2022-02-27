@@ -79,7 +79,7 @@ class MementoDialogNametag():
 
     def __init__(self):
         self.state = 'off'  # off, transition_in, on, transition_out
-        self.font = FONT['text-white']
+        self.font = FONT['text']
         self.last_update = engine.get_time()
         self.transition_progress = 0
         self.current_position = self.default_pos

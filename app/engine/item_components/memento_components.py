@@ -37,7 +37,7 @@ class MementoRuneType(ItemComponent):
     expose = Type.Affinity  # Nid
 
     def available(self, unit, item) -> bool:
-        return self.value in unit.affinity
+        return self.value == 'None' or self.value in unit.affinity or unit.affinity == 'All'
 
 class MementoSkillOnHold(ItemComponent):
     nid = 'memento_skill_on_hold'
@@ -185,3 +185,10 @@ class MementoPull(ItemComponent):
                 playback.append(('shove_hit', unit, item, target))
             else:  # Immobilize Status
                 action.do(action.AddSkill(target, self.value, unit))
+
+class ItemPrefab(ItemComponent):
+    nid = 'item_prefab'
+    desc = "This item will automatically inherit the components of the chosen item"
+    tag = 'memento'
+
+    expose = Type.Item

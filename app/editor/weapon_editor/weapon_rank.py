@@ -133,6 +133,7 @@ class WexpGainMultiAttrModel(DefaultMultiAttrListModel):
                 value = int(value)
             else:
                 value = 0
+            setattr(data, 'wexp_gain', value)
             usable = getattr(data, 'usable')
             if value > 0 and not usable:
                 self.on_attr_changed(data, 'usable', usable, True)

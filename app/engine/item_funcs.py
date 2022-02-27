@@ -86,7 +86,7 @@ def create_item(unit, item_nid, droppable=False, parent: ItemObject = None):
 
     elif item.memento_staff:
         for subitem_nid in item.memento_staff.value:
-            create_subitem(subitem_nid)
+            create_item(unit, subitem_nid, parent=item)
 
     return item
 

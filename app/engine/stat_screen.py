@@ -98,6 +98,8 @@ class StatScreen():
         self.transition = None
         self.transition_counter = 0
 
+        self._saved_items = []
+
     def reset_surfs(self):
         self.info_graph.clear()
         self.portrait_surf = None
@@ -132,6 +134,10 @@ class StatScreen():
 
     def draw(self, surf):
         self.update()
+        # Make sure item ordering hasn't changed
+        if self.unit and self.unit.items != self._saved_items:
+            self.reset_surfs()
+
         if self.bg:
             surf.blit(self.bg, (0, 0))
         if self.unit:
@@ -172,10 +178,10 @@ class StatScreen():
 
         class_obj = DB.classes.get(self.unit.klass)
         if self.unit.generic:
-            FONT['text-white'].blit(class_obj.name, surf, (8, 80))
+            FONT['text'].blit(class_obj.name, surf, (8, 80))
             self.info_graph.register((8, 80, 72, 16), class_obj.desc, 'all', first=True)
         else:
-            FONT['text-white'].blit(self.unit.name, surf, (8, 80))
+            FONT['text'].blit(self.unit.name, surf, (8, 80))
             self.info_graph.register((8, 80, 72, 16), self.unit.desc, 'all', first=True)
         FONT['text-blue'].blit_right(str(self.unit.level), surf, (86, 80))
         self.info_graph.register((50, 80, 30, 16), 'Level_desc', 'all')
@@ -260,6 +266,7 @@ class StatScreen():
         # Equipment
         weapon = self.unit.get_weapon()
         accessory = self.unit.get_accessory()
+        self._saved_items = self.unit.items
 
         # Blit items
         for idx, item in enumerate(self.unit.nonaccessories):
@@ -289,14 +296,14 @@ class StatScreen():
                     if subitem is accessory:
                         if not item_funcs.available(self.unit, subitem) and subitem.memento_skill_on_hold:
                             skill = [s for s in self.unit.skills if s.nid == subitem.memento_skill_on_hold.value][0]
-                            item_option = menu_options.SkillOption(aidx, skill)
+                            item_option = menu_options.MementoSkillOption(aidx, skill)
                         else:
                             item_option = menu_options.MementoAccessoryItemOption(aidx, subitem)
                         break
                 else:  # Shouldn't happen
                     if not item_funcs.available(self.unit, subitem) and subitem.memento_skill_on_hold:
                         skill = [s for s in self.unit.skills if s.nid == subitem.memento_skill_on_hold.value][0]
-                        item_option = menu_options.SkillOption(aidx, skill)
+                        item_option = menu_options.MementoSkillOption(aidx, skill)
                     else:
                         item_option = menu_options.MementoAccessoryItemOption(aidx, subitem)
             else:
@@ -305,7 +312,7 @@ class StatScreen():
                 if not item_funcs.available(self.unit, item) and item.memento_skill_on_hold:
                     skills = [s for s in self.unit.skills if s.nid == item.memento_skill_on_hold.value]
                     if skills:
-                        item_option = menu_options.SkillOption(aidx, skills[0])
+                        item_option = menu_options.MementoSkillOption(aidx, skills[0])
                     else:
                         item_option = menu_options.MementoAccessoryItemOption(aidx, item)
                 else:
