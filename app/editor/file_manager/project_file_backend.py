@@ -115,6 +115,7 @@ class ProjectFileBackend():
         # Actually save project
         RESOURCES.save(self.current_proj, progress=self.save_progress)
         self.save_progress.setValue(75)
+
         DB.serialize(self.current_proj)
         self.save_progress.setValue(85)
 

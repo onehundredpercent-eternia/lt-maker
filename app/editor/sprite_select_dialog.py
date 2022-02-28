@@ -1,9 +1,14 @@
+from app.utilities.typing import NID
+from typing import Tuple
+from app.resources.panoramas import Panorama
+from app.resources.resources import RESOURCES
+from app.data.database import DB
 from app.editor.base_database_gui import CollectionModel
 from app.editor.icon_editor.icon_tab import IconListView
 from app.extensions.custom_gui import PropertyBox
 from app.sprites import SPRITES, BasicSprite
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QGridLayout, QLineEdit,
                              QListView)
 
@@ -18,14 +23,22 @@ class SpriteModel(CollectionModel):
             return text
         elif role == Qt.DecorationRole:
             sprite = self._data[index.row()]
-            if sprite.pixmap:
+            if isinstance(sprite, Panorama):
+                panorama = sprite
+                if not panorama.pixmaps:
+                    for path in panorama.get_all_paths():
+                        panorama.pixmaps.append(QPixmap(path))
+                return QIcon(panorama.pixmaps[0])
+            elif sprite.pixmap:
                 return QIcon(sprite.pixmap)
         return None
 
 class SpriteSelectionDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, with_panoramas: bool = False):
         super().__init__(parent)
         self._data = [sprite for sprite in SPRITES.values() if isinstance(sprite, BasicSprite)]
+        if with_panoramas:
+            self._data += [panorama for panorama in RESOURCES.panoramas.values()]
 
         self.setWindowTitle("Sprites")
         self.setStyleSheet("font: 10pt;")
@@ -79,7 +92,7 @@ class SpriteSelectionDialog(QDialog):
                 print(e)
 
     @property
-    def current(self):
+    def current(self) -> NID:
         indices = self.view.selectionModel().selectedIndexes()
         if indices:
             index = indices[0]
@@ -87,8 +100,8 @@ class SpriteSelectionDialog(QDialog):
             return bg.nid
         return None
 
-def get_sprite():
-    window = SpriteSelectionDialog()
+def get_sprite(with_panoramas=False):
+    window = SpriteSelectionDialog(with_panoramas=with_panoramas)
     result = window.exec_()
     if result == QDialog.Accepted:
         selected_sprite = window.current

@@ -1,3 +1,4 @@
+from app.resources.resources import RESOURCES
 from typing import Tuple
 
 from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
@@ -72,7 +73,10 @@ class UIComponentView(QGraphicsView):
             base_pixmap: QPixmap = None
             offset = (0, 0)
             if self.current_ui_component.canvas:
-                base_pixmap = SPRITES[self.current_ui_component.canvas].pixmap.copy()
+                if self.current_ui_component.canvas in SPRITES.keys():
+                    base_pixmap = SPRITES[self.current_ui_component.canvas].pixmap.copy()
+                else:
+                    base_pixmap = RESOURCES.panoramas.get(self.current_ui_component.canvas).pixmaps[0].copy()
                 offset = tuple(self.current_ui_component.canvas_offset)
             else:
                 base_pixmap = QPixmap(*self.current_ui_component.size)
@@ -119,7 +123,10 @@ class UIComponentView(QGraphicsView):
                 self.draw_component_outlines()
             self.draw_selected_component()
             if self.current_ui_component and self.current_ui_component.canvas:
-                canvas_sprite = SPRITES[self.current_ui_component.canvas].pixmap.copy()
+                if self.current_ui_component.canvas in SPRITES.keys():
+                    canvas_sprite = SPRITES[self.current_ui_component.canvas].pixmap.copy()
+                else:
+                    canvas_sprite = RESOURCES.panoramas.get(self.current_ui_component.canvas).pixmaps[0].copy()
                 canvas = self.qscene.addPixmap(canvas_sprite)
                 ox, oy = self.current_ui_component.canvas_offset
                 canvas.setPos(-ox, -oy)

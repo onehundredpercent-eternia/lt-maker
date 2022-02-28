@@ -219,7 +219,7 @@ class UIContainerProperties(QWidget):
             self.state_manager.change_and_broadcast('ui_refresh_signal', None)
 
     def set_canvas(self):
-        sprite_nid, ok = get_sprite()
+        sprite_nid, ok = get_sprite(True)
         if ok:
             self.current_container.canvas = sprite_nid
             self.state_manager.change_and_broadcast('ui_refresh_signal', None)
