@@ -126,7 +126,11 @@ class UIComponentView(QGraphicsView):
                 if self.current_ui_component.canvas in SPRITES.keys():
                     canvas_sprite = SPRITES[self.current_ui_component.canvas].pixmap.copy()
                 else:
-                    canvas_sprite = RESOURCES.panoramas.get(self.current_ui_component.canvas).pixmaps[0].copy()
+                    panorama = RESOURCES.panoramas.get(self.current_ui_component.canvas)
+                    if not panorama.pixmaps:
+                        for path in panorama.get_all_paths():
+                            panorama.pixmaps.append(QPixmap(path))
+                    canvas_sprite = panorama.pixmaps[0].copy()
                 canvas = self.qscene.addPixmap(canvas_sprite)
                 ox, oy = self.current_ui_component.canvas_offset
                 canvas.setPos(-ox, -oy)
