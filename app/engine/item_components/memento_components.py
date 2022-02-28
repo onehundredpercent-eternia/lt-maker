@@ -47,6 +47,8 @@ class MementoSkillOnHold(ItemComponent):
     expose = Type.Skill  # Nid
 
     def on_add_item(self, unit, item):
+        if 'Mage' in unit.tags:
+            return
         if not item.memento_rune_type or item.memento_rune_type.available(unit, item):
             action.do(action.AddSkill(unit, self.value))
 

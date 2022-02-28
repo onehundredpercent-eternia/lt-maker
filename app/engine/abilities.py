@@ -193,7 +193,7 @@ class PairUpAbility(Ability):
     @staticmethod
     def targets(unit) -> set:
         # Pair up not enabled
-        if not DB.constants.value('pairup'):
+        if not DB.constants.value('pairup') or DB.constants.value('attack_stance_only'):
             return set()
         if unit.traveler:
             return set()
