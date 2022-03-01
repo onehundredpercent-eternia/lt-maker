@@ -36,6 +36,7 @@ from app.engine.overworld.overworld_movement_manager import \
 from app.engine.sound import SOUNDTHREAD
 from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait
+from app.events.speak_style import SpeakStyle
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
@@ -57,17 +58,6 @@ screen_positions = {'OffscreenLeft': -96,
 vertical_screen_positions = {'Top': 0,
                              'Middle': (WINHEIGHT - 80) // 2 ,
                              'Bottom': WINHEIGHT - 80}
-
-class SpeakStyle():
-    def __init__(self, nid: NID = None, speaker: NID = None, text_position: str | Tuple[int, int]=None,
-                 width: int = None, dialog_variant: str = None, speed: int = None, flags: Set[str] = None):
-        self.nid: NID = nid
-        self.speaker: NID = speaker
-        self.text_position: str | Tuple[int, int] = text_position
-        self.width: int = width
-        self.dialog_variant: str = dialog_variant
-        self.speed: int = speed
-        self.flags: Set[str] = flags
 
 class Event():
     _transition_speed = 250
@@ -91,7 +81,19 @@ class Event():
         self.position = position
         self.region = region
 
-        self.speak_styles: Dict[NID, SpeakStyle] = {}
+        # Built in speak styles for backwards compatibility
+        self.speak_styles: Dict[NID, SpeakStyle] = \
+            {'noir': SpeakStyle(dialog_box='menu_bg_dark', font_color='white', message_tail='None'),
+             'hint': SpeakStyle(dialog_box='menu_bg_parchment', text_position='center', width=WINWIDTH//2 + 8, num_lines=4, message_tail='None'),
+             'cinematic': SpeakStyle(dialog_box='None', text_position='center', font_color='grey', num_lines=5, 
+                                     font_type='chapter', draw_cursor=False, message_tail='None'),
+             'narration': SpeakStyle(dialog_box='menu_bg_base', text_position=(4, 110), width=WINWIDTH - 8,
+                                     font_color='white', message_tail='None'),
+             'narration_top': SpeakStyle(dialog_box='menu_bg_base', text_position=(4, 2), width=WINWIDTH - 8, 
+                                         font_color='white', message_tail='None'),
+             'clear': SpeakStyle(dialog_box='None', font_color='white', draw_cursor=False, message_tail='None'),
+             'thought_bubble': SpeakStyle(message_tail='message_bg_thought_tail')
+             }
 
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
