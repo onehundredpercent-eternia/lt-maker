@@ -42,22 +42,7 @@ from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
-
-screen_positions = {'OffscreenLeft': -96,
-                    'FarLeft': -24,
-                    'Left': 0,
-                    'MidLeft': 24,
-                    'CenterLeft': 24,
-                    'CenterRight': WINWIDTH - 120,
-                    'MidRight': WINWIDTH - 120,
-                    'LevelUpRight': 140,
-                    'Right': WINWIDTH - 96,
-                    'FarRight': WINWIDTH - 72,
-                    'OffscreenRight': WINWIDTH}
-
-vertical_screen_positions = {'Top': 0,
-                             'Middle': (WINHEIGHT - 80) // 2 ,
-                             'Bottom': WINHEIGHT - 80}
+from app.event.screen_positions import horizontal_screen_positions, vertical_screen_positions
 
 class Event():
     _transition_speed = 250
