@@ -42,7 +42,7 @@ from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
-from app.event.screen_positions import horizontal_screen_positions, vertical_screen_positions
+from app.event.screen_positions import parse_screen_position
 
 class Event():
     _transition_speed = 250
@@ -1577,7 +1577,6 @@ class Event():
         if name in self.portraits and not self.portraits[name].remove:
             return False
 
-        pos = values[1]
         position, mirror = parse_screen_position(value[1])
 
         priority = self.priority_counter
@@ -1636,11 +1635,7 @@ class Event():
         if not portrait:
             return False
 
-        pos = values[1]
-        if pos in screen_positions:
-            position = [screen_positions[pos], 80]
-        else:
-            position = [int(p) for p in pos.split(',')]
+        pos, _ = parse_screen_position(values[1])
 
         if 'immediate' in flags or self.do_skip:
             portrait.quick_move(position)
