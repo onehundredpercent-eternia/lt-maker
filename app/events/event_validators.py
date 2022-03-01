@@ -7,7 +7,7 @@ from app.data.database import DB
 from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
                                                                   VAlignment)
 from app.events import event_commands
-from app.events.screen_position import horizontal_screen_positions, vertical_screen_positions
+from app.events.screen_positions import horizontal_screen_positions, vertical_screen_positions
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils
