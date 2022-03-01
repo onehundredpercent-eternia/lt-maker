@@ -12,39 +12,27 @@ from app.engine import config as cf
 from app.engine.game_state import game
 
 class Dialog():
-    num_lines = 2
     solo_flag = False
     cursor = SPRITES.get('waiting_cursor')
     cursor_offset = [0]*20 + [1]*2 + [2]*8 + [1]*2
-    draw_cursor_flag = True
     transition_speed = 166  # 10 frames
     pause_time = 150  # 9 frames
 
     aesthetic_commands = ('{red}', '{/red}', '{black}', '{/black}', '{white}', '{/white}', '{green}', '{/green}')
 
     def __init__(self, text, portrait=None, background=None, position=None, width=None,
-                 speaker=None, variant=None, nid=None, autosize=False, speed=1):
+                 speaker=None, style_nid=None, autosize=False, speed=1, font_color='black',
+                 font_type='convo', num_lines=2, draw_cursor=True, message_tail='message_bg_tail'):
         self.plain_text = text
         self.portrait = portrait
         self.speaker = speaker
-        self.variant = variant
-        self.font_type = 'convo'
-        self.nid = nid
+        self.style_nid = style_nid
+        self.font_type = font_type
+        self.font_color = font_color
         self.autosize = autosize
         self.speed = speed
-        if self.variant in ('noir', 'narration', 'narration_top', 'clear'):
-            self.font_color = 'white'
-        else:
-            self.font_color = 'black'
-        if self.variant == 'hint':
-            self.num_lines = 4
-        elif self.variant == 'cinematic':
-            self.font_type = 'chapter'
-            self.font_color = 'grey'
-            self.num_lines = 5
-            self.draw_cursor_flag = False
-        elif self.variant == 'clear':
-            self.draw_cursor_flag = False
+        self.num_lines = num_lines
+        self.draw_cursor_flag = draw_cursor
         self.font = FONT[self.font_type]
 
         # States: process, transition, pause, wait, done, new_line
@@ -87,17 +75,13 @@ class Dialog():
             pos_y = WINHEIGHT - self.height - 4
         self.position = pos_x, pos_y
 
-        if background:
-            self.background = self.make_background(background)
-            self.tail = SPRITES.get('message_bg_tail')
-        else:
-            self.background = None
-            self.tail = None
+        self.background = None
+        self.tail = None
 
-        if self.variant in ('noir', 'hint', 'cinematic'):
-            self.tail = None
-        elif self.variant == 'thought_bubble':
-            self.tail = SPRITES.get('message_bg_thought_tail')
+        if background and background != 'None':
+            self.background = self.make_background(background)
+            if message_tail and message_tail != 'None':
+                self.tail = SPRITES.get(message_tail)
 
         self.name_tag_surf = create_base_surf(64, 16, 'name_tag')
 
