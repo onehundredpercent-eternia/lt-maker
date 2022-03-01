@@ -1578,16 +1578,7 @@ class Event():
             return False
 
         pos = values[1]
-        if len(values) > 4 and values[4]: # there's a vertical position as well
-            vert_pos = values[4]
-        else:
-            vert_pos = 'Bottom'
-        if pos in screen_positions:
-            position = [screen_positions[pos], vertical_screen_positions[vert_pos]]
-            mirror = 'Left' in pos
-        else:
-            position = [int(p) for p in pos.split(',')]
-            mirror = False
+        position, mirror = parse_screen_position(value[1])
 
         priority = self.priority_counter
         if 'low_priority' in flags:
