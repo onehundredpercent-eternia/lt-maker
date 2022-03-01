@@ -7,6 +7,7 @@ from app.data.database import DB
 from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
                                                                   VAlignment)
 from app.events import event_commands
+from app.events.screen_position import horizontal_screen_positions, vertical_screen_positions
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils
@@ -291,9 +292,6 @@ Determines position to place text. Supports either pixels (`x,y`) or the `center
 
 
 class ScreenPosition(Validator):
-    horiz_positions = ["OffscreenLeft", "FarLeft", "Left", "MidLeft", "CenterLeft", "CenterRight", "MidRight", "LevelUpRight", "Right", "FarRight", "OffscreenRight"]
-    vert_positions = ["Top", "Middle", "Bottom"]
-
     desc = """
 Determines where to add the portrait to the screen.
 Available options are (`OffscreenLeft`,
@@ -307,7 +305,7 @@ it will be facing right, and vice versa.
 """
 
     def validate(self, text, level):
-        if text in self.horiz_positions:
+        if text in horizontal_screen_positions:
             return text
         elif str_utils.is_int(text):
             return text
@@ -315,14 +313,14 @@ it will be facing right, and vice versa.
             splittext = text.split(',')
             if all(str_utils.is_int(t) for t in splittext):
                 return text
-            elif splittext[0] in self.horiz_positions and splittext[1] in self.vert_positions:
+            elif splittext[0] in horizontal_screen_positions and splittext[1] in vertical_screen_positions:
                 return text
-            elif splittext[0] in self.vert_positions and splittext[1] in self.horiz_positions:
+            elif splittext[0] in vertical_screen_positions and splittext[1] in horizontal_screen_positions:
                 return text
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(None, option) for option in self.horiz_positions]
+        valids = [(None, option) for option in horizontal_screen_positions]
         return valids
 
 class Slide(OptionValidator):
