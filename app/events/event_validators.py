@@ -291,47 +291,39 @@ Determines position to place text. Supports either pixels (`x,y`) or the `center
 
 
 class ScreenPosition(Validator):
-    valid_positions = ["OffscreenLeft", "FarLeft", "Left", "MidLeft", "CenterLeft", "CenterRight", "MidRight", "LevelUpRight", "Right", "FarRight", "OffscreenRight"]
+    horiz_positions = ["OffscreenLeft", "FarLeft", "Left", "MidLeft", "CenterLeft", "CenterRight", "MidRight", "LevelUpRight", "Right", "FarRight", "OffscreenRight"]
+    vert_positions = ["Top", "Middle", "Bottom"]
 
     desc = """
 Determines where to add the portrait to the screen.
 Available options are (`OffscreenLeft`,
-`FarLeft`, `Left`, `MidLeft`, `MidRight`, `Right`, `FarRight`, `OffscreenRight`).
+`FarLeft`, `Left`, `MidLeft`, `MidRight`, `Right`, `FarRight`, `OffscreenRight`) for horizontal positions.
+Available options are (`Top`, `Middle`, `Bottom`) for vertical positions.
 Alternately, specify a position in pixels (`x,y`)
 for the topleft of the portrait.
+Can combine horizontal and vertical positions like so: `Left,Bottom`.
 If the portrait is placed on the left side of the screen to start,
 it will be facing right, and vice versa.
 """
 
     def validate(self, text, level):
-        if text in self.valid_positions:
+        if text in self.horiz_positions:
             return text
         elif str_utils.is_int(text):
             return text
-        elif ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
-            return text
+        elif ',' in text and len(text.split(',')) == 2:
+            splittext = text.split(',')
+            if all(str_utils.is_int(t) for t in splittext):
+                return text
+            elif splittext[0] in self.horiz_positions and splittext[1] in self.vert_positions:
+                return text
+            elif splittext[0] in self.vert_positions and splittext[1] in self.horiz_positions:
+                return text
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(None, option) for option in self.valid_positions]
+        valids = [(None, option) for option in self.horiz_positions]
         return valids
-
-class VerticalScreenPosition(Validator):
-    valid_positions = ["Bottom", "Middle", "Top"]
-
-    desc = ("determines what height to add the portrait to the screen."
-            "Available options are (`Bottom`, `Middle`, `Top`). By default,"
-            "dialog portraits are displayed along the bottom.")
-
-    def validate(self, text, level):
-        if text in self.valid_positions:
-            return text
-        return None
-
-    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(None, option) for option in self.valid_positions]
-        return valids
-
 
 class Slide(OptionValidator):
     valid = ["normal", "left", "right"]
