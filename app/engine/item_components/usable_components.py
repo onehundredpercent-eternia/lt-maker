@@ -120,8 +120,7 @@ class ManaCost(ItemComponent):
     expose = Type.Int
     value = 1
 
-    def init(self, item):
-        self._did_something = False
+    _did_something = False
 
     def available(self, unit, item) -> bool:
         return unit.get_mana() >= self.value

@@ -104,7 +104,7 @@ class DropAbility(Ability):
             adj_positions = target_system.get_adjacent_positions(unit.position)
             u = game.get_unit(unit.traveler)
             for adj_pos in adj_positions:
-                if not game.board.get_unit(adj_pos) and game.movement.check_traversable(u, adj_pos):
+                if not game.board.get_unit(adj_pos) and game.movement.check_weakly_traversable(u, adj_pos):
                     good_pos.add(adj_pos)
             return good_pos
         return set()

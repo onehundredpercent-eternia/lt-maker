@@ -155,7 +155,6 @@ class DecreasingSightRangeBonus(SkillComponent):
     value = 3
 
     def init(self, skill):
-        self.skill = skill
         self.skill.data['torch_counter'] = 0
 
     def sight_range(self, unit):
