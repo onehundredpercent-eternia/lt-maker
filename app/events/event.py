@@ -3,7 +3,6 @@ from app.engine.text_evaluator import TextEvaluator
 
 import ast
 import logging
-import re
 from typing import Any, Callable, Dict, List, Set, Tuple
 
 import app.engine.config as cf
@@ -36,13 +35,13 @@ from app.engine.overworld.overworld_movement_manager import \
 from app.engine.sound import SOUNDTHREAD
 from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait
+from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
-from app.event.screen_positions import parse_screen_position
 
 class Event():
     _transition_speed = 250
@@ -1577,7 +1576,7 @@ class Event():
         if name in self.portraits and not self.portraits[name].remove:
             return False
 
-        position, mirror = parse_screen_position(value[1])
+        position, mirror = parse_screen_position(values[1])
 
         priority = self.priority_counter
         if 'low_priority' in flags:
@@ -1635,7 +1634,7 @@ class Event():
         if not portrait:
             return False
 
-        pos, _ = parse_screen_position(values[1])
+        position, _ = parse_screen_position(values[1])
 
         if 'immediate' in flags or self.do_skip:
             portrait.quick_move(position)
@@ -1673,7 +1672,7 @@ class Event():
         return self.text_evaluator._evaluate_all(text)
 
     def speak(self, speaker, text, text_position=None, width=None, style_nid=None, text_speed=None,
-              font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
+              color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
               message_tail=None, flags=None):
         flags = flags or set()
         # special char: this is a unicode single-line break.
@@ -1705,7 +1704,7 @@ class Event():
             position = None
 
         if width:
-            box_width = int(text_width)
+            box_width = int(width)
         elif speak_style and speak_style.width:
             box_width = speak_style.width
         else:
@@ -1724,6 +1723,13 @@ class Event():
             ftype = speak_style.font_type
         else:
             ftype = 'convo'
+
+        if color:
+            fcolor = color
+        elif speak_style and speak_style.font_color:
+            fcolor = speak_style.font_color
+        else:
+            fcolor = None
 
         if dialog_box:
             bg = dialog_box
@@ -1753,14 +1759,14 @@ class Event():
         else:
             tail = "message_bg_tail"
 
-        if speak_style:
+        if speak_style and speak_style.flags:
             flags = speak_style.flags.union(flags)
 
         autosize = 'fit' in flags
         new_dialog = \
             dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker, 
                           style_nid=style_nid, autosize=autosize, speed=speed,
-                          font_color=color, font_type=ftype, num_lines=lines,
+                          font_color=fcolor, font_type=ftype, num_lines=lines,
                           draw_cursor=cursor, message_tail=tail)
         new_dialog.hold = 'hold' in flags
         if 'no_popup' in flags:

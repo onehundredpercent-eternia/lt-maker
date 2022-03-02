@@ -1,3 +1,5 @@
+from app.constants import WINHEIGHT, WINWIDTH
+
 horizontal_screen_positions = {'OffscreenLeft': -96,
                                'FarLeft': -24,
                                'Left': 0,
@@ -14,7 +16,7 @@ vertical_screen_positions = {'Top': 0,
                              'Middle': (WINHEIGHT - 80) // 2 ,
                              'Bottom': WINHEIGHT - 80}
 
-def parse_screen_positions(pos) -> tuple:
+def parse_screen_position(pos) -> tuple:
     x, y = None, None
     mirror = False
     if ',' in pos:
