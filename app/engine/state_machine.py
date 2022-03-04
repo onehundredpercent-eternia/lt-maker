@@ -62,6 +62,7 @@ class StateMachine():
              'transition_pop': transitions.TransitionPopState,
              'transition_double_pop': transitions.TransitionDoublePopState,
              'transition_to': transitions.TransitionToState,
+             'transition_to_with_pop': transitions.TransitionToWithPopState,
              'turn_change': general_states.TurnChangeState,
              'initiative_upkeep': general_states.InitiativeUpkeep,
              'free': general_states.FreeState,

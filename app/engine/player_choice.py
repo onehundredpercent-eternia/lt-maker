@@ -15,7 +15,7 @@ class PlayerChoiceState(MapState):
     def start(self):
         self.nid, self.header, options_list, self.row_width, self.orientation, \
             self.data_type, self.should_persist, self.alignment, self.bg, self.event_on_choose, \
-            self.size, self.no_cursor, self.arrows, self.scroll_bar, self.text_align = \
+            self.size, self.no_cursor, self.arrows, self.scroll_bar, self.text_align, self.event_context = \
             game.memory['player_choice']
         self.tsize = [0, 0]
         if self.size:
@@ -71,7 +71,7 @@ class PlayerChoiceState(MapState):
             if self.event_on_choose:
                 valid_events = DB.events.get_by_nid_or_name(self.event_on_choose, game.level.nid)
                 for event_prefab in valid_events:
-                    game.events.trigger_specific_event(event_prefab.nid)
+                    game.events.trigger_specific_event(event_prefab.nid, **self.event_context)
                     game.memory[self.nid + '_unchoice'] = self.unchoose
                 if not valid_events:
                     logging.error("Couldn't find any valid events matching name %s" % self.event_on_choose)

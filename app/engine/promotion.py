@@ -30,7 +30,7 @@ class PromotionChoiceState(State):
         game.memory['current_unit'] = self.unit
         game.memory['next_class'] = next_class
         game.memory['next_state'] = 'promotion'
-        game.state.change('transition_to')
+        game.state.change('transition_to_with_pop')
 
     def start(self):
         self.fluid = FluidScroll()
@@ -212,7 +212,7 @@ class ClassChangeChoiceState(PromotionChoiceState):
         game.memory['current_unit'] = self.unit
         game.memory['next_class'] = next_class
         game.memory['next_state'] = 'class_change'
-        game.state.change('transition_to')
+        game.state.change('transition_to_with_pop')
 
 class PromotionState(State, MockCombat):
     name = 'promotion'
@@ -304,7 +304,7 @@ class PromotionState(State, MockCombat):
 
         elif self.state == 'leave':
             if current_time > utils.frames2ms(10):
-                game.state.change('transition_double_pop')
+                game.state.change('transition_pop')
                 self.state = 'done'
                 if self.promotion_song:
                     SOUNDTHREAD.fade_back()

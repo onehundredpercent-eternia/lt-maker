@@ -677,6 +677,8 @@ class GlobalUnit(Validator):
         valids.append((None, "convoy"))
         return valids
 
+class AnimationType(OptionValidator):
+    valid = ['north', 'east', 'west', 'south', 'fade']
 class CardinalDirection(OptionValidator):
     valid = ['north', 'east', 'west', 'south']
 

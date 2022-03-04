@@ -1896,12 +1896,12 @@ Will always draw immediately behind the dialog.
 You can control the order that multiple siimultaneous overlays are drawn by choosing a custom z-level.
 Higher z-level sprites will cover lower z-level sprites occupying the same positions.
 
-Can choose to animate the sprite sliding in or out in a specific direction.
+Can choose to animate the sprite in and out.
 """
 
     keywords = ['String', 'Sprite']
-    optional_keywords = ['PositionOffset', 'Integer', 'CardinalDirection']
-    keyword_names = ['Name', 'Sprite_ID', 'Position', 'Z-Level', 'Animation Direction']
+    optional_keywords = ['PositionOffset', 'Integer', 'AnimationType']
+    keyword_names = ['Name', 'Sprite_ID', 'Position', 'Z-Level', 'Animation']
 
 class RemoveOverlaySprite(EventCommand):
     nid = 'remove_overlay_sprite'

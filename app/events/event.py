@@ -20,7 +20,7 @@ from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper impo
 from app.engine.game_state import game
 from app.engine.graphics.dialog.narration_dialogue import NarrationDialogue
 from app.engine.graphics.ui_framework.premade_animations.animation_templates import \
-    translate_anim
+    fade_anim, translate_anim
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_animation import \
     InterpolationType
@@ -1517,7 +1517,12 @@ class Event():
             component.name = name
             component.disable()
             x, y = pos
+            component.offset = pos
             if anim_dir:
+                if anim_dir == 'fade':
+                    enter_anim = fade_anim(0, 1, 1000)
+                    exit_anim = fade_anim(1, 0, 1000)
+                else:
                 if anim_dir == 'west':
                     start_x = -component.width
                     start_y = y
@@ -3247,10 +3252,18 @@ class Event():
         arrows = 'arrows' in flags and orientation == 'horizontal'
         scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
 
+        event_context = {
+            'unit': self.unit,
+            'unit2': self.unit2,
+            'item': self.item,
+            'position': self.position,
+            'region': self.region
+        }
+
         game.memory['player_choice'] = (nid, header, data, row_width,
                                         orientation, dtype, should_persist,
                                         align, bg, event_nid, size, no_cursor,
-                                        arrows, scroll_bar, talign)
+                                        arrows, scroll_bar, talign, event_context)
         game.state.change('player_choice')
         self.state = 'paused'
 

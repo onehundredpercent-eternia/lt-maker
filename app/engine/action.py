@@ -1538,6 +1538,8 @@ class Promote(Action):
 class ClassChange(Action):
     def __init__(self, unit, new_class_nid):
         self.unit = unit
+        self.old_exp = self.unit.exp
+        self.old_level = self.unit.level
         self.old_klass = self.unit.klass
         self.new_klass = new_class_nid
 
