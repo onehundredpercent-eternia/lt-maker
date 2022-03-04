@@ -65,20 +65,6 @@ class Event():
         self.position = position
         self.region = region
 
-        # Built in speak styles for backwards compatibility
-        self.speak_styles: Dict[NID, SpeakStyle] = \
-            {'noir': SpeakStyle(dialog_box='menu_bg_dark', font_color='white', message_tail='None'),
-             'hint': SpeakStyle(dialog_box='menu_bg_parchment', text_position='center', width=WINWIDTH//2 + 8, num_lines=4, message_tail='None'),
-             'cinematic': SpeakStyle(dialog_box='None', text_position='center', font_color='grey', num_lines=5, 
-                                     font_type='chapter', draw_cursor=False, message_tail='None'),
-             'narration': SpeakStyle(dialog_box='menu_bg_base', text_position=(4, 110), width=WINWIDTH - 8,
-                                     font_color='white', message_tail='None'),
-             'narration_top': SpeakStyle(dialog_box='menu_bg_base', text_position=(4, 2), width=WINWIDTH - 8, 
-                                         font_color='white', message_tail='None'),
-             'clear': SpeakStyle(dialog_box='None', font_color='white', draw_cursor=False, message_tail='None'),
-             'thought_bubble': SpeakStyle(message_tail='message_bg_thought_tail')
-             }
-
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
         self.other_boxes: List[Tuple[NID, Any]] = []
@@ -1523,20 +1509,20 @@ class Event():
                     enter_anim = fade_anim(0, 1, 1000)
                     exit_anim = fade_anim(1, 0, 1000)
                 else:
-                if anim_dir == 'west':
-                    start_x = -component.width
-                    start_y = y
-                elif anim_dir == 'east':
-                    start_x = WINWIDTH
-                    start_y = y
-                elif anim_dir == 'north':
-                    start_x = x
-                    start_y = -component.height
-                elif anim_dir == 'south':
-                    start_x = x
-                    start_y = WINHEIGHT
-                enter_anim = translate_anim((start_x, start_y), (x, y), 750, interp_mode=InterpolationType.CUBIC)
-                exit_anim = translate_anim((x, y), (start_x, start_y), 750, disable_after=True, interp_mode=InterpolationType.CUBIC)
+                    if anim_dir == 'west':
+                        start_x = -component.width
+                        start_y = y
+                    elif anim_dir == 'east':
+                        start_x = WINWIDTH
+                        start_y = y
+                    elif anim_dir == 'north':
+                        start_x = x
+                        start_y = -component.height
+                    elif anim_dir == 'south':
+                        start_x = x
+                        start_y = WINHEIGHT
+                    enter_anim = translate_anim((start_x, start_y), (x, y), 750, interp_mode=InterpolationType.CUBIC)
+                    exit_anim = translate_anim((x, y), (start_x, start_y), 750, disable_after=True, interp_mode=InterpolationType.CUBIC)
                 component.save_animation(enter_anim, '!enter')
                 component.save_animation(exit_anim, '!exit')
 
@@ -1691,8 +1677,8 @@ class Event():
             text += '{no_wait}'
 
         speak_style = None
-        if style_nid and style_nid in self.speak_styles:
-            speak_style = self.speak_styles[style_nid]
+        if style_nid and style_nid in game.speak_styles:
+            speak_style = game.speak_styles[style_nid]
 
         if not speaker and speak_style:
             speaker = speak_style.speaker
@@ -1788,8 +1774,8 @@ class Event():
                     font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
                     message_tail=None, flags=None):
         flags = flags or set()
-        if style_nid in self.speak_styles:
-            style = self.speak_styles[style_nid]
+        if style_nid in game.speak_styles:
+            style = game.speak_styles[style_nid]
         else:
             style = SpeakStyle(nid=style_nid)
         # parse everything
@@ -1819,7 +1805,7 @@ class Event():
         if flags:
             style.flags = flags
         # Create new style or modify existing style
-        self.speak_styles[style_nid] = style
+        game.speak_styles[style_nid] = style
 
     def unhold(self, unhold_nid, flags):
         for box in self.text_boxes:

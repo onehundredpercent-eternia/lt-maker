@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from app.engine.objects.unit import UnitObject
     from app.engine.dialog_log import DialogLog
     from app.events.event_manager import EventManager
+    from app.events import speak_style
     from app.events.regions import Region
     from app.utilities.typing import NID
 
@@ -68,6 +69,7 @@ class GameState():
         # global controllers
         self.supports: supports.SupportController = None
         self.records: records.Recordkeeper = None
+        self.speak_styles: speak_style.SpeakStyleLibrary = None
 
         # 'current' state information, typically varies by level
         self.current_level: LevelObject = None
@@ -126,6 +128,7 @@ class GameState():
     # When the player clicks "New Game"
     def build_new(self):
         from app.engine import records, supports
+        from app.events import speak_style
         logging.info("Building New Game")
         self.playtime = 0
 
@@ -162,6 +165,7 @@ class GameState():
             self.overworld_registry[overworld.nid] = OverworldObject.from_prefab(overworld, self.parties, self.unit_registry)
         self.supports = supports.SupportController()
         self.records = records.Recordkeeper()
+        self.speak_styles = speak_style.SpeakStyleLibrary()
         self.market_items = set()
         self.unlocked_lore = []
         from app.engine.dialog_log import DialogLog
@@ -292,6 +296,7 @@ class GameState():
                   'events': self.events.save(),
                   'supports': self.supports.save(),
                   'records': self.records.save(),
+                  'speak_styles': self.speak_styles.save(),
                   'market_items': self.market_items,  # Item nids
                   'unlocked_lore': self.unlocked_lore,
                   'dialog_log': self.dialog_log.save(),
@@ -329,7 +334,7 @@ class GameState():
         from app.engine.objects.party import PartyObject
         from app.engine.objects.skill import SkillObject
         from app.engine.objects.unit import UnitObject
-        from app.events import event_manager
+        from app.events import event_manager, speak_style
         from app.events.regions import Region
 
         logging.info("Loading Game...")
@@ -396,6 +401,10 @@ class GameState():
             self.records = records.Recordkeeper.restore(s_dict['records'])
         else:
             self.records = records.Recordkeeper()
+        if s_dict.get('speak_styles'):
+            self.speak_styles = speak_style.SpeakStyleLibrary.restore(s_dict['speak_styles'])
+        else:
+            self.speak_styles = speak_style.SpeakStyleLibrary()
 
         if 'current_random_state' in s_dict:
             static_random.set_combat_random_state(s_dict['current_random_state'])
