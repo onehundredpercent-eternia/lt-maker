@@ -13,11 +13,11 @@ horizontal_screen_positions = {'OffscreenLeft': -96,
                                'OffscreenRight': WINWIDTH}
 
 vertical_screen_positions = {'Top': 0,
-                             'Middle': (WINHEIGHT - 80) // 2 ,
+                             'Middle': (WINHEIGHT - 80) // 2,
                              'Bottom': WINHEIGHT - 80}
 
 def parse_screen_position(pos) -> tuple:
-    x, y = None, None
+    x, y = 0, 0
     mirror = False
     if ',' in pos:
         split_pos = pos.split(',')
@@ -26,7 +26,7 @@ def parse_screen_position(pos) -> tuple:
             x = horizontal_screen_positions[split_pos[0]]
             mirror = 'Left' in split_pos[0]
         elif split_pos[0] in vertical_screen_positions:
-            x = vertical_screen_positions[split_pos[0]]
+            y = vertical_screen_positions[split_pos[0]]
         else:
             x = int(split_pos[0])
         # Handle second part of tuple
@@ -37,9 +37,13 @@ def parse_screen_position(pos) -> tuple:
             y = vertical_screen_positions[split_pos[1]]
         else:
             y = int(split_pos[1])
-    else:
+    elif pos in horizontal_screen_positions:
         x = horizontal_screen_positions[pos]
         y = vertical_screen_positions['Bottom']
         mirror = 'Left' in pos
+    elif pos in vertical_screen_positions:
+        x = horizontal_screen_positions['Left']
+        y = vertical_screen_positions[pos]
+        mirror = True
 
     return (x, y), mirror

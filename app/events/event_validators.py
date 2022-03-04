@@ -307,6 +307,8 @@ it will be facing right, and vice versa.
     def validate(self, text, level):
         if text in horizontal_screen_positions:
             return text
+        elif text in vertical_screen_positions:
+            return text
         elif str_utils.is_int(text):
             return text
         elif ',' in text and len(text.split(',')) == 2:

@@ -436,7 +436,7 @@ Causes the *Speaker* to speak some *Text*. If *Speaker* is a portrait nid that i
 
 The pipe | symbol can be used within the *Text* body to insert a line break.
 
-The *Style* optional keyword changes how the text is displayed graphically, by accessing built-in speak styles.
+The *Nid* optional keyword changes how the text is displayed graphically, by accessing built-in speak styles.
 
 1. *thought_bubble*: causes the text to be in a cloud-like thought bubble instead of a speech bubble.
 2. *noir*: causes the speech bubble to be dark grey with white text.
