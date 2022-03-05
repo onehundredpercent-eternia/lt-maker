@@ -85,9 +85,7 @@ class Name(SurfComponent):
         name: str = None
         if isinstance(self.source, UnitObject):
             name = self.get_unit_name(self.source)
-        elif isinstance(self.source, ItemPrefab):
-            name = self.source.name
-        elif isinstance(self.source, SkillPrefab):
+        elif hasattr(self.source, 'name'):
             name = self.source.name
         else:
             name = str(self.source)
