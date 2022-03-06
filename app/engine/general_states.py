@@ -193,6 +193,9 @@ class FreeState(MapState):
 
         game.cursor.show()
         game.boundary.show()
+        for unit in game.get_all_units():
+            if skill_system.has_dynamic_range(unit):
+                game.boundary.recalculate_unit(unit)
         phase.fade_in_phase_music()
 
     def take_input(self, event):
@@ -1906,10 +1909,6 @@ class AIState(MapState):
 
     def update(self):
         super().update()
-
-        # Don't bother if someone is dying!!!
-        if any(unit.is_dying for unit in game.units):
-            return
 
         if (not self.cur_unit or not self.cur_unit.position):
             self.cur_unit = self.get_next_unit()

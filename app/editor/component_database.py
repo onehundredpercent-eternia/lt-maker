@@ -103,6 +103,7 @@ class FloatItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = QDoubleSpinBox(self)
         self.editor.setMaximumWidth(60)
+        self.editor.setRange(-99, 99)
         self.editor.setSingleStep(.1)
         if self._data.value is None:
             self._data.value = 0

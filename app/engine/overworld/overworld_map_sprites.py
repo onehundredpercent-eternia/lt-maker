@@ -176,8 +176,9 @@ class OverworldRoadSprite():
         return surf
 
 class OverworldUnitSprite():
-    def __init__(self, unit_object: UnitObject | UnitPrefab, parent: OverworldEntityObject):
+    def __init__(self, unit_object: UnitObject | UnitPrefab, parent: OverworldEntityObject, team: NID):
         self.unit: UnitObject | UnitPrefab = unit_object
+        self.team = team
         self.state = 'normal'                       # What state the image sprite is in
         self.image_state = 'passive'                # What the image looks like
         self.transition_state = 'normal'
@@ -214,8 +215,7 @@ class OverworldUnitSprite():
             self.map_sprite = None
             return
 
-        team = 'player'
-        map_sprite = MapSprite(res, team)
+        map_sprite = MapSprite(res, self.team)
         self.map_sprite = map_sprite
 
     # Normally drawing units is culled to those on the screen

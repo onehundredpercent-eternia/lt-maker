@@ -38,7 +38,6 @@ class EventManager():
 
     def trigger(self, trigger, unit=None, unit2=None, item=None, position=None, region=None, level_nid=None):
         triggered_events = self.get_triggered_events(trigger, unit, unit2, item, position, region, level_nid)
-
         new_event = False
         sorted_events = sorted(triggered_events, key=lambda x: x.priority)
         for event_prefab in sorted_events:

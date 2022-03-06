@@ -3,7 +3,6 @@ from app.engine.text_evaluator import TextEvaluator
 
 import ast
 import logging
-import re
 from typing import Any, Callable, Dict, List, Set, Tuple
 
 import app.engine.config as cf
@@ -21,7 +20,7 @@ from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper impo
 from app.engine.game_state import game
 from app.engine.graphics.dialog.narration_dialogue import NarrationDialogue
 from app.engine.graphics.ui_framework.premade_animations.animation_templates import \
-    translate_anim
+    fade_anim, translate_anim
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_animation import \
     InterpolationType
@@ -36,53 +35,13 @@ from app.engine.overworld.overworld_movement_manager import \
 from app.engine.sound import SOUNDTHREAD
 from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait, MementoEventPortrait
+from app.events.screen_positions import parse_screen_position
+from app.events.speak_style import SpeakStyle
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
-
-if MEMENTO_MODE:
-    screen_positions = {'OffscreenLeft': -128,
-                        'FarLeft': 0,
-                        'Left': 36,
-                        'MidLeft': 72,
-                        'CenterLeft': 72,
-                        'CenterRight': 184,
-                        'MidRight': 184,
-                        'LevelUpRight': 216,
-                        'Right': 220,
-                        'FarRight': 256,
-                        'OffscreenRight': 384}
-else:
-    screen_positions = {'OffscreenLeft': -96,
-                        'FarLeft': -24,
-                        'Left': 0,
-                        'MidLeft': 24,
-                        'CenterLeft': 24,
-                        'CenterRight': 120,
-                        'MidRight': 120,
-                        'LevelUpRight': 140,
-                        'Right': 144,
-                        'FarRight': 168,
-                        'OffscreenRight': 240}
-
-vertical_screen_positions = {'Top': 0,
-                             'Middle': 40,
-                             'Bottom': 80}
-if MEMENTO_MODE:
-    vertical_screen_positions['Top'] = 2
-
-class SpeakStyle():
-    def __init__(self, nid: NID = None, speaker: NID = None, text_position: str | Tuple[int, int]=None,
-                 width: int = None, dialog_variant: str = None, speed: int = None, flags: Set[str] = None):
-        self.nid: NID = nid
-        self.speaker: NID = speaker
-        self.text_position: str | Tuple[int, int] = text_position
-        self.width: int = width
-        self.dialog_variant: str = dialog_variant
-        self.speed: int = speed
-        self.flags: Set[str] = flags
 
 class Event():
     _transition_speed = 250
@@ -110,7 +69,7 @@ class Event():
             self.dialog_background = memento_dialog.MementoDialogBackground()
         else:
             self.dialog_background = None
-        self.speak_styles: Dict[NID, SpeakStyle] = {}
+
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
         self.other_boxes: List[Tuple[NID, Any]] = []
@@ -760,11 +719,6 @@ class Event():
             except Exception as e:
                 self.logger.error("Could not evaluate %s (%s)" % (to_eval, e))
                 return
-            # Need to update fog of war when we change it
-            if nid in ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius', '_other_fog_of_war_radius'):
-                for unit in game.units:
-                    if unit.position:
-                        action.do(action.UpdateFogOfWar(unit))
 
         elif command.nid == 'inc_level_var':
             values, flags = event_commands.parse(command, self._evaluate_all)
@@ -927,8 +881,6 @@ class Event():
                 return
             if values[1] in DB.teams:
                 action.do(action.ChangeTeam(unit, values[1]))
-                if unit.position:
-                    action.do(action.UpdateFogOfWar(unit))
             else:
                 self.logger.error("Not a valid team: %s" % values[1])
                 return
@@ -1565,7 +1517,12 @@ class Event():
             component.name = name
             component.disable()
             x, y = pos
+            component.offset = pos
             if anim_dir:
+                if anim_dir == 'fade':
+                    enter_anim = fade_anim(0, 1, 1000)
+                    exit_anim = fade_anim(1, 0, 1000)
+                else:
                 if anim_dir == 'west':
                     start_x = -component.width
                     start_y = y
@@ -1624,19 +1581,7 @@ class Event():
         if name in self.portraits and not self.portraits[name].remove:
             return False
 
-        pos = values[1]
-        if MEMENTO_MODE:
-            vert_pos = 'Top'
-        elif len(values) > 4 and values[4]: # there's a vertical position as well
-            vert_pos = values[4]
-        else:
-            vert_pos = 'Bottom'
-        if pos in screen_positions:
-            position = [screen_positions[pos], vertical_screen_positions[vert_pos]]
-            mirror = 'Left' in pos
-        else:
-            position = [int(p) for p in pos.split(',')]
-            mirror = False
+        position, mirror = parse_screen_position(values[1])
 
         priority = self.priority_counter
         if 'low_priority' in flags:
@@ -1700,11 +1645,7 @@ class Event():
         if not portrait:
             return False
 
-        pos = values[1]
-        if pos in screen_positions:
-            position = [screen_positions[pos], 80]
-        else:
-            position = [int(p) for p in pos.split(',')]
+        position, _ = parse_screen_position(values[1])
 
         if 'immediate' in flags or self.do_skip:
             portrait.quick_move(position)
@@ -1741,8 +1682,10 @@ class Event():
     def _evaluate_all(self, text: str) -> str:
         return self.text_evaluator._evaluate_all(text)
 
-    def speak(self, speaker, text, text_position, text_width, dialog_variant,
-              nid, speed, flags):
+    def speak(self, speaker, text, text_position=None, width=None, style_nid=None, text_speed=None,
+              color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
+              message_tail=None, flags=None):
+        flags = flags or set()
         # special char: this is a unicode single-line break.
         # basically equivalent to {br}
         # the first char shouldn't be one of these
@@ -1754,69 +1697,78 @@ class Event():
             text += '{no_wait}'
 
         speak_style = None
-        if nid and nid in self.speak_styles:
-            speak_style = self.speak_styles[nid]
+        if style_nid and style_nid in game.speak_styles:
+            speak_style = game.speak_styles[style_nid]
 
-        if not speaker:
-            if speak_style:
+        if not speaker and speak_style:
                 speaker = speak_style.speaker
+        portrait = self.portraits.get(speaker)
 
-        position = None
         if text_position:
             if text_position == 'center':
                 position = 'center'
             else:
                 position = self.parse_pos(text_position)
-        elif speak_style:
+        elif speak_style and speak_style.text_position:
             position = speak_style.text_position
+        else:
+            position = None
 
-        width = None
-        if text_width:
-            width = int(text_width)
-        elif speak_style:
-            width = speak_style.width
+        if width:
+            box_width = int(width)
+        elif speak_style and speak_style.width:
+            box_width = speak_style.width
+        else:
+            box_width = None
 
-        variant = None
-        if dialog_variant:
-            variant = dialog_variant
-        elif speak_style:
-            variant = speak_style.dialog_variant
-
-        if speed:
-            speed = float(speed)
-        elif speak_style and speak_style.speed:
-            speed = speak_style.speed
+        if text_speed:
+            speed = float(text_speed)
+        elif speak_style and speak_style.text_speed:
+            speed = speak_style.text_speed
         else:
             speed = 1
 
-        portrait = self.portraits.get(speaker)
+        if font_type:
+            ftype = font_type
+        elif speak_style and speak_style.font_type:
+            ftype = speak_style.font_type
+        else:
+            ftype = 'convo'
+
+        if color:
+            fcolor = color
+        elif speak_style and speak_style.font_color:
+            fcolor = speak_style.font_color
+        else:
+            fcolor = None
+
+        if dialog_box:
+            bg = dialog_box
+        elif speak_style and speak_style.dialog_box:
+            bg = speak_style.dialog_box
+        else:
         bg = 'message_bg_base'
-        if variant == 'noir':
-            bg = 'menu_bg_dark'
-        elif variant == 'clear':
-            bg = None
-        elif variant == 'cinematic':
-            bg = None
-            if not position:
-                position = 'center'
-        elif variant == 'hint':
-            bg = 'menu_bg_parchment'
-            if not position:
-                position = 'center'
-            if not width:
-                width = WINWIDTH//2 + 8
-        elif variant == 'narration':
-            bg = 'menu_bg_base'
-            if not position:
-                position = (4, 110)
-            if not width:
-                width = WINWIDTH - 8
-        elif variant == 'narration_top':
-            bg = 'menu_bg_base'
-            if not position:
-                position = (4, 2)
-            if not width:
-                width = WINWIDTH - 8
+
+        if num_lines:
+            lines = int(num_lines)
+        elif speak_style and speak_style.num_lines:
+            lines = speak_style.num_lines
+        else:
+            lines = 2
+
+        if draw_cursor:
+            cursor = bool(draw_cursor)
+        elif speak_style and speak_style.draw_cursor:
+            cursor = speak_style.draw_cursor
+        else:
+            cursor = True
+
+        if message_tail:
+            tail = message_tail
+        elif speak_style and speak_style.message_tail:
+            tail = speak_style.message_tail
+        else:
+            tail = "message_bg_tail"
 
         if speak_style and speak_style.flags:
             flags = speak_style.flags.union(flags)
@@ -1826,7 +1778,11 @@ class Event():
             self.saturate_portrait(portrait)
         else:
             autosize = 'fit' in flags
-            new_dialog = dialog.Dialog(text, portrait, bg, position, width, speaker=speaker, variant=variant, nid=nid, autosize=autosize, speed=speed)
+        new_dialog = \
+            dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
+                          style_nid=style_nid, autosize=autosize, speed=speed,
+                          font_color=fcolor, font_type=ftype, num_lines=lines,
+                          draw_cursor=cursor, message_tail=tail)
             new_dialog.hold = 'hold' in flags
             if 'no_popup' in flags:
                 new_dialog.last_update = engine.get_time() - 10000
@@ -1839,12 +1795,14 @@ class Event():
             portrait.priority = self.priority_counter
             self.priority_counter += 1
 
-    def speak_style(self, nid, speaker, text_position, width,
-                    dialog_variant, speed, flags):
-        if nid in self.speak_styles:
-            style = self.speak_styles[nid]
+    def speak_style(self, style_nid, speaker=None, text_position=None, width=None, text_speed=None,
+                    font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
+                    message_tail=None, flags=None):
+        flags = flags or set()
+        if style_nid in game.speak_styles:
+            style = game.speak_styles[style_nid]
         else:
-            style = SpeakStyle(nid=nid)
+            style = SpeakStyle(nid=style_nid)
         # parse everything
         if speaker:
             style.speaker = speaker
@@ -1855,17 +1813,28 @@ class Event():
                 style.text_position  = self.parse_pos(text_position)
         if width:
             style.width = int(width)
-        if dialog_variant:
-            style.dialog_variant = dialog_variant
-        if speed:
-            style.speed = float(speed)
+        if text_speed:
+            style.text_speed = float(text_speed)
+        if font_color:
+            style.font_color = font_color
+        if font_type:
+            style.font_type = font_type
+        if dialog_box:
+            style.dialog_box = dialog_box
+        if num_lines:
+            style.num_lines = int(num_lines)
+        if draw_cursor:
+            style.draw_cursor = bool(draw_cursor)
+        if message_tail:
+            style.message_tail = message_tail
         if flags:
             style.flags = flags
-        self.speak_styles[nid] = style
+        # Create new style or modify existing style
+        game.speak_styles[style_nid] = style
 
     def unhold(self, unhold_nid, flags):
         for box in self.text_boxes:
-            if box.nid == unhold_nid:
+            if box.style_nid == unhold_nid:
                 box.hold = False
 
     def _place_unit(self, unit, position, entry_type):
@@ -3294,10 +3263,18 @@ class Event():
         arrows = 'arrows' in flags and orientation == 'horizontal'
         scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
 
+        event_context = {
+            'unit': self.unit,
+            'unit2': self.unit2,
+            'item': self.item,
+            'position': self.position,
+            'region': self.region
+        }
+
         game.memory['player_choice'] = (nid, header, data, row_width,
                                         orientation, dtype, should_persist,
                                         align, bg, event_nid, size, no_cursor,
-                                        arrows, scroll_bar, talign)
+                                        arrows, scroll_bar, talign, event_context)
         game.state.change('player_choice')
         self.state = 'paused'
 
@@ -3629,7 +3606,11 @@ class Event():
             unit_nid = values[1]
             if unit_nid not in DB.units.keys():
                 self.logger.error('%s: No such unit with nid %s', 'create_overworld_entity', unit_nid)
-            new_entity = OverworldEntityObject.from_unit_prefab(entity_nid, None, unit_nid)
+            if values[2] in DB.teams:
+                team_nid = values[2]
+            else:
+                team_nid = 'player'
+            new_entity = OverworldEntityObject.from_unit_prefab(entity_nid, None, unit_nid, team_nid)
             game.overworld_controller.add_entity(new_entity)
 
     def set_overworld_menu_option_enabled(self, node_nid: NID, option_nid: NID, setting: bool, flags: Dict):

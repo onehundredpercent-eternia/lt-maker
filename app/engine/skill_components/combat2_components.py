@@ -157,6 +157,9 @@ class EvalMaximumRange(SkillComponent):
             print("Couldn't evaluate %s conditional" % self.value)
         return 0
 
+    def has_dynamic_range(sellf, unit):
+        return True
+
 class CannotDouble(SkillComponent):
     nid = 'cannot_double'
     desc = "Unit cannot double"
@@ -339,7 +342,7 @@ class PostCombatDamagePercent(SkillComponent):
     expose = Type.Float
     value = 0.2
     author = 'Lord_Tweed'
-    
+
     def end_combat(self, playback, unit, item, target, mode):
         if target and skill_system.check_enemy(unit, target):
             end_health = int(target.get_hp() - (target.get_max_hp() * self.value))
@@ -386,7 +389,7 @@ def get_pc_damage(unit, skill) -> int:
         if component.defines('post_combat_damage'):
             return component.post_combat_damage()
     return 0  # 0 is default
-    
+
 class AllBrave(SkillComponent):
     nid = 'all_brave'
     desc = "All items multi-attack"

@@ -1,0 +1,68 @@
+from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
+
+if MEMENTO_MODE:
+    horizontal_screen_positions = {'OffscreenLeft': -128,
+                                   'FarLeft': 0,
+                                   'Left': 36,
+                                   'MidLeft': 72,
+                                   'CenterLeft': 72,
+                                   'CenterRight': 184,
+                                   'MidRight': 184,
+                                   'LevelUpRight': 216,
+                                   'Right': 220,
+                                   'FarRight': 256,
+                                   'OffscreenRight': 384}
+else:
+    horizontal_screen_positions = {'OffscreenLeft': -96,
+                                   'FarLeft': -24,
+                                   'Left': 0,
+                                   'MidLeft': 24,
+                                   'CenterLeft': 24,
+                                   'CenterRight': 120,
+                                   'MidRight': 120,
+                                   'LevelUpRight': 140,
+                                   'Right': 144,
+                                   'FarRight': 168,
+                                   'OffscreenRight': 240}
+
+vertical_screen_positions = {'Top': 0,
+                             'Middle': (WINHEIGHT - 80) // 2,
+                             'Bottom': WINHEIGHT - 80}
+
+if MEMENTO_MODE:
+    vertical_screen_positions['Top'] = 2
+
+def parse_screen_position(pos) -> tuple:
+    x, y = 0, 0
+    mirror = False
+    if ',' in pos:
+        split_pos = pos.split(',')
+        # Handle first part of tuple
+        if split_pos[0] in horizontal_screen_positions:
+            x = horizontal_screen_positions[split_pos[0]]
+            mirror = 'Left' in split_pos[0]
+        elif split_pos[0] in vertical_screen_positions:
+            y = vertical_screen_positions[split_pos[0]]
+        else:
+            x = int(split_pos[0])
+        # Handle second part of tuple
+        if split_pos[1] in horizontal_screen_positions:
+            x = horizontal_screen_positions[split_pos[1]]
+            mirror = 'Left' in split_pos[1]
+        elif split_pos[1] in vertical_screen_positions:
+            y = vertical_screen_positions[split_pos[1]]
+        else:
+            y = int(split_pos[1])
+    elif pos in horizontal_screen_positions:
+        x = horizontal_screen_positions[pos]
+        if MEMENTO_MODE:
+            y = vertical_screen_positions['Top']
+        else:
+            y = vertical_screen_positions['Bottom']
+        mirror = 'Left' in pos
+    elif pos in vertical_screen_positions:
+        x = horizontal_screen_positions['Left']
+        y = vertical_screen_positions[pos]
+        mirror = True
+
+    return (x, y), mirror

@@ -424,17 +424,27 @@ class SetGameVar(Action):
 
 
 class SetLevelVar(Action):
+    fog_nids = ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius', '_other_fog_of_war_radius')
+
     def __init__(self, nid, val):
         self.nid = nid
         self.val = val
         self.old_val = game.level_vars[self.nid]
 
+    def _update_fog_of_war(self):
+        if self.nid in self.fog_nids:
+            for unit in game.units:
+                if unit.position:
+                    UpdateFogOfWar(unit).execute()
+
     def do(self):
         game.level_vars[self.nid] = self.val
+        # Need to update fog of war when we change it
+        self._update_fog_of_war()
 
     def reverse(self):
         game.level_vars[self.nid] = self.old_val
-
+        self._update_fog_of_war()
 
 class Wait(Action):
     def __init__(self, unit):
@@ -502,11 +512,14 @@ class ResetUnitVars(Action):
         self.old_current_hp = self.unit.get_hp()
         self.old_current_mana = self.unit.get_mana()
         self.old_movement_left = self.unit.movement_left
+        self.old_possible_movement = equations.parser.movement(self.unit)
 
     def do(self):
         self.unit.set_hp(min(self.unit.get_hp(), equations.parser.hitpoints(self.unit)))
         self.unit.set_mana(min(self.unit.get_mana(), equations.parser.get_mana(self.unit)))
-        self.unit.movement_left = min(self.unit.movement_left, equations.parser.movement(self.unit))
+        new_possible_movement = equations.parser.movement(self.unit)
+        movement_diff = new_possible_movement - self.old_possible_movement
+        self.unit.movement_left = min(self.unit.movement_left + movement_diff, new_possible_movement)
 
     def reverse(self):
         self.unit.set_hp(self.old_current_hp)
@@ -1538,6 +1551,8 @@ class Promote(Action):
 class ClassChange(Action):
     def __init__(self, unit, new_class_nid):
         self.unit = unit
+        self.old_exp = self.unit.exp
+        self.old_level = self.unit.level
         self.old_klass = self.unit.klass
         self.new_klass = new_class_nid
 
@@ -2538,29 +2553,26 @@ class RemoveSkill(Action):
         self.old_owner_nid = None
         self.reset_action = ResetUnitVars(self.unit)
 
+    def _remove_skill(self, skill, true_remove):
+        skill_system.on_remove(self.unit, skill)
+        if true_remove:
+            skill_system.on_true_remove(self.unit, skill)
+        skill.owner_nid = None
+        self.removed_skills.append(skill)
+        if skill.aura and self.unit.position and game.board and game.tilemap:
+            aura_funcs.release_aura(self.unit, skill, game)
+
     def _remove(self, true_remove=True):
         self.removed_skills.clear()
         if isinstance(self.skill, str):
             for skill in self.unit.skills:
                 if skill.nid == self.skill:
-                    skill_system.on_remove(self.unit, skill)
-                    if true_remove:
-                        skill_system.on_true_remove(self.unit, skill)
-                    skill.owner_nid = None
-                    self.removed_skills.append(skill)
-                    if skill.aura and self.unit.position and game.board and game.tilemap:
-                        aura_funcs.release_aura(self.unit, skill, game)
+                    self._remove_skill(skill, true_remove)
             self.unit.skills = [skill for skill in self.unit.skills if skill.nid != self.skill]
         else:
             if self.skill in self.unit.skills:
                 self.unit.skills.remove(self.skill)
-                skill_system.on_remove(self.unit, self.skill)
-                if true_remove:
-                    skill_system.on_true_remove(self.unit, self.skill)
-                self.skill.owner_nid = None
-                self.removed_skills.append(self.skill)
-                if self.skill.aura and self.unit.position and game.board and game.tilemap:
-                    aura_funcs.release_aura(self.unit, self.skill, game)
+                self._remove_skill(self.skill, true_remove)
             else:
                 logging.warning("Skill %s not in %s's skills", self.skill.nid, self.unit)
 

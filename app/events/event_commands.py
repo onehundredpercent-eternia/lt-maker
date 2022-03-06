@@ -300,7 +300,7 @@ Extra flags:
         """
 
     keywords = ['Portrait', 'ScreenPosition']
-    optional_keywords = ['Slide', 'ExpressionList', 'VerticalScreenPosition']
+    optional_keywords = ['Slide', 'ExpressionList']
     _flags = ["mirror", "low_priority", "immediate", "no_block", "desaturate"]
 
 class MultiAddPortrait(EventCommand):
@@ -417,7 +417,7 @@ A style only applies to `speak` commands inside this event.
 """
 
     keywords = ['Nid']
-    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'DialogVariant', 'Float']
+    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'FontType', 'DialogBox', 'PositiveInteger', 'Bool', 'MessageTail']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit']
 
 class Speak(EventCommand):
@@ -436,7 +436,7 @@ Causes the *Speaker* to speak some *Text*. If *Speaker* is a portrait nid that i
 
 The pipe | symbol can be used within the *Text* body to insert a line break.
 
-The *DialogVariant* optional keyword changes how the text is displayed graphically:
+The *Nid* optional keyword changes how the text is displayed graphically, by accessing built-in speak styles.
 
 1. *thought_bubble*: causes the text to be in a cloud-like thought bubble instead of a speech bubble.
 2. *noir*: causes the speech bubble to be dark grey with white text.
@@ -449,12 +449,12 @@ Extra flags:
 1. *low_priority*: The speaker's portrait will not be moved in front of other overlapping portraits.
 2. *hold*: The dialog box will remain even after the player has pressed A (useful for narration).
 3. *no_popup*: The dialog box will not transition in, but rather will appear immediately.
-4. *fit*: The dialog box will shrink to fit the text.
+4. *fit*: The dialog box will shrink to fit the text. (not needed if there is an associated portrait).
 5. *no_block*: the speak command will not block event execution.
         """
 
     keywords = ['Speaker', 'Text']
-    optional_keywords = ['TextPosition', 'Width', 'DialogVariant', 'Nid', 'Float']
+    optional_keywords = ['TextPosition', 'Width', 'Nid', 'Float', 'FontColor', 'FontType', 'DialogBox', 'PositiveInteger', 'Bool', 'MessageTail']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
 class EndHoldSpeak(EventCommand):
@@ -508,7 +508,7 @@ The optional *Speed* and *Color3* keywords control the speed and color of the tr
 
     optional_keywords = ['Direction', 'Speed', 'Color3']
 
-class Background(EventCommand):
+class ChangeBackground(EventCommand):
     # Also does remove background
     nid = "change_background"
     nickname = "b"
@@ -1904,12 +1904,12 @@ Will always draw immediately behind the dialog.
 You can control the order that multiple siimultaneous overlays are drawn by choosing a custom z-level.
 Higher z-level sprites will cover lower z-level sprites occupying the same positions.
 
-Can choose to animate the sprite sliding in or out in a specific direction.
+Can choose to animate the sprite in and out.
 """
 
     keywords = ['String', 'Sprite']
-    optional_keywords = ['PositionOffset', 'Integer', 'CardinalDirection']
-    keyword_names = ['Name', 'Sprite_ID', 'Position', 'Z-Level', 'Animation Direction']
+    optional_keywords = ['PositionOffset', 'Integer', 'AnimationType']
+    keyword_names = ['Name', 'Sprite_ID', 'Position', 'Z-Level', 'Animation']
 
 class RemoveOverlaySprite(EventCommand):
     nid = 'remove_overlay_sprite'
@@ -2211,7 +2211,7 @@ class CreateOverworldEntity(EventCommand):
             'If the `delete` flag is passed, this command will instead delete the entity with said NID')
 
     keywords = ['Nid']
-    optional_keywords = ['Unit']
+    optional_keywords = ['Unit', 'Team']
     _flags = ['delete']
 
 class DisableOverworldEntity(EventCommand):

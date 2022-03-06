@@ -60,25 +60,26 @@ class OverworldEntityObject():
         else:
             unit = DB.units.values()[0]
             logging.error("OverworldEntityObject cannot find unit %s", party_prefab.leader)
-        entity.sprite = OverworldUnitSprite(unit, entity)
+        entity.sprite = OverworldUnitSprite(unit, entity, 'player')
 
         from app.engine import unit_sound
         entity.sound = unit_sound.UnitSound(unit)
         return entity
 
     @classmethod
-    def from_unit_prefab(cls, nid: NID, initial_position: Point, unit_nid: NID):
+    def from_unit_prefab(cls, nid: NID, initial_position: Point, unit_nid: NID, team: NID):
         entity = cls()
         entity.nid = nid
         entity.dnid = unit_nid
         entity.dtype = OverworldEntityTypes.UNIT
         entity.on_node = None
+        entity.team = team
 
         unit = DB.units.get(unit_nid)
         if not unit:
             logging.error("OverworldEntityObject cannot find unit %s, using default unit %s", unit_nid, DB.units.values()[0].nid)
             unit = DB.units.values()[0]
-        entity.sprite = OverworldUnitSprite(unit, entity)
+        entity.sprite = OverworldUnitSprite(unit, entity, team)
 
         entity.display_position = initial_position
 

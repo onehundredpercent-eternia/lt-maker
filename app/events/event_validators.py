@@ -7,6 +7,7 @@ from app.data.database import DB
 from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
                                                                   VAlignment)
 from app.events import event_commands
+from app.events.screen_positions import horizontal_screen_positions, vertical_screen_positions
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils
@@ -291,47 +292,38 @@ Determines position to place text. Supports either pixels (`x,y`) or the `center
 
 
 class ScreenPosition(Validator):
-    valid_positions = ["OffscreenLeft", "FarLeft", "Left", "MidLeft", "CenterLeft", "CenterRight", "MidRight", "LevelUpRight", "Right", "FarRight", "OffscreenRight"]
-
     desc = """
 Determines where to add the portrait to the screen.
 Available options are (`OffscreenLeft`,
-`FarLeft`, `Left`, `MidLeft`, `MidRight`, `Right`, `FarRight`, `OffscreenRight`).
+`FarLeft`, `Left`, `MidLeft`, `MidRight`, `Right`, `FarRight`, `OffscreenRight`) for horizontal positions.
+Available options are (`Top`, `Middle`, `Bottom`) for vertical positions.
 Alternately, specify a position in pixels (`x,y`)
 for the topleft of the portrait.
+Can combine horizontal and vertical positions like so: `Left,Bottom`.
 If the portrait is placed on the left side of the screen to start,
 it will be facing right, and vice versa.
 """
 
     def validate(self, text, level):
-        if text in self.valid_positions:
+        if text in horizontal_screen_positions:
+            return text
+        elif text in vertical_screen_positions:
             return text
         elif str_utils.is_int(text):
             return text
-        elif ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
+        elif ',' in text and len(text.split(',')) == 2:
+            splittext = text.split(',')
+            if all(str_utils.is_int(t) for t in splittext):
+            return text
+            elif splittext[0] in horizontal_screen_positions and splittext[1] in vertical_screen_positions:
+                return text
+            elif splittext[0] in vertical_screen_positions and splittext[1] in horizontal_screen_positions:
             return text
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(None, option) for option in self.valid_positions]
+        valids = [(None, option) for option in horizontal_screen_positions]
         return valids
-
-class VerticalScreenPosition(Validator):
-    valid_positions = ["Bottom", "Middle", "Top"]
-
-    desc = ("determines what height to add the portrait to the screen."
-            "Available options are (`Bottom`, `Middle`, `Top`). By default,"
-            "dialog portraits are displayed along the bottom.")
-
-    def validate(self, text, level):
-        if text in self.valid_positions:
-            return text
-        return None
-
-    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(None, option) for option in self.valid_positions]
-        return valids
-
 
 class Slide(OptionValidator):
     valid = ["normal", "left", "right"]
@@ -685,6 +677,8 @@ class GlobalUnit(Validator):
         valids.append((None, "convoy"))
         return valids
 
+class AnimationType(OptionValidator):
+    valid = ['north', 'east', 'west', 'south', 'fade']
 class CardinalDirection(OptionValidator):
     valid = ['north', 'east', 'west', 'south']
 

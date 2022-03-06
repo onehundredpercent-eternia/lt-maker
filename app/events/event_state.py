@@ -12,6 +12,7 @@ class EventState(State):
     name = 'event'
     transparent = True
     event = None
+    is_handling_end_event = False
 
     def begin(self):
         logging.debug("Begin Event State")
@@ -104,8 +105,10 @@ class EventState(State):
     def end_event(self):
         logging.debug("Ending Event")
         game.events.end(self.event)
-        if game.level_vars.get('_win_game'):
+        if game.level_vars.get('_win_game') or self.is_handling_end_event:
             logging.info("Player Wins!")
+            game.level_vars['_win_game'] = False
+            self.is_handling_end_event = True
             # Update statistics here, if necessary
             if game.level_vars.get('_level_end_triggered'):
                 self.level_end()
