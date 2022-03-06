@@ -141,7 +141,7 @@ class ManaCost(ItemComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_something:
-        action.do(action.ChangeMana(unit, -self.value))
+            action.do(action.ChangeMana(unit, -self.value))
         self._did_something = False
 
     def reverse_use(self, unit, item):

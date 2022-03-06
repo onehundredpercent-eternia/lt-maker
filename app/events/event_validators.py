@@ -314,11 +314,11 @@ it will be facing right, and vice versa.
         elif ',' in text and len(text.split(',')) == 2:
             splittext = text.split(',')
             if all(str_utils.is_int(t) for t in splittext):
-            return text
+                return text
             elif splittext[0] in horizontal_screen_positions and splittext[1] in vertical_screen_positions:
                 return text
             elif splittext[0] in vertical_screen_positions and splittext[1] in horizontal_screen_positions:
-            return text
+                return text
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:

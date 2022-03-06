@@ -122,3 +122,11 @@ class MementoRuneType(SkillComponent):
 
     def available(self, unit, skill) -> bool:
         return self.value in unit.affinity
+
+class MementoAttackStanceDouble(SkillComponent):
+    nid = 'memento_attack_stance_double'
+    desc = "Unit will ALWAYS double while supporting in a pairup"
+    tag = 'memento'
+
+    def attack_stance_double(self, unit, skill) -> bool:
+        return True

@@ -263,9 +263,9 @@ class ItemOption(BasicOption):
         FONT[self.font].blit_right(uses_string, surf, (left, y), uses_color)
 
 class MementoAccessoryItemOption(ItemOption):
-    def __init__(self, idx, item):
-        super().__init__(idx, item)
-        self.font = 'runes'
+    # def __init__(self, idx, item):
+    #     super().__init__(idx, item)
+    #     self.font = 'runes'
 
     def get_color(self):
         owner = game.get_unit(self.item.owner_nid)
@@ -299,7 +299,8 @@ class MementoSkillOption(ItemOption):
         self.skill = skill
         self.help_box = None
         self.ignore = False
-        self.font = FONT['runes']
+        # self.font = FONT['runes']
+        self.font = FONT['text']
 
     def get(self):
         return self.skill

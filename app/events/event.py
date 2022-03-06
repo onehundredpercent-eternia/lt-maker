@@ -1523,20 +1523,20 @@ class Event():
                     enter_anim = fade_anim(0, 1, 1000)
                     exit_anim = fade_anim(1, 0, 1000)
                 else:
-                if anim_dir == 'west':
-                    start_x = -component.width
-                    start_y = y
-                elif anim_dir == 'east':
-                    start_x = WINWIDTH
-                    start_y = y
-                elif anim_dir == 'north':
-                    start_x = x
-                    start_y = -component.height
-                elif anim_dir == 'south':
-                    start_x = x
-                    start_y = WINHEIGHT
-                enter_anim = translate_anim((start_x, start_y), (x, y), 750, interp_mode=InterpolationType.CUBIC)
-                exit_anim = translate_anim((x, y), (start_x, start_y), 750, disable_after=True, interp_mode=InterpolationType.CUBIC)
+                    if anim_dir == 'west':
+                        start_x = -component.width
+                        start_y = y
+                    elif anim_dir == 'east':
+                        start_x = WINWIDTH
+                        start_y = y
+                    elif anim_dir == 'north':
+                        start_x = x
+                        start_y = -component.height
+                    elif anim_dir == 'south':
+                        start_x = x
+                        start_y = WINHEIGHT
+                    enter_anim = translate_anim((start_x, start_y), (x, y), 750, interp_mode=InterpolationType.CUBIC)
+                    exit_anim = translate_anim((x, y), (start_x, start_y), 750, disable_after=True, interp_mode=InterpolationType.CUBIC)
                 component.save_animation(enter_anim, '!enter')
                 component.save_animation(exit_anim, '!exit')
 
@@ -1701,7 +1701,7 @@ class Event():
             speak_style = game.speak_styles[style_nid]
 
         if not speaker and speak_style:
-                speaker = speak_style.speaker
+            speaker = speak_style.speaker
         portrait = self.portraits.get(speaker)
 
         if text_position:
@@ -1747,7 +1747,7 @@ class Event():
         elif speak_style and speak_style.dialog_box:
             bg = speak_style.dialog_box
         else:
-        bg = 'message_bg_base'
+            bg = 'message_bg_base'
 
         if num_lines:
             lines = int(num_lines)
@@ -1778,11 +1778,11 @@ class Event():
             self.saturate_portrait(portrait)
         else:
             autosize = 'fit' in flags
-        new_dialog = \
-            dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
-                          style_nid=style_nid, autosize=autosize, speed=speed,
-                          font_color=fcolor, font_type=ftype, num_lines=lines,
-                          draw_cursor=cursor, message_tail=tail)
+            new_dialog = \
+                dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
+                              style_nid=style_nid, autosize=autosize, speed=speed,
+                              font_color=fcolor, font_type=ftype, num_lines=lines,
+                              draw_cursor=cursor, message_tail=tail)
             new_dialog.hold = 'hold' in flags
             if 'no_popup' in flags:
                 new_dialog.last_update = engine.get_time() - 10000
