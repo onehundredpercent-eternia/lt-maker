@@ -735,7 +735,7 @@ class LoreDisplay():
                 unit = game.get_unit(self.lore.nid)
                 icons.draw_portrait(image, unit, (self.width - 96, WINHEIGHT - 12 - 80))
             elif self.lore.nid in DB.units.keys():
-                portrait = icons.get_portrait_from_nid(DB.units.get(self.lore.nid).portrait_nid)
+                portrait, offset = icons.get_portrait_from_nid(DB.units.get(self.lore.nid).portrait_nid)
                 image.blit(portrait, (self.width - 96, WINHEIGHT - 12 - 80))
 
             FONT['text-blue'].blit_center(self.lore.title, image, (self.width // 2, 4))

@@ -113,7 +113,7 @@ def save_surface(surf, fn):
 
 def subsurface(surf, rect):
     x, y, width, height = rect
-    twidth = min(surf.get_width() - x , width)
+    twidth = min(surf.get_width() - x, width)
     theight = min(surf.get_height() - y, height)
     tx = max(0, x)
     ty = max(0, y)

@@ -27,7 +27,7 @@ Visit the Discord server for more information and help: https://discord.gg/dC6VW
 ## Executable Version
 > Recommended for beginners and those without programming experience
 
-> **LT-maker** can be run directly as an executable on Windows. Download it here:   https://www.dropbox.com/s/q8ii1e4rd3e97et/lt_editor.zip?dl=1
+> **LT-maker** can be run directly as an executable on Windows. Download it here:   https://gitlab.com/rainlash/lt-maker/-/releases
 . Unzip the downloaded files, and then double-click *double_click_to_run.bat* to begin creating your own game.
 
 ## Python Version

@@ -14,7 +14,7 @@ from app.engine import config as cf
 from app.engine.game_state import game
 from app.engine import menus, banner, action, base_surf, background, \
     info_menu, engine, equations, item_funcs, text_funcs, image_mods, \
-    convoy_funcs, item_system, gui
+    convoy_funcs, item_system, gui, trade
 from app.engine.combat import interaction
 from app.engine.fluid_scroll import FluidScroll
 
@@ -805,23 +805,28 @@ class PrepItemsState(State):
                 self.menu.update_options()
 
             elif self.state == 'trade_convoy':
-                action.do(action.HasTraded(self.unit))
                 unit_item = self.menu.get_inventory_current()
                 convoy_item = self.menu.get_convoy_current()
-                # print(unit_item, convoy_item, self.unit.nid)
-                convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
-                self.menu.unlock()
-                self.menu.update_options()
-                self.state = 'free'
+                if trade.check_trade(unit_item, convoy_item):
+                    action.do(action.HasTraded(self.unit))
+                    convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
+                    self.menu.unlock()
+                    self.menu.update_options()
+                    self.state = 'free'
+                else:
+                    SOUNDTHREAD.play_sfx('Error')
 
             elif self.state == 'trade_inventory':
-                action.do(action.HasTraded(self.unit))
                 convoy_item = self.menu.get_convoy_current()
                 unit_item = self.menu.get_inventory_current()
-                convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
-                self.menu.unlock()
-                self.menu.update_options()
-                self.state = 'free'
+                if trade.check_trade(unit_item, convoy_item):
+                    action.do(action.HasTraded(self.unit))
+                    convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
+                    self.menu.unlock()
+                    self.menu.update_options()
+                    self.state = 'free'
+                else:
+                    SOUNDTHREAD.play_sfx('Error')
 
         elif event == 'BACK':
             if self.menu.info_flag:

@@ -580,10 +580,10 @@ class InfoMenuState(State):
         surf = engine.create_surface((96, WINHEIGHT), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (8, 122))
 
-        im = icons.get_portrait(self.unit)
+        im, offset = icons.get_portrait(self.unit)
         if im:
             x_pos = (im.get_width() - 80)//2
-            portrait_surf = engine.subsurface(im, (x_pos, 0, 80, 72))
+            portrait_surf = engine.subsurface(im, (x_pos, offset, 80, 72))
             surf.blit(portrait_surf, (8, 8))
 
         FONT['text'].blit_center(self.unit.name, surf, (48, 80), 'white')

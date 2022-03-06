@@ -46,8 +46,9 @@ class OverworldFreeState(MapState):
 
         # assign the next level
         if game.overworld_controller.next_level:
-            next_level_node_nid = game.overworld_controller.node_by_level(game.overworld_controller.next_level).nid
-            game.overworld_controller.set_node_property(next_level_node_nid, OverworldNodeProperty.IS_NEXT_LEVEL, True)
+            next_level_node = game.overworld_controller.node_by_level(game.overworld_controller.next_level)
+            if next_level_node:
+                game.overworld_controller.set_node_property(next_level_node.nid, OverworldNodeProperty.IS_NEXT_LEVEL, True)
 
     def start(self):
         OverworldFreeState.set_up_overworld_game_state()
@@ -335,18 +336,18 @@ class OverworldPartyOptionMenu(State):
         self.events = [None for option in options]
         current_node = game.overworld_controller.selected_party_node()
         all_options = current_node.menu_options
-        
+
         additional_option_names = [option.option_name for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
         additional_ignore = [not game.overworld_controller.menu_option_enabled(current_node.nid, option.nid) for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
         additional_events = [option.event for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
         additional_info = [None for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
-        
+
         options += additional_option_names
         ignore += additional_ignore
         self.events += additional_events
         #Options seem to need info_descs, no idea what to do with those. They're just None for now to prevent crashes
         info_desc += additional_info
-        
+
         self.menu = menus.Choice(None, options, info=info_desc)
         self.menu.set_ignore(ignore)
 

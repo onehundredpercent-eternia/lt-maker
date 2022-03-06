@@ -101,9 +101,10 @@ def draw_faction(surf, faction, topleft):
     surf.blit(image, topleft)
     return surf
 
-def get_portrait(unit):
+def get_portrait(unit) -> tuple:
     image = RESOURCES.portraits.get(unit.portrait_nid)
     if image:
+        offset = image.info_offset
         if not image.image:
             image.image = engine.image_load(image.full_path)
         if MEMENTO_MODE:
@@ -118,24 +119,28 @@ def get_portrait(unit):
         if not image.image:
             image.image = engine.image_load(image.full_path)
         image = engine.subsurface(image.image, (klass.icon_index[0] * 80, klass.icon_index[1] * 72, 80, 72))
+        offset = 0
 
     image = image.convert()
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
 
-    return image
+    return image, offset
 
-def get_portrait_from_nid(portrait_nid):
+def get_portrait_from_nid(portrait_nid) -> tuple:
     image = RESOURCES.portraits.get(portrait_nid)
     if image:
+        offset = image.info_offset
         if not image.image:
             image.image = engine.image_load(image.full_path)
         image = engine.subsurface(image.image, (0, 0, 96, 80))
         image = image.convert()
         engine.set_colorkey(image, COLORKEY, rleaccel=True)
-    return image
+    else:
+        offset = 0
+    return image, offset
 
 def draw_portrait(surf, unit, topleft=None, bottomright=None):
-    image = get_portrait(unit)
+    image, _ = get_portrait(unit)
     if not image:
         return None
 

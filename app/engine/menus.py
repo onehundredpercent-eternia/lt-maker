@@ -35,11 +35,11 @@ def make_bg_surf(shimmer):
 
 def draw_unit_face(surf, topleft, unit, right):
     x, y = topleft
-    face_image = icons.get_portrait(unit)
+    face_image, offset = icons.get_portrait(unit)
     if right:
         face_image = engine.flip_horiz(face_image)
     face_image = face_image.convert_alpha()
-    face_image = engine.subsurface(face_image, (0, 0, 96, 76))
+    face_image = engine.subsurface(face_image, (0, max(0, offset - 4), 96, 76))
     face_image = image_mods.make_translucent(face_image, 0.5)
     left = x + 104//2 + 1
     top = y + (16 * DB.constants.total_items() + 8)//2 - 1 + 2
@@ -505,7 +505,7 @@ class Choice(Simple):
                     if item:
                         unit = game.get_unit(item.owner_nid)
                     if unit:
-                        face_image = icons.get_portrait(unit)
+                        face_image, _ = icons.get_portrait(unit)
                         face_image = face_image.convert_alpha()
                         # face_image = engine.subsurface(face_image, (0, 0, 96, 76))
                         face_image = image_mods.make_translucent(face_image, 0.5)

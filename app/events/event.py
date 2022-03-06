@@ -1271,7 +1271,7 @@ class Event():
             values, flags = event_commands.convert_parse(command, self._evaluate_all)
             unevaled_values, flags = event_commands.convert_parse(command, None)
             # we don't want to evaluate the contents immediately
-            values[1] = unevaled_values[1]
+            values[2] = unevaled_values[2]
             self.choice(*values, flags)
 
         elif command.nid == 'unchoice':
@@ -1402,7 +1402,7 @@ class Event():
             name = values[0]
             unit = self.get_unit(name)
             if unit and unit.portrait_nid:
-                portrait = icons.get_portrait(unit)
+                portrait, _ = icons.get_portrait(unit)
                 portrait = portrait.convert_alpha()
                 portrait = image_mods.make_translucent(portrait, 0.2)
             else:

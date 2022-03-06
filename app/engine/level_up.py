@@ -1,3 +1,4 @@
+from app.engine.objects.unit import UnitObject
 import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
@@ -311,15 +312,16 @@ class ExpState(State):
         return surf
 
     @staticmethod
-    def give_new_class_skills(unit):
+    def give_new_class_skills(unit: UnitObject):
         unit_klass = DB.classes.get(unit.klass)
-        for level_needed, class_skill in unit_klass.learned_skills:
+        for level_needed, class_skill_nid in unit_klass.learned_skills:
             if unit.level == level_needed:
-                if class_skill == 'Feat':
+                if class_skill_nid == 'Feat':
                     game.memory['current_unit'] = unit
                     game.state.change('feat_choice')
                 else:
-                    act = action.AddSkill(unit, class_skill)
+                    if class_skill_nid not in [skill.nid for skill in unit.skills]:
+                        act = action.AddSkill(unit, class_skill_nid)
                     action.do(act)
                     if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
                         game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
@@ -330,13 +332,14 @@ class ExpState(State):
         unit_prefab = DB.units.get(unit.nid)
         if not unit_prefab:
             return
-        for level_needed, personal_skill in unit_prefab.learned_skills:
+        for level_needed, personal_skill_nid in unit_prefab.learned_skills:
             if unit.level == level_needed:
-                if personal_skill == 'Feat':
+                if personal_skill_nid == 'Feat':
                     game.memory['current_unit'] = unit
                     game.state.change('feat_choice')
                 else:
-                    act = action.AddSkill(unit, personal_skill)
+                    if personal_skill_nid not in [skill.nid for skill in unit.skills]:
+                        act = action.AddSkill(unit, personal_skill_nid)
                     action.do(act)
                     if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
                         game.alerts.append(banner.GiveSkill(unit, act.skill_obj))

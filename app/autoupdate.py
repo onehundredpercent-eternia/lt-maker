@@ -3,8 +3,8 @@ import urllib.request
 
 from app.constants import VERSION
 
-remote_repo = r"https://www.dropbox.com/s/q8ii1e4rd3e97et/lt_editor.zip?dl=1"
-remote_metadata = r"https://www.dropbox.com/s/3kilsxojvdiogvb/metadata.txt?dl=1"
+remote_repo = r"https://gitlab.com/kdports/lt-maker/-/jobs/artifacts/logcrashfix/download?job=build_app"
+remote_metadata = r"https://gitlab.com/kdports/lt-maker/-/jobs/artifacts/logcrashfix/download?job=get_metadata"
 
 def check_version(a: str, b: str) -> bool:
     """
@@ -18,12 +18,13 @@ def download_url(url, save_path):
     with urllib.request.urlopen(url) as dl_file:
         with open(save_path, 'wb') as out_file:
             out_file.write(dl_file.read())
-    
+
 # Check
 def check_for_update() -> bool:
-    metadata = 'metadata.txt.tmp'
+    metadata = 'version.txt'
     try:
-        download_url(remote_metadata, metadata)
+        download_url(remote_metadata)
+
     except:
         print("Could not access internet!")
         return False

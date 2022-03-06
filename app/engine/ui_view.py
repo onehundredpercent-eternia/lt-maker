@@ -870,7 +870,7 @@ class ItemDescriptionPanel():
         if MEMENTO_MODE:
             pass
         else:
-            portrait = icons.get_portrait(self.unit)
+            portrait, _ = icons.get_portrait(self.unit)
             if portrait:
                 if cursor_left:
                     portrait = engine.flip_horiz(portrait)
