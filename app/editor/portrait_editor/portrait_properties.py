@@ -223,7 +223,7 @@ class PortraitProperties(QWidget):
         painter.setPen(QPen(Qt.black, 1, Qt.DashLine))
         painter.setOpacity(0.75)
         painter.drawRect(0, self.current.info_offset, 96, 72)
-            painter.end()
+        painter.end()
 
         final_pix = QPixmap.fromImage(editor_utilities.convert_colorkey(main_portrait))
         self.portrait_view.set_image(final_pix)

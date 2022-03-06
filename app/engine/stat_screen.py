@@ -162,17 +162,17 @@ class StatScreen():
         surf = engine.create_surface((STATWIDTH, WINHEIGHT), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (54, 82))
 
-        im = icons.get_portrait(self.unit)
+        im, offset = icons.get_portrait(self.unit)
         if im:
             width = im.get_width()
             if width < 112:
                 x_pos = (width - 80)//2
-                portrait_surf = engine.subsurface(im, (x_pos, 0, 80, 72))
+                portrait_surf = engine.subsurface(im, (x_pos, offset, 80, 72))
                 portrait_surf = engine.flip_horiz(portrait_surf)
                 surf.blit(portrait_surf, (16, 2))
             else:
                 x_pos = (width - 112)//2
-                portrait_surf = engine.subsurface(im, (x_pos, 0, 112, 72))
+                portrait_surf = engine.subsurface(im, (x_pos, offset, 112, 72))
                 portrait_surf = engine.flip_horiz(portrait_surf)
                 surf.blit(portrait_surf, (0, 2))
 

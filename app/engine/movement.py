@@ -81,16 +81,10 @@ class MovementManager():
 
     def check_weakly_traversable(self, unit_to_move, pos) -> bool:
         if not game.tilemap.check_bounds(pos):
-        return False
+            return False
         mcost = self.get_mcost(unit_to_move, pos)
         movement = equations.parser.movement(unit_to_move)
         return mcost <= 5 or mcost <= movement
-
-    def check_weakly_traversable(self, unit_to_move, pos) -> bool:
-        if not game.tilemap.check_bounds(pos):
-            return False
-        mcost = self.get_mcost(unit_to_move, pos)
-        return mcost <= 5
 
     def check_simple_traversable(self, pos) -> bool:
         if not game.tilemap.check_bounds(pos):
