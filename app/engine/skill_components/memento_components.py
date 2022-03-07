@@ -128,5 +128,5 @@ class MementoAttackStanceDouble(SkillComponent):
     desc = "Unit will ALWAYS double while supporting in a pairup"
     tag = 'memento'
 
-    def attack_stance_double(self, unit, skill) -> bool:
+    def attack_stance_double(self, unit) -> bool:
         return True

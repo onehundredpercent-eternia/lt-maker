@@ -320,6 +320,8 @@ class UIView():
 
     def create_attack_info(self, attacker, weapon, defender, a_assist=None, d_assist=None):
         def blit_num(surf, num, x_pos, y_pos):
+            if MEMENTO_MODE:
+                x_pos += 24
             if num is None:
                 FONT['text-blue'].blit_right('--', surf, (x_pos, y_pos))
                 return
@@ -348,7 +350,41 @@ class UIView():
         final = prefix + infix + ('_' if infix else '') + color
         surf = SPRITES.get(final).copy()
 
-        if DB.constants.value('pairup'):
+        if DB.constants.value('pairup') and MEMENTO_MODE:
+            if a_assist:
+                surf.blit(SPRITES.get('assist_info_blue').copy(), (91, 35))
+                
+                mt = combat_calcs.compute_assist_damage(a_assist, defender, a_assist.get_weapon(), defender.get_weapon(), 'attack', (0, 0))
+                if grandmaster:
+                    hit = combat_calcs.compute_hit(a_assist, defender, a_assist.get_weapon(), defender.get_weapon(), 'attack', (0, 0))
+                    blit_num(surf, int(mt * float(hit) / 100), 87, 35)
+                else:
+                    blit_num(surf, mt, 87, 35)
+                    hit = combat_calcs.compute_hit(a_assist, defender, a_assist.get_weapon(), defender.get_weapon(), 'attack', (0, 0))
+                    blit_num(surf, hit, 87, 51)
+                    # Blit crit if applicable
+                    if crit_flag:
+                        c = combat_calcs.compute_crit(a_assist, defender, a_assist.get_weapon(), defender.get_weapon(), 'attack', (0, 0))
+                        blit_num(surf, c, 87, 67)
+
+            if d_assist and defender.get_weapon() and \
+                    combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
+                surf.blit(SPRITES.get('assist_info_red').copy(), (1, 35))
+
+                mt = combat_calcs.compute_assist_damage(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+                if grandmaster:
+                    hit = combat_calcs.compute_hit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+                    blit_num(surf, int(mt * float(hit) / 100), -3, 35)
+                else:
+                    blit_num(surf, mt, -3, 35)
+                    hit = combat_calcs.compute_hit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+                    blit_num(surf, hit, -3, 51)
+                    # Blit crit if applicable
+                    if crit_flag:
+                        c = combat_calcs.compute_crit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+                        blit_num(surf, c, -3, 67)
+
+        elif DB.constants.value('pairup'):
             # This is where the dual attack info will be shown
             if (a_assist or d_assist) and not (attacker.traveler or defender.traveler):
                 # Background boxes
@@ -415,7 +451,7 @@ class UIView():
 
         # Name
         width = FONT['text'].width(attacker.name)
-        FONT['text'].blit(attacker.name, surf, (43 - width//2, 3))
+        FONT['text'].blit(attacker.name, surf, (43 - width//2 + (24 if MEMENTO_MODE else 0), 3))
         # Enemy name
         y_pos = 84
         if as_flag:
@@ -424,7 +460,7 @@ class UIView():
             y_pos -= 16
         if grandmaster:
             y_pos -= 16
-        position = 26 - FONT['text'].width(defender.name)//2, y_pos
+        position = 26 - FONT['text'].width(defender.name)//2 + (24 if MEMENTO_MODE else 0), y_pos
         FONT['text'].blit(defender.name, surf, position)
         # Enemy Weapon
         if defender.get_weapon():
@@ -436,7 +472,7 @@ class UIView():
                 y_pos -= 16
             if grandmaster:
                 y_pos -= 16
-            position = 32 - width//2, y_pos
+            position = 32 - width//2 + (24 if MEMENTO_MODE else 0), y_pos
             FONT['text'].blit(defender.get_weapon().name, surf, position)
         # Self HP
         blit_num(surf, attacker.get_hp(), 64, 19)
@@ -537,7 +573,7 @@ class UIView():
         icon = icons.get_icon(weapon)
         if icon:
             icon = item_system.item_icon_mod(attacker, weapon, defender, icon)
-            surf.blit(icon, (topleft[0] + 2, topleft[1] + 4))
+            surf.blit(icon, (topleft[0] + 2 + (24 if MEMENTO_MODE else 0), topleft[1] + 4))
 
         # Defender Item
         if defender.get_weapon():
@@ -552,11 +588,11 @@ class UIView():
                     y_pos -= 16
                 if grandmaster:
                     y_pos -= 16
-                surf.blit(icon, (topleft[0] + 50, y_pos))
+                surf.blit(icon, (topleft[0] + 50 + (24 if MEMENTO_MODE else 0), y_pos))
 
         # Advantage arrows
         if skill_system.check_enemy(attacker, defender):
-            self.draw_adv_arrows(surf, attacker, defender, weapon, defender.get_weapon(), (topleft[0] + 13, topleft[1] + 8))
+            self.draw_adv_arrows(surf, attacker, defender, weapon, defender.get_weapon(), (topleft[0] + 13 + (24 if MEMENTO_MODE else 0), topleft[1] + 8))
 
             y_pos = topleft[1] + 105
             if as_flag:
@@ -566,12 +602,14 @@ class UIView():
             if not grandmaster:
                 y_pos -= 16
 
-            self.draw_adv_arrows(surf, defender, attacker, defender.get_weapon(), weapon, (topleft[0] + 61, y_pos))
+            self.draw_adv_arrows(surf, defender, attacker, defender.get_weapon(), weapon, (topleft[0] + 61 + (24 if MEMENTO_MODE else 0), y_pos))
 
         # Doubling
         count = ANIMATION_COUNTERS.x2_counter.count
-        x2_pos_player = (topleft[0] + 59 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_enemy = (topleft[0] + 20 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
+        x2_pos_player = (topleft[0] + 59 + self.x_positions[count] + (24 if MEMENTO_MODE else 0), topleft[1] + 38 + self.y_positions[count])
+        x2_pos_enemy = (topleft[0] + 20 + self.x_positions[count] + (24 if MEMENTO_MODE else 0), topleft[1] + 38 + self.y_positions[count])
+        x2_pos_player_partner = (topleft[0] + 83 + self.x_positions[count] + (24 if MEMENTO_MODE else 0), topleft[1] + 38 + self.y_positions[count])
+        x2_pos_enemy_partner = (topleft[0] + 44 + self.x_positions[count] + (24 if MEMENTO_MODE else 0), topleft[1] + 38 + self.y_positions[count])
 
         my_num = combat_calcs.outspeed(attacker, defender, weapon, defender.get_weapon(), "attack", (0, 0))
         my_num *= combat_calcs.compute_multiattacks(attacker, defender, weapon, "attack", (0, 0))
@@ -583,6 +621,10 @@ class UIView():
             surf.blit(SPRITES.get('x3'), x2_pos_player)
         elif my_num == 4:
             surf.blit(SPRITES.get('x4'), x2_pos_player)
+
+        if a_assist:
+            if skill_system.attack_stance_double(a_assist):
+                surf.blit(SPRITES.get('x2'), x2_pos_player_partner)
 
         # Enemy doubling
         eweapon = defender.get_weapon()
@@ -600,6 +642,10 @@ class UIView():
                 surf.blit(SPRITES.get('x3'), x2_pos_enemy)
             elif e_num == 4:
                 surf.blit(SPRITES.get('x4'), x2_pos_enemy)
+
+            if d_assist:
+                if skill_system.attack_stance_double(d_assist):
+                    surf.blit(SPRITES.get('x2'), x2_pos_enemy_partner)
 
         # Turns off combat conditionals
         skill_system.test_off([], defender, defender.get_weapon(), attacker, 'defense')
