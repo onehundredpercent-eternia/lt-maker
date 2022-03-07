@@ -37,11 +37,18 @@ from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait
 from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
+from app.events import event_functions, overworld_event_functions
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
+
+# Get all event command implementations
+general_funcs = {func: getattr(event_funtions, func) for func in dir(event_functions) if callable(getattr(event_functions, func)) and not func.startswith("__")}
+overworld_funcs = {func: getattr(overworld_event_funtions, func) for func in dir(overworld_event_functions) if callable(getattr(overworld_event_functions, func)) and not func.startswith("__")}
+general_funcs.update(overworld_funcs)
+function_catalog: Dict[NID, Callable] = general_funcs
 
 class Event():
     _transition_speed = 250
@@ -297,13 +304,14 @@ class Event():
         """
         Returns true if a loop was found
         """
+        self.logger.disabled = False
         if command.nid == 'for':
-            self.logger.info('%s: %s', command.nid, command.values)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
             show_warning = True
             if 'no_warn' in command.flags:
                 show_warning = False
-            iterator_nid = command.values[0]
-            cond = command.values[1]
+            iterator_nid = command.parameters['Nid']
+            cond = command.parameters['Expression']
             cond = self._evaluate_all(cond)
             try:
                 arg_list = evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region)
@@ -341,7 +349,7 @@ class Event():
                 for command in reversed(looped_commands):
                     new_command = command.__class__.copy(command)
                     if iterator_nid:
-                        new_command.values = [value.replace('{' + iterator_nid + '}', arg) for value in new_command.values]
+                        new_command.parameters = {k: v.replace('{' + iterator_nid + '}', arg) for k, v in new_command.parameters.items()}
                     self.commands.insert(self.command_idx + 1, new_command)
             return True
         return False
@@ -350,11 +358,12 @@ class Event():
         """
         Returns true if the processor should be processing this command
         """
+        self.logger.disabled = False
         if command.nid == 'if':
-            self.logger.info('%s: %s', command.nid, command.values)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
             if not self.if_stack or self.if_stack[-1]:
                 try:
-                    cond = command.values[0]
+                    cond = command.parameters['Expression']
                     cond = self._evaluate_all(cond)
                     truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region))
                 except Exception as e:
@@ -368,14 +377,14 @@ class Event():
                 self.parse_stack.append(True)
             return False
         elif command.nid == 'elif':
-            self.logger.info('%s: %s', command.nid, command.values)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
             if not self.if_stack:
                 self.logger.error("Syntax Error somewhere in script. 'elif' needs to be after if statement.")
                 return False
             # If we haven't encountered a truth yet
             if not self.parse_stack[-1]:
                 try:
-                    cond = command.values[0]
+                    cond = command.parameters['Expression']
                     cond = self._evaluate_all(cond)
                     truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region))
                 except Exception as e:
@@ -388,7 +397,7 @@ class Event():
                 self.if_stack[-1] = False
             return False
         elif command.nid == 'else':
-            self.logger.info('%s: %s', command.nid, command.values)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
             if not self.if_stack:
                 self.logger.error("Syntax Error somewhere in script. 'else' needs to be after if statement.")
                 return False
@@ -400,7 +409,7 @@ class Event():
                 self.if_stack[-1] = False
             return False
         elif command.nid == 'end':
-            self.logger.info('%s: %s', command.nid, command.values)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
             if self.if_stack:
                 self.if_stack.pop()
             if self.parse_stack:
@@ -429,14 +438,15 @@ class Event():
             self.text_boxes[-1].hurry_up()
 
     def run_command(self, command: event_commands.EventCommand):
-        self.logger.info('%s: %s', command.nid, command.values)
-        current_time = engine.get_time()
+        self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
 
-        values, flags = event_commands.parse(command, self._evaluate_all)
+        parameters, flags = event_commands.convert_parse(command, self._evaluate_all)
         if 'no_warn' in flags:
             self.logger.disabled = True
         else:
             self.logger.disabled = False
+        parameters = {str_utils.camel_to_snake(k): v for k, v in parameters.items()}
+        function_catalog[command.nid](self, **parameters, flags=flags)
 
         if command.nid == 'break':
             self.end()
