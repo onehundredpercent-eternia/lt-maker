@@ -51,7 +51,7 @@ class DebugState(MapState):
             game.state.back()
             return
 
-        event_command = event_commands.parse_text(command)
+        event_command, error_loc = event_commands.parse_text_to_command(command)
         if not event_command:
             return
         game.events._add_event('debug_console', [event_command], game.cursor.get_hover())
