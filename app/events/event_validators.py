@@ -126,9 +126,6 @@ class EventFunction(Validator):
         valids = [(None, command.nid) for command in event_commands.get_commands()]
         return valids
 
-class Condition(Validator):
-    desc = "must be a valid Python condition to evaluate."
-
 class Expression(Validator):
     desc = "must be a valid Python expression to evaluate."
 
@@ -413,9 +410,6 @@ class PointList(Validator):
             return text
 
 class Speaker(Validator):
-    pass  # Any text will do
-
-class Text(Validator):
     pass  # Any text will do
 
 class Panorama(Validator):
