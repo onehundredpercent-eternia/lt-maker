@@ -2184,6 +2184,7 @@ class Separate(EventCommand):
 
     keywords = ["Unit"]
 
+# === OVERWORLD COMMANDS START HERE ===
 class StartOverworldCinematic(EventCommand):
     nid = 'overworld_cinematic'
     tag = Tags.OVERWORLD
@@ -2205,11 +2206,12 @@ class OverworldMoveUnit(EventCommand):
     tag = Tags.OVERWORLD
     desc = ('Issues a move command to *OverworldEntity* to move from its current position to given *OverworldLocation*. '
             'Alternately, moves *OverworldEntity* along a path denoted by the *PointList* in the format "(x, y)-(x1,y1)-(x2,y2)-...". '
-            'You can adjust the travel time via the *Float* parameter - higher is slower (2 is twice as slow, 3 is thrice...)'
+            'You can adjust the travel time via the *Speed* parameter - higher is slower (2 is twice as slow, 3 is thrice...)'
             '\n the `disable_after` flag determines whether or not to remove the unit after the move concludes. Useful for cinematics.')
 
     keywords = ["OverworldEntity"]
-    optional_keywords = ['OverworldLocation', 'Float', 'PointList']
+    optional_keywords = ['OverworldLocation', 'Speed', 'PointList']
+    keyword_types = ["OverworldEntity", 'OverworldLocation', 'Float', 'PointList']
     _flags = ['no_block', 'no_follow', 'disable_after', 'no_sound']
 
 class OverworldRevealNode(EventCommand):
@@ -2263,14 +2265,16 @@ class SetOverworldMenuOptionEnabled(EventCommand):
     tag = Tags.OVERWORLD
     desc = ('Toggle whether the specified node menu option can be accessed by the player. Note that even if enabled, it must also be visible for the player to access it.')
 
-    keywords = ['OverworldNodeNid', 'OverworldNodeMenuOption', 'Bool']
+    keywords = ['OverworldNodeNid', 'OverworldNodeMenuOption', 'Setting']
+    keyword_types = ['OverworldNodeNid', 'OverworldNodeMenuOption', 'Bool']
 
 class SetOverworldMenuOptionVisible(EventCommand):
     nid = 'set_overworld_menu_option_visible'
     tag = Tags.OVERWORLD
     desc = ('Toggle whether the specified node menu option can be seen by the player. Note that even if visible, it must also be enabled for the player to access it.')
 
-    keywords = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Bool']
+    keywords = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Setting']
+    keyword_types = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Bool']
 
 def get_commands():
     return EventCommand.__subclasses__()
