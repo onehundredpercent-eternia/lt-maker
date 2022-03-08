@@ -398,6 +398,7 @@ def transition(self, direction=None, speed=None, color3=None, flags=None):
         self.state = 'waiting'
 
 def change_background(self, panorama=None, flags=None):
+    flags = flags or set()
     if panorama:
         panorama = RESOURCES.panoramas.get(panorama)
         if not panorama:
@@ -792,6 +793,8 @@ def remove_unit(self, unit, remove_type=None, flags=None):
         action.do(action.LeaveMap(unit))
 
 def kill_unit(self, unit, flags=None):
+    flags = flags or set()
+
     new_unit = self.get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
@@ -1044,6 +1047,8 @@ def spawn_group(self, group, cardinal_direction, starting_group, movement_type=N
         game.state.change('movement')
 
 def move_group(self, group, starting_group, movement_type=None, placement=None, flags=None):
+    flags = flags or set()
+
     new_group = game.level.unit_groups.get(group)
     if not new_group:
         self.logger.error("Couldn't find group %s" % group)
@@ -1299,6 +1304,8 @@ def give_skill(self, global_unit, skill, flags=None):
         self.state = 'paused'
 
 def remove_skill(self, global_unit, skill, flags=None):
+    flags = flags or set()
+
     unit = self.get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
@@ -1362,6 +1369,8 @@ def change_portrait(self, global_unit, portrait_nid, flags=None):
     action.do(action.ChangePortrait(unit, portrait_nid))
 
 def change_stats(self, global_unit, stat_list, flags=None):
+    flags = flags or set()
+
     unit = self.get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
@@ -1377,6 +1386,8 @@ def change_stats(self, global_unit, stat_list, flags=None):
     self._apply_stat_changes(unit, stat_changes, flags)
 
 def set_stats(self, global_unit, stat_list, flags=None):
+    flags = flags or set()
+
     unit = self.get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
@@ -1457,6 +1468,8 @@ def autolevel_to(self, global_unit, expression, flags=None):
         action.do(action.AddSkill(unit, class_skill))
 
 def set_mode_autolevels(self, expression, flags=None):
+    flags = flags or set()
+
     try:
         autolevel = int(evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region))
     except:
@@ -1638,6 +1651,8 @@ def remove_market_item(self, item, flags=None):
     game.market_items.discard(item)
 
 def add_region(self, nid, position, size, region_type, string=None, flags=None):
+    flags = flags or set()
+
     if nid in game.level.regions.keys():
         self.logger.error("Region nid %s already present!" % nid)
         return
@@ -1835,6 +1850,8 @@ def prep(self, pick_units_enabled: str = None, music: str = None, other_options:
 
 def base(self, background: str, music: str, other_options: str,
          other_options_enabled: str, other_options_on_select: str, flags=None):
+    flags = flags or set()
+    
     # set panorama
     action.do(action.SetGameVar('_base_bg_name', background))
     # set music
@@ -1960,6 +1977,7 @@ def choice(self, nid: NID, title: str, choices: str, row_width: str = None, orie
     no_cursor = 'no_cursor' in flags
     arrows = 'arrows' in flags and orientation == 'horizontal'
     scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
+    backable = 'backable' in flags
 
     event_context = {
         'unit': self.unit,
@@ -1972,7 +1990,7 @@ def choice(self, nid: NID, title: str, choices: str, row_width: str = None, orie
     game.memory['player_choice'] = (nid, header, data, row_width,
                                     orientation, dtype, should_persist,
                                     align, bg, event_nid, size, no_cursor,
-                                    arrows, scroll_bar, talign, event_context)
+                                    arrows, scroll_bar, talign, backable, event_context)
     game.state.change('player_choice')
     self.state = 'paused'
 
