@@ -413,7 +413,7 @@ If the *no_block* flag is set, portrait bopping will not pause execution of even
     _flags = ["no_block"]
     
 class MirrorPortrait(EventCommand):
-    nid = "mirror"
+    nid = "mirror_portrait"
     nickname = "mirror"
     tag = Tags.PORTRAIT
 
@@ -489,7 +489,7 @@ Extra flags:
         """
 
     keywords = ['Speaker', 'Text']
-    optional_keywords = ['TextPosition', 'Width', 'Nid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail']
+    optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail']
     keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'Nid', 'Float', 'FontColor', 'FontType', 'DialogBox', 'PositiveInteger', 'Bool', 'MessageTail']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
@@ -1021,7 +1021,8 @@ Be extremely careful with this function. The new NID *must* be unique across eve
 Otherwise extremely undefined behavior can occur.
 """
 
-    keywords = ['Nid', 'Nid', 'String']
+    keywords = ['Unit', 'Nid', 'Name']
+    keyword_types = ['Unit', 'Nid', 'String']
 
 class AddGroup(EventCommand):
     nid = 'add_group'
@@ -1841,7 +1842,7 @@ via hitting the back button, and the event will go on as normal.
  """
 
     keywords = ['Nid', 'Title', 'Choices']
-    optional_keywords = ['RowWidth', 'Orientation', 'Alignment', 'BG', 'EventName', 'EntryType', 'Dimensions', 'TextAlign']
+    optional_keywords = ['RowWidth', 'Orientation', 'Alignment', 'BG', 'EventNid', 'EntryType', 'Dimensions', 'TextAlign']
     keyword_types = ['Nid', 'String', 'String', 'Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
     _flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar']
 
