@@ -641,7 +641,6 @@ class MenuState(MapState):
         # Play this here because there's a gap in sound while unit is moving
         SOUNDTHREAD.play_sfx('Select 2')
         game.cursor.hide()
-        game.stat_screen.reset_surfs()
         self.cur_unit = game.cursor.cur_unit
         if not self.cur_unit or not self.cur_unit.position:
             # Could happen if unit escaped
@@ -761,12 +760,10 @@ class MenuState(MapState):
                     act.execute()
                     self.cur_unit = u
                     game.cursor.cur_unit = u
-                    game.stat_screen.reset_surfs()
                 else:
                     if self.cur_unit.current_move:
                         action.reverse(self.cur_unit.current_move)
                         self.cur_unit.current_move = None
-                        game.stat_screen.reset_surfs()
                     # game.cursor.set_pos(self.cur_unit.position)
                     game.state.change('move')
                     game.cursor.construct_arrows(game.cursor.path[::-1])
@@ -1191,14 +1188,12 @@ class WeaponChoiceState(MapState):
         options = self.get_options(self.cur_unit)
         self.menu = menus.Choice(self.cur_unit, options)
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
-        game.stat_screen.reset_surfs()
         self.disp_attacks(self.cur_unit, self.menu.get_current())
 
     def _item_desc_update(self):
         current = self.menu.get_current()
         self.item_desc_panel.set_item(current)
         game.highlight.remove_highlights()
-        game.stat_screen.reset_surfs()
         self.disp_attacks(self.cur_unit, current)
 
     def take_input(self, event):
@@ -1243,7 +1238,6 @@ class WeaponChoiceState(MapState):
 
             game.memory['item'] = selection
             game.state.change('combat_targeting')
-            game.stat_screen.reset_surfs()
 
         elif event == 'INFO':
             self.menu.toggle_info()

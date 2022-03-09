@@ -166,8 +166,6 @@ class SimpleCombat():
 
         a_broke, d_broke = self.find_broken_items()
         self.handle_broken_items(a_broke, d_broke)
-
-        game.stat_screen.reset_surfs()
         
     def start_event(self, full_animation=False):
         # region is set to True or False depending on whether we are in a battle anim

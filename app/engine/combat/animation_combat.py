@@ -1091,8 +1091,6 @@ class AnimationCombat(BaseCombat, MockCombat):
         a_broke, d_broke = self.find_broken_items()
         self.handle_broken_items(a_broke, d_broke)
 
-        game.stat_screen.reset_surfs()
-
         # Clean up battle anims so we can re-use them later
         self.left_battle_anim.reset_unit()
         if self.lp_battle_anim:
