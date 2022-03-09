@@ -43,12 +43,12 @@ class EventCommand(Prefab):
 
     # volatile, can be different between the same class
     parameters: dict = {}
-    flags: set = set()
+    chosen_flags: set = set()
     display_values: list = []
 
     def __init__(self, parameters: Dict[str, str] = None, flags: Set[str] = None, display_values: List[str] = None):
         self.parameters: Dict[str, str] = parameters or {}
-        self.flags: Set[str] = flags or set()
+        self.chosen_flags: Set[str] = flags or set()
         self.display_values: List[str] = display_values or []
 
     def save(self):
@@ -91,7 +91,7 @@ class EventCommand(Prefab):
     def copy(cls, command: EventCommand) -> EventCommand:
         new_command = cls()
         new_command.parameters = command.parameters.copy()
-        new_command.flags = command.flags.copy()
+        new_command.chosen_flags = command.chosen_flags.copy()
         new_command.display_values = command.display_values.copy()
         return new_command
 
@@ -2380,7 +2380,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                     cmd_validator = command_info.get_keyword_types()[idx]
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
                 else:
-                    logging.error("too many arguments: %s", arg)
+                    logging.error("too many arguments: %s, %s", arg, arguments)
                     return None, idx
 
         copy = command(parameters, flags, cmd_args)
@@ -2389,9 +2389,9 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
     # Main function starts here
     text = text.lstrip()
     if text.startswith('#'):
-        return Comment(display_values=[text])
+        return Comment(display_values=[text]), None
     if text.startswith('comment;'):
-        return Comment(display_values=[text[8:]])
+        return Comment(display_values=[text[8:]]), None
     arguments = text.split(';')
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
@@ -2400,19 +2400,20 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
         if command_type.nid == command_nid or command_type.nickname == command_nid:
             output, bad_idx = _parse_command(command_type, arguments)
             if output:
-                return output
+                return output, None
+    # Only gets here if it couldn't find a good match
     if strict:
-        return bad_idx
+        return None, bad_idx
     elif not text:
-        return None
+        return None, None
     else:
-        return Comment(display_values=[text])
+        return Comment(display_values=[text]), None
 
 def parse(command: EventCommand, _eval_evals: Callable[[str], str] = None):
     parameters = command.parameters
     if _eval_evals:
         parameters = {k: _eval_evals(v) for k, v in parameters.items()}
-    return parameters, command.flags
+    return parameters, command.chosen_flags
 
 def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = None):
     from app.events.event_validators import convert
@@ -2432,4 +2433,4 @@ def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = Non
         keyword_type = command.get_keyword_types()[idx]
         parameters[keyword] = convert(keyword_type, value)
 
-    return parameters, command.flags
+    return parameters, command.chosen_flags

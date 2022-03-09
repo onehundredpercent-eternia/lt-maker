@@ -1749,7 +1749,7 @@ def map_anim(self, map_anim, float_position, speed=None, flags=None):
         return
     pos = self._parse_pos(float_position, True)
     if speed:
-        speed_mult = speed
+        speed_mult = float(speed)
     else:
         speed_mult = 1
     if 'permanent' in flags:

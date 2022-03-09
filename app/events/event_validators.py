@@ -144,9 +144,10 @@ class Integer(Validator):
 
 class Float(Validator):
     desc = "Any number with a decimal"
+
     def validate(self, text, level):
         if str_utils.is_float(text):
-            return float(text)
+            return text
         return None
 
     def convert(self, text: str):
@@ -276,10 +277,11 @@ class TextPosition(Validator):
     desc = """
 Determines position to place text. Supports either pixels (`x,y`) or the `center` position.
 """
+
     def validate(self, text, level):
         if text in self.valid_positions:
             return text
-        elif ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
+        elif text and ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
             return text
         return None
 

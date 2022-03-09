@@ -306,9 +306,9 @@ class Event():
         """
         self.logger.disabled = False
         if command.nid == 'for':
-            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             show_warning = True
-            if 'no_warn' in command.flags:
+            if 'no_warn' in command.chosen_flags:
                 show_warning = False
             iterator_nid = command.parameters['Nid']
             cond = command.parameters['Expression']
@@ -360,7 +360,7 @@ class Event():
         """
         self.logger.disabled = False
         if command.nid == 'if':
-            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             if not self.if_stack or self.if_stack[-1]:
                 try:
                     cond = command.parameters['Expression']
@@ -377,7 +377,7 @@ class Event():
                 self.parse_stack.append(True)
             return False
         elif command.nid == 'elif':
-            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             if not self.if_stack:
                 self.logger.error("Syntax Error somewhere in script. 'elif' needs to be after if statement.")
                 return False
@@ -397,7 +397,7 @@ class Event():
                 self.if_stack[-1] = False
             return False
         elif command.nid == 'else':
-            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             if not self.if_stack:
                 self.logger.error("Syntax Error somewhere in script. 'else' needs to be after if statement.")
                 return False
@@ -409,7 +409,7 @@ class Event():
                 self.if_stack[-1] = False
             return False
         elif command.nid == 'end':
-            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             if self.if_stack:
                 self.if_stack.pop()
             if self.parse_stack:
@@ -438,7 +438,7 @@ class Event():
             self.text_boxes[-1].hurry_up()
 
     def run_command(self, command: event_commands.EventCommand):
-        self.logger.info('%s: %s, %s', command.nid, command.parameters, command.flags)
+        self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
 
         parameters, flags = event_commands.convert_parse(command, self._evaluate_all)
 

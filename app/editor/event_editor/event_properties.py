@@ -164,7 +164,7 @@ class Highlighter(QSyntaxHighlighter):
         try:
             command, error_loc = event_commands.parse_text_to_command(line, strict=True)
             if command:
-                parameters, flags = event_commands.convert_parse(command)
+                parameters, flags = event_commands.parse(command)
                 for keyword in command.keywords:
                     if keyword not in parameters:
                         return 'all'
