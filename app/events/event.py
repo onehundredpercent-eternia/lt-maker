@@ -455,6 +455,7 @@ class Event():
         else:
             self.logger.disabled = False
         parameters = {str_utils.camel_to_snake(k): v for k, v in parameters.items()}
+        self.logger.debug("%s, %s", parameters, flags)
         function_catalog[command.nid](self, **parameters, flags=flags)
 
     def _object_to_str(self, obj) -> str:

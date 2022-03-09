@@ -77,7 +77,7 @@ def add_portrait(self, portrait, screen_position, slide=None, expression_list=No
     flags = flags or set()
 
     name = portrait
-    unit = self.get_unit(name)
+    unit = self._get_unit(name)
     if unit and unit.portrait_nid:
         portrait = RESOURCES.portraits.get(unit.portrait_nid)
     elif name in DB.units.keys():
@@ -236,10 +236,11 @@ def expression(self, portrait, expression_list, flags=None):
 def speak_style(self, style, speaker=None, text_position=None, width=None, text_speed=None,
                 font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None, message_tail=None, flags=None):
     flags = flags or set()
-    if style in game.speak_styles:
-        style = game.speak_styles[style]
+    style_nid = style
+    if style_nid in game.speak_styles:
+        style = game.speak_styles[style_nid]
     else:
-        style = SpeakStyle(nid=style)
+        style = SpeakStyle(nid=style_nid)
     # parse everything
     if speaker:
         style.speaker = speaker
@@ -266,7 +267,7 @@ def speak_style(self, style, speaker=None, text_position=None, width=None, text_
         style.message_tail = message_tail
     if flags:
         style.flags = flags
-    game.speak_styles[style] = style
+    game.speak_styles[style.nid] = style
 
 def speak(self, speaker, text, text_position=None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
@@ -362,7 +363,7 @@ def speak(self, speaker, text, text_position=None, width=None, style_nid=None, t
     autosize = 'fit' in flags
     new_dialog = \
         dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
-                      nid=style_nid, autosize=autosize, speed=speed,
+                      style_nid=style_nid, autosize=autosize, speed=speed,
                       font_color=fcolor, font_type=ftype, num_lines=lines,
                       draw_cursor=cursor, message_tail=tail)
     new_dialog.hold = 'hold' in flags
@@ -642,7 +643,7 @@ def make_generic(self, nid, klass, level, team, ai=None, faction=None, animation
         self.text_evaluator.created_unit = new_unit
 
 def create_unit(self, unit, nid=None, level=None, position=None, entry_type=None, placement=None, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -690,7 +691,7 @@ def create_unit(self, unit, nid=None, level=None, position=None, entry_type=None
     self._place_unit(new_unit, position, entry_type)
 
 def add_unit(self, unit, position=None, entry_type=None, placement=None, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -722,7 +723,7 @@ def add_unit(self, unit, position=None, entry_type=None, placement=None, flags=N
 def move_unit(self, unit, position=None, movement_type=None, placement=None, flags=None):
     flags = flags or set()
 
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -769,7 +770,7 @@ def move_unit(self, unit, position=None, movement_type=None, placement=None, fla
         game.state.change('movement')
 
 def remove_unit(self, unit, remove_type=None, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -795,7 +796,7 @@ def remove_unit(self, unit, remove_type=None, flags=None):
 def kill_unit(self, unit, flags=None):
     flags = flags or set()
 
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -829,7 +830,7 @@ def remove_all_enemies(self, flags=None):
 def interact_unit(self, unit, position, combat_script=None, ability=None, rounds=None, flags=None):
     flags = flags or set()
 
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor or not actor.position:
         self.logger.error("Couldn't find %s" % unit)
         return
@@ -891,28 +892,28 @@ def recruit_generic(self, unit, nid, name, flags=None):
     action.do(action.SetName(unit, name))
 
 def set_name(self, unit, string, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
     action.do(action.SetName(actor, string))
 
 def set_current_hp(self, unit, hp, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
     action.do(action.SetHP(actor, int(hp)))
 
 def set_current_mana(self, unit, mana, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
     action.do(action.SetMana(actor, int(mana)))
 
 def add_fatigue(self, unit, fatigue, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -921,7 +922,7 @@ def add_fatigue(self, unit, fatigue, flags=None):
 def set_unit_field(self, unit, key, value, flags=None):
     flags = flags or set()
 
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -936,7 +937,7 @@ def set_unit_field(self, unit, key, value, flags=None):
     action.do(action.ChangeField(actor, key, value, should_increment))
 
 def resurrect(self, global_unit, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -946,21 +947,21 @@ def resurrect(self, global_unit, flags=None):
     action.do(action.SetHP(unit, 1000))
 
 def reset(self, unit, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
     action.do(action.Reset(actor))
 
 def has_attacked(self, unit, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
     action.do(action.HasAttacked(actor))
 
 def has_traded(self, unit, flags=None):
-    actor = self.get_unit(unit)
+    actor = self._get_unit(unit)
     if not actor:
         self.logger.error("Couldn't find unit %s" % unit)
         return
@@ -1104,7 +1105,7 @@ def give_item(self, global_unit, item, flags=None):
     if global_unit.lower() == 'convoy':
         unit = None
     else:
-        unit = self.get_unit(global_unit)
+        unit = self._get_unit(global_unit)
         if not unit:
             self.logger.error("Couldn't find unit with nid %s" % global_unit)
             return
@@ -1253,7 +1254,7 @@ def give_bexp(self, bexp, party=None, string=None, flags=None):
         self.state = 'paused'
 
 def give_exp(self, global_unit, experience, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
         return
@@ -1263,7 +1264,7 @@ def give_exp(self, global_unit, experience, flags=None):
     self.state = 'paused'
 
 def set_exp(self, global_unit, experience, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
         return
@@ -1273,7 +1274,7 @@ def set_exp(self, global_unit, experience, flags=None):
 def give_wexp(self, global_unit, weapon_type, integer, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
         return
@@ -1286,7 +1287,7 @@ def give_wexp(self, global_unit, weapon_type, integer, flags=None):
 def give_skill(self, global_unit, skill, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
         return
@@ -1306,7 +1307,7 @@ def give_skill(self, global_unit, skill, flags=None):
 def remove_skill(self, global_unit, skill, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
         return
@@ -1325,7 +1326,7 @@ def remove_skill(self, global_unit, skill, flags=None):
         self.state = 'paused'
 
 def change_ai(self, global_unit, ai, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1336,7 +1337,7 @@ def change_ai(self, global_unit, ai, flags=None):
         return
 
 def change_party(self, global_unit, party, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1347,7 +1348,7 @@ def change_party(self, global_unit, party, flags=None):
         return
 
 def change_team(self, global_unit, team, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1358,7 +1359,7 @@ def change_team(self, global_unit, team, flags=None):
         return
 
 def change_portrait(self, global_unit, portrait_nid, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1371,7 +1372,7 @@ def change_portrait(self, global_unit, portrait_nid, flags=None):
 def change_stats(self, global_unit, stat_list, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1388,7 +1389,7 @@ def change_stats(self, global_unit, stat_list, flags=None):
 def set_stats(self, global_unit, stat_list, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1405,7 +1406,7 @@ def set_stats(self, global_unit, stat_list, flags=None):
     self._apply_stat_changes(unit, stat_changes, flags)
 
 def change_growths(self, global_unit, stat_list, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1420,7 +1421,7 @@ def change_growths(self, global_unit, stat_list, flags=None):
     self._apply_growth_changes(unit, growth_changes)
 
 def set_growths(self, global_unit, stat_list, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1439,7 +1440,7 @@ def set_growths(self, global_unit, stat_list, flags=None):
 def autolevel_to(self, global_unit, expression, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1481,7 +1482,7 @@ def set_mode_autolevels(self, expression, flags=None):
         game.current_mode.enemy_truelevels = autolevel
 
 def promote(self, global_unit, klass=None, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1511,7 +1512,7 @@ def promote(self, global_unit, klass=None, flags=None):
 def change_class(self, global_unit, klass=None, flags=None):
     flags = flags or set()
 
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1554,7 +1555,7 @@ def change_class(self, global_unit, klass=None, flags=None):
         self.state = 'paused'
 
 def add_tag(self, global_unit, tag, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1562,7 +1563,7 @@ def add_tag(self, global_unit, tag, flags=None):
         action.do(action.AddTag(unit, tag))
 
 def remove_tag(self, global_unit, tag, flags=None):
-    unit = self.get_unit(global_unit)
+    unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
@@ -1593,14 +1594,14 @@ def remove_base_convo(self, nid, flags=None):
         del game.base_convos[nid]
 
 def increment_support_points(self, unit1, unit2, support_points, flags=None):
-    _unit1 = self.get_unit(unit1)
+    _unit1 = self._get_unit(unit1)
     if not _unit1:
         _unit1 = DB.units.get(unit1)
     if not _unit1:
         self.logger.error("Couldn't find unit %s" % unit1)
         return
     unit1 = _unit1
-    _unit2 = self.get_unit(unit2)
+    _unit2 = self._get_unit(unit2)
     if not _unit2:
         _unit2 = DB.units.get(unit2)
     if not _unit2:
@@ -1617,13 +1618,13 @@ def increment_support_points(self, unit1, unit2, support_points, flags=None):
         return
 
 def unlock_support_rank(self, unit1, unit2, support_rank, flags=None):
-    _unit1 = self.get_unit(unit1)
+    _unit1 = self._get_unit(unit1)
     if not _unit1:
         _unit1 = DB.units.get(unit1)
     if not _unit1:
         self.logger.error("Couldn't find unit %s" % unit1)
         return
-    _unit2 = self.get_unit(unit2)
+    _unit2 = self._get_unit(unit2)
     if not _unit2:
         _unit2 = DB.units.get(unit2)
     if not _unit2:
@@ -1892,7 +1893,7 @@ def base(self, background: str, music: str, other_options: str,
     self.state = 'paused'
 
 def shop(self, unit, item_list, shop_flavor=None, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Must have a unit visit the shop!")
         return
@@ -2205,7 +2206,7 @@ def credits(self, role, credits, flags=None):
     self.state = 'waiting'
 
 def ending(self, portrait, title, text, flags=None):
-    unit = self.get_unit(portrait)
+    unit = self._get_unit(portrait)
     if unit and unit.portrait_nid:
         portrait, _ = icons.get_portrait(unit)
         portrait = portrait.convert_alpha()
@@ -2230,7 +2231,7 @@ def unlock(self, unit, flags=None):
     self.commands.insert(self.command_idx + 1, find_unlock_command)
 
 def find_unlock(self, unit, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
@@ -2260,7 +2261,7 @@ def find_unlock(self, unit, flags=None):
         game.memory['unlock_item'] = None
 
 def spend_unlock(self, unit, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
@@ -2293,11 +2294,11 @@ def spend_unlock(self, unit, flags=None):
 
 def trigger_script(self, event, unit1=None, unit2=None, flags=None):
     if unit1:
-        unit = self.get_unit(unit1)
+        unit = self._get_unit(unit1)
     else:
         unit = self.unit
     if unit2:
-        unit2 = self.get_unit(unit2)
+        unit2 = self._get_unit(unit2)
     else:
         unit2 = self.unit2
 
@@ -2345,7 +2346,7 @@ def change_roaming(self, free_roam_enabled, flags=None):
 
 def change_roaming_unit(self, unit, flags=None):
     if game.level:
-        unit = self.get_unit(unit)
+        unit = self._get_unit(unit)
         if unit:
             game.level.roam_unit = unit
         else:
@@ -2362,7 +2363,7 @@ def clean_up_roaming(self, flags=None):
 
 def add_to_initiative(self, unit, integer, flags=None):
     # NOT CURRENTLY TURNWHEEL COMPATIBLE
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
@@ -2373,7 +2374,7 @@ def add_to_initiative(self, unit, integer, flags=None):
         game.initiative.insert_at(unit, game.initiative.current_idx + pos)
 
 def move_in_initiative(self, unit, integer, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
@@ -2382,12 +2383,12 @@ def move_in_initiative(self, unit, integer, flags=None):
     action.do(action.MoveInInitiative(unit, offset))
 
 def pair_up(self, unit1, unit2, flags=None):
-    new_unit1 = self.get_unit(unit1)
+    new_unit1 = self._get_unit(unit1)
     if not new_unit1:
         self.logger.error("Couldn't find unit with nid %s" % unit1)
         return
     unit1 = new_unit1
-    new_unit2 = self.get_unit(unit2)
+    new_unit2 = self._get_unit(unit2)
     if not new_unit2:
         self.logger.error("Couldn't find unit with nid %s" % unit2)
         return
@@ -2395,7 +2396,7 @@ def pair_up(self, unit1, unit2, flags=None):
     action.do(action.PairUp(unit1, unit2))
 
 def separate(self, unit, flags=None):
-    new_unit = self.get_unit(unit)
+    new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
