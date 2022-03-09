@@ -15,7 +15,7 @@ class PlayerChoiceState(MapState):
     def start(self):
         self.nid, self.header, options_list, self.row_width, self.orientation, \
             self.data_type, self.should_persist, self.alignment, self.bg, self.event_on_choose, \
-            self.size, self.no_cursor, self.arrows, self.scroll_bar, self.text_align, self.event_context = \
+            self.size, self.no_cursor, self.arrows, self.scroll_bar, self.text_align, self.backable, self.event_context = \
             game.memory['player_choice']
         self.tsize = [0, 0]
         if self.size:
@@ -59,7 +59,9 @@ class PlayerChoiceState(MapState):
             SOUNDTHREAD.play_sfx('Select 6')
             self.menu.move_up()
         elif event == 'BACK':
-            if self.should_persist:
+            if self.should_persist or self.backable:
+                if self.backable:
+                    action.do(action.SetGameVar(self.nid, "BACK"))
                 # this is the only way to exit a persistent state
                 game.state.back()
             else:

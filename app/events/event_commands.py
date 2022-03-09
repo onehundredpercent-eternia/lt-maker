@@ -411,7 +411,7 @@ If the *no_block* flag is set, portrait bopping will not pause execution of even
 
     keywords = ['Portrait']
     _flags = ["no_block"]
-    
+
 class MirrorPortrait(EventCommand):
     nid = "mirror_portrait"
     nickname = "mirror"
@@ -2283,14 +2283,22 @@ def restore_command(dat):
     if len(dat) == 2:
         nid, display_values = dat
         text = ';'.join([nid] + display_values)
-        command = parse_text_to_command(text, strict=True)
+        command, _ = parse_text_to_command(text, strict=True)
+        if command:
+            return command
+        else:
+            return Comment(display_values=[nid + ';' + str.join(';', display_values)])
     elif len(dat) == 3:
         nid, values, display_values = dat
         text = ';'.join([nid] + display_values)
-        command = parse_text_to_command(text, strict=True)
+        command, _ = parse_text_to_command(text, strict=True)
+        if command:
+            return command
+        else:
+            return Comment(display_values=[nid + ';' + str.join(';', display_values)])
     else:
         logging.error("Couldn't restore event command: NID: %s; Display Values: %s", nid, display_values)
-    return Comment(display_values=[nid + ';' + str.join(';', display_values)])
+        return None
 
 single_equal_sign = re.compile(r'^[^\=]*\=[^\=]*$')
 evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList')
@@ -2305,7 +2313,7 @@ def determine_command_type(text: str) -> EventCommand:
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
     for command_type in subclasses:
-        if command_type.nid == command_nid
+        if command_type.nid == command_nid:
             return command_type()
     return Comment()
 
@@ -2372,7 +2380,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                     cmd_validator = command_info.get_keyword_types()[idx]
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
                 else:
-                    logging.error("too many arguments: %s" arg)
+                    logging.error("too many arguments: %s", arg)
                     return None, idx
 
         copy = command(parameters, flags, cmd_args)
