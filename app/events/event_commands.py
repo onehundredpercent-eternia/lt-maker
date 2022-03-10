@@ -1839,7 +1839,7 @@ via hitting the back button, and the event will go on as normal.
 * *no_cursor* removes the cursor.
 * *arrows* adds pulsing left/right arrows.
 * *scroll_bar* adds a vertical scroll bar
-* *backable* allows you to exit out of the menu without making a choiec - similarly to *persist*. If backed out in this way, will set `BACK` as the chosen option.
+* *backable* allows you to exit out of the menu without making a choice - similarly to *persist*. If backed out in this way, will set `BACK` as the chosen option.
  """
 
     keywords = ['Nid', 'Title', 'Choices']
@@ -1893,7 +1893,7 @@ expression would automatically update the gold.
 
     keywords = ['Nid', 'TableData']
     optional_keywords = ['Title', 'Dimensions', 'RowWidth', 'Alignment', 'BG', 'EntryType', 'TextAlign']
-    keyword_types = ['Nid', 'String', 'String', 'Size', 'Width', 'Align', 'Sprite', 'TableEntryType', 'HAAlign']
+    keyword_types = ['Nid', 'String', 'String', 'Size', 'Width', 'Align', 'Sprite', 'TableEntryType', 'HAlign']
     _flags = ['expression', 'no_bg']
 
 class RemoveTable(EventCommand):
