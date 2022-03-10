@@ -89,7 +89,7 @@ class EventManager():
         if all_events is None:
             all_events = []
         for event in all_events:
-            new_event = Event.restore(event)
+            new_event = Event.restore(event, game)
             self.all_events.append(new_event)
             self.event_stack.append(new_event)
 
