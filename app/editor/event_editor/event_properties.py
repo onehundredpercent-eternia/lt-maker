@@ -296,8 +296,12 @@ class CodeEditor(QPlainTextEdit):
         hint_words = []
         hint_words.append(command.nid)
         all_keywords = command.keywords + command.optional_keywords
-        for keyword in all_keywords:
-            hint_words.append(keyword)
+        for idx, keyword in enumerate(all_keywords):
+            if command.keyword_types:
+                keyword_type = command.keyword_types[idx]
+                hint_words.append(keyword + "=" + keyword_type)
+            else:
+                hint_words.append(keyword)
         if command.flags:
             hint_words.append('FLAGS')
         hint_cmd = ""
@@ -1158,6 +1162,8 @@ class ShowCommandsDialog(QDialog):
                 all_keywords = command.keywords + command.optional_keywords
                 for i, kwyd in enumerate(all_keywords):
                     next_text = kwyd
+                    if command.keyword_types:
+                        next_text = next_text + '=' + command.keyword_types[i]
                     if not i < len(command.keywords): # it's an optional
                         next_text = '_' + next_text + '_'
                     next_text += ';'
