@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch, call
 
 from app.tests.mocks.mock_game import get_mock_game
-from app.events.event_commands import parse_text
+from app.events.event_commands import parse_text_to_command
 
 class EventUnitTests(unittest.TestCase):
     def setUp(self):
@@ -30,7 +30,7 @@ class EventUnitTests(unittest.TestCase):
 
     def create_event(self, test_commands):
         from app.events.event import Event
-        parsed_test_commands = [parse_text(command) for command in test_commands]
+        parsed_test_commands = [parse_text_to_command(command)[0] for command in test_commands]
         event = Event('test_nid', parsed_test_commands, game=self.game)
         return event
 
@@ -75,6 +75,7 @@ class EventUnitTests(unittest.TestCase):
         self.assertEqual(event.state, 'complete')
 
     def test_speak_command(self):
+        from app.events import event_functions
         # test that event correctly parses speak commands
         self.MACRO_test_event_commands(['speak;Eirika;SPEAK_TEXT'])
 
@@ -92,7 +93,7 @@ class EventUnitTests(unittest.TestCase):
         # initialize testing command(s)
         # we test event command parsing in another test, so just use a dummy event
         event = self.create_event([])
-        event.speak(None, '\u2028SPEAK_TEXT\u2028SPEAK_TEXT', flags={'no_block'})
+        event_functions.speak(event, None, '\u2028SPEAK_TEXT\u2028SPEAK_TEXT', flags={'no_block'})
         mock_dialog.assert_called_with('SPEAK_TEXT{sub_break}SPEAK_TEXT{no_wait}', None, 'message_bg_base',
                                             None, None, speaker=None, style_nid=None,
                                             autosize=False, speed=1, font_color=None,
@@ -108,7 +109,7 @@ class EventUnitTests(unittest.TestCase):
         mock_portrait = MagicMock()
         event = self.create_event([])
         event.portraits['Eirika'] = mock_portrait
-        event.speak('Eirika', 'SPEAK_TEXT', text_position='1,2', width='3', text_speed='5.0')
+        event_functions.speak(event, 'Eirika', 'SPEAK_TEXT', text_position='1,2', width='3', text_speed='5.0')
         mock_dialog.assert_called_with('SPEAK_TEXT', mock_portrait, 'message_bg_base',
                                             (1, 2), 3, speaker='Eirika', style_nid=None,
                                             autosize=False, speed=5.0, font_color=None,
@@ -120,7 +121,7 @@ class EventUnitTests(unittest.TestCase):
         #   - Test with portrait, low priority
         #   - Test with 'fit' flag
         #   - Test does not increment priority
-        event.speak('Eirika', 'SPEAK_TEXT', flags={'low_priority', 'fit'})
+        event_functions.speak(event, 'Eirika', 'SPEAK_TEXT', flags={'low_priority', 'fit'})
         mock_dialog.assert_called_with('SPEAK_TEXT', mock_portrait, 'message_bg_base',
                                             None, None, speaker='Eirika', style_nid=None,
                                             autosize=True, speed=1, font_color=None,
@@ -134,7 +135,7 @@ class EventUnitTests(unittest.TestCase):
         self.game.speak_styles['test_style'] = SpeakStyle('test_style', 'Eirika', (1, 2),  3,
                                                           4.5, 'some_color', 'some_font', 'some_box_type',
                                                           6, True, 'message_bg_thought_tail')
-        event.speak(None, 'SPEAK_TEXT', style_nid='test_style')
+        event_functions.speak(event, None, 'SPEAK_TEXT', style_nid='test_style')
         mock_dialog.assert_called_with('SPEAK_TEXT', None, 'some_box_type', (1, 2), 3,
                                        speaker='Eirika', style_nid='test_style',
                                        autosize=False, speed=4.5, font_color='some_color',
@@ -142,7 +143,7 @@ class EventUnitTests(unittest.TestCase):
                                        message_tail='message_bg_thought_tail')
 
         # test #4: special center text position
-        event.speak(None, 'SPEAK_TEXT', text_position='center')
+        event_functions.speak(event, None, 'SPEAK_TEXT', text_position='center')
         mock_dialog.assert_called_with('SPEAK_TEXT', None, 'message_bg_base',
                                             'center', None, speaker=None, style_nid=None,
                                             autosize=False, speed=1, font_color=None,
