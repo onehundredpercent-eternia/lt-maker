@@ -449,10 +449,10 @@ class Event():
 
         # Handle the weird cases where we don't want to handle evaluation
         if command.nid == 'choice':
-            unevaled_parameters, flags = event_commands.convert_parse(command, None)
+            unevaled_parameters, _ = event_commands.convert_parse(command, None)
             parameters['Choices'] = unevaled_parameters['Choices']
         elif command.nid == 'table':
-            unevaled_parameters, flags = event_commands.convert_parse(command, None)
+            unevaled_parameters, _ = event_commands.convert_parse(command, None)
             parameters['TableData'] = unevaled_parameters['TableData']
 
         if 'no_warn' in flags:
