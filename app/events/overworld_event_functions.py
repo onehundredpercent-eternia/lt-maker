@@ -12,7 +12,7 @@ from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
 from app.utilities.typing import NID, Point
 
-def start_overworld_cinematic(self, overworld_nid=None, flags=None):
+def start_overworld_cinematic(self: Event, overworld_nid=None, flags=None):
     if not overworld_nid:
         if DB.overworlds.values():
             overworld_nid = DB.overworlds.values()[0].nid
@@ -25,7 +25,7 @@ def start_overworld_cinematic(self, overworld_nid=None, flags=None):
     from app.engine.overworld.overworld_states import OverworldFreeState
     OverworldFreeState.set_up_overworld_game_state(overworld_nid)
 
-def set_overworld_position(self, overworld_entity: NID, overworld_location: NID | Tuple[float, float], flags=None):
+def set_overworld_position(self: Event, overworld_entity: NID, overworld_location: NID | Tuple[float, float], flags=None):
     flags = flags or set()
 
     if isinstance(overworld_location, tuple): # setting to a direct coordinate
@@ -59,7 +59,7 @@ def set_overworld_position(self, overworld_entity: NID, overworld_location: NID 
     if 'no_animate' not in flags:
         entity.sprite.set_transition('fade_in')
 
-def overworld_move_unit(self, overworld_entity: NID, overworld_location: Tuple[int, int] | NID = None,
+def overworld_move_unit(self: Event, overworld_entity: NID, overworld_location: Tuple[int, int] | NID = None,
                         speed: float = None, point_list: List[Point] = None, flags=None):
     flags = flags or set()
     # default values
@@ -154,7 +154,7 @@ def overworld_move_unit(self, overworld_entity: NID, overworld_location: Tuple[i
             return False
         self.should_update['overworld_movement'] = update_movement
 
-def reveal_overworld_node(self, overworld_node_nid, flags=None):
+def reveal_overworld_node(self: Event, overworld_node_nid, flags=None):
     flags = flags or set()
 
     overworld = game.overworld_controller
@@ -170,7 +170,7 @@ def reveal_overworld_node(self, overworld_node_nid, flags=None):
         self.wait_time = engine.get_time() + node.sprite.transition_time
         self.state = 'waiting'
 
-def reveal_overworld_road(self, node1, node2, flags=None):
+def reveal_overworld_road(self: Event, node1, node2, flags=None):
     flags = flags or set()
 
     overworld = game.overworld_controller
@@ -193,7 +193,7 @@ def reveal_overworld_road(self, node1, node2, flags=None):
         self.wait_time = engine.get_time() + road.sprite.transition_time
         self.state = 'waiting'
 
-def create_overworld_entity(self, nid, unit=None, team=None, flags=None):
+def create_overworld_entity(self: Event, nid, unit=None, team=None, flags=None):
     flags = flags or set()
 
     if 'delete' in flags:
@@ -211,7 +211,7 @@ def create_overworld_entity(self, nid, unit=None, team=None, flags=None):
         new_entity = OverworldEntityObject.from_unit_prefab(nid, None, unit, team)
         game.overworld_controller.add_entity(new_entity)
 
-def disable_overworld_entity(self, nid, flags=None):
+def disable_overworld_entity(self: Event, nid, flags=None):
     flags = flags or set()
 
     entity = game.overworld_controller.entities.get(nid, None)
@@ -223,7 +223,7 @@ def disable_overworld_entity(self, nid, flags=None):
     entity.on_node = None
     entity.display_position = None
 
-def toggle_narration_mode(self, direction, speed=None, flags=None):
+def toggle_narration_mode(self: Event, direction, speed=None, flags=None):
     toggle_which = direction.lower()
     if speed:
         anim_duration = int(speed)
@@ -250,7 +250,7 @@ def toggle_narration_mode(self, direction, speed=None, flags=None):
             self.wait_time = engine.get_time() + anim_duration
             self.state = 'waiting'
 
-def narrate(self, speaker, text, flags=None):
+def narrate(self: Event, speaker, text, flags=None):
     if not self.overlay_ui.has_child('event_narration'):
         self.logger.error("%s: Not currently in overworld narration mode", "overworld_speak")
         return
@@ -275,10 +275,10 @@ def narrate(self, speaker, text, flags=None):
         self.should_remain_blocked.append(should_block)
         self.state = 'blocked'
 
-def set_overworld_menu_option_enabled(self, overworld_node_nid: NID, overworld_node_menu_option: NID, setting: bool, flags=None):
+def set_overworld_menu_option_enabled(self: Event, overworld_node_nid: NID, overworld_node_menu_option: NID, setting: bool, flags=None):
     overworld = game.overworld_controller
     overworld.toggle_menu_option_enabled(overworld_node_nid, overworld_node_menu_option, setting)
 
-def set_overworld_menu_option_visible(self, overworld_node_nid: NID, overworld_node_menu_option: NID, setting: bool, flags=None):
+def set_overworld_menu_option_visible(self: Event, overworld_node_nid: NID, overworld_node_menu_option: NID, setting: bool, flags=None):
     overworld = game.overworld_controller
     overworld.toggle_menu_option_visible(overworld_node_nid, overworld_node_menu_option, setting)
