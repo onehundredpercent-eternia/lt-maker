@@ -17,7 +17,7 @@ from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
 from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper import \
     SimpleMenuUI
-from app.engine.game_state import game
+from app.engine.game_state import GameState
 from app.engine.graphics.dialog.narration_dialogue import NarrationDialogue
 from app.engine.graphics.ui_framework.premade_animations.animation_templates import \
     fade_anim, translate_anim
@@ -59,7 +59,7 @@ class Event():
     skippable = {"speak", "wait", "bop_portrait",
                  "sound", "location_card", "credits", "ending"}
 
-    def __init__(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None):
+    def __init__(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None, game: GameState = None):
         self.nid = nid
         self.commands: List[event_commands.EventCommand] = commands.copy()
         self.command_idx = 0
@@ -71,6 +71,11 @@ class Event():
         self.item = item
         self.position = position
         self.region = region
+        if game:
+            self.game = game
+        else:
+            from app.engine.game_state import game
+            self.game = game
 
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
@@ -119,7 +124,7 @@ class Event():
 
         self.logger = logging.getLogger()
 
-        self.text_evaluator = TextEvaluator(self.logger, game, self.unit, self.unit2, self.item, self.position, self.region)
+        self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.item, self.position, self.region)
 
     @property
     def unit1(self):
@@ -140,7 +145,7 @@ class Event():
         return ser_dict
 
     @classmethod
-    def restore(cls, ser_dict):
+    def restore(cls, ser_dict, game: GameState):
         unit = game.get_unit(ser_dict['unit1'])
         unit2 = game.get_unit(ser_dict['unit2'])
         region = game.get_region(ser_dict['region'])
@@ -148,7 +153,7 @@ class Event():
         position = ser_dict['position']
         commands = ser_dict['commands']
         nid = ser_dict['nid']
-        self = cls(nid, commands, unit, unit2, item, position, region)
+        self = cls(nid, commands, unit, unit2, item, position, region, game)
         self.command_idx = ser_dict['command_idx']
         self.if_stack = ser_dict['if_stack']
         self.parse_stack = ser_dict['parse_stack']
@@ -160,8 +165,8 @@ class Event():
         self.should_update = {name: to_update for name, to_update in self.should_update.items() if not to_update(self.do_skip)}
 
         # Update movement so that no_block works correctly
-        if game.movement:
-            game.movement.update()
+        if self.game.movement:
+            self.game.movement.update()
 
         # Can move through its own internal state up to 5 times in a frame
         counter = 0
@@ -239,7 +244,7 @@ class Event():
     def draw(self, surf):
         self.animations = [anim for anim in self.animations if not anim.update()]
         for anim in self.animations:
-            anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
+            anim.draw(surf, offset=(-self.game.camera.get_x(), -self.game.camera.get_y()))
 
         if self.background:
             self.background.draw(surf)
@@ -507,35 +512,35 @@ class Event():
         if direction == 'west':
             test_pos = (0, position[1])
             for x in offsets:
-                if game.movement.check_traversable(unit, test_pos):
+                if self.game.movement.check_traversable(unit, test_pos):
                     final_pos = test_pos
                     break
                 else:
                     test_pos = (0, position[1] + x)
         elif direction == 'east':
-            test_pos = (game.tilemap.width - 1, position[1])
+            test_pos = (self.game.tilemap.width - 1, position[1])
             for x in offsets:
-                if game.movement.check_traversable(unit, test_pos):
+                if self.game.movement.check_traversable(unit, test_pos):
                     final_pos = test_pos
                     break
                 else:
-                    test_pos = (game.tilemap.width - 1, position[1] + x)
+                    test_pos = (self.game.tilemap.width - 1, position[1] + x)
         elif direction == 'north':
             test_pos = (position[0], 0)
             for x in offsets:
-                if game.movement.check_traversable(unit, test_pos):
+                if self.game.movement.check_traversable(unit, test_pos):
                     final_pos = test_pos
                     break
                 else:
                     test_pos = (position[0] + x, 0)
         elif direction == 'south':
-            test_pos = (position[0], game.tilemap.height - 1)
+            test_pos = (position[0], self.game.tilemap.height - 1)
             for x in offsets:
-                if game.movement.check_traversable(unit, test_pos):
+                if self.game.movement.check_traversable(unit, test_pos):
                     final_pos = test_pos
                     break
                 else:
-                    test_pos = (position[1] + x, game.tilemap.height - 1)
+                    test_pos = (position[1] + x, self.game.tilemap.height - 1)
         if final_pos:
             final_pos = self.check_placement(unit, final_pos, placement)
         if final_pos:
@@ -553,15 +558,15 @@ class Event():
         elif ',' in next_pos:
             position = self.parse_pos(next_pos)
         else:
-            other_group = game.level.unit_groups.get(next_pos)
+            other_group = self.game.level.unit_groups.get(next_pos)
             position = other_group.positions.get(unit_nid)
         return position
 
     def _check_placement(self, unit, position, placement):
-        if not game.board.check_bounds(position):
+        if not self.game.board.check_bounds(position):
             self.logger.error("%s: position out of bounds %s", 'check_placement', position)
             return None
-        current_occupant = game.board.get_unit(position)
+        current_occupant = self.game.board.get_unit(position)
         if current_occupant:
             if placement == 'giveup':
                 self.logger.warning("Check placement (giveup): Unit already present on tile %s", position)
@@ -582,19 +587,19 @@ class Event():
             return position
 
     def _copy_unit(self, unit_nid):
-        level_prefab = DB.levels.get(game.level.nid)
+        level_prefab = DB.levels.get(self.game.level.nid)
         level_unit_prefab = level_prefab.units.get(unit_nid)
         if not level_unit_prefab:
             self.logger.warning("Could not find level unit prefab for unit with nid: %s", unit_nid)
             return None
-        new_nid = str_utils.get_next_int(level_unit_prefab.nid, game.unit_registry.keys())
+        new_nid = str_utils.get_next_int(level_unit_prefab.nid, self.game.unit_registry.keys())
         level_unit_prefab.nid = new_nid
-        new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
+        new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
         level_unit_prefab.nid = unit_nid  # Set back to old nid
         new_unit.position = None
         new_unit.dead = False
-        new_unit.party = game.current_party
-        game.full_register(new_unit)
+        new_unit.party = self.game.current_party
+        self.game.full_register(new_unit)
         return new_unit
 
     def _get_item_in_inventory(self, values):
@@ -620,9 +625,9 @@ class Event():
 
         action.do(action.ApplyStatChanges(unit, stat_changes))
         if not immediate:
-            game.memory['stat_changes'] = stat_changes
-            game.exp_instance.append((unit, 0, None, 'stat_booster'))
-            game.state.change('exp')
+            self.game.memory['stat_changes'] = stat_changes
+            self.game.exp_instance.append((unit, 0, None, 'stat_booster'))
+            self.game.state.change('exp')
             self.state = 'paused'
 
     def _apply_growth_changes(self, unit, growth_changes):
@@ -638,15 +643,15 @@ class Event():
                 position = tuple(int(_) for _ in text.split(','))
         elif text == '{position}':
             position = self.position
-        elif not game.is_displaying_overworld() and self.get_unit(text):
+        elif not self.game.is_displaying_overworld() and self.get_unit(text):
             position = self.get_unit(text).position
-        elif game.is_displaying_overworld() and self._get_overworld_location_of_object(text):
+        elif self.game.is_displaying_overworld() and self._get_overworld_location_of_object(text):
             position = self._get_overworld_location_of_object(text).position
         else:
             valid_regions = \
-                [tuple(region.position) for region in game.level.regions
+                [tuple(region.position) for region in self.game.level.regions
                  if text == region.sub_nid and region.position and
-                 not game.board.get_unit(region.position)]
+                 not self.game.board.get_unit(region.position)]
             if valid_regions:
                 position = static_random.shuffle(valid_regions)[0]
         return position
@@ -659,17 +664,17 @@ class Event():
         elif text == '{created_unit}':
             return self.created_unit
         else:
-            return game.get_unit(text)
+            return self.game.get_unit(text)
 
     def _get_overworld_location_of_object(self, text, entity_only=False, node_only=False) -> OverworldNodeObject:
-        if game.overworld_controller:
-            if not node_only and text in game.overworld_controller.entities:
-                entity_at_nid = game.overworld_controller.entities[text]
+        if self.game.overworld_controller:
+            if not node_only and text in self.game.overworld_controller.entities:
+                entity_at_nid = self.game.overworld_controller.entities[text]
                 if entity_at_nid:
                     return entity_at_nid.node
 
-            if not entity_only and text in game.overworld_controller.nodes:
-                node_at_nid = game.overworld_controller.nodes[text]
+            if not entity_only and text in self.game.overworld_controller.nodes:
+                node_at_nid = self.game.overworld_controller.nodes[text]
                 if node_at_nid:
                     return node_at_nid
         return None
