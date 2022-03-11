@@ -849,9 +849,10 @@ class SupportRank(Validator):
 
 class Layer(Validator):
     def validate(self, text, level):
-        tilemap_prefab = RESOURCES.tilemaps.get(level.tilemap)
-        if text in tilemap_prefab.layers.keys():
-            return text
+        if level:
+            tilemap_prefab = RESOURCES.tilemaps.get(level.tilemap)
+            if text in tilemap_prefab.layers.keys():
+                return text
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:

@@ -1,54 +1,23 @@
 from __future__ import annotations
 from app.engine.text_evaluator import TextEvaluator
 
-import ast
 import logging
-from typing import Any, Callable, Dict, List, Set, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database import DB
-from app.data.level_units import GenericUnit, UniqueUnit
-from app.engine import (action, background, banner, dialog, engine, evaluate,
-                        icons, image_mods, item_funcs, item_system,
-                        skill_system, static_random, target_system, unit_funcs)
-from app.engine.animations import MapAnimation
-from app.engine.combat import interaction
-from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper import \
-    SimpleMenuUI
+from app.engine import (action, dialog, engine, evaluate,
+                        static_random, target_system)
 from app.engine.game_state import GameState
-from app.engine.graphics.dialog.narration_dialogue import NarrationDialogue
-from app.engine.graphics.ui_framework.premade_animations.animation_templates import \
-    fade_anim, translate_anim
-from app.engine.graphics.ui_framework.ui_framework import UIComponent
-from app.engine.graphics.ui_framework.ui_framework_animation import \
-    InterpolationType
-from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment
-from app.engine.objects.item import ItemObject
 from app.engine.objects.overworld import OverworldNodeObject
-from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
-from app.engine.overworld.overworld_actions import OverworldMove
-from app.engine.overworld.overworld_movement_manager import \
-    OverworldMovementManager
 from app.engine.sound import SOUNDTHREAD
-from app.events import event_commands, regions
+from app.events import event_commands
 from app.events.event_portrait import EventPortrait
-from app.events.screen_positions import parse_screen_position
-from app.events.speak_style import SpeakStyle
-from app.events import event_functions, overworld_event_functions
-from app.resources.resources import RESOURCES
-from app.sprites import SPRITES
 from app.utilities import str_utils, utils
-from app.utilities.enums import Alignments
-from app.utilities.typing import NID, Point
-
-# Get all event command implementations
-general_funcs = {func: getattr(event_functions, func) for func in dir(event_functions) if callable(getattr(event_functions, func)) and not func.startswith("__")}
-overworld_funcs = {func: getattr(overworld_event_functions, func) for func in dir(overworld_event_functions) if callable(getattr(overworld_event_functions, func)) and not func.startswith("__")}
-general_funcs.update(overworld_funcs)
-function_catalog: Dict[NID, Callable] = general_funcs
+from app.utilities.typing import NID
 
 class Event():
     _transition_speed = 250
@@ -443,6 +412,8 @@ class Event():
             self.text_boxes[-1].hurry_up()
 
     def run_command(self, command: event_commands.EventCommand):
+        from app.events.function_catalog import get_catalog
+        
         self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
 
         parameters, flags = event_commands.convert_parse(command, self._evaluate_all)
@@ -461,7 +432,7 @@ class Event():
             self.logger.disabled = False
         parameters = {str_utils.camel_to_snake(k): v for k, v in parameters.items()}
         self.logger.debug("%s, %s", parameters, flags)
-        function_catalog[command.nid](self, **parameters, flags=flags)
+        get_catalog()[command.nid](self, **parameters, flags=flags)
 
     def _object_to_str(self, obj) -> str:
         if hasattr(obj, 'uid'):

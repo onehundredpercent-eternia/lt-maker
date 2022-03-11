@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import logging
 from enum import Enum
 from typing import Callable, List, Dict, Set, Tuple
@@ -76,9 +75,8 @@ class EventCommand(Prefab):
 
     def get_index_from_keyword(self, keyword: str) -> int:
         for idx, value in enumerate(self.display_values):
-            if single_equal_sign.match(value):
-                if (keyword + '=') in value:
-                    return idx
+            if (keyword + '=') in value:
+                return idx
             else:
                 if keyword in self.keywords:
                     if self.keywords.index(keyword) == idx:
@@ -2300,7 +2298,6 @@ def restore_command(dat):
         logging.error("Couldn't restore event command: NID: %s; Display Values: %s", nid, display_values)
         return None
 
-single_equal_sign = re.compile(r'^[^\=]*\=[^\=]*$')
 evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList')
 
 def determine_command_type(text: str) -> EventCommand:
@@ -2350,15 +2347,17 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
             if command_info.nid != 'speak':
                 arg = arg.replace('\u2028', '')
 
+            all_keywords = command_info.keywords + command_info.optional_keywords
+
             # Check for flag first
             if _process_arg(None, arg) in command_info._flags:
                 flags.add(arg)
 
             # Handle Python style keyword arguments
             # For example `s;Speaker=Eirika;Text=Hi!;Nid=normal`
-            elif single_equal_sign.match(arg):
+            elif '=' in arg and arg.split('=', 1)[0] in all_keywords:
                 keyword_argument_mode = True
-                cmd_keyword, arg = arg.split('=')
+                cmd_keyword, arg = arg.split('=', 1)
                 cmd_validator = command_info.get_validator_from_keyword(cmd_keyword)
                 if cmd_validator:
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
