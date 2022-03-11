@@ -39,12 +39,14 @@ class EventUnitTests(unittest.TestCase):
             event.update()
 
     def MACRO_test_event_commands(self, test_commands):
+        from app.events.function_catalog import get_catalog
         command_names = set([command.split(';')[0] for command in test_commands])
         event = self.create_event(test_commands)
         mocked_commands: List[MagicMock] = []
+        catalog = get_catalog()
         for name in command_names:
             mocked_command = MagicMock()
-            setattr(event, name, mocked_command)
+            catalog[name] = mocked_command
             mocked_commands.append(mocked_command)
 
         self.run_all_commands(event)
@@ -62,16 +64,18 @@ class EventUnitTests(unittest.TestCase):
         self.assertEqual(event.state, 'complete')
 
     def test_break(self):
+        from app.events.function_catalog import get_catalog
         test_commands = [
             "speak;Eirika;SPEAK_TEXT",
             "break",
             "speak;Eirika;SPEAK_TEXT"
         ]
         event = self.create_event(test_commands)
-        event.speak = MagicMock()
+        catalog = get_catalog()
+        catalog['speak'] = MagicMock()
         self.run_all_commands(event)
 
-        event.speak.assert_called_once()
+        catalog['speak'].assert_called_once()
         self.assertEqual(event.state, 'complete')
 
     def test_speak_command(self):
@@ -95,10 +99,10 @@ class EventUnitTests(unittest.TestCase):
         event = self.create_event([])
         event_functions.speak(event, None, '\u2028SPEAK_TEXT\u2028SPEAK_TEXT', flags={'no_block'})
         mock_dialog.assert_called_with('SPEAK_TEXT{sub_break}SPEAK_TEXT{no_wait}', None, 'message_bg_base',
-                                            None, None, speaker=None, style_nid=None,
-                                            autosize=False, speed=1, font_color=None,
-                                            font_type='convo', num_lines=2, draw_cursor=True,
-                                            message_tail='message_bg_tail')
+                                       None, None, speaker=None, style_nid=None,
+                                       autosize=False, speed=1, font_color=None,
+                                       font_type='convo', num_lines=2, draw_cursor=True,
+                                       message_tail='message_bg_tail')
         self.assertEqual(len(event.text_boxes), 1)
         self.assertEqual(event.priority_counter, 1)
 
@@ -111,10 +115,10 @@ class EventUnitTests(unittest.TestCase):
         event.portraits['Eirika'] = mock_portrait
         event_functions.speak(event, 'Eirika', 'SPEAK_TEXT', text_position='1,2', width='3', text_speed='5.0')
         mock_dialog.assert_called_with('SPEAK_TEXT', mock_portrait, 'message_bg_base',
-                                            (1, 2), 3, speaker='Eirika', style_nid=None,
-                                            autosize=False, speed=5.0, font_color=None,
-                                            font_type='convo', num_lines=2, draw_cursor=True,
-                                            message_tail='message_bg_tail')
+                                       (1, 2), 3, speaker='Eirika', style_nid=None,
+                                       autosize=False, speed=5.0, font_color=None,
+                                       font_type='convo', num_lines=2, draw_cursor=True,
+                                       message_tail='message_bg_tail')
         self.assertEqual(mock_portrait.priority, 1)
 
         # Test #2a:
@@ -123,10 +127,10 @@ class EventUnitTests(unittest.TestCase):
         #   - Test does not increment priority
         event_functions.speak(event, 'Eirika', 'SPEAK_TEXT', flags={'low_priority', 'fit'})
         mock_dialog.assert_called_with('SPEAK_TEXT', mock_portrait, 'message_bg_base',
-                                            None, None, speaker='Eirika', style_nid=None,
-                                            autosize=True, speed=1, font_color=None,
-                                            font_type='convo', num_lines=2, draw_cursor=True,
-                                            message_tail='message_bg_tail')
+                                       None, None, speaker='Eirika', style_nid=None,
+                                       autosize=True, speed=1, font_color=None,
+                                       font_type='convo', num_lines=2, draw_cursor=True,
+                                       message_tail='message_bg_tail')
         self.assertEqual(mock_portrait.priority, 1)
 
         # test #3: dialog with speak style
@@ -145,10 +149,10 @@ class EventUnitTests(unittest.TestCase):
         # test #4: special center text position
         event_functions.speak(event, None, 'SPEAK_TEXT', text_position='center')
         mock_dialog.assert_called_with('SPEAK_TEXT', None, 'message_bg_base',
-                                            'center', None, speaker=None, style_nid=None,
-                                            autosize=False, speed=1, font_color=None,
-                                            font_type='convo', num_lines=2, draw_cursor=True,
-                                            message_tail='message_bg_tail')
+                                       'center', None, speaker=None, style_nid=None,
+                                       autosize=False, speed=1, font_color=None,
+                                       font_type='convo', num_lines=2, draw_cursor=True,
+                                       message_tail='message_bg_tail')
 
         # disable intercepting calls at the end of the test
         dialog_patch.stop()
