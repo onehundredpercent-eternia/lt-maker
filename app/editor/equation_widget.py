@@ -75,6 +75,7 @@ class EquationMultiModel(MultiAttrListModel):
             result = parser.get_expression(equation.expression, test_unit)
             return True
         except Exception as e:
+            logging.exception(e)
             logging.error("TestEquation Error: %s" % e)
             return False
 

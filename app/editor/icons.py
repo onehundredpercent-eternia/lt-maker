@@ -102,7 +102,7 @@ class ItemIcon80(ItemIcon16):
 class UnitPortrait(QPushButton):
     sourceChanged = pyqtSignal(str)
     if MEMENTO_MODE:
-        width, height = 128, 128
+        width, height = 128, 80
     else:
         width, height = 96, 80
     database = RESOURCES.portraits

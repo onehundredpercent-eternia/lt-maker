@@ -193,7 +193,7 @@ class DefenderState(SolverState):
         if solver.defender.strike_partner:
             can_double_in_pairup = \
                 not DB.constants.value('limit_attack_stance') or \
-                skill_system.attack_stance_double(solver.defender.strike_partner)
+                (skill_system.attack_stance_double(solver.defender.strike_partner) and DB.constants.value('def_double'))
         else:
             can_double_in_pairup = False
 

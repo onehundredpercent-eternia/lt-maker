@@ -21,7 +21,7 @@ class UIView():
     y_positions = (0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0, 0)
 
     def __init__(self):
-        # self.unit_info_disp = None
+        self.unit_info_disp = None
         self.tile_info_disp = None
         self.obj_info_disp = None
         self.attack_info_disp = None
@@ -41,11 +41,11 @@ class UIView():
         self.tile_last_update: int = 0
         self.current_tile_pos = None
 
-        # self.remove_unit_info = True
+        self.remove_unit_info = True
         self.obj_top = False
 
-    # def remove_unit_display(self):
-    #     self.remove_unit_info = True
+    def remove_unit_display(self):
+        self.remove_unit_info = True
 
     def get_cursor_right(self):
         return game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1
@@ -80,19 +80,19 @@ class UIView():
     def draw(self, surf):
         self.update()
         # Unit info handling
-        # if self.remove_unit_info:
-        #     hover = game.cursor.get_hover()
-        #     if game.state.current() in self.legal_states and hover:
-        #         self.remove_unit_info = False
-        #         self.unit_info_disp = self.create_unit_info(hover)
-        #         self.unit_info_offset = min(self.unit_info_disp.get_width(), self.unit_info_offset)
-        #     elif self.unit_info_disp:
-        #         self.unit_info_offset += 20
-        #         if self.unit_info_offset >= 200:
-        #             self.unit_info_disp = None
-        # else:
-        #     self.unit_info_offset -= 20
-        #     self.unit_info_offset = max(0, self.unit_info_offset)
+        if self.remove_unit_info:
+            hover = game.cursor.get_hover()
+            if game.state.current() in self.legal_states and hover:
+                self.remove_unit_info = False
+                self.unit_info_disp = self.create_unit_info(hover)
+                self.unit_info_offset = min(self.unit_info_disp.get_width(), self.unit_info_offset)
+            elif self.unit_info_disp:
+                self.unit_info_offset += 20
+                if self.unit_info_offset >= 200:
+                    self.unit_info_disp = None
+        else:
+            self.unit_info_offset -= 20
+            self.unit_info_offset = max(0, self.unit_info_offset)
 
         # Objective info handling
         if game.state.current() in self.legal_states and cf.SETTINGS['show_objective']:
@@ -118,16 +118,16 @@ class UIView():
 
         # === Final drawing
         # Should be in topleft, unless cursor is in topleft, in which case it should be in bottomleft
-        # if self.unit_info_disp:
-        #     # If in top and not in right
-        #     if not DB.constants.value('initiative') or not game.initiative.draw_me:
-        #         if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
-        #                 not (game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1):
-        #             surf.blit(self.unit_info_disp, (-self.unit_info_offset, WINHEIGHT - self.unit_info_disp.get_height()))
-        #         else:
-        #             surf.blit(self.unit_info_disp, (-self.unit_info_offset, 0))
-        #     else:
-        #         pass
+        if self.unit_info_disp:
+            # If in top and not in right
+            if not DB.constants.value('initiative') or not game.initiative.draw_me:
+                if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
+                        not (game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1):
+                    surf.blit(self.unit_info_disp, (-self.unit_info_offset, WINHEIGHT - self.unit_info_disp.get_height()))
+                else:
+                    surf.blit(self.unit_info_disp, (-self.unit_info_offset, 0))
+            else:
+                pass
 
         if game.state.current() in self.legal_states and cf.SETTINGS['show_terrain'] and \
                 (game.level_vars['_fog_of_war'] != 2 or game.board.in_vision(game.cursor.position)):
@@ -203,7 +203,7 @@ class UIView():
         return surf
 
     def create_unit_info(self, unit):
-        font = FONT['info-grey']
+        font = FONT['info-white']
         dimensions = (112, 40)
         width, height = dimensions
         surf = SPRITES.get('unit_info_bg').copy()
@@ -265,19 +265,16 @@ class UIView():
         else:
             bg_surf = SPRITES.get('tile_info_quick_opaque').copy()
             bg_surf = image_mods.make_translucent(bg_surf, .1)
-            stat_changes = {}
+            tile_def, tile_avoid = 0, 0
             if terrain.status:
                 status_prefab = DB.skills.get(terrain.status)
                 for component in status_prefab.components:
-                    if component.defines('stat_change'):
-                        stat_changes.update(component.stat_change())
-                        
-            for idx, (stat_nid, stat_change) in enumerate(list(stat_changes.items())[:2]):
-                text = str(stat_change)
-                if stat_change > 0:
-                    text = "+" + text
-                FONT['small'].blit(stat_nid, bg_surf, (1, 17 + idx * 8))
-                FONT['small'].blit_right(text, bg_surf, (bg_surf.get_width() - 4, 17 + idx * 8))
+                    if component.defines('tile_def'):
+                        tile_def += component.tile_def()
+                    if component.defines('tile_avoid'):
+                        tile_avoid += component.tile_avoid()
+            FONT['small'].blit_right(str(tile_def), bg_surf, (bg_surf.get_width() - 4, 17))
+            FONT['small'].blit_right(str(tile_avoid), bg_surf, (bg_surf.get_width() - 4, 25))
 
         name = terrain.name
         width, height = FONT['text'].size(name)
@@ -913,14 +910,11 @@ class ItemDescriptionPanel():
             cursor_left = True
             topleft = (STATWIDTH + 8, WINHEIGHT - 8 - self.surf.get_height())
 
-        if MEMENTO_MODE:
-            pass
-        else:
-            portrait, _ = icons.get_portrait(self.unit)
-            if portrait:
-                if cursor_left:
-                    portrait = engine.flip_horiz(portrait)
-                surf.blit(portrait, (topleft[0] + 2, topleft[1] - 76))
+        portrait, _ = icons.get_portrait(self.unit)
+        if portrait:
+            if cursor_left:
+                portrait = engine.flip_horiz(portrait)
+            surf.blit(portrait, (topleft[0] + 2, topleft[1] - 76))
 
         surf.blit(self.surf, topleft)
         return surf

@@ -191,6 +191,6 @@ class MementoPull(ItemComponent):
 class ItemPrefab(ItemComponent):
     nid = 'item_prefab'
     desc = "This item will automatically inherit the components of the chosen item"
-    tag = 'memento'
+    tag = 'base'
 
     expose = Type.Item

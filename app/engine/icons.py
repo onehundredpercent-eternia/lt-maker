@@ -110,7 +110,7 @@ def get_portrait(unit) -> tuple:
         if MEMENTO_MODE:
             image = engine.subsurface(image.image, (0, 0, 128, 128))
         else:
-            image = engine.subsurface(image.image, (0, 0, 96, 80))
+            image = engine.subsurface(image.image, (0, 0, 112, 88))
     else:  # Generic class portrait
         klass = DB.classes.get(unit.klass)
         image = RESOURCES.icons80.get(klass.icon_nid)

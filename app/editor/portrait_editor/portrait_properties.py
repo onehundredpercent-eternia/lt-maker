@@ -16,7 +16,10 @@ from app.editor.portrait_editor import portrait_model
 import app.editor.utilities as editor_utilities
 
 class PortraitProperties(QWidget):
-    width, height = 128, 112
+    if MEMENTO_MODE:
+        width, height = 128 + 32, 80
+    else:
+        width, height = 128, 112
 
     halfblink = (96, 48, 32, 16)
     fullblink = (96, 64, 32, 16)
@@ -54,7 +57,7 @@ class PortraitProperties(QWidget):
 
         self.portrait_view = IconView(self)
         if MEMENTO_MODE:
-            self.portrait_view.setMinimumHeight(128 + 2)
+            self.portrait_view.setMinimumHeight(88 + 2)
         else:
             self.portrait_view.setMinimumHeight(80 + 2)
         left_section.addWidget(self.portrait_view, 0, 0, 1, 3)
@@ -183,7 +186,7 @@ class PortraitProperties(QWidget):
         if not self.current:
             return
         if MEMENTO_MODE:
-            main_portrait = self.current.pixmap.copy(0, 0, self.current.pixmap.width() - 32, 128)
+            main_portrait = self.current.pixmap.copy(0, 0, self.current.pixmap.width() - 32, 88)
         else:
             main_portrait = self.current.pixmap.copy(0, 0, 96, 80)
         main_portrait = main_portrait.toImage()
@@ -213,9 +216,9 @@ class PortraitProperties(QWidget):
         else:
             blink_image = None
         # Draw image
+        painter = QPainter()
+        painter.begin(main_portrait)
         if not MEMENTO_MODE:
-            painter = QPainter()
-            painter.begin(main_portrait)
             if blink_image:
                 blink_image = blink_image.toImage()
                 painter.drawImage(self.current.blinking_offset[0], self.current.blinking_offset[1], blink_image)

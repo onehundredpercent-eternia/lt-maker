@@ -291,14 +291,14 @@ class EventPortrait():
         self.transition_update = engine.get_time()
 
 class MementoEventPortrait(EventPortrait):
-    width, height = 128 + 32, 128
-    main_portrait_coords = 0, 0, 128, 128
+    width, height = 128 + 32, 80
+    main_portrait_coords = 0, 0, 128, 80
 
     def get_width(self):
-        return 128
+        return 112
 
     def get_height(self):
-        return 128
+        return 88
 
     def create_image(self):
         main_image = self.main_portrait.copy()
