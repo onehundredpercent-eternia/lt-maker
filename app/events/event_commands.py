@@ -1790,12 +1790,13 @@ via hitting the back button, and the event will go on as normal.
 * *no_cursor* removes the cursor.
 * *arrows* adds pulsing left/right arrows.
 * *scroll_bar* adds a vertical scroll bar
+* *backable* allows you to exit out of the menu without making a choice - similarly to *persist*. If backed out in this way, will set `BACK` as the chosen option.
  """
 
     keywords = ['Nid', 'Text', 'String']
     optional_keywords = ['Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
     keyword_names = ['NID', 'Title', 'Choices', 'RowWidth', 'Orientation', 'Alignment', 'BG', 'EventName', 'Type', 'Dimensions', 'TextAlign']
-    _flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar']
+    _flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar', 'backable']
 
 class NoChoice(EventCommand):
     nid = 'unchoice'

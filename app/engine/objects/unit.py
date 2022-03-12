@@ -299,7 +299,7 @@ class UnitObject(Prefab):
     def get_gauge_inc(self):
         return equations.parser.get_gauge_inc(self)
 
-    def get_field(self, key: str, default: str='FIELD_NOT_DEFINED') -> str:
+    def get_field(self, key: str, default:str = None) -> str:
         if not getattr(self, '_fields'):
             return default
         if key in self._fields:

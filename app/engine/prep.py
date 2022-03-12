@@ -742,7 +742,7 @@ class PrepItemsState(State):
                                 item_system.can_use_in_base(self.unit, current) and \
                                 item_system.simple_target_restrict(self.unit, current):
                             self.state = 'convoy_item'
-                            topleft = (80, self.menu.get_current_index() * 16)
+                            topleft = (80, (self.menu.get_current_index() - self.menu.get_scrolled_index()) * 16 + 36)
                             if item_funcs.inventory_full(self.unit, current):
                                 options = ['Trade', 'Use']
                             else:
@@ -807,7 +807,7 @@ class PrepItemsState(State):
             elif self.state == 'trade_convoy':
                 unit_item = self.menu.get_inventory_current()
                 convoy_item = self.menu.get_convoy_current()
-                if trade.check_trade(unit_item, convoy_item):
+                if trade.check_trade(unit_item, self.unit, convoy_item, None):
                     action.do(action.HasTraded(self.unit))
                     convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
                     self.menu.unlock()
@@ -819,7 +819,7 @@ class PrepItemsState(State):
             elif self.state == 'trade_inventory':
                 convoy_item = self.menu.get_convoy_current()
                 unit_item = self.menu.get_inventory_current()
-                if trade.check_trade(unit_item, convoy_item):
+                if trade.check_trade(unit_item, self.unit, convoy_item, None):
                     action.do(action.HasTraded(self.unit))
                     convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
                     self.menu.unlock()

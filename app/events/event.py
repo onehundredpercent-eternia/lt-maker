@@ -3262,6 +3262,7 @@ class Event():
         no_cursor = 'no_cursor' in flags
         arrows = 'arrows' in flags and orientation == 'horizontal'
         scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
+        backable = 'backable' in flags
 
         event_context = {
             'unit': self.unit,
@@ -3274,7 +3275,7 @@ class Event():
         game.memory['player_choice'] = (nid, header, data, row_width,
                                         orientation, dtype, should_persist,
                                         align, bg, event_nid, size, no_cursor,
-                                        arrows, scroll_bar, talign, event_context)
+                                        arrows, scroll_bar, talign, backable, event_context)
         game.state.change('player_choice')
         self.state = 'paused'
 

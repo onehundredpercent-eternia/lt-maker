@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.data import raw_data
 
 import random
 import time
@@ -616,7 +617,9 @@ class GameState():
         self.region_registry[region.nid] = region
 
     def get_data(self, raw_data_nid):
-        return DB.raw_data.get(str(raw_data_nid)).value
+        if str(raw_data_nid) in DB.raw_data.keys():
+            return DB.raw_data.get(str(raw_data_nid)).value
+        return None
 
     def get_unit(self, unit_nid):
         """

@@ -1192,8 +1192,10 @@ class ShowCommandsDialog(QDialog):
                     else:
                         already.append(keyword)
                     validator = event_validators.get(keyword)
-                    if validator.desc:
+                    if validator and validator.desc:
                         text += '_%s_ %s\n\n' % (keyword, validator().desc)
+                    else:
+                        text += '_%s_ %s\n\n' % (keyword, "")
                 if command.desc:
                     text += " --- \n\n"
                 text += command.desc

@@ -3,7 +3,7 @@
 
 If you have experience working with Python and want to use the Python version of the **Lex Talionis** engine and editor, check out the [Python Installation](PyInstall) guide in the sidebar. Otherwise, read on.
 
-The Windows executable version of the **Lex Talionis** editor can be downloaded at this link:  https://www.dropbox.com/s/q8ii1e4rd3e97et/lt_editor.zip?dl=1
+The Windows executable version of the **Lex Talionis** editor can be downloaded at this link:  https://gitlab.com/rainlash/lt-maker/-/releases
 
 ![PictureOfDoubleClick](../Images/PictureOfDoubleClick.png)
 

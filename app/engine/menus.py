@@ -1153,7 +1153,6 @@ class Table(Simple):
         start_index = self.scroll * self.columns
         end_index = (self.scroll + self.rows) * self.columns
         choices = self.options[start_index:end_index]
-        # print(self.scroll, start_index, end_index)
         width = max(option.width() for option in self.options)
         width -= width%8
         height = max(option.height() for option in self.options)
@@ -1279,7 +1278,7 @@ class Convoy():
         for name, menu in self.menus.items():
             menu.update_options(sorted_dict[name])
 
-    def get_menu(self):
+    def get_menu(self) -> Choice:
         return self.menus[self.order[self.menu_index]]
 
     def get_current(self):
@@ -1299,6 +1298,9 @@ class Convoy():
             return self.inventory.get_current_index()
         else:
             return self.get_menu().get_current_index()
+
+    def get_scrolled_index(self):
+        return self.get_menu().scroll
 
     def get_context(self):
         if self.selection_index == 0:
