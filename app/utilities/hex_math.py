@@ -1,10 +1,17 @@
+import math
+
 from dataclasses import dataclass
+
+from app.constants import TILEWIDTH, TILEHEIGHT
 
 @dataclass
 class Hex:
     q: float = 0
     r: float = 0
     s: float = 0
+
+    def __hash__(self):
+        return hash((self.q, self.r, self.s))
 
     def __add__(self, other):
         return Hex(self.q + other.q, self.r + other.r, self.s + other.s)
@@ -43,10 +50,10 @@ orientation_vertical = Orientation(3 / 2, 0, math.sqrt(3) / 2, math.sqrt(3), 2 /
 @dataclass
 class Layout:
     orientation: Orientation = None
-    size: tuple = 0, 0
-    origin: tuple = 0, 0
+    size: tuple = None
+    origin: tuple = None
 
-def default_layout(size: float):
+def default_layout(size: float = 16):
     return Layout(orientation_horizontal, (size, size), (0, 0))
 
 def calculate_distance(a: Hex, b: Hex) -> float:
@@ -85,6 +92,23 @@ def hex_linedraw(a: Hex, b: Hex) -> list:
         results.append(hex_round(hex_lerp(a_nudge, b_nudge, step * i)))
     return results
 
+EVEN = 1
+ODD = -1
+def roffset_from_cube(offset, h: Hex) -> tuple:
+    col = h.q + (h.r + offset * (h.r & 1)) // 2
+    row = h.r
+    if offset != EVEN and offset != ODD:
+        raise ValueError("offset %s must be EVEN (+1) or ODD (-1)" % offset)
+    return (col, row)
+
+def roffset_to_cube(offset, h: tuple) -> Hex:
+    q = h[0] - (h[1] + offset * (h[1] & 1)) // 2
+    r = h[1]
+    s = -q - r
+    if offset != EVEN and offset != ODD:
+        raise ValueError("offset %s must be EVEN (+1) or ODD (-1)" % offset)
+    return Hex(q, r, s)
+
 def hex_to_pixel(layout: Layout, h: Hex) -> tuple:
     m = layout.orientation
     x = (m.f0 * h.q + m.f1 * h.r) * layout.size[0]
@@ -97,3 +121,17 @@ def pixel_to_hex(layout: Layout, p: tuple) -> Hex:
     q = m.b0 * pt[0] + m.b1 * pt[1]
     r = m.b2 * pt[0] + m.b3 * pt[1]
     return Hex(q, r, -q - r)
+
+def hex_corner_offset(layout: Layout, corner: int) -> tuple:
+    m = layout.orientation
+    size = layout.size
+    angle = 2 * math.pi * (m.start_angle - corner) / 6.0
+    return size[0] * math.cos(angle), size[1] * math.sin(angle)
+
+def polygon_corners(layout: Layout, h: Hex) -> list:
+    corners = []
+    center = hex_to_pixel(layout, h)
+    for i in range(6):
+        offset = hex_corner_offset(layout, i)
+        corners.append((center[0] + offset[0], center[1] + offset[1]))
+    return corners

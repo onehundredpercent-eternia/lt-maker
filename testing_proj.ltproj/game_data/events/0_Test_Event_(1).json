@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Test Event (1)",
+        "trigger": "level_start",
+        "level_nid": "0",
+        "condition": "True",
+        "commands": [
+            [
+                "speak",
+                [
+                    "",
+                    "This is Seth speaking",
+                    "",
+                    "",
+                    "Seth"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 19
+    }
+]

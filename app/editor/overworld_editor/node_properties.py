@@ -1,17 +1,15 @@
 from PyQt5.QtWidgets import QVBoxLayout, QLineEdit, \
-    QWidget, QPushButton, QMessageBox, QLabel, QComboBox, QHBoxLayout, QDialog, QCheckBox
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QPixmap
+    QWidget, QMessageBox, QLabel, QComboBox, QHBoxLayout
+from PyQt5.QtCore import Qt
 
 from app.data.database import DB
 from app.resources.resources import RESOURCES
 
 from app.editor.icons import MapIconButton
 
-from app.extensions.custom_gui import ComboBox, SimpleDialog, PropertyBox
+from app.extensions.custom_gui import PropertyBox
 from app.utilities import str_utils
-from app.editor.sound_editor import sound_tab
-from app.editor.tile_editor import tile_tab
+
 from app.utilities.data import Data
 from app.editor.overworld_editor.node_menu_properties import NodeEventPropertiesMenu
 
@@ -91,7 +89,6 @@ class NodePropertiesMenu(QWidget):
             overworld.overworld_nodes.update_nid(self.current_node, self.current_node.nid)
         self.state_manager.change_and_broadcast('ui_refresh_signal', None)
 
-
     def level_changed(self, index):
         if(self.current_node):
             self.current_node.level = self.level_box.edit.itemData(index)
@@ -144,5 +141,3 @@ class NodeIconSelector(QWidget):
 
     def on_node_icon_changed(self, nid):
         self.on_icon_change(nid)
-
-

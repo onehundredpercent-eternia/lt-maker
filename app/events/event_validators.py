@@ -115,9 +115,9 @@ class UnitFieldValidator(EvalValidator):
                     all_keys.update(set([key for (key, _) in unit.fields]))
                 return [(None, key) for key in all_keys]
             else:
-            unit_prefab = DB.units.get(unit_nid)
-            if unit_prefab: # get its predefined field keys
-                return [(None, key) for (key, _) in unit_prefab.fields]
+                unit_prefab = DB.units.get(unit_nid)
+                if unit_prefab: # get its predefined field keys
+                    return [(None, key) for (key, _) in unit_prefab.fields]
         return []
 
 class EventFunction(Validator):

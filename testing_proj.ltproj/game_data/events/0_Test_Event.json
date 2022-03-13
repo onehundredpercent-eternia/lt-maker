@@ -1,0 +1,87 @@
+[
+    {
+        "name": "Test Event",
+        "trigger": "level_start",
+        "level_nid": "0",
+        "condition": "True",
+        "commands": [
+            [
+                "comment",
+                [
+                    "# Fire Emblem is a game"
+                ]
+            ],
+            [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "Right"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "No weak points I can find.{w} They've got guards at every pass,|and a pretty elaborate signal system."
+                ]
+            ],
+            [
+                "add_portrait",
+                [
+                    "Seth",
+                    "Right,Top"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "Hello, seth."
+                ]
+            ],
+            [
+                "speak_style",
+                [
+                    "Seth",
+                    "Seth",
+                    "4,4",
+                    "",
+                    "2",
+                    "red",
+                    "",
+                    "",
+                    "3"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "",
+                    "Hell, Eirika. How are you doing on this fine morning.{br}It's been great weather we're having.{br}Zombies.",
+                    "",
+                    "",
+                    "Seth"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "I am evil",
+                    "",
+                    "",
+                    "noir"
+                ]
+            ],
+            [
+                "multi_remove_portrait",
+                [
+                    "Eirika",
+                    "Seth"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]
