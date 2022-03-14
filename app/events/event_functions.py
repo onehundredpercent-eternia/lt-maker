@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from typing import TYPE_CHECKING
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database import DB
@@ -22,7 +23,6 @@ from app.engine.objects.item import ItemObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import SOUNDTHREAD
-from app.events.event import Event
 from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait
 from app.events.speak_style import SpeakStyle
@@ -32,6 +32,9 @@ from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID
+
+if TYPE_CHECKING:
+    from app.events.event import Event
 
 def comment(self: Event, flags=None):
     pass
