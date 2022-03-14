@@ -512,6 +512,8 @@ class PrepManageSelectState(State):
         self.current_index = self.menu.current_index
 
         options = ['Trade', 'Restock', 'Give all', 'Optimize', 'Items', 'Market']
+        if DB.constants.value('repair_shop'):
+            options[3] = 'Repair'
         ignore = self.get_ignore()
         self.select_menu = menus.Table(self.unit, options, (3, 2), (120, 80))
         self.select_menu.set_ignore(ignore)
@@ -531,6 +533,8 @@ class PrepManageSelectState(State):
         else:
             if game.game_vars.get('_prep_market') and game.market_items:
                 ignore[5] = False
+        if DB.constants.value('repair_shop'):
+            ignore[3] = not item_funcs.has_repair(self.unit)
         return ignore
 
     def begin(self):
@@ -574,6 +578,9 @@ class PrepManageSelectState(State):
                 convoy_funcs.optimize(self.unit)
             elif choice == 'Market':
                 game.memory['next_state'] = 'prep_market'
+                game.state.change('transition_to')
+            elif choice == 'Repair':
+                game.memory['next_state'] = 'repair_shop'
                 game.state.change('transition_to')
 
         elif event == 'BACK':

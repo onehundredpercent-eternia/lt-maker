@@ -4,7 +4,7 @@
         "name": "Eirika",
         "desc": "The princess of the Kingdom of\nRenais. She's elegant and kind.",
         "variant": null,
-        "level": 20,
+        "level": 1,
         "klass": "Eirika_Lord",
         "tags": [
             "Lord"

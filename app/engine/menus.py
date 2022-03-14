@@ -673,6 +673,8 @@ class Inventory(Choice):
             self.options.append(option)
 
 class Shop(Choice):
+    default_option = menu_options.ValueItemOption
+
     def __init__(self, owner, options, topleft=None, disp_value='sell', background='menu_bg_base', info=None):
         self.disp_value = disp_value
         super().__init__(owner, options, topleft, background, info)
@@ -683,7 +685,7 @@ class Shop(Choice):
     def create_options(self, options, info_descs=None):
         self.options.clear()
         for idx, option in enumerate(options):
-            option = menu_options.ValueItemOption(idx, option, self.disp_value)
+            option = self.default_option(idx, option, self.disp_value)
             option.help_box = option.get_help_box()
             self.options.append(option)
 
@@ -691,6 +693,9 @@ class Shop(Choice):
             for num in range(self.limit - len(options)):
                 option = menu_options.EmptyOption(len(options) + num)
                 self.options.append(option)
+
+class RepairShop(Shop):
+    default_option = menu_options.RepairValueItemOption
 
 class Trade(Simple):
     """
@@ -1064,14 +1069,16 @@ class Table(Simple):
             col += 1
             if self._exists(row, col):
                 pass
-            elif first_push:
+            elif row < self.rows - 1:
+                row += 1
                 col = 0
             else:
                 break
             idx = self._idx_coords(row, col)
             if not self.options[idx].ignore:
                 break
-        self.current_index = idx
+        if not self.options[idx].ignore:
+            self.current_index = idx
         return old_index != self.current_index
 
     def move_left(self, first_push=True):
@@ -1084,14 +1091,16 @@ class Table(Simple):
             col -= 1
             if self._exists(row, col):
                 pass
-            elif first_push:
+            elif row > 0:
+                row -= 1
                 col = self._get_right(row)
             else:
                 break
             idx = self._idx_coords(row, col)
             if not self.options[idx].ignore:
                 break
-        self.current_index = idx
+        if not self.options[idx].ignore:
+            self.current_index = idx
         return old_index != self.current_index
 
     def get_menu_width(self):

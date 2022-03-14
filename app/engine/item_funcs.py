@@ -1,3 +1,5 @@
+import math
+
 from app.data.database import DB
 
 from app.utilities import utils
@@ -30,6 +32,15 @@ def can_use(unit, item) -> bool:
             return True
     return False
 
+def can_repair(unit, item) -> bool:
+    if item.uses and item.data['uses'] < item.data['starting_uses'] and \
+            not item_system.unrepairable(unit, item):
+        return True
+    return False
+
+def has_repair(unit) -> bool:
+    return any(can_repair(unit, item) for item in unit.items)
+
 def buy_price(unit, item):
     value = item_system.buy_price(unit, item)
     if value:
@@ -46,6 +57,14 @@ def sell_price(unit, item):
     else:
         return 0
     return int(value)
+
+def repair_price(unit, item):
+    repair_cost = 0
+    if item.uses:
+        charges_used = item.data['starting_uses'] - item.data['uses']
+        cost_per_charge = buy_price(unit, item) / item.data['uses']
+        repair_cost = math.ceil(charges_used * cost_per_charge)
+    return int(repair_cost)
 
 # def can_wield(unit, item) -> bool:
 #     weapon = item_system.is_weapon(unit, item)

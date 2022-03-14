@@ -43,7 +43,7 @@ class ItemObject():
     def from_prefab(cls, prefab):
         # Components NEED To be copies! Since they store individualized information
         components = Data()
-        
+
         # Check if there is a prefab
         for component in prefab.components:
             if component.nid == 'item_prefab':
@@ -52,7 +52,8 @@ class ItemObject():
                 for component in item_prefab.components:
                     new_component = ICA.restore_component((component.nid, component.value))
                     components.append(new_component)
-        
+                break
+
         for component in prefab.components:
             new_component = ICA.restore_component((component.nid, component.value))
             components.append(new_component, overwrite=True)

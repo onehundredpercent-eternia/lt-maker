@@ -54,7 +54,6 @@ class EndTime(SkillComponent):
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))
 
-
 class CombinedTime(SkillComponent):
     nid = 'combined_time'
     desc = "Lasts for twice the number of phases (counts both upkeep and endstep)"
@@ -84,7 +83,6 @@ class CombinedTime(SkillComponent):
 
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))
-
 
 class UpkeepStatChange(SkillComponent):
     nid = 'upkeep_stat_change'

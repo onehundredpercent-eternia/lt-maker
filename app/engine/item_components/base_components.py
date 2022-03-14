@@ -163,3 +163,10 @@ class Transform(ItemComponent):
 
     def transforms(self, unit, item):
         return True
+
+class ItemPrefab(ItemComponent):
+    nid = 'item_prefab'
+    desc = "This item will automatically inherit the components of the chosen item"
+    tag = 'base'
+
+    expose = Type.Item
