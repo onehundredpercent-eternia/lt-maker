@@ -38,56 +38,122 @@ class EventCommandUnitTests(unittest.TestCase):
         self.assertTrue(isinstance(command, event_commands.Comment))
 
     def test_parse_text_to_command_typing(self):
-        command1, bad_idx = event_commands.determine_command_type("speak")
+        command1, bad_idx = event_commands.parse_text_to_command("speak")
         self.assertTrue(isinstance(command1, event_commands.Speak))
         # Test with tab in front
-        command2, bad_idx = event_commands.determine_command_type("    speak;Eirika;I am evil;;60")
+        command2, bad_idx = event_commands.parse_text_to_command("    speak;Eirika;I am evil;;60")
         self.assertTrue(isinstance(command2, event_commands.Speak))
         # Test with nickname
-        command3, bad_idx = event_commands.determine_command_type("s;Eirika;I am evil;;60")
+        command3, bad_idx = event_commands.parse_text_to_command("s;Eirika;I am evil;;60")
         self.assertTrue(isinstance(command3, event_commands.Speak))
         # Test comments
-        command4, bad_idx = event_commands.determine_command_type("#Hello")
+        command4, bad_idx = event_commands.parse_text_to_command("#Hello")
         self.assertTrue(isinstance(command4, event_commands.Comment))
-        command5, bad_idx = event_commands.determine_command_type("comment;Hello")
+        command5, bad_idx = event_commands.parse_text_to_command("comment;Hello")
         self.assertTrue(isinstance(command5, event_commands.Comment))
-        command6, bad_idx = event_commands.determine_command_type("flgjklskl;sumerian;lorem ipsum")
+        command6, bad_idx = event_commands.parse_text_to_command("flgjklskl;sumerian;lorem ipsum")
         self.assertTrue(isinstance(command6, event_commands.Comment))
-        command7, bad_idx = event_commands.determine_command_type(None)
+        command7, bad_idx = event_commands.parse_text_to_command(None)
         self.assertTrue(command7 is None)
-        command8, bad_idx = event_commands.determine_command_type("")
+        command8, bad_idx = event_commands.parse_text_to_command("")
         self.assertTrue(command8 is None)
 
     def test_parse_text_to_command_strict(self):
         # Test with keyword arguments
-        # Test with flags
+        command1, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;HP=13", strict=True)
+        self.assertTrue(isinstance(command1, event_commands.SetCurrentHP))
+        self.assertTrue(command1.parameters.get('Unit') == "Seth")
+        self.assertTrue(command1.parameters.get('HP') == "13")
+        self.assertTrue(len(command1.chosen_flags) == 0)
+        self.assertTrue(bad_idx is None)
+        # Test with flags and nickname
+        command2, bad_idx = event_commands.parse_text_to_command("r;Seth;no_block", strict=True)
+        self.assertTrue(isinstance(command1, event_commands.RemovePortrait))
+        self.assertTrue(command2.parameters.get('Unit') == "Seth")
+        self.assertTrue(command2.chosen_flags == {"no_block"})
         # Test with universal flags
+        command3, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;13;no_warn", strict=True)
+        self.assertTrue(command3.chosen_flags == {"no_warn"})
         # Test with display values (use of parentheses)
+        command4, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth (Seth);13", strict=True)
+        self.assertTrue(command4.parameters.get('Unit') == "Seth")
+        self.assertTrue(command4.parameters.get('HP') == "13")
         # Test with evaluables
+        command5, bad_idx = event_commands.parse_text_to_command("if;Seth (Seth)", strict=True)
+        self.assertTrue(command5.parameters.get('Expression') == "Seth (Seth)")
         # Test with positional arguments before keywords
+        command6, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;HP=13", strict=True)
+        self.assertTrue(command6.parameters.get('Unit') == "Seth")
+        self.assertTrue(command6.parameters.get('HP') == "13")
         # Test with invalid keyword argument
-        # Test with bad idx returning something interesting
+        command7, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;13", strict=True)
+        self.assertTrue(command7 is None)
+        self.assertTrue(bad_idx == 1)
+        # Test with using keyword types wrongly
+        command8, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;PositiveInteger=13", strict=True)
+        self.assertTrue(command8 is None)
+        self.assertTrue(bad_idx == 1)
+        # Purposefully does not do validation of keyword arguments here,
+        # so that other functions can use the full command when THEY do validation
+        # Plus, validation often reuqires that the validator know what level is referred to
+        # This ruins the atomic self-containedness of theis
+        # parse_text_to_command is really a structural check, not a semantic check
+        command9, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;HP=lorem ipsum", strict=True)
+        self.assertTrue(isinstance(command9, event_commands.SetCurrentHP))
         # Test with too many arguments
+        command10, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;13;Lorem Ipsum", strict=True)
+        self.assertTrue(command10 is None)
+        self.assertTrue(bad_idx == 2)
+        # Test with non-existent keyword argument
+        command11, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;13;Lorem=Ipsum", strict=True)
+        self.assertTrue(command11 is None)
+        self.assertTrue(bad_idx == 2)
+        # Test with missing keyword arguments
+        command12, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth", strict=True)
+        self.assertTrue(command12 is None)
 
     def test_parse(self):
-        # Test with existing command and make sure it returns back parameters + flags
+        input_parameters = {"x": 1, "y": 2}
+        x = event_commands.EventCommands(input_parameters, {"algebra"})
+        parameters, flags = event_commands.parse(x)
+        self.assertEqual(parameters, input_parameters)
+        self.assertEqual(flags, {"algebra"})
 
     def test_convert_parse(self):
+        input_parameters = {"x": 1, "y": 2}
+        x = event_commands.EventCommands(input_parameters, {"algebra"})
+        parameters, flags = event_commands.convert_parse(x)
+        self.assertEqual(parameters, input_parameters)
+        self.assertEqual(flags, {"algebra"})
         # Test with existing command and make sure it returns back parameters + flags
+        command_parameters = {"Unit": "Seth", "HP": "13"}
+        command1 = event_commands.SetCurrentHP(command_parameters, {"no_warn"})
+        parameters, flags = event_commands.convert_parse(command1)
+        self.assertEqual(parameters, command_parameters)
+        self.assertEqual(flags, {"no_warn"})
         # Test with existing command and see if it runs convert using validators
+        command_parameters = {"Speaker": "Seth", "TextSpeed": "5.5"}
+        command2 = event_commands.SpeakStyle(command_parameters)
+        parameters, flags = event_commands.convert_parse(command2)
+        self.assertEqual(parameters, {"Speaker": "Seth", "TextSpeed": 5.5})
+        self.assertTrue(len(flags) == 0)
 
     def test_save_and_restore(self):
         # Test save returns what we expect
         # Test restore correctly restores an event command
+        pass
 
     def test_get_keyword_types(self):
         # Test that when keyword types exist, it returns that
         # Test that when keyword types does not exist, it returns regular command
+        pass
 
     def test_get_validator_from_keyword(self):
         # Test validator from keywords
         # Test validator from optional keywords
+        pass
 
     def test_get_index_from_keyword(self):
         # Test keyword argument
         # Test positional argument
+        pass
