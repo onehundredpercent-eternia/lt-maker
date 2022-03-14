@@ -30,7 +30,7 @@ class UIView():
 
         self.cursor_right: bool = False
 
-        # self.unit_info_offset = 0
+        self.unit_info_offset = 0
         self.obj_info_offset = 0
         self.attack_info_offset = 0
         self.initiative_info_offset = 0

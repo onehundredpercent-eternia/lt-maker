@@ -322,10 +322,10 @@ class ExpState(State):
                 else:
                     if class_skill_nid not in [skill.nid for skill in unit.skills]:
                         act = action.AddSkill(unit, class_skill_nid)
-                    action.do(act)
-                    if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
-                        game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
-                        game.state.change('alert')
+                        action.do(act)
+                        if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
+                            game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
+                            game.state.change('alert')
 
     @staticmethod
     def give_new_personal_skills(unit):
@@ -340,10 +340,10 @@ class ExpState(State):
                 else:
                     if personal_skill_nid not in [skill.nid for skill in unit.skills]:
                         act = action.AddSkill(unit, personal_skill_nid)
-                    action.do(act)
-                    if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
-                        game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
-                        game.state.change('alert')
+                        action.do(act)
+                        if act.skill_obj and not skill_system.hidden(act.skill_obj, unit):
+                            game.alerts.append(banner.GiveSkill(unit, act.skill_obj))
+                            game.state.change('alert')
 
 class LevelUpScreen():
     bg = SPRITES.get('level_screen')
