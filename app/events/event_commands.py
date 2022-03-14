@@ -2277,26 +2277,21 @@ class SetOverworldMenuOptionVisible(EventCommand):
 def get_commands():
     return EventCommand.__subclasses__()
 
-def restore_command(dat):
+def restore_command(dat) -> EventCommand:
     if len(dat) == 2:
         nid, display_values = dat
-        text = ';'.join([nid] + display_values)
-        command, _ = parse_text_to_command(text, strict=True)
-        if command:
-            return command
-        else:
-            return Comment(display_values=[nid + ';' + str.join(';', display_values)])
-    elif len(dat) == 3:
+    elif len(dat) == 3:  # Old method
         nid, values, display_values = dat
-        text = ';'.join([nid] + display_values)
-        command, _ = parse_text_to_command(text, strict=True)
-        if command:
-            return command
-        else:
-            return Comment(display_values=[nid + ';' + str.join(';', display_values)])
     else:
         logging.error("Couldn't restore event command: NID: %s; Display Values: %s", nid, display_values)
         return None
+
+    text = ';'.join([nid] + display_values)
+    command, _ = parse_text_to_command(text, strict=True)
+    if command:
+        return command
+    else:
+        return Comment(display_values=[nid + ';' + str.join(';', display_values)])
 
 evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList')
 
@@ -2310,7 +2305,7 @@ def determine_command_type(text: str) -> EventCommand:
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
     for command_type in subclasses:
-        if command_type.nid == command_nid:
+        if command_type.nid == command_nid or command_type.nickname == command_nid:
             return command_type()
     return Comment()
 
