@@ -2377,6 +2377,12 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                     logging.error("too many arguments: %s, %s", arg, arguments)
                     return None, idx
 
+        # Check that we have all the required keywords
+        for keyword in command_info.keywords:
+            if keyword not in parameters:
+                logging.error("Missing required parameter: %s in %s", keyword, parameters)
+                return None, len(cmd_args) - 1
+
         copy = command(parameters, flags, cmd_args)
         return copy, None
 
