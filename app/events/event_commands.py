@@ -2345,7 +2345,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
             all_keywords = command_info.keywords + command_info.optional_keywords
 
             # Check for flag first
-            if _process_arg(None, arg) in command_info._flags:
+            if _process_arg(None, arg) in command_info.flags:
                 flags.add(arg)
 
             # Handle Python style keyword arguments
@@ -2387,6 +2387,8 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
         return copy, None
 
     # Main function starts here
+    if not text:
+        return None, None
     text = text.lstrip()
     if text.startswith('#'):
         return Comment(display_values=[text]), None
