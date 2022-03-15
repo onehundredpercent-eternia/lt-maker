@@ -141,22 +141,23 @@ class EventCommandUnitTests(unittest.TestCase):
 
     def test_save_and_restore(self):
         # Test save returns what we expect
-        parameters = {"Unit": "Seth", "HP": "13"}
-        command = event_commands.SetCurrentHP(parameters)
+        command, _ = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;HP=13")
         dat = command.save()
         self.assertEqual(len(dat), 2)
         self.assertEqual(dat[0], command.nid)
         # Test restore correctly restores an event command
         command = event_commands.restore_command(dat)
         self.assertTrue(isinstance(command, event_commands.SetCurrentHP))
+        parameters = {"Unit": "Seth", "HP": "13"}
         self.assertEqual(command.parameters, parameters)
 
     def test_save_and_restore_comment(self):
-        command = event_commands.Comment("Hello")
+        command = event_commands.Comment(display_values=["Hello"])
         dat = command.save()
         self.assertEqual(dat[0], command.nid)
+        self.assertEqual(dat[1], ["Hello"])
         command = event_commands.restore_command(dat)
-        self.assertEqual(command.display_values, "Hello")
+        self.assertEqual(command.display_values, ["Hello"])
 
     def test_get_keyword_types(self):
         # Test that when keyword types exist, it returns that
@@ -178,6 +179,8 @@ class EventCommandUnitTests(unittest.TestCase):
     def test_get_index_from_keyword(self):
         command, _ = event_commands.parse_text_to_command("add_portrait;ScreenPosition=Left;Slide=Left;Portrait=Eirika")
         self.assertTrue(isinstance(command, event_commands.AddPortrait))
+        self.assertEqual(len(command.display_values), 2)
+        self.assertTrue("Portrait=Eirika" in command.display_values)
         # Test keyword argument
         self.assertEqual(command.get_index_from_keyword("ScreenPosition"), 0)
         # Test positional argument
