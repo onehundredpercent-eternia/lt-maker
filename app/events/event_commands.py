@@ -74,7 +74,9 @@ class EventCommand(Prefab):
             return self.get_keyword_types()[len(self.keywords) + i]
 
     def get_index_from_keyword(self, keyword: str) -> int:
+        print(keyword, self.display_values)
         for idx, value in enumerate(self.display_values):
+            print(idx, value, (keyword + '=') in value)
             if (keyword + '=') in value:
                 return idx
             else:
