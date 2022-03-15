@@ -38,13 +38,14 @@ class EventCommandUnitTests(unittest.TestCase):
         self.assertTrue(isinstance(command, event_commands.Comment))
 
     def test_parse_text_to_command_typing(self):
+        # Missing keyword
         command1, bad_idx = event_commands.parse_text_to_command("speak")
-        self.assertTrue(isinstance(command1, event_commands.Speak))
+        self.assertTrue(command1 is None)
         # Test with tab in front
         command2, bad_idx = event_commands.parse_text_to_command("    speak;Eirika;I am evil;;60")
         self.assertTrue(isinstance(command2, event_commands.Speak))
         # Test with nickname
-        command3, bad_idx = event_commands.parse_text_to_command("s;Eirika;I am evil;;60")
+        command3, bad_idx = event_commands.parse_text_to_command("s;Eirika;I am evil")
         self.assertTrue(isinstance(command3, event_commands.Speak))
         # Test comments
         command4, bad_idx = event_commands.parse_text_to_command("#Hello")
@@ -68,7 +69,7 @@ class EventCommandUnitTests(unittest.TestCase):
         self.assertTrue(bad_idx is None)
         # Test with flags and nickname
         command2, bad_idx = event_commands.parse_text_to_command("r;Seth;no_block", strict=True)
-        self.assertTrue(isinstance(command1, event_commands.RemovePortrait))
+        self.assertTrue(isinstance(command2, event_commands.RemovePortrait))
         self.assertTrue(command2.parameters.get('Unit') == "Seth")
         self.assertTrue(command2.chosen_flags == {"no_block"})
         # Test with universal flags
@@ -114,14 +115,14 @@ class EventCommandUnitTests(unittest.TestCase):
 
     def test_parse(self):
         input_parameters = {"x": 1, "y": 2}
-        x = event_commands.EventCommands(input_parameters, {"algebra"})
+        x = event_commands.EventCommand(input_parameters, {"algebra"})
         parameters, flags = event_commands.parse(x)
         self.assertEqual(parameters, input_parameters)
         self.assertEqual(flags, {"algebra"})
 
     def test_convert_parse(self):
         input_parameters = {"x": 1, "y": 2}
-        x = event_commands.EventCommands(input_parameters, {"algebra"})
+        x = event_commands.EventCommand(input_parameters, {"algebra"})
         parameters, flags = event_commands.convert_parse(x)
         self.assertEqual(parameters, input_parameters)
         self.assertEqual(flags, {"algebra"})
@@ -140,20 +141,45 @@ class EventCommandUnitTests(unittest.TestCase):
 
     def test_save_and_restore(self):
         # Test save returns what we expect
+        parameters = {"Unit": "Seth", "HP": "13"}
+        command = event_commands.SetCurrentHP(parameters)
+        dat = command.save()
+        self.assertTrue(len(dat) == 2)
+        self.assertEqual(dat[0] == command.nid)
         # Test restore correctly restores an event command
-        pass
+        command = event_commands.restore_command(dat)
+        self.assertTrue(isinstance(command, event_commands.SetCurrentHP))
+        self.assertEqual(command.parameters, parameters)
+
+    def test_save_and_restore_comment(self):
+        command = event_commands.Comment("Hello")
+        dat = command.save()
+        self.assertEqual(dat[0] == command.nid)
+        command = event_commands.restore_command(dat)
+        self.assertEqual(command.display_values, "Hello")
 
     def test_get_keyword_types(self):
         # Test that when keyword types exist, it returns that
+        command = event_commands.SetCurrentHP()
+        self.assertEqual(command.get_keyword_types(), command.keyword_types)
         # Test that when keyword types does not exist, it returns regular command
-        pass
+        command = event_commands.If()
+        self.assertEqual(command.get_keyword_types(), command.keywords + command.optional_keywords)
+        command = event_commands.AddPortrait()
+        self.assertEqual(command.get_keyword_types(), command.keywords + command.optional_keywords)
 
     def test_get_validator_from_keyword(self):
+        command = event_commands.Music()
         # Test validator from keywords
+        self.assertEqual(command.get_validator_from_keyword("Music"), "Music")
         # Test validator from optional keywords
-        pass
+        self.assertEqual(command.get_validator_from_keyword("FadeIn"), "Time")
 
     def test_get_index_from_keyword(self):
+        command, _ = event_commands.parse_text_to_command("add_portrait;ScreenPosition=Left;Slide=Left;Portrait=Eirika")
+        self.assertTrue(isinstance(command, event_commands.AddPortrait))
         # Test keyword argument
+        self.assertEqual(command.get_index_from_keyword("ScreenPosition"), 0)
         # Test positional argument
-        pass
+        self.assertEqual(command.get_index_from_keyword("Slide"), 1)
+        self.assertEqual(command.get_index_from_keyword("Portrait"), 2)
