@@ -40,7 +40,7 @@ class EventCommandUnitTests(unittest.TestCase):
     def test_parse_text_to_command_typing(self):
         # Missing keyword
         command1, bad_idx = event_commands.parse_text_to_command("speak")
-        self.assertTrue(command1 is None)
+        self.assertTrue(isinstance(command1, event_commands.Comment))
         # Test with tab in front
         command2, bad_idx = event_commands.parse_text_to_command("    speak;Eirika;I am evil;;60")
         self.assertTrue(isinstance(command2, event_commands.Speak))
@@ -63,37 +63,37 @@ class EventCommandUnitTests(unittest.TestCase):
         # Test with keyword arguments
         command1, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;HP=13", strict=True)
         self.assertTrue(isinstance(command1, event_commands.SetCurrentHP))
-        self.assertTrue(command1.parameters.get('Unit') == "Seth")
-        self.assertTrue(command1.parameters.get('HP') == "13")
-        self.assertTrue(len(command1.chosen_flags) == 0)
+        self.assertEqual(command1.parameters.get('Unit'), "Seth")
+        self.assertEqual(command1.parameters.get('HP'), "13")
+        self.assertEqual(len(command1.chosen_flags), 0)
         self.assertTrue(bad_idx is None)
         # Test with flags and nickname
         command2, bad_idx = event_commands.parse_text_to_command("r;Seth;no_block", strict=True)
         self.assertTrue(isinstance(command2, event_commands.RemovePortrait))
-        self.assertTrue(command2.parameters.get('Unit') == "Seth")
-        self.assertTrue(command2.chosen_flags == {"no_block"})
+        self.assertEqual(command2.parameters.get('Portrait'), "Seth")
+        self.assertEqual(command2.chosen_flags, {"no_block"})
         # Test with universal flags
         command3, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;13;no_warn", strict=True)
-        self.assertTrue(command3.chosen_flags == {"no_warn"})
+        self.assertEqual(command3.chosen_flags, {"no_warn"})
         # Test with display values (use of parentheses)
         command4, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth (Seth);13", strict=True)
-        self.assertTrue(command4.parameters.get('Unit') == "Seth")
-        self.assertTrue(command4.parameters.get('HP') == "13")
+        self.assertEqual(command4.parameters.get('Unit'), "Seth")
+        self.assertEqual(command4.parameters.get('HP'), "13")
         # Test with evaluables
         command5, bad_idx = event_commands.parse_text_to_command("if;Seth (Seth)", strict=True)
-        self.assertTrue(command5.parameters.get('Expression') == "Seth (Seth)")
+        self.assertEqual(command5.parameters.get('Expression'), "Seth (Seth)")
         # Test with positional arguments before keywords
         command6, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;HP=13", strict=True)
-        self.assertTrue(command6.parameters.get('Unit') == "Seth")
-        self.assertTrue(command6.parameters.get('HP') == "13")
+        self.assertEqual(command6.parameters.get('Unit'), "Seth")
+        self.assertEqual(command6.parameters.get('HP'), "13")
         # Test with invalid keyword argument
         command7, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;13", strict=True)
         self.assertTrue(command7 is None)
-        self.assertTrue(bad_idx == 1)
+        self.assertEqual(bad_idx, 1)
         # Test with using keyword types wrongly
         command8, bad_idx = event_commands.parse_text_to_command("set_current_hp;Unit=Seth;PositiveInteger=13", strict=True)
         self.assertTrue(command8 is None)
-        self.assertTrue(bad_idx == 1)
+        self.assertEqual(bad_idx, 1)
         # Purposefully does not do validation of keyword arguments here,
         # so that other functions can use the full command when THEY do validation
         # Plus, validation often reuqires that the validator know what level is referred to
@@ -104,11 +104,11 @@ class EventCommandUnitTests(unittest.TestCase):
         # Test with too many arguments
         command10, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;13;Lorem Ipsum", strict=True)
         self.assertTrue(command10 is None)
-        self.assertTrue(bad_idx == 2)
+        self.assertEqual(bad_idx, 2)
         # Test with non-existent keyword argument
         command11, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth;13;Lorem=Ipsum", strict=True)
         self.assertTrue(command11 is None)
-        self.assertTrue(bad_idx == 2)
+        self.assertEqual(bad_idx, 2)
         # Test with missing keyword arguments
         command12, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth", strict=True)
         self.assertTrue(command12 is None)
@@ -144,8 +144,8 @@ class EventCommandUnitTests(unittest.TestCase):
         parameters = {"Unit": "Seth", "HP": "13"}
         command = event_commands.SetCurrentHP(parameters)
         dat = command.save()
-        self.assertTrue(len(dat) == 2)
-        self.assertEqual(dat[0] == command.nid)
+        self.assertEqual(len(dat), 2)
+        self.assertEqual(dat[0], command.nid)
         # Test restore correctly restores an event command
         command = event_commands.restore_command(dat)
         self.assertTrue(isinstance(command, event_commands.SetCurrentHP))
@@ -154,7 +154,7 @@ class EventCommandUnitTests(unittest.TestCase):
     def test_save_and_restore_comment(self):
         command = event_commands.Comment("Hello")
         dat = command.save()
-        self.assertEqual(dat[0] == command.nid)
+        self.assertEqual(dat[0], command.nid)
         command = event_commands.restore_command(dat)
         self.assertEqual(command.display_values, "Hello")
 
