@@ -179,7 +179,8 @@ class EventCommandUnitTests(unittest.TestCase):
     def test_get_index_from_keyword(self):
         command, _ = event_commands.parse_text_to_command("add_portrait;ScreenPosition=Left;Slide=Left;Portrait=Eirika")
         self.assertTrue(isinstance(command, event_commands.AddPortrait))
-        self.assertEqual(len(command.display_values), 2)
+        self.assertEqual(len(command.display_values), 3)
+        print(command.display_values)
         self.assertTrue("Portrait=Eirika" in command.display_values)
         # Test keyword argument
         self.assertEqual(command.get_index_from_keyword("ScreenPosition"), 0)
