@@ -74,18 +74,15 @@ class EventCommand(Prefab):
             return self.get_keyword_types()[len(self.keywords) + i]
 
     def get_index_from_keyword(self, keyword: str) -> int:
-        print(keyword, self.display_values)
         for idx, value in enumerate(self.display_values):
-            print(idx, value, (keyword + '=') in value)
             if (keyword + '=') in value:
                 return idx
-            else:
-                if keyword in self.keywords:
-                    if self.keywords.index(keyword) == idx:
-                        return idx
-                elif keyword in self.optional_keywords:
-                    if self.optional_keywords.index(keyword) + len(self.keywords) == idx:
-                        return idx
+
+        if keyword in self.keywords:
+            return self.keywords.index(keyword)
+        elif keyword in self.optional_keywords:
+            return self.optional_keywords.index(keyword) + len(self.keywords)
+        return 0
 
     @classmethod
     def copy(cls, command: EventCommand) -> EventCommand:
