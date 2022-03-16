@@ -2096,7 +2096,7 @@ def chapter_title(self: Event, music=None, string=None, flags=None):
     self.game.state.change('chapter_title')
     self.state = 'paused'
 
-def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, zlevel=None, animation_direction=None, flags=None):
+def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, z_level=None, animation=None, flags=None):
     flags = flags or set()
 
     name = nid
@@ -2106,8 +2106,8 @@ def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, zlevel=None,
     if position:
         pos = tuple(str_utils.intify(position))
     if zlevel:
-        z = int(zlevel)
-    anim_dir = animation_direction
+        z = int(z_level)
+    anim_dir = animation
 
     sprite = SPRITES.get(sprite_nid)
     component = UIComponent.from_existing_surf(sprite)
