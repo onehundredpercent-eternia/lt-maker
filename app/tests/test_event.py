@@ -39,11 +39,10 @@ class EventUnitTests(unittest.TestCase):
             event.update()
 
     def MACRO_test_event_commands(self, test_commands):
-        from app.events.function_catalog import get_catalog
         command_names = set([command.split(';')[0] for command in test_commands])
         event = self.create_event(test_commands)
         mocked_commands: List[MagicMock] = []
-        catalog = get_catalog()
+        catalog = {}
         for name in command_names:
             mocked_command = MagicMock()
             catalog[name] = mocked_command
@@ -64,7 +63,7 @@ class EventUnitTests(unittest.TestCase):
         self.assertEqual(event.state, 'complete')
 
     def test_break(self):
-        from app.events.function_catalog import get_catalog
+        from app.events.function_catalog import get_catalog, reset_catalog
         test_commands = [
             "speak;Eirika;SPEAK_TEXT",
             "break",
@@ -77,6 +76,7 @@ class EventUnitTests(unittest.TestCase):
 
         catalog['speak'].assert_called_once()
         self.assertEqual(event.state, 'complete')
+        reset_catalog()
 
     def test_speak_command(self):
         from app.events import event_functions
