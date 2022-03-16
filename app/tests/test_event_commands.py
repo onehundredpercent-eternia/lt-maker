@@ -216,7 +216,7 @@ class EventCommandUnitTests(unittest.TestCase):
             if command.keyword_types:
                 self.assertEqual(len(command.keyword_types), len(all_keywords), command.nid)
             # Make sure the command's class name and nid follow conventions
-            self.assertEqual(str_utils.camel_to_snake(command.__class__.__name__), command.nid)
+            self.assertEqual(str_utils.camel_to_snake(command().__class__.__name__), command.nid)
 
     def test_check_event_function_flags(self):
         import inspect
@@ -242,6 +242,8 @@ class EventCommandUnitTests(unittest.TestCase):
         commands = event_commands.get_commands()
         catalog = function_catalog.get_catalog()
         for command in commands:
+            if command.special_handling:  # If, Elif, Else, End, For, Endf
+                continue
             all_keywords = command.keywords + command.optional_keywords
             self.assertTrue(command.nid in catalog, command.nid)  # There is a corresponding event function
             associated_func = catalog[command.nid]
