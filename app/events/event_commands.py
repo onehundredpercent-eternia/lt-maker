@@ -2182,14 +2182,14 @@ class Separate(EventCommand):
     keywords = ["Unit"]
 
 # === OVERWORLD COMMANDS START HERE ===
-class StartOverworldCinematic(EventCommand):
+class OverworldCinematic(EventCommand):
     nid = 'overworld_cinematic'
     tag = Tags.OVERWORLD
     desc = 'Sets the background to the overworld, allowing us to create cutscenes set in the overworld'
 
     optional_keywords = ['OverworldNid']
 
-class OverworldSetPosition(EventCommand):
+class SetOverworldPosition(EventCommand):
     nid = 'set_overworld_position'
     tag = Tags.OVERWORLD
     desc = "Sets the position of a specific party in the overworld to a specific coordinate or node in the overworld"
@@ -2211,7 +2211,7 @@ class OverworldMoveUnit(EventCommand):
     keyword_types = ["OverworldEntity", 'OverworldLocation', 'Float', 'PointList']
     _flags = ['no_block', 'no_follow', 'disable_after', 'no_sound']
 
-class OverworldRevealNode(EventCommand):
+class RevealOverworldNode(EventCommand):
     nid = 'reveal_overworld_node'
     tag = Tags.OVERWORLD
     desc = ('Reveals an overworld node on the map: moves the camera to the new location, plays the animation, and fades in the nodes.'
@@ -2220,7 +2220,7 @@ class OverworldRevealNode(EventCommand):
     keywords = ['OverworldNodeNid']
     _flags = ["immediate"]
 
-class OverworldRevealRoad(EventCommand):
+class RevealOverworldRoad(EventCommand):
     nid = 'reveal_overworld_road'
     tag = Tags.OVERWORLD
     desc = ('Enables a road between two overworld nodes. *OverworldNodeNID* denotes the NID of a valid node. '

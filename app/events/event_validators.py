@@ -188,6 +188,9 @@ class Time(Validator):
             return int(text)
         return None
 
+    def convert(self, text: str) -> int:
+        return int(text)
+
 class Music(Validator):
     def validate(self, text, level):
         if text in RESOURCES.music.keys():

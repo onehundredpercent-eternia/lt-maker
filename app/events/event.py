@@ -574,7 +574,7 @@ class Event():
         return new_unit
 
     def _get_item_in_inventory(self, values):
-        unit = self.get_unit(values[0])
+        unit = self._get_unit(values[0])
         if not unit:
             self.logger.error("Couldn't find unit with nid %s" % values[0])
             return None, None
@@ -614,8 +614,8 @@ class Event():
                 position = tuple(int(_) for _ in text.split(','))
         elif text == '{position}':
             position = self.position
-        elif not self.game.is_displaying_overworld() and self.get_unit(text):
-            position = self.get_unit(text).position
+        elif not self.game.is_displaying_overworld() and self._get_unit(text):
+            position = self._get_unit(text).position
         elif self.game.is_displaying_overworld() and self._get_overworld_location_of_object(text):
             position = self._get_overworld_location_of_object(text).position
         else:
