@@ -1274,14 +1274,14 @@ def set_exp(self: Event, global_unit, experience, flags=None):
     exp = utils.clamp(int(experience), 0, 100)
     action.do(action.SetExp(unit, exp))
 
-def give_wexp(self: Event, global_unit, weapon_type, integer, flags=None):
+def give_wexp(self: Event, global_unit, weapon_type, positive_integer, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit with nid %s" % global_unit)
         return
-    wexp = int(integer)
+    wexp = int(positive_integer)
     if 'no_banner' in flags:
         action.execute(action.AddWexp(unit, weapon_type, wexp))
     else:
