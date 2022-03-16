@@ -12,6 +12,7 @@ def get_catalog():
     if not FUNCTION_CATALOG:
         # general_funcs = {func: getattr(event_functions, func) for func in dir(event_functions) if callable(getattr(event_functions, func)) and not func.startswith("__")}
         # overworld_funcs = {func: getattr(overworld_event_functions, func) for func in dir(overworld_event_functions) if callable(getattr(overworld_event_functions, func)) and not func.startswith("__")}
+        print([(k, v.__module__) for (k, v) in inspect.getmembers(event_functions, inspect.isfunction)])
         general_funcs = {k: v for (k, v) in inspect.getmembers(event_functions, inspect.isfunction) if not k.startswith("__") and v.__module__ == 'event_functions'}
         overworld_funcs = {k: v for (k, v) in inspect.getmembers(overworld_event_functions, inspect.isfunction) if not k.startswith("__") and v.__module__ == 'overworld_event_functions'}
         general_funcs.update(overworld_funcs)
