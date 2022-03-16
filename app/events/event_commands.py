@@ -497,7 +497,7 @@ Extra flags:
     keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'Nid', 'Float', 'FontColor', 'FontType', 'DialogBox', 'PositiveInteger', 'Bool', 'MessageTail']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
-class EndHoldSpeak(EventCommand):
+class Unhold(EventCommand):
     nid = "unhold"
     tag = Tags.DIALOGUE_TEXT
 
