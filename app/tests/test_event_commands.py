@@ -248,7 +248,7 @@ class EventCommandUnitTests(unittest.TestCase):
             self.assertTrue(command.nid in catalog, command.nid)  # There is a corresponding event function
             associated_func = catalog[command.nid]
             sig = inspect.signature(associated_func)
-            self.assertEqual(len(sig.parameters), len(all_keywords) + 2, command.nid) # Also includes self: Event and flags=None
+            self.assertEqual(len(sig.parameters), len(all_keywords) + 2, '%s: %s' % (command.nid, sig.parameters)) # Also includes self: Event and flags=None
 
             for idx, keyword in enumerate(all_keywords):
                 traceback_str = '%s: %s' % (command.nid, keyword)
