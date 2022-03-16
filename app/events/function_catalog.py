@@ -18,3 +18,7 @@ def get_catalog():
         general_funcs.update(overworld_funcs)
         FUNCTION_CATALOG = general_funcs
     return FUNCTION_CATALOG
+
+def reset_catalog():
+    global FUNCTION_CATALOG
+    FUNCTION_CATALOG = {}
