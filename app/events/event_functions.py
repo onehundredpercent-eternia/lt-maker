@@ -2069,15 +2069,15 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
-def text_entry(self: Event, nid, string, integer=None, illegal_character_list=None, flags=None):
+def text_entry(self: Event, nid, string, positive_integer=None, illegal_character_list=None, flags=None):
     flags = flags or set()
 
     header = string
     limit = 16
     illegal_characters = []
     force_entry = False
-    if integer:
-        limit = int(integer)
+    if positive_integer:
+        limit = int(positive_integer)
     if illegal_character_list:
         illegal_characters = illegal_character_list.split(',')
     force_entry = 'force_entry' in flags
