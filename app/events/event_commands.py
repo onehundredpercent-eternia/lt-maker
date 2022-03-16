@@ -962,7 +962,7 @@ vars that are persisted across events.
 If the flag `increment_mode` is supplied, this will add the value to the existing value instead instead of setting it.
 Please try to avoid using `increment_mode` with non-numerical fields. That would erase your field and then nobody will be happy.
     """
-    keyword_names = ["Unit", "Key", "Value"]
+    keywords = ["Unit", "Key", "Value"]
     keyword_types = ['Unit', 'String', 'String']
     _flags = ['increment_mode']
 
