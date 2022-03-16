@@ -148,7 +148,7 @@ class EventCommandUnitTests(unittest.TestCase):
         self.assertEqual(parameters, {"Speaker": "Seth", "TextSpeed": 5.5})
         self.assertTrue(len(flags) == 0)
         # Test with flags and exising function
-        command3, _ = event_commands.parse_text_to_command("give_item;Eirika;Rapier;no_banner", strict=True)
+        command3, _ = event_commands.parse_text_to_command("give_item;Eirika;Rapier;FLAG(no_banner)", strict=True)
         self.assertTrue(isinstance(command3, event_commands.GiveItem))
         self.assertEqual(len(command3.chosen_flags), 1)
         self.assertEqual(command3.chosen_flags, {"no_banner"})

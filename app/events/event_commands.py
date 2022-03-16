@@ -2345,7 +2345,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
 
             # Check for flag first
             if _process_arg(None, arg) in command_info.flags:
-                flags.add(arg)
+                flags.add(_process_arg(None, arg))
 
             # Handle Python style keyword arguments
             # For example `s;Speaker=Eirika;Text=Hi!;Nid=normal`
