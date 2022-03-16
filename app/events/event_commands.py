@@ -1851,7 +1851,7 @@ via hitting the back button, and the event will go on as normal.
     keyword_types = ['Nid', 'String', 'String', 'Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
     _flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar', 'backable']
 
-class NoChoice(EventCommand):
+class Unchoice(EventCommand):
     nid = 'unchoice'
     tag = Tags.MISCELLANEOUS
 
@@ -1901,7 +1901,8 @@ expression would automatically update the gold.
     _flags = ['expression', 'no_bg']
 
 class RemoveTable(EventCommand):
-    nid = 'rmtable'
+    nid = 'remove_table'
+    nickname = 'rmtable'
     tag = Tags.MISCELLANEOUS
 
     desc = \
