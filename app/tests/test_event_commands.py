@@ -203,3 +203,59 @@ class EventCommandUnitTests(unittest.TestCase):
         # Test positional argument
         self.assertEqual(command.get_index_from_keyword("Slide"), 1)
         self.assertEqual(command.get_index_from_keyword("Portrait"), 2)
+
+    def test_check_event_signatures(self):
+        from app.utilities import str_utils    
+
+        commands = event_commands.get_commands()
+        for command in commands:
+            # Make sure no duplicates in command.keywords and command.optional_keywords
+            all_keywords = command.keywords + command.optional_keywords
+            self.assertEqual(len(set(all_keywords)), len(all_keywords))
+            # Make sure we have the right amount of keyword_types
+            if command.keyword_types:
+                self.assertEqual(len(command.keyword_types), len(all_keywords), command.nid)
+            # Make sure the command's class name and nid follow conventions
+            self.assertEqual(str_utils.camel_to_snake(command.__class__.__name__), command.nid)
+
+    def test_check_event_function_flags(self):
+        import inspect
+        from app.events import function_catalog
+        # Make sure event_commands match properly with event_functions
+        # Make sure every command can ingest flags=None
+        catalog = function_catalog.get_catalog()
+        for func in catalog.values():
+            sig = inspect.signature(func)
+            self_parameter = sig.parameters.get('self')
+            self.assertTrue(self_parameter is not None, func.__name__)
+            flag_parameter = sig.parameters.get('flags')
+            self.assertTrue(flag_parameter is not None, func.__name__)
+            self.assertTrue(flag_parameter.default is None, func.__name__)
+            # Make sure flags is always the last parameter
+            self.assertTrue(flag_parameter is sig.parameters.values()[-1], func.__name__)
+
+    def test_check_event_functions_match_event_commands(self):
+        import inspect
+        from app.utilities import str_utils
+        from app.events import function_catalog
+
+        commands = event_commands.get_commands()
+        catalog = function_catalog.get_catalog()
+        for command in commands:
+            all_keywords = command.keywords + command.optional_keywords
+            self.assertTrue(command.nid in catalog, command.nid)  # There is a corresponding event function
+            associated_func = catalog[command.nid]
+            sig = inspect.signature(associated_func)
+            self.assertEqual(len(sig.parameters), len(all_keywords) + 2, command.nid) # Also includes self: Event and flags=None
+
+            for idx, keyword in enumerate(all_keywords):
+                traceback_str = '%s: %s' % (command.nid, keyword)
+                snake_case = str_utils.camel_to_snake(keyword)
+                self.assertTrue(snake_case in sig.parameters, traceback_str)
+                # +1 because of self in the function signature
+                self.assertEqual(idx + 1, sig.parameters.keys().index(snake_case), traceback_str)
+                param = sig.parameters[snake_case]
+                if keyword in command.optional_keywords:
+                    self.assertTrue(param.default is not param.empty, traceback_str)
+                else:
+                    self.assertTrue(param.default is param.empty, traceback_str)
