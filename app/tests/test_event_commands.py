@@ -147,6 +147,13 @@ class EventCommandUnitTests(unittest.TestCase):
         parameters, flags = event_commands.convert_parse(command2)
         self.assertEqual(parameters, {"Speaker": "Seth", "TextSpeed": 5.5})
         self.assertTrue(len(flags) == 0)
+        # Test with flags and exising function
+        command3, _ = event_commands.parse_text_to_command("give_item;Eirika;Rapier;no_banner", strict=True)
+        self.assertTrue(isinstance(command3, event_commands.GiveItem))
+        self.assertEqual(len(command3.chosen_flags), 1)
+        self.assertEqual(command3.chosen_flags, {"no_banner"})
+        parameters, flags = event_commands.convert_parse(command3)
+        self.assertEqual(flags, {"no_banner"})
 
     def test_save_and_restore(self):
         # Test save returns what we expect

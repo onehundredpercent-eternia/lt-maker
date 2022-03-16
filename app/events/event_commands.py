@@ -2356,7 +2356,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                 if cmd_validator:
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
                 else:
-                    logging.error("Keyword argument %s not found", cmd_keyword)
+                    logging.info("Keyword argument %s not found", cmd_keyword)
                     return None, idx
 
             elif keyword_argument_mode:
@@ -2373,13 +2373,13 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                     cmd_validator = command_info.get_keyword_types()[idx]
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
                 else:
-                    logging.error("too many arguments: %s, %s", arg, arguments)
+                    logging.info("too many arguments: %s, %s", arg, arguments)
                     return None, idx
 
         # Check that we have all the required keywords
         for keyword in command_info.keywords:
             if keyword not in parameters:
-                logging.error("Missing required parameter: %s in %s", keyword, parameters)
+                logging.info("Missing required parameter: %s in %s", keyword, parameters)
                 return None, len(cmd_args) - 1
 
         copy = command(parameters, flags, cmd_args)
@@ -2397,7 +2397,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
     # Since they screw up the parser
     if text.endswith(';'):
         text = text[:-1]
-        
+
     arguments = text.split(';')
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
