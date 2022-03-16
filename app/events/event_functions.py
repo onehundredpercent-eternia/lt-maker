@@ -534,7 +534,7 @@ def change_tilemap(self: Event, tilemap, position_offset, load_tilemap, flags=No
     reload_map = 'reload' in flags
     if reload_map and self.game.is_displaying_overworld(): # just go back to the level
         from app.engine import level_cursor, map_view, movement
-        self.game.cursor = level_cursor.LevelCursor(game)
+        self.game.cursor = level_cursor.LevelCursor(self.game)
         self.game.movement = movement.MovementManager()
         self.game.map_view = map_view.MapView()
         self.game.boundary = self.prev_game_boundary
@@ -575,7 +575,7 @@ def change_tilemap(self: Event, tilemap, position_offset, load_tilemap, flags=No
     if self.game.is_displaying_overworld():
         # we were in the overworld before this, so we should probably reset cursor and such
         from app.engine import level_cursor, map_view, movement
-        self.game.cursor = level_cursor.LevelCursor(game)
+        self.game.cursor = level_cursor.LevelCursor(self.game)
         self.game.movement = movement.MovementManager()
         self.game.map_view = map_view.MapView()
     self.game.set_up_game_board(self.game.level.tilemap)
@@ -676,7 +676,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
         placement = 'giveup'
 
     level_unit_prefab = GenericUnit(
-        unit_nid, unit.variant, level, unit.klass, unit.faction, [item.nid for item in unit.items], unit.team, unit.ai)
+        unit_nid, unit.variant, int(level), unit.klass, unit.faction, [item.nid for item in unit.items], unit.team, unit.ai)
     new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
     position = self._check_placement(new_unit, position, placement)
     if not position:
