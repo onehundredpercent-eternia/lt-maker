@@ -1440,18 +1440,14 @@ def set_growths(self: Event, global_unit, stat_list, flags=None):
 
     self._apply_growth_changes(unit, growth_changes)
 
-def autolevel_to(self: Event, global_unit, expression, flags=None):
+def autolevel_to(self: Event, global_unit, level, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
         return
-    try:
-        final_level = int(evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region))
-    except:
-        self.logger.error("Could not evaluate {%s}" % expression)
-        return
+    final_level = int(level)
     current_level = unit.level
     diff = max(0, final_level - current_level)
     if diff <= 0:
@@ -1471,14 +1467,10 @@ def autolevel_to(self: Event, global_unit, expression, flags=None):
     for class_skill in class_skills:
         action.do(action.AddSkill(unit, class_skill))
 
-def set_mode_autolevels(self: Event, expression, flags=None):
+def set_mode_autolevels(self: Event, level, flags=None):
     flags = flags or set()
 
-    try:
-        autolevel = int(evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region))
-    except:
-        self.logger.error("Could not evaluate {%s}" % expression)
-        return
+    autolevel = int(level)
     if 'hidden' in flags:
         self.game.current_mode.enemy_autolevels = autolevel
     else:
@@ -1740,8 +1732,8 @@ def change_objective_win(self: Event, string, flags=None):
 def change_objective_loss(self: Event, string, flags=None):
     action.do(action.ChangeObjective('loss', string))
 
-def set_position(self: Event, expression, flags=None):
-    pos = self._parse_pos(expression)
+def set_position(self: Event, position, flags=None):
+    pos = self._parse_pos(position)
     self.position = pos
     self.text_evaluator.position = pos
 
