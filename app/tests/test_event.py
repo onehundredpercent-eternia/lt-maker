@@ -52,7 +52,7 @@ class EventUnitTests(unittest.TestCase):
         self.run_all_commands(event)
         for mocked_command in mocked_commands:
             mocked_command.assert_called_once()
-        resert_catalog()
+        reset_catalog()
 
     def test_event_terminates_eventually(self):
         test_commands = [
