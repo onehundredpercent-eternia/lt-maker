@@ -525,7 +525,7 @@ def activate_turnwheel(self: Event, force=None, flags=None):
 def battle_save(self: Event, flags=None):
     self.battle_save_flag = True
 
-def change_tilemap(self: Event, tilemap, position_offset, load_tilemap, flags=None):
+def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None, flags=None):
     """
     Cannot be turnwheeled
     """
