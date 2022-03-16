@@ -250,14 +250,14 @@ def toggle_narration_mode(self: Event, direction, speed=None, flags=None):
             self.wait_time = engine.get_time() + anim_duration
             self.state = 'waiting'
 
-def narrate(self: Event, speaker, text, flags=None):
+def narrate(self: Event, speaker, string, flags=None):
     if not self.overlay_ui.has_child('event_narration'):
         self.logger.error("%s: Not currently in overworld narration mode", "overworld_speak")
         return
 
     narration_component: NarrationDialogue = self.overlay_ui.get_child('event_narration')
     narrator = speaker
-    dialogue = text
+    dialogue = string
 
     # add the hurry up handler if it doesn't already exist
     if 'event_narration_listener' not in self.functions_listening_for_input:
