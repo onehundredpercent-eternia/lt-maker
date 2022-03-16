@@ -2066,7 +2066,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         text_align=talign)
     self.other_boxes.append((nid, table_ui))
 
-def rmtable(self: Event, nid):
+def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
 def text_entry(self: Event, nid, string, integer=None, illegal_character_list=None, flags=None):
