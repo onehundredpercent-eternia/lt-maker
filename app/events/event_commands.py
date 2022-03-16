@@ -32,6 +32,7 @@ class EventCommand(Prefab):
     nid: str = None
     nickname: str = None
     tag: Tags = Tags.HIDDEN
+    special_handling: bool = False
     desc: str = ''
 
     # static, shared among all instances of an EventCommand
@@ -115,6 +116,7 @@ class Comment(EventCommand):
 class If(EventCommand):
     nid = "if"
     tag = Tags.FLOW_CONTROL
+    special_handling = True
     desc = \
         """
 If the *Expression* returns true, the block under this command will be executed.
@@ -145,6 +147,7 @@ end
 class Elif(EventCommand):
     nid = "elif"
     tag = Tags.FLOW_CONTROL
+    special_handling = True
     desc = \
         """
 Works exactly like the **if** statement, but is called only if the previous **if** or **elif** returned false.
@@ -171,6 +174,7 @@ end
 class Else(EventCommand):
     nid = "else"
     tag = Tags.FLOW_CONTROL
+    special_handling = True
     desc = \
         """
 Defines a block to be executed only if the previous **if** or **elif** returned false.
@@ -193,6 +197,7 @@ end
 class End(EventCommand):
     nid = "end"
     tag = Tags.FLOW_CONTROL
+    special_handling = True
     desc = \
         """
 Ends a conditional block. Refer to the **if** command for more information.
@@ -201,6 +206,7 @@ Ends a conditional block. Refer to the **if** command for more information.
 class For(EventCommand):
     nid = "for"
     tag = Tags.FLOW_CONTROL
+    special_handling = True
     desc = \
     """The Expression will be evaluated, and it should return a list of strings.
 For every string in this list, the events below will be ran once, with the contents of the string accessible via the bracketed `{$(nid)}` tag.
@@ -223,6 +229,7 @@ endf
 class Endf(EventCommand):
     nid = "endf"
     tag = Tags.FLOW_CONTROL
+    special_handling = True
     desc = \
         """
 Ends a for block. Refer to the **for** command for more information.
