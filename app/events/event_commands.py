@@ -1143,7 +1143,7 @@ Changes the description of *Item* in the inventory of *GlobalUnit* to *String*.
 
     keywords = ["GlobalUnit", "Item", "String"]
 
-class AddItemToMultiItem(EventCommand):
+class AddItemToMultiitem(EventCommand):
     nid = 'add_item_to_multiitem'
     tag = Tags.MODIFY_ITEM_PROPERTIES
 
@@ -1155,7 +1155,7 @@ Adds a new item to an existing multi-item in the inventory of *GlobalUnit*.
     keywords = ["GlobalUnit", "MultiItem", "ChildItem"]
     keyword_types = ["GlobalUnit", "Item", "Item"]
 
-class RemoveItemFromMultiItem(EventCommand):
+class RemoveItemFromMultiitem(EventCommand):
     nid = 'remove_item_from_multiitem'
     tag = Tags.MODIFY_ITEM_PROPERTIES
 
