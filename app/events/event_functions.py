@@ -2305,8 +2305,8 @@ def trigger_script(self: Event, event, unit1=None, unit2=None, flags=None):
     if not valid_events:
         self.logger.error("Couldn't find any valid events matching name %s" % event)
 
-def trigger_script_with_args(self: Event, event_name: str, arg1: str = None, arg2: str = None, arg3: str = None, arg4: str = None, arg5: str = None, flags=None):
-    trigger_script = event_name
+def trigger_script_with_args(self: Event, event: str, arg1: str = None, arg2: str = None, arg3: str = None, arg4: str = None, arg5: str = None, flags=None):
+    trigger_script = event
     valid_events = DB.events.get_by_nid_or_name(trigger_script, self.game.level.nid)
     for event_prefab in valid_events:
         self.game.events.trigger_specific_event(event_prefab.nid, arg1, arg2, arg3, arg4, arg5)
