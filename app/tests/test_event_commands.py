@@ -232,12 +232,12 @@ class EventCommandUnitTests(unittest.TestCase):
         for func in catalog.values():
             sig = inspect.signature(func)
             self_parameter = sig.parameters.get('self')
-            self.assertTrue(self_parameter is not None, func.__name__)
+            self.assertTrue(self_parameter is not None, func)
             flag_parameter = sig.parameters.get('flags')
-            self.assertTrue(flag_parameter is not None, func.__name__)
-            self.assertTrue(flag_parameter.default is None, func.__name__)
+            self.assertTrue(flag_parameter is not None, func)
+            self.assertTrue(flag_parameter.default is None, func)
             # Make sure flags is always the last parameter
-            self.assertTrue(flag_parameter is list(sig.parameters.values())[-1], func.__name__)
+            self.assertTrue(flag_parameter is list(sig.parameters.values())[-1], func)
 
     def test_check_event_functions_match_event_commands(self):
         import inspect
@@ -253,7 +253,7 @@ class EventCommandUnitTests(unittest.TestCase):
             self.assertTrue(command.nid in catalog, command.nid)  # There is a corresponding event function
             associated_func = catalog[command.nid]
             sig = inspect.signature(associated_func)
-            self.assertEqual(len(sig.parameters), len(all_keywords) + 2, '%s: %s' % (command.nid, sig.parameters)) # Also includes self: Event and flags=None
+            self.assertEqual(len(sig.parameters.keys()), len(all_keywords) + 2, '%s: %s: %s %s' % (command.nid, sig, sig.parameters, sig.parameters.keys())) # Also includes self: Event and flags=None
 
             for idx, keyword in enumerate(all_keywords):
                 traceback_str = '%s: %s' % (command.nid, keyword)
