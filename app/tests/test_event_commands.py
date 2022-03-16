@@ -211,7 +211,7 @@ class EventCommandUnitTests(unittest.TestCase):
         for command in commands:
             # Make sure no duplicates in command.keywords and command.optional_keywords
             all_keywords = command.keywords + command.optional_keywords
-            self.assertEqual(len(set(all_keywords)), len(all_keywords))
+            self.assertEqual(len(set(all_keywords)), len(all_keywords), command.nid)
             # Make sure we have the right amount of keyword_types
             if command.keyword_types:
                 self.assertEqual(len(command.keyword_types), len(all_keywords), command.nid)
@@ -232,7 +232,7 @@ class EventCommandUnitTests(unittest.TestCase):
             self.assertTrue(flag_parameter is not None, func.__name__)
             self.assertTrue(flag_parameter.default is None, func.__name__)
             # Make sure flags is always the last parameter
-            self.assertTrue(flag_parameter is sig.parameters.values()[-1], func.__name__)
+            self.assertTrue(flag_parameter is list(sig.parameters.values())[-1], func.__name__)
 
     def test_check_event_functions_match_event_commands(self):
         import inspect
@@ -255,7 +255,7 @@ class EventCommandUnitTests(unittest.TestCase):
                 snake_case = str_utils.camel_to_snake(keyword)
                 self.assertTrue(snake_case in sig.parameters, traceback_str)
                 # +1 because of self in the function signature
-                self.assertEqual(idx + 1, sig.parameters.keys().index(snake_case), traceback_str)
+                self.assertEqual(idx + 1, list(sig.parameters.keys()).index(snake_case), traceback_str)
                 param = sig.parameters[snake_case]
                 if keyword in command.optional_keywords:
                     self.assertTrue(param.default is not param.empty, traceback_str)
