@@ -39,10 +39,11 @@ class EventUnitTests(unittest.TestCase):
             event.update()
 
     def MACRO_test_event_commands(self, test_commands):
+        from app.events.function_catalog import get_catalog, reset_catalog
         command_names = set([command.split(';')[0] for command in test_commands])
         event = self.create_event(test_commands)
         mocked_commands: List[MagicMock] = []
-        catalog = {}
+        catalog = get_catalog()
         for name in command_names:
             mocked_command = MagicMock()
             catalog[name] = mocked_command
@@ -51,6 +52,7 @@ class EventUnitTests(unittest.TestCase):
         self.run_all_commands(event)
         for mocked_command in mocked_commands:
             mocked_command.assert_called_once()
+        resert_catalog()
 
     def test_event_terminates_eventually(self):
         test_commands = [
