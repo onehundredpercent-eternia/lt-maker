@@ -12,7 +12,7 @@ from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
 from app.utilities.typing import NID, Point
 
-def start_overworld_cinematic(self: Event, overworld_nid=None, flags=None):
+def overworld_cinematic(self: Event, overworld_nid=None, flags=None):
     if not overworld_nid:
         if DB.overworlds.values():
             overworld_nid = DB.overworlds.values()[0].nid
