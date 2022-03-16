@@ -1844,8 +1844,8 @@ def prep(self: Event, pick_units_enabled: str = None, music: str = None, other_o
     self.game.state.change('prep_main')
     self.state = 'paused'  # So that the message will leave the update loop
 
-def base(self: Event, background: str, music: str, other_options: str,
-         other_options_enabled: str, other_options_on_select: str, flags=None):
+def base(self: Event, background: str, music: str = None, other_options: str = None,
+         other_options_enabled: str = None, other_options_on_select: str = None, flags=None):
     flags = flags or set()
     
     # set panorama

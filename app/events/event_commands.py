@@ -2393,6 +2393,11 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
         return Comment(display_values=[text]), None
     if text.startswith('comment;'):
         return Comment(display_values=[text[8:]]), None
+    # Remove trailing semicolons
+    # Since they screw up the parser
+    if text.endswith(';'):
+        text = text[:-1]
+        
     arguments = text.split(';')
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()

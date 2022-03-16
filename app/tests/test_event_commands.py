@@ -112,6 +112,15 @@ class EventCommandUnitTests(unittest.TestCase):
         # Test with missing keyword arguments
         command12, bad_idx = event_commands.parse_text_to_command("set_current_hp;Seth", strict=True)
         self.assertTrue(command12 is None)
+        # Test with trailing semicolon
+        command13, bad_idx = event_commands.parse_text_to_command("else;", strict=True)
+        self.assertTrue(isinstance(command13, event_commands.Else))
+        self.assertEqual(len(command13.parameters), 0)
+        # Test with flags
+        command14, bad_idx = event_commands.parse_text_to_command("give_item;Eirika;Rapier;no_banner", strict=True)
+        self.assertTrue(isinstance(command14, event_commands.GiveItem))
+        self.assertEqual(len(command14.chosen_flags), 1)
+        self.assertTrue('no_banner' in command14.chosen_flags)
 
     def test_parse(self):
         input_parameters = {"x": 1, "y": 2}
