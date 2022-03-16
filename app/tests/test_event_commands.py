@@ -16,6 +16,11 @@ class EventCommandUnitTests(unittest.TestCase):
         # Make sure that speak exists as a command
         self.assertTrue(any(command.nid == 'speak' for command in commands))
 
+    def test_catalog(self):
+        from app.events import function_catalog
+        catalog = function_catalog.get_catalog()
+        self.assertTrue(len(catalog) > 0)
+
     def test_determine_command_type(self):
         command1 = event_commands.determine_command_type("speak")
         self.assertTrue(isinstance(command1, event_commands.Speak))
