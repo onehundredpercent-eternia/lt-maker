@@ -1451,7 +1451,7 @@ Removes the ability for the two indicated units to "Talk" in the current chapter
         """
 
     keywords = ["Unit1", "Unit2"]
-    keywords = ["Unit", "Unit"]
+    keyword_types = ["Unit", "Unit"]
 
 class AddLore(EventCommand):
     nid = 'add_lore'
