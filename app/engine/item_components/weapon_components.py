@@ -130,7 +130,7 @@ class Damage(ItemComponent):
             damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info)
         else:
             damage = combat_calcs.compute_damage(unit, target, item, target.get_weapon(), mode, attack_info)
-        damage = damage // 2  # Because glancing hit
+        damage //= 2  # Because glancing hit
 
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))

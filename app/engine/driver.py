@@ -1,7 +1,8 @@
 import os
+import collections
 from datetime import datetime
 
-from app.constants import WINWIDTH, WINHEIGHT, VERSION
+from app.constants import WINWIDTH, WINHEIGHT, VERSION, FPS
 from app.engine import engine
 
 import app.engine.config as cf
@@ -47,6 +48,17 @@ def save_screenshot(raw_events: list, surf):
         current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
         engine.save_surface(surf, 'screenshots/LT_%s.bmp' % current_time)
 
+def draw_fps(surf, fps_records):
+    from app.engine.fonts import FONT
+    total_time = sum(fps_records)
+    num_frames = len(fps_records)
+    fps = int(num_frames / (total_time / 1000))
+    max_frame = max(fps_records)
+    min_fps = 1000 // max_frame
+
+    FONT['small-white'].blit(str(fps), surf, (surf.get_width() - 20, 0))
+    FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
+
 def run(game):
     from app.engine.sound import SOUNDTHREAD
     from app.engine.game_counters import ANIMATION_COUNTERS
@@ -61,9 +73,11 @@ def run(game):
     surf = engine.create_surface((WINWIDTH, WINHEIGHT))
     # import time
     clock = engine.Clock()
+    fps_records = collections.deque(maxlen=FPS)
     while True:
         # start = time.time_ns()
         engine.update_time()
+        fps_records.append(engine.get_delta())
         # print(engine.get_delta())
 
         raw_events = engine.get_events()
@@ -74,6 +88,9 @@ def run(game):
         surf, repeat = game.state.update(event, surf)
         while repeat:  # Let's the game traverse through state chains
             surf, repeat = game.state.update([], surf)
+
+        if cf.SETTINGS['display_fps']:
+            draw_fps(surf, fps_records)
 
         SOUNDTHREAD.update(raw_events)
 

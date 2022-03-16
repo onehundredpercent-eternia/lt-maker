@@ -67,6 +67,7 @@ constants = ConstantCatalog([
     Constant('boss_crit', "Final blow on boss will use critical animation", bool, False, 'aesthetic'),
     Constant('battle_platforms', "Use battle platforms when battle backgrounds are on", bool, True, 'aesthetic'),
     Constant('convoy_on_death', "Items held by dead player units are sent to convoy", bool),
+    Constant('repair_shop', "Access the Repair Shop in prep and base", bool, False),
     Constant('give_and_take', "Units can give a unit after taking a unit", bool),
     Constant('reset_mana', "Mana resets to full for units upon completion of the chapter", bool),
     Constant('double_splash', "When doubling, splash/aoe damage is applied on the second strike as well", bool),

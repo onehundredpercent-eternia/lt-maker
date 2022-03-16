@@ -14,7 +14,7 @@ from app.utilities.data import Data, Prefab
 class TileMapPrefab(Prefab):
     def __init__(self, nid):
         self.nid = nid
-        self.width, self.height = TILEX, TILEY
+        self.width, self.height = int(TILEX), int(TILEY)
         self.autotile_fps = 29
         self.layers = Data()
         self.layers.append(LayerGrid('base', self))
@@ -25,7 +25,7 @@ class TileMapPrefab(Prefab):
         self.image = None  # Icon used for drawing in resource editor
 
     def clear(self):
-        self.width, self.height = TILEX, TILEY
+        self.width, self.height = int(TILEX), int(TILEY)
         self.layers.clear()
         self.layers.append(LayerGrid('base', self))
 

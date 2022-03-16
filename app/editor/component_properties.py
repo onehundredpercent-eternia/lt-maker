@@ -83,9 +83,6 @@ class ComponentProperties(QWidget):
             icon_folder = 'icons/dark_icons'
 
         for component in self.get_components():
-            if component.tag == 'memento' and \
-                    not DB.constants.value('game_nid').lower() == 'memento':
-                continue
             if component.tag not in self.menus:
                 new_menu = QHelpMenu(self)
                 self.menus[component.tag] = new_menu

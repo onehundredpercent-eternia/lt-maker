@@ -135,7 +135,7 @@ class Database(object):
         to_save = self.save()
         # This section is what takes so long!
         for key, value in to_save.items():
-            if not key in self.save_as_chunks:
+            if key not in self.save_as_chunks:
                 save_loc = os.path.join(data_dir, key + '.json')
                 logging.info("Serializing %s to %s" % (key, save_loc))
                 self.json_save(save_loc, value)

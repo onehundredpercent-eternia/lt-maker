@@ -10,6 +10,7 @@ def read_config_file():
                          ('screen_size', 2),
                          ('sound_buffer_size', 4),
                          ('animation', 'Always'),
+                         ('display_fps', 0),
                          ('battle_bg', 0),
                          ('unit_speed', 120),
                          ('text_speed', 10),

@@ -1,17 +1,14 @@
 from PyQt5.QtWidgets import QVBoxLayout, QLineEdit, \
-    QWidget, QPushButton, QMessageBox, QLabel, QComboBox, QHBoxLayout, QDialog, QCheckBox
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QPixmap
+    QWidget, QMessageBox, QLabel, QComboBox, QHBoxLayout
+from PyQt5.QtCore import Qt
 
 from app.data.database import DB
 from app.resources.resources import RESOURCES
 
 from app.editor.icons import MapIconButton
 
-from app.extensions.custom_gui import ComboBox, SimpleDialog, PropertyBox
+from app.extensions.custom_gui import PropertyBox
 from app.utilities import str_utils
-from app.editor.sound_editor import sound_tab
-from app.editor.tile_editor import tile_tab
 from app.utilities.data import Data
 from app.editor.overworld_editor.node_menu_properties import NodeEventPropertiesMenu
 

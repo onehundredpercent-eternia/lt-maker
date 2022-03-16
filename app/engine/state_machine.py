@@ -95,6 +95,7 @@ class StateMachine():
              'alert': general_states.AlertState,
              'ai': general_states.AIState,
              'shop': general_states.ShopState,
+             'repair_shop': general_states.RepairShopState,
              'unlock_select': general_states.UnlockSelectState,
              'exp': level_up.ExpState,
              'promotion_choice': promotion.PromotionChoiceState,

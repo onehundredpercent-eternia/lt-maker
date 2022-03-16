@@ -512,6 +512,8 @@ class PrepManageSelectState(State):
         self.current_index = self.menu.current_index
 
         options = ['Trade', 'Restock', 'Give all', 'Optimize', 'Items', 'Market']
+        if DB.constants.value('repair_shop'):
+            options[3] = 'Repair'
         ignore = self.get_ignore()
         self.select_menu = menus.Table(self.unit, options, (3, 2), (120, 80))
         self.select_menu.set_ignore(ignore)
@@ -531,6 +533,8 @@ class PrepManageSelectState(State):
         else:
             if game.game_vars.get('_prep_market') and game.market_items:
                 ignore[5] = False
+        if DB.constants.value('repair_shop'):
+            ignore[3] = not item_funcs.has_repair(self.unit)
         return ignore
 
     def begin(self):
@@ -574,6 +578,9 @@ class PrepManageSelectState(State):
                 convoy_funcs.optimize(self.unit)
             elif choice == 'Market':
                 game.memory['next_state'] = 'prep_market'
+                game.state.change('transition_to')
+            elif choice == 'Repair':
+                game.memory['next_state'] = 'repair_shop'
                 game.state.change('transition_to')
 
         elif event == 'BACK':
@@ -742,7 +749,7 @@ class PrepItemsState(State):
                                 item_system.can_use_in_base(self.unit, current) and \
                                 item_system.simple_target_restrict(self.unit, current):
                             self.state = 'convoy_item'
-                            topleft = (80, self.menu.get_current_index() * 16)
+                            topleft = (80, (self.menu.get_current_index() - self.menu.get_scrolled_index()) * 16 + 36)
                             if item_funcs.inventory_full(self.unit, current):
                                 options = ['Trade', 'Use']
                             else:
@@ -807,7 +814,7 @@ class PrepItemsState(State):
             elif self.state == 'trade_convoy':
                 unit_item = self.menu.get_inventory_current()
                 convoy_item = self.menu.get_convoy_current()
-                if trade.check_trade(unit_item, convoy_item):
+                if trade.check_trade(unit_item, self.unit, convoy_item, None):
                     action.do(action.HasTraded(self.unit))
                     convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
                     self.menu.unlock()
@@ -819,7 +826,7 @@ class PrepItemsState(State):
             elif self.state == 'trade_inventory':
                 convoy_item = self.menu.get_convoy_current()
                 unit_item = self.menu.get_inventory_current()
-                if trade.check_trade(unit_item, convoy_item):
+                if trade.check_trade(unit_item, self.unit, convoy_item, None):
                     action.do(action.HasTraded(self.unit))
                     convoy_funcs.trade_items(convoy_item, unit_item, self.unit)
                     self.menu.unlock()

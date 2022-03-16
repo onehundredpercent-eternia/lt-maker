@@ -2,7 +2,7 @@ from typing import Set, Tuple
 from app.data.skill_components import SkillComponent
 from app.data.components import Type
 
-from app.engine import equations
+from app.engine import equations, target_system
 from app.engine.game_state import game
 from app.engine.objects.unit import UnitObject
 
@@ -104,3 +104,22 @@ class WitchWarp(SkillComponent):
                     if game.tilemap.check_bounds(point):
                         warp_spots.add(point)
         return warp_spots
+
+class SpecificWitchWarp(SkillComponent):
+    nid = 'specific_witch_warp'
+    desc = "Allows unit to witch warp to the given units"
+    tag = 'movement'
+
+    expose = (Type.List, Type.Unit)
+
+    def witch_warp(self, unit) -> list:
+        positions = []
+        for val in self.value:
+            u = game.get_unit(val)
+            if u and u.position:
+                partner_pos = u.position
+            else:
+                continue
+            if partner_pos:
+                positions += target_system.get_adjacent_positions(partner_pos)
+        return positions

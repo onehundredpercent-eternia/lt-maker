@@ -4,10 +4,7 @@ from app.engine.game_state import game
 from app.engine import action, menus, item_system, item_funcs
 from app.engine.objects.item import ItemObject
 
-def check_trade(item1: ItemObject, item2: ItemObject) -> bool:
-    return _check_trade(item1, game.get_unit(item1.owner_nid), item2, game.get_unit(item2.owner_nid))
-
-def _check_trade(item1: ItemObject, item1_owner, item2: ItemObject, item2_owner) -> bool:
+def check_trade(item1: ItemObject, item1_owner, item2: ItemObject, item2_owner) -> bool:
     # Can't trade the same item to itself
     if item1 is item2:
         return False
@@ -69,7 +66,7 @@ class TradeState(MapState):
         else:
             self.item2_owner = self.partner
 
-        if not _check_trade(item1, self.item1_owner, item2, self.item2_owner):
+        if not check_trade(item1, self.item1_owner, item2, self.item2_owner):
             self.menu.unset_selected_option()
             SOUNDTHREAD.play_sfx('Error')
             return False

@@ -108,9 +108,16 @@ class UnitFieldValidator(EvalValidator):
         elif level == 1:
             # we already have unit nid
             unit_nid = text.split('.')[0]
-            unit_prefab = DB.units.get(unit_nid)
-            if unit_prefab: # get its predefined field keys
-                return [(None, key) for (key, _) in unit_prefab.fields]
+            if unit_nid in ['_unit', '_unit2']:
+                # generic unit, get all keys
+                all_keys = set()
+                for unit in DB.units:
+                    all_keys.update(set([key for (key, _) in unit.fields]))
+                return [(None, key) for key in all_keys]
+            else:
+                unit_prefab = DB.units.get(unit_nid)
+                if unit_prefab: # get its predefined field keys
+                    return [(None, key) for (key, _) in unit_prefab.fields]
         return []
 
 class EventFunction(Validator):

@@ -23,6 +23,7 @@ control_order = ('key_SELECT', 'key_BACK', 'key_INFO', 'key_AUX', 'key_LEFT', 'k
 
 config = [('animation', ['Always', 'Your Turn', 'Combat Only', 'Never'], 0),
           ('screen_size', [1, 2, 3, 4, 5], 18),
+          ('display_fps', bool, 2),
           ('battle_bg', bool, 17),
           ('unit_speed', list(reversed(range(15, 180, 15))), 1),
           ('text_speed', cf.text_speed_options, 2),

@@ -54,6 +54,36 @@ class EndTime(SkillComponent):
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))
 
+class CombinedTime(SkillComponent):
+    nid = 'combined_time'
+    desc = "Lasts for twice the number of phases (counts both upkeep and endstep)"
+    tag = "time"
+
+    expose = Type.Int
+    value = 1
+
+    def init(self, skill):
+        self.skill.data['turns'] = self.value * 2
+        self.skill.data['starting_turns'] = self.value * 2
+
+    def on_upkeep(self, actions, playback, unit):
+        val = self.skill.data['turns'] - 1
+        action.do(action.SetObjData(self.skill, 'turns', val))
+        if self.skill.data['turns'] <= 0:
+            actions.append(action.RemoveSkill(unit, self.skill))
+
+    def on_endstep(self, actions, playback, unit):
+        val = self.skill.data['turns'] - 1
+        action.do(action.SetObjData(self.skill, 'turns', val))
+        if self.skill.data['turns'] <= 0:
+            actions.append(action.RemoveSkill(unit, self.skill))
+
+    def text(self) -> str:
+        return str(self.skill.data['turns'] // 2)
+
+    def on_end_chapter(self, unit, skill):
+        action.do(action.RemoveSkill(unit, self.skill))
+
 class UpkeepStatChange(SkillComponent):
     nid = 'upkeep_stat_change'
     desc = "Gives changing stat bonuses"

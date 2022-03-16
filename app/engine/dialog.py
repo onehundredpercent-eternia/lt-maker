@@ -17,6 +17,7 @@ class Dialog():
     cursor_offset = [0]*20 + [1]*2 + [2]*8 + [1]*2
     transition_speed = 166  # 10 frames
     pause_time = 150  # 9 frames
+    attempt_split: bool = True # Whether we attempt to split big chunks across multiple lines
 
     aesthetic_commands = ('{red}', '{/red}', '{black}', '{/black}', '{white}', '{/white}', '{green}', '{/green}')
 
@@ -34,6 +35,9 @@ class Dialog():
         self.num_lines = num_lines
         self.draw_cursor_flag = draw_cursor
         self.font = FONT[self.font_type]
+
+        if '{sub_break}' in self.plain_text:
+            self.attempt_split = False
 
         # States: process, transition, pause, wait, done, new_line
         self.state = 'transition'
@@ -69,7 +73,7 @@ class Dialog():
                 pos_x += 4
             if pos_x == 0:
                 pos_x = 4
-            pos_y =  WINHEIGHT - self.height - 80
+            pos_y = WINHEIGHT - self.height - 80
         else:
             pos_x = 4
             pos_y = WINHEIGHT - self.height - 4
@@ -148,7 +152,7 @@ class Dialog():
         waiting_cursor = False
         for command in self.text_commands:
             if command in ('{br}', '{break}', '{clear}', '{sub_break}'):
-                if not preceded_by_wait or command == '{sub_break}':
+                if not preceded_by_wait or not self.attempt_split:
                     # Force it to be only one line
                     split_lines = self.get_lines_from_block(current_line, 1)
                 else:
@@ -165,7 +169,10 @@ class Dialog():
             else:
                 current_line += command
         if current_line:
-            split_lines = self.get_lines_from_block(current_line)
+            if self.attempt_split:
+                split_lines = self.get_lines_from_block(current_line)
+            else:
+                split_lines = self.get_lines_from_block(current_line, 1)
             width = max(width, max(self.font.width(s) for s in split_lines))
             if len(split_lines) == 1:
                 waiting_cursor = True

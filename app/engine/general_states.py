@@ -2139,7 +2139,7 @@ class ShopState(State):
         if self.menu:
             self.menu.update()
 
-    def draw(self, surf):
+    def _draw(self, surf):
         if self.bg:
             self.bg.draw(surf)
         surf.blit(self.message_bg, (-4, 8))
@@ -2154,6 +2154,10 @@ class ShopState(State):
 
         FONT['text-blue'].blit_right(str(game.get_money()), surf, (223, 48))
         self.money_counter_disp.draw(surf)
+        return surf
+
+    def draw(self, surf):
+        surf = self._draw(surf)
 
         if self.state == 'sell':
             self.sell_menu.draw(surf)
@@ -2164,6 +2168,100 @@ class ShopState(State):
         if self.state == 'choice' and self.current_msg.is_done_or_wait():
             self.choice_menu.draw(surf)
 
+        return surf
+
+class RepairShopState(ShopState):
+    name = 'repair_shop'
+
+    def start(self):
+        self.fluid = FluidScroll()
+
+        self.unit = game.memory['current_unit']
+
+        self.portrait = SPRITES.get('armory_portrait')
+        self.opening_message = 'repair_opener'
+        self.buy_message = 'repair_buy'
+
+        items = self.unit.items[:]
+        topleft = (44, WINHEIGHT - 16 * 5 - 8 - 4)
+        self.menu = menus.RepairShop(self.unit, items, topleft, disp_value='repair')
+        self.menu.set_limit(5)
+        self.menu.set_hard_limit(True)
+        self.menu.gem = True
+        self.menu.shimmer = 0
+        self.menu.set_takes_input(True)
+
+        self.current_msg = self.get_dialog(self.opening_message)
+
+        self.message_bg = base_surf.create_base_surf(WINWIDTH + 8, 48, 'menu_bg_clear')
+        self.money_counter_disp = gui.PopUpDisplay((223, 32))
+
+        self.bg = background.create_background('rune_background')
+
+        self.update_options()
+        game.state.change('transition_in')
+        return 'repeat'
+
+    def update_options(self):
+        ignore = [not item_funcs.can_repair(self.unit, item) for item in self.unit.items]
+        self.menu.set_ignore(ignore)
+
+    def take_input(self, event):
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        if self.menu:
+            self.menu.handle_mouse()
+            if 'DOWN' in directions or 'RIGHT' in directions:
+                SOUNDTHREAD.play_sfx('Select 6')
+                self.menu.move_down(first_push)
+            elif 'UP' in directions or 'LEFT' in directions:
+                SOUNDTHREAD.play_sfx('Select 6')
+                self.menu.move_up(first_push)
+
+        if event == 'SELECT':
+            item = self.menu.get_current()
+            if item:
+                value = item_funcs.repair_price(self.unit, item)
+                if value:
+                    if game.get_money() - value >= 0:
+                        action.do(action.HasTraded(self.unit))
+                        SOUNDTHREAD.play_sfx('GoldExchange')
+                        action.do(action.GainMoney(game.current_party, -value))
+                        self.money_counter_disp.start(-value)
+                        action.do(action.RepairItem(item))
+                        self.current_msg = self.get_dialog(self.buy_message)
+                        self.update_options()
+                    else:
+                        # You don't have enough money
+                        SOUNDTHREAD.play_sfx('Select 4')
+                        self.current_msg = self.get_dialog('shop_no_money')
+                else:
+                    # Item doesn't have a repair cost
+                    SOUNDTHREAD.play_sfx('Select 4')
+            else:
+                # Item is not valid for some reason!
+                SOUNDTHREAD.play_sfx('Select 4')
+
+        elif event == 'BACK':
+            if self.menu.info_flag:
+                self.menu.toggle_info()
+                SOUNDTHREAD.play_sfx('Info Out')
+            else:
+                SOUNDTHREAD.play_sfx('Select 4')
+                self.current_msg = self.get_dialog('shop_again')
+                game.state.change('transition_pop')
+
+        elif event == 'INFO':
+            self.menu.toggle_info()
+            if self.menu.info_flag:
+                SOUNDTHREAD.play_sfx('Info In')
+            else:
+                SOUNDTHREAD.play_sfx('Info Out')
+
+    def draw(self, surf):
+        surf = self._draw(surf)
+        self.menu.draw(surf)
         return surf
 
 class UnlockSelectState(MapState):

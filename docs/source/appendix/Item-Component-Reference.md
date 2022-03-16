@@ -24,6 +24,7 @@ The item components in this dictionary are broken down by icon going from left t
 | **Targets Units** | Any unit within range, regardless of team, can be targeted. |
 | **Targets Enemies** | Can only target enemy units. |
 | **Targets Allies** | Can only target allied units, including green units (assuming a player is using the item). |
+| **EvalSpecialRange** | Takes a condition accepting `x`, `y` that will limit what positions relative to the unit can be targeted within range. For example, the condition `x == 0 or y == 0` will lock the range to a "cross" shape, allowing the unit to shoot directly vertically or horizontally.
 | **Eval Target Restrict** | This component takes a string that will be evaluated in python. If the string evaluates to false for a targeted unit they cannot be targeted by this weapon. See an upcoming guide for options when creating these strings. |
 | **Empty Tile Target Restrict** | Used in conjunction with Targets Anything to restrict the target to empty tiles. |
 | **Minimum Range** | A fixed integer that sets the minimum range of an item. Zero means that it can target the user. Unneeded for usable items. Don't go into the negatives. |

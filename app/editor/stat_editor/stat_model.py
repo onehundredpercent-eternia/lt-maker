@@ -20,6 +20,7 @@ class StatTypeModel(DragDropCollectionModel):
             for stat_list in klass.get_stat_lists():
                 if nid not in stat_list:
                     stat_list[nid] = 0
+            klass.max_stats[nid] = new_stat.maximum
         for unit in DB.units:
             for stat_list in unit.get_stat_lists():
                 if nid not in stat_list:

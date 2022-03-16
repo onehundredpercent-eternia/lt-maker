@@ -1,3 +1,5 @@
+import math
+
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
 
 from app.engine import engine
@@ -85,16 +87,8 @@ class MapView():
             self.draw_units(surf, cull_rect)
 
         # Handle time region text
-        font = FONT['text-yellow']
-        current_time = engine.get_time()
-        for region in game.level.regions:
-            if region.region_type == 'time' and region.position:
-                text = str(region.sub_nid)
-                w = font.width(text)
-                pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
-                pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + 2*math.sin(current_time//500))
-                font.blit(text, surf, pos)
-
+        self.time_region_text(surf, cull_rect)
+        
         surf = game.cursor.draw(surf, cull_rect)
 
         for weather in game.tilemap.weather:
@@ -103,3 +97,14 @@ class MapView():
 
         surf = game.ui_view.draw(surf)
         return surf
+
+    def time_region_text(self, surf, cull_rect):
+        font = FONT['text-yellow']
+        current_time = engine.get_time()
+        for region in game.level.regions:
+            if region.region_type == 'time' and region.position:
+                text = str(region.sub_nid)
+                w = font.width(text)
+                pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
+                pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + 2 * math.sin(current_time//500))
+                font.blit(text, surf, pos)

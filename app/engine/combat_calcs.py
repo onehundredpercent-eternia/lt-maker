@@ -445,6 +445,9 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
     if assist:
         might //= 2
 
+    # So that crit can correctly multiply when the damage dealt would be less than min_damage
+    might = int(max(DB.constants.value('min_damage'), might))
+
     if crit or skill_system.crit_anyway(unit):
         might *= equations.parser.crit_mult(unit)
         if equations.parser.crit_add(unit):

@@ -32,7 +32,7 @@ class UnitObject(Prefab):
     faction: NID = None
     team: str = "player"
     portrait_nid: NID = None
-    affinity: NID  = None
+    affinity: NID = None
     notes: List[Tuple[str, str]] = field(default_factory=list)
     _fields: Dict[str, str] = field(default_factory=dict)
     klass: NID = None

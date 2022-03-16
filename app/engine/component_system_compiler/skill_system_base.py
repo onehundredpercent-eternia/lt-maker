@@ -168,9 +168,12 @@ def stat_change(unit, stat_nid) -> int:
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('stat_change'):
+                d = component.stat_change(unit)
+                d_bonus = d.get(stat_nid, 0)
+                if d_bonus == 0:
+                    continue
                 if component.ignore_conditional or condition(skill, unit):
-                    d = component.stat_change(unit)
-                    bonus += d.get(stat_nid, 0)
+                    bonus += d_bonus
     return bonus
 
 def stat_change_contribution(unit, stat_nid) -> dict:

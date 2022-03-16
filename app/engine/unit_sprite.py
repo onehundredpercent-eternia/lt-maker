@@ -44,7 +44,7 @@ class MapSprite():
             if DB.constants.value('dark_sprites'):
                 conversion_dict = player_dark_colors
             else:
-                return map_sprite.standing_image, map_sprite.moving_image
+                conversion_dict = {}
         elif self.team == 'enemy':
             if DB.constants.value('dark_sprites'):
                 conversion_dict = enemy_dark_colors
