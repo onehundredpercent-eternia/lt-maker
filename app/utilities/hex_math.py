@@ -135,3 +135,10 @@ def polygon_corners(layout: Layout, h: Hex) -> list:
         offset = hex_corner_offset(layout, i)
         corners.append((center[0] + offset[0], center[1] + offset[1]))
     return corners
+
+def get_all_hex_within_distance(h: Hex, dist: int) -> list:
+    neighbors = []
+    for q in range(-dist, dist + 1):
+        for r in range(max(-dist, -q - dist), min(dist, -q + dist) + 1):
+            s = -q - r
+            neighbors.append(h.add(Hex(q, r, s)))
