@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QDoubleSpinBox, QItemDelegate
 
-from app.editor.custom_widgets import GlobalEventBox
+from app.editor.custom_widgets import EventBox
 
 class HexEventDelegate(QItemDelegate):
     event_column = 0
@@ -8,7 +8,7 @@ class HexEventDelegate(QItemDelegate):
 
     def create_editor(self, parent, option, index):
         if index.column() == self.event_column:
-            editor = GlobalEventBox(parent)
+            editor = EventBox(parent, detached=True)
             return editor
         elif index.column() == self.float_column:
             editor = QDoubleSpinBox(parent)
