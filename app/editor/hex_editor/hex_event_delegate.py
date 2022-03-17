@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDoubleSpinBox, QItemDelegate
 
 from app.editor.custom_widgets import GlobalEventBox
 
-class HexTypeDelegate(QItemDelegate):
+class HexEventDelegate(QItemDelegate):
     event_column = 0
     float_column = 1
 
