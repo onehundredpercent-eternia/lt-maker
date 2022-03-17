@@ -8,6 +8,8 @@ from app.data.database import DB
 
 from app.extensions.custom_gui import PropertyBox
 from app.extensions.color_icon import ColorIcon
+from app.extensions.list_widgets import AppendMultiListWidget
+from app.extensions.list_models import DoubleListModel
 from app.utilities import str_utils
 
 class HexTypeProperties(QWidget):
@@ -53,6 +55,10 @@ class HexTypeProperties(QWidget):
 
         main_section.addLayout(movement_section)
 
+        attrs = ("event_nid", "event_chance")
+        self.hex_event_widget = AppendMultiListWidget([], "Hex Events", attrs, HexEventDelegate, self, model=DoubleListModel)
+        main_section.addLayout(self.hex_event_widget)
+
         total_section = QVBoxLayout()
         self.setLayout(total_section)
         total_section.addLayout(top_section)
@@ -88,6 +94,8 @@ class HexTypeProperties(QWidget):
         self.nid_box.edit.setText(current.nid)
         self.name_box.edit.setText(current.name)
         self.movement_box.edit.setValue(current.movement_cost)
+
+        self.hex_event_widget.set_current(current.events)
 
         # Icon
         color = current.color
