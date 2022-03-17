@@ -10,6 +10,7 @@ from app.extensions.custom_gui import PropertyBox
 from app.extensions.color_icon import ColorIcon
 from app.extensions.list_widgets import AppendMultiListWidget
 from app.extensions.list_models import DoubleListModel
+from app.editor.hex_editor.hex_event_delegate import HexEventDelegate
 from app.utilities import str_utils
 
 class HexTypeProperties(QWidget):
