@@ -5,9 +5,10 @@ if TYPE_CHECKING:
     from app.data.hex_prefab import HexPrefab
     from app.data.hex_type import HexType
     from app.data.overworld import OverworldPrefab
+    from app.engine.objects.hex_entity import HexEntity
 
 from app.utilities import hex_math
-from app.utilities.typing imprt NID
+from app.utilities.typing import NID
 
 class Sight(Enum):
     UNEXPLORED = 0
