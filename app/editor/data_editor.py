@@ -83,8 +83,13 @@ class SingleDatabaseEditor(QDialog):
         if self.main_editor:
             state_manager = self.main_editor.app_state_manager
             current_level_nid = state_manager.state.selected_level
-            state_manager.change_and_broadcast(
-                'selected_level', current_level_nid)
+            # Sometimes the current level nid stored here
+            # does not exist as a valid level
+            # Reason currently unknown...
+            # Check that it does before broadcasting
+            if current_level_nid in DB.levels.keys():
+                state_manager.change_and_broadcast(
+                    'selected_level', current_level_nid)
 
     def apply(self):
         self.save()
