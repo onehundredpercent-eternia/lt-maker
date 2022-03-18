@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Tuple
+from typing import TYPE_CHECKING
 
 from app.data.database import DB
 from app.engine import engine
@@ -11,6 +12,9 @@ from app.engine.overworld.overworld_actions import OverworldMove
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
 from app.utilities.typing import NID, Point
+
+if TYPE_CHECKING:
+    from app.events.event import Event
 
 def overworld_cinematic(self: Event, overworld_nid=None, flags=None):
     if not overworld_nid:
@@ -216,7 +220,7 @@ def disable_overworld_entity(self: Event, nid, flags=None):
 
     entity = game.overworld_controller.entities.get(nid, None)
     if not entity:
-        self.logger.error("%s: No such entity exists with nid %s", "disable_overworld_entity", values[0])
+        self.logger.error("%s: No such entity exists with nid %s", "disable_overworld_entity", nid)
         return
     if 'no_animate' not in flags:
         entity.sprite.set_transition('fade_out')

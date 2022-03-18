@@ -1052,14 +1052,14 @@ class SpawnGroup(EventCommand):
     desc = \
         """
 Causes a unit *Group* to arrive on the map from one of the *CardinalDirection*s.
-*EntryType* selects the method of placement, and *Placement* defines the behavior that occurs if any of the chosen map positions are already occupied.
+*MovementType* selects the method of placement, and *Placement* defines the behavior that occurs if any of the chosen map positions are already occupied.
 
 If the *create* flag is set, a copy of each unit will be created and deployed instead of using the unit itself.
 *no_block* causes the script to continue executing while the units appear on the map. *no_follow* prevents the camera from focusing on the point where the units enter the map.
         """
 
     keywords = ["Group", "CardinalDirection", "StartingGroup"]
-    optional_keywords = ["EntryType", "Placement"]
+    optional_keywords = ["MovementType", "Placement"]
     _flags = ["create", "no_block", 'no_follow']
 
 class MoveGroup(EventCommand):

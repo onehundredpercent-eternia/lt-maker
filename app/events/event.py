@@ -460,7 +460,7 @@ class Event():
 
     def _move_unit(self, movement_type, placement, follow, unit, position):
         position = tuple(position)
-        position = self.check_placement(unit, position, placement)
+        position = self._check_placement(unit, position, placement)
         if not position:
             self.logger.warning("Couldn't determine valid position for %s?", unit.nid)
             return
@@ -514,7 +514,7 @@ class Event():
                 else:
                     test_pos = (position[1] + x, self.game.tilemap.height - 1)
         if final_pos:
-            final_pos = self.check_placement(unit, final_pos, placement)
+            final_pos = self._check_placement(unit, final_pos, placement)
         if final_pos:
             action.do(action.ArriveOnMap(unit, final_pos))
             return True
@@ -528,7 +528,7 @@ class Event():
         elif next_pos.lower() == 'starting':
             position = unit.starting_position
         elif ',' in next_pos:
-            position = self.parse_pos(next_pos)
+            position = self._parse_pos(next_pos)
         else:
             other_group = self.game.level.unit_groups.get(next_pos)
             position = other_group.positions.get(unit_nid)

@@ -1004,7 +1004,7 @@ def add_group(self: Event, group, starting_group=None, entry_type=None, placemen
             action.do(action.InsertInitiative(unit))
         self._place_unit(unit, position, entry_type)
 
-def spawn_group(self: Event, group, cardinal_direction, starting_group, entry_type=None, placement=None, flags=None):
+def spawn_group(self: Event, group, cardinal_direction, starting_group, movement_type=None, placement=None, flags=None):
     flags = flags or set()
 
     new_group = self.game.level.unit_groups.get(group)
@@ -2105,7 +2105,7 @@ def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, z_level=None
     pos = (0, 0)
     if position:
         pos = tuple(str_utils.intify(position))
-    if zlevel:
+    if z_level:
         z = int(z_level)
     anim_dir = animation
 
