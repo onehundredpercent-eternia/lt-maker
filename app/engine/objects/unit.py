@@ -386,13 +386,7 @@ class UnitObject(Prefab):
 
     @property
     def tags(self):
-        unit_tags = self._tags
-        class_tags = DB.classes.get(self.klass).tags
-        skill_tags = set()
-        for skill in self.skills:
-            if skill.has_tags and skill.has_tags.value:
-                skill_tags = skill_tags | set(skill.has_tags.value)
-        return unit_tags + class_tags + list(skill_tags)
+        return set(self._tags) | set(DB.classes.get(self.klass).tags) | skill_system.additional_tags(self)
 
     def get_ai(self):
         return skill_system.change_ai(self)
