@@ -143,7 +143,7 @@ class ManaCost(ItemComponent):
         if self._did_something:
             action.do(action.ChangeMana(unit, -self.value))
         self._did_something = False
-        
+
     def reverse_use(self, unit, item):
         action.do(action.ChangeMana(unit, self.value))
 

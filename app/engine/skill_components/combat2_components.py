@@ -120,6 +120,21 @@ class AllyLifelink(SkillComponent):
 
         actions.append(action.TriggerCharge(unit, self.skill))
 
+class Armsthrift(SkillComponent):
+    nid = 'armsthrift'
+    desc = 'Restores uses on hit.'
+    tag = 'combat2'
+
+    expose = Type.Int
+    value = 1
+
+    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        if not item.data.get('uses', None) or not item.data.get('starting_uses', None):
+            return
+        curr_uses = item.data.get('uses')
+        max_uses = item.data.get('starting_uses')
+        actions.append(action.SetObjData(item, 'uses', min(curr_uses + self.value - 1, max_uses)))
+
 class LimitMaximumRange(SkillComponent):
     nid = 'limit_maximum_range'
     desc = "limits unit's maximum allowed range"
