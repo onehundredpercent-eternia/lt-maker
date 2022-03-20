@@ -31,8 +31,8 @@ class ChapterTitleState(State):
 
         # Fade in music
         self.music_flag = False
-        if game.memory.get('chapter_title_sound'):
-            song = SOUNDTHREAD.fade_in(game.memory.get('chapter_sound'))
+        if game.memory.get('chapter_title_music'):
+            song = SOUNDTHREAD.fade_in(game.memory.get('chapter_title_music'))
             if song:
                 self.music_flag = True
         if not self.music_flag:

@@ -327,7 +327,7 @@ class GameState():
         return s_dict, meta_dict
 
     def load(self, s_dict):
-        from app.engine import action, records, save, supports, turnwheel, dialog_log
+        from app.engine import action, aura_funcs, records, save, supports, turnwheel, dialog_log
         from app.engine.objects.difficulty_mode import DifficultyModeObject
         from app.engine.objects.item import ItemObject
         from app.engine.objects.level import LevelObject
@@ -423,6 +423,9 @@ class GameState():
             for unit in self.units:
                 if unit.position:
                     self.board.set_unit(unit.position, unit)
+                    for skill in unit.skills:
+                        if skill.aura:
+                            aura_funcs.repopulate_aura(unit, skill, self)
                     self.boundary.arrive(unit)
                     action.UpdateFogOfWar(unit).execute()
 

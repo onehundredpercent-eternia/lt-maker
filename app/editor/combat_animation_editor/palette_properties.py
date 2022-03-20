@@ -200,6 +200,9 @@ class AnimView(IconView):
         offset_x, offset_y = frame.offset
         pos = pos[0] - offset_x, pos[1] - offset_y
         pixmap = frame.pixmap
+        if pos[0] < 0 or pos[1] < 0 or pos[0] >= pixmap.width() or pos[1] >= pixmap.height():
+            logging.warning("Selected position outside of bounds of frame")
+            return
 
         coord_color: Tuple[int, int, int] = self.get_color_at_pos(pixmap, pos)
         coord = coord_color[1], coord_color[2]  # Just the G, B channels
@@ -328,7 +331,7 @@ class EaselWidget(QGraphicsView):
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         if event.key() == Qt.Key_Delete:
-            if self.current_coord:
+            if self.current_coord and self.current_palette.colors.get(self.current_coord):
                 command = CommandDeleteColor(self.current_palette, self.current_coord)
                 palette_commands.append(command)
                 command.redo()
@@ -338,6 +341,9 @@ class EaselWidget(QGraphicsView):
         scene_pos = self.mapToScene(event.pos())
         tile_pos = int(scene_pos.x() // self.palette_size), \
             int(scene_pos.y() // self.palette_size)
+        if tile_pos[0] < 0 or tile_pos[0] >= self.square_size or tile_pos[1] < 0 or tile_pos[1] >= self.square_size:
+            logging.warning("Out of Bounds selection on EaselWidget")
+            return
 
         if event.button() == Qt.RightButton:
             print(tile_pos)
