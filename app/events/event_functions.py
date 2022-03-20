@@ -68,7 +68,7 @@ def music_clear(self: Event, fade_out=0, flags=None):
         SOUNDTHREAD.clear()
 
 def sound(self: Event, sound, volume=1.0, flags=None):
-    SOUNDTHREAD.play_sfx(sound, volume=volume)
+    SOUNDTHREAD.play_sfx(sound, volume=float(volume))
 
 def change_music(self: Event, phase, music, flags=None):
     if music == 'None':

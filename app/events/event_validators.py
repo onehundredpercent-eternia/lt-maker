@@ -218,12 +218,15 @@ class PhaseMusic(OptionValidator):
              'player_battle', 'enemy_battle', 'other_battle', 'enemy2_battle']
 
 class Volume(Validator):
-    desc = "A number between 0 and 1 (0 is muted, 1 is highest volume)"
+    desc = "A number between greater than 0 (0 is muted, 1 is current volume)"
 
     def validate(self, text, level):
         if str_utils.is_float(text) and float(text) >= 0:
             return float(text)
         return None
+
+    def convert(self, text: str) -> float:
+        return float(text)
 
 class PortraitNid(Validator):
     def validate(self, text, level):
