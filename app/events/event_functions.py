@@ -1102,8 +1102,9 @@ def remove_group(self: Event, group, remove_type=None, flags=None):
             else:  # immediate
                 action.do(action.LeaveMap(unit))
 
-def give_item(self: Event, global_unit, item, flags=None):
+def give_item(self: Event, global_unit_or_convoy, item, flags=None):
     flags = flags or set()
+    global_unit = global_unit_or_convoy
 
     if global_unit.lower() == 'convoy':
         unit = None
@@ -1153,8 +1154,9 @@ def give_item(self: Event, global_unit, item, flags=None):
             self.game.state.change('alert')
             self.state = 'paused'
 
-def remove_item(self: Event, global_unit, item, flags=None):
+def remove_item(self: Event, global_unit_or_convoy, item, flags=None):
     flags = flags or set()
+    global_unit = global_unit_or_convoy
 
     unit, item = self._get_item_in_inventory(global_unit, item)
     if not unit or not item:
@@ -1172,20 +1174,20 @@ def remove_item(self: Event, global_unit, item, flags=None):
             self.game.state.change('alert')
             self.state = 'paused'
 
-def change_item_name(self: Event, global_unit, item, string, flags=None):
-    unit, item = self._get_item_in_inventory(global_unit, item)
+def change_item_name(self: Event, global_unit_or_convoy, item, string, flags=None):
+    unit, item = self._get_item_in_inventory(global_unit_or_convoy, item)
     if not unit or not item:
         return
     action.do(action.ChangeItemName(item, string))
 
-def change_item_desc(self: Event, global_unit, item, string, flags=None):
-    unit, item = self._get_item_in_inventory(global_unit, item)
+def change_item_desc(self: Event, global_unit_or_convoy, item, string, flags=None):
+    unit, item = self._get_item_in_inventory(global_unit_or_convoy, item)
     if not unit or not item:
         return
     action.do(action.ChangeItemDesc(item, string))
 
-def add_item_to_multiitem(self: Event, global_unit, multi_item, child_item, flags=None):
-    unit, item = self._get_item_in_inventory(global_unit, multi_item)
+def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item, flags=None):
+    unit, item = self._get_item_in_inventory(global_unit_or_convoy, multi_item)
     if not unit or not item:
         return
     if not item.multi_item:
@@ -1201,13 +1203,13 @@ def add_item_to_multiitem(self: Event, global_unit, multi_item, child_item, flag
         component.item = item
     item_system.init(subitem)
     self.game.register_item(subitem)
-    if global_unit.lower() == 'convoy':
+    if global_unit_or_convoy.lower() == 'convoy':
         owner_nid = None
     else:
         owner_nid = unit.nid
     action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
 
-def remove_item_from_multiitem(self: Event, global_unit, multi_item, child_item, flags=None):
+def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item, flags=None):
     unit, item = self._get_item_in_inventory(global_unit, multi_item)
     if not unit or not item:
         return
@@ -1220,7 +1222,7 @@ def remove_item_from_multiitem(self: Event, global_unit, multi_item, child_item,
         self.logger.error("Couldn't find subitem with nid %s" % child_item)
         return
     subitem = [subitem for subitem in item.subitems if subitem.nid == child_item][0]
-    if global_unit.lower() == 'convoy':
+    if global_unit_or_convoy.lower() == 'convoy':
         owner_nid = None
     else:
         owner_nid = unit.nid
