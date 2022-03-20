@@ -1,9 +1,9 @@
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 
 class NoAI(ItemComponent):
     nid = 'no_ai'
     desc = "Item cannot be used by the AI"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def ai_priority(self, unit, item, target, move):
         return -1

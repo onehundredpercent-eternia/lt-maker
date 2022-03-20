@@ -1,6 +1,6 @@
 from app.data.database import DB
 
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine.game_state import game
@@ -8,7 +8,7 @@ from app.engine.game_state import game
 class Promote(ItemComponent):
     nid = 'promote'
     desc = "Item promotes target after hit"
-    tag = 'class_change'
+    tag = ItemTags.CLASS_CHANGE
 
     _did_hit = False
 
@@ -39,7 +39,7 @@ class Promote(ItemComponent):
 class ForcePromote(Promote, ItemComponent):
     nid = 'force_promote'
     desc = "Item forcibly promotes target to class after hit"
-    tag = 'class_change'
+    tag = ItemTags.CLASS_CHANGE
 
     expose = Type.Class
 
@@ -54,7 +54,7 @@ class ForcePromote(Promote, ItemComponent):
 class ClassChange(Promote, ItemComponent):
     nid = 'class_change'
     desc = "Item allows target to change class after hit"
-    tag = 'class_change'
+    tag = ItemTags.CLASS_CHANGE
 
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_hit and target:
@@ -82,7 +82,7 @@ class ClassChange(Promote, ItemComponent):
 class ForceClassChange(Promote, ItemComponent):
     nid = 'force_class_change'
     desc = "Item forcibly changes target's class after hit"
-    tag = 'class_change'
+    tag = ItemTags.CLASS_CHANGE
 
     expose = Type.Class
 

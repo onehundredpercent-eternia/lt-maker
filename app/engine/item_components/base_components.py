@@ -1,10 +1,10 @@
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 class Spell(ItemComponent):
     nid = 'spell'
     desc = "Item will be treated as a spell (cannot counterattack, be counterattacked, or double)"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def is_spell(self, unit, item):
         return True
@@ -30,7 +30,7 @@ class Spell(ItemComponent):
 class Weapon(ItemComponent):
     nid = 'weapon'
     desc = "Item will be treated as a normal weapon (can double, counterattack, be equipped, etc.)"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def is_weapon(self, unit, item):
         return True
@@ -56,7 +56,7 @@ class Weapon(ItemComponent):
 class SiegeWeapon(ItemComponent):
     nid = 'siege_weapon'
     desc = "Item will be treated as a siege weapon (cannot counterattack or be counterattacked, but can still be equipped and can double)"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def is_weapon(self, unit, item):
         return True
@@ -82,7 +82,7 @@ class SiegeWeapon(ItemComponent):
 class Usable(ItemComponent):
     nid = 'usable'
     desc = "Item is usable"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def can_use(self, unit, item):
         return True
@@ -90,7 +90,7 @@ class Usable(ItemComponent):
 class UsableInBase(ItemComponent):
     nid = 'usable_in_base'
     desc = "Item is usable in base"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def can_use_in_base(self, unit, item):
         return True
@@ -101,7 +101,7 @@ class UsableInBase(ItemComponent):
 class Unrepairable(ItemComponent):
     nid = 'unrepairable'
     desc = "Item cannot be repaired"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def unrepairable(self, unit, item):
         return True
@@ -109,7 +109,7 @@ class Unrepairable(ItemComponent):
 class Unsplashable(ItemComponent):
     nid = 'unsplashable'
     desc = "Item cannot have its targeting affected by splash"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def unsplashable(self, unit, item):
         return True
@@ -117,7 +117,7 @@ class Unsplashable(ItemComponent):
 class Value(ItemComponent):
     nid = 'value'
     desc = "Item has a value and can be bought and sold. Items sell for half their value."
-    tag = 'base'
+    tag = ItemTags.BASE
 
     expose = Type.Int
     value = 0
@@ -140,7 +140,7 @@ class Value(ItemComponent):
 class Accessory(ItemComponent):
     nid = 'accessory'
     desc = "Item is an accessory"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def is_accessory(self, unit, item) -> bool:
         return True
@@ -148,7 +148,7 @@ class Accessory(ItemComponent):
 class EquippableAccessory(ItemComponent):
     nid = 'equippable_accessory'
     desc = "Item is an equippable accessory"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def is_accessory(self, unit, item) -> bool:
         return True
@@ -159,7 +159,7 @@ class EquippableAccessory(ItemComponent):
 class Transform(ItemComponent):
     nid = 'transform'
     desc = "Item allows unit to transform. Use for Dragonstones, etc."
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def transforms(self, unit, item):
         return True
@@ -167,6 +167,6 @@ class Transform(ItemComponent):
 class ItemPrefab(ItemComponent):
     nid = 'item_prefab'
     desc = "This item will automatically inherit the components of the chosen item"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     expose = Type.Item

@@ -1,6 +1,6 @@
 from app.utilities.data import Data
 from app.data.components import Type
-from app.data.item_components import ItemComponent, tags
+from app.data.item_components import ItemComponent, ItemTags
 
 def get_item_components():
     # Necessary for get_item_components to find all the
@@ -9,7 +9,7 @@ def get_item_components():
 
     subclasses = ItemComponent.__subclasses__()
     # Sort by tag
-    subclasses = sorted(subclasses, key=lambda x: tags.index(x.tag) if x.tag in tags else 100)
+    subclasses = sorted(subclasses, key=lambda x: list(ItemTags).index(x.tag) if x.tag in list(ItemTags) else 100)
     return Data(subclasses)
 
 def get_component(nid):

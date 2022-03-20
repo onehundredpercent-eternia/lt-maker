@@ -340,7 +340,7 @@ class PrepFormationSelectState(MapState):
             if game.check_for_region(game.cursor.position, 'formation'):
                 SOUNDTHREAD.play_sfx('FormationSelect')
                 cur_unit = game.cursor.get_hover()
-                if cur_unit and cur_unit.team != 'player':
+                if cur_unit and (cur_unit.team != 'player' or cur_unit is self.unit):
                     pass
                 elif cur_unit:
                     game.leave(cur_unit)

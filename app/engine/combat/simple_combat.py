@@ -156,7 +156,7 @@ class SimpleCombat():
         self.handle_records(self.full_playback, all_units)
 
         self.end_combat()
-        
+
         self.attacker.built_guard = True
         if self.defender:
             self.defender.strike_partner = None

@@ -1,4 +1,4 @@
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 from app.engine import equations, action, item_funcs, static_random, skill_system
@@ -7,7 +7,7 @@ from app.engine.game_state import game
 class Ability(SkillComponent):
     nid = 'ability'
     desc = "Give unit an item as an extra ability"
-    tag = "advanced"
+    tag = SkillTags.ADVANCED
 
     expose = Type.Item
 
@@ -29,7 +29,7 @@ class Ability(SkillComponent):
 class CombatArt(SkillComponent):
     nid = 'combat_art'
     desc = "Unit has the ability to apply an extra effect to next attack"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Skill
     _action = None
@@ -72,7 +72,7 @@ class CombatArt(SkillComponent):
 class AutomaticCombatArt(SkillComponent):
     nid = 'automatic_combat_art'
     desc = "Unit will be given skill on upkeep and removed on endstep"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Skill
 
@@ -86,7 +86,7 @@ class AutomaticCombatArt(SkillComponent):
 class AllowedWeapons(SkillComponent):
     nid = 'allowed_weapons'
     desc = "Defines what weapons are allowed for combat art or proc skill"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.String
 
@@ -101,7 +101,7 @@ class AllowedWeapons(SkillComponent):
 class CombatArtSetMaxRange(SkillComponent):
     nid = 'combat_art_set_max_range'
     desc = "Defines what unit's max range is for testing combat art. Combine with 'Limit Max Range' component on subskill."
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
     paired_with = ('combat_art', )
 
     expose = Type.Int
@@ -112,7 +112,7 @@ class CombatArtSetMaxRange(SkillComponent):
 class CombatArtModifyMaxRange(SkillComponent):
     nid = 'combat_art_modify_max_range'
     desc = "Modifies unit's max range when testing combat art. Combine with 'Modify Max Range' component on subskill."
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
     paired_with = ('combat_art', )
 
     expose = Type.Int
@@ -131,11 +131,11 @@ def get_weapon_filter(skill, unit, item) -> bool:
         if component.defines('weapon_filter'):
             return component.weapon_filter(unit, item)
     return True
-            
+
 class AttackProc(SkillComponent):
     nid = 'attack_proc'
     desc = "Allows skill to proc on a single attacking strike"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Skill
     _did_action = False
@@ -150,7 +150,7 @@ class AttackProc(SkillComponent):
                 action.do(act)
                 playback.append(('attack_proc', unit, act.skill_obj))
                 self._did_action = True
-        
+
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
@@ -158,7 +158,7 @@ class AttackProc(SkillComponent):
 class DefenseProc(SkillComponent):
     nid = 'defense_proc'
     desc = "Allows skill to proc when defending a single strike"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Skill
     _did_action = False
@@ -173,7 +173,7 @@ class DefenseProc(SkillComponent):
                 action.do(act)
                 playback.append(('defense_proc', unit, act.skill_obj))
                 self._did_action = True
-        
+
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
@@ -181,7 +181,7 @@ class DefenseProc(SkillComponent):
 class AttackPreProc(SkillComponent):
     nid = 'attack_pre_proc'
     desc = "Allows skill to proc when initiating combat. Lasts entire combat."
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Skill
     _did_action = False
@@ -196,7 +196,7 @@ class AttackPreProc(SkillComponent):
                 action.do(act)
                 playback.append(('attack_pre_proc', unit, act.skill_obj))
                 self._did_action = True
-        
+
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
@@ -205,7 +205,7 @@ class AttackPreProc(SkillComponent):
 class DefensePreProc(SkillComponent):
     nid = 'defense_pre_proc'
     desc = "Allows skill to proc when defending in combat. Lasts entire combat."
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Skill
     _did_action = False
@@ -220,7 +220,7 @@ class DefensePreProc(SkillComponent):
                 action.do(act)
                 playback.append(('defense_pre_proc', unit, act.skill_obj))
                 self._did_action = True
-        
+
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
@@ -229,7 +229,7 @@ class DefensePreProc(SkillComponent):
 class ProcRate(SkillComponent):
     nid = 'proc_rate'
     desc = "Set the proc rate"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Equation
 
@@ -239,7 +239,7 @@ class ProcRate(SkillComponent):
 class DeathTether(SkillComponent):
     nid = 'death_tether'
     desc = "Remove all skills in the game that I initiated on my death"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     def on_death(self, unit):
         for other_unit in game.units:
@@ -250,7 +250,7 @@ class DeathTether(SkillComponent):
 class EmpowerHeal(SkillComponent):
     nid = 'empower_heal'
     desc = "Gives +X extra healing"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.String
 

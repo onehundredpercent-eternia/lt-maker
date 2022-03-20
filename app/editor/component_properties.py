@@ -83,18 +83,19 @@ class ComponentProperties(QWidget):
             icon_folder = 'icons/dark_icons'
 
         for component in self.get_components():
-            if component.tag not in self.menus:
-                new_menu = QHelpMenu(self)
-                self.menus[component.tag] = new_menu
-                toolbutton = QToolButton(self)
-                toolbutton.setIcon(QIcon(f"{icon_folder}/component_%s.png" % component.tag))
-                toolbutton.setMenu(new_menu)
-                toolbutton.setPopupMode(QToolButton.InstantPopup)
-                toolbutton_action = QWidgetAction(self)
-                toolbutton_action.setDefaultWidget(toolbutton)
-                self.toolbar.addAction(toolbutton_action)
-            menu = self.menus[component.tag]
-            menu.addAction(self.actions.get(component.nid))
+            if not component.tag.value == 'hidden':
+                if component.tag.value not in self.menus:
+                    new_menu = QHelpMenu(self)
+                    self.menus[component.tag.value] = new_menu
+                    toolbutton = QToolButton(self)
+                    toolbutton.setIcon(QIcon(f"{icon_folder}/component_%s.png" % component.tag.value))
+                    toolbutton.setMenu(new_menu)
+                    toolbutton.setPopupMode(QToolButton.InstantPopup)
+                    toolbutton_action = QWidgetAction(self)
+                    toolbutton_action.setDefaultWidget(toolbutton)
+                    self.toolbar.addAction(toolbutton_action)
+                menu = self.menus[component.tag.value]
+                menu.addAction(self.actions.get(component.nid))
 
         # Template action
         for template_key, template_value in self.get_templates():

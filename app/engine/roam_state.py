@@ -36,11 +36,13 @@ class FreeRoamState(MapState):
             elif self.roam_unit:
                 # Don't need to do anything --  just reusing the same unit
                 pass
-            else:
+            elif game.get_unit(roam_unit_nid):
                 self.roam_unit = game.get_unit(roam_unit_nid)
                 game.cursor.cur_unit = self.roam_unit
                 # Roam unit is no longer consider to be on the board
                 game.leave(self.roam_unit)
+            else:
+                logging.error("Roam State unable to find roaming unit %s", roam_unit_nid)
 
         elif self.roam_unit:  # Have a roam unit and we shouldn't...
             # No roam unit assigned, time to go
