@@ -1,5 +1,5 @@
 from typing import Set, Tuple
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 from app.engine import equations, target_system
@@ -9,7 +9,7 @@ from app.engine.objects.unit import UnitObject
 class Canto(SkillComponent):
     nid = 'canto'
     desc = "Unit can move again after certain actions"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def has_canto(self, unit, unit2) -> bool:
         """
@@ -20,7 +20,7 @@ class Canto(SkillComponent):
 class CantoPlus(SkillComponent):
     nid = 'canto_plus'
     desc = "Unit can move again even after attacking"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def has_canto(self, unit, unit2) -> bool:
         return True
@@ -28,7 +28,7 @@ class CantoPlus(SkillComponent):
 class CantoSharp(SkillComponent):
     nid = 'canto_sharp'
     desc = "Unit can move and attack in either order"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def has_canto(self, unit, unit2) -> bool:
         return not unit.has_attacked or unit.movement_left >= equations.parser.movement(unit)
@@ -36,7 +36,7 @@ class CantoSharp(SkillComponent):
 class MovementType(SkillComponent):
     nid = 'movement_type'
     desc = "Unit will have a non-default movement type"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     expose = Type.MovementType
 
@@ -46,7 +46,7 @@ class MovementType(SkillComponent):
 class Pass(SkillComponent):
     nid = 'pass'
     desc = "Unit can move through enemies"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def pass_through(self, unit):
         return True
@@ -54,7 +54,7 @@ class Pass(SkillComponent):
 class IgnoreTerrain(SkillComponent):
     nid = 'ignore_terrain'
     desc = "Unit will not be affected by terrain"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def ignore_terrain(self, unit):
         return True
@@ -65,7 +65,7 @@ class IgnoreTerrain(SkillComponent):
 class IgnoreRescuePenalty(SkillComponent):
     nid = 'ignore_rescue_penalty'
     desc = "Unit will ignore the rescue penalty"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def ignore_rescue_penalty(self, unit):
         return True
@@ -73,7 +73,7 @@ class IgnoreRescuePenalty(SkillComponent):
 class Grounded(SkillComponent):
     nid = 'grounded'
     desc = "Unit cannot be forcibly moved"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def ignore_forced_movement(self, unit):
         return True
@@ -81,7 +81,7 @@ class Grounded(SkillComponent):
 class NoAttackAfterMove(SkillComponent):
     nid = 'no_attack_after_move'
     desc = 'Unit can either move or attack, but not both'
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def no_attack_after_move(self, unit):
         return True
@@ -89,7 +89,7 @@ class NoAttackAfterMove(SkillComponent):
 class WitchWarp(SkillComponent):
     nid = 'witch_warp'
     desc = 'Unit can warp to any ally'
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     def witch_warp(self, unit: UnitObject) -> Set[Tuple[int, int]]:
         warp_spots = set()
@@ -108,7 +108,7 @@ class WitchWarp(SkillComponent):
 class SpecificWitchWarp(SkillComponent):
     nid = 'specific_witch_warp'
     desc = "Allows unit to witch warp to the given units"
-    tag = 'movement'
+    tag = SkillTags.MOVEMENT
 
     expose = (Type.List, Type.Unit)
 

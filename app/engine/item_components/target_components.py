@@ -4,7 +4,7 @@ import logging
 from functools import lru_cache
 
 from app.data.components import Type
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.engine import item_funcs, skill_system, target_system
 from app.engine.game_state import game
 from app.utilities import utils
@@ -13,7 +13,7 @@ from app.utilities import utils
 class TargetsAnything(ItemComponent):
     nid = 'target_tile'
     desc = "Item targets any tile"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item) -> set:
         return {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
@@ -26,7 +26,7 @@ class TargetsAnything(ItemComponent):
 class TargetsUnits(ItemComponent):
     nid = 'target_unit'
     desc = "Item targets any unit"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item):
         return {other.position for other in game.units if other.position}
@@ -38,7 +38,7 @@ class TargetsUnits(ItemComponent):
 class TargetsEnemies(ItemComponent):
     nid = 'target_enemy'
     desc = "Item targets any enemy"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item):
         return {other.position for other in game.units if other.position and
@@ -52,7 +52,7 @@ class TargetsEnemies(ItemComponent):
 class TargetsAllies(ItemComponent):
     nid = 'target_ally'
     desc = "Item targets any ally"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item):
         return {other.position for other in game.units if other.position and
@@ -66,7 +66,7 @@ class TargetsAllies(ItemComponent):
 class EvalSpecialRange(ItemComponent):
     nid = 'eval_special_range'
     desc = "Use this to restrict range to specific tiles around the unit"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     expose = Type.String
     value = ''
@@ -102,7 +102,7 @@ class EvalSpecialRange(ItemComponent):
 class EvalTargetRestrict(ItemComponent):
     nid = 'eval_target_restrict'
     desc = "Use this to restrict what units can be targeted"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     expose = Type.String
     value = 'True'
@@ -135,7 +135,7 @@ class EvalTargetRestrict(ItemComponent):
 class EmptyTileTargetRestrict(ItemComponent):
     nid = 'empty_tile_target_restrict'
     desc = "Item will only target tiles without units on them"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
         if not game.board.get_unit(def_pos):
@@ -145,7 +145,7 @@ class EmptyTileTargetRestrict(ItemComponent):
 class MinimumRange(ItemComponent):
     nid = 'min_range'
     desc = "Set the minimum_range of the item to an integer"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     expose = Type.Int
     value = 0
@@ -156,7 +156,7 @@ class MinimumRange(ItemComponent):
 class MaximumRange(ItemComponent):
     nid = 'max_range'
     desc = "Set the maximum_range of the item to an integer"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     expose = Type.Int
     value = 0
@@ -167,7 +167,7 @@ class MaximumRange(ItemComponent):
 class MaximumEquationRange(ItemComponent):
     nid = 'max_equation_range'
     desc = "Set the maximum_range of the item to an equation"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     expose = Type.Equation
 
@@ -182,7 +182,7 @@ class MaximumEquationRange(ItemComponent):
 class GlobalRange(ItemComponent):
     nid = 'global_range'
     desc = "Item has no maximum range"
-    tag = 'target'
+    tag = ItemTags.TARGET
 
     def maximum_range(self, unit, item) -> int:
         return 99

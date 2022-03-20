@@ -1,4 +1,4 @@
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.utilities import utils
@@ -9,7 +9,7 @@ class Effective(ItemComponent):
     desc = 'Item does extra damage against certain units'
     # requires = ['damage']
     paired_with = ('effective_tag',)
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = Type.Int
     value = 0
@@ -22,7 +22,7 @@ class EffectiveTag(ItemComponent):
     desc = "Item does extra damage against units with these tags"
     # requires = ['damage']
     paired_with = ('effective',)
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = (Type.List, Type.Tag)
     value = []
@@ -62,7 +62,7 @@ class EffectiveTag(ItemComponent):
 class Brave(ItemComponent):
     nid = 'brave'
     desc = "Item multi-attacks"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value):
         return 1
@@ -70,7 +70,7 @@ class Brave(ItemComponent):
 class BraveOnAttack(ItemComponent):
     nid = 'brave_on_attack'
     desc = "Item multi-attacks only when attacking"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value):
         return 1 if mode == 'attack' else 0
@@ -79,7 +79,7 @@ class Lifelink(ItemComponent):
     nid = 'lifelink'
     desc = "Heals user %% of damage dealt"
     # requires = ['damage']
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = Type.Float
     value = 0.5
@@ -100,7 +100,7 @@ class DamageOnMiss(ItemComponent):
     nid = 'damage_on_miss'
     desc = "Does %% damage even on miss"
     # requires = ['damage']
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = Type.Float
     value = 0.5
@@ -121,7 +121,7 @@ class DamageOnMiss(ItemComponent):
 class Eclipse(ItemComponent):
     nid = 'Eclipse'
     desc = "Target loses half current HP on hit"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         true_damage = damage = target.get_hp()//2
@@ -136,7 +136,7 @@ class Eclipse(ItemComponent):
 class NoDouble(ItemComponent):
     nid = 'no_double'
     desc = "Item cannot double"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def can_double(self, unit, item):
         return False
@@ -144,7 +144,7 @@ class NoDouble(ItemComponent):
 class CannotCounter(ItemComponent):
     nid = 'cannot_counter'
     desc = "Item cannot counter"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def can_counter(self, unit, item):
         return False
@@ -152,7 +152,7 @@ class CannotCounter(ItemComponent):
 class CannotBeCountered(ItemComponent):
     nid = 'cannot_be_countered'
     desc = "Item cannot be countered"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def can_be_countered(self, unit, item):
         return False
@@ -160,7 +160,7 @@ class CannotBeCountered(ItemComponent):
 class IgnoreWeaponAdvantage(ItemComponent):
     nid = 'ignore_weapon_advantage'
     desc = "Item will not be affected by the weapon triangle"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def ignore_weapon_advantage(self, unit, item):
         return True
@@ -168,7 +168,7 @@ class IgnoreWeaponAdvantage(ItemComponent):
 class Reaver(ItemComponent):
     nid = 'reaver'
     desc = "Item will have double reverse weapon triangle"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def modify_weapon_triangle(self, unit, item):
         return -2
@@ -176,7 +176,7 @@ class Reaver(ItemComponent):
 class DoubleTriangle(ItemComponent):
     nid = 'double_triangle'
     desc = "Item will have double weapon triangle"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     def modify_weapon_triangle(self, unit, item):
         return 2
@@ -184,7 +184,7 @@ class DoubleTriangle(ItemComponent):
 class StatusOnEquip(ItemComponent):
     nid = 'status_on_equip'
     desc = "Item gives status while equipped"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = Type.Skill  # Nid
 
@@ -199,7 +199,7 @@ class StatusOnEquip(ItemComponent):
 class MultiStatusOnEquip(ItemComponent):
     nid = 'multi_status_on_equip'
     desc = "Item gives these statuses while equipped"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = (Type.List, Type.Skill)  # Nid
 
@@ -216,7 +216,7 @@ class MultiStatusOnEquip(ItemComponent):
 class StatusOnHold(ItemComponent):
     nid = 'status_on_hold'
     desc = "Item gives status while in unit's inventory"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
 
     expose = Type.Skill  # Nid
 
@@ -229,7 +229,7 @@ class StatusOnHold(ItemComponent):
 class GainManaAfterCombat(ItemComponent):
     nid = 'gain_mana_after_combat'
     desc = "Item grants X Mana at the end of combat solved dynamically"
-    tag = 'extra'
+    tag = ItemTags.EXTRA
     author = 'KD'
 
     expose = Type.String

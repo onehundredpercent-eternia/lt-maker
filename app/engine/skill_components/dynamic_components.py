@@ -1,10 +1,10 @@
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 class DynamicDamage(SkillComponent):
     nid = 'dynamic_damage'
     desc = "Gives +X damage solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -19,7 +19,7 @@ class DynamicDamage(SkillComponent):
 class DynamicResist(SkillComponent):
     nid = 'dynamic_resist'
     desc = "Gives +X resist solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -34,7 +34,7 @@ class DynamicResist(SkillComponent):
 class DynamicAccuracy(SkillComponent):
     nid = 'dynamic_accuracy'
     desc = "Gives +X hit solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -49,7 +49,7 @@ class DynamicAccuracy(SkillComponent):
 class DynamicAvoid(SkillComponent):
     nid = 'dynamic_avoid'
     desc = "Gives +X avoid solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -64,7 +64,7 @@ class DynamicAvoid(SkillComponent):
 class DynamicCritAccuracy(SkillComponent):
     nid = 'dynamic_crit_accuracy'
     desc = "Gives +X crit solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -79,7 +79,7 @@ class DynamicCritAccuracy(SkillComponent):
 class DynamicCritAvoid(SkillComponent):
     nid = 'dynamic_crit_avoid'
     desc = "Gives +X crit avoid solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -94,7 +94,7 @@ class DynamicCritAvoid(SkillComponent):
 class DynamicAttackSpeed(SkillComponent):
     nid = 'dynamic_attack_speed'
     desc = "Gives +X attack speed solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -109,7 +109,7 @@ class DynamicAttackSpeed(SkillComponent):
 class DynamicDefenseSpeed(SkillComponent):
     nid = 'dynamic_defense_speed'
     desc = "Gives +X defense speed solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 
@@ -124,7 +124,7 @@ class DynamicDefenseSpeed(SkillComponent):
 class DynamicMultiattacks(SkillComponent):
     nid = 'dynamic_multiattacks'
     desc = "Gives +X extra attacks per phase solved dynamically"
-    tag = 'dynamic'
+    tag = SkillTags.DYNAMIC
 
     expose = Type.String
 

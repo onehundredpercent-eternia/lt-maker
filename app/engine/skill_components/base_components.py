@@ -1,4 +1,4 @@
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 from app.engine import equations, action, item_funcs, item_system
@@ -8,7 +8,7 @@ from app.engine.game_state import game
 class Unselectable(SkillComponent):
     nid = 'unselectable'
     desc = "Unit cannot be selected"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     def can_select(self, unit) -> bool:
         return False
@@ -16,7 +16,7 @@ class Unselectable(SkillComponent):
 class CannotUseItems(SkillComponent):
     nid = 'cannot_use_items'
     desc = "Unit cannot use or equip any items"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     def available(self, unit, item) -> bool:
         return False
@@ -24,7 +24,7 @@ class CannotUseItems(SkillComponent):
 class CannotUseMagicItems(SkillComponent):
     nid = 'cannot_use_magic_items'
     desc = "Unit cannot use or equip magic items"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     def available(self, unit, item) -> bool:
         return not item_funcs.is_magic(unit, item)
@@ -32,7 +32,7 @@ class CannotUseMagicItems(SkillComponent):
 class AdditionalAccessories(SkillComponent):
     nid = 'additional_accessories'
     desc = "Unit can hold additional accessories rather than regular items"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Int
     value = 2
@@ -46,7 +46,7 @@ class AdditionalAccessories(SkillComponent):
 class IgnoreAlliances(SkillComponent):
     nid = 'ignore_alliances'
     desc = "Unit will treat all units as enemies"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     def check_ally(self, unit1, unit2) -> bool:
         return unit1 is unit2
@@ -57,7 +57,7 @@ class IgnoreAlliances(SkillComponent):
 class ChangeAI(SkillComponent):
     nid = 'change_ai'
     desc = "Unit's AI is forcibly changed"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.AI
 
@@ -67,7 +67,7 @@ class ChangeAI(SkillComponent):
 class ChangeBuyPrice(SkillComponent):
     nid = 'change_buy_price'
     desc = "Unit's buy price for items is changed"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Float
 
@@ -77,7 +77,7 @@ class ChangeBuyPrice(SkillComponent):
 class ExpMultiplier(SkillComponent):
     nid = 'exp_multiplier'
     desc = "Unit receives a multiplier on exp gained"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Float
 
@@ -87,7 +87,7 @@ class ExpMultiplier(SkillComponent):
 class EnemyExpMultiplier(SkillComponent):
     nid = 'enemy_exp_multiplier'
     desc = "Unit gives a multiplier to the exp gained by others in combat"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Float
 
@@ -97,7 +97,7 @@ class EnemyExpMultiplier(SkillComponent):
 class WexpMultiplier(SkillComponent):
     nid = 'wexp_multiplier'
     desc = "Unit receives a multiplier on wexp gained"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Float
 
@@ -107,7 +107,7 @@ class WexpMultiplier(SkillComponent):
 class CanUseWeaponType(SkillComponent):
     nid = 'wexp_usable_skill'
     desc = 'Unit can use this weapon type, regardless of class'
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.WeaponType
 
@@ -120,7 +120,7 @@ class CanUseWeaponType(SkillComponent):
 class EnemyWexpMultiplier(SkillComponent):
     nid = 'enemy_wexp_multiplier'
     desc = "Unit gives a multiplier to the wexp gained by others in combat"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Float
 
@@ -130,7 +130,7 @@ class EnemyWexpMultiplier(SkillComponent):
 class Locktouch(SkillComponent):
     nid = 'locktouch'
     desc = "Unit is able to unlock automatically"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     def can_unlock(self, unit, region):
         return True
@@ -138,7 +138,7 @@ class Locktouch(SkillComponent):
 class SightRangeBonus(SkillComponent):
     nid = 'sight_range_bonus'
     desc = "Unit gains a bonus to sight range"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Int
     value = 3
@@ -149,7 +149,7 @@ class SightRangeBonus(SkillComponent):
 class DecreasingSightRangeBonus(SkillComponent):
     nid = 'decreasing_sight_range_bonus'
     desc = "Unit gains a bonus to sight range that decreases by 1 each turn"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     expose = Type.Int
     value = 3
@@ -167,7 +167,7 @@ class DecreasingSightRangeBonus(SkillComponent):
 class IgnoreFatigue(SkillComponent):
     nid = 'ignore_fatigue'
     desc = "Unit cannot gain fatigue"
-    tag = 'base'
+    tag = SkillTags.BASE
 
     def ignore_fatigue(self, unit):
         return True

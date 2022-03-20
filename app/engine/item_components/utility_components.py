@@ -1,6 +1,6 @@
 from app.utilities import utils
 
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine import action
@@ -10,7 +10,7 @@ from app.engine.game_state import game
 class Heal(ItemComponent):
     nid = 'heal'
     desc = "Item heals this amount on hit"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     expose = Type.Int
     value = 10
@@ -68,7 +68,7 @@ class MagicHeal(Heal, ItemComponent):
 class Refresh(ItemComponent):
     nid = 'refresh'
     desc = "Item allows target to move again on hit"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
         # only targets areas where unit could move again
@@ -87,7 +87,7 @@ class Refresh(ItemComponent):
 class Restore(ItemComponent):
     nid = 'restore'
     desc = "Item removes all negative statuses from target on hit"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     def _can_be_restored(self, status):
         return status.negative
@@ -112,7 +112,7 @@ class Restore(ItemComponent):
 class RestoreSpecific(Restore, ItemComponent):
     nid = 'restore_specific'
     desc = "Item removes status from target on hit"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     expose = Type.Skill # Nid
 
@@ -122,7 +122,7 @@ class RestoreSpecific(Restore, ItemComponent):
 class UnlockStaff(ItemComponent):
     nid = 'unlock_staff'
     desc = "Item allows user to unlock locked regions. Doesn't work with other splash/aoe components"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     _did_hit = False
 
@@ -171,7 +171,7 @@ class UnlockStaff(ItemComponent):
 class CanUnlock(ItemComponent):
     nid = 'can_unlock'
     desc = "Item can be used to unlock events. String will be evaluated to determine kind of event"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     expose = Type.String
     value = 'True'
@@ -187,7 +187,7 @@ class CanUnlock(ItemComponent):
 class Repair(ItemComponent):
     nid = 'repair'
     desc = "Item repairs target item on hit"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     def init(self, item):
         item.data['target_item'] = None
@@ -228,7 +228,7 @@ class Repair(ItemComponent):
 class Trade(ItemComponent):
     nid = 'trade'
     desc = "Item allows user to trade with target on hit"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     _did_hit = False
 
@@ -246,7 +246,7 @@ class Trade(ItemComponent):
 class MenuAfterCombat(ItemComponent):
     nid = 'menu_after_combat'
     desc = "Can access menu after combat"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     def menu_after_combat(self, unit, item):
         return True
@@ -254,7 +254,7 @@ class MenuAfterCombat(ItemComponent):
 class AttackAfterCombat(ItemComponent):
     nid = 'attack_after_combat'
     desc = "Can access menu and attack after combat"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     def menu_after_combat(self, unit, item):
         return True
@@ -267,7 +267,7 @@ class AttackAfterCombat(ItemComponent):
 class NoAttackAfterMove(ItemComponent):
     nid = 'no_attack_after_move'
     desc = "Cannot be used after moving"
-    tag = 'utility'
+    tag = ItemTags.UTILITY
 
     def no_attack_after_move(self, unit, item):
         return True

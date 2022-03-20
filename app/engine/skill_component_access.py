@@ -1,13 +1,13 @@
 from app.utilities.data import Data
 from app.data.components import Type
-from app.data.skill_components import SkillComponent, tags
+from app.data.skill_components import SkillComponent, SkillTags
 
 def get_skill_components():
     from app.engine import skill_components
 
     subclasses = SkillComponent.__subclasses__()
     # Sort by tag
-    subclasses = sorted(subclasses, key=lambda x: tags.index(x.tag) if x.tag in tags else 100)
+    subclasses = sorted(subclasses, key=lambda x: list(SkillTags).index(x.tag) if x.tag in list(SkillTags) else 100)
     return Data(subclasses)
 
 def get_component(nid):

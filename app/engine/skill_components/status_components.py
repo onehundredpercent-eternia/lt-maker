@@ -1,6 +1,6 @@
 import random
 
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 from app.engine import equations, action, static_random
@@ -9,7 +9,7 @@ from app.engine.game_state import game
 class Aura(SkillComponent):
     nid = 'aura'
     desc = "Skill has an aura that gives off child skill"
-    tag = 'status'
+    tag = SkillTags.STATUS
     paired_with = ('aura_range', 'aura_target')
 
     expose = Type.Skill
@@ -17,7 +17,7 @@ class Aura(SkillComponent):
 class AuraRange(SkillComponent):
     nid = 'aura_range'
     desc = "Set range of skill's aura"
-    tag = 'status'
+    tag = SkillTags.STATUS
     paired_with = ('aura', 'aura_target')
 
     expose = Type.Int
@@ -26,7 +26,7 @@ class AuraRange(SkillComponent):
 class AuraTarget(SkillComponent):
     nid = 'aura_target'
     desc = "Set target of skill's aura (set to 'ally', 'enemy', or 'unit')"
-    tag = 'status'
+    tag = SkillTags.STATUS
     paired_with = ('aura', 'aura_range')
 
     expose = Type.String
@@ -35,7 +35,7 @@ class AuraTarget(SkillComponent):
 class PairUpBonus(SkillComponent):
     nid = 'pairup_bonus'
     desc = "Grants a child skill to lead units while in guard stance."
-    tag = 'status'
+    tag = SkillTags.STATUS
 
     expose = Type.Skill
 
@@ -49,7 +49,7 @@ class PairUpBonus(SkillComponent):
 class Regeneration(SkillComponent):
     nid = 'regeneration'
     desc = "Unit restores %% of HP at beginning of turn"
-    tag = "status"
+    tag = SkillTags.STATUS
 
     expose = Type.Float
     value = 0.2
@@ -68,11 +68,11 @@ class Regeneration(SkillComponent):
             else:
                 name = 'MapSmallHealTrans'
             playback.append(('cast_anim', name, unit))
-            
+
 class ManaRegeneration(SkillComponent):
     nid = 'mana_regeneration'
     desc = "Unit restores X mana at beginning of turn"
-    tag = "status"
+    tag = SkillTags.STATUS
 
     expose = Type.Int
 
@@ -82,7 +82,7 @@ class ManaRegeneration(SkillComponent):
 class UpkeepDamage(SkillComponent):
     nid = 'upkeep_damage'
     desc = "Unit takes damage at upkeep"
-    tag = "status"
+    tag = SkillTags.STATUS
 
     expose = Type.Int
     value = 5
@@ -113,7 +113,7 @@ class UpkeepDamage(SkillComponent):
 class EndstepDamage(UpkeepDamage, SkillComponent):
     nid = 'endstep_damage'
     desc = "Unit takes damage at endstep"
-    tag = "status"
+    tag = SkillTags.STATUS
 
     expose = Type.Int
     value = 5
@@ -130,7 +130,7 @@ class EndstepDamage(UpkeepDamage, SkillComponent):
 class GBAPoison(SkillComponent):
     nid = 'gba_poison'
     desc = "Unit takes random amount of damage up to num"
-    tag = "status"
+    tag = SkillTags.STATUS
 
     expose = Type.Int
     value = 5
@@ -145,7 +145,7 @@ class GBAPoison(SkillComponent):
 class ResistStatus(SkillComponent):
     nid = 'resist_status'
     desc = "Unit is only affected by statuses for a turn"
-    tag = "status"
+    tag = SkillTags.STATUS
 
     def on_add(self, unit, skill):
         for skill in unit.skills:
@@ -159,7 +159,7 @@ class ResistStatus(SkillComponent):
 class ImmuneStatus(SkillComponent):
     nid = 'immune_status'
     desc = "Unit is not affected by negative statuses"
-    tag = 'status'
+    tag = SkillTags.STATUS
 
     def on_add(self, unit, skill):
         for skill in unit.skills:
@@ -173,7 +173,7 @@ class ImmuneStatus(SkillComponent):
 class ReflectStatus(SkillComponent):
     nid = 'reflect_status'
     desc = "Unit reflects statuses back to initiator"
-    tag = 'status'
+    tag = SkillTags.STATUS
 
     def on_gain_skill(self, unit, other_skill):
         if other_skill.initiator_nid:

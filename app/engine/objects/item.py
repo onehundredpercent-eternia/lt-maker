@@ -28,7 +28,7 @@ class ItemObject():
             component_value.item = self
 
         self.data = {}
-        
+
         # For subitems
         self.subitem_uids = []
         self.subitems = []
@@ -57,6 +57,7 @@ class ItemObject():
         for component in prefab.components:
             new_component = ICA.restore_component((component.nid, component.value))
             components.append(new_component, overwrite=True)
+
         return cls(prefab.nid, prefab.name, prefab.desc, prefab.icon_nid, prefab.icon_index, components)
 
     # If the attribute is not found
@@ -80,7 +81,7 @@ class ItemObject():
         serial_dict['owner_nid'] = self.owner_nid
         serial_dict['droppable'] = self.droppable
         serial_dict['data'] = self.data
-        serial_dict['subitems'] = self.subitem_uids 
+        serial_dict['subitems'] = self.subitem_uids
         return serial_dict
 
     @classmethod
