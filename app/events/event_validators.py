@@ -660,6 +660,27 @@ class UniqueUnit(Validator):
         return valids
 
 class GlobalUnit(Validator):
+    desc = "accepts a unit's nid. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`) where appropriate."
+
+    def validate(self, text, level):
+        if level:
+            nids = [u.nid for u in level.units]
+            if text in nids:
+                return text
+        elif text in DB.units.keys():
+            return text
+        elif text in ('{unit}', '{unit1}', '{unit2}'):
+            return True
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        valids = [(unit.name, unit.nid) for unit in DB.units.values()]
+        valids.append((None, "{unit}"))
+        valids.append((None, "{unit1}"))
+        valids.append((None, "{unit2}"))
+        return valids
+
+class GlobalUnitOrConvoy(Validator):
     desc = "accepts a unit's nid. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`) or `convoy` where appropriate."
 
     def validate(self, text, level):

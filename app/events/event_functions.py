@@ -1161,13 +1161,16 @@ def remove_item(self: Event, global_unit, item, flags=None):
         return
     banner_flag = 'no_banner' not in flags
 
-    action.do(action.RemoveItem(unit, item))
-    if banner_flag:
-        item = DB.items.get(item.nid)
-        b = banner.TakeItem(unit, item)
-        self.game.alerts.append(b)
-        self.game.state.change('alert')
-        self.state = 'paused'
+    if global_unit.lower() == 'convoy':
+        action.do(action.RemoveItemFromConvoy(item))
+    else:
+        action.do(action.RemoveItem(unit, item))
+        if banner_flag:
+            item = DB.items.get(item.nid)
+            b = banner.TakeItem(unit, item)
+            self.game.alerts.append(b)
+            self.game.state.change('alert')
+            self.state = 'paused'
 
 def change_item_name(self: Event, global_unit, item, string, flags=None):
     unit, item = self._get_item_in_inventory(global_unit, item)
@@ -1198,7 +1201,11 @@ def add_item_to_multiitem(self: Event, global_unit, multi_item, child_item, flag
         component.item = item
     item_system.init(subitem)
     self.game.register_item(subitem)
-    action.do(action.AddItemToMultiItem(unit, item, subitem))
+    if global_unit.lower() == 'convoy':
+        owner_nid = None
+    else:
+        owner_nid = unit.nid
+    action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
 
 def remove_item_from_multiitem(self: Event, global_unit, multi_item, child_item, flags=None):
     unit, item = self._get_item_in_inventory(global_unit, multi_item)
@@ -1213,7 +1220,11 @@ def remove_item_from_multiitem(self: Event, global_unit, multi_item, child_item,
         self.logger.error("Couldn't find subitem with nid %s" % child_item)
         return
     subitem = [subitem for subitem in item.subitems if subitem.nid == child_item][0]
-    action.do(action.RemoveItemFromMultiItem(unit, item, subitem))
+    if global_unit.lower() == 'convoy':
+        owner_nid = None
+    else:
+        owner_nid = unit.nid
+    action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
 
 def give_money(self: Event, money, party=None, flags=None):
     flags = flags or set()
@@ -1931,7 +1942,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
             ast.parse(choices)
             def tryexcept(callback_expr):
                 try:
-                    val = eval(self.text_evaluator._evaluate_all(callback_expr, True))
+                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr, True), self.unit, self.unit2, self.item, self.position, self.region, game=self.game)
                     if isinstance(val, list):
                         return val
                     else:
@@ -2036,7 +2047,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
             ast.parse(table_data)
             def tryexcept(callback_expr):
                 try:
-                    val = eval(self.text_evaluator._evaluate_all(callback_expr))
+                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.item, self.position, self.region, game=self.game)
                     if isinstance(val, list):
                         return val
                     else:

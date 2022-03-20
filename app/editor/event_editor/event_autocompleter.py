@@ -97,7 +97,7 @@ def detect_type_under_cursor(line: str, cursor_pos: int, arg_under_cursor: str =
     if arg_idx == -1:
         return (event_validators.EventFunction, [])
     try:
-        command, error_loc = event_commands.parse_text_to_command(line)
+        command = detect_command_under_cursor(line)
         validator_name = None
         if command:
             if arg_idx >= len(command.keywords):

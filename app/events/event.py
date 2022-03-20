@@ -263,6 +263,7 @@ class Event():
     def process(self):
         while self.command_idx < len(self.commands) and self.state == 'processing':
             command = self.commands[self.command_idx]
+            self.logger.debug("Run Event Command: %s", command)
             try:
                 if self.handle_conditional(command):
                     if self.handle_loop(command):
@@ -326,6 +327,9 @@ class Event():
                     if iterator_nid:
                         new_command.parameters = {k: v.replace('{' + iterator_nid + '}', arg) for k, v in new_command.parameters.items()}
                     self.commands.insert(self.command_idx + 1, new_command)
+            return True
+        # Skip endf command here
+        elif command.nid == 'endf':
             return True
         return False
 
@@ -574,16 +578,19 @@ class Event():
         self.game.full_register(new_unit)
         return new_unit
 
-    def _get_item_in_inventory(self, values):
-        unit = self._get_unit(values[0])
-        if not unit:
-            self.logger.error("Couldn't find unit with nid %s" % values[0])
-            return None, None
-        item_id = values[1]
+    def _get_item_in_inventory(self, unit_nid: str, item: str) -> tuple:
+        if unit_nid.lower() == 'convoy':
+            unit = self.game.get_party()
+        else:
+            unit = self._get_unit(unit_nid)
+            if not unit:
+                self.logger.error("Couldn't find unit with nid %s" % unit_nid)
+                return None, None
+        item_id = item
         inids = [item.nid for item in unit.items]
         iuids = [item.uid for item in unit.items]
         if (item_id not in inids) and (not str_utils.is_int(item_id) or not int(item_id) in iuids):
-            self.logger.error("Couldn't find item with id %s" % values[1])
+            self.logger.error("Couldn't find item with id %s" % item)
             return None, None
         item = [item for item in unit.items if (item.nid == item_id or (str_utils.is_int(item_id) and item.uid == int(item_id)))][0]
         return unit, item

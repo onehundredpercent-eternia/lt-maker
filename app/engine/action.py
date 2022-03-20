@@ -1291,13 +1291,13 @@ class ChangeItemDesc(Action):
         self.item.desc = self.old_desc
 
 class AddItemToMultiItem(Action):
-    def __init__(self, unit, item, subitem):
-        self.unit = unit
+    def __init__(self, owner_nid, item, subitem):
+        self.owner_nid = owner_nid
         self.item = item
         self.subitem = subitem
 
     def do(self):
-        self.subitem.owner_nid = self.unit.nid
+        self.subitem.owner_nid = self.owner_nid
         self.item.subitem_uids.append(self.subitem.uid)
         self.item.subitems.append(self.subitem)
         self.subitem.parent_item = self.item
@@ -1309,8 +1309,8 @@ class AddItemToMultiItem(Action):
         self.subitem.parent_item = None
 
 class RemoveItemFromMultiItem(Action):
-    def __init__(self, unit, item, subitem):
-        self.unit = unit
+    def __init__(self, owner_nid, item, subitem):
+        self.owner_nid = owner_nid
         self.item = item
         self.subitem = subitem
 
@@ -1321,7 +1321,7 @@ class RemoveItemFromMultiItem(Action):
         self.subitem.parent_item = None
 
     def reverse(self):
-        self.subitem.owner_nid = self.unit.nid
+        self.subitem.owner_nid = self.owner_nid
         self.item.subitem_uids.append(self.subitem.uid)
         self.item.subitems.append(self.subitem)
         self.subitem.parent_item = self.item

@@ -1098,14 +1098,14 @@ class GiveItem(EventCommand):
 
     desc = \
         """
-Gives a new copy of *Item* to *GlobalUnit*. If the *no_banner* flag is set, there will not be a banner announcing that "X unit got a Y item!".
+Gives a new copy of *Item* to *GlobalUnitOrConvoy*. If the *no_banner* flag is set, there will not be a banner announcing that "X unit got a Y item!".
 
 If the unit's inventory is full, the player will be given the option of which item to send to the convoy.
 If the *no_choice* flag is set, the new item will be automatically sent to the convoy in this case without prompting the player.
 The *droppable* flag determines whether the item is set as a "droppable" item (generally only given to enemy units).
         """
 
-    keywords = ["GlobalUnit", "Item"]
+    keywords = ["GlobalUnitOrConvoy", "Item"]
     _flags = ['no_banner', 'no_choice', 'droppable']
 
 class RemoveItem(EventCommand):
@@ -1114,11 +1114,12 @@ class RemoveItem(EventCommand):
 
     desc = \
         """
-Removes *Item* from the inventory of *GlobalUnit*.
+Removes *Item* from the inventory of *GlobalUnitOrConvoy*.
 If the *no_banner* flag is set, there will not be a banner announcing that "X unit lost a Y item!".
+Also, if the item is removed from the convoy, there will not be a banner.
         """
 
-    keywords = ["GlobalUnit", "Item"]
+    keywords = ["GlobalUnitOrConvoy", "Item"]
     _flags = ['no_banner']
 
 class ChangeItemName(EventCommand):
@@ -1127,10 +1128,10 @@ class ChangeItemName(EventCommand):
 
     desc = \
         """
-Changes the name of *Item* in the inventory of *GlobalUnit* to *String*.
+Changes the name of *Item* in the inventory of *GlobalUnitOrConvoy* to *String*.
         """
 
-    keywords = ["GlobalUnit", "Item", "String"]
+    keywords = ["GlobalUnitOrConvoy", "Item", "String"]
 
 class ChangeItemDesc(EventCommand):
     nid = 'change_item_desc'
@@ -1138,10 +1139,10 @@ class ChangeItemDesc(EventCommand):
 
     desc = \
         """
-Changes the description of *Item* in the inventory of *GlobalUnit* to *String*.
+Changes the description of *Item* in the inventory of *GlobalUnitOrConvoy* to *String*.
         """
 
-    keywords = ["GlobalUnit", "Item", "String"]
+    keywords = ["GlobalUnitOrConvoy", "Item", "String"]
 
 class AddItemToMultiitem(EventCommand):
     nid = 'add_item_to_multiitem'
@@ -1149,11 +1150,11 @@ class AddItemToMultiitem(EventCommand):
 
     desc = \
         """
-Adds a new item to an existing multi-item in the inventory of *GlobalUnit*.
+Adds a new item to an existing multi-item in the inventory of *GlobalUnitOrConvoy*.
         """
 
-    keywords = ["GlobalUnit", "MultiItem", "ChildItem"]
-    keyword_types = ["GlobalUnit", "Item", "Item"]
+    keywords = ["GlobalUnitOrConvoy", "MultiItem", "ChildItem"]
+    keyword_types = ["GlobalUnitOrConvoy", "Item", "Item"]
 
 class RemoveItemFromMultiitem(EventCommand):
     nid = 'remove_item_from_multiitem'
@@ -1161,11 +1162,11 @@ class RemoveItemFromMultiitem(EventCommand):
 
     desc = \
         """
-Removes an item from an existing multi-item in the inventory of *GlobalUnit*.
+Removes an item from an existing multi-item in the inventory of *GlobalUnitOrConvoy*.
         """
 
-    keywords = ["GlobalUnit", "MultiItem", "ChildItem"]
-    keyword_types = ["GlobalUnit", "Item", "Item"]
+    keywords = ["GlobalUnitOrConvoy", "MultiItem", "ChildItem"]
+    keyword_types = ["GlobalUnitOrConvoy", "Item", "Item"]
 
 class GiveMoney(EventCommand):
     nid = 'give_money'
@@ -2364,7 +2365,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                 if cmd_validator:
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
                 else:
-                    logging.info("Keyword argument %s not found", cmd_keyword)
+                    logging.debug("Keyword argument %s not found", cmd_keyword)
                     return None, idx
 
             elif keyword_argument_mode:
@@ -2381,13 +2382,13 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                     cmd_validator = command_info.get_keyword_types()[idx]
                     parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
                 else:
-                    logging.info("too many arguments: %s, %s", arg, arguments)
+                    logging.debug("too many arguments: %s, %s", arg, arguments)
                     return None, idx
 
         # Check that we have all the required keywords
         for keyword in command_info.keywords:
             if keyword not in parameters:
-                logging.info("Missing required parameter: %s in %s", keyword, parameters)
+                logging.debug("Missing required parameter: %s in %s", keyword, parameters)
                 return None, len(cmd_args) - 1
 
         copy = command(parameters, flags, cmd_args)
