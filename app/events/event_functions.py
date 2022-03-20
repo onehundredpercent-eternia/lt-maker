@@ -1210,7 +1210,7 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
     action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
 
 def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item, flags=None):
-    unit, item = self._get_item_in_inventory(global_unit, multi_item)
+    unit, item = self._get_item_in_inventory(global_unit_or_convoy, multi_item)
     if not unit or not item:
         return
     if not item.multi_item:
