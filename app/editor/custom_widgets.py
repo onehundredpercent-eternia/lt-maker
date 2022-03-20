@@ -107,11 +107,9 @@ class MovementClassBox(ObjBox):
         super().__init__("Movement Class", MovementClassModel, DB.mcost, parent, button)
 
 class EventBox(ObjBox):
-    def __init__(self, parent=None, button=False, exclude=None, detached=False):
+    def __init__(self, parent=None, button=False, exclude=None):
         from app.editor.event_editor.event_model import EventModel
         database = DB.events
-        if detached:
-            database = Data([d for d in DB.events if not d.level_nid and d.trigger == "None")
         if exclude:
             database = Data([d for d in DB.events if d is not exclude])
         super().__init__("Event", EventModel, database, parent, button)

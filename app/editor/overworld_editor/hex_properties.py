@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QVBoxLayout, \
-    QWidget, QLabel
+    QWidget, QLabel, QLineEdit
 from PyQt5.QtCore import Qt
+
+from app.extensions.custom_gui import PropertyBox
 
 from app.data.database import DB
 from app.editor.custom_widgets import HexTypeBox
@@ -40,6 +42,11 @@ class HexPropertiesMenu(QWidget):
         if self.current_hex:
             self.current_hex.hex_type = self.hex_type_box.edit.currentText()
 
+    def name_changed(self, text):
+        if self.current_hex:
+            self.current_hex.name = text
+            self.state_manager.change_and_broadcast('ui_refresh_signal', None)
+
     def _initialize_components(self):
         self.setStyleSheet("font: 10pt;")
         self.layout = QVBoxLayout(self)
@@ -48,6 +55,10 @@ class HexPropertiesMenu(QWidget):
         self.position_label = QLabel()
         self.position_label.setText("No Hex Selected")
         self.layout.addWidget(self.position_label)
+
+        self.name_box = PropertyBox("Unique Name", QLineEdit, self)
+        self.name_box.edit.textChanged.connect(self.name_changed)
+        self.layout.addWidget(self.name_box)
 
         self.hex_type_box = HexTypeBox(self)
         self.hex_type_box.edit.activated.connect(self.hex_type_changed)

@@ -58,7 +58,7 @@ class HexTypeProperties(QWidget):
 
         attrs = ("event_nid", "event_chance")
         self.hex_event_widget = AppendMultiListWidget([], "Hex Events", attrs, HexEventDelegate, self, model=DoubleListModel)
-        main_section.addLayout(self.hex_event_widget)
+        main_section.addWidget(self.hex_event_widget)
 
         total_section = QVBoxLayout()
         self.setLayout(total_section)

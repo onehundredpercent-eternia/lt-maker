@@ -109,18 +109,24 @@ def roffset_to_cube(offset, h: tuple) -> Hex:
         raise ValueError("offset %s must be EVEN (+1) or ODD (-1)" % offset)
     return Hex(q, r, s)
 
-def hex_to_pixel(layout: Layout, h: Hex) -> tuple:
+def _hex_to_pixel(layout: Layout, h: Hex) -> tuple:
     m = layout.orientation
     x = (m.f0 * h.q + m.f1 * h.r) * layout.size[0]
     y = (m.f2 * h.q + m.f3 * h.r) * layout.size[1]
     return (x + layout.origin[0], y + layout.origin[1])
 
-def pixel_to_hex(layout: Layout, p: tuple) -> Hex:
+def hex_to_pixel(h: Hex) -> tuple:
+    return _hex_to_pixel(default_layout(), h)
+
+def _pixel_to_hex(layout: Layout, p: tuple) -> Hex:
     m = layout.orientation
     pt = (p[0] - layout.origin[0]) / layout.size[0], (p[1] - layout.origin[1]) / layout.size[1]
     q = m.b0 * pt[0] + m.b1 * pt[1]
     r = m.b2 * pt[0] + m.b3 * pt[1]
     return Hex(q, r, -q - r)
+
+def pixel_to_hex(h: Hex) -> tuple:
+    return _pixel_to_hex(default_layout(), h)
 
 def hex_corner_offset(layout: Layout, corner: int) -> tuple:
     m = layout.orientation

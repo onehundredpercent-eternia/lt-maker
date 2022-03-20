@@ -4,8 +4,9 @@ from app.utilities.data import Prefab
 from app.utilities import hex_math
 
 class HexPrefab(Prefab):
-    def __init__(self, pos: hex_math.Hex, hex_type: str = None):
+    def __init__(self, pos: hex_math.Hex, name: str = '', hex_type: str = None):
         self.pos: hex_math.Hex = pos
+        self.name: str = name
         self.hex_type: str = hex_type
 
     def get_position_label(self) -> str:
@@ -26,9 +27,15 @@ class HexPrefab(Prefab):
 
     @classmethod
     def default(cls):
-        return cls(hex_math.Hex(0, 0, 0), None)
+        return cls(hex_math.Hex(0, 0, 0), '', None)
 
 class OverworldHexCatalog(Dict[Tuple, HexPrefab]):
+    def get_by_name(self, name):
+        for hex_prefab in self.values():
+            if hex_prefab.name == name:
+                return hex_prefab
+        return None
+        
     def save(self):
         return [elem.save() for elem in self.values()]
 

@@ -27,6 +27,6 @@ class HexTypeModel(DragDropCollectionModel):
     def create_new(self):
         nids = [d.nid for d in self._data]
         nid = name = str_utils.get_next_name("New Hex Type", nids)
-        new_hex_type = hex_type.HexType(nid, name, (0, 0, 0), 1)
-        DB.hex_type.append(new_hex_type)
+        new_hex_type = hex_type.HexType(nid, name, (0, 0, 0), 1, [])
+        DB.hex_types.append(new_hex_type)
         return new_hex_type

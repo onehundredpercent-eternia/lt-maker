@@ -7,7 +7,7 @@ from app.editor.hex_editor import hex_type_properties, hex_type_model
 class HexTypeDatabase(DatabaseTab):
     @classmethod
     def create(cls, parent=None):
-        data = DB.hex_type
+        data = DB.hex_types
         title = "Hex Type"
         right_frame = hex_type_properties.HexTypeProperties
 

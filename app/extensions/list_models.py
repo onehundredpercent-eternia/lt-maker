@@ -143,7 +143,6 @@ class DoubleListModel(VirtualListModel):
     def create_new(self):
         new_row = str_utils.get_next_name("%s" % self.title, [d[0] for d in self._data])
         self._data.append([new_row, 0])
-        return new_row
 
     def new(self, idx):
         self.create_new()

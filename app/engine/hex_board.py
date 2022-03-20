@@ -1,4 +1,4 @@
-form enum import Enum
+from enum import Enum
 from typing import Dict, List, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:

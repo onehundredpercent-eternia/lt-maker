@@ -122,8 +122,10 @@ class OverworldEditor(QMainWindow):
             nid_to_delete = current_node.nid
             self.current_overworld.overworld_nodes.remove_key(nid_to_delete)
         elif sel.type == OverworldEditorInternalTypes.MAP_HEX:
-            # cannot delete hexes
-            pass
+            # delete hex from overworld
+            current_hex = sel.obj
+            pos_to_delete = current_hex.pos
+            del self.current_overworld.hexes[pos_to_delete]
         # reset selection
         self.selected_object = SelectedObject(type=OverworldEditorInternalTypes.NONE, obj=None)
 
@@ -250,7 +252,7 @@ class OverworldEditor(QMainWindow):
         pixel_x = TILEWIDTH * utils.clamp(x + 0.5, 0.05, self.current_overworld.width) 
         pixel_y = TILEHEIGHT * utils.clamp(y + 0.5, 0.05, self.current_overworld.height)
 
-        hex_coord_f = hex_math.pixel_to_hex(hex_math.default_layout(), (pixel_x, pixel_y))
+        hex_coord_f = hex_math.pixel_to_hex((pixel_x, pixel_y))
         hex_coord = hex_math.hex_round(hex_coord_f)
         current_hex = self.current_overworld.get_hex(hex_coord)
         if not current_hex:
