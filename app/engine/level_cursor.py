@@ -98,6 +98,10 @@ class LevelCursor(BaseCursor):
             self.path = self._get_path()
             self.construct_arrows(self.path[::-1])
 
+        # Remove unit info display
+        if dx != 0 or dy != 0:
+            self.game.ui_view.remove_unit_display()
+
     def autocursor(self, immediate=False):
         player_units = [unit for unit in self.game.units if unit.team == 'player' and unit.position]
         lord_units = [unit for unit in player_units if 'Lord' in unit.tags]

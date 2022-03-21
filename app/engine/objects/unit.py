@@ -153,6 +153,10 @@ class UnitObject(Prefab):
             growths = prefab.growths
             self.stats = {stat_nid: bases.get(stat_nid, 0) for stat_nid in DB.stats.keys()}
             self.growths = {stat_nid: growths.get(stat_nid, 0) for stat_nid in DB.stats.keys()}
+            if DB.constants.value('unit_stats_as_bonus'): 
+                klass_obj = DB.classes.get(self.klass)
+                self.stats = {stat_nid: self.stats[stat_nid] + klass_obj.bases.get(stat_nid, 0) for stat_nid in DB.stats.keys()}
+                self.growths = {stat_nid: self.growths[stat_nid] + klass_obj.growths.get(stat_nid, 0) for stat_nid in DB.stats.keys()}
             weapon_gain = prefab.wexp_gain
             self.wexp = {weapon_nid: weapon_gain.get(weapon_nid, DB.weapons.default()).wexp_gain for weapon_nid in DB.weapons.keys()}
 

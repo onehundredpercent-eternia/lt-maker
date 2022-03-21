@@ -38,6 +38,7 @@ small.colors = text.colors
 info = FontType('info', 'black')
 info.colors['black'] = ((56, 48, 40, 255), (160, 136, 216, 255))
 info.colors['grey'] = ((56, 48, 40, 255), (184, 176, 176, 255))
+info.colors['white'] = ((248, 248, 248, 255), (184, 176, 176, 255))
 
 convo = FontType('convo', 'black')
 convo.colors['black'] = ((40, 40, 40, 255), (184, 184, 184, 255))

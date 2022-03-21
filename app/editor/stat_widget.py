@@ -465,6 +465,10 @@ class UnitStatAveragesModel(ClassStatAveragesModel):
     def determine_average(self, obj, stat_nid, level_ups):
         stat_base = obj.bases.get(stat_nid, 0)
         stat_growth = obj.growths.get(stat_nid, 0)
+        if DB.constants.value('unit_stats_as_bonus'):
+            klass = DB.classes.get(obj.klass)
+            stat_base += klass.bases.get(stat_nid, 0)
+            stat_growth += klass.growths.get(stat_nid, 0)
         average = 0.5
         quantile10 = 0
         quantile90 = 0

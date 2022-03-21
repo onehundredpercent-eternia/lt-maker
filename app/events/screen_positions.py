@@ -6,12 +6,12 @@ if MEMENTO_MODE:
                                    'Left': 36,
                                    'MidLeft': 72,
                                    'CenterLeft': 72,
-                                   'CenterRight': 184,
-                                   'MidRight': 184,
+                                   'CenterRight': WINWIDTH - 128 - 72,
+                                   'MidRight': WINWIDTH - 128 - 72,
                                    'LevelUpRight': 216,
-                                   'Right': 220,
-                                   'FarRight': 256,
-                                   'OffscreenRight': 384}
+                                   'Right': WINWIDTH - 128 - 36,
+                                   'FarRight': WINWIDTH - 128,
+                                   'OffscreenRight': WINWIDTH}
 else:
     horizontal_screen_positions = {'OffscreenLeft': -96,
                                    'FarLeft': -24,
@@ -30,7 +30,7 @@ vertical_screen_positions = {'Top': 0,
                              'Bottom': WINHEIGHT - 80}
 
 if MEMENTO_MODE:
-    vertical_screen_positions['Top'] = 2
+    vertical_screen_positions['Top'] = 16
 
 def parse_screen_position(pos) -> tuple:
     x, y = 0, 0

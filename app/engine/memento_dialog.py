@@ -75,7 +75,7 @@ class MementoDialogNametag():
     transition_in_speed = utils.frames2ms(12)
     transition_out_speed = utils.frames2ms(10)
     movement_speed = 32
-    default_pos = (WINWIDTH//2 - sprite.get_width(), 120)
+    default_pos = (WINWIDTH//2 - sprite.get_width(), 96)
 
     def __init__(self):
         self.state = 'off'  # off, transition_in, on, transition_out
@@ -119,7 +119,7 @@ class MementoDialogNametag():
         if portrait:
             position = portrait.position
             x_pos = position[0] + 16
-            y_pos = position[1] + 118
+            y_pos = position[1] + 70
             if x_pos < 0:
                 x_pos = position[0] + 32
         else:

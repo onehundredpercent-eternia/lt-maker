@@ -59,6 +59,7 @@ constants = ConstantCatalog([
     Constant('fog_los', "Fog of War will also be affected by line of sight", bool, False, 'line_of_sight'),
     Constant('ai_fog_of_war', "AI will also be affected by Fog of War", bool, False, 'line_of_sight'),
     Constant('def_double', "Defender can double counterattack", bool, True, 'features'),
+    Constant('unit_stats_as_bonus', "Add class stats to non-generic base stats", bool, False, 'leveling'),
     Constant('enemy_leveling', "Method for autoleveling generic units", (*[growth.value for growth in GrowthOption if growth != GrowthOption.PLAYER_CHOICE], "Match"), "Match", 'leveling'),
     Constant('auto_promote', "Units will promote automatically upon reaching max level", bool, False, 'leveling'),
     Constant('promote_level_reset', "Promotion resets level back to 1", bool, True, 'leveling'),
