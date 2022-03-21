@@ -2356,7 +2356,7 @@ def change_roaming_unit(self: Event, unit, flags=None):
     if self.game.level:
         unit = self._get_unit(unit)
         if unit:
-            self.game.level.roam_unit = unit
+            self.game.level.roam_unit = unit.nid
         else:
             self.game.level.roam_unit = None
 
