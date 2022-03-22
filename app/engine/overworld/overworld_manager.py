@@ -213,16 +213,7 @@ class OverworldManager():
     def hex_at(self, pos: Point, force=False) -> hex_math.Hex:
         hex_pos = hex_math.pixel_to_hex(pos)
         hex_pos = hex_math.hex_round(hex_pos)
-        for h in self.hex_board.hex_graph.values():
-            if h.pos == hex_pos:
-                if force:
-                    return hex_pos
-                else:
-                    if h.sight == Sight.INSIGHT or h.sight == Sight.EXPLORED:
-                        return hex_pos
-                    else:
-                        break
-        return None
+        return hex_pos
 
     def node_props(self, node: OverworldNodeObject | NID) -> Set[str]:
         if isinstance(node, OverworldNodeObject):
