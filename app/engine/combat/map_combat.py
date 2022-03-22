@@ -344,8 +344,8 @@ class MapCombat(SimpleCombat):
             unit1, unit2 = pair
             if not unit1.position or not unit2.position:
                 continue
-            unit1.sprite.add_animation('support_up')
-            unit2.sprite.add_animation('support_up')
+            unit1.sprite.add_animation('support_up', loop=False)
+            unit2.sprite.add_animation('support_up', loop=False)
 
     def draw(self, surf):
         # Animations
