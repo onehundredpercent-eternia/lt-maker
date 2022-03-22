@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
 if TYPE_CHECKING:
     from .overworld_cursor import OverworldCursor
+    from app.engine import hex_board
+    from app.utils import hex_math
 
 from app.engine.objects.overworld import (OverworldEntityObject,
                                           OverworldNodeObject, OverworldObject,
@@ -43,6 +45,10 @@ class OverworldManager():
     @property
     def entities(self) -> Dict[NID, OverworldEntityObject]:
         return self._overworld.overworld_entities
+
+    @property
+    def hex_board(self) -> hex_board.HexBoard:
+        return self._overworld.hex_board
 
     @property
     def revealed_nodes(self) -> List[OverworldNodeObject]:
@@ -193,9 +199,11 @@ class OverworldManager():
         node_path: List[NID] = graph.shortest_path(n1, n2)
         return [graph[node_path[i]][node_path[i+1]].data for i in range(len(node_path) - 1)]
 
-    def entity_at(self, pos: Point | OverworldNodeObject) -> Optional[OverworldEntityObject]:
+    def entity_at(self, pos: Point | OverworldNodeObject | hex_math.Hex) -> Optional[OverworldEntityObject]:
         if isinstance(pos, OverworldNodeObject):
             pos = pos.position
+        elif isinstance(pos, hex_math.Hex):
+            pos = hex_math.hex_to_pixel(pos)
         for entity in self._overworld.overworld_entities.values():
             if entity.display_position == pos:
                 return entity
