@@ -9,9 +9,6 @@ class EventUnitTests(unittest.TestCase):
     def setUp(self):
         from app.data.database import DB
         DB.load('testing_proj.ltproj')
-        import sys
-        sys.modules['app.engine.sound'] = MagicMock()
-        sys.modules['app.engine.input_manager'] = MagicMock()
         self.patchers = self.initialize_patchers()
         for patcher in self.patchers:
             patcher.start()
