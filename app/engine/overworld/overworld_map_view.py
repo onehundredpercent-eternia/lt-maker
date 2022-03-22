@@ -13,6 +13,15 @@ class OverworldMapView():
         self.cursor = cursor
         self.overworld_ui = OverworldTravelUI(overworld, cursor)
 
+    def draw_hexes(self, surf, cull_rect):
+        hex_board = self.overworld.hex_board
+        for h in hex_board.hex_graph.values():
+            if h.sight == Sight.INSIGHT or h.sight == Sight.EXPLORED:
+                hex_outline = SPRITES.get('hex_outline')
+                pos = hex_math.hex_to_pixel(h.pos)
+                pos = pos[0] - cull_rect[0], pos[1] - cull_rect[1]
+                surf.blit(hex_outline, pos)
+
     def draw_nodes(self, surf, cull_rect):
         for node in self.overworld.revealed_nodes:
             if not node.sprite:
@@ -68,6 +77,7 @@ class OverworldMapView():
         surf = surf.convert_alpha()
 
         # draw the map objects: roads, nodes, and entities
+        self.draw_hexes(surf, full_size, cull_rect)
         self.draw_roads(surf, full_size, cull_rect)
         self.draw_nodes(surf, cull_rect)
         self.overworld.tilemap.animations = [anim for anim in self.overworld.tilemap.animations if not anim.update()]
