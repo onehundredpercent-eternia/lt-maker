@@ -129,7 +129,8 @@ class SimpleCombat():
         game.events.trigger('combat_end', self.attacker, self.defender, self.main_item, self.attacker.position)
         self.handle_item_gain(all_units)
 
-        self.handle_supports(all_units)
+        pairs = self.handle_supports(all_units)
+        self.handle_support_pairs(pairs)
 
         # handle wexp & skills
         if not self.attacker.is_dying:
@@ -546,7 +547,7 @@ class SimpleCombat():
 
         return total_exp
 
-    def handle_supports(self, all_units):
+    def handle_supports(self, all_units) -> list:
         """
         Returns a list of pairs of units that gained support together
         """
@@ -574,6 +575,9 @@ class SimpleCombat():
                         if supports.increment_pairup_supports(unit, unit.strike_partner):
                             pairs.append((unit, unit.strike_partner))
         return pairs
+
+    def handle_support_pairs(self, pairs):
+        pass
 
     def handle_records(self, full_playback, all_units):
         miss_marks = self.get_from_full_playback('mark_miss')
