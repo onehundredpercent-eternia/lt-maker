@@ -132,10 +132,10 @@ class UnitSprite():
             return int(round(self.fake_position[0])), int(round(self.fake_position[1]))
         return None
 
-    def add_animation(self, animation_nid):
+    def add_animation(self, animation_nid, loop=True):
         anim = RESOURCES.animations.get(animation_nid)
         if anim:
-            anim = Animation(anim, (-16, -16), loop=True)
+            anim = Animation(anim, (-16, -16), loop=loop)
             self.animations[animation_nid] = anim
 
     def remove_animation(self, animation_nid):
