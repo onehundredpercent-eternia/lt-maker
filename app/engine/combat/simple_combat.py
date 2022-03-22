@@ -554,10 +554,18 @@ class SimpleCombat():
                     supports.increment_end_combat_supports(self.attacker, self.defender)
                 else:
                     supports.increment_end_combat_supports(unit)
+            
             enemies = all_units.copy()
             enemies.remove(self.attacker)
             for unit in enemies:
                 supports.increment_interact_supports(self.attacker, unit)
+
+            if DB.constants.value('pair_up'):
+                for unit in all_units:
+                    if unit.traveler:
+                        supports.increment_pairup_supports(unit, unit.traveler)
+                    if unit.strike_partner:
+                        supports.increment_pairup_supports(unit, unit.strike_partner)
 
     def handle_records(self, full_playback, all_units):
         miss_marks = self.get_from_full_playback('mark_miss')
