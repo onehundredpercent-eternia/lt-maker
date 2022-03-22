@@ -5,7 +5,7 @@ from app.engine.sound import get_sound_thread
 
 from app.events import event_commands
 from app.events.event import Event
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 
 from app.engine.state import MapState
 from app.engine.game_state import game
@@ -22,7 +22,7 @@ class DebugState(MapState):
         self.current_command = ''
         self.buffer_count = 0
 
-        self.quit_commands += engine.get_key_name(INPUT.key_map['BACK'])
+        self.quit_commands += engine.get_key_name(get_input_manager().key_map['BACK'])
 
     def take_input(self, event):
         game.cursor.take_input()

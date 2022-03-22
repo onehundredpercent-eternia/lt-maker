@@ -17,7 +17,7 @@ from app.engine import engine, action, menus, image_mods, \
 from app.engine.combat import interaction
 from app.engine.selection_helper import SelectionHelper
 from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.fluid_scroll import FluidScroll
 
 import logging
@@ -199,7 +199,7 @@ class FreeState(MapState):
         phase.fade_in_phase_music()
 
     def take_input(self, event):
-        game.cursor.set_speed_state(INPUT.is_pressed('BACK'))
+        game.cursor.set_speed_state(get_input_manager().is_pressed('BACK'))
         game.cursor.take_input()
 
         if event == 'INFO':
@@ -1883,9 +1883,9 @@ class AIState(MapState):
 
     def take_input(self, event):
         # Skip combats while START is held down
-        if not game.ai.do_skip and INPUT.is_pressed('START'):
+        if not game.ai.do_skip and get_input_manager().is_pressed('START'):
             game.ai.skip()
-        elif game.ai.do_skip and not INPUT.is_pressed('START'):
+        elif game.ai.do_skip and not get_input_manager().is_pressed('START'):
             game.ai.end_skip()
 
     def update(self):

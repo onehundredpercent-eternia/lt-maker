@@ -62,7 +62,7 @@ def draw_fps(surf, fps_records):
 def run(game):
     from app.engine.sound import get_sound_thread
     from app.engine.game_counters import ANIMATION_COUNTERS
-    from app.engine.input_manager import INPUT
+    from app.engine.input_manager import get_input_manager
 
     ANIMATION_COUNTERS.reset()
 
@@ -83,7 +83,7 @@ def run(game):
         raw_events = engine.get_events()
         if raw_events == engine.QUIT:
             break
-        event = INPUT.process_input(raw_events)
+        event = get_input_manager().process_input(raw_events)
 
         surf, repeat = game.state.update(event, surf)
         while repeat:  # Let's the game traverse through state chains
@@ -108,7 +108,7 @@ def run(game):
 
 def run_combat(mock_combat):
     from app.engine.sound import get_sound_thread
-    from app.engine.input_manager import INPUT
+    from app.engine.input_manager import get_input_manager
 
     get_sound_thread().reset()
     get_sound_thread().set_music_volume(cf.SETTINGS['music_volume'])
@@ -122,7 +122,7 @@ def run_combat(mock_combat):
         raw_events = engine.get_events()
         if raw_events == engine.QUIT:
             break
-        event = INPUT.process_input(raw_events)
+        event = get_input_manager().process_input(raw_events)
 
         mock_combat.take_input(event)
         mock_combat.update()

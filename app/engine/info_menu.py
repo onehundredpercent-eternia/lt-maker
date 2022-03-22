@@ -11,7 +11,7 @@ from app.data.database import DB
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine.sound import get_sound_thread
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.state import State
 from app.engine import engine, background, menu_options, help_menu, gui, \
     icons, image_mods, item_funcs, equations, \
@@ -353,7 +353,7 @@ class InfoMenuState(State):
                     self.back()
                     return
             elif event == 'SELECT':
-                mouse_position = INPUT.get_mouse_position()
+                mouse_position = get_input_manager().get_mouse_position()
                 if mouse_position:
                     mouse_x, mouse_y = mouse_position
                     if mouse_x <= 16:
@@ -441,7 +441,7 @@ class InfoMenuState(State):
         self.transition = 'DOWN'
 
     def handle_mouse(self):
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if not mouse_position:
             return
         if self.info_flag:

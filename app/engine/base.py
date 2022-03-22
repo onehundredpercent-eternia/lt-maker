@@ -9,7 +9,7 @@ from app.data.database import DB
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
 from app.engine.fonts import FONT
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.state import State
 
 from app.engine.state import MapState
@@ -974,7 +974,7 @@ class BaseRecordsState(State):
                     self.current_menu = self.unit_menus[self.current_menu.get_current_index()]
 
     def check_mouse_position(self):
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             if mouse_x <= 16:

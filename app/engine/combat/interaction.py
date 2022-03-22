@@ -2,7 +2,7 @@ from app.utilities import utils
 
 from app.engine import item_system, skill_system, battle_animation
 from app.engine.game_state import game
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 
 from app.engine.combat.simple_combat import SimpleCombat
 from app.engine.combat.map_combat import MapCombat
@@ -23,7 +23,7 @@ def has_animation(attacker: UnitObject, item: ItemObject, main_target: tuple, fo
             (cf.SETTINGS['animation'] == 'Your Turn' and attacker.team == 'player') or \
             (cf.SETTINGS['animation'] == 'Combat Only' and skill_system.check_enemy(attacker, defender))
 
-    toggle_anim = INPUT.is_pressed('START')
+    toggle_anim = get_input_manager().is_pressed('START')
     anim = animation_wanted(attacker, defender) != toggle_anim
     if attacker is not defender and (anim or force_animation):
         if attacker.position and defender.position:
@@ -114,7 +114,7 @@ def start_combat(unit: UnitObject, target: tuple, item: ItemObject, skip: bool =
             targets = [target]
 
     combat = engage(
-        unit, targets, item, skip=skip, script=script, total_rounds=total_rounds, 
+        unit, targets, item, skip=skip, script=script, total_rounds=total_rounds,
         arena_combat=arena, force_animation=force_animation)
     combat.ai_combat = ai_combat # Must mark this so we can come back!
     combat.event_combat = event_combat # Must mark this so we can come back!

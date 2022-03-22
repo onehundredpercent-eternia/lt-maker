@@ -4,7 +4,7 @@ from app.engine import config as cf
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine.sound import get_sound_thread
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.state import State
 from app.engine import engine, background, banner, menus, settings_menu, base_surf, text_funcs
 from app.engine.game_state import game
@@ -76,7 +76,7 @@ class SettingsMenuState(State):
             return self.controls_menu
 
     def handle_mouse(self):
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             top_left_rect = (4, 4, self.header_width, 24)
@@ -113,18 +113,18 @@ class SettingsMenuState(State):
             if event == 'BACK':
                 get_sound_thread().play_sfx('Select 4')
                 self.state = 'controls'
-                INPUT.set_change_keymap(False)
+                get_input_manager().set_change_keymap(False)
             elif event == 'NEW':
                 get_sound_thread().play_sfx('Select 1')
                 self.state = 'controls'
                 selection = self.current_menu.get_current()
-                cf.SETTINGS[selection] = INPUT.unavailable_button
-                INPUT.set_change_keymap(False)
-                INPUT.update_key_map()
+                cf.SETTINGS[selection] = get_input_manager().unavailable_button
+                get_input_manager().set_change_keymap(False)
+                get_input_manager().update_key_map()
             elif event:
                 get_sound_thread().play_sfx('Select 4')
                 self.state = 'controls'
-                INPUT.set_change_keymap(False)
+                get_input_manager().set_change_keymap(False)
                 text = 'Invalid Choice!'
                 game.alerts.append(banner.Custom(text))
                 game.state.change('alert')
@@ -182,7 +182,7 @@ class SettingsMenuState(State):
                 if self.state == 'controls':
                     get_sound_thread().play_sfx('Select 1')
                     self.state = 'get_input'
-                    INPUT.set_change_keymap(True)
+                    get_input_manager().set_change_keymap(True)
                 elif self.state == 'config':
                     get_sound_thread().play_sfx('Select 6')
                     self.current_menu.move_next()
@@ -257,4 +257,4 @@ class SettingsMenuState(State):
 
     def finish(self):
         # Just to make sure!
-        INPUT.set_change_keymap(False)
+        get_input_manager().set_change_keymap(False)

@@ -8,7 +8,7 @@ from app.engine import engine, image_mods
 from app.engine.state import MapState
 from app.engine.game_state import game
 
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 
 class Link():
     def __init__(self, pos):
@@ -568,7 +568,7 @@ class MinimapState(MapState):
         self.progress = 200
 
     def take_input(self, event):
-        game.cursor.set_speed_state(INPUT.is_pressed('BACK'))
+        game.cursor.set_speed_state(get_input_manager().is_pressed('BACK'))
         game.cursor.take_input()
 
         if event in ('BACK', 'SELECT', 'START') and not self.arrive_flag and not self.exit_flag:

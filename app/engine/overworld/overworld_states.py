@@ -5,7 +5,7 @@ from app.data.database import DB
 from app.engine import engine, menus
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_state import game
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.objects.overworld import (OverworldNodeObject,
                                           OverworldNodeProperty, OverworldEntityTypes)
 from app.engine.overworld.overworld_actions import OverworldMove
@@ -79,7 +79,7 @@ class OverworldFreeState(MapState):
         game.cursor.show()
 
     def take_input(self, event):
-        game.cursor.set_speed_state(INPUT.is_pressed('BACK'))
+        game.cursor.set_speed_state(get_input_manager().is_pressed('BACK'))
         game.cursor.take_input()
 
         if event == 'BACK': # flick our cursor back to our party

@@ -5,7 +5,7 @@ from app.constants import WINWIDTH, WINHEIGHT
 from app.utilities import utils
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 
 from app.engine import engine, image_mods, icons
 
@@ -348,7 +348,7 @@ class MouseIndicator():
     mouse_indicator_bottom = engine.flip_vert(SPRITES.get('mouse_indicator_top'))
 
     def draw(self, surf):
-        mouse_position = INPUT.get_real_mouse_position()
+        mouse_position = get_input_manager().get_real_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             if mouse_x <= 16:

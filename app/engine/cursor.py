@@ -5,7 +5,7 @@ from app.constants import TILEHEIGHT, TILEWIDTH, TILEX, TILEY
 from app.engine import engine
 from app.engine.camera import Camera
 from app.engine.fluid_scroll import FluidScroll
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
@@ -187,12 +187,12 @@ class BaseCursor():
             self.mouse_mode = False
 
         # Handle mouse
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             self.mouse_mode = True
         if self.mouse_mode:
             # Get the actual mouse position, irrespective if actually used recently
-            mouse_pos = INPUT.get_real_mouse_position()
+            mouse_pos = get_input_manager().get_real_mouse_position()
             if mouse_pos:
                 from_mouse = True
                 new_pos = mouse_pos[0] // TILEWIDTH, mouse_pos[1] // TILEHEIGHT
