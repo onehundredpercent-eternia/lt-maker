@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.engine.objects.unit import UnitObject
 
 from app.engine.objects.tilemap import TileMapObject
+from app.engine.hex_board import HexBoard
 from app.engine.overworld.overworld_map_sprites import (OverworldNodeSprite,
                                                         OverworldRoadSprite,
                                                         OverworldUnitSprite)
@@ -127,6 +128,7 @@ class OverworldObject():
     def __init__(self):
         self.prefab: OverworldPrefab = None # the prefab information itself
         self.tilemap: TileMapObject = None  # tilemap
+        self.hex_board: HexBoard = None  # hex board that keeps track of explored hexes, etc.
         self.enabled_nodes: Set[NID] = set() # set of ids of nodes that are accessible right now
         self.enabled_roads: Set[NID] = set() # set of ids of roads that are accessible right now
         self.enabled_menu_options: Dict[NID, Dict[NID, bool]] = {} # dict of node ids and node menu events that are accessible right now
@@ -171,10 +173,12 @@ class OverworldObject():
             for option in node.menu_options:
                 overworld.enabled_menu_options[node.nid][option.nid] = option.enabled
                 overworld.visible_menu_options[node.nid][option.nid] = option.visible
+        overworld.hex_board = HexBoard(overworld.prefab)
         return overworld
 
     def save(self):
         s_dict = {'tilemap': self.tilemap.save() if self.tilemap else None,
+                  'hex_board': self.hex_board.save() if self.hex_board else None,
                   'enabled_nodes': list(self.enabled_nodes),
                   'enabled_roads': list(self.enabled_roads),
                   'prefab_nid': self.nid,
@@ -190,6 +194,8 @@ class OverworldObject():
     def restore(cls, s_dict: Dict, game: GameState) -> OverworldObject:
         overworld = OverworldObject.from_prefab(DB.overworlds.get(s_dict['prefab_nid']), game.parties, game.unit_registry)
         overworld.tilemap = TileMapObject.restore(s_dict['tilemap']) if s_dict['tilemap'] else None
+        if s_dict['hex_board']:
+            overworld.hex_board.restore(s_dict['hex_board'])
         overworld.enabled_nodes = set(s_dict['enabled_nodes'])
         overworld.enabled_roads = set(s_dict['enabled_roads'])
         overworld.node_properties = s_dict.get('node_properties', {})
