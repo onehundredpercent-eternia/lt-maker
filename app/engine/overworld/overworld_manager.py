@@ -15,6 +15,7 @@ from app.engine.objects.overworld import (OverworldEntityObject,
 from app.engine.objects.tilemap import TileMapObject
 from app.utilities.typing import NID, Point
 from app.utilities.algorithms.ltgraph import LTGraph
+from app.engine.hex_board import Sight
 
 class OverworldManager():
     """A wrapper class that contains various functionality for manipulating
@@ -207,6 +208,20 @@ class OverworldManager():
         for entity in self._overworld.overworld_entities.values():
             if entity.display_position == pos:
                 return entity
+        return None
+
+    def hex_at(self, pos: Point, force=False) -> hex_math.Hex:
+        hex_pos = hex_math.pixel_to_hex(pos)
+        hex_pos = hex_math.hex_round(hex_pos)
+        for h in self.hex_board.hex_graph.values():
+            if h.pos == hex_pos:
+                if force:
+                    return hex_pos
+                else:
+                    if h.sight == Sight.INSIGHT or h.sight == Sight.EXPLORED:
+                        return hex_pos
+                    else:
+                        break
         return None
 
     def node_props(self, node: OverworldNodeObject | NID) -> Set[str]:
