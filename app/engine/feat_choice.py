@@ -1,7 +1,7 @@
 from app.constants import WINWIDTH, WINHEIGHT
 from app.data.database import DB
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.fonts import FONT
 from app.engine.state import MapState
 
@@ -76,7 +76,7 @@ class FeatChoiceState(MapState):
         ignore = [True if feat.nid in current_skills else False for feat in feats]
         self.menu = FeatChoice(self.unit, feats, (5, 2), 'center')
         self.menu.shimmer = 2
-        self.menu.topleft = (self.menu.get_topleft()[0], WINHEIGHT - self.menu.get_menu_height() - 4) 
+        self.menu.topleft = (self.menu.get_topleft()[0], WINHEIGHT - self.menu.get_menu_height() - 4)
         self.menu.set_ignore(ignore)
 
     def take_input(self, event):
@@ -85,33 +85,33 @@ class FeatChoiceState(MapState):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
         if 'RIGHT' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_right(first_push)
         elif 'LEFT' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_left(first_push)
 
         if event == 'BACK':
             if self.menu.info_flag:
-                SOUNDTHREAD.play_sfx('Info Out')
+                get_sound_thread().play_sfx('Info Out')
             else:
-                SOUNDTHREAD.play_sfx('Info In')
+                get_sound_thread().play_sfx('Info In')
             self.menu.toggle_info()
 
         elif event == 'INFO':
-            SOUNDTHREAD.play_sfx('Select 2')
+            get_sound_thread().play_sfx('Select 2')
             game.memory['next_state'] = 'info_menu'
             game.memory['current_unit'] = self.unit
             game.state.change('transition_to')
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             game.state.back()
             act = action.AddSkill(self.unit, selection.nid)

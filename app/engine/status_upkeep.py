@@ -1,6 +1,6 @@
 from app.resources.resources import RESOURCES
 from app.data.database import DB
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.engine.game_state import game
 from app.engine import engine, action, skill_system, \
@@ -103,9 +103,9 @@ class StatusUpkeepState(MapState):
                 color = brush[2]
                 brush[1].sprite.begin_flicker(333, color, 'sub')
             elif brush[0] == 'cast_sound':
-                SOUNDTHREAD.play_sfx(brush[1])
+                get_sound_thread().play_sfx(brush[1])
             elif brush[0] == 'hit_sound':
-                SOUNDTHREAD.play_sfx(brush[1])
+                get_sound_thread().play_sfx(brush[1])
             elif brush[0] == 'cast_anim':
                 anim = RESOURCES.animations.get(brush[1])
                 pos = game.cursor.position

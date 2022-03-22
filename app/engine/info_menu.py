@@ -10,7 +10,7 @@ from app.data.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.input_manager import INPUT
 from app.engine.state import State
 from app.engine import engine, background, menu_options, help_menu, gui, \
@@ -21,12 +21,12 @@ from app.engine.fluid_scroll import FluidScroll
 
 def handle_info():
     if game.cursor.get_hover():
-        SOUNDTHREAD.play_sfx('Select 1')
+        get_sound_thread().play_sfx('Select 1')
         game.memory['next_state'] = 'info_menu'
         game.memory['current_unit'] = game.cursor.get_hover()
         game.state.change('transition_to')
     else:
-        SOUNDTHREAD.play_sfx('Select 3')
+        get_sound_thread().play_sfx('Select 3')
         game.boundary.toggle_all_enemy_attacks()
 
 def handle_aux():
@@ -50,7 +50,7 @@ def handle_aux():
             idx = (idx + 1) % len(avail_units)
             new_pos = avail_units[idx].position
             game.memory['aux_unit'] = cur_unit
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.cursor.set_pos(new_pos)
 
 @dataclass
@@ -300,7 +300,7 @@ class InfoMenuState(State):
             self.logo = gui.Logo(image, (164, 10))
 
     def back(self):
-        SOUNDTHREAD.play_sfx('Select 4')
+        get_sound_thread().play_sfx('Select 4')
         game.memory['info_menu_state'] = self.state
         game.memory['current_unit'] = self.unit
         if self.unit.position:
@@ -314,33 +314,33 @@ class InfoMenuState(State):
         self.handle_mouse()
         if self.info_flag:
             if event == 'INFO' or event == 'BACK':
-                SOUNDTHREAD.play_sfx('Info Out')
+                get_sound_thread().play_sfx('Info Out')
                 self.info_graph.set_transition_out()
                 self.info_flag = False
                 return
 
             if 'RIGHT' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.info_graph.move_right()
             elif 'LEFT' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.info_graph.move_left()
             elif 'UP' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.info_graph.move_up()
             elif 'DOWN' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.info_graph.move_down()
 
         elif not self.transition:  # Only takes input when not transitioning
 
             if event == 'INFO':
-                SOUNDTHREAD.play_sfx('Info In')
+                get_sound_thread().play_sfx('Info In')
                 self.info_graph.set_transition_in()
                 self.info_flag = True
             elif event == 'AUX':
                 if self.state == 'personal_data' and self.unit.team == 'player' and DB.constants.value('growth_info'):
-                    SOUNDTHREAD.play_sfx('Select 3')
+                    get_sound_thread().play_sfx('Select 3')
                     self.growth_flag = not self.growth_flag
                     if self.growth_flag:
                         self.info_graph.set_current_state('growths')
@@ -378,7 +378,7 @@ class InfoMenuState(State):
                 self.move_up()
 
     def move_left(self):
-        SOUNDTHREAD.play_sfx('Status_Page_Change')
+        get_sound_thread().play_sfx('Status_Page_Change')
         index = info_states.index(self.state)
         new_index = (index - 1) % len(info_states)
         self.next_state = info_states[new_index]
@@ -390,7 +390,7 @@ class InfoMenuState(State):
         self.switch_logo(self.next_state)
 
     def move_right(self):
-        SOUNDTHREAD.play_sfx('Status_Page_Change')
+        get_sound_thread().play_sfx('Status_Page_Change')
         index = info_states.index(self.state)
         new_index = (index + 1) % len(info_states)
         self.next_state = info_states[new_index]
@@ -402,7 +402,7 @@ class InfoMenuState(State):
         self.switch_logo(self.next_state)
 
     def move_down(self):
-        SOUNDTHREAD.play_sfx('Status_Character')
+        get_sound_thread().play_sfx('Status_Character')
         if self.scroll_units:
             if self.rescuer:
                 new_index = self.scroll_units.index(self.rescuer)
@@ -417,7 +417,7 @@ class InfoMenuState(State):
             self.transition = 'DOWN'
 
     def move_up(self):
-        SOUNDTHREAD.play_sfx('Status_Character')
+        get_sound_thread().play_sfx('Status_Character')
         if self.scroll_units:
             if self.rescuer:
                 new_index = self.scroll_units.index(self.rescuer)
@@ -432,7 +432,7 @@ class InfoMenuState(State):
             self.transition = 'UP'
 
     def move_traveler(self):
-        SOUNDTHREAD.play_sfx('Status_Character')
+        get_sound_thread().play_sfx('Status_Character')
         self.rescuer = self.unit
         self.next_unit = game.get_unit(self.unit.traveler)
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.next_unit.notes):

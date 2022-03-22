@@ -13,7 +13,7 @@ from app.engine.fluid_scroll import FluidScroll
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.objects.difficulty_mode import DifficultyModeObject
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.events.event import Event
@@ -49,9 +49,9 @@ class TitleStartState(State):
         if save.SAVE_THREAD:
             save.SAVE_THREAD.join()
 
-        SOUNDTHREAD.clear()
+        get_sound_thread().clear()
         if DB.constants.value('music_main'):
-            SOUNDTHREAD.fade_in(DB.constants.value('music_main'), fade_in=50)
+            get_sound_thread().fade_in(DB.constants.value('music_main'), fade_in=50)
 
         game.state.refresh()
         game.state.change('transition_in')
@@ -59,7 +59,7 @@ class TitleStartState(State):
 
     def take_input(self, event):
         if event:
-            SOUNDTHREAD.play_sfx('Start')
+            get_sound_thread().play_sfx('Start')
             game.memory['next_state'] = 'title_main'
             game.state.change('transition_to')
 
@@ -124,19 +124,19 @@ class TitleMainState(State):
         if self.state == 'normal':
             self.menu.handle_mouse()
             if 'DOWN' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.menu.move_down(first_push)
             elif 'UP' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.menu.move_up(first_push)
 
             if event == 'BACK':
-                SOUNDTHREAD.play_sfx('Select 4')
+                get_sound_thread().play_sfx('Select 4')
                 game.memory['next_state'] = 'title_start'
                 game.state.change('transition_to')
 
             elif event == 'SELECT':
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 self.selection = self.menu.get_current()
                 if self.selection == 'Continue':
                     self.state = 'wait'
@@ -311,17 +311,17 @@ class TitleModeState(State):
         old_current_index = self.menu.get_current_index()
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if self.menu.get_current_index() != old_current_index:
             self.update_dialog()
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             if self.state == 'difficulty_wait':
                 game.state.change('transition_pop')
             elif self.state == 'death_wait':
@@ -344,7 +344,7 @@ class TitleModeState(State):
             return 'repeat'
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             if self.state == 'growth_wait':
                 game.current_mode.growths = self.menu.get_current()
                 game.memory['next_state'] = 'title_new'
@@ -426,21 +426,21 @@ class TitleLoadState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             self.state = 'transition_out'
 
         elif event == 'SELECT':
             selection = self.menu.current_index
             save_slot = self.save_slots[selection]
             if save_slot.kind:
-                SOUNDTHREAD.play_sfx('Save')
+                get_sound_thread().play_sfx('Save')
                 logging.info("Loading save of kind %s...", save_slot.kind)
                 game.state.clear()
                 game.state.process_temp_state()
@@ -459,7 +459,7 @@ class TitleLoadState(State):
                 game.state.process_temp_state()
                 save.remove_suspend()
             else:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
 
     def back(self):
         game.state.back()
@@ -505,14 +505,14 @@ class TitleRestartState(TitleLoadState):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             self.state = 'transition_out'
 
         elif event == 'SELECT':
@@ -520,7 +520,7 @@ class TitleRestartState(TitleLoadState):
             save_slot = save.RESTART_SLOTS[selection]
             save_slot_main = save.SAVE_SLOTS[selection]
             if save_slot.kind:
-                SOUNDTHREAD.play_sfx('Save')
+                get_sound_thread().play_sfx('Save')
                 logging.info("Loading game...")
                 game.build_new()
                 # Restart level
@@ -537,7 +537,7 @@ class TitleRestartState(TitleLoadState):
                 game.state.process_temp_state()
                 save.remove_suspend()
             else:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
 
 def build_new_game(slot):
     # Make sure to keep the current mode
@@ -572,28 +572,28 @@ class TitleNewState(TitleLoadState):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             self.state = 'transition_out'
 
         elif event == 'SELECT':
             selection = self.menu.current_index
             save_slot = self.save_slots[selection]
             if save_slot.kind:
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 game.memory['option_owner'] = selection
                 game.memory['option_menu'] = self.menu
                 game.memory['transition_from'] = 'New Game'
                 game.memory['title_menu'] = self.menu
                 game.state.change('title_new_child')
             else:
-                SOUNDTHREAD.play_sfx('Save')
+                get_sound_thread().play_sfx('Save')
                 build_new_game(selection)
                 save.SAVE_THREAD.join()
                 save.check_save_slots()
@@ -623,20 +623,20 @@ class TitleNewChildState(State):
     def take_input(self, event):
         self.menu.handle_mouse()
         if event == 'RIGHT':
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down()
         elif event == 'LEFT':
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up()
 
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.back()
 
         elif event == 'SELECT':
             selection = self.menu.get_current()
             if selection == 'Overwrite':
-                SOUNDTHREAD.play_sfx('Save')
+                get_sound_thread().play_sfx('Save')
                 build_new_game(self.menu.owner)  # game.memory['option_owner']
                 save.SAVE_THREAD.join()
                 save.check_save_slots()
@@ -646,7 +646,7 @@ class TitleNewChildState(State):
                 game.state.change('title_wait')
                 game.state.process_temp_state()
             elif selection == 'Back':
-                SOUNDTHREAD.play_sfx('Select 4')
+                get_sound_thread().play_sfx('Select 4')
                 game.state.back()
 
     def update(self):
@@ -690,18 +690,18 @@ class TitleExtrasState(TitleLoadState):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             self.state = 'transition_out'
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             if selection == 'Credits':
                 game.sweep()  # Set up event manager
@@ -712,7 +712,7 @@ class TitleExtrasState(TitleLoadState):
                     game.memory['next_state'] = 'event'
                     game.state.change('transition_to')
                 else:
-                    SOUNDTHREAD.play_sfx('Error')
+                    get_sound_thread().play_sfx('Error')
             elif selection == 'Options':
                 game.memory['next_state'] = 'settings_menu'
                 game.state.change('transition_to')
@@ -843,15 +843,15 @@ class TitleSaveState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
             # Proceed to next level anyway
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             if self.name == 'in_chapter_save':
                 game.state.change('transition_pop')
             elif game.game_vars['_should_go_to_overworld']:
@@ -860,7 +860,7 @@ class TitleSaveState(State):
                 self.go_to_next_level(make_save=False)
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Save')
+            get_sound_thread().play_sfx('Save')
             # Rename selection
             self.wait_time = engine.get_time()
             if self.name == 'in_chapter_save':

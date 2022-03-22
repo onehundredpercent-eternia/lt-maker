@@ -1,6 +1,6 @@
 from app.utilities import utils
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.engine.game_state import game
 from app.engine import engine, info_menu, evaluate, target_system, action
@@ -141,20 +141,20 @@ class FreeRoamState(MapState):
             other_unit = self.can_talk()
             region = self.can_visit()
             if other_unit:
-                SOUNDTHREAD.play_sfx('Select 2')
+                get_sound_thread().play_sfx('Select 2')
                 did_trigger = game.events.trigger('on_talk', self.roam_unit, other_unit)
                 if did_trigger:
                     action.do(action.RemoveTalk(self.roam_unit.nid, other_unit.nid))
                     self.rationalize()
             elif region:
-                SOUNDTHREAD.play_sfx('Select 2')
+                get_sound_thread().play_sfx('Select 2')
                 did_trigger = game.events.trigger(region.sub_nid, self.roam_unit, position=self.roam_unit.position, region=region)
                 if did_trigger:
                     self.rationalize()
                 if did_trigger and region.only_once:
                     action.do(action.RemoveRegion(region))
             else:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
 
         elif event == 'AUX':
             game.state.change('option_menu')

@@ -7,7 +7,7 @@ from app.engine.camera import Camera
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.input_manager import INPUT
 from app.engine.objects.tilemap import TileMapObject
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.utilities.enums import Direction
 from app.utilities.utils import frames2ms, tclamp, tmult, tuple_sub
@@ -126,9 +126,9 @@ class BaseCursor():
         if mouse:
             pass  # No cursor sound in mouse mode, cause it's annoying
         else:
-            SOUNDTHREAD.stop_sfx('Select 5')
+            get_sound_thread().stop_sfx('Select 5')
             if sound:
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
 
         # queue transition
         transition_start = engine.get_time()

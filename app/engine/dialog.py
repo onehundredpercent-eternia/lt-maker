@@ -4,7 +4,7 @@ from app.utilities import utils
 from app.constants import WINWIDTH, WINHEIGHT
 from app.engine.fonts import FONT
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.base_surf import create_base_surf
 from app.engine import text_funcs, engine, image_mods
 from app.engine import config as cf
@@ -303,7 +303,7 @@ class Dialog():
     def play_talk_boop(self):
         if cf.SETTINGS['talk_boop'] and engine.get_true_time() - self.last_sound_update > 32:
             self.last_sound_update = engine.get_true_time()
-            SOUNDTHREAD.play_sfx('Talk_Boop')
+            get_sound_thread().play_sfx('Talk_Boop')
 
     def update(self):
         current_time = engine.get_time()

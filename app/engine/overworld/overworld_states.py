@@ -13,7 +13,7 @@ from app.engine.overworld.overworld_manager import OverworldManager
 from app.engine.overworld.overworld_map_view import OverworldMapView
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import MapState, State
 from app.utilities.typing import NID
 
@@ -93,7 +93,7 @@ class OverworldFreeState(MapState):
                 entity = game.overworld_controller.entity_at(selected_node.position)
                 if entity and entity.team == 'player' and entity.dtype == OverworldEntityTypes.PARTY: # there's a party underneath us, select it and launch the party menu
                     game.overworld_controller.select_entity(entity)
-                    SOUNDTHREAD.play_sfx('Select 5')
+                    get_sound_thread().play_sfx('Select 5')
                     game.state.change('overworld_party_option_menu')
                     return
                 else:   # we selected a node without a party
@@ -115,7 +115,7 @@ class OverworldFreeState(MapState):
                         game.state.change('overworld_movement')
                         movement.queue(game.movement)
             else:   # clicked on empty space, trigger the general menu
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
                 game.state.change('overworld_game_option_menu')
 
     def update(self):
@@ -276,18 +276,18 @@ class OverworldGameOptionMenuState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.back()
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             if selection == 'Save':
                 self.make_save()
@@ -357,18 +357,18 @@ class OverworldPartyOptionMenu(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.back()
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             if selection == 'Base Camp':
                 game.memory['next_state'] = 'base_main'

@@ -21,7 +21,7 @@ from app.data.overworld_node import OverworldNodePrefab
 from app.engine.overworld.overworld_road_sprite_wrapper import OverworldRoadSpriteWrapper
 from app.engine import engine, image_mods
 from app.engine.animations import MapAnimation
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.resources.map_icons import MapIcon
 from app.resources.resources import RESOURCES
 from app.utilities import utils
@@ -269,12 +269,12 @@ class OverworldUnitSprite():
         elif self.transition_state == 'fade_move':
             self.fake_position = self.parent.display_position
         elif self.transition_state == 'warp_in':
-            SOUNDTHREAD.play_sfx('WarpEnd')
+            get_sound_thread().play_sfx('WarpEnd')
         elif self.transition_state == 'warp_out':
-            SOUNDTHREAD.play_sfx('Warp')
+            get_sound_thread().play_sfx('Warp')
             self.fake_position = self.parent.display_position
         elif self.transition_state == 'warp_move':
-            SOUNDTHREAD.play_sfx('Warp')
+            get_sound_thread().play_sfx('Warp')
             self.fake_position = self.parent.display_position
 
     def change_state(self, new_state):

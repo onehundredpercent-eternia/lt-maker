@@ -6,7 +6,7 @@ from app.utilities import utils
 
 from app.engine.fonts import FONT
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import State
 from app.engine import background, menus, engine, dialog, text_funcs, icons, \
     action, item_system, battle_animation
@@ -87,7 +87,7 @@ class PromotionChoiceState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             if self.child_menu:
                 self.child_menu.move_down(first_push)
             else:
@@ -95,7 +95,7 @@ class PromotionChoiceState(State):
                 self.target_anim_offset = True
                 self.current_desc = self._get_desc()
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             if self.child_menu:
                 self.child_menu.move_up(first_push)
             else:
@@ -105,29 +105,29 @@ class PromotionChoiceState(State):
 
         elif event == 'BACK':
             if self.child_menu:
-                SOUNDTHREAD.play_sfx('Select 4')
+                get_sound_thread().play_sfx('Select 4')
                 self.child_menu = None
             elif self.can_go_back:
-                SOUNDTHREAD.play_sfx('Select 4')
+                get_sound_thread().play_sfx('Select 4')
                 game.state.back()
                 if self.combat_item:
                     action.do(action.Reset(self.unit))
                     item_system.reverse_use(self.unit, self.combat_item)
             else:
                 # Can't go back...
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
 
         elif event == 'SELECT':
             if self.child_menu:
                 selection = self.child_menu.get_current()
                 if selection == 'Change':
-                    SOUNDTHREAD.play_sfx('Select 1')
+                    get_sound_thread().play_sfx('Select 1')
                     self._proceed(self.class_options[self.menu.get_current_index()])
                 else:
-                    SOUNDTHREAD.play_sfx('Select 4')
+                    get_sound_thread().play_sfx('Select 4')
                     self.child_menu = None
             else:
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 selection = self.menu.get_current()
                 options = ['Change', 'Cancel']
                 self.child_menu = menus.Choice(selection, options, self.menu)
@@ -231,7 +231,7 @@ class PromotionState(State, MockCombat):
         self.promotion_song = None
         if DB.constants.value(music):
             self.promotion_song = \
-                SOUNDTHREAD.fade_in(DB.constants.value(music), fade_in=50)
+                get_sound_thread().fade_in(DB.constants.value(music), fade_in=50)
 
         self.unit = game.memory['current_unit']
         color = utils.get_team_color(self.unit.team)
@@ -307,7 +307,7 @@ class PromotionState(State, MockCombat):
                 game.state.change('transition_pop')
                 self.state = 'done'
                 if self.promotion_song:
-                    SOUNDTHREAD.fade_back()
+                    get_sound_thread().fade_back()
                 return 'repeat'
 
         if self.state != self.current_state:

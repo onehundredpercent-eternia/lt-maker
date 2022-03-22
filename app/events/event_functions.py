@@ -22,7 +22,7 @@ from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment
 from app.engine.objects.item import ItemObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.events import event_commands, regions
 from app.events.event_portrait import EventPortrait
 from app.events.speak_style import SpeakStyle
@@ -55,20 +55,20 @@ def music(self: Event, music, fade_in=400, flags=None):
     if self.do_skip:
         fade_in = 0
     if music == 'None':
-        SOUNDTHREAD.fade_to_pause(fade_out=fade_in)
+        get_sound_thread().fade_to_pause(fade_out=fade_in)
     else:
-        SOUNDTHREAD.fade_in(music, fade_in=fade_in)
+        get_sound_thread().fade_in(music, fade_in=fade_in)
 
 def music_clear(self: Event, fade_out=0, flags=None):
     if self.do_skip:
         fade_out = 0
     if fade_out > 0:
-        SOUNDTHREAD.fade_clear(fade_out)
+        get_sound_thread().fade_clear(fade_out)
     else:
-        SOUNDTHREAD.clear()
+        get_sound_thread().clear()
 
 def sound(self: Event, sound, volume=1.0, flags=None):
-    SOUNDTHREAD.play_sfx(sound, volume=float(volume))
+    get_sound_thread().play_sfx(sound, volume=float(volume))
 
 def change_music(self: Event, phase, music, flags=None):
     if music == 'None':
@@ -205,9 +205,9 @@ def mirror_portrait(self: Event, portrait, flags=None):
 
     self.portraits[name] = \
         EventPortrait(
-            self.portraits[name].portrait, 
+            self.portraits[name].portrait,
             self.portraits[name].position,
-            self.portraits[name].priority, 
+            self.portraits[name].priority,
             False, None, not self.portraits[name].mirror)
 
     if 'no_block' in flags or self.do_skip:
@@ -1860,7 +1860,7 @@ def prep(self: Event, pick_units_enabled: str = None, music: str = None, other_o
 def base(self: Event, background: str, music: str = None, other_options: str = None,
          other_options_enabled: str = None, other_options_on_select: str = None, flags=None):
     flags = flags or set()
-    
+
     # set panorama
     action.do(action.SetGameVar('_base_bg_name', background))
     # set music
@@ -1919,7 +1919,7 @@ def shop(self: Event, unit, item_list, shop_flavor=None, flags=None):
     self.state = 'paused'
 
 def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = None, orientation: str = None,
-           alignment: str = None, bg: str = None, event_nid: str = None, entry_type: str = None, 
+           alignment: str = None, bg: str = None, event_nid: str = None, entry_type: str = None,
            dimensions: str = None, text_align: str = None, flags=None):
     flags = flags or set()
 
@@ -2015,7 +2015,7 @@ def unchoice(self: Event, flags=None):
         self.logger.error("Unchoice failed: " + e)
 
 def table(self: Event, nid: NID, table_data: str, title: str = None,
-          dimensions: str = None, row_width: str = None, alignment: str = None, 
+          dimensions: str = None, row_width: str = None, alignment: str = None,
           bg: str = None, entry_type: str = None, text_align: str = None, flags=None):
     flags = flags or set()
 

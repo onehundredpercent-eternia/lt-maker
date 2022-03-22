@@ -1,7 +1,7 @@
 from app.constants import WINHEIGHT
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 
 from app.events import event_commands
 from app.events.event import Event
@@ -47,7 +47,7 @@ class DebugState(MapState):
 
     def parse_command(self, command):
         if command in self.quit_commands:
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.back()
             return
 

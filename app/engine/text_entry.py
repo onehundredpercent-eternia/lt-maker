@@ -1,5 +1,5 @@
 from app.constants import WINWIDTH, WINHEIGHT
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine.state import MapState
@@ -20,7 +20,7 @@ class TextEntryState(MapState):
 
         game.state.change('transition_in')
         return 'repeat'
-    
+
     def create_bg_surf(self):
         width_of_header = FONT['text'].width(self.header) + 16
         menu_width = self.menu.get_menu_width()
@@ -34,17 +34,17 @@ class TextEntryState(MapState):
     def _back(self):
         if len(self.menu.name) > 0:
             self.menu.updateName('back')
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
         else:
-            SOUNDTHREAD.play_sfx('Error')
+            get_sound_thread().play_sfx('Error')
 
     def _add(self, selection):
         if len(self.menu.name) < self.menu.character_limit:
             self.menu.updateName(selection)
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
         else:
-            SOUNDTHREAD.play_sfx('Error')
-    
+            get_sound_thread().play_sfx('Error')
+
     def take_input(self, event):
         if self.keyboard_mode:
             for pg_event in engine.events:
@@ -67,16 +67,16 @@ class TextEntryState(MapState):
 
             self.menu.handle_mouse()
             if 'RIGHT' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.menu.move_right(first_push)
             elif 'LEFT' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.menu.move_left(first_push)
             if 'DOWN' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.menu.move_down(first_push)
             elif 'UP' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.menu.move_up(first_push)
 
             if event == 'BACK':
@@ -89,8 +89,8 @@ class TextEntryState(MapState):
             elif event == 'START':
                 game.memory['text_entry_menu'] = (self.constant_id, self.menu.name)
                 game.state.change('text_confirm')
-                SOUNDTHREAD.play_sfx('Select 2')
-                
+                get_sound_thread().play_sfx('Select 2')
+
             #Exits text entry without saving a value. Dev must dictate whether this is available by setting the flag in the event.
             elif event == 'AUX' and not self.force_entry:
                 game.state.change('transition_pop')
@@ -133,18 +133,18 @@ class TextConfirmState(MapState):
         self.menu.handle_mouse()
         if (event == 'RIGHT' and self.orientation == 'horizontal') or \
                 (event == 'DOWN' and self.orientation == 'vertical'):
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down()
         elif (event == 'LEFT' and self.orientation == 'horizontal') or \
                 (event == 'UP' and self.orientation == 'vertical'):
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up()
 
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Error')
+            get_sound_thread().play_sfx('Error')
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             if selection == 'Yes':
                 constant_id, text = game.memory['text_entry_menu']

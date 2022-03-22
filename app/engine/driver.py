@@ -60,15 +60,15 @@ def draw_fps(surf, fps_records):
     FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
 
 def run(game):
-    from app.engine.sound import SOUNDTHREAD
+    from app.engine.sound import get_sound_thread
     from app.engine.game_counters import ANIMATION_COUNTERS
     from app.engine.input_manager import INPUT
 
     ANIMATION_COUNTERS.reset()
 
-    SOUNDTHREAD.reset()
-    SOUNDTHREAD.set_music_volume(cf.SETTINGS['music_volume'])
-    SOUNDTHREAD.set_sfx_volume(cf.SETTINGS['sound_volume'])
+    get_sound_thread().reset()
+    get_sound_thread().set_music_volume(cf.SETTINGS['music_volume'])
+    get_sound_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
 
     surf = engine.create_surface((WINWIDTH, WINHEIGHT))
     # import time
@@ -92,7 +92,7 @@ def run(game):
         if cf.SETTINGS['display_fps']:
             draw_fps(surf, fps_records)
 
-        SOUNDTHREAD.update(raw_events)
+        get_sound_thread().update(raw_events)
 
         engine.push_display(surf, engine.SCREENSIZE, engine.DISPLAYSURF)
 
@@ -107,12 +107,12 @@ def run(game):
         game.playtime += clock.tick()
 
 def run_combat(mock_combat):
-    from app.engine.sound import SOUNDTHREAD
+    from app.engine.sound import get_sound_thread
     from app.engine.input_manager import INPUT
 
-    SOUNDTHREAD.reset()
-    SOUNDTHREAD.set_music_volume(cf.SETTINGS['music_volume'])
-    SOUNDTHREAD.set_sfx_volume(cf.SETTINGS['sound_volume'])
+    get_sound_thread().reset()
+    get_sound_thread().set_music_volume(cf.SETTINGS['music_volume'])
+    get_sound_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
 
     surf = engine.create_surface((WINWIDTH, WINHEIGHT))
     clock = engine.Clock()
@@ -128,7 +128,7 @@ def run_combat(mock_combat):
         mock_combat.update()
         surf = mock_combat.draw(surf)
 
-        SOUNDTHREAD.update(raw_events)
+        get_sound_thread().update(raw_events)
 
         engine.push_display(surf, engine.SCREENSIZE, engine.DISPLAYSURF)
         save_screenshot(raw_events, surf)

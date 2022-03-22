@@ -11,7 +11,7 @@ from app.data.database import DB
 from app.utilities import utils
 
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, image_mods, health_bar, equations
 from app.engine import item_funcs, item_system, skill_system, particles
 import app.engine.config as cf
@@ -212,32 +212,32 @@ class UnitSprite():
         elif self.transition_state == 'fade_move':
             self.fake_position = self.unit.position
         elif self.transition_state == 'warp_in':
-            SOUNDTHREAD.play_sfx('WarpEnd')
+            get_sound_thread().play_sfx('WarpEnd')
             self.fake_position = None
             self.add_warp_anim('warp_in')
             self.add_warp_flowers(reverse=True)
         elif self.transition_state == 'warp_out':
-            SOUNDTHREAD.play_sfx('Warp')
+            get_sound_thread().play_sfx('Warp')
             self.fake_position = self.unit.position
             self.add_warp_anim('warp_out')
             self.begin_flicker(self.transition_time, (255, 255, 255))
             self.add_warp_flowers()
         elif self.transition_state == 'warp_move':
-            SOUNDTHREAD.play_sfx('Warp')
+            get_sound_thread().play_sfx('Warp')
             self.fake_position = self.unit.position
             self.add_warp_anim('warp_move')
             self.begin_flicker(self.transition_time, (255, 255, 255))
             self.add_warp_flowers()
         elif self.transition_state == 'swoosh_in':
-            SOUNDTHREAD.play_sfx('Sword Whoosh')
+            get_sound_thread().play_sfx('Sword Whoosh')
             self.fake_position = None
             self.add_swoosh_anim()
         elif self.transition_state == 'swoosh_out':
-            SOUNDTHREAD.play_sfx('Sword Whoosh')
+            get_sound_thread().play_sfx('Sword Whoosh')
             self.fake_position = self.unit.position
             self.add_swoosh_anim(reverse=True)
         elif self.transition_state == 'swoosh_move':
-            SOUNDTHREAD.play_sfx('Sword Whoosh')
+            get_sound_thread().play_sfx('Sword Whoosh')
             self.fake_position = self.unit.position
             self.add_swoosh_anim(reverse=True)
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from app.constants import WINWIDTH, WINHEIGHT
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine.input_manager import INPUT
@@ -449,7 +449,7 @@ class TurnwheelState(MapState):
         self.last_direction = 'FORWARD'
 
     def move_forward(self):
-        SOUNDTHREAD.play_sfx('Select 1')
+        get_sound_thread().play_sfx('Select 1')
         old_message = None
         if self.last_direction == 'BACKWARD':
             game.action_log.current_unit = None
@@ -462,7 +462,7 @@ class TurnwheelState(MapState):
         self.last_direction = 'FORWARD'
 
     def move_back(self):
-        SOUNDTHREAD.play_sfx('Select 2')
+        get_sound_thread().play_sfx('Select 2')
         old_message = None
         if self.last_direction == 'FORWARD':
             game.action_log.current_unit = None
@@ -501,13 +501,13 @@ class TurnwheelState(MapState):
             elif not self.force and not game.action_log.locked:
                 self.back_out()
             else:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
 
         elif event == 'BACK':
             if not self.force:
                 self.back_out()
             else:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
 
     def check_mouse_position(self) -> bool:
         mouse_position = INPUT.get_mouse_position()

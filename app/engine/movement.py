@@ -4,7 +4,7 @@ import app.engine.config as cf
 from app.data.database import DB
 from app.engine import action, engine, equations, skill_system
 from app.engine.game_state import game
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.utilities import utils
 
 
@@ -117,7 +117,7 @@ class MovementManager():
 
     def done_moving(self, unit_nid, data, unit, surprise=False):
         if surprise:
-            SOUNDTHREAD.play_sfx('Surprise')
+            get_sound_thread().play_sfx('Surprise')
             unit.sprite.change_state('normal')
             unit.sprite.reset()
             action.do(action.HasAttacked(unit))
