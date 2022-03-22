@@ -13,7 +13,7 @@ from app.engine.game_state import game
 from app.engine import engine, action, menus, image_mods, \
     banner, save, phase, skill_system, target_system, item_system, \
     item_funcs, ui_view, info_menu, base_surf, gui, background, dialog, \
-    text_funcs, equations, evaluate, supports, stat_screen
+    text_funcs, equations, evaluate, supports
 from app.engine.combat import interaction
 from app.engine.selection_helper import SelectionHelper
 from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES
@@ -203,7 +203,7 @@ class FreeState(MapState):
         game.cursor.take_input()
 
         if event == 'INFO':
-            stat_screen.handle_info()
+            info_menu.handle_info()
 
         elif event == 'AUX':
             info_menu.handle_aux()
@@ -772,7 +772,7 @@ class MenuState(MapState):
                     game.cursor.construct_arrows(game.cursor.path[::-1])
 
         elif event == 'INFO':
-            stat_screen.handle_info()
+            info_menu.handle_info()
 
         elif event == 'SELECT':
             SOUNDTHREAD.play_sfx('Select 1')
@@ -1596,7 +1596,7 @@ class CombatTargetingState(MapState):
             game.cursor.set_pos(mouse_position)
 
         if event == 'INFO':
-            stat_screen.handle_info()
+            info_menu.handle_info()
 
         elif event == 'AUX':
             adj_allies = target_system.get_adj_allies(self.cur_unit)

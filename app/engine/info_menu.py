@@ -245,8 +245,8 @@ class InfoMenuState(State):
 
         self.fluid = FluidScroll(200, 1)
 
-        self.left_arrow = gui.ScrollArrow('left', (7, self.portrait_section_height + 3))
-        self.right_arrow = gui.ScrollArrow('right', (WINWIDTH - 16 - 7, self.portrait_section_height + 3), 0.5)
+        self.left_arrow = gui.ScrollArrow('left', (3, self.portrait_section_height + 44))
+        self.right_arrow = gui.ScrollArrow('right', (WINWIDTH - 8 - 3, self.portrait_section_height + 44), 0.5)
 
         self.logo = None
         self.switch_logo(self.state)
@@ -585,63 +585,65 @@ class InfoMenuState(State):
         # Blit the unit's active/focus map sprite
         if not self.transparency:
             active_sprite = self.unit.sprite.create_image('active')
-            x_pos = 96 + 81 - active_sprite.get_width()//2
+            x_pos = 4 + 81 - active_sprite.get_width()//2
             y_pos = self.portrait_section_height - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
     def create_portrait(self):
         surf = engine.create_surface((WINWIDTH, 80), transparent=True)
-        surf.blit(SPRITES.get('info_unit'), (96 + 8, 24))
+        surf.blit(SPRITES.get('info_unit'), (10, 44))
 
         im, offset = icons.get_portrait(self.unit)
         if im:
-            x_pos = (im.get_width() - 96)//2
-            portrait_surf = engine.subsurface(im, (x_pos, offset, 96, 72))
-            surf.blit(portrait_surf, (4, 4))
+            x_pos = (im.get_width() - 86)//2
+            portrait_surf = engine.subsurface(im, (x_pos, offset//2, 86, 76))
+            surf.blit(portrait_surf, (103, 4))
 
-        FONT['text'].blit_center(self.unit.name, surf, (96 + 48, 4), 'white')
-        self.info_graph.register((96 + 24, 4, 52, 24), self.unit.desc, 'all')
+        x_offset = 4
+        FONT['text'].blit_center(self.unit.name, surf, (x_offset + 44, 0), 'white')
+        self.info_graph.register((x_offset + 24, 0, 52, 24), self.unit.desc, 'all')
         class_obj = DB.classes.get(self.unit.klass)
-        FONT['text'].blit(class_obj.name, surf, (96 + 8, 28), 'white')
-        self.info_graph.register((96 + 8, 28, 72, 16), class_obj.desc, 'all')
-        FONT['text'].blit_right(str(self.unit.level), surf, (96 + 39, 42), 'blue')
-        self.info_graph.register((96 + 8, 42, 30, 16), 'Level_desc', 'all')
-        FONT['text'].blit_right(str(self.unit.exp), surf, (96 + 63, 42), 'blue')
-        self.info_graph.register((96 + 38, 42, 30, 16), 'Exp_desc', 'all')
-        FONT['text'].blit_right(str(self.unit.get_hp()), surf, (96 + 39, 58), 'blue')
-        self.info_graph.register((96 + 8, 58, 72, 16), 'HP_desc', 'all')
+        FONT['text'].blit(class_obj.name, surf, (x_offset + 8, 24), 'white')
+        self.info_graph.register((x_offset + 8, 24, 72, 16), class_obj.desc, 'all')
+        FONT['text'].blit_right(str(self.unit.level), surf, (x_offset + 39, 42), 'blue')
+        self.info_graph.register((x_offset + 8, 42, 30, 16), 'Level_desc', 'all')
+        FONT['text'].blit_right(str(self.unit.exp), surf, (x_offset + 63, 42), 'blue')
+        self.info_graph.register((x_offset + 38, 42, 30, 16), 'Exp_desc', 'all')
+        FONT['text'].blit_right(str(self.unit.get_hp()), surf, (x_offset + 39, 58), 'blue')
+        self.info_graph.register((x_offset + 8, 58, 72, 16), 'HP_desc', 'all')
         max_hp = equations.parser.hitpoints(self.unit)
-        FONT['text'].blit_right(str(max_hp), surf, (96 + 63, 58), 'blue')
+        FONT['text'].blit_right(str(max_hp), surf, (x_offset + 63, 58), 'blue')
         # Blit the white status platform
-        surf.blit(SPRITES.get('status_platform'), (96 + 66, 53))
+        surf.blit(SPRITES.get('status_platform'), (x_offset + 66, 53))
         # Blit affinity
         affinity = DB.affinities.get(self.unit.affinity)
         if affinity:
-            icons.draw_item(surf, affinity, (96 + 78, 5))
-            self.info_graph.register((96 + 76, 4, 16, 16), affinity.desc, 'all')
+            icons.draw_item(surf, affinity, (x_offset + 78, 5))
+            self.info_graph.register((x_offset + 76, 4, 16, 16), affinity.desc, 'all')
 
         # Battle stats
         battle_surf = SPRITES.get('battle_info')
-        left, top = WINWIDTH - 64 - 64 - 8, 20
+        left, top = WINWIDTH - 122, 31
         surf.blit(battle_surf, (left, top))
         # Populate battle info
         # surf.blit(SPRITES.get('equipment_logo'), (14, top + 4))
         # FONT['text-yellow'].blit('Rng', surf, (78, top))
         # self.info_graph.register((96 + 78, top, 56, 16), 'Rng_desc', 'equipment')
-        FONT['text-yellow'].blit('Atk', surf, (left + 4, top + 4))
-        self.info_graph.register((left + 4, top + 4, 64, 16), 'Atk_desc', 'all')
-        FONT['text-yellow'].blit('AS', surf, (left + 68, top + 4))
-        self.info_graph.register((left + 68, top + 4, 64, 16), 'AS_desc', 'all')
-        FONT['text-yellow'].blit('Hit', surf, (left + 4, top + 20))
-        self.info_graph.register((left + 4, top + 20, 64, 16), 'Hit_desc', 'all')
-        FONT['text-yellow'].blit('Avoid', surf, (left + 68, top + 20))
-        self.info_graph.register((left + 4, top + 20, 64, 16), 'Avoid_desc', 'all')
+        FONT['text-yellow'].blit('Atk', surf, (left + 4, top + 2))
+        self.info_graph.register((left + 4, top + 2, 64, 16), 'Atk_desc', 'all')
+        FONT['text-yellow'].blit('AS', surf, (left + 60, top + 2))
+        self.info_graph.register((left + 60, top + 2, 64, 16), 'AS_desc', 'all')
+        FONT['text-yellow'].blit('Hit', surf, (left + 4, top + 18))
+        self.info_graph.register((left + 4, top + 18, 64, 16), 'Hit_desc', 'all')
+        FONT['text-yellow'].blit('Avoid', surf, (left + 60, top + 18))
+        self.info_graph.register((left + 60, top + 18, 64, 16), 'Avoid_desc', 'all')
         if DB.constants.value('crit'):
-            FONT['text-yellow'].blit('Crit', surf, (left + 4, top + 36))
-            self.info_graph.register((left + 4, top + 36, 64, 16), 'Crit_desc', 'all')
-            FONT['text-yellow'].blit('Dodg', surf, (left + 68, top + 36))
-            self.info_graph.register((left + 68, top + 36, 64, 16), 'Dodg_desc', 'all')
+            FONT['text-yellow'].blit('Crit', surf, (left + 4, top + 34))
+            self.info_graph.register((left + 4, top + 34, 64, 16), 'Crit_desc', 'all')
+            FONT['text-yellow'].blit('Dodg', surf, (left + 60, top + 34))
+            self.info_graph.register((left + 60, top + 34, 64, 16), 'Dodg_desc', 'all')
 
+        weapon = self.unit.get_weapon()
         if weapon:
             # rng = item_funcs.get_range_string(self.unit, weapon)
             dam = str(combat_calcs.damage(self.unit, weapon))
@@ -658,13 +660,13 @@ class InfoMenuState(State):
         attack_speed = str(combat_calcs.attack_speed(self.unit, weapon))
         ddg = str(combat_calcs.crit_avoid(self.unit, weapon))
         # FONT['text-blue'].blit_right(rng, surf, (127, top))
-        FONT['text-blue'].blit_right(dam, surf, (left + 64, top + 4))
-        FONT['text-blue'].blit_right(attack_speed, surf, (left + 128, top + 4))
-        FONT['text-blue'].blit_right(acc, surf, (left + 64, top + 20))
-        FONT['text-blue'].blit_right(avo, surf, (left + 128, top + 20))
+        FONT['text-blue'].blit_right(dam, surf, (left + 56, top + 2))
+        FONT['text-blue'].blit_right(attack_speed, surf, (left + 116, top + 2))
+        FONT['text-blue'].blit_right(acc, surf, (left + 56, top + 18))
+        FONT['text-blue'].blit_right(avo, surf, (left + 116, top + 18))
         if DB.constants.value('crit'):
-            FONT['text-blue'].blit_right(crt, surf, (left + 64, top + 36))
-            FONT['text-blue'].blit_right(ddg, surf, (left + 128, top + 36))
+            FONT['text-blue'].blit_right(crt, surf, (left + 56, top + 34))
+            FONT['text-blue'].blit_right(ddg, surf, (left + 116, top + 34))
 
         return surf
 
@@ -681,8 +683,8 @@ class InfoMenuState(State):
         # if self.logo:
         #     self.logo.update()
         #     self.logo.draw(top_surf)
-        page = str(info_states.index(self.state) + 1) + '/' + str(len(info_states))
-        FONT['small'].blit_right(page, top_surf, (WINWIDTH - 5, self.portrait_section_height + 4))
+        # page = str(info_states.index(self.state) + 1) + '/' + str(len(info_states))
+        # FONT['small'].blit_right(page, top_surf, (WINWIDTH - 5, self.portrait_section_height + 4))
 
         self.draw_top_arrows(top_surf)
 
@@ -755,23 +757,23 @@ class InfoMenuState(State):
             x_idx = idx // 3
             y_idx = idx % 3
             if growths:
-                icons.draw_growth(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx + 8))
+                icons.draw_growth(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx))
             else:
                 highest_stat = DB.stats.get(stat_nid).maximum
                 max_stat = max_stats.get(stat_nid, 30)
                 if max_stat > 0:
                     total_length = int(max_stat / highest_stat * 44)
                     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
-                    build_groove(surf, (27 + stat_offset * x_idx, 16 * y_idx + 16), total_length, frac)
-                icons.draw_stat(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx + 8))
+                    build_groove(surf, (27 + stat_offset * x_idx, 16 * y_idx + 8), total_length, frac)
+                icons.draw_stat(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx))
             # Name
             name = DB.stats.get(stat_nid).name
-            FONT['text-yellow'].blit(name, surf, (8 + stat_offset * x_idx, 16 * y_idx + 8))
+            FONT['text-yellow'].blit(name, surf, (8 + stat_offset * x_idx, 16 * y_idx))
             base_value = self.unit.stats.get(stat_nid, 0)
             contribution = self.unit.stat_contribution(stat_nid)
             contribution['Base Value'] = base_value
             help_box = help_menu.StatDialog('%s_desc' % stat_nid, contribution)
-            self.info_graph.register((0 + 8 + stat_offset * x_idx, 16 * y_idx + 8, 64, 16), help_box, state, first=(idx == 0))
+            self.info_graph.register((0 + 8 + stat_offset * x_idx, 16 * y_idx, 64, 16), help_box, state, first=(idx == 0))
 
         # for idx, stat_nid in enumerate(right_stats):
         #     if growths:
@@ -919,7 +921,7 @@ class InfoMenuState(State):
         # Blit items
         for idx, item in enumerate(self.unit.nonaccessories):
             if item.multi_item and any(subitem is weapon for subitem in item.subitems):
-                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 24 + 8))
+                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 for subitem in item.subitems:
                     if subitem is weapon:
                         item_option = menu_options.FullItemOption(idx, subitem)
@@ -928,15 +930,15 @@ class InfoMenuState(State):
                     item_option = menu_options.FullItemOption(idx, item)
             else:
                 if item is weapon:
-                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 24 + 8))
+                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 item_option = menu_options.FullItemOption(idx, item)
-            item_option.draw(surf, 8, idx * 16 + 24)
-            self.info_graph.register((WINWIDTH//2 + 8, idx * 16 + 24 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
+            item_option.draw(surf, 8, idx * 16 + 4)
+            self.info_graph.register((WINWIDTH//2 + 8, idx * 16 + 4 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
 
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):
             aidx = item_funcs.get_num_items(self.unit) + idx
-            y_pos = aidx * 16 + 24
+            y_pos = aidx * 16 + 4
             if item.multi_item and any(subitem is accessory for subitem in item.subitems):
                 surf.blit(SPRITES.get('equipment_highlight'), (8, y_pos + 8))
                 for subitem in item.subitems:
