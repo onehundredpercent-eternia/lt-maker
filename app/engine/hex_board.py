@@ -16,10 +16,18 @@ class Sight(Enum):
     INSIGHT = 2
 
 class HexData():
-    def __init__(self, pos):
+    def __init__(self, pos, sight=Sight.UNEXPLORED):
         self.pos: hex_math.Hex = pos
         self.adjacency: List[hex_math.Hex] = []
-        self.sight: Sight = Sight.UNEXPLORED
+        self.sight: Sight = sight
+
+    def save(self):
+        return ((self.pos.q, self.pos.r, self.pos.s), self.sight)
+
+    @classmethod
+    def restore(cls, dat):
+        pos = hex_math.Hex(*dat[0])
+        return cls(pos, dat[1])
 
 class HexBoard():
     def __init__(self, overworld_prefab: OverworldPrefab):
@@ -30,15 +38,25 @@ class HexBoard():
             hex_data = HexData(hex_prefab.pos)
             self.hex_graph[hex_data.pos] = hex_data
 
-        # Assign adjacency
+        self.assign_adjacency()
+
+    def assign_adjacency(self):
         for hex_data in self.hex_graph:
             potential_neighbors: List[hex_math.Hex] = hex_math.get_neighbors(hex_data.pos)
             for neighbor in potential_neighbors:
                 if neighbor in self.hex_graph:
                     self.hex_graph.adjacency.append(neighbor)
 
-        self.entities: Dict[NID, HexEntity] = {}
-        self.selected_party_nid: NID = None
+    def save(self):
+        return [h.save() for h in self.hex_graph.values()]
+
+    def restore(self, hex_graph_data):
+        self.hex_graph.clear()
+        for dat in hex_graph_data:
+            hex_data = HexData.restore(dat)
+            self.hex_graph[hex_data.pos] = hex_data
+
+        self.assign_adjacency()
 
     def get_hex_type(self, pos) -> HexType:
         hex_prefab = self.hexes.get(pos)
