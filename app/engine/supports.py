@@ -336,12 +336,18 @@ def increment_end_combat_supports(combatant, target=None):
             elif dist == 99 or utils.calculate_distance(combatant.position, other_unit.position) <= dist:
                 action.do(action.IncrementSupportPoints(support_prefab.nid, inc))
 
-def increment_interact_supports(combatant, target):
+def increment_supports(combatant, partner, constant: str):
     if not game.game_vars.get('_supports'):
         return
-    inc = DB.support_constants.value('interact_points')
+    inc = DB.support_constants.value(constant)
     if inc:
         for support_prefab in DB.support_pairs:
-            if (support_prefab.unit1 == combatant.nid and support_prefab.unit2 == target.nid) or \
-                    (support_prefab.unit2 == combatant.nid and support_prefab.unit1 == target.nid):
+            if (support_prefab.unit1 == combatant.nid and support_prefab.unit2 == partner.nid) or \
+                    (support_prefab.unit2 == combatant.nid and support_prefab.unit1 == partner.nid):
                 action.do(action.IncrementSupportPoints(support_prefab.nid, inc))
+
+def increment_interact_supports(combatant, target):
+    increment_supports(combatant, target, 'interact_points')
+
+def increment_pairup_supports(combatant, partner):
+    increment_supports(combatant, target, 'pairup_points')
