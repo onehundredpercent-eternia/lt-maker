@@ -27,16 +27,16 @@ class HexData():
         return hex_math.hex_to_pixel(self.pos)
 
     def save(self):
-        return ((self.pos.q, self.pos.r, self.pos.s), self.sight)
+        return (self.pos, self.sight)
 
     @classmethod
     def restore(cls, dat):
-        pos = hex_math.Hex(*dat[0])
+        pos = tuple(dat[0])
         return cls(pos, dat[1])
 
 class HexBoard():
     def __init__(self, overworld_prefab: OverworldPrefab):
-        self.hexes: Dict[Tuple, HexPrefab] = overworld_prefab.hexes.copy()
+        self.hexes: Dict[hex_math.Hex, HexPrefab] = overworld_prefab.hexes.copy()
 
         self.hex_graph = {}  # Store Hex Data
         for hex_prefab in self.hexes:
