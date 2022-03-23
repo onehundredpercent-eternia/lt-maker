@@ -21,6 +21,10 @@ class HexData():
         self.adjacency: List[hex_math.Hex] = []
         self.sight: Sight = sight
 
+    @property
+    def position(self) -> hex_math.Hex:
+        return self.pos
+
     def save(self):
         return ((self.pos.q, self.pos.r, self.pos.s), self.sight)
 
