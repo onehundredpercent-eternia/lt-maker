@@ -2,7 +2,7 @@ import logging
 
 import app.engine.config as cf
 from app.data.database import DB
-from app.engine import engine, menus
+from app.engine import engine, hex_board, menus
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
