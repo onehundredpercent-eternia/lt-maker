@@ -22,8 +22,9 @@ class HexData():
         self.sight: Sight = sight
 
     @property
-    def position(self) -> hex_math.Hex:
-        return self.pos
+    def position(self) -> tuple:
+        # Returns pixel position
+        return hex_math.hex_to_pixel(self.pos)
 
     def save(self):
         return ((self.pos.q, self.pos.r, self.pos.s), self.sight)
