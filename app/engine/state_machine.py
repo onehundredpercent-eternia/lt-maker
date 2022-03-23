@@ -147,6 +147,7 @@ class StateMachine():
              'overworld_game_option_menu': overworld_states.OverworldGameOptionMenuState,
              'overworld_party_option_menu': overworld_states.OverworldPartyOptionMenu,
              'overworld_on_node': overworld_states.OverworldNodeTransition,
+             'overworld_on_hex': overworld_states.OverworldHexTransition,
              'overworld_next_level': overworld_states.OverworldLevelTransition,
              'dialog_log': dialog_log.DialogLogState
              }
