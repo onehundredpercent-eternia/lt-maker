@@ -159,7 +159,7 @@ class OverworldManager():
             # node doesn't exist, prop doesn't exist, who cares?
             pass
 
-    def shortest_hex_path(self, n1: OverworldNodeObject | NID,
+    def shortest_path(self, n1: OverworldNodeObject | NID,
                       n2: OverworldNodeObject | NID, neighbor_priority=True,
                       force=False) -> List[RoadObject]:
         """Returns a list of roads indicating the shortest paths between two nodes.
@@ -212,20 +212,17 @@ class OverworldManager():
                 what's visible. Defaults to False, i.e., use only the visible graph.
 
         Returns:
-            List[hex_math.Hex]: list of road objects that constitutes a path between h1
+            List[hex_math.Hex]: list of hex positions that constitutes a path between h1
                 and h2. Can be a list of length 1, if the two nodes are neighbors, or 0,
                 if no such path exists.
 
         """
-        if not self.any_path(h1, h2, force):
-            return []
-
         if isinstance(h1, hex_board.HexData):
             h1 = h1.pos
         if isinstance(h2, hex_board.HexData):
             h2 = h2.pos
 
-        node_path: List[hex_math.Hex] = self.hex_board.shortest_path(h1, h2)
+        node_path: List[hex_math.Hex] = self.hex_board.shortest_path(h1, h2, only_visible=not force)
         return node_path
 
     def entity_at(self, pos: Point | OverworldNodeObject | hex_math.Hex | hex_board.HexData) -> Optional[OverworldEntityObject]:
