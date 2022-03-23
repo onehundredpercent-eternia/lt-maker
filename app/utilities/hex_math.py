@@ -45,7 +45,7 @@ def default_layout(size: float = 16):
     return Layout(orientation_horizontal, (size, size), (0, 0))
 
 def calculate_distance(a: Hex, b: Hex) -> float:
-    c = a - b
+    c = hex_sub(a, b)
     return hex_length(c)
 
 def hex_round(h: Hex) -> Hex:
