@@ -159,7 +159,7 @@ class OverworldManager():
             # node doesn't exist, prop doesn't exist, who cares?
             pass
 
-    def shortest_path(self, n1: OverworldNodeObject | NID,
+    def shortest_hex_path(self, n1: OverworldNodeObject | NID,
                       n2: OverworldNodeObject | NID, neighbor_priority=True,
                       force=False) -> List[RoadObject]:
         """Returns a list of roads indicating the shortest paths between two nodes.
@@ -200,20 +200,51 @@ class OverworldManager():
         node_path: List[NID] = graph.shortest_path(n1, n2)
         return [graph[node_path[i]][node_path[i+1]].data for i in range(len(node_path) - 1)]
 
-    def entity_at(self, pos: Point | OverworldNodeObject | hex_math.Hex) -> Optional[OverworldEntityObject]:
+    def shortest_hex_path(self, h1: hex_board.HexData | hex_math.Hex,
+                      h2: hex_board.HexData | hex_math.Hex,
+                      force=False) -> List[hex_math.Hex]:
+        """Returns a list of hex_math.Hex indicating the shortest paths between two hexes.
+
+        Args:
+            h1 (hex_board.HexData | hex_math.Hex): the start hex which the path starts from.
+            h2 (hex_board.HexData | hex_math.Hex): the end hex which the path goes to.
+            force (bool): Optional. Indicates whether to use the full overworld graph, or just the graph of
+                what's visible. Defaults to False, i.e., use only the visible graph.
+
+        Returns:
+            List[hex_math.Hex]: list of road objects that constitutes a path between h1
+                and h2. Can be a list of length 1, if the two nodes are neighbors, or 0,
+                if no such path exists.
+
+        """
+        if not self.any_path(h1, h2, force):
+            return []
+
+        if isinstance(h1, hex_board.HexData):
+            h1 = h1.pos
+        if isinstance(h2, hex_board.HexData):
+            h2 = h2.pos
+
+        node_path: List[hex_math.Hex] = self.hex_board.shortest_path(h1, h2)
+        return node_path
+
+    def entity_at(self, pos: Point | OverworldNodeObject | hex_math.Hex | hex_board.HexData) -> Optional[OverworldEntityObject]:
         if isinstance(pos, OverworldNodeObject):
             pos = pos.position
-        elif isinstance(pos, hex_math.Hex):
+        elif isinstance(pos, hex_board.HexData):
+            pos = pos.position
+        elif isinstance(pos, tuple) and len(pos) == 3:  # Checking for hex_math.Hex
             pos = hex_math.hex_to_pixel(pos)
+
         for entity in self._overworld.overworld_entities.values():
             if entity.display_position == pos:
                 return entity
         return None
 
-    def hex_at(self, pos: Point, force=False) -> hex_math.Hex:
+    def hex_at(self, pos: Point, force=False) -> hex_board.HexData:
         hex_pos = hex_math.pixel_to_hex(pos)
         hex_pos = hex_math.hex_round(hex_pos)
-        return hex_pos
+        return self.hex_board.hex_graph.get(hex_pos)
 
     def node_props(self, node: OverworldNodeObject | NID) -> Set[str]:
         if isinstance(node, OverworldNodeObject):
@@ -242,9 +273,11 @@ class OverworldManager():
         entity = self.entities[entity_nid]
         entity.on_node = node_nid
 
-    def selected_party_node(self) -> OverworldNodeObject:
+    def selected_party_node(self) -> OverworldNodeObject | hex_board.HexData:
         if self.selected_entity.on_node:
             return self.nodes[self.selected_entity.on_node]
+        elif self.selected_entity.on_hex:
+            return self.hex_board.hex_graph.get(self.selected_entity.on_hex)
         return None
 
     def any_path(self, n1: OverworldNodeObject | NID,
@@ -275,6 +308,26 @@ class OverworldManager():
             return graph.has_path(n1, n2)
         except:
             return False
+
+    def hex_path(self, h1: hex_board.HexData | hex_math.Hex,
+                 h2: hex_board.HexData | hex_math.Hex, force: bool = False) -> bool:
+        """If there exists a valid method of traveling between the two hexes on the world map,
+        this will return true, else false.
+
+        Args:
+            n1 (hex_board.HexData | hex_math.Hex): One hex of interest
+            n2 (hex_board.HexData | hex_math.Hex): The other hex of interest
+            force (bool): Optional. Indicates whether to use the full overworld graph, or just the graph of
+                what's visible. Defaults to False, i.e., use only the visible graph.
+
+        Returns:
+            bool: Whether or not a path exists between the two hexes
+        """
+        if isinstance(h1, hex_board.HexData):
+            h1 = h1.pos
+        if isinstance(h2, hex_board.HexData):
+            h2 = h2.pos
+        return self.hex_board.has_path(h1, h2, only_visible=not force)
 
     def get_road(self, n1: OverworldNodeObject | NID,
                  n2: OverworldNodeObject | NID, force: bool = False) -> Optional[RoadObject]:
