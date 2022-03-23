@@ -142,7 +142,7 @@ class HexPathfinding():
         self.closed.clear()
 
     def get_heuristic(self, pos: hex_math.Hex) -> float:
-        return hex_math.hex_distance(pos, end)
+        return hex_math.calculate_distance(pos, end)
 
     def update_hex(self, adj: hex_math.Hex, pos: hex_math.Hex):
         pos_g = self.heuristic_data[pos][1]
