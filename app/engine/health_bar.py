@@ -4,7 +4,7 @@ import app.utilities as utils
 from app.constants import WINWIDTH, WINHEIGHT, TILEWIDTH, TILEHEIGHT, TILEX, TILEY
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, combat_calcs, icons, equations, skill_system, item_system
 from app.engine.game_state import game
 from app.engine.game_counters import ANIMATION_COUNTERS
@@ -75,8 +75,8 @@ class CombatHealthBar(HealthBar):
         current_time = engine.get_time()
         if self.displayed_hp < self.unit.get_hp() and current_time - self.heal_sound_update > self.speed:
             self.heal_sound_update = current_time
-            SOUNDTHREAD.stop_sfx('HealBoop')
-            SOUNDTHREAD.play_sfx('HealBoop')
+            get_sound_thread().stop_sfx('HealBoop')
+            get_sound_thread().play_sfx('HealBoop')
         super().set_hp(val)
 
     def big_number(self) -> bool:

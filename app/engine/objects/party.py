@@ -22,6 +22,10 @@ class PartyObject(Prefab):
         self.special: int = special
         self.crystals: int = crystals
 
+    @property
+    def items(self):
+        return self.convoy
+
     def save(self):
         return {'nid': self.nid,
                 'name': self.name,

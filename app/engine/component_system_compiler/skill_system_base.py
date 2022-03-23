@@ -149,7 +149,7 @@ def condition(skill, unit) -> bool:
     return True
 
 def hidden(skill, unit) -> bool:
-    return skill.hidden or (skill.hidden_if_inactive and not condition(skill, unit))
+    return skill.hidden or skill.is_terrain or (skill.hidden_if_inactive and not condition(skill, unit))
 
 def available(unit, item) -> bool:
     """
@@ -200,6 +200,13 @@ def growth_change(unit, stat_nid) -> int:
                     d = component.growth_change(unit)
                     bonus += d.get(stat_nid, 0)
     return bonus
+
+def additional_tags(unit) -> set:
+    new_tags = set()
+    for skill in unit.skills:
+        if skill.has_tags and skill.has_tags.value and condition(skill, unit):
+            new_tags = new_tags | set(skill.has_tags.value)
+    return new_tags
 
 def mana(playback, unit, item, target) -> int:
     mana = 0

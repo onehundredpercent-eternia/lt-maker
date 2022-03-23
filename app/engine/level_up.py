@@ -8,7 +8,7 @@ from app.data.database import DB
 from app.utilities import utils
 from app.engine import engine, image_mods, icons, unit_funcs, action, banner, skill_system
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.fonts import FONT
 from app.engine.state import State
 from app.engine.state_machine import SimpleStateMachine
@@ -119,7 +119,7 @@ class ExpState(State):
             if current_time - self.start_time > 466:
                 self.state.change('exp0')
                 self.start_time = current_time
-                SOUNDTHREAD.play_sfx('Experience Gain', True)
+                get_sound_thread().play_sfx('Experience Gain', True)
 
         # Increment exp until done or 100 exp is reached
         elif self.state.get_state() == 'exp0':
@@ -135,15 +135,15 @@ class ExpState(State):
                 mana_set = int(mana_set)
 
             if exp_set >= self.old_exp + self.exp_gain:
-                SOUNDTHREAD.stop_sfx('Experience Gain')
+                get_sound_thread().stop_sfx('Experience Gain')
 
             if exp_set >= 100:
                 max_level = self.unit_klass.max_level
                 if self.unit.level >= max_level:  # Do I promote?
-                    SOUNDTHREAD.stop_sfx('Experience Gain')
+                    get_sound_thread().stop_sfx('Experience Gain')
                     if self.auto_promote:
                         self.exp_bar.update(100)
-                        SOUNDTHREAD.play_sfx('Level Up')
+                        get_sound_thread().play_sfx('Level Up')
                     else:
                         self.exp_bar.update(99)
                     self.state.clear()
@@ -155,7 +155,7 @@ class ExpState(State):
                     self.state.change('exp100')
 
             elif current_time - self.start_time >= self.total_time_for_exp + 500:
-                SOUNDTHREAD.stop_sfx('Experience Gain')  # Just in case
+                get_sound_thread().stop_sfx('Experience Gain')  # Just in case
                 self.state.clear()
                 self.state.change('exp_leave')
                 self.exp_bar.fade_out()
@@ -183,7 +183,7 @@ class ExpState(State):
             exp_set = int(exp_set)
 
             if exp_set >= self.old_exp + self.exp_gain - 100:
-                SOUNDTHREAD.stop_sfx('Experience Gain')
+                get_sound_thread().stop_sfx('Experience Gain')
 
             # Extra time to account for pause at end
             if current_time - self.start_time >= self.total_time_for_exp + 333:
@@ -202,7 +202,7 @@ class ExpState(State):
 
         elif self.state.get_state() == 'level_up':
             if not self.level_up_sound_played:
-                SOUNDTHREAD.play_sfx('Level Up')
+                get_sound_thread().play_sfx('Level Up')
                 self.level_up_sound_played = True
 
             if self.level_up_animation.update():
@@ -424,7 +424,7 @@ class LevelUpScreen():
                     self.state = 'first_spark'
                     topleft = (87, 27)
                     self.animations.append(self.make_spark(topleft))
-                    SOUNDTHREAD.play_sfx('Level_Up_Level')
+                    get_sound_thread().play_sfx('Level_Up_Level')
                 self.start_time = current_time
 
         elif self.state == 'scroll_out':
@@ -473,7 +473,7 @@ class LevelUpScreen():
                     number_animation = Animation(anim, (offset_pos[0] + 37, offset_pos[1] + 4), delay=80, hold=True)
                     self.animations.append(number_animation)
 
-                SOUNDTHREAD.play_sfx('Stat Up')
+                get_sound_thread().play_sfx('Stat Up')
                 self.underline_offset = 36 # for underline growing
                 self.state = 'spark_wait'
                 self.start_time = current_time

@@ -133,9 +133,6 @@ class EventFunction(Validator):
         valids = [(None, command.nid) for command in event_commands.get_commands()]
         return valids
 
-class Condition(Validator):
-    desc = "must be a valid Python condition to evaluate."
-
 class Expression(Validator):
     desc = "must be a valid Python expression to evaluate."
 
@@ -154,9 +151,10 @@ class Integer(Validator):
 
 class Float(Validator):
     desc = "Any number with a decimal"
+
     def validate(self, text, level):
         if str_utils.is_float(text):
-            return float(text)
+            return text
         return None
 
     def convert(self, text: str):
@@ -190,6 +188,9 @@ class Time(Validator):
             return int(text)
         return None
 
+    def convert(self, text: str) -> int:
+        return int(text)
+
 class Music(Validator):
     def validate(self, text, level):
         if text in RESOURCES.music.keys():
@@ -217,12 +218,15 @@ class PhaseMusic(OptionValidator):
              'player_battle', 'enemy_battle', 'other_battle', 'enemy2_battle']
 
 class Volume(Validator):
-    desc = "A number between 0 and 1 (0 is muted, 1 is highest volume)"
+    desc = "A number between greater than 0 (0 is muted, 1 is current volume)"
 
     def validate(self, text, level):
         if str_utils.is_float(text) and float(text) >= 0:
             return float(text)
         return None
+
+    def convert(self, text: str) -> float:
+        return float(text)
 
 class PortraitNid(Validator):
     def validate(self, text, level):
@@ -286,10 +290,11 @@ class TextPosition(Validator):
     desc = """
 Determines position to place text. Supports either pixels (`x,y`) or the `center` position.
 """
+
     def validate(self, text, level):
         if text in self.valid_positions:
             return text
-        elif ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
+        elif text and ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
             return text
         return None
 
@@ -420,9 +425,6 @@ class PointList(Validator):
             return text
 
 class Speaker(Validator):
-    pass  # Any text will do
-
-class Text(Validator):
     pass  # Any text will do
 
 class Panorama(Validator):
@@ -661,6 +663,27 @@ class UniqueUnit(Validator):
         return valids
 
 class GlobalUnit(Validator):
+    desc = "accepts a unit's nid. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`) where appropriate."
+
+    def validate(self, text, level):
+        if level:
+            nids = [u.nid for u in level.units]
+            if text in nids:
+                return text
+        elif text in DB.units.keys():
+            return text
+        elif text in ('{unit}', '{unit1}', '{unit2}'):
+            return True
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        valids = [(unit.name, unit.nid) for unit in DB.units.values()]
+        valids.append((None, "{unit}"))
+        valids.append((None, "{unit1}"))
+        valids.append((None, "{unit2}"))
+        return valids
+
+class GlobalUnitOrConvoy(Validator):
     desc = "accepts a unit's nid. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`) or `convoy` where appropriate."
 
     def validate(self, text, level):
@@ -860,6 +883,7 @@ class SupportRank(Validator):
 
 class Layer(Validator):
     def validate(self, text, level):
+        if level:
         tilemap_prefab = RESOURCES.tilemaps.get(level.tilemap)
         if text in tilemap_prefab.layers.keys():
             return text

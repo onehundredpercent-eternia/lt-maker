@@ -2,7 +2,7 @@ from app.utilities import utils
 
 from app.data.database import DB
 
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine import action, combat_calcs, equations, banner
@@ -12,7 +12,7 @@ from app.engine.game_state import game
 class PermanentStatChange(ItemComponent):
     nid = 'permanent_stat_change'
     desc = "Item changes target's stats on hit."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
 
@@ -29,7 +29,7 @@ class PermanentStatChange(ItemComponent):
         if not defender:
             return False
         return self._target_restrict(defender)
-        
+
     def simple_target_restrict(self, unit, item):
         return self._target_restrict(unit)
 
@@ -59,7 +59,7 @@ class PermanentStatChange(ItemComponent):
 class PermanentGrowthChange(ItemComponent):
     nid = 'permanent_growth_change'
     desc = "Item changes target's growths on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
 
@@ -71,7 +71,7 @@ class PermanentGrowthChange(ItemComponent):
 class WexpChange(ItemComponent):
     nid = 'wexp_change'
     desc = "Item changes target's wexp on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.WeaponType)
 
@@ -84,7 +84,7 @@ class WexpChange(ItemComponent):
 class FatigueOnHit(ItemComponent):
     nid = 'fatigue_on_hit'
     desc = "Item changes target's fatigue on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -109,7 +109,7 @@ def ai_status_priority(unit, target, item, move, status_nid) -> float:
 class StatusOnHit(ItemComponent):
     nid = 'status_on_hit'
     desc = "Item gives status to target when it hits"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Skill  # Nid
 
@@ -125,7 +125,7 @@ class StatusOnHit(ItemComponent):
 class StatusesOnHit(ItemComponent):
     nid = 'statuses_on_hit'
     desc = "Item gives statuses to target when it hits"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = 'BigMood'
 
     expose = (Type.List, Type.Skill)  # Nid
@@ -146,7 +146,7 @@ class StatusesOnHit(ItemComponent):
 class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
     nid = 'status_after_combat_on_hit'
     desc = "Item gives status to target after it hits"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Skill  # Nid
 
@@ -168,7 +168,7 @@ class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
 class Shove(ItemComponent):
     nid = 'shove'
     desc = "Item shoves target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -196,7 +196,7 @@ class Shove(ItemComponent):
 class ShoveOnEndCombat(Shove):
     nid = 'shove_on_end_combat'
     desc = "Item shoves target at the end of combat"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -210,7 +210,7 @@ class ShoveOnEndCombat(Shove):
 class ShoveTargetRestrict(Shove, ItemComponent):
     nid = 'shove_target_restrict'
     desc = "Target restriction for Shove"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -236,7 +236,7 @@ class ShoveTargetRestrict(Shove, ItemComponent):
 class Swap(ItemComponent):
     nid = 'swap'
     desc = "Item swaps user with target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         if not skill_system.ignore_forced_movement(unit) and not skill_system.ignore_forced_movement(target):
@@ -246,7 +246,7 @@ class Swap(ItemComponent):
 class Pivot(ItemComponent):
     nid = 'pivot'
     desc = "User moves to other side of target on hit."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -275,7 +275,7 @@ class Pivot(ItemComponent):
 class PivotTargetRestrict(Pivot, ItemComponent):
     nid = 'pivot_target_restrict'
     desc = "Suppresses the Pivot command when it would be invalid."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -302,7 +302,7 @@ class PivotTargetRestrict(Pivot, ItemComponent):
 class DrawBack(ItemComponent):
     nid = 'draw_back'
     desc = "Item moves both user and target back on hit."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -337,7 +337,7 @@ class DrawBack(ItemComponent):
 class DrawBackTargetRestrict(DrawBack, ItemComponent):
     nid = 'draw_back_target_restrict'
     desc = "Suppresses the Draw Back command when it would be invalid."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -365,7 +365,7 @@ class DrawBackTargetRestrict(DrawBack, ItemComponent):
 class Steal(ItemComponent):
     nid = 'steal'
     desc = "Steal any unequipped item from target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     _did_steal = False
 
@@ -434,7 +434,7 @@ class Steal(ItemComponent):
 class GBASteal(Steal, ItemComponent):
     nid = 'gba_steal'
     desc = "Steal any non-weapon, non-spell from target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     def item_restrict(self, unit, item, defender, def_item) -> bool:
         if item_system.unstealable(defender, def_item):
@@ -448,7 +448,7 @@ class GBASteal(Steal, ItemComponent):
 class EventOnHit(ItemComponent):
     nid = 'event_on_hit'
     desc = "Calls event on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
@@ -460,7 +460,7 @@ class EventOnHit(ItemComponent):
 class EventAfterCombat(ItemComponent):
     nid = 'event_after_combat'
     desc = "Item calls an event after hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
@@ -480,7 +480,7 @@ class EventAfterCombat(ItemComponent):
 class EventOnUse(ItemComponent):
     nid = 'event_on_use'
     desc = 'Item calls an event on use, before any effects are played'
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
@@ -492,7 +492,7 @@ class EventOnUse(ItemComponent):
 class EventAfterUse(ItemComponent):
     nid = 'event_after_use'
     desc = 'Item calls an event after use'
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 

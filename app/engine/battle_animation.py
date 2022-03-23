@@ -4,7 +4,7 @@ from app.resources.resources import RESOURCES
 from app.data.database import DB
 
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, image_mods, item_system, item_funcs, skill_system
 
 from app.resources.combat_anims import CombatAnimation, WeaponAnimation, EffectAnimation
@@ -373,7 +373,7 @@ class BattleAnimation():
                     opacity = 255
                     self.flash_color = [(248, 248, 248)]
                     self.flash_counter = 100
-                    SOUNDTHREAD.play_sfx('CombatDeath')
+                    get_sound_thread().play_sfx('CombatDeath')
                 self.opacity = opacity
             else:
                 self.state = 'inert'
@@ -449,9 +449,9 @@ class BattleAnimation():
             self.processing = False  # No more processing -- need to wait at least a frame
 
         elif command.nid == 'sound':
-            SOUNDTHREAD.play_sfx(values[0])
+            get_sound_thread().play_sfx(values[0])
         elif command.nid == 'stop_sound':
-            SOUNDTHREAD.stop_sfx(values[0])
+            get_sound_thread().stop_sfx(values[0])
 
         elif command.nid == 'start_hit':
             self.owner.shake()
@@ -859,7 +859,7 @@ def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False, a
             weapon_anim_nid = weapon_type
         if magic and weapon_anim_nid not in res.weapon_anims.keys():
             weapon_anim_nid = 'MagicGeneric'
-    
+
     weapon_anim = res.weapon_anims.get(weapon_anim_nid)
     if not weapon_anim and weapon_anim_nid.startswith('Ranged'):
         weapon_anim = res.weapon_anims.get(weapon_anim_nid[6:])

@@ -21,7 +21,7 @@ run_tests:
     script:
         - echo "Running tests"
         - python -m app.engine.component_system_compiler.source_generator
-        - python -m unittest app/tests/*.py  
+        - python -m unittest discover -s app/tests -p 'test*.py'
 
 get_metadata:
     stage: generate
@@ -40,7 +40,7 @@ get_metadata:
 
 build_app:
     stage: generate
-    image: "python:3.7.9" 
+    image: "python:3.7.9"
     extends:
     - .shared_windows_runners
     except: # If this double builds consider changing to only: pushes
@@ -70,10 +70,10 @@ build_app:
         - mv dist/lt_editor ./lt_editor/lt_editor
         - cp utilities/install/double_click_to_run.bat ./lt_editor
         - cp dist/autoupdater.exe ./lt_editor/lt_editor
-        - cp autoupdater.py ./lt_editor/lt_editor        
+        - cp autoupdater.py ./lt_editor/lt_editor
         - mv build/editor ./lt_editor/lt_editor
         - echo "Copying default lt project..."
-        - cp default.ltproj ./lt_editor/lt_editor -r 
+        - cp default.ltproj ./lt_editor/lt_editor -r
         - echo "Copying generated files"
         - cp app/engine/item_system.py ./lt_editor/lt_editor/app/engine
         - cp app/engine/skill_system.py ./lt_editor/lt_editor/app/engine

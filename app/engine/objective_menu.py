@@ -5,7 +5,7 @@ from app.constants import WINWIDTH
 
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import State
 from app.engine import engine, background, base_surf, text_funcs, evaluate
 from app.engine.game_state import game
@@ -102,7 +102,7 @@ class ObjectiveMenuState(State):
 
     def take_input(self, event):
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.change('transition_pop')
 
     def draw(self, surf):

@@ -41,7 +41,20 @@ class ItemPrefab(Prefab):
         item_components = Data()
         components = [ICA.restore_component(val) for val in dat['components']]
         components = [c for c in components if c]
+
+        # NOTE: Backwards Compatability. Guarantees that additional paired components
+        # added since last version are default initialized.
+        all_components = []
         for component in components:
+            all_components.append(component)
+            if component.paired_with:
+                for paired_nid in component.paired_with:
+                    if not any([paired_nid == component.nid for component in components]):
+                        component_class = ICA.get_component(paired_nid)
+                        new_paired = ICA.restore_component((paired_nid, component_class.value))
+                        all_components.append(new_paired)
+
+        for component in all_components:
             item_components.append(component)
         i = cls(dat['nid'], dat['name'], dat['desc'],
                 dat['icon_nid'], dat['icon_index'],

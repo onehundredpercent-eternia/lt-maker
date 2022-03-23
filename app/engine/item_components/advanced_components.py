@@ -1,6 +1,5 @@
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
-
 from app.engine import action
 from app.engine import skill_system
 from app.engine.game_state import game
@@ -8,21 +7,21 @@ from app.engine.game_state import game
 class MultiItem(ItemComponent):
     nid = 'multi_item'
     desc = "Item that contains multiple items. Don't abuse!"
-    tag = 'advanced'
+    tag = ItemTags.ADVANCED
 
     expose = (Type.List, Type.Item)
 
 class SequenceItem(ItemComponent):
     nid = 'sequence_item'
     desc = "Item that contains a sequence of items used for targeting"
-    tag = 'advanced'
+    tag = ItemTags.ADVANCED
 
     expose = (Type.List, Type.Item)
 
 class MultiTarget(ItemComponent):
     nid = 'multi_target'
     desc = "Item can target multiple targets."
-    tag = 'advanced'
+    tag = ItemTags.ADVANCED
 
     expose = Type.Int
     value = 2
@@ -33,7 +32,7 @@ class MultiTarget(ItemComponent):
 class AllowSameTarget(ItemComponent):
     nid = 'allow_same_target'
     desc = "Item can target the same target multiple times"
-    tag = 'advanced'
+    tag = ItemTags.ADVANCED
 
     def allow_same_target(self, unit, item) -> bool:
         return True
@@ -41,7 +40,7 @@ class AllowSameTarget(ItemComponent):
 class StoreUnit(ItemComponent):
     nid = 'store_unit'
     desc = "Item registers a unit on the map on hit"
-    tag = 'advanced'
+    tag = ItemTags.ADVANCED
 
     def init(self, item):
         self.item.data['stored_unit'] = None
@@ -55,7 +54,7 @@ class StoreUnit(ItemComponent):
 class UnloadUnit(ItemComponent):
     nid = 'unload_unit'
     desc = "Item takes stored unit and warps them to the new location on the map"
-    tag = 'advanced'
+    tag = ItemTags.ADVANCED
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
         if def_pos and not game.board.get_unit(def_pos) and game.movement.check_simple_traversable(def_pos):

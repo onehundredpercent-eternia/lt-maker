@@ -10,7 +10,7 @@ import app.engine.config as cf
 
 from app.engine.combat.solver import CombatPhaseSolver
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, combat_calcs, gui, action, battle_animation, \
     item_system, skill_system, icons, item_funcs, background, image_mods
 from app.engine.health_bar import CombatHealthBar
@@ -634,7 +634,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 sound = brush[1]
                 if sound == 'Attack Miss 2':
                     sound = 'Miss'  # Replace with miss sound
-                SOUNDTHREAD.play_sfx(sound)
+                get_sound_thread().play_sfx(sound)
 
     def _apply_actions(self):
         """
@@ -658,7 +658,7 @@ class AnimationCombat(BaseCombat, MockCombat):
     def finish(self):
         # Fade back music if and only if it was faded in
         if self.battle_music:
-            SOUNDTHREAD.battle_fade_back(self.battle_music)
+            get_sound_thread().battle_fade_back(self.battle_music)
 
     def build_viewbox(self, current_time):
         vb_multiplier = utils.clamp(current_time / self.viewbox_time, 0, 1)
@@ -677,11 +677,11 @@ class AnimationCombat(BaseCombat, MockCombat):
             defender_battle = None
         battle_music = game.level.music['%s_battle' % self.attacker.team]
         if attacker_battle:
-            self.battle_music = SOUNDTHREAD.battle_fade_in(attacker_battle)
+            self.battle_music = get_sound_thread().battle_fade_in(attacker_battle)
         elif defender_battle:
-            self.battle_music = SOUNDTHREAD.battle_fade_in(defender_battle)
+            self.battle_music = get_sound_thread().battle_fade_in(defender_battle)
         elif battle_music:
-            self.battle_music = SOUNDTHREAD.battle_fade_in(battle_music)
+            self.battle_music = get_sound_thread().battle_fade_in(battle_music)
 
     def left_team(self):
         return self.left.team

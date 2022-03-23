@@ -5,7 +5,7 @@ import app.engine.config as cf
 from app.engine import engine
 from app.engine.objects.overworld import OverworldEntityObject
 from .overworld_manager import OverworldManager
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.utilities import utils
 from app.utilities.typing import NID, Point
 
@@ -85,7 +85,7 @@ class OverworldMovementManager():
         if self.camera_follow == entity_nid:
             self.camera_follow = None
         if surprise:
-            SOUNDTHREAD.play_sfx('Surprise')
+            get_sound_thread().play_sfx('Surprise')
             entity.sprite.change_state('normal')
 
     def finish_all_movement(self):

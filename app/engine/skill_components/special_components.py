@@ -1,5 +1,5 @@
 from app.engine.objects.unit import UnitObject
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 from app.engine import action
@@ -8,7 +8,7 @@ from app.engine.game_state import game
 class DeathTether(SkillComponent):
     nid = 'death_tether'
     desc = "Remove all skills in the game that I initiated on my death"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     def on_death(self, unit):
         for other_unit in game.units:
@@ -19,7 +19,7 @@ class DeathTether(SkillComponent):
 class Oversplash(SkillComponent):
     nid = 'oversplash'
     desc = "Grants unit +X area of effect for regular and blast items"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Int
     value = 1
@@ -50,7 +50,7 @@ class SmartOversplash(Oversplash, SkillComponent):
 class EmpowerHeal(SkillComponent):
     nid = 'empower_heal'
     desc = "Gives +X extra healing"
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.String
 
@@ -65,7 +65,7 @@ class EmpowerHeal(SkillComponent):
 class ManaOnHit(SkillComponent):
     nid = 'mana_on_hit'
     desc = 'Gives +X mana on hit'
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
     author = 'BigMood'
 
     expose = Type.Int
@@ -76,11 +76,11 @@ class ManaOnHit(SkillComponent):
         if target and any(p[2] == target for p in mark_playbacks):
             return self.value
         return 0
-        
+
 class ManaOnKill(SkillComponent):
     nid = 'mana_on_kill'
     desc = 'Gives +X mana on kill'
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Int
 
@@ -93,7 +93,7 @@ class ManaOnKill(SkillComponent):
 class EventAfterInitiatedCombat(SkillComponent):
     nid = 'event_after_initiated_combat'
     desc = 'calls event after combat initated by user'
-    tag = 'advanced'
+    tag = SkillTags.ADVANCED
 
     expose = Type.Event
     value = ''

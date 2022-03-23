@@ -112,7 +112,7 @@ class Channel():
                         # Could also have been told to fade out without ever starting to play
                         # In which case we don't need to do anything
                         self.state = 'stopped'
-                        # This state machine is an absolute mess that 
+                        # This state machine is an absolute mess that
                         # needs to be considerably refactored
                         # self.last_state = 'stopped'
                     return True
@@ -581,4 +581,11 @@ class SoundController():
 
 MUSIC = MusicDict()
 SFX = SoundDict()
-SOUNDTHREAD = SoundController()
+
+_soundthread: SoundController = None
+
+def get_sound_thread():
+    global _soundthread
+    if not _soundthread:
+        _soundthread = SoundController()
+    return _soundthread

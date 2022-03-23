@@ -7,9 +7,9 @@ from app.resources.resources import RESOURCES
 from app.data.database import DB
 
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.fonts import FONT
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.state import State
 
 from app.engine.state import MapState
@@ -67,7 +67,7 @@ class BaseMainState(State):
     def start(self):
         base_music = game.game_vars.get('_base_music')
         if base_music:
-            SOUNDTHREAD.fade_in(base_music)
+            get_sound_thread().fade_in(base_music)
         game.cursor.hide()
         game.cursor.autocursor()
         game.boundary.hide()
@@ -103,10 +103,10 @@ class BaseMainState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         elif event == 'BACK':
@@ -114,7 +114,7 @@ class BaseMainState(State):
                 game.state.back()
 
         elif event == 'SELECT':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             if selection == 'Debug':
                 game.state.change('debug')
@@ -198,28 +198,28 @@ class BaseMarketSelectState(prep.PrepManageState):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
         elif 'LEFT' in directions:
             if self.menu.move_left(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
         elif 'RIGHT' in directions:
             if self.menu.move_right(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
 
         if event == 'SELECT':
             unit = self.menu.get_current()
             game.memory['current_unit'] = unit
             game.memory['next_state'] = 'prep_market'
             game.state.change('transition_to')
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
         elif event == 'BACK':
             game.state.change('transition_pop')
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
         elif event == 'INFO':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = game.get_units_in_party()
             game.memory['next_state'] = 'info_menu'
             game.memory['current_unit'] = self.menu.get_current()
@@ -251,7 +251,7 @@ class BaseConvosChildState(State):
         self.menu.set_ignore(ignore)
         base_music = game.game_vars.get('_base_music')
         if base_music:
-            SOUNDTHREAD.fade_in(base_music)
+            get_sound_thread().fade_in(base_music)
 
     def take_input(self, event):
         first_push = self.fluid.update()
@@ -259,20 +259,20 @@ class BaseConvosChildState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.back()
 
         elif event == 'SELECT':
             selection = self.menu.get_current()
             if not game.base_convos[selection]:
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 # Auto-ignore
                 game.base_convos[selection] = True
                 game.events.trigger('on_base_convo', selection)
@@ -511,7 +511,7 @@ class BaseSupportsState(State):
     def begin(self):
         base_music = game.game_vars.get('_base_music')
         if base_music:
-            SOUNDTHREAD.fade_in(base_music)
+            get_sound_thread().fade_in(base_music)
 
     def take_input(self, event):
         first_push = self.fluid.update()
@@ -524,45 +524,45 @@ class BaseSupportsState(State):
         if 'DOWN' in directions:
             if self.in_display:
                 if self.display.move_down(first_push):
-                    SOUNDTHREAD.play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
             else:
                 if self.menu.move_down(first_push):
-                    SOUNDTHREAD.play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
                 self.display.update_entry(self.menu.get_current().nid)
         elif 'UP' in directions:
             if self.in_display:
                 if self.display.move_up(first_push):
-                    SOUNDTHREAD.play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
             else:
                 if self.menu.move_up(first_push):
-                    SOUNDTHREAD.play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
                 self.display.update_entry(self.menu.get_current().nid)
         elif 'RIGHT' in directions:
             if self.in_display:
                 if self.display.move_right(first_push):
-                    SOUNDTHREAD.play_sfx('TradeRight')
+                    get_sound_thread().play_sfx('TradeRight')
                 else:
-                    SOUNDTHREAD.play_sfx('Error')
+                    get_sound_thread().play_sfx('Error')
             else:
-                SOUNDTHREAD.play_sfx('TradeRight')
+                get_sound_thread().play_sfx('TradeRight')
                 self.in_display = True
                 self.display.draw_cursor = True
         elif 'LEFT' in directions:
             if self.in_display:
                 if self.display.move_left(first_push):
-                    SOUNDTHREAD.play_sfx('TradeRight')
+                    get_sound_thread().play_sfx('TradeRight')
                 else:
                     self.in_display = False
                     self.display.draw_cursor = False
-                    SOUNDTHREAD.play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
 
         if event == 'BACK':
             if self.in_display:
-                SOUNDTHREAD.play_sfx('TradeRight')
+                get_sound_thread().play_sfx('TradeRight')
                 self.in_display = False
                 self.display.draw_cursor = False
             else:
-                SOUNDTHREAD.play_sfx('Select 4')
+                get_sound_thread().play_sfx('Select 4')
                 game.state.change('transition_pop')
 
         elif event == 'SELECT':
@@ -571,12 +571,12 @@ class BaseSupportsState(State):
                 if success:
                     pass
                 else:
-                    SOUNDTHREAD.play_sfx('Error')
+                    get_sound_thread().play_sfx('Error')
             else:
                 if self.display.move_right():
-                    SOUNDTHREAD.play_sfx('TradeRight')
+                    get_sound_thread().play_sfx('TradeRight')
                 else:
-                    SOUNDTHREAD.play_sfx('Error')
+                    get_sound_thread().play_sfx('Error')
 
         elif event == 'INFO':
             game.memory['scroll_units'] = self.units
@@ -629,19 +629,19 @@ class BaseCodexChildState(State):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 6')
+            get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.back()
 
         elif event == 'SELECT':
             selection = self.menu.get_current()
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
 
             if selection == 'Library':
                 game.memory['next_state'] = 'base_library'
@@ -809,29 +809,29 @@ class BaseLibraryState(State):
 
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
             self.display.update_entry(self.menu.get_current().nid)
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
             self.display.update_entry(self.menu.get_current().nid)
         elif 'RIGHT' in directions:
             if self.display.page_right():
-                SOUNDTHREAD.play_sfx('Status_Page_Change')
+                get_sound_thread().play_sfx('Status_Page_Change')
         elif 'LEFT' in directions:
             if self.display.page_left():
-                SOUNDTHREAD.play_sfx('Status_Page_Change')
+                get_sound_thread().play_sfx('Status_Page_Change')
 
         if event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             game.state.change('transition_pop')
 
         elif event == 'SELECT':
             if self.display.page_right(True):
-                SOUNDTHREAD.play_sfx('Status_Page_Change')
+                get_sound_thread().play_sfx('Status_Page_Change')
 
         elif event == 'AUX':
-            SOUNDTHREAD.play_sfx('Info')
+            get_sound_thread().play_sfx('Info')
             lore = self.menu.get_current()
             # Go to previous category
             cidx = self.categories.index(lore.category)
@@ -842,7 +842,7 @@ class BaseLibraryState(State):
             self.display.update_entry(option.nid)
 
         elif event == 'INFO':
-            SOUNDTHREAD.play_sfx('Info')
+            get_sound_thread().play_sfx('Info')
             lore = self.menu.get_current()
             # Go to next category
             cidx = self.categories.index(lore.category)
@@ -929,10 +929,10 @@ class BaseRecordsState(State):
 
         if 'DOWN' in directions:
             if self.current_menu.move_down(first_push):
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.current_menu.move_up(first_push):
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         if event == 'LEFT':
             self.move_left()
@@ -941,7 +941,7 @@ class BaseRecordsState(State):
             self.move_right()
 
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             if self.state in ('records', 'mvp'):
                 game.state.change('transition_pop')
             else:
@@ -960,7 +960,7 @@ class BaseRecordsState(State):
             if self.check_mouse_position():
                 pass
             else:
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 if self.state in ('records', 'mvp'):
                     self.prev_menu = self.current_menu
                     self.current_offset_y = WINHEIGHT
@@ -974,7 +974,7 @@ class BaseRecordsState(State):
                     self.current_menu = self.unit_menus[self.current_menu.get_current_index()]
 
     def check_mouse_position(self):
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             if mouse_x <= 16:
@@ -984,17 +984,17 @@ class BaseRecordsState(State):
                 self.move_right()
                 return True
             elif mouse_y <= 16:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.current_menu.move_up()
                 return True
             elif mouse_y >= WINHEIGHT - 16:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 self.current_menu.move_down()
                 return True
         return False
 
     def move_left(self):
-        SOUNDTHREAD.play_sfx('Status_Page_Change')
+        get_sound_thread().play_sfx('Status_Page_Change')
         self.prev_menu = self.current_menu
         self.current_offset_x = -WINWIDTH
         self.prev_offset_x = 1
@@ -1012,7 +1012,7 @@ class BaseRecordsState(State):
             self.current_menu = self.unit_menus[self.mvp.get_current_index()]
 
     def move_right(self):
-        SOUNDTHREAD.play_sfx('Status_Page_Change')
+        get_sound_thread().play_sfx('Status_Page_Change')
         self.prev_menu = self.current_menu
         self.current_offset_x = WINWIDTH
         self.prev_offset_x = -1
@@ -1106,28 +1106,28 @@ class BaseBEXPSelectState(prep.PrepManageState):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
         elif 'LEFT' in directions:
             if self.menu.move_left(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
         elif 'RIGHT' in directions:
             if self.menu.move_right(first_push):
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
 
         if event == 'SELECT':
             unit = self.menu.get_current()
             game.memory['current_unit'] = unit
             game.memory['next_state'] = 'base_bexp_allocate'
             game.state.change('transition_to')
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
         elif event == 'BACK':
             game.state.change('transition_pop')
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
         elif event == 'INFO':
-            SOUNDTHREAD.play_sfx('Select 1')
+            get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = game.get_units_in_party()
             game.memory['next_state'] = 'info_menu'
             game.memory['current_unit'] = self.menu.get_current()
@@ -1187,28 +1187,28 @@ class BaseBEXPAllocateState(State):
         # Down resets values to their starting values
         if 'DOWN' in directions:
             if self.new_exp > self.current_exp:
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
                 self.new_bexp = self.current_bexp
                 self.new_exp = self.current_exp
             elif first_push:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
         # Right increments by 1 EXP
         elif 'RIGHT' in directions:
             if self.new_exp < 100 and self.new_bexp > 0 and self.new_bexp >= self.exp_increment:
-                SOUNDTHREAD.play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
                 self.new_exp += 1
                 self.new_bexp -= self.exp_increment
             elif first_push:
-                SOUNDTHREAD.play_sfx('Error')
+                get_sound_thread().play_sfx('Error')
         # Left decrements by 1 EXP
         elif 'LEFT' in directions:
-            SOUNDTHREAD.play_sfx('Select 5')
+            get_sound_thread().play_sfx('Select 5')
             if self.new_exp > self.current_exp:
                 self.new_exp -= 1
                 self.new_bexp += self.exp_increment
         # Up attempts to get us to 100 EXP, or the highest amount possible if 100 cannot be reached.
         elif 'UP' in directions:
-            SOUNDTHREAD.play_sfx('Select 5')
+            get_sound_thread().play_sfx('Select 5')
             if self.new_exp < 100 and self.new_bexp > self.exp_increment:
                 amount_needed = (100 - self.new_exp) * self.exp_increment
                 if self.new_bexp >= amount_needed:
@@ -1221,7 +1221,7 @@ class BaseBEXPAllocateState(State):
         # Allocates EXP, performs level up, and sets values as needed
         if event == 'SELECT':
             if self.new_exp > self.current_exp:
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 exp_to_gain = self.new_exp - self.current_exp
                 if DB.constants.value('rd_bexp_lvl'):
                     game.memory['exp_method'] = 'BEXP'
@@ -1238,7 +1238,7 @@ class BaseBEXPAllocateState(State):
 
             # Resets values to starting values and goes back to previous menu
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             self.new_bexp = self.current_exp
             self.new_bexp = self.current_bexp
             game.state.change('transition_pop')

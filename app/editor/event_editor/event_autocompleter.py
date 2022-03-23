@@ -71,7 +71,7 @@ def generate_flags_wordlist(flags: List[str] = []) -> List[str]:
     return flaglist
 
 def detect_command_under_cursor(line: str) -> event_commands.EventCommand:
-    return event_commands.parse_text(line)
+    return event_commands.determine_command_type(line)
 
 def detect_type_under_cursor(line: str, cursor_pos: int, arg_under_cursor: str = None) -> Tuple[event_validators.Validator, List[str]]:
     # turn off typechecking for comments
@@ -97,7 +97,7 @@ def detect_type_under_cursor(line: str, cursor_pos: int, arg_under_cursor: str =
     if arg_idx == -1:
         return (event_validators.EventFunction, [])
     try:
-        command = event_commands.parse_text(line)
+        command = detect_command_under_cursor(line)
         validator_name = None
         if command:
             if arg_idx >= len(command.keywords):

@@ -7,7 +7,7 @@ from app.utilities import utils
 from app.data import lore
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine import engine, image_mods, icons, help_menu, menu_options, \
     item_system, gui, item_funcs
 from app.engine.gui import ScrollBar
@@ -334,7 +334,7 @@ class Simple():
         return NotImplementedError
 
     def handle_mouse(self) -> bool:
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             idxs, option_rects = self.get_rects()
@@ -905,7 +905,7 @@ class Trade(Simple):
         return surf
 
     def handle_mouse(self) -> bool:
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         did_move = False
         if mouse_position:
             mouse_x, mouse_y = mouse_position
@@ -1499,7 +1499,7 @@ class Convoy():
         return surf
 
     def handle_mouse(self) -> bool:
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         did_move = False
         if mouse_position:
             mouse_x, mouse_y = mouse_position

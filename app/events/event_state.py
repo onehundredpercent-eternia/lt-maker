@@ -1,6 +1,6 @@
 from app.data.database import DB
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import State
 from app.engine.dialog_log import DialogLogState
 import app.engine.config as cf
