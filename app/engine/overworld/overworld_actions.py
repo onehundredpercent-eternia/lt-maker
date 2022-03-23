@@ -5,7 +5,7 @@ from app.engine.objects.overworld import OverworldEntityObject, OverworldNodeObj
 from .overworld_manager import OverworldManager
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
-from app.utilities.typing import NID
+from app.utilities.typing import NID, Point
 from app.utilities import hex_math
 
 
@@ -65,9 +65,9 @@ class OverworldHexMove():
     """
     A user-issued move to a party on the overworld between two hexes.
     """
-    def __init__(self, entity: OverworldEntityObject | NID, target_node: NID,
+    def __init__(self, entity: OverworldEntityObject | NID, target_hex: hex_math.Hex,
                  overworld: OverworldManager, event=False, follow=True, speed_adj=1,
-                 remove_last=False, path=None, linger=250, after_move_callback=None, mute=False):
+                 remove_last=False, path: List[Point] =None, linger=250, after_move_callback=None, mute=False):
         if isinstance(entity, OverworldEntityObject):
             entity = entity.nid
         self.entity = overworld.entities[entity]
@@ -76,23 +76,23 @@ class OverworldHexMove():
 
         # pathfinding
         if not path and self.entity.on_hex:
-            target_hex = overworld.hexes[target_node]
-            old_hex = overworld.hexes[self.entity.on_hex]
+            target_hex: hex_board.HexData = overworld.hex_board.hex_graph[target_hex]
+            old_hex: hex_board.HexData = overworld.hex_board.hex_graph[self.entity.on_hex]
             new_hex = target_hex
 
-            hexes: List[Tuple] = overworld.shortest_hex_path(old_hex, new_hex)
+            hexes: List[hex_math.Hex] = overworld.shortest_hex_path(old_hex, new_hex)
             if remove_last:
                 hexes.pop()
-            self.path = [hex_math.hex_to_pixel(old_hex.pos)]
+            self.path: List[Point] = [hex_math.hex_to_pixel(old_hex.pos)]
 
-            for hex_prefab in hexes:                
-                self.path.append(hex_math.hex_to_pixel(hex_prefab.pos))
+            for hex_data in hexes:                
+                self.path.append(hex_math.hex_to_pixel(hex_data.pos))
         elif not path and not self.entity.on_hex: # path directly to hex from where we're at
-            self.path = [hex_math.hex_to_pixel(target_hex.pos)]
+            self.path: List[Point] = [hex_math.hex_to_pixel(target_hex.pos)]
             if self.entity.display_position != self.path[0]:
                 self.path.insert(0, self.entity.display_position)
         else: # queue custom path
-            self.path = path
+            self.path: List[Point] = path
             if self.entity.display_position != self.path[0]:
                 self.path.insert(0, self.entity.display_position)
         # finally, since movement is queued LIFO, we reverse the path
