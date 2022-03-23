@@ -273,9 +273,11 @@ class PrepPickUnitsState(State):
 class PrepFormationState(MapState):
     name = 'prep_formation'
 
+    def start(self):
+        game.highlight.show_formation(game.get_all_formation_spots())
+
     def begin(self):
         game.cursor.show()
-        game.highlight.show_formation(game.get_all_formation_spots())
         game.boundary.show()
 
     def take_input(self, event):

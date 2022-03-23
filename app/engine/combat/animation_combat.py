@@ -526,7 +526,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.left_bar = SPRITES.get('combat_main_left_' + left_color).copy()
         if self.left_item:
             name = self.left_item.name
-            if FONT['text-brown'].width(name) > 60:
+            if FONT['text-brown'].width(name) > 56:
                 font = FONT['narrow-brown']
             else:
                 font = FONT['text-brown']
@@ -559,7 +559,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.right_bar = SPRITES.get('combat_main_right_' + right_color).copy()
         if self.right_item:
             name = self.right_item.name
-            if FONT['text-brown'].width(name) > 60:
+            if FONT['text-brown'].width(name) > 56:
                 font = FONT['narrow-brown']
             else:
                 font = FONT['text-brown']
@@ -1014,10 +1014,10 @@ class AnimationCombat(BaseCombat, MockCombat):
         icon = icons.get_icon(item)
         if icon:
             icon = item_system.item_icon_mod(unit, item, other, icon)
-            surf.blit(icon, (topleft[0] + 2, topleft[1] + 3))
+            surf.blit(icon, (topleft[0] + 2, topleft[1] + 4))
 
         if skill_system.check_enemy(unit, other):
-            game.ui_view.draw_adv_arrows(surf, unit, other, item, other_item, (topleft[0] + 11, topleft[1] + 7))
+            game.ui_view.draw_adv_arrows(surf, unit, other, item, other_item, (topleft[0] + 11, topleft[1] + 8))
 
     def draw_stats(self, surf, stats, topright):
         right, top = topright
