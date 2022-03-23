@@ -129,7 +129,8 @@ class SimpleCombat():
         game.events.trigger('combat_end', self.attacker, self.defender, self.main_item, self.attacker.position)
         self.handle_item_gain(all_units)
 
-        self.handle_supports(all_units)
+        pairs = self.handle_supports(all_units)
+        self.handle_support_pairs(pairs)
 
         # handle wexp & skills
         if not self.attacker.is_dying:
@@ -546,18 +547,37 @@ class SimpleCombat():
 
         return total_exp
 
-    def handle_supports(self, all_units):
+    def handle_supports(self, all_units) -> list:
+        """
+        Returns a list of pairs of units that gained support together
+        """
+        pairs = []
         if game.game_vars.get('_supports'):
             # End combat supports
             for unit in all_units:
                 if unit is self.attacker and self.defender and self.defender is not self.attacker:
-                    supports.increment_end_combat_supports(self.attacker, self.defender)
-                else:
-                    supports.increment_end_combat_supports(unit)
+                    pairs += supports.increment_end_combat_supports(self.attacker, self.defender)
+                else
+                    pairs += supports.increment_end_combat_supports(unit)
+            
             enemies = all_units.copy()
             enemies.remove(self.attacker)
             for unit in enemies:
-                supports.increment_interact_supports(self.attacker, unit)
+                if supports.increment_interact_supports(self.attacker, unit):
+                    pairs.append((self.attacker, unit))
+
+            if DB.constants.value('pairup'):
+                for unit in all_units:
+                    if unit.traveler:
+                        if supports.increment_pairup_supports(unit, unit.traveler):
+                            pairs.append((unit, unit.traveler))
+                    if unit.strike_partner:
+                        if supports.increment_pairup_supports(unit, unit.strike_partner):
+                            pairs.append((unit, unit.strike_partner))
+        return pairs
+
+    def handle_support_pairs(self, pairs):
+        pass
 
     def handle_records(self, full_playback, all_units):
         miss_marks = self.get_from_full_playback('mark_miss')

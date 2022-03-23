@@ -339,6 +339,14 @@ class MapCombat(SimpleCombat):
     def _end_phase(self):
         pass
 
+    def handle_support_pairs(self, pairs):
+        for pair in pairs:
+            unit1, unit2 = pair
+            if not unit1.position or not unit2.position:
+                continue
+            unit1.sprite.add_animation('support_up', loop=False)
+            unit2.sprite.add_animation('support_up', loop=False)
+
     def draw(self, surf):
         # Animations
         self.animations = [anim for anim in self.animations if not anim.update()]

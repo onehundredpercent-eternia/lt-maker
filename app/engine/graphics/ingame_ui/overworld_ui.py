@@ -13,9 +13,10 @@ from app.engine.sprites import SPRITES
 from app.engine.game_state import game
 
 class OverworldTravelUI():
-    legal_states = ('overworld')
+    legal_states = ('overworld',)
 
     def __init__(self, overworld: OverworldObject = None, cursor: OverworldCursor = None):
+        self.overworld = overworld
         self.base_component = uif.UIComponent.create_base_component()
         # initialize components
         self.location_title: uif.UIComponent = uif.UIComponent(name="location title")
@@ -69,6 +70,13 @@ class OverworldTravelUI():
             text = node.prefab.name
             self.location_title_text.set_text(text)
             active = True
+        hex_pos = game.cursor.get_hovered_hex()
+        hex_prefab = self.overworld.hex_board.hexes.get(hex_pos)
+        if hex_prefab:
+            text = hex_prefab.name
+            self.location_title_text.set_text(text)
+            active = True
+
         # logic for determining which side of the screen the title hangs out on
         # only switch sides if we aren't onscreen
         if not self.location_title.enabled:

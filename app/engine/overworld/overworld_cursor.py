@@ -8,6 +8,7 @@ from app.engine.overworld.overworld_manager import OverworldManager
 
 if TYPE_CHECKING:
     from app.engine.objects.overworld import OverworldNodeObject, OverworldEntityObject
+    from app.engine import hex_math
 
 from app.constants import TILEWIDTH
 from app.engine import engine
@@ -61,6 +62,10 @@ class OverworldCursor(BaseCursor):
         node = self.overworld.node_at(self.position)
         entity = self.overworld.entity_at(self.position)
         return (entity, node)
+
+    def get_hovered_hex(self) -> hex_math.Hex:
+        hex_pos = self.overworld.hex_at(self.position)
+        return hex_pos
 
     def get_image(self):
         left = (ANIMATION_COUNTERS.fps6_360counter.count % 10) * TILEWIDTH * 2

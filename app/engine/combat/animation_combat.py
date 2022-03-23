@@ -1076,7 +1076,8 @@ class AnimationCombat(BaseCombat, MockCombat):
         game.events.trigger('combat_end', self.attacker, self.defender, self.main_item, self.attacker.position)
         self.handle_item_gain(all_units)
 
-        self.handle_supports(all_units)
+        pairs = self.handle_supports(all_units)
+        self.handle_support_pairs(pairs)
         self.handle_records(self.full_playback, all_units)
 
         self.end_combat()
@@ -1104,3 +1105,9 @@ class AnimationCombat(BaseCombat, MockCombat):
         Map combat has the implementation I want of this, so let's just use it
         """
         MapCombat.handle_state_stack(self)
+
+    def handle_support_pairs(self, pairs):
+        """
+        Map combat has the implementation I want of this, so let's just use it
+        """
+        MapCombat.handle_support_pairs(self, pairs)
