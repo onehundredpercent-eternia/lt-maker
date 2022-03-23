@@ -29,8 +29,8 @@ class Uses(ItemComponent):
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         if item.uses_options.lose_uses_on_miss():
-        actions.append(action.SetObjData(item, 'uses', item.data['uses'] - 1))
-        actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
+            actions.append(action.SetObjData(item, 'uses', item.data['uses'] - 1))
+            actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
 
     def on_broken(self, unit, item):
         from app.engine.game_state import game
@@ -79,8 +79,8 @@ class ChapterUses(ItemComponent):
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         if item.uses_options.lose_uses_on_miss():
-        actions.append(action.SetObjData(item, 'c_uses', item.data['c_uses'] - 1))
-        actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
+            actions.append(action.SetObjData(item, 'c_uses', item.data['c_uses'] - 1))
+            actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
 
     def on_broken(self, unit, item):
         if self.is_broken(unit, item):

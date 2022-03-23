@@ -557,7 +557,7 @@ class SimpleCombat():
             for unit in all_units:
                 if unit is self.attacker and self.defender and self.defender is not self.attacker:
                     pairs += supports.increment_end_combat_supports(self.attacker, self.defender)
-                else
+                else:
                     pairs += supports.increment_end_combat_supports(unit)
             
             enemies = all_units.copy()

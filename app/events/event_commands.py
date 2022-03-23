@@ -2299,7 +2299,7 @@ def restore_command(dat) -> EventCommand:
     elif len(dat) == 3:  # Old method
         nid, values, display_values = dat
     else:
-    logging.error("Couldn't restore event command: NID: %s; Display Values: %s", nid, display_values)
+        logging.error("Couldn't restore event command: NID: %s; Display Values: %s", nid, display_values)
         return None
 
     text = ';'.join([nid] + display_values)
@@ -2349,14 +2349,14 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
     def _parse_command(command: EventCommand, arguments: List[str]) -> Tuple:
         # Start parsing
         keyword_argument_mode: bool = False
-            cmd_args = arguments[1:]
+        cmd_args = arguments[1:]
         parameters, flags = {}, set()
-            command_info = command()
+        command_info = command()
 
-            for idx, arg in enumerate(cmd_args):
-                # remove line break chars. speak has its own handling, so keep them
-                if command_info.nid != 'speak':
-                    arg = arg.replace('\u2028', '')
+        for idx, arg in enumerate(cmd_args):
+            # remove line break chars. speak has its own handling, so keep them
+            if command_info.nid != 'speak':
+                arg = arg.replace('\u2028', '')
 
             all_keywords = command_info.keywords + command_info.optional_keywords
 

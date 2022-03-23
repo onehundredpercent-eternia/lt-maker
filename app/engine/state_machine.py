@@ -41,7 +41,7 @@ class StateMachine():
                                 settings, status_upkeep, text_entry,
                                 title_screen, trade, transitions, turnwheel,
                                 victory_screen)
-        from app.engine import stat_screen
+        # from app.engine import stat_screen
         from app.engine.game_menus.menu_states import unit_menu_state
         from app.engine.overworld import overworld_states
         from app.events import event_state
@@ -73,7 +73,7 @@ class StateMachine():
              'objective_menu': objective_menu.ObjectiveMenuState,
              'unit_menu': unit_menu_state.UnitMenuState,
              'info_menu': info_menu.InfoMenuState,
-             'stat_screen': stat_screen.StatScreenState,
+             # 'stat_screen': stat_screen.StatScreenState,
              'phase_change': general_states.PhaseChangeState,
              'move': general_states.MoveState,
              'movement': general_states.MovementState,

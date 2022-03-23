@@ -4,7 +4,7 @@ from app.data.database import DB
 from app.utilities import utils
 
 from app.engine.fonts import FONT
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.engine.input_manager import INPUT
 from app.engine.state import MapState
@@ -15,10 +15,10 @@ from app.engine.fluid_scroll import FluidScroll
 
 def handle_info():
     if game.cursor.get_hover():
-        SOUNDTHREAD.play_sfx('Select 1')
+        get_sound_thread().play_sfx('Select 1')
         game.state.change('stat_screen')
     else:
-        SOUNDTHREAD.play_sfx('Select 3')
+        get_sound_thread().play_sfx('Select 3')
         game.boundary.toggle_all_enemy_attacks()
 
 def build_groove(surf, topleft, width, fill):
@@ -46,7 +46,7 @@ class StatScreenState(MapState):
     def start(self):
         self.fluid = FluidScroll(200, 1)
 
-        SOUNDTHREAD.play_sfx('Info In')
+        get_sound_thread().play_sfx('Info In')
         game.stat_screen.toggle_info(True)
         game.stat_screen.info_graph.set_transition_in()
 
@@ -57,21 +57,21 @@ class StatScreenState(MapState):
         self.handle_mouse()
         if game.stat_screen.info_flag:
             if event == 'INFO' or event == 'BACK':
-                SOUNDTHREAD.play_sfx('Info Out')
+                get_sound_thread().play_sfx('Info Out')
                 game.stat_screen.info_graph.set_transition_out()
                 game.state.back()
 
             if 'RIGHT' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 game.stat_screen.info_graph.move_right()
             elif 'LEFT' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 game.stat_screen.info_graph.move_left()
             elif 'UP' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 game.stat_screen.info_graph.move_up()
             elif 'DOWN' in directions:
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
                 game.stat_screen.info_graph.move_down()
 
     def handle_mouse(self):

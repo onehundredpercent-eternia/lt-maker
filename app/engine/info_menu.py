@@ -609,10 +609,10 @@ class InfoMenuState(State):
         self.info_graph.register((x_offset + 8, 42, 30, 16), 'Level_desc', 'all')
         FONT['text'].blit_right(str(self.unit.exp), surf, (x_offset + 63, 42), 'blue')
         self.info_graph.register((x_offset + 38, 42, 30, 16), 'Exp_desc', 'all')
-        FONT['text'].blit_right(str(self.unit.get_hp()), surf, (x_offset + 39, 58), 'blue')
-        self.info_graph.register((x_offset + 8, 58, 72, 16), 'HP_desc', 'all')
-        max_hp = equations.parser.hitpoints(self.unit)
-        FONT['text'].blit_right(str(max_hp), surf, (x_offset + 63, 58), 'blue')
+        FONT['text'].blit_right(str(self.unit.get_mana()), surf, (x_offset + 39, 58), 'blue')
+        self.info_graph.register((x_offset + 8, 58, 72, 16), 'Mana_desc', 'all')
+        max_mana = self.unit.get_max_mana()
+        FONT['text'].blit_right(str(max_mana), surf, (x_offset + 63, 58), 'blue')
         # Blit the white status platform
         surf.blit(SPRITES.get('status_platform'), (x_offset + 66, 53))
         # Blit affinity
@@ -623,25 +623,25 @@ class InfoMenuState(State):
 
         # Battle stats
         battle_surf = SPRITES.get('battle_info')
-        left, top = WINWIDTH - 122, 31
+        left, top = WINWIDTH - 122, 8
         surf.blit(battle_surf, (left, top))
         # Populate battle info
-        # surf.blit(SPRITES.get('equipment_logo'), (14, top + 4))
+        surf.blit(SPRITES.get('equipment_logo'), (left + 2, top + 4))
         # FONT['text-yellow'].blit('Rng', surf, (78, top))
         # self.info_graph.register((96 + 78, top, 56, 16), 'Rng_desc', 'equipment')
-        FONT['text-yellow'].blit('Atk', surf, (left + 4, top + 2))
-        self.info_graph.register((left + 4, top + 2, 64, 16), 'Atk_desc', 'all')
-        FONT['text-yellow'].blit('AS', surf, (left + 60, top + 2))
-        self.info_graph.register((left + 60, top + 2, 64, 16), 'AS_desc', 'all')
-        FONT['text-yellow'].blit('Hit', surf, (left + 4, top + 18))
-        self.info_graph.register((left + 4, top + 18, 64, 16), 'Hit_desc', 'all')
-        FONT['text-yellow'].blit('Avoid', surf, (left + 60, top + 18))
-        self.info_graph.register((left + 60, top + 18, 64, 16), 'Avoid_desc', 'all')
+        FONT['text-yellow'].blit('Atk', surf, (left + 4, top + 17))
+        self.info_graph.register((left + 4, top + 17, 64, 16), 'Atk_desc', 'all')
+        FONT['text-yellow'].blit('AS', surf, (left + 60, top + 17))
+        self.info_graph.register((left + 60, top + 17, 64, 16), 'AS_desc', 'all')
+        FONT['text-yellow'].blit('Hit', surf, (left + 4, top + 33))
+        self.info_graph.register((left + 4, top + 33, 64, 16), 'Hit_desc', 'all')
+        FONT['text-yellow'].blit('Avoid', surf, (left + 60, top + 33))
+        self.info_graph.register((left + 60, top + 33, 64, 16), 'Avoid_desc', 'all')
         if DB.constants.value('crit'):
-            FONT['text-yellow'].blit('Crit', surf, (left + 4, top + 34))
-            self.info_graph.register((left + 4, top + 34, 64, 16), 'Crit_desc', 'all')
-            FONT['text-yellow'].blit('Dodg', surf, (left + 60, top + 34))
-            self.info_graph.register((left + 60, top + 34, 64, 16), 'Dodg_desc', 'all')
+            FONT['text-yellow'].blit('Crit', surf, (left + 4, top + 49))
+            self.info_graph.register((left + 4, top + 49, 64, 16), 'Crit_desc', 'all')
+            FONT['text-yellow'].blit('Dodg', surf, (left + 60, top + 49))
+            self.info_graph.register((left + 60, top + 49, 64, 16), 'Dodg_desc', 'all')
 
         weapon = self.unit.get_weapon()
         if weapon:
@@ -660,13 +660,22 @@ class InfoMenuState(State):
         attack_speed = str(combat_calcs.attack_speed(self.unit, weapon))
         ddg = str(combat_calcs.crit_avoid(self.unit, weapon))
         # FONT['text-blue'].blit_right(rng, surf, (127, top))
-        FONT['text-blue'].blit_right(dam, surf, (left + 56, top + 2))
-        FONT['text-blue'].blit_right(attack_speed, surf, (left + 116, top + 2))
-        FONT['text-blue'].blit_right(acc, surf, (left + 56, top + 18))
-        FONT['text-blue'].blit_right(avo, surf, (left + 116, top + 18))
+        FONT['text-blue'].blit_right(dam, surf, (left + 56, top + 17))
+        FONT['text-blue'].blit_right(attack_speed, surf, (left + 116, top + 17))
+        FONT['text-blue'].blit_right(acc, surf, (left + 56, top + 33))
+        FONT['text-blue'].blit_right(avo, surf, (left + 116, top + 33))
         if DB.constants.value('crit'):
-            FONT['text-blue'].blit_right(crt, surf, (left + 56, top + 34))
-            FONT['text-blue'].blit_right(ddg, surf, (left + 116, top + 34))
+            FONT['text-blue'].blit_right(crt, surf, (left + 56, top + 49))
+            FONT['text-blue'].blit_right(ddg, surf, (left + 116, top + 49))
+
+        # draw hp
+        hp = self.unit.get_hp()
+        max_hp = self.unit.get_max_hp()
+        # build_groove(surf, (left, 12), 112, utils.clamp(hp / max_hp, 0, 1))
+        text = str(hp) + '/' + str(max_hp)
+        x_pos -= FONT['text-blue'].width(text)//2
+        FONT['text-blue'].blit_right(text, surf, (left + 116, top + 1))
+        FONT['text-yellow'].blit('HP', surf, (left + 60, top + 1))
 
         return surf
 

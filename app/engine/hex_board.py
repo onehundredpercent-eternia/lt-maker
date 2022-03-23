@@ -1,14 +1,14 @@
 from enum import Enum
 from typing import Dict, List, Tuple, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from app.data.hex_prefab import HexPrefab
-    from app.data.hex_type import HexType
-    from app.data.overworld import OverworldPrefab
-    from app.engine.objects.hex_entity import HexEntity
+# if TYPE_CHECKING:
+from app.data.hex_prefab import HexPrefab
+from app.data.hex_type import HexType
 
 from app.utilities import hex_math
 from app.utilities.typing import NID
+from app.data.overworld import OverworldPrefab
+
 
 class Sight(Enum):
     UNEXPLORED = 0

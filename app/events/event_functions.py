@@ -7,7 +7,7 @@ from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
 from app.data.database import DB
 from app.data.level_units import GenericUnit, UniqueUnit
 from app.engine import (action, background, banner, dialog, engine, evaluate,
-                        icons, image_mods, item_funcs, item_system, memento_dialog
+                        icons, image_mods, item_funcs, item_system, memento_dialog,
                         skill_system, target_system, unit_funcs)
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -24,7 +24,7 @@ from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, regions
-from app.events.event_portrait import EventPortrait
+from app.events.event_portrait import EventPortrait, MementoEventPortrait
 from app.events.speak_style import SpeakStyle
 from app.events.screen_positions import parse_screen_position
 from app.resources.resources import RESOURCES
