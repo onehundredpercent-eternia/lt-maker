@@ -44,7 +44,25 @@ class OverworldTravelUI():
 
         self.base_component.add_child(self.location_title)
 
-    def _init_location_title_animations(self):
+        self.resources: uif.UIComponent = uif.UIComponent(name="resources")
+        self.resources.props.bg = SPRITES.get('world_map_resources_box')
+        self.resources.size = self.resources.props.bg.get_size()
+        self.resources.props.v_alignment = uif.VAlignment.BOTTOM
+        self.resources.margin = (5, 5, 5, 5)
+        self._init_resources_animations()
+        self.resources.disable()
+
+        self.resource_text_components = []
+        self.resource_names = ["money", "special", "crystals", "rations"]
+        for idx, val in enumerate(self.resource_names):
+            text = uif.PlainTextLine("%s text" % val, self.resources, "")
+            text.props.h_alignment = uif.HAlignment.CENTER
+            text.props.v_alignment = uif.VAlignment.CENTER
+            text.props.resize_mode = uif.ResizeMode.AUTO
+            self.resources.add_child(text)
+            self.resource_text_components.append(text)
+
+    def _generate_transitions(self) -> tuple:
         exit_left = uif.translate_anim((0, 0), (-WINWIDTH, 0), disable_after=True)
         exit_right = uif.translate_anim((0, 0), (WINWIDTH, 0), disable_after=True)
         enter_left = uif.translate_anim((-WINWIDTH, 0), (0, 0))
@@ -57,9 +75,21 @@ class OverworldTravelUI():
                 return "right"
         transition_out_anim = uif.hybridize_animation({"left": exit_left, "right": exit_right}, which_transition)
         transition_in_anim = uif.hybridize_animation({"left": enter_left, "right": enter_right}, which_transition)
+        return transition_in_anim, transition_out_anim
+
+    def _init_location_title_animations(self):
+        transition_in_anim, transition_out_anim = self._generate_transitions()
 
         self.location_title.save_animation(transition_out_anim, '!exit')
         self.location_title.save_animation(transition_in_anim, '!enter')
+        self.location_title.save_animation(transition_out_anim + transition_in_anim, '!switch')
+
+    def _init_resources_animations(self):
+        transition_in_anim, transition_out_anim = self._generate_transitions()
+
+        self.resources.save_animation(transition_out_anim, '!exit')
+        self.resources.save_animation(transition_in_anim, '!enter')
+        self.resources.save_animation(transition_out_anim + transition_in_anim, '!switch')
 
     def _update_location_title_component(self):
         # determine name of location hovered
@@ -71,32 +101,34 @@ class OverworldTravelUI():
             self.location_title_text.set_text(text)
             active = True
         hex_pos = game.cursor.get_hovered_hex()
-        hex_prefab = self.overworld.hex_board.hexes.get(hex_pos)
-        if hex_prefab:
-            text = hex_prefab.name
-            self.location_title_text.set_text(text)
+        hex_name = self.overworld.hex_board.get_name(hex_pos)
+        if hex_name:
+            self.location_title_text.set_text(hex_name)
             active = True
 
         # logic for determining which side of the screen the title hangs out on
-        # only switch sides if we aren't onscreen
-        if not self.location_title.enabled:
-            if game.cursor.position[0] < TILEX // 2 + game.camera.get_x():
-                # if both cursor and box is left, switch sides
-                if self.location_title.props.h_alignment == uif.HAlignment.LEFT:
-                    self.location_title.props.h_alignment = uif.HAlignment.RIGHT
-            else:
-                if self.location_title.props.h_alignment == uif.HAlignment.RIGHT:
-                    self.location_title.props.h_alignment = uif.HAlignment.LEFT
+        # Try to keep them on the same side
+        # Left
+        switch_sides = False
+        if game.cursor.position[0] < TILEX // 2 + game.camera.get_x():
+            # if both cursor is left but box is right, switch sides
+            if self.location_title.props.h_alignment == uif.HAlignment.RIGHT:
+                self.location_title.props.h_alignment = uif.HAlignment.LEFT
+                switch_sides = True
+        else:
+            if self.location_title.props.h_alignment == uif.HAlignment.LEFT:
+                self.location_title.props.h_alignment = uif.HAlignment.RIGHT
+                switch_sides = True
         # animate out/in, if it's not already animating
         if len(self.location_title.queued_animations) == 0:
-            if not active:
-                if self.location_title.enabled:
-                    # was active, now not, animate out
-                    self.location_title.exit()
-            else:
-                if not self.location_title.enabled:
-                    # was inactive, no active, animate in
-                    self.location_title.enter()
+            if self.location_title.enabled and not active:
+                # was active, now not, animate out
+                self.location_title.exit()
+            elif self.location_title.enabled and switch_sides:
+                self.location_title.switch()
+            elif not self.location_title.enabled:
+                # was inactive, no active, animate in
+                self.location_title.enter()
 
     def _update_minimap_component(self):
         if self.minimap:
@@ -115,13 +147,40 @@ class OverworldTravelUI():
                     # then we leave the left
                     self.minimap.queue_animation(names=['translate_down', 'change_alignment', 'translate_up'])
 
+    def _update_resources_component(self):
+        vals = [game.party.money, game.party.special, game.party.crystals, game.party.rations]
+        for idx, text_component in enumerate(self.resource_text_components):
+            val = str(vals[idx])
+            name = self.resource_names[idx]
+            text_component.set_text("%s: %s" % (name, val))
+
+        switch_sides = False
+        if game.cursor.position[0] < TILEX // 2 + game.camera.get_x():
+            # Make sure they are on opposite sides
+            if self.resources.props.h_alignment == uif.HAlignment.LEFT:
+                self.resources.props.h_alignment = uif.HAlignment.RIGHT
+                switch_sides = True
+        else:
+            if self.resources.props.h_alignment == uif.HAlignment.RIGHT:
+                self.resources.props.h_alignment = uif.HAlignment.LEFT
+                switch_sides = True
+        # animate out/in, if it's not already animating
+        if len(self.resources.queued_animations) == 0:
+            if self.resources.enabled and switch_sides:
+                self.resources.switch()
+            elif not self.resources.enabled:
+                # was inactive, no active, animate in
+                self.resources.enter()
+
     def draw(self, surf: Surface) -> Surface:
         if not game.state.current() in self.legal_states:
             if self.minimap:
                 self.minimap.disable()
             self.location_title.disable()
+            self.resources.disable()
             return surf
         self._update_location_title_component()
+        self._update_resources_component()
         self._update_minimap_component()
         self.base_component._should_redraw = True
         ui_surf = self.base_component.to_surf()
