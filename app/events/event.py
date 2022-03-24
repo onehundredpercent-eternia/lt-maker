@@ -293,11 +293,11 @@ class Event():
                 arg_list = evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region)
                 arg_list = [self._object_to_str(arg) for arg in arg_list]
             except Exception as e:
-                self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
+                self.logger.error("%s: Could not evaluate {%s}" % (e, command.parameters['Expression']))
                 return False
             if not arg_list:
                 if show_warning:
-                    self.logger.warning("Arg list is empty for: %s" % (cond))
+                    self.logger.warning("Arg list is empty for: %s" % (command.parameters['Expression']))
 
             # template and paste all commands inside the for loop
             # to find the correct endf, we'll need to make sure that
