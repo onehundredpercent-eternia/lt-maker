@@ -6,7 +6,7 @@ from app.engine import action, combat_calcs, image_mods, engine, item_system
 
 class Effective(ItemComponent):
     nid = 'effective'
-    desc = 'Item does extra damage against certain units'
+    desc = 'If this item is effective against an enemy its damage value will be increased by the integer chosen here instead. This is not a multiplier, but an addition.'
     # requires = ['damage']
     paired_with = ('effective_tag',)
     tag = ItemTags.EXTRA
@@ -19,7 +19,7 @@ class Effective(ItemComponent):
 
 class EffectiveTag(ItemComponent):
     nid = 'effective_tag'
-    desc = "Item does extra damage against units with these tags"
+    desc = "Item will be considered effective if the targeted enemy has any of the tags listed in this component."
     # requires = ['damage']
     paired_with = ('effective',)
     tag = ItemTags.EXTRA
@@ -61,7 +61,7 @@ class EffectiveTag(ItemComponent):
 
 class Brave(ItemComponent):
     nid = 'brave'
-    desc = "Item multi-attacks"
+    desc = "Weapon has the brave property, doubling its attacks."
     tag = ItemTags.EXTRA
 
     def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value):
@@ -69,7 +69,7 @@ class Brave(ItemComponent):
 
 class BraveOnAttack(ItemComponent):
     nid = 'brave_on_attack'
-    desc = "Item multi-attacks only when attacking"
+    desc = "The weapon is only brave when making an attack, and acts as a normal weapon when being attacked."
     tag = ItemTags.EXTRA
 
     def dynamic_multiattacks(self, unit, item, target, mode, attack_info, base_value):
@@ -77,7 +77,7 @@ class BraveOnAttack(ItemComponent):
 
 class Lifelink(ItemComponent):
     nid = 'lifelink'
-    desc = "Heals user %% of damage dealt"
+    desc = "The unit heals this percentage of damage dealt to an enemy on hit. Chosen value should be between 0 and 1."
     # requires = ['damage']
     tag = ItemTags.EXTRA
 
@@ -98,7 +98,7 @@ class Lifelink(ItemComponent):
 
 class DamageOnMiss(ItemComponent):
     nid = 'damage_on_miss'
-    desc = "Does %% damage even on miss"
+    desc = "Item deals a percentage of it's normal damage on a miss."
     # requires = ['damage']
     tag = ItemTags.EXTRA
 
@@ -159,7 +159,7 @@ class CannotBeCountered(ItemComponent):
 
 class IgnoreWeaponAdvantage(ItemComponent):
     nid = 'ignore_weapon_advantage'
-    desc = "Item will not be affected by the weapon triangle"
+    desc = "Any weapon advantage relationships defined in the weapon types editor are ignored by this item."
     tag = ItemTags.EXTRA
 
     def ignore_weapon_advantage(self, unit, item):
@@ -167,7 +167,7 @@ class IgnoreWeaponAdvantage(ItemComponent):
 
 class Reaver(ItemComponent):
     nid = 'reaver'
-    desc = "Item will have double reverse weapon triangle"
+    desc = "Weapon advantage relationships defined in the weapon types editor are doubled and reversed against this weapon. If two reaver weapons are in combat with each other weapon advantage works as normal."
     tag = ItemTags.EXTRA
 
     def modify_weapon_triangle(self, unit, item):
@@ -175,7 +175,7 @@ class Reaver(ItemComponent):
 
 class DoubleTriangle(ItemComponent):
     nid = 'double_triangle'
-    desc = "Item will have double weapon triangle"
+    desc = "The effects of weapon advantage relationships are doubled by this item."
     tag = ItemTags.EXTRA
 
     def modify_weapon_triangle(self, unit, item):
@@ -183,7 +183,7 @@ class DoubleTriangle(ItemComponent):
 
 class StatusOnEquip(ItemComponent):
     nid = 'status_on_equip'
-    desc = "Item gives status while equipped"
+    desc = "A unit with this item equipped will receive the specified status."
     tag = ItemTags.EXTRA
 
     expose = Type.Skill  # Nid
@@ -228,7 +228,7 @@ class StatusOnHold(ItemComponent):
 
 class GainManaAfterCombat(ItemComponent):
     nid = 'gain_mana_after_combat'
-    desc = "Item grants X Mana at the end of combat solved dynamically"
+    desc = "Takes a string that will be evaluated by python. At the end of combat the string is evaluated if the item was used and the result is translated into mana gained by the unit. If you want a flat gain of X mana, enter X, where X is an integer."
     tag = ItemTags.EXTRA
     author = 'KD'
 

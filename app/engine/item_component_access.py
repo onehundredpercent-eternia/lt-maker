@@ -12,6 +12,9 @@ def get_item_components():
     subclasses = sorted(subclasses, key=lambda x: list(ItemTags).index(x.tag) if x.tag in list(ItemTags) else 100)
     return Data(subclasses)
 
+def get_item_tags():
+    return list(ItemTags)
+
 def get_component(nid):
     _item_components = get_item_components()
     base_class = _item_components.get(nid)

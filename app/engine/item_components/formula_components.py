@@ -14,7 +14,7 @@ class AlternateDamageFormula(ItemComponent):
 
 class AlternateResistFormula(ItemComponent):
     nid = 'alternate_resist_formula'
-    desc = 'Item uses a different resist formula'
+    desc = 'Item uses a different resist formula. Resist applies to both defense and resistance.'
     tag = ItemTags.FORMULA
 
     expose = Type.Equation
@@ -69,7 +69,7 @@ class AlternateCritAvoidFormula(ItemComponent):
 
 class AlternateAttackSpeedFormula(ItemComponent):
     nid = 'alternate_attack_speed_formula'
-    desc = 'Item uses a different attack speed formula'
+    desc = 'Item uses a different attack speed formula. Attack speed is used when initiating a combat.'
     tag = ItemTags.FORMULA
 
     expose = Type.Equation
@@ -80,7 +80,7 @@ class AlternateAttackSpeedFormula(ItemComponent):
 
 class AlternateDefenseSpeedFormula(ItemComponent):
     nid = 'alternate_defense_speed_formula'
-    desc = 'Item uses a different defense speed formula'
+    desc = 'Item uses a different defense speed formula. Defense speed is used when being attacked.'
     tag = ItemTags.FORMULA
 
     expose = Type.Equation

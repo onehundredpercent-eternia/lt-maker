@@ -26,7 +26,7 @@ class MapHitSubBlend(ItemComponent):
 
 class MapHitSFX(ItemComponent):
     nid = 'map_hit_sfx'
-    desc = "Changes the sound the item will make on hit"
+    desc = "When the target is hit by this item the selected sound is played."
     tag = ItemTags.AESTHETIC
 
     expose = Type.Sound
@@ -37,7 +37,7 @@ class MapHitSFX(ItemComponent):
 
 class MapCastSFX(ItemComponent):
     nid = 'map_cast_sfx'
-    desc = "Adds a sound to the item on cast"
+    desc = "When item is used the selected sound is played."
     tag = ItemTags.AESTHETIC
 
     expose = Type.Sound
@@ -51,7 +51,7 @@ class MapCastSFX(ItemComponent):
 
 class MapCastAnim(ItemComponent):
     nid = 'map_cast_anim'
-    desc = "Adds a map animation to the item on cast"
+    desc = "Adds a specific animation effect when the item is used. Relevant in map combat situations."
     tag = ItemTags.AESTHETIC
 
     expose = Type.MapAnimation
@@ -64,7 +64,7 @@ class MapCastAnim(ItemComponent):
 
 class BattleCastAnim(ItemComponent):
     nid = 'battle_cast_anim'
-    desc = "Set a specific effect animation to the item in battle"
+    desc = "Adds a specific animation effect when the item is used. This does not change the battle animation used, think instead of the spell's effect."
     tag = ItemTags.AESTHETIC
 
     expose = Type.EffectAnimation
@@ -83,7 +83,7 @@ class BattleAnimationMusic(ItemComponent):
     def battle_music(self, unit, item, target, mode):
         return self.value
 
-class NoMapCombatDispla(ItemComponent):
+class NoMapCombatDisplay(ItemComponent):
     nid = 'no_map_hp_display'
     desc = "Item does not show full map hp display when used"
     tag = ItemTags.BASE
@@ -103,7 +103,7 @@ class PreCombatEffect(ItemComponent):
 
 class Warning(ItemComponent):
     nid = 'warning'
-    desc = "Yellow warning sign appears above wielder's head"
+    desc = "A yellow exclamation mark appears above the wielder's head. Often used for killing weapons."
     tag = ItemTags.AESTHETIC
 
     def warning(self, unit, item, target) -> bool:
@@ -111,7 +111,7 @@ class Warning(ItemComponent):
 
 class EvalWarning(ItemComponent):
     nid = 'eval_warning'
-    desc = "Yellow warning sign appears above wielder's head if current unit meets eval"
+    desc = "A red exclamation mark appears above the wielder’s head if the selected unit matches the evaluated string. Often used for effective weapons."
     tag = ItemTags.AESTHETIC
 
     expose = Type.String

@@ -3,7 +3,7 @@ from app.data.components import Type
 
 class Spell(ItemComponent):
     nid = 'spell'
-    desc = "Item will be treated as a spell (cannot counterattack, be counterattacked, or double)"
+    desc = "This item will be included under the Spells menu instead of the Attack menu. A useful way to separate weapons from utility items like staves or non-damaging tomes. It cannot counterattack, be counterattacked, or double."
     tag = ItemTags.BASE
 
     def is_spell(self, unit, item):
@@ -29,7 +29,7 @@ class Spell(ItemComponent):
 
 class Weapon(ItemComponent):
     nid = 'weapon'
-    desc = "Item will be treated as a normal weapon (can double, counterattack, be equipped, etc.)"
+    desc = "Item is a weapon that can be used to attack and initiate combat. Important to add to anything that's being used for that purpose. Can double, counterattack, be equipped, etc."
     tag = ItemTags.BASE
 
     def is_weapon(self, unit, item):
@@ -55,7 +55,7 @@ class Weapon(ItemComponent):
 
 class SiegeWeapon(ItemComponent):
     nid = 'siege_weapon'
-    desc = "Item will be treated as a siege weapon (cannot counterattack or be counterattacked, but can still be equipped and can double)"
+    desc = "The weapon cannot counterattack or be counterattacked, but can be equipped and double. Used instead of the weapon component. Cannot counterattack or be counterattacked, but can still be equipped and can double."
     tag = ItemTags.BASE
 
     def is_weapon(self, unit, item):
@@ -81,7 +81,7 @@ class SiegeWeapon(ItemComponent):
 
 class Usable(ItemComponent):
     nid = 'usable'
-    desc = "Item is usable"
+    desc = "Item can be used from the items menu. Must be paired with the Targets Allies or Target Anything component."
     tag = ItemTags.BASE
 
     def can_use(self, unit, item):
@@ -89,7 +89,7 @@ class Usable(ItemComponent):
 
 class UsableInBase(ItemComponent):
     nid = 'usable_in_base'
-    desc = "Item is usable in base"
+    desc = "Item is usable in base. Must be paired with the Targets Allies or Target Anything component."
     tag = ItemTags.BASE
 
     def can_use_in_base(self, unit, item):
@@ -100,7 +100,7 @@ class UsableInBase(ItemComponent):
 
 class Unrepairable(ItemComponent):
     nid = 'unrepairable'
-    desc = "Item cannot be repaired"
+    desc = "An item with the repair component cannot repair an item with this component."
     tag = ItemTags.BASE
 
     def unrepairable(self, unit, item):
@@ -139,7 +139,7 @@ class Value(ItemComponent):
 
 class Accessory(ItemComponent):
     nid = 'accessory'
-    desc = "Item is an accessory"
+    desc = "The item is considered an accessory and takes up an accessory slot in a unit's inventory. Make sure to increase the number of accessory slots to more than zero and have a total number of inventory + accessory slots less than six."
     tag = ItemTags.BASE
 
     def is_accessory(self, unit, item) -> bool:

@@ -11,7 +11,7 @@ from app.engine.game_state import game
 
 class PermanentStatChange(ItemComponent):
     nid = 'permanent_stat_change'
-    desc = "Item changes target's stats on hit."
+    desc = "Using this item permanently changes the stats of the target in the specified ways. The target and user are often the same unit (think of normal FE stat boosters)."
     tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
@@ -58,7 +58,7 @@ class PermanentStatChange(ItemComponent):
 
 class PermanentGrowthChange(ItemComponent):
     nid = 'permanent_growth_change'
-    desc = "Item changes target's growths on hit"
+    desc = "Using this item permanently changes the growth values of the target in the specified ways."
     tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
@@ -70,7 +70,7 @@ class PermanentGrowthChange(ItemComponent):
 
 class WexpChange(ItemComponent):
     nid = 'wexp_change'
-    desc = "Item changes target's wexp on hit"
+    desc = "Using this item permanently changes the WEXP of the target. Can specify individual amounts for different weapon types. Useful for Arms Scroll."
     tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.WeaponType)
@@ -83,7 +83,7 @@ class WexpChange(ItemComponent):
 
 class FatigueOnHit(ItemComponent):
     nid = 'fatigue_on_hit'
-    desc = "Item changes target's fatigue on hit"
+    desc = "If fatigue is enabled, increases the amount of fatigue a target suffers when hit by this item. Can be negative in order to remove fatigue."
     tag = ItemTags.SPECIAL
 
     expose = Type.Int
@@ -108,7 +108,7 @@ def ai_status_priority(unit, target, item, move, status_nid) -> float:
 
 class StatusOnHit(ItemComponent):
     nid = 'status_on_hit'
-    desc = "Item gives status to target when it hits"
+    desc = "Target gains the specified status on hit. Applies instantly, potentially causing values to change mid-combat."
     tag = ItemTags.SPECIAL
 
     expose = Type.Skill  # Nid
@@ -145,7 +145,7 @@ class StatusesOnHit(ItemComponent):
 
 class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
     nid = 'status_after_combat_on_hit'
-    desc = "Item gives status to target after it hits"
+    desc = "If the target is hit they gain the specified status at the end of combat. Prevents changes being applied mid-combat."
     tag = ItemTags.SPECIAL
 
     expose = Type.Skill  # Nid
@@ -209,7 +209,7 @@ class ShoveOnEndCombat(Shove):
 
 class ShoveTargetRestrict(Shove, ItemComponent):
     nid = 'shove_target_restrict'
-    desc = "Target restriction for Shove"
+    desc = "Works the same as shove but will not allow the item to be selected if the action cannot be performed."
     tag = ItemTags.SPECIAL
 
     expose = Type.Int
@@ -447,7 +447,7 @@ class GBASteal(Steal, ItemComponent):
 
 class EventOnHit(ItemComponent):
     nid = 'event_on_hit'
-    desc = "Calls event on hit"
+    desc = "The selected event plays before a hit, if the unit will hit with this item. The event is triggered with args (unit1=attacking unit, unit2=target, item=item, position=attacking unit's position, region=targeted position)"
     tag = ItemTags.SPECIAL
 
     expose = Type.Event
@@ -459,7 +459,7 @@ class EventOnHit(ItemComponent):
 
 class EventAfterCombat(ItemComponent):
     nid = 'event_after_combat'
-    desc = "Item calls an event after hit"
+    desc = "The selected event plays at the end of combat so long as an attack in combat hit."
     tag = ItemTags.SPECIAL
 
     expose = Type.Event

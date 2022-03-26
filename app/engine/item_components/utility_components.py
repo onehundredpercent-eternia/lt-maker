@@ -59,7 +59,7 @@ class Heal(ItemComponent):
 
 class MagicHeal(Heal, ItemComponent):
     nid = 'magic_heal'
-    desc = "Item heals this amount + HEAL on hit"
+    desc = "Heals the target for the specified integer + the HEAL equation defined in the equations editor. Will act oddly if no HEAL equation is defined."
 
     def _get_heal_amount(self, unit, target):
         empower_heal = skill_system.empower_heal(unit, target)
@@ -67,7 +67,7 @@ class MagicHeal(Heal, ItemComponent):
 
 class Refresh(ItemComponent):
     nid = 'refresh'
-    desc = "Item allows target to move again on hit"
+    desc = "Has an effect identical to dancing in normal FE. A dance skill makes use of this component in an attached item."
     tag = ItemTags.UTILITY
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
@@ -111,7 +111,7 @@ class Restore(ItemComponent):
 
 class RestoreSpecific(Restore, ItemComponent):
     nid = 'restore_specific'
-    desc = "Item removes status from target on hit"
+    desc = "Item removes specific status from target on hit"
     tag = ItemTags.UTILITY
 
     expose = Type.Skill # Nid
@@ -170,7 +170,7 @@ class UnlockStaff(ItemComponent):
 
 class CanUnlock(ItemComponent):
     nid = 'can_unlock'
-    desc = "Item can be used to unlock events. String will be evaluated to determine kind of event"
+    desc = "Allows the item to unlock specific types of locks. In GBA games, the unlock staff can only unlock doors. This component would allow for that limited functionality. In particular, region.nid.startswith('Door') would limit the staff to unlocking doors."
     tag = ItemTags.UTILITY
 
     expose = Type.String
@@ -186,7 +186,7 @@ class CanUnlock(ItemComponent):
 
 class Repair(ItemComponent):
     nid = 'repair'
-    desc = "Item repairs target item on hit"
+    desc = "Repairs a selected item in the target's inventory. Used in the Hammerne staff."
     tag = ItemTags.UTILITY
 
     def init(self, item):
@@ -245,7 +245,7 @@ class Trade(ItemComponent):
 
 class MenuAfterCombat(ItemComponent):
     nid = 'menu_after_combat'
-    desc = "Can access menu after combat"
+    desc = "Using this item returns the user to the menu state. However, user cannot attack again. Menu activates after any use of the item that involves targeting a unit (including targeting the user)."
     tag = ItemTags.UTILITY
 
     def menu_after_combat(self, unit, item):

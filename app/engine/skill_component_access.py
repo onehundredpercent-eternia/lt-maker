@@ -10,6 +10,9 @@ def get_skill_components():
     subclasses = sorted(subclasses, key=lambda x: list(SkillTags).index(x.tag) if x.tag in list(SkillTags) else 100)
     return Data(subclasses)
 
+def get_skill_tags():
+    return list(SkillTags)
+
 def get_component(nid):
     _skill_components = get_skill_components()
     base_class = _skill_components.get(nid)

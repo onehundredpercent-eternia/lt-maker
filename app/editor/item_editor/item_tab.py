@@ -17,6 +17,7 @@ class ItemProperties(ComponentProperties):
     title = "Item"
     get_components = staticmethod(ICA.get_item_components)
     get_templates = staticmethod(ICA.get_templates)
+    get_tags = staticmethod(ICA.get_item_tags)
 
 class ItemDatabase(DatabaseTab):
     allow_import_from_lt = True

@@ -6,21 +6,21 @@ from app.engine.game_state import game
 
 class MultiItem(ItemComponent):
     nid = 'multi_item'
-    desc = "Item that contains multiple items. Don't abuse!"
+    desc = "Stores a list of other items to be included as part of this multi item. When using the item the sub-items stored within the list can each be accessed and used. Useful for Three Houses-like magic system."
     tag = ItemTags.ADVANCED
 
     expose = (Type.List, Type.Item)
 
 class SequenceItem(ItemComponent):
     nid = 'sequence_item'
-    desc = "Item that contains a sequence of items used for targeting"
+    desc = "Item requires various sub-items to be work properly. Useful for complex items like Warp or Rescue. Items are used from list's top to bottom."
     tag = ItemTags.ADVANCED
 
     expose = (Type.List, Type.Item)
 
 class MultiTarget(ItemComponent):
     nid = 'multi_target'
-    desc = "Item can target multiple targets."
+    desc = "Can target a specified number of units when used."
     tag = ItemTags.ADVANCED
 
     expose = Type.Int
@@ -31,7 +31,7 @@ class MultiTarget(ItemComponent):
 
 class AllowSameTarget(ItemComponent):
     nid = 'allow_same_target'
-    desc = "Item can target the same target multiple times"
+    desc = "If the item is multi target this component allows it to select the same target multiple times."
     tag = ItemTags.ADVANCED
 
     def allow_same_target(self, unit, item) -> bool:
@@ -39,7 +39,7 @@ class AllowSameTarget(ItemComponent):
 
 class StoreUnit(ItemComponent):
     nid = 'store_unit'
-    desc = "Item registers a unit on the map on hit"
+    desc = "The targeted unit is stored in the game's memory when hit. The next time the unload unit component is called the unit is placed on the targeted tile."
     tag = ItemTags.ADVANCED
 
     def init(self, item):
@@ -53,7 +53,7 @@ class StoreUnit(ItemComponent):
 
 class UnloadUnit(ItemComponent):
     nid = 'unload_unit'
-    desc = "Item takes stored unit and warps them to the new location on the map"
+    desc = "Places the unit stored through the store unit component on the specified target (most often a tile)."
     tag = ItemTags.ADVANCED
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:

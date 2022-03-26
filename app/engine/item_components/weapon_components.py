@@ -9,7 +9,7 @@ from app.engine.game_state import game
 
 class WeaponType(ItemComponent):
     nid = 'weapon_type'
-    desc = "Item has a weapon type and can only be used by certain classes"
+    desc = "The type of weapon that the wielder must be able to use in order to attack with this item."
     tag = ItemTags.WEAPON
 
     expose = Type.WeaponType
@@ -168,7 +168,7 @@ class Crit(ItemComponent):
 
 class Weight(ItemComponent):
     nid = 'weight'
-    desc = "Item has a weight."
+    desc = "Lowers attack speed. At first, subtracted from the CONSTITUTION equation. If negative, subtracts from overall attack speed."
     tag = ItemTags.WEAPON
 
     expose = Type.Int
@@ -193,7 +193,7 @@ class Unwieldy(ItemComponent):
 
 class StatChange(ItemComponent):
     nid = 'stat_change'
-    desc = "Gives stat bonuses"
+    desc = "A list of stats that correspond to integers. When equipped, stats are changed by that amount."
     tag = ItemTags.WEAPON
 
     expose = (Type.Dict, Type.Stat)

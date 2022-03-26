@@ -56,7 +56,7 @@ class Uses(ItemComponent):
 
 class ChapterUses(ItemComponent):
     nid = 'c_uses'
-    desc = "Number of uses per chapter for item. (Refreshes after each chapter)"
+    desc = "The item’s uses per chapter. The uses recharge to full at chapter end, even if all are used. Do not combine with the uses component."
     paired_with = ('uses_options',)
     tag = ItemTags.USES
 
@@ -122,7 +122,7 @@ class UsesOptions(ItemComponent):
 
 class HPCost(ItemComponent):
     nid = 'hp_cost'
-    desc = "Item costs HP to use"
+    desc = "Item subtracts the specified amount of HP upon use. If the subtraction would kill the unit the item becomes unusable."
     tag = ItemTags.USES
 
     expose = Type.Int
@@ -139,7 +139,7 @@ class HPCost(ItemComponent):
 
 class ManaCost(ItemComponent):
     nid = 'mana_cost'
-    desc = "Item costs mana to use"
+    desc = "Item subtracts the specified amount of Mana upon use. MANA must be defined in the equations editor. If unit does not have enough mana the item will not be usable."
     tag = ItemTags.USES
 
     expose = Type.Int
@@ -200,7 +200,7 @@ class EvalManaCost(ItemComponent):
 
 class Cooldown(ItemComponent):
     nid = 'cooldown'
-    desc = "After use, item cannot be used until X turns have passed"
+    desc = "The item cannot be used for the specified number of turns. Since timers tick down at the start of the turn, setting cooldown to one will allow the unit to use the item on their next turn."
     tag = ItemTags.USES
 
     expose = Type.Int
@@ -288,7 +288,7 @@ class PrfAffinity(ItemComponent):
 
 class Locked(ItemComponent):
     nid = 'locked'
-    desc = 'Item cannot be discarded, traded, or stolen'
+    desc = 'Item cannot be taken or dropped from a units inventory. However, the trade command can be used to rearrange its position, and event commands can remove the item.'
     tag = ItemTags.USES
 
     def locked(self, unit, item) -> bool:

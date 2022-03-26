@@ -7,7 +7,7 @@ from app.engine.game_state import game
 
 class BlastAOE(ItemComponent):
     nid = 'blast_aoe'
-    desc = "Gives Blast AOE"
+    desc = "Blast extends outwards the specified number of tiles."
     tag = ItemTags.AOE
 
     expose = Type.Int  # Radius
@@ -128,7 +128,7 @@ class AllyBlastEquationAOE(AllyBlastAOE, EquationBlastAOE, ItemComponent):
 
 class EnemyCleaveAOE(ItemComponent):
     nid = 'enemy_cleave_aoe'
-    desc = "Gives Enemy Cleave AOE"
+    desc = "All enemies within one tile (or diagonal from the user) are affected by this attack's AOE."
     tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
@@ -172,7 +172,7 @@ class EnemyCleaveAOE(ItemComponent):
 
 class AllAlliesAOE(ItemComponent):
     nid = 'all_allies_aoe'
-    desc = "Item affects all allies on the map including self"
+    desc = "Item affects all allies on the map including user"
     tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
@@ -220,7 +220,7 @@ class AllEnemiesAOE(ItemComponent):
 
 class LineAOE(ItemComponent):
     nid = 'line_aoe'
-    desc = "Gives Line AOE"
+    desc = "A line is drawn from the user to the target, affecting each unit within it. Never extends past the target."
     tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:

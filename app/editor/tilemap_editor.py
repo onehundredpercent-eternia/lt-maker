@@ -988,11 +988,12 @@ class LayerMenu(QWidget):
 
     def duplicate(self):
         current_index = self.view.currentIndex()
-        self.view.duplicate(current_index)
+        if current_index and current_index.row() >= 0:
+            self.view.duplicate(current_index)
 
     def delete(self):
         current_index = self.view.currentIndex()
-        if self.deletion_func(self.model, current_index):
+        if current_index and current_index.row() >= 0 and self.deletion_func(self.model, current_index):
             self.view.delete(current_index)
 
 class TileSetMenu(QWidget):
