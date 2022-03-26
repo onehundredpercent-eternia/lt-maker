@@ -16,6 +16,7 @@ class ItemTags(Enum):
     AESTHETIC = 'aesthetic'
     ADVANCED = 'advanced'
 
+    CUSTOM = 'custom'
     HIDDEN = 'hidden'
 
 class ItemComponent(Component):

@@ -16,6 +16,7 @@ class SkillTags(Enum):
     ADVANCED = 'advanced'
     EXTRA = 'extra'
 
+    CUSTOM = 'custom'
     HIDDEN = 'hidden'
 
 class SkillComponent(Component):

@@ -101,13 +101,14 @@ release:
         - echo 'remember to make sure your url is correct!'
     release:
         name: 'Release Executables $CI_COMMIT_SHORT_SHA'
-        description: 'Created using the release-cli'
+        description: 'Download Lex_Talionis_Maker from the Packages header to use the editor! Once the download is extracted run double_click_to_run.bat to open the editor.'
         tag_name: '$CI_COMMIT_SHORT_SHA'
         assets:
             links: # IF SOMETHING IS BROKEN, IT'S PROBABLY THESE URLS FAULT
-                - name: 'Built_Editor'
+                - name: 'Lex_Talionis_Maker'
                   # url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=build_app"
                   url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=build_app"
+                  link_type: package
                 - name: 'Version Info'
                   # url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=get_metadata"
                   url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=get_metadata"
