@@ -30,7 +30,7 @@ vertical_screen_positions = {'Top': 0,
                              'Bottom': WINHEIGHT - 80}
 
 if MEMENTO_MODE:
-    vertical_screen_positions['Top'] = 16
+    vertical_screen_positions['Top'] = 20
 
 def parse_screen_position(pos) -> tuple:
     x, y = 0, 0

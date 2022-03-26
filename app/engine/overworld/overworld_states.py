@@ -382,7 +382,7 @@ class OverworldPartyOptionMenu(State):
 
         self.events = [None for option in options]
         current_node = game.overworld_controller.selected_party_node()  # Can also be a HexData
-        isinstance(current_node, hex_board.HexData):
+        if isinstance(current_node, hex_board.HexData):
             pass # Currently hexes don't define new menu options...
         else:
             all_options = current_node.menu_options

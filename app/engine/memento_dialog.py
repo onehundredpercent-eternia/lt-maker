@@ -5,11 +5,11 @@ from app.utilities.algorithms.interpolation import lerp
 from app.constants import WINWIDTH, WINHEIGHT
 from app.engine.fonts import FONT
 from app.engine.sprites import SPRITES
-from app.engine import text_funcs, engine, image_mods, dialog
+from app.engine import text_funcs, engine, image_mods, dialog, base_surf
 from app.engine import config as cf
 
 class MementoDialogBackground():
-    background = SPRITES.get('memento_dialog_background')
+    background = base_surf.create_base_surf(WINWIDTH, 80, 'memento_dialog_bg')
     background = background.convert_alpha()
     transition_in_speed = utils.frames2ms(12)
     transition_out_speed = utils.frames2ms(10)
@@ -75,7 +75,7 @@ class MementoDialogNametag():
     transition_in_speed = utils.frames2ms(12)
     transition_out_speed = utils.frames2ms(10)
     movement_speed = 32
-    default_pos = (WINWIDTH//2 - sprite.get_width(), 96)
+    default_pos = (WINWIDTH//2 - sprite.get_width(), 94)
 
     def __init__(self):
         self.state = 'off'  # off, transition_in, on, transition_out
@@ -119,7 +119,7 @@ class MementoDialogNametag():
         if portrait:
             position = portrait.position
             x_pos = position[0] + 16
-            y_pos = position[1] + 70
+            y_pos = position[1] + 74
             if x_pos < 0:
                 x_pos = position[0] + 32
         else:

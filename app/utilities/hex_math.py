@@ -1,8 +1,8 @@
 import math
-from app.constants import TILEWIDTH, TILEHEIGHT
 
-Hex = Tuple[int, int, int]
-
+from dataclasses import dataclass
+from typing import Tuple
+Hex = Tuple[float, float, float]
 hex_directions = [(1, 0, -1), (1, -1, 0), (0, -1, 1), (-1, 0, 1), (-1, 1, 0), (0, 1, -1)]
 
 def hex_add(a: Hex, b: Hex) -> Hex:
@@ -12,7 +12,7 @@ def hex_sub(a: Hex, b: Hex) -> Hex:
     return a[0] - b[0], a[1] - b[1], a[2] - b[2]
 
 def hex_scale(h: Hex, k: float) -> Hex:
-    return a[0] * k, a[1] * k, a[2] * k
+    return h[0] * k, h[1] * k, h[2] * k
 
 def hex_length(h: Hex) -> float:
     return (abs(h[0]) + abs(h[1]) + abs(h[2])) / 2
@@ -83,7 +83,7 @@ def hex_linedraw(a: Hex, b: Hex) -> list:
 EVEN = 1
 ODD = -1
 def roffset_from_cube(offset, h: Hex) -> tuple:
-    col = h.[0] + (h[1] + offset * (h[1] & 1)) // 2
+    col = h[0] + (h[1] + offset * (h[1] & 1)) // 2
     row = h[1]
     if offset != EVEN and offset != ODD:
         raise ValueError("offset %s must be EVEN (+1) or ODD (-1)" % offset)
@@ -135,4 +135,4 @@ def get_all_hex_within_distance(h: Hex, dist: int) -> list:
     for q in range(-dist, dist + 1):
         for r in range(max(-dist, -q - dist), min(dist, -q + dist) + 1):
             s = -q - r
-            neighbors.append(hex_add(h, (q, r, s))
+            neighbors.append(hex_add(h, (q, r, s)))

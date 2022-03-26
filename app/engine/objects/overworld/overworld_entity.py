@@ -47,11 +47,11 @@ class OverworldEntityObject():
         entity.nid = party_prefab_nid
         entity.dtype = OverworldEntityTypes.PARTY
         entity.dnid = party_prefab_nid
-        if isinstance(initial_loc, hex_math.Hex):
+        if isinstance(initial_loc, tuple):
             entity.on_node = None
             entity.on_hex = initial_loc
         else:
-            entity.on_node = initial_node
+            entity.on_node = initial_loc
             entity.on_hex = None
 
         # create unit
