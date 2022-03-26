@@ -205,20 +205,20 @@ class UnitObject(Prefab):
 
         # Handle items
         if not for_equation_test:
-        items = item_funcs.create_items(self, prefab.starting_items)
-        for item in items:
-            self.add_item(item)
+            items = item_funcs.create_items(self, prefab.starting_items)
+            for item in items:
+                self.add_item(item)
 
-        if self.generic:
-            self.calculate_needed_wexp_from_items()
+            if self.generic:
+                self.calculate_needed_wexp_from_items()
 
-        # Handle skills
-        global_skills = unit_funcs.get_global_skills(self)
-        self.skills += global_skills
-        personal_skills = unit_funcs.get_personal_skills(self, prefab)
-        self.skills += personal_skills
-        class_skills = unit_funcs.get_starting_skills(self)
-        self.skills += class_skills
+            # Handle skills
+            global_skills = unit_funcs.get_global_skills(self)
+            self.skills += global_skills
+            personal_skills = unit_funcs.get_personal_skills(self, prefab)
+            self.skills += personal_skills
+            class_skills = unit_funcs.get_starting_skills(self)
+            self.skills += class_skills
 
         klass = DB.classes.get(self.klass)
         if klass.tier == 0:

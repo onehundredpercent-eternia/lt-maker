@@ -1,4 +1,4 @@
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.utilities import utils
@@ -8,7 +8,7 @@ from app.engine.game_state import game
 class MementoStaff(ItemComponent):
     nid = 'memento_staff'
     desc = "Item contains a ward of the weapon types you want to use"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     expose = (Type.List, Type.Item)
 
@@ -21,7 +21,7 @@ class MementoStaff(ItemComponent):
 class MementoWard(ItemComponent):
     nid = 'memento_ward'
     desc = "Item is a ward"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     def get_spell(self, unit, selection):
         spells = target_system.get_all_spells(self.cur_unit)
@@ -32,7 +32,7 @@ class MementoWard(ItemComponent):
 class MementoRuneType(ItemComponent):
     nid = 'memento_rune_type'
     desc = "Item has a rune type and can only be used by those with the right affinity"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     expose = Type.Affinity  # Nid
 
@@ -42,7 +42,7 @@ class MementoRuneType(ItemComponent):
 class MementoSkillOnHold(ItemComponent):
     nid = 'memento_skill_on_hold'
     desc = "Item gives status while in unit's inventory"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     expose = Type.Skill  # Nid
 
@@ -58,7 +58,7 @@ class MementoSkillOnHold(ItemComponent):
 class MementoEnemyCleaveAOE(ItemComponent):
     nid = 'memento_enemy_cleave_aoe'
     desc = "Gives Enemy Memento Cleave AOE"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     def splash(self, unit, item, position) -> tuple:
         pos = unit.position
@@ -96,7 +96,7 @@ class MementoEnemyCleaveAOE(ItemComponent):
 class MementoEnemyPierceAOE(ItemComponent):
     nid = 'memento_enemy_pierce_aoe'
     desc = "Gives Enemy Memento Pierce AOE"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     def splash(self, unit, item, position) -> tuple:
         pos = unit.position
@@ -124,7 +124,7 @@ class MementoEnemyPierceAOE(ItemComponent):
 class MementoBurstAOE(ItemComponent):
     nid = 'memento_burst_aoe'
     desc = "Gives Memento Burst AOE"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     expose = Type.Int
     value = 1
@@ -161,7 +161,7 @@ class MementoBurstAOE(ItemComponent):
 class MementoPull(ItemComponent):
     nid = 'memento_pull'
     desc = "Item moves target toward user on hit, and if it cannot, applies this status instead"
-    tag = 'memento'
+    tag = ItemTags.CUSTOM
 
     expose = Type.Skill
 

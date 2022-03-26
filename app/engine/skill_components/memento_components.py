@@ -1,4 +1,4 @@
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
 from app.utilities import utils
@@ -8,7 +8,7 @@ from app.engine.game_state import game
 class MementoHitBonus(SkillComponent):
     nid = 'memento_hit_bonus'
     desc = "Gives out bonus to hit when another character can attack the same unit"
-    tag = 'memento'
+    tag = SkillTags.CUSTOM
 
     expose = Type.Int
     value = 10
@@ -27,7 +27,7 @@ class MementoHitBonus(SkillComponent):
 class MementoShove(SkillComponent):
     nid = 'memento_shove'
     desc = "All attacks shove target after combat"
-    tag = 'memento'
+    tag = SkillTags.CUSTOM
 
     def _check_shove(self, unit_to_move, anchor_pos, magnitude):
         offset_x = utils.clamp(unit_to_move.position[0] - anchor_pos[0], -1, 1)
@@ -66,7 +66,7 @@ class MementoShove(SkillComponent):
 class MementoTempo(SkillComponent):
     nid = 'memento_tempo'
     desc = "Gives +4 DEF if attacked last player phase, +4 POW otherwise"
-    tag = 'memento'
+    tag = SkillTags.CUSTOM
 
     def init(self, skill):
         self.skill.data['_has_attacked'] = False
@@ -97,7 +97,7 @@ class MementoTempo(SkillComponent):
 class WitchWarp(SkillComponent):
     nid = 'witch_warp'
     desc = "Allows unit to witch warp to the given units"
-    tag = 'memento'
+    tag = SkillTags.CUSTOM
 
     expose = (Type.List, Type.Unit)
 
@@ -116,7 +116,7 @@ class WitchWarp(SkillComponent):
 class MementoRuneType(SkillComponent):
     nid = 'memento_rune_type'
     desc = "Skill has a rune type and can only be used by those with the right affinity"
-    tag = 'memento'
+    tag = SkillTags.CUSTOM
 
     expose = Type.Affinity  # Nid
 
@@ -126,7 +126,7 @@ class MementoRuneType(SkillComponent):
 class MementoAttackStanceDouble(SkillComponent):
     nid = 'memento_attack_stance_double'
     desc = "Unit will ALWAYS double while supporting in a pairup"
-    tag = 'memento'
+    tag = SkillTags.CUSTOM
 
     def attack_stance_double(self, unit) -> bool:
         return True
