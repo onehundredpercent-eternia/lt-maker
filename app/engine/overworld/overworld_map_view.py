@@ -7,13 +7,17 @@ from app.engine import engine
 from app.engine.graphics.ingame_ui.overworld_ui import OverworldTravelUI
 from app.engine.overworld.overworld_cursor import OverworldCursor
 
+from app.engine.sprites import SPRITES
+from app.engine.hex_board import Sight
+from app.utilities import hex_math
+
 class OverworldMapView():
     def __init__(self, overworld: OverworldManager = None, cursor: OverworldCursor = None):
         self.overworld = overworld
         self.cursor = cursor
         self.overworld_ui = OverworldTravelUI(overworld, cursor)
 
-    def draw_hexes(self, surf, cull_rect):
+    def draw_hexes(self, surf, full_size, cull_rect):
         hex_board = self.overworld.hex_board
         for h in hex_board.hex_graph.values():
             if h.sight == Sight.INSIGHT or h.sight == Sight.EXPLORED:

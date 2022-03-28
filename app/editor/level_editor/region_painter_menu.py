@@ -9,6 +9,7 @@ from app.utilities import utils, str_utils
 from app.utilities.data import Data
 
 from app.extensions.custom_gui import PropertyBox, PropertyCheckBox, ComboBox, RightClickListView
+from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.editor.base_database_gui import DragDropCollectionModel
 from app.editor.custom_widgets import SkillBox
 from app.events import regions
@@ -214,11 +215,26 @@ class ModifyRegionWidget(QWidget):
         self.status_box.edit.currentIndexChanged.connect(self.status_changed)
         layout.addWidget(self.status_box)
 
+        # For group region
+        self.group_class_box = PropertyBox("Classes", MultiSelectComboBox, self)
+        self.group_class_box.edit.setPlaceholderText("Potential Classes...")
+        self.group_class_box.edit.addItems(DB.classes.keys())
+        self.group_class_box.edit.updated.connect(self.group_class_changed)
+        layout.addWidget(self.group_class_box)
+
+        self.group_tags_box = PropertyBox("Tags", MultiSelectComboBox, self)
+        self.group_tags_box.edit.setPlaceholderText("Potential Tags...")
+        self.group_tags_box.edit.addItems(DB.tags.keys())
+        self.group_tags_box.edit.updated.connect(self.group_tags_changed)
+        layout.addWidget(self.group_tags_box)
+
         self.sub_nid_box.hide()
         self.condition_box.hide()
         self.only_once_box.hide()
         self.interrupt_move_box.hide()
         self.status_box.hide()
+        self.group_class_box.hide()
+        self.group_tags_box.hide()
 
     def nid_changed(self, text):
         if self.current:
@@ -243,30 +259,28 @@ class ModifyRegionWidget(QWidget):
         if not self.current:
             return
         self.current.region_type = self.region_type_box.edit.currentText().lower()
+        # Just hide them all
+        self.sub_nid_box.hide()
+        self.condition_box.hide()
+        self.only_once_box.hide()
+        self.interrupt_move_box.hide()
+        self.status_box.hide()
+        self.group_class_box.hide()
+        self.group_tags_box.hide()
         if self.current.region_type in ('normal', 'formation'):
-            self.sub_nid_box.hide()
-            self.condition_box.hide()
-            self.only_once_box.hide()
-            self.interrupt_move_box.hide()
-            self.status_box.hide()
+            pass
         elif self.current.region_type == 'status':
-            self.sub_nid_box.hide()
-            self.condition_box.hide()
-            self.only_once_box.hide()
-            self.interrupt_move_box.hide()
             self.status_box.show()
         elif self.current.region_type == 'event':
             self.sub_nid_box.show()
             self.condition_box.show()
             self.only_once_box.show()
             self.interrupt_move_box.show()
-            self.status_box.hide()
         elif self.current.region_type == 'time':
             self.sub_nid_box.show()
-            self.condition_box.hide()
-            self.only_once_box.hide()
-            self.interrupt_move_box.hide()
-            self.status_box.hide()
+        elif self.current.region_type == 'group':
+            self.group_class_box.show()
+            self.group_tags_box.show()
 
     def sub_nid_changed(self, text):
         self.current.sub_nid = text
@@ -286,6 +300,12 @@ class ModifyRegionWidget(QWidget):
         self.current.sub_nid = self.status_box.edit.currentText()
         self.window.update_list()
 
+    def group_class_changed(self):
+        self.current.group_data['valid_classes'] = self.group_class_box.edit.currentText()
+
+    def group_tags_changed(self):
+        self.current.group_data['valid_tags'] = self.group_tags_box.edit.currentText()
+
     def set_current(self, current):
         self.current = current
         self.nid_box.edit.setText(current.nid)
@@ -299,3 +319,13 @@ class ModifyRegionWidget(QWidget):
             self.sub_nid_box.edit.setText(current.sub_nid)
         else:
             self.sub_nid_box.edit.setText('')
+
+        valid_classes = current.group_data.get('valid_classes', [])[:]
+        self.group_class_box.edit.clear()
+        self.group_class_box.edit.addItems(DB.classes.keys())
+        self.group_class_box.edit.setCurrentTexts(valid_classes)
+
+        tags = current.group_data.get('valid_tags', [])[:]
+        self.group_tags_box.edit.clear()
+        self.group_tags_box.edit.addItems(DB.tags.keys())
+        self.group_tags_box.edit.setCurrentTexts(tags)

@@ -11,6 +11,7 @@ from app.constants import WINWIDTH, WINHEIGHT, TILEX, TILEY
 
 from app.engine.sprites import SPRITES
 from app.engine.game_state import game
+from app.engine import base_surf
 
 class OverworldTravelUI():
     legal_states = ('overworld',)
@@ -45,7 +46,10 @@ class OverworldTravelUI():
         self.base_component.add_child(self.location_title)
 
         self.resources: uif.UIComponent = uif.UIComponent(name="resources")
-        self.resources.props.bg = SPRITES.get('world_map_resources_box')
+        bg = SPRITES.get('world_map_resources_box')
+        if not bg:
+            bg = base_surf.create_base_surf(72, 72)
+        self.resources.props.bg = bg
         self.resources.size = self.resources.props.bg.get_size()
         self.resources.props.v_alignment = uif.VAlignment.BOTTOM
         self.resources.margin = (5, 5, 5, 5)

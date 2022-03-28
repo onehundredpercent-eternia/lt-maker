@@ -73,7 +73,7 @@ class OverworldFreeState(MapState):
         game.cursor.set_pos(game.overworld_controller.selected_party_node().position)
         game.camera.force_center(*game.overworld_controller.selected_party_node().position)
         if game.overworld_controller.next_level:
-            game.events.trigger('overworld_start', level_nid = game.overworld_controller.next_level)
+            game.events.trigger('overworld_start', level_nid=game.overworld_controller.next_level)
 
     def begin(self):
         game.cursor.show()

@@ -41,14 +41,14 @@ class HexBoard():
         self.hexes: Dict[hex_math.Hex, HexPrefab] = overworld_prefab.hexes.copy()
 
         self.hex_graph = {}  # Store Hex Data
-        for hex_prefab in self.hexes:
+        for hex_prefab in self.hexes.values():
             hex_data = HexData(hex_prefab.pos)
             self.hex_graph[hex_data.pos] = hex_data
 
         self.assign_adjacency()
 
     def assign_adjacency(self):
-        for hex_data in self.hex_graph:
+        for hex_data in self.hex_graph.values():
             potential_neighbors: List[hex_math.Hex] = hex_math.get_neighbors(hex_data.pos)
             for neighbor in potential_neighbors:
                 if neighbor in self.hex_graph:
@@ -142,7 +142,7 @@ class HexPathfinding():
         self.closed.clear()
 
     def get_heuristic(self, pos: hex_math.Hex) -> float:
-        return hex_math.calculate_distance(pos, end)
+        return hex_math.calculate_distance(pos, self.end)
 
     def update_hex(self, adj: hex_math.Hex, pos: hex_math.Hex):
         pos_g = self.heuristic_data[pos][1]

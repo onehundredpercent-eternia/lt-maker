@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
 if TYPE_CHECKING:
     from .overworld_cursor import OverworldCursor
-    from app.engine import hex_board
     from app.utils import hex_math
 
 from app.engine.objects.overworld import (OverworldEntityObject,
@@ -15,7 +14,7 @@ from app.engine.objects.overworld import (OverworldEntityObject,
 from app.engine.objects.tilemap import TileMapObject
 from app.utilities.typing import NID, Point
 from app.utilities.algorithms.ltgraph import LTGraph
-from app.engine.hex_board import Sight
+from app.engine import hex_board
 
 class OverworldManager():
     """A wrapper class that contains various functionality for manipulating
@@ -37,7 +36,7 @@ class OverworldManager():
         self.nodes: Dict[NID, OverworldNodeObject] = {}
         self.roads: Dict[NID, RoadObject] = {}
 
-        self.overworld_full_graph: LTGraph[NID, OverworldNodeObject, RoadObject]  = None
+        self.overworld_full_graph: LTGraph[NID, OverworldNodeObject, RoadObject] = None
         self.overworld_explored_graph: LTGraph[NID, OverworldNodeObject, RoadObject] = None
 
         self._initialize_objects()
@@ -369,6 +368,7 @@ class OverworldManager():
 
     def _initialize_objects(self):
         for nid, node in self._overworld.prefab.overworld_nodes.items():
+            print(nid, node)
             self.nodes[nid] = OverworldNodeObject.from_prefab(node)
         for rid, road in self._overworld.prefab.map_paths.items():
             self.roads[rid] = RoadObject.from_prefab(road, rid)

@@ -43,7 +43,7 @@ def set_overworld_position(self: Event, overworld_entity: NID, overworld_locatio
             display_pos = overworld_location
             entity.display_position = display_pos
         elif len(overworld_location) == 3:
-            if overworld_location in overworld.hexes:
+            if overworld_location in overworld.hex_board.hex_graph:
                 entity.on_hex = overworld_location
             else:
                 self.logger.error("Hex {} does not exist".format(overworld_location))

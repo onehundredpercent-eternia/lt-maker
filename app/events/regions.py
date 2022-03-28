@@ -1,6 +1,6 @@
 from app.utilities.data import Prefab
 
-region_types = ['normal', 'status', 'event', 'formation', 'time']
+region_types = ['normal', 'status', 'event', 'formation', 'time', 'group']
 
 class Region(Prefab):
     def __init__(self, nid):
@@ -13,6 +13,9 @@ class Region(Prefab):
         self.condition = 'True'
         self.only_once = False
         self.interrupt_move = False
+
+        # Only used for group regions
+        self.group_data = {}
 
     @property
     def area(self):
