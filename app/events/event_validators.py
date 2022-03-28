@@ -946,14 +946,18 @@ class OverworldNID(Validator):
         return valids
 
 class OverworldLocation(Validator):
-    desc = "accepts the nid of an overworld location/node, or a coordinate x, y"
-    decimal_converter = re.compile(r'[^\d.]+')
+    desc = "accepts the nid of an overworld location/node, or a hex coordinate (r, q, s), or a display coordinate x, y"
+    decimal_converter = re.compile(r'[^\d.-]+')
 
     def validate(self, text, level):
         try:
             text = self.convert(text)
             if isinstance(text, tuple) and len(text) == 2:
                 return text
+            elif isinstance(text, tuple) and len(text) == 3:  # hex position
+                for overworld in DB.overworlds.values():
+                    if text in overworld.hexes:
+                        return text
             for overworld in DB.overworlds.values():
                 for node in overworld.overworld_nodes:
                     if node.nid == text:
@@ -975,6 +979,15 @@ class OverworldLocation(Validator):
                 x = float(self.decimal_converter.sub('', coords[0]))
                 y = float(self.decimal_converter.sub('', coords[1]))
                 return (x, y)
+            except:
+                raise ValueError("Could not parse coordinates from string %s" % text)
+        elif len(text.split(',')) == 3: # is hex position
+            try:
+                coords = text.split(',')
+                q = int(self.decimal_converter.sub('', coords[0]))
+                r = int(self.decimal_converter.sub('', coords[1]))
+                s = int(self.decimal_converter.sub('', coords[2]))
+                return (q, r, s)
             except:
                 raise ValueError("Could not parse coordinates from string %s" % text)
         else: # is nid

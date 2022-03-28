@@ -27,15 +27,19 @@ class HexPropertiesMenu(QWidget):
             self.current_hex = hex_prefab
         else:
             self.current_hex = None
-        print("select hex", self.hex_type_box.model._data)
         if self.current_hex:
             self.position_label.setText(self.current_hex.get_position_label())
             if self.current_hex.hex_type:
                 self.hex_type_box.edit.setValue(self.current_hex.hex_type)
             elif DB.hex_types:
                 self.hex_type_box.edit.setValue(DB.hex_types.keys()[0])
+            if self.current_hex.name:
+                self.name_box.edit.setText(self.current_hex.name)
+            else:
+                self.name_box.edit.setText('')
             self.set_components_active(True)
         else:
+            self.position_label.setText("No Hex Selected")
             self.set_components_active(False)
 
     def set_components_active(self, is_active):
