@@ -11,6 +11,8 @@ from app.utilities import hex_math
 from app.utilities.typing import NID
 from app.data.overworld import OverworldPrefab
 
+from app.data.database import DB
+
 
 class Sight(Enum):
     UNEXPLORED = 0
@@ -70,6 +72,15 @@ class HexBoard():
         if hex_prefab:
             return hex_prefab.hex_type
         return None
+
+    def get_name(self, pos) -> str:
+        hex_prefab = self.hexes.get(pos)
+        if hex_prefab:
+            if hex_prefab.name:
+                return hex_prefab.name
+            elif DB.hex_types.get(hex_prefab.hex_type):
+                return DB.hex_types.get(hex_prefab.hex_type).name
+        return ''
 
     def get_mcost(self, pos) -> float:
         hex_type = self.get_hex_type(pos)

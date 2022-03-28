@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
 if TYPE_CHECKING:
     from .overworld_cursor import OverworldCursor
-    from app.utils import hex_math
+
+from app.constants import TILEWIDTH, TILEHEIGHT
 
 from app.engine.objects.overworld import (OverworldEntityObject,
                                           OverworldNodeObject, OverworldObject,
@@ -14,6 +15,7 @@ from app.engine.objects.overworld import (OverworldEntityObject,
 from app.engine.objects.tilemap import TileMapObject
 from app.utilities.typing import NID, Point
 from app.utilities.algorithms.ltgraph import LTGraph
+from app.utilities import hex_math
 from app.engine import hex_board
 
 class OverworldManager():
@@ -238,9 +240,10 @@ class OverworldManager():
         return None
 
     def hex_at(self, pos: Point, force=False) -> hex_board.HexData:
-        hex_pos = hex_math.pixel_to_hex(pos)
+        hex_pos = hex_math.pixel_to_hex((pos[0] * TILEWIDTH, pos[1] * TILEHEIGHT))
         hex_pos = hex_math.hex_round(hex_pos)
-        return self.hex_board.hex_graph.get(hex_pos)
+        hex_data = self.hex_board.hex_graph.get(hex_pos)
+        return hex_data
 
     def node_props(self, node: OverworldNodeObject | NID) -> Set[str]:
         if isinstance(node, OverworldNodeObject):

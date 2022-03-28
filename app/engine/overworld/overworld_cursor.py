@@ -24,7 +24,7 @@ class OverworldCursor(BaseCursor):
         self.overworld: OverworldManager = None
         self._sprite = SPRITES.get('overworld_cursor')
 
-        self._transition_duration = 250
+        # self._transition_duration = 250
 
     def set_overworld_manager(self, manager: OverworldManager):
         """Must be called in order to use the cursor.
@@ -64,8 +64,11 @@ class OverworldCursor(BaseCursor):
         return (entity, node)
 
     def get_hovered_hex(self) -> hex_math.Hex:
-        hex_pos = self.overworld.hex_at(self.position)
-        return hex_pos
+        hex_data = self.overworld.hex_at(self.position)
+        if hex_data:
+            hex_pos = hex_data.pos
+            return hex_pos
+        return None
 
     def get_image(self):
         left = (ANIMATION_COUNTERS.fps6_360counter.count % 10) * TILEWIDTH * 2

@@ -34,14 +34,15 @@ class OverworldTravelUI():
         self.location_title_text.props.resize_mode = uif.ResizeMode.AUTO
         self.location_title.add_child(self.location_title_text)
 
-        if SPRITES.get('MagvelMinimap'):
-            self.minimap: OverworldMinimap = OverworldMinimap('minimap', None, overworld, cursor)
-            self.minimap.props.v_alignment = uif.VAlignment.BOTTOM
-            self.minimap.margin = (5, 5, 5, 5)
-            self.minimap.disable()
-            self.base_component.add_child(self.minimap)
-        else:
-            self.minimap = None
+        # if SPRITES.get('MagvelMinimap'):
+        #     self.minimap: OverworldMinimap = OverworldMinimap('minimap', None, overworld, cursor)
+        #     self.minimap.props.v_alignment = uif.VAlignment.BOTTOM
+        #     self.minimap.margin = (5, 5, 5, 5)
+        #     self.minimap.disable()
+        #     self.base_component.add_child(self.minimap)
+        # else:
+        #     self.minimap = None
+        self.minimap = None
 
         self.base_component.add_child(self.location_title)
 
@@ -65,6 +66,8 @@ class OverworldTravelUI():
             text.props.resize_mode = uif.ResizeMode.AUTO
             self.resources.add_child(text)
             self.resource_text_components.append(text)
+
+        self.base_component.add_child(self.resources)
 
     def _generate_transitions(self) -> tuple:
         exit_left = uif.translate_anim((0, 0), (-WINWIDTH, 0), disable_after=True)
@@ -103,10 +106,11 @@ class OverworldTravelUI():
             self.location_title_text.set_text(text)
             active = True
         hex_pos = game.cursor.get_hovered_hex()
-        hex_name = self.overworld.hex_board.get_name(hex_pos)
-        if hex_name:
-            self.location_title_text.set_text(hex_name)
-            active = True
+        if hex_pos:
+            hex_name = self.overworld.hex_board.get_name(hex_pos)
+            if hex_name:
+                self.location_title_text.set_text(hex_name)
+                active = True
 
         # logic for determining which side of the screen the title hangs out on
         # Try to keep them on the same side
@@ -134,7 +138,7 @@ class OverworldTravelUI():
                 self.location_title.exit()
             elif self.location_title.enabled and switch_sides:
                 self.location_title.exit()
-            elif not self.location_title.enabled:
+            elif not self.location_title.enabled and active:
                 # was inactive, no active, animate in
                 self.location_title.enter()
 

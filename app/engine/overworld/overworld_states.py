@@ -8,7 +8,7 @@ from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
 from app.engine.objects.overworld import (OverworldNodeObject, OverworldEntityObject,
                                           OverworldNodeProperty, OverworldEntityTypes)
-from app.engine.overworld.overworld_actions import OverworldMove
+from app.engine.overworld.overworld_actions import OverworldMove, OverworldHexMove
 from app.engine.overworld.overworld_manager import OverworldManager
 from app.engine.overworld.overworld_map_view import OverworldMapView
 from app.engine.overworld.overworld_movement_manager import \
@@ -70,18 +70,18 @@ class OverworldFreeState(MapState):
         #                     game.overworld_controller.selected_entity.nid,
         #                     current_level_node.name)
 
-        # Create the player party without a location
-        if not game.overworld_controller.selected_entity:
+        # If no entities at all, create the player party without a location
+        if not game.overworld_controller.entities:
             first_party_nid = DB.parties[0].nid
             new_entity = OverworldEntityObject.from_party_prefab(None, first_party_nid)
             game.overworld_controller.add_entity(new_entity)
 
-        party_pos = game.overworld_controller.selected_party_node().position
-        if party_pos:
+        party_loc = game.overworld_controller.selected_party_node()
+        if party_loc:
+            party_pos = party_loc.position
             game.cursor.set_pos(party_pos)
             game.camera.force_center(*party_pos)
-        if game.overworld_controller.next_level:
-            game.events.trigger('overworld_start', level_nid=game.overworld_controller.next_level)
+        game.events.trigger('overworld_start', level_nid=game.overworld_controller.next_level)
 
     def begin(self):
         game.cursor.show()
@@ -91,7 +91,9 @@ class OverworldFreeState(MapState):
         game.cursor.take_input()
 
         if event == 'BACK': # flick our cursor back to our party
-            game.cursor.set_pos(game.overworld_controller.selected_party_node().position)
+            party_loc = game.overworld_controller.selected_party_node()
+            if party_loc:
+                game.cursor.set_pos(party_loc.position)
 
         elif event == 'SELECT': # this is where the fun begins
             cur_pos = game.cursor.position

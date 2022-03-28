@@ -10,6 +10,8 @@ from app.engine import game_state
 from app.engine.component_system_compiler import source_generator
 
 def main(name: str):
+    if not os.path.exists(name + '.ltproj'):
+        raise ValueError("Could not locate LT project %s" % (name + '.ltproj'))
     RESOURCES.load(name + '.ltproj')
     DB.load(name + '.ltproj')
     title = DB.constants.value('title')
@@ -61,8 +63,9 @@ if __name__ == '__main__':
     try:
         # find_and_run_project()
         # main('lion_throne')
+        main('../west_march/west_march')
         # test_play('lion_throne')
-        test_play('../west_march/west_march')
+        # test_play('../west_march/west_march')
     except Exception as e:
         logging.exception(e)
         inform_error()
