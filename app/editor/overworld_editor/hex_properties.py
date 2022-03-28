@@ -22,21 +22,26 @@ class HexPropertiesMenu(QWidget):
         self.state_manager.subscribe_to_key(HexPropertiesMenu.__name__, 'selected_node', self.select_hex)
 
     def select_hex(self, hex_prefab):
-        print("Hex Properties Menu select_hex", hex_prefab)
         current_overworld = DB.overworlds.get(self.state_manager.state.selected_overworld)
         if current_overworld:
             self.current_hex = hex_prefab
         else:
             self.current_hex = None
+        print("select hex", self.hex_type_box.model._data)
         if self.current_hex:
             self.position_label.setText(self.current_hex.get_position_label())
-            self.hex_type_box.edit.setValue(self.current_hex.hex_type)
+            if self.current_hex.hex_type:
+                self.hex_type_box.edit.setValue(self.current_hex.hex_type)
+            elif DB.hex_types:
+                self.hex_type_box.edit.setValue(DB.hex_types.keys()[0])
+            self.set_components_active(True)
         else:
             self.set_components_active(False)
 
     def set_components_active(self, is_active):
         is_inactive = not is_active
         self.hex_type_box.setDisabled(is_inactive)
+        self.name_box.setDisabled(is_inactive)
 
     def hex_type_changed(self):
         if self.current_hex:

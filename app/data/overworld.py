@@ -49,6 +49,8 @@ class OverworldPrefab(Prefab):
     def save_attr(self, name, value):
         if name == 'overworld_nodes':
             value = [node.save() for node in value]
+        elif name == 'hexes':
+            value = self.hexes.save()
         else:
             value = super().save_attr(name, value)
         return value
@@ -56,6 +58,11 @@ class OverworldPrefab(Prefab):
     def restore_attr(self, name, value):
         if name == 'overworld_nodes':
             value = Data([OverworldNodePrefab.restore(map_node) for map_node in value])
+        elif name == 'hexes':
+            d = OverworldHexCatalog()
+            if value:
+                d.restore(value)
+            value = d
         else:
             value = super().restore_attr(name, value)
         return value

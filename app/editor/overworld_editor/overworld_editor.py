@@ -261,7 +261,7 @@ class OverworldEditor(QMainWindow):
         current_obj_type = OverworldEditorInternalTypes.MAP_HEX
 
         self.selected_object = SelectedObject(type=current_obj_type, obj=current_hex)
-        self.set_message("Selected Hex(q=%s, r=%s, s=%s)" % (current_hex.pos.q, current_hex.pos.r, current_hex.pos.s))
+        self.set_message("Selected Hex(q=%s, r=%s, s=%s)" % (current_hex.pos[0], current_hex.pos[1], current_hex.pos[2]))
 
     def lock_angle(self, prev_point: Point, next_point: Point, short=True) -> Point:
         """Roads can only run either horizontal/vertical, or in 45 degree angles.

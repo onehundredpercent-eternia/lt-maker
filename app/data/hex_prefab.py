@@ -10,24 +10,18 @@ class HexPrefab(Prefab):
         self.hex_type: str = hex_type
 
     def get_position_label(self) -> str:
-        return "(q: %s, r: %s, s: %s)" % (self.pos.q, self.pos.r, self.pos.s)
-
-    def save_attr(self, name, value):
-        if name == 'pos':
-            value = (value.q, value.r, value.s)
-        else:
-            value = super().save_attr(name, value)
-        return value
+        return "(q: %s, r: %s, s: %s)" % (self.pos[0], self.pos[1], self.pos[2])
 
     def restore_attr(self, name, value):
-        value = super().restore_attr(name, value)
         if name == 'pos':
-            value = hex_math.Hex(*value)
+            value = tuple(value)
+        else:
+            value = super().restore_attr(name, value)
         return value
 
     @classmethod
     def default(cls):
-        return cls(hex_math.Hex(0, 0, 0), '', None)
+        return cls((0, 0, 0), '', None)
 
 class OverworldHexCatalog(Dict[Tuple, HexPrefab]):
     def get_by_name(self, name):

@@ -76,7 +76,7 @@ class HexTypeProperties(QWidget):
         if self.current.nid in other_nids:
             QMessageBox.warning(self.window, 'Warning', 'Hex Type ID %s already in use' % self.current.nid)
             self.current.nid = str_utils.get_next_int(self.current.nid, other_nids)
-        DB.hex_type.update_nid(self.current, self.current.nid)
+        DB.hex_types.update_nid(self.current, self.current.nid)
         self.window.update_list()
 
     def name_changed(self, text):

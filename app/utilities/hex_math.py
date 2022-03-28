@@ -124,7 +124,7 @@ def hex_corner_offset(layout: Layout, corner: int) -> tuple:
 
 def polygon_corners(layout: Layout, h: Hex) -> list:
     corners = []
-    center = hex_to_pixel(layout, h)
+    center = _hex_to_pixel(layout, h)
     for i in range(6):
         offset = hex_corner_offset(layout, i)
         corners.append((center[0] + offset[0], center[1] + offset[1]))
