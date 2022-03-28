@@ -1665,12 +1665,12 @@ def unlock_support_rank(self: Event, unit1, unit2, support_rank, flags=None):
     if rank not in DB.support_ranks.keys():
         self.logger.error("Support rank %s not a valid rank!" % rank)
         return
-    prefabs = DB.support_pairs.get_pairs(unit1.nid, unit2.nid)
+    prefabs = DB.support_pairs.get_pairs(_unit1.nid, _unit2.nid)
     if prefabs:
         prefab = prefabs[0]
         action.do(action.UnlockSupportRank(prefab.nid, rank))
     else:
-        self.logger.error("Couldn't find prefab for units %s and %s" % (unit1.nid, unit2.nid))
+        self.logger.error("Couldn't find prefab for units %s and %s" % (_unit1.nid, _unit2.nid))
         return
 
 def add_market_item(self: Event, item, flags=None):
@@ -2051,14 +2051,14 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
     if not dimensions:
         dimensions = "0, 1"
     if not row_width:
-        width = '-1'
+        row_width = '-1'
     if not bg:
         bg = 'menu_bg_base'
     if 'no_bg' in flags:
         bg = None
 
     rows, cols = tuple(int(i) for i in dimensions.split(','))
-    row_width = int(width)
+    row_width = int(row_width)
 
     # determine data type
     dtype = 'str'
