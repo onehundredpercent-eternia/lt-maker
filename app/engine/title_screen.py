@@ -546,15 +546,23 @@ def build_new_game(slot):
     game.current_mode = old_mode
 
     game.state.clear()
-    game.state.change('turn_change')
-    game.state.process_temp_state()
+    if DB.constants.value('overworld_start'):
+        game.state.change('overworld')
+        game.state.process_temp_state()
 
-    first_level_nid = DB.levels[0].nid
-    # Skip DEBUG if it's the first level
-    if first_level_nid == 'DEBUG' and len(DB.levels) > 1:
-        first_level_nid = DB.levels[1].nid
-    game.start_level(first_level_nid)
-    game.game_vars['_next_level_nid'] = first_level_nid
+        first_overworld_nid = DB.overworlds[0].nid
+        game.game_vars['_next_overworld_nid'] = first_overworld_nid
+    else:
+        game.state.change('turn_change')
+        game.state.process_temp_state()
+
+        first_level_nid = DB.levels[0].nid
+        # Skip DEBUG if it's the first level
+        if first_level_nid == 'DEBUG' and len(DB.levels) > 1:
+            first_level_nid = DB.levels[1].nid
+        game.start_level(first_level_nid)
+        # Just for displaying the correct information on the title menu
+        game.game_vars['_next_level_nid'] = first_level_nid
 
     save.suspend_game(game, 'start', slot)
     save.remove_suspend()

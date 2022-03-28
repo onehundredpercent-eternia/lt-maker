@@ -9,8 +9,7 @@ if TYPE_CHECKING:
     from app.engine.game_state import GameState
     from app.engine.objects.unit import UnitObject
 
-from app.engine.overworld.overworld_map_sprites import (
-                                                        OverworldUnitSprite)
+from app.engine.overworld.overworld_map_sprites import (OverworldUnitSprite)
 from app.engine.unit_sound import UnitSound
 from app.utilities.typing import NID, Point
 from app.utilities import hex_math
@@ -50,8 +49,11 @@ class OverworldEntityObject():
         if isinstance(initial_loc, tuple):
             entity.on_node = None
             entity.on_hex = initial_loc
-        else:
+        elif initial_loc:
             entity.on_node = initial_loc
+            entity.on_hex = None
+        else:
+            entity.on_node = None
             entity.on_hex = None
 
         # create unit

@@ -6,7 +6,7 @@ from app.engine import engine, hex_board, menus
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
-from app.engine.objects.overworld import (OverworldNodeObject,
+from app.engine.objects.overworld import (OverworldNodeObject, OverworldEntityObject,
                                           OverworldNodeProperty, OverworldEntityTypes)
 from app.engine.overworld.overworld_actions import OverworldMove
 from app.engine.overworld.overworld_manager import OverworldManager
@@ -70,8 +70,16 @@ class OverworldFreeState(MapState):
         #                     game.overworld_controller.selected_entity.nid,
         #                     current_level_node.name)
 
-        game.cursor.set_pos(game.overworld_controller.selected_party_node().position)
-        game.camera.force_center(*game.overworld_controller.selected_party_node().position)
+        # Create the player party without a location
+        if not game.overworld_controller.selected_entity:
+            first_party_nid = DB.parties[0].nid
+            new_entity = OverworldEntityObject.from_party_prefab(None, first_party_nid)
+            game.overworld_controller.add_entity(new_entity)
+
+        party_pos = game.overworld_controller.selected_party_node().position
+        if party_pos:
+            game.cursor.set_pos(party_pos)
+            game.camera.force_center(*party_pos)
         if game.overworld_controller.next_level:
             game.events.trigger('overworld_start', level_nid=game.overworld_controller.next_level)
 
