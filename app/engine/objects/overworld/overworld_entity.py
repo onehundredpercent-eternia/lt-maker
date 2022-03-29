@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict
 from enum import Enum
 
+from app.constants import TILEWIDTH, TILEHEIGHT
 from app.data.database import DB
 
 if TYPE_CHECKING:
@@ -144,7 +145,8 @@ class OverworldEntityObject():
                 if node is not None:
                     return node.pos
         elif self.on_hex:
-            return hex_math.hex_to_pixel(self.on_hex)
+            pixel_pos = hex_math.hex_to_pixel(self.on_hex)
+            return pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
         else:
             return None
 

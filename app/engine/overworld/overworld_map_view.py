@@ -19,9 +19,17 @@ class OverworldMapView():
 
     def draw_hexes(self, surf, full_size, cull_rect):
         hex_board = self.overworld.hex_board
+        if self.cursor:
+            hovered_hex_position = self.cursor.get_hovered_hex()
+        else:
+            hovered_hex_position = None
         for h in hex_board.hex_graph.values():
             if h.sight == Sight.INSIGHT or h.sight == Sight.EXPLORED or True:
-                hex_outline = SPRITES.get('hex_outline')
+                # special behavior for the hovered hex
+                if hovered_hex_position == h.pos:
+                    hex_outline = SPRITES.get('selected_hex_outline')
+                else:
+                    hex_outline = SPRITES.get('hex_outline')
                 pos = hex_math.hex_to_pixel(h.pos)
                 pos = pos[0] - cull_rect[0] - TILEWIDTH//2, pos[1] - cull_rect[1] - TILEHEIGHT//2
                 surf.blit(hex_outline, pos)

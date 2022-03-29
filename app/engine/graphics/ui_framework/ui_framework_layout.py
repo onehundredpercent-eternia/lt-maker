@@ -87,7 +87,7 @@ class UILayoutHandler():
     def __init__(self, parent_component: UIComponent):
         self.parent_component: UIComponent = parent_component
 
-    def generate_child_positions(self, no_cull = False) -> Dict[int, Point]:
+    def generate_child_positions(self, no_cull=False) -> Dict[int, Point]:
         """Generates a list positions, order corresponding to the list of children provided.
 
         Returns:
@@ -243,7 +243,7 @@ class UILayoutHandler():
             return True
         if cpos[0] - coverflow[0] > psize[0] + poverflow[1]: # too far right
             return True
-        if cpos[1] + csize[1]  + coverflow[3] < -poverflow[2]: # too far up
+        if cpos[1] + csize[1] + coverflow[3] < -poverflow[2]: # too far up
             return True
         if cpos[1] - coverflow[2] > psize[1] + poverflow[3]: # too far down
             return True

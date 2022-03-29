@@ -20,7 +20,7 @@ class EventManager():
             if game.level_nid:
                 event_source_nid = game.level_nid
             else:
-                return []
+                event_source_nid = None
         for event_prefab in DB.events.get(trigger, event_source_nid):
             try:
                 result = evaluate.evaluate(event_prefab.condition, unit, unit2, item, position, region)

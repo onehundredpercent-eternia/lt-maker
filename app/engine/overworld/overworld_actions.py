@@ -1,12 +1,14 @@
 from __future__ import annotations
 from typing import List, Tuple
 
+from app.constants import TILEWIDTH, TILEHEIGHT
 from app.engine.objects.overworld import OverworldEntityObject, OverworldNodeObject, RoadObject
 from .overworld_manager import OverworldManager
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
 from app.utilities.typing import NID, Point
 from app.utilities import hex_math
+from app.engine import hex_board
 
 
 class OverworldMove():
@@ -67,7 +69,7 @@ class OverworldHexMove():
     """
     def __init__(self, entity: OverworldEntityObject | NID, target_hex: hex_math.Hex,
                  overworld: OverworldManager, event=False, follow=True, speed_adj=1,
-                 remove_last=False, path: List[Point] =None, linger=250, after_move_callback=None, mute=False):
+                 remove_last=False, path: List[Point] = None, linger=250, after_move_callback=None, mute=False):
         if isinstance(entity, OverworldEntityObject):
             entity = entity.nid
         self.entity = overworld.entities[entity]
@@ -83,12 +85,18 @@ class OverworldHexMove():
             hexes: List[hex_math.Hex] = overworld.shortest_hex_path(old_hex, new_hex)
             if remove_last:
                 hexes.pop()
-            self.path: List[Point] = [hex_math.hex_to_pixel(old_hex.pos)]
+            pixel_pos = hex_math.hex_to_pixel(old_hex.pos)
+            pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
+            self.path: List[Point] = [pos]
 
-            for hex_data in hexes:                
-                self.path.append(hex_math.hex_to_pixel(hex_data.pos))
+            for hex_pos in hexes:                
+                pixel_pos = hex_math.hex_to_pixel(hex_pos)
+                pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
+                self.path.append(pos)
         elif not path and not self.entity.on_hex: # path directly to hex from where we're at
-            self.path: List[Point] = [hex_math.hex_to_pixel(target_hex.pos)]
+            pixel_pos = hex_math.hex_to_pixel(target_hex.pos)
+            pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
+            self.path: List[Point] = [pos]
             if self.entity.display_position != self.path[0]:
                 self.path.insert(0, self.entity.display_position)
         else: # queue custom path

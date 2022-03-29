@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Dict, List, Tuple, TYPE_CHECKING
 
 # if TYPE_CHECKING:
+from app.constants import TILEWIDTH, TILEHEIGHT
 from app.data.hex_prefab import HexPrefab
 from app.data.hex_type import HexType
 
@@ -26,9 +27,13 @@ class HexData():
         self.sight: Sight = sight
 
     @property
-    def position(self) -> tuple:
+    def pixel_pos(self) -> tuple:
         # Returns pixel position
         return hex_math.hex_to_pixel(self.pos)
+
+    @property
+    def position(self):
+        return self.pixel_pos[0] / TILEWIDTH, self.pixel_pos[1] / TILEHEIGHT
 
     def save(self):
         return (self.pos, self.sight)
@@ -54,7 +59,7 @@ class HexBoard():
             potential_neighbors: List[hex_math.Hex] = hex_math.get_neighbors(hex_data.pos)
             for neighbor in potential_neighbors:
                 if neighbor in self.hex_graph:
-                    self.hex_graph.adjacency.append(neighbor)
+                    hex_data.adjacency.append(neighbor)
 
     def save(self):
         return [h.save() for h in self.hex_graph.values()]
@@ -83,7 +88,8 @@ class HexBoard():
         return ''
 
     def get_mcost(self, pos) -> float:
-        hex_type = self.get_hex_type(pos)
+        hex_type_nid = self.get_hex_type(pos)
+        hex_type = DB.hex_types.get(hex_type_nid)
         if hex_type:
             return hex_type.movement_cost
         return 1
@@ -101,7 +107,7 @@ class HexBoard():
         return Sight.UNEXPLORED
 
     def _update_fow(self, pos: hex_math.Hex, sight_range: int, new_sight: Sight):
-        positions_in_range: List[hex_math.Hex] = hex_math.get_all_hex_in_distance(pos, sight_range)
+        positions_in_range: List[hex_math.Hex] = hex_math.get_all_hex_within_distance(pos, sight_range)
         for hex_pos in positions_in_range:
             hex_data = self.hex_graph.get(hex_pos)
             if hex_data:
@@ -157,7 +163,7 @@ class HexPathfinding():
 
     def update_hex(self, adj: hex_math.Hex, pos: hex_math.Hex):
         pos_g = self.heuristic_data[pos][1]
-        adj_g = pos_g + self.hexes[adj].movement_cost
+        adj_g = pos_g + self.hex_board.get_mcost(adj)
         self.heuristic_data[adj][1] = adj_g
         adj_h = self.get_heuristic(adj)
         self.heuristic_data[adj][2] = adj_h
@@ -182,7 +188,7 @@ class HexPathfinding():
             # Don't process the hex twice
             self.closed.add(pos)
             # If ending cell, return path
-            if pos is self.end:
+            if pos == self.end:
                 return self.return_path(pos)
             # Get adjacent hexes for hexes
             if only_visible:
@@ -192,15 +198,17 @@ class HexPathfinding():
             for adj in adj_hexes:
                 if self.hex_board.get_mcost(adj) < 99 and adj not in self.closed:
                     adj_f = self.heuristic_data[adj][0] 
-                    adj_g = self.heuristic_data[adj][1]
-                    cur_g = self.heuristic_data[pos][1]
                     if (adj_f, adj) in self.open:
+                        adj_g = self.heuristic_data[adj][1]
+                        cur_g = self.heuristic_data[pos][1]
                         # check if current path is beter than the one previous found for this adj
                         if adj_g > cur_g + self.hex_board.get_mcost(adj):
                             self.update_hex(adj, pos)
+                            adj_f = self.heuristic_data[adj][0] 
                             heapq.heappush(self.open, (adj_f, adj))
                     else:
                         self.update_hex(adj, pos)
+                        adj_f = self.heuristic_data[adj][0] 
                         heapq.heappush(self.open, (adj_f, adj))
                 else:
                     pass  # Cannot move to here

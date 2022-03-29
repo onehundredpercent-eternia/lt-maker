@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QVBoxLayout, \
     QWidget, QLabel, QLineEdit
 from PyQt5.QtCore import Qt
 
-from app.extensions.custom_gui import PropertyBox
+from app.extensions.custom_gui import PropertyBox, ComboBox
 
 from app.data.database import DB
 from app.editor.custom_widgets import HexTypeBox
@@ -28,6 +28,11 @@ class HexPropertiesMenu(QWidget):
         else:
             self.current_hex = None
         if self.current_hex:
+            # Reset Hex Types
+            self.hex_type_box.edit.clear()
+            for hex_type in DB.hex_types:
+                self.hex_type_box.edit.addItem(hex_type.nid)            
+
             self.position_label.setText(self.current_hex.get_position_label())
             if self.current_hex.hex_type:
                 self.hex_type_box.edit.setValue(self.current_hex.hex_type)
@@ -49,6 +54,7 @@ class HexPropertiesMenu(QWidget):
 
     def hex_type_changed(self):
         if self.current_hex:
+            print("Hex Type Changed!", self.current_hex, self.hex_type_box.edit.currentText())
             self.current_hex.hex_type = self.hex_type_box.edit.currentText()
 
     def name_changed(self, text):
@@ -69,6 +75,8 @@ class HexPropertiesMenu(QWidget):
         self.name_box.edit.textChanged.connect(self.name_changed)
         self.layout.addWidget(self.name_box)
 
-        self.hex_type_box = HexTypeBox(self)
+        self.hex_type_box = PropertyBox("Hex Type", ComboBox, self)
+        for hex_type in DB.hex_types:
+            self.hex_type_box.edit.addItem(hex_type.nid)
         self.hex_type_box.edit.activated.connect(self.hex_type_changed)
         self.layout.addWidget(self.hex_type_box)

@@ -219,7 +219,7 @@ class MementoDialog(dialog.Dialog):
         self.plain_text = text
         self.background = background
         self.portrait = portrait
-        self.speaker = self.portrait.name
+        self.speaker = self.portrait.name if self.portrait else None
         self.font_type = 'convo'
         self.font_color = 'black'
         self.font = FONT[self.font_type + '-' + self.font_color]
@@ -440,8 +440,9 @@ class MementoDialog(dialog.Dialog):
     def draw(self, surf):
         if self.state not in ('transition_in', 'transition_out'):
             # Draw nametag
-            self.name_tag.update(self.portrait)
-            self.name_tag.draw(surf, self.portrait, self.speaker)
+            if self.portrait and self.speaker:
+                self.name_tag.update(self.portrait)
+                self.name_tag.draw(surf, self.portrait, self.speaker)
             # Draw text
             self.draw_text(surf)
 

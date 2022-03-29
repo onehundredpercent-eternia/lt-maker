@@ -81,6 +81,7 @@ class OverworldFreeState(MapState):
             party_pos = party_loc.position
             game.cursor.set_pos(party_pos)
             game.camera.force_center(*party_pos)
+        print("Trigger Overworld Start")
         game.events.trigger('overworld_start', level_nid=game.overworld_controller.next_level)
 
     def begin(self):
@@ -128,27 +129,38 @@ class OverworldFreeState(MapState):
 
             elif selected_hex: # if we clicked on a hex
                 entity = game.overworld_controller.entity_at(selected_hex.position)
-                if entity and entity.team == 'player' and entity.dtype == OverworldEntityTypes.PARTY: # there's a party underneath us, select it and launch the party menu
+                print("Entity", entity, game.overworld_controller.selected_entity)
+
+                # there's a party underneath us, select it and launch the party menu
+                if entity and entity.team == 'player' and entity.dtype == OverworldEntityTypes.PARTY:
                     game.overworld_controller.select_entity(entity)
                     get_sound_thread().play_sfx('Select 5')
                     game.state.change('overworld_party_option_menu')
                     return
-                else:   # we selected a hex without a player party
+
+                elif game.overworld_controller.selected_entity:   # we selected a hex without a player party
                     current_party_hex: hex_board.HexData = game.overworld_controller.selected_party_node()
+                    print(current_party_hex, current_party_hex.pos, current_party_hex.position, game.overworld_controller.selected_entity.display_position)
                     if game.overworld_controller.hex_path(current_party_hex, selected_hex):  # if there is a path from our party to this hex
                         # if there is an event that will take place upon reaching this node, stop short and trigger event start
                         hex_type = game.overworld_controller.hex_board.hexes.get(current_party_hex.pos).hex_type
                         if game.events.should_trigger('on_overworld_hex_select', unit=game.overworld_controller.selected_entity, region=hex_type, level_nid=game.overworld_controller.next_level):
-                            movement = OverworldHexMove(game.overworld_controller.selected_entity, selected_hex, game.overworld_controller, event=True, remove_last=True)
+                            movement = OverworldHexMove(game.overworld_controller.selected_entity, selected_hex.pos, game.overworld_controller, event=True, remove_last=True)
                             game.game_vars['_target_hex_type'] = hex_type
                             game.state.change('overworld_on_hex')
                         else:
-                            movement = OverworldHexMove(game.overworld_controller.selected_entity, selected_hex, game.overworld_controller)
+                            movement = OverworldHexMove(game.overworld_controller.selected_entity, selected_hex.pos, game.overworld_controller)
                         # queue camera movement to unit
                         game.camera.do_slow_pan(1000)
                         game.camera.set_center(current_party_hex.position[0], current_party_hex.position[1])
                         game.state.change('overworld_movement')
                         movement.queue(game.movement)
+                    else:
+                        print("No Path!")
+                        get_sound_thread().play_sfx('Error')
+                else:
+                    print("No Selected Party!")
+                    get_sound_thread().play_sfx('Error')    
 
             else:   # clicked on empty space, trigger the general menu
                 get_sound_thread().play_sfx('Select 5')
@@ -224,8 +236,8 @@ class OverworldNodeTransition(State):
         if not game.events.trigger('on_overworld_node_select', unit=game.overworld_controller.selected_entity.nid, region=game.game_vars['_target_node_nid'], level_nid=game.overworld_controller.next_level):
             # no events, then just queue the move
             movement = OverworldMove(game.overworld_controller.selected_entity.nid,
-                                    game.game_vars['_target_node_nid'],
-                                    game.overworld_controller)
+                                     game.game_vars['_target_node_nid'],
+                                     game.overworld_controller)
             game.state.change('overworld_movement')
             movement.queue(game.movement)
         return 'repeat'
@@ -245,8 +257,8 @@ class OverworldHexTransition(State):
         if not game.events.trigger('on_overworld_hex_select', unit=game.overworld_controller.selected_entity.nid, region=game.game_vars['_target_hex_type'], level_nid=game.overworld_controller.next_level):
             # no events, then just queue the move
             movement = OverworldMove(game.overworld_controller.selected_entity.nid,
-                                    game.game_vars['_target_hex_type'],
-                                    game.overworld_controller)
+                                     game.game_vars['_target_hex_type'],
+                                     game.overworld_controller)
             game.state.change('overworld_movement')
             movement.queue(game.movement)
         return 'repeat'
@@ -267,8 +279,8 @@ class OverworldLevelTransition(State):
         if not game.events.trigger('level_select', level_nid=game.overworld_controller.next_level):
             # no events, then just queue the move
             movement = OverworldMove(game.overworld_controller.selected_entity.nid,
-                                    game.overworld_controller.node_by_level(game.overworld_controller.next_level).nid,
-                                    game.overworld_controller)
+                                     game.overworld_controller.node_by_level(game.overworld_controller.next_level).nid,
+                                     game.overworld_controller)
             game.state.change('overworld_movement')
             movement.queue(game.movement)
         return 'repeat'

@@ -383,7 +383,8 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
 
     if MEMENTO_MODE:
         new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
-        self._saturate_portrait(portrait)
+        if portrait:
+            self._saturate_portrait(portrait)
     else:
         autosize = 'fit' in flags
         new_dialog = \

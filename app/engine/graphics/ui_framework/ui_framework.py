@@ -756,9 +756,9 @@ class UIComponent():
         csize = (cwidth, cheight)
 
         cpadding = (self.props.padding[0].to_pixels(ctsize[0]),
-            self.props.padding[1].to_pixels(ctsize[0]),
-            self.props.padding[2].to_pixels(ctsize[1]),
-            self.props.padding[3].to_pixels(ctsize[1]))
+                    self.props.padding[1].to_pixels(ctsize[0]),
+                    self.props.padding[2].to_pixels(ctsize[1]),
+                    self.props.padding[3].to_pixels(ctsize[1]))
 
         ciwidth = cwidth - cpadding[0] - cpadding[1]
         ciheight = cheight - cpadding[2] - cpadding[3]
@@ -787,9 +787,9 @@ class UIComponent():
             return
         pwidth, pheight = tuple_sub(self.parent.size, (self.parent.padding[0] + self.parent.padding[1], self.parent.padding[2] + self.parent.padding[3]))
         cmargin = (self.props.margin[0].to_pixels(pwidth),
-                    self.props.margin[1].to_pixels(pwidth),
-                    self.props.margin[2].to_pixels(pheight),
-                    self.props.margin[3].to_pixels(pheight))
+                   self.props.margin[1].to_pixels(pwidth),
+                   self.props.margin[2].to_pixels(pheight),
+                   self.props.margin[3].to_pixels(pheight))
         super(UIComponent, self).__setattr__('margin', cmargin)
         for child in self.children:
             child._recalculate_cached_margin_from_props()
@@ -844,7 +844,7 @@ class UIComponent():
         except:
             pass
 
-        if name in CACHED_ATTRIBUTES and not name in UNSETTABLE_ATTRIBUTES:
+        if name in CACHED_ATTRIBUTES and name not in UNSETTABLE_ATTRIBUTES:
             self.props.__setattr__(name, value)
         elif name in UNSETTABLE_ATTRIBUTES:
             return

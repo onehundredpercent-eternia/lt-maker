@@ -12,6 +12,7 @@ from app.constants import WINWIDTH, WINHEIGHT, TILEX, TILEY
 from app.engine.sprites import SPRITES
 from app.engine.game_state import game
 from app.engine import base_surf
+from app.engine import engine
 
 class OverworldTravelUI():
     legal_states = ('overworld',)
@@ -49,7 +50,7 @@ class OverworldTravelUI():
         self.resources: uif.UIComponent = uif.UIComponent(name="resources")
         bg = SPRITES.get('world_map_resources_box')
         if not bg:
-            bg = base_surf.create_base_surf(72, 72)
+            bg = base_surf.create_base_surf(72, 88)
         self.resources.props.bg = bg
         self.resources.size = self.resources.props.bg.get_size()
         self.resources.props.v_alignment = uif.VAlignment.BOTTOM
@@ -57,15 +58,22 @@ class OverworldTravelUI():
         self._init_resources_animations()
         self.resources.disable()
 
-        self.resource_text_components = []
+        self.resource_row_components = []
         self.resource_names = ["money", "special", "crystals", "rations"]
+        self.resource_icons = [None, None, None, None]
         for idx, val in enumerate(self.resource_names):
-            text = uif.PlainTextLine("%s text" % val, self.resources, "")
-            text.props.h_alignment = uif.HAlignment.CENTER
-            text.props.v_alignment = uif.VAlignment.CENTER
-            text.props.resize_mode = uif.ResizeMode.AUTO
-            self.resources.add_child(text)
-            self.resource_text_components.append(text)
+            icon = self.resource_icons[idx]
+            row = uif.IconRow("%s text" % val, text=str(val), icon=icon, text_align=uif.HAlignment.LEFT)
+            self.resource_row_components.append(row)
+
+        header_list = uif.HeaderList(
+            name="resources",
+            parent=self.resources,
+            header_row=uif.IconRow(text="Resources", text_align=uif.HAlignment.CENTER),
+            data_rows=self.resource_row_components,
+            width="90%")
+        header_list.margin = (3, 0, 0, 0)
+        self.resources.add_child(header_list)
 
         self.base_component.add_child(self.resources)
 
@@ -111,6 +119,7 @@ class OverworldTravelUI():
             if hex_name:
                 self.location_title_text.set_text(hex_name)
                 active = True
+        # print(engine.get_time(), self.location_title_text.text, self.location_title_text.enabled)
 
         # logic for determining which side of the screen the title hangs out on
         # Try to keep them on the same side
@@ -139,7 +148,7 @@ class OverworldTravelUI():
             elif self.location_title.enabled and switch_sides:
                 self.location_title.exit()
             elif not self.location_title.enabled and active:
-                # was inactive, no active, animate in
+                # was inactive, now active, animate in
                 self.location_title.enter()
 
     def _update_minimap_component(self):
@@ -161,10 +170,10 @@ class OverworldTravelUI():
 
     def _update_resources_component(self):
         vals = [game.party.money, game.party.special, game.party.crystals, game.party.rations]
-        for idx, text_component in enumerate(self.resource_text_components):
+        for idx, row_component in enumerate(self.resource_row_components):
             val = str(vals[idx])
             name = self.resource_names[idx]
-            text_component.set_text("%s: %s" % (name, val))
+            row_component.set_text("%s: %s" % (name, val))
 
         # logic for determining which side of the screen the title hangs out on
         # Try to keep them on opposite sides

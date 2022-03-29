@@ -2,6 +2,7 @@ import math
 
 from dataclasses import dataclass
 from typing import Tuple
+
 Hex = Tuple[float, float, float]
 hex_directions = [(1, 0, -1), (1, -1, 0), (0, -1, 1), (-1, 0, 1), (-1, 1, 0), (0, 1, -1)]
 
@@ -18,7 +19,7 @@ def hex_length(h: Hex) -> float:
     return (abs(h[0]) + abs(h[1]) + abs(h[2])) / 2
 
 def get_neighbors(h: Hex) -> list:
-    return [h + direction for direction in hex_directions]
+    return [hex_add(h, direction) for direction in hex_directions]
 
 @dataclass
 class Orientation:
@@ -136,3 +137,4 @@ def get_all_hex_within_distance(h: Hex, dist: int) -> list:
         for r in range(max(-dist, -q - dist), min(dist, -q + dist) + 1):
             s = -q - r
             neighbors.append(hex_add(h, (q, r, s)))
+    return neighbors

@@ -232,7 +232,8 @@ class OverworldManager():
         elif isinstance(pos, hex_board.HexData):
             pos = pos.position
         elif isinstance(pos, tuple) and len(pos) == 3:  # Checking for hex_math.Hex
-            pos = hex_math.hex_to_pixel(pos)
+            pixel_pos = hex_math.hex_to_pixel(pos)
+            pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
 
         for entity in self._overworld.overworld_entities.values():
             if entity.display_position == pos:
@@ -326,6 +327,7 @@ class OverworldManager():
             h1 = h1.pos
         if isinstance(h2, hex_board.HexData):
             h2 = h2.pos
+        print("hex path", h1, h2)
         return self.hex_board.has_path(h1, h2, only_visible=not force)
 
     def get_road(self, n1: OverworldNodeObject | NID,
