@@ -1,8 +1,9 @@
+import colorsys
+import hashlib
 import math
 from collections import Counter
-import colorsys, hashlib
 from operator import add, sub
-from typing import List
+
 
 def frames_to_ms(num_frames: int) -> int:
     """at 60 fps, each frame would happen in 16.67 ms"""
