@@ -16,27 +16,6 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
 
-
-def unit_position_compare(unit_a: UniqueUnit, unit_b: UniqueUnit):
-    a = unit_a.starting_position
-    b = unit_b.starting_position
-    if not a:
-        return -1
-    if not b:
-        return 1
-    ax, ay = a
-    bx, by = b
-    if ay < by:
-        return -1
-    elif by < ay:
-        return 1
-    # ay == by
-    if ax < bx:
-        return -1
-    elif bx < ax:
-        return 1
-    return 0
-
 class SimpleMapView(QGraphicsView):
     min_scale = 1
     max_scale = 4
@@ -120,7 +99,8 @@ class SimpleMapView(QGraphicsView):
         if self.working_image:
             painter = QPainter()
             painter.begin(self.working_image)
-            for unit in sorted(current_level.units, key=functools.cmp_to_key(unit_position_compare)):
+            drawn_units = [unit for unit in current_level.units if unit.starting_position]
+            for unit in sorted(drawn_units, key=lambda unit: tuple(unit.starting_position)):
                 if not unit.starting_position:
                     continue
                 if unit.starting_traveler:
@@ -221,7 +201,8 @@ class GlobalModeLevelMapView(SimpleMapView):
             painter = QPainter()
             painter.begin(self.working_image)
             if self.current_level:
-                for unit in sorted(self.current_level.units, key=functools.cmp_to_key(unit_position_compare)):
+                drawn_units = [unit for unit in self.current_level.units if unit.starting_position]
+                for unit in sorted(drawn_units, key=lambda unit: tuple(unit.starting_position)):
                     if not unit.starting_position:
                         continue
                     if unit.generic or unit.nid in DB.units.keys():
@@ -366,7 +347,8 @@ class NewMapView(SimpleMapView):
         if self.working_image:
             painter = QPainter()
             painter.begin(self.working_image)
-            for unit in sorted(self.current_level.units, key=functools.cmp_to_key(unit_position_compare)):
+            drawn_units = [unit for unit in self.current_level.units if unit.starting_position]
+            for unit in sorted(drawn_units, key=lambda unit: tuple(unit.starting_position)):
                 if not unit.starting_position:
                     continue
                 if unit.generic or unit.nid in DB.units.keys():
