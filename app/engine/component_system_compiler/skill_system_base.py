@@ -1,3 +1,6 @@
+from app.engine.objects.item import ItemObject
+
+
 class Defaults():
     @staticmethod
     def can_select(unit) -> bool:
@@ -384,3 +387,24 @@ def on_separate(unit, leader):
         for component in skill.components:
             if component.defines('on_separate'):
                 component.on_separate(unit, leader)
+
+global item_override_recursion_stack
+item_override_recursion_stack = set()
+def item_override(unit, item: ItemObject):
+    if not unit or not item:
+        return []
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.nid == 'item_override':
+                # Conditions for item overrides might rely on e.g.
+                # what item is equipped, which would itself
+                # make an item override call on the same skill.
+                # Therefore, we simply assume - probably safely -
+                # that the skill cannot influence its own condition.
+                if skill.nid not in item_override_recursion_stack:
+                    item_override_recursion_stack.add(skill.nid)
+                    if condition(skill, unit):
+                        item_override_recursion_stack.remove(skill.nid)
+                        return list(component.get_components(unit))
+                    item_override_recursion_stack.remove(skill.nid)
+    return []

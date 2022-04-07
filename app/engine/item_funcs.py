@@ -77,7 +77,7 @@ def repair_price(unit, item):
 #             return False
 #     return True
 
-def create_item(unit, item_nid, droppable=False, parent: ItemObject = None):
+def create_item(unit, item_nid, droppable=False, parent: ItemObject = None) -> ItemObject:
     item_prefab = DB.items.get(item_nid)
     if not item_prefab:
         logging.error("Couldn't find %s" % item_nid)
@@ -155,14 +155,15 @@ def inventory_full(unit, item) -> bool:
 
 def get_range(unit, item) -> set:
     min_range, max_range = 0, 0
-    for component in item.components:
+    all_components = item_system.get_all_components(unit, item)
+    for component in all_components:
         if component.defines('minimum_range'):
             min_range = component.minimum_range(unit, item)
             break
     if item._force_max_range is not None:
         max_range = item._force_max_range
     else:
-        for component in item.components:
+        for component in all_components:
             if component.defines('maximum_range'):
                 max_range = component.maximum_range(unit, item)
                 break

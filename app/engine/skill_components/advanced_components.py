@@ -1,8 +1,14 @@
-from app.data.skill_components import SkillComponent, SkillTags
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from app.data.components import Type
-
-from app.engine import equations, action, item_funcs, static_random, skill_system
+from app.data.skill_components import SkillComponent, SkillTags
+from app.engine import (action, equations, item_funcs, skill_system,
+                        static_random)
 from app.engine.game_state import game
+
+if TYPE_CHECKING:
+    from app.engine.objects.item import ItemObject
+
 
 class Ability(SkillComponent):
     nid = 'ability'
@@ -261,3 +267,21 @@ class EmpowerHeal(SkillComponent):
         except:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
+
+class ItemOverride(SkillComponent):
+    nid = 'item_override'
+    desc = 'allows overriding of item properties'
+    tag = SkillTags.ADVANCED
+
+    expose = Type.Item
+    value = ""
+
+    item: ItemObject = None
+
+    def get_components(self, unit):
+        if not self.value:
+            return []
+        if not self.item:
+            from app.engine import item_funcs
+            self.item = item_funcs.create_item(unit, self.value)
+        return self.item.components
