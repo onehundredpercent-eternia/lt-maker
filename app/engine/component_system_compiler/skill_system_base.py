@@ -388,7 +388,6 @@ def on_separate(unit, leader):
             if component.defines('on_separate'):
                 component.on_separate(unit, leader)
 
-global item_override_recursion_stack
 item_override_recursion_stack = set()
 def item_override(unit, item: ItemObject):
     if not unit or not item:
@@ -407,4 +406,5 @@ def item_override(unit, item: ItemObject):
                         item_override_recursion_stack.remove(skill.nid)
                         return list(component.get_components(unit))
                     item_override_recursion_stack.remove(skill.nid)
+                break
     return []
