@@ -39,7 +39,7 @@ class ItemObject():
         all_tags = set()
         for component in self.components:
             if component.nid == 'item_tags':
-                all_tags = all_tags | set(self.components.get('item_tags').value)
+                all_tags |= set(self.components.get('item_tags').value)
         return all_tags
 
     def change_owner(self, nid):
