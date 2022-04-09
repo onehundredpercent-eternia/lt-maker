@@ -390,8 +390,10 @@ def on_separate(unit, leader):
 
 item_override_recursion_stack = set()
 def item_override(unit, item: ItemObject):
+    all_override_components = []
+    components_so_far = set()
     if not unit or not item:
-        return []
+        return all_override_components
     for skill in unit.skills:
         for component in skill.components:
             if component.nid == 'item_override':
@@ -403,8 +405,10 @@ def item_override(unit, item: ItemObject):
                 if skill.nid not in item_override_recursion_stack:
                     item_override_recursion_stack.add(skill.nid)
                     if condition(skill, unit):
-                        item_override_recursion_stack.remove(skill.nid)
-                        return list(component.get_components(unit))
+                        new_override_components = list(component.get_components(unit))
+                        new_override_components = [comp for comp in new_override_components if comp.nid not in components_so_far]
+                        components_so_far |= set([comp.nid for comp in new_override_components])
+                        all_override_components += new_override_components
                     item_override_recursion_stack.remove(skill.nid)
                 break
-    return []
+    return all_override_components
