@@ -394,7 +394,7 @@ def item_override(unit, item: ItemObject):
     components_so_far = set()
     if not unit or not item:
         return all_override_components
-    for skill in unit.skills:
+    for skill in reversed(unit.skills):
         for component in skill.components:
             if component.nid == 'item_override':
                 # Conditions for item overrides might rely on e.g.
