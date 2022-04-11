@@ -30,34 +30,8 @@ class MountainTerrain(Terrain):
         return new_coords1, new_coords2, new_coords3, new_coords4
 
     def initial_process(self):
-        self.quit_all_threads()
-        data_loc = 'app/map_maker/mountain_data.p'
-        with open(data_loc, 'rb') as fp:
-            self.mountain_data = pickle.load(fp)
-        self.mountain_data = {mountain_group.coords: mountain_group for mountain_group in self.mountain_data}
-        self.border_dict = {}  # Coord: Index (0-15)
-        self.index_dict = {i: set() for i in range(16)}  # Index: Coord 
-        self.noneless_rules = {}
-
-        for mountain_group in self.mountain_data.values():
-            coord = mountain_group.coords
-            rules = mountain_group.rules
-            north_edge = None in rules['up']
-            south_edge = None in rules['down']
-            east_edge = None in rules['right']
-            west_edge = None in rules['left']
-            index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
-            self.border_dict[coord] = index
-            self.index_dict[index].add(coord)
-            # Keep track of the rules when None is not present as well
-            noneless_rules = {}
-            noneless_rules['up'] = {k: v for k, v in rules['up'].items() if k is not None}
-            noneless_rules['down'] = {k: v for k, v in rules['down'].items() if k is not None}
-            noneless_rules['left'] = {k: v for k, v in rules['left'].items() if k is not None}
-            noneless_rules['right'] = {k: v for k, v in rules['right'].items() if k is not None}
-            self.noneless_rules[coord] = noneless_rules
-        for index, coord in self.index_dict.items():
-            print(index, sorted(coord))
+        pass
+        # Here's where we determine which are index type 15
 
     def single_process(self, tilemap):
         positions: set = tilemap.get_all_terrain(self.nid)
@@ -94,10 +68,11 @@ class MountainTerrain(Terrain):
         self.tilemap = tilemap
 
         # But then, start the thread
-        if len(group) < 12:
-            thread = NaiveBacktrackingThread(tilemap, self.mountain_data, self.noneless_rules, group)
-        else:
-            thread = AlgorithmXThread(tilemap, self.mountain_data, self.noneless_rules, group)
+        # if len(group) < 12:
+        #     thread = NaiveBacktrackingThread(tilemap, self.mountain_data, self.noneless_rules, group)
+        # else:
+        #     thread = AlgorithmXThread(tilemap, self.mountain_data, self.noneless_rules, group)
+        thread = MountainRidgeThread(tilemap, group)
         thread.finished.connect(functools.partial(self.mountain_process_finished, thread))
         thread.waiting.connect(functools.partial(self.mountain_processing, thread))
         self.current_threads.append(thread)
@@ -105,7 +80,7 @@ class MountainTerrain(Terrain):
 
     def generic_fill(self, group):
         for pos in group:
-            valid_coords = self.index_dict[15]
+            valid_coords = self.solo_coords
             valid_coord = random_choice(list(valid_coords), pos)
             self.organization[pos] = valid_coord
 
