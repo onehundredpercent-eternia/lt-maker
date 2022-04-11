@@ -5,6 +5,9 @@ class MountainGroup():
 
     def __init__(self, positions, ridge_patterns, valley_patterns):
         self.tiles: Set[Tuple] = set(positions)
+        self.width = max(pos[0] for pos in self.tiles) - min(pos[0] for pos in self.tiles) + 1
+        self.height = max(pos[1] for pos in self.tiles) - min(pos[1] for pos in self.tiles) + 1
+
         self.ridge_patterns = ridge_patterns
         self.valley_patterns = valley_patterns
 
@@ -21,6 +24,8 @@ class MountainGroup():
 
         self.find_edges()
         self.pair_edges()
+
+        self.place_ridges()
 
     def find_edges(self):
         for pos in self.tiles:
@@ -46,6 +51,12 @@ class MountainGroup():
             valid_positions = [right_pos for right_pos in self.right_edges if right_pos[1] == left_pos[1] and right_pos[0] >= left_pos[0]]
             right_pos = list(sorted(valid_positions))[0]
             self.edge_pairs_h.append((left_pos, right_pos))
+
+    def place_ridges(self):
+        num_ridges = max(1, int(self.width / (self.peak_height * 2)))
+        num_valleys = num_ridges - 1
+        num_creases = num_ridges + num_valleys
+
 
 class Ridge():
     """Collection of Ridge Patterns"""
