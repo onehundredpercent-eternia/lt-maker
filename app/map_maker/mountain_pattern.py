@@ -1,6 +1,19 @@
+from enum import Enum
+
+class MountainCategory(Enum):
+    LIGHT = 1
+    LIGHT_BRIGHT = 2
+    LIGHT_TRANSITION = 3
+    DARK = 4
+    RIDGE = 5
+    RIDGE_BRIGHT = 6
+    RIDGE_TRANSITION = 7
+    VALLEY = 8
+
 class MountainPattern():
-    def __init__(self, coord, edge, ridges):
+    def __init__(self, coord, edge, category, ridges):
         self.coord: tuple = coord  # Position on tilemap
+        self.category: MountainCategory = category
         self.edge_index: int = edge   # Wang 2-edge tiles
         self.ridges: list = ridges
 
@@ -23,5 +36,3 @@ class MountainPattern():
     @staticmethod
     def edge_to_index(left=False, right=False, top=False, bottom=False) -> int:
         return bool(top) * 1 + bool(right) * 2 + bool(bottom) * 4 + bool(left) * 8
-
-    
