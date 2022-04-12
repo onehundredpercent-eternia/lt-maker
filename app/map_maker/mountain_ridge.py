@@ -1,5 +1,7 @@
 from typing import List, Dict, Tuple, Set
 
+from app.map_maker.mountain_patterns import MountainCategory
+
 class MountainGroup():
     peak_height = 2
 
@@ -58,12 +60,10 @@ class MountainGroup():
 
 
 class Ridge():
-    """Collection of Ridge Patterns"""
     def __init__(self):
         self.placement: Dict[Tuple, MountainPattern] = {}
         self.chain: List[Tuple] = []
 
 class Valley(Ridge):
-    """Collection of Valley Patterns"""
     pass
 
