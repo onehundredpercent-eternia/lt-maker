@@ -3,13 +3,12 @@ from typing import List, Dict, Tuple, Set
 class MountainGroup():
     peak_height = 2
 
-    def __init__(self, positions, ridge_patterns, valley_patterns):
+    def __init__(self, positions, mountain_patterns):
         self.tiles: Set[Tuple] = set(positions)
         self.width = max(pos[0] for pos in self.tiles) - min(pos[0] for pos in self.tiles) + 1
         self.height = max(pos[1] for pos in self.tiles) - min(pos[1] for pos in self.tiles) + 1
 
-        self.ridge_patterns = ridge_patterns
-        self.valley_patterns = valley_patterns
+        self.mountain_patterns = mountain_patterns
 
         self.ridges: List[Ridge] = []
         self.valleys: List[Valley] = [] 
@@ -61,7 +60,7 @@ class MountainGroup():
 class Ridge():
     """Collection of Ridge Patterns"""
     def __init__(self):
-        self.placement: Dict[Tuple, RidgePattern] = {}
+        self.placement: Dict[Tuple, MountainPattern] = {}
         self.chain: List[Tuple] = []
 
 class Valley(Ridge):
