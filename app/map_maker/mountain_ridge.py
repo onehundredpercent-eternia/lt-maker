@@ -1,6 +1,9 @@
+import math
+
 from typing import List, Dict, Tuple, Set
 
-from app.map_maker.mountain_patterns import MountainCategory
+from app.map_maker.mountain_patterns import MountainCategory, MountainPattern
+from app.map_maker.utilities import random_weighted_choice
 
 class MountainGroup():
     peak_height = 2
@@ -13,23 +16,24 @@ class MountainGroup():
         self.width = max(pos[0] for pos in self.tiles) + 1
         self.height = max(pos[1] for pos in self.tiles) + 1
 
-        self.mountain_patterns = mountain_patterns
-
-        self.ridges: List[Ridge] = []
-        self.valleys: List[Valley] = [] 
+        self.mountain_patterns: Dict[Tuple, MountainPattern] = mountain_patterns
 
         self.top_edges: Set[Tuple] = set()
         self.bottom_edges: Set[Tuple] = set()
         self.left_edges: Set[Tuple] = set()
         self.right_edges: Set[Tuple] = set()
 
-        self.edge_pairs_v = []
-        self.edge_pairs_h = []
-
         self.find_edges()
-        self.pair_edges()
+        self.edge_indices = {pos: MountainPattern.calculate_edge_index(left=pos in self.left_edges, right=pos in self.right_edges, top=pos in self.top_edges, bottom=pos in self.bottom_edges) for pos in self.tiles}
 
-        self.place_ridges_wavefunction_collapse()
+        output = False
+        counter = 0
+        while not output and counter < 10000:
+            output = self.place_ridges_wavefunction_collapse()
+            counter += 1
+        # Now organization exists
+        if counter >= 10000:
+            print("Wow this broke, infinite loop")
 
     def find_edges(self):
         for pos in self.tiles:
@@ -42,141 +46,101 @@ class MountainGroup():
             if (pos[0], pos[1] + 1) not in self.tiles:
                 self.bottom_edges.add(pos)
 
-    def pair_edges(self):
-        # Top to bottom first
-        for top_pos in self.top_edges:
-            # Find the closest bottom edge along the same column
-            valid_positions = [bottom_pos for bottom_pos in self.bottom_edges if bottom_pos[0] == top_pos[0] and bottom_pos[1] >= top_pos[1]]
-            bottom_pos = list(sorted(valid_positions))[0]
-            self.edge_pairs_v.append((top_pos, bottom_pos))
-        # Now left to right
-        for left_pos in self.left_edges:
-            # Find the closest right edge along the same row
-            valid_positions = [right_pos for right_pos in self.right_edges if right_pos[1] == left_pos[1] and right_pos[0] >= left_pos[0]]
-            right_pos = list(sorted(valid_positions))[0]
-            self.edge_pairs_h.append((left_pos, right_pos))
-
-    # def place_ridges_randomly(self):
-    #     num_ridges = max(1, int(self.width / (self.peak_height * 2)))
-    #     num_valleys = num_ridges - 1
-    #     num_creases = num_ridges + num_valleys
-    #     avg_peak_height = self.width / (num_creases + 1)
-
-    #     ridge_start_positions = [i * avg_peak_height + (i - 1) * avg_peak_height for i in range(1, num_ridges + 1)]
-    #     valley_start_positions = [i * avg_peak_height * 2 for i in range(1, num_valleys + 1)]
-
-    #     # Keep trying until we get one right
-    #     counter = 0
-    #     while counter < 10000:
-
-    #         # Place ridge chains
-    #         ridge_chains: List[Ridge] = []
-    #         for ridge_start in ridge_start_positions:
-    #             ridge = Ridge()
-    #             pos = (int(ridge_start), 0)
-    #             # Pick a valid pattern for this position
-    #             pattern = self.get_valid_starting_pattern(pos, mountain_category.RIDGE)
-    #             # Place it in the ridge
-    #             ridge.add(pos, pattern)
-    #             # Repeat until we reach the bottom of the bounding box
-    #             while pos[1] < self.height - 1:
-    #                 current_pos = ridge.chain[-1]
-    #                 current_pattern = ridge.placement[current_pos]
-    #                 pos, pattern = self.get_next_pattern(current_pos, current_pattern, mountain_category.RIDGE)
-    #                 ridge.add(pos, pattern)
-    #             ridge_chains.append(ridge)
-
-
-    #         valley_chains: List[Valley] = []
-    #         for valley_start in valley_start_positions:
-    #             valley = Valley()
-    #             pos = (int(valley_start), 0)
-    #             # Pick a valid pattern for this position
-    #             pattern = self.get_valid_starting_pattern(pos, mountain_category.VALLEY)
-    #             # Place it in the valley
-    #             valley.add(pos, pattern)
-    #             # Repeat until we reach the bottom of the bounding box
-    #             while pos[1] < self.height - 1:
-    #                 current_pos = valley.chain[-1]
-    #                 current_pattern = valley.placement[current_pos]
-    #                 pos, pattern = self.get_next_pattern(current_pos, current_pattern, mountain_category.VALLEY)
-    #                 valley.add(pos, pattern)
-    #             valley_chains.append(valley)
-
-    #         # Now check the results
-    #         # Need to assert none of the tiles overlap or lines cross
-    #         tile_frequency = Counter()
-    #         for ridge in ridge_chains:
-    #             for position in ridge,chain:
-    #                 tile_frequency[position] += 1
-    #         for valley in valley_chains:
-    #             for position in valley.chain:
-    #                 tile_frequency[position] += 1
-    #         if any(count > 1 for pos, count in tile_frequency.items()):
-    #             counter += 1
-    #             break
-    #         all_chains = ridge_chains + valley_chains
-    #         # Check whether lines cross
-    #         for pos in self.tiles:
-    #             if any(pos in chain.chain for chain in ridge_chains) and \
-    #                     any((pos[0] + 1, pos[1] + 1) in chain.chain for chain in ridge_chains) and \
-    #                     any((pos[0] + 1, pos[1]) in chain.chain for chain in valley_chains) and \
-    #                     any((pos[0], pos[1] + 1) in chain.chain for chain in valley_chains):
-    #                 counter += 1
-    #                 break
-    #             elif any(pos in chain.chain for chain in ridge_chains) and \
-    #                     any((pos[0] + 1, pos[1] + 1) in chain.chain for chain in ridge_chains) and \
-    #                     any((pos[0] + 1, pos[1]) in chain.chain for chain in valley_chains) and \
-    #                     any((pos[0], pos[1] + 1) in chain.chain for chain in valley_chains):
-    #                 counter += 1
-    #                 break
-
-    #         # Need to assert that where edges are concerned, there is a valid match (not necessary, done above?)
-    #         # Ridges at least X/2 distance away from valleys (where X is self.peak_height?)
-    #         for chain in ridge_chains:
-    #             for ridge_pos in chain.chain:
-    #                 for chain in valley_chains:
-    #                     for valley_pos in chain.chain:
-    #                         if utils.calculate_distance(ridge_pos, valley_pos) <=  
-    #         # No tile is more than 1.5X distance away from ridge
-    #         # If all these assertions are met, we have a valid match
-    #         # Assign to self.ridges and self.valleys
-    #         # Can now proceed to find correct coordinates for the non-crease tiles
-
     def shannon_entropy(self, possibilities) -> float:
         total = 0
         for possibility, chance in possibilities:
             total += chance * math.log2(1 / chance)
         return total
 
-    def place_ridges_wavefunction_collapse(self):
-        self.possibilities_at_position = \
-            {pos: {(MountainCategory.LIGHT, 1), (MountainCategory.DARK, 1)} for pos in self.tiles}
-        self.edge_indices = {pos: MountainPattern.calculate_edge_index(left=pos in self.left_edges, right=pos in self.right_edges, top=pos in self.top_edges, bottom=pos in self.bottom_edges)}
+    def get_minimum_shannon(self, possibility_space):
+        best_pos = None
+        min_shannon = 9e99
+        for pos, possibilities in possibility_space.items():
+            if len(possibilities) < 2:
+                continue  # Don't bother with single possibility
+            entropy = self.shannon_entropy(possibilities)
+            if entropy < min_shannon:
+                min_shannon = entropy
+                best_pos = pos
+        return pos, possibility_space[pos]
+
+    def place_ridges_wavefunction_collapse(self, random_offset=0):
+        self.possibility_space = \
+            {pos: set()} for pos in self.tiles}
         for pos in self.tiles:
-            if any(pattern.category == MountainCategory.RIDGE and pattern.edge_index == self.edge_indices[pos] in self.mountain_patterns):
-                self.possibilities_at_position[pos].add((MountainCategory.RIDGE, 0.33))
-            if any(pattern.category == MountainCategory.VALLEY and pattern.edge_index == self.edge_indices[pos] in self.mountain_patterns):
-                self.possibilities_at_position[pos].add((MountainCategory.VALLEY, 0.33))
+            categories = [MountainCategory.LIGHT, MountainCategory.DARK, MountainCategory.RIDGE, MountainCategory.VALLEY]
+            default_likelihood = [1, 1, 1 / (self.peak_height + 1), 1 / (self.peak_height + 1)]
+            for category, likelihood in zip(categories, default_likelihood):
+                if any(pattern.category == category and pattern.edge_index == self.edge_indices[pos] in self.mountain_patterns.values()):
+                    self.possibility_space[pos].add((category, likelihood))
 
-        while any(len(possibilities) > 1 for possibilities in self.possibilities_at_position):
-            current_pos, possibilities = self.get_minimum_shannon(self.possibilities_at_position)
+        assert all(len(v) >= 1 for v in self.possibility_space.values())
 
+        while any(len(possibilities) > 1 for possibilities in self.possibility_space):
+            current_pos, possibilities = self.get_minimum_shannon(self.possibility_space)
+            # Choose from among the possibilities randomly
+            choice = random_weighted_choice(possibilities, current_pos, offset=random_offset)
+            self.possibility_space[current_pos] = {(choice, 1)}
 
+            # Now remove other possibilities from the possibility space
+            if choice == MountainCategory.LIGHT:
+                # If Light, then 4-adjacent tiles can't be dark
+                for pos in self.get_adjacent_4_tiles(current_pos):
+                    self.possibility_space[pos].discard(MountainCategory.DARK)
+            elif choice == MountainCategory.DARK:
+                # if dark, then 4-adjacent tiles can't be light
+                for pos in self.get_adjacent_4_tiles(current_pos):
+                    self.possibility_space[pos].discard(MountainCategory.LIGHT)
+            elif choice == MountainCategory.RIDGE:
+                # if ridge, then 4-adjacent tiles can't be valley
+                for pos in self.get_adjacent_4_tiles(current_pos):
+                    self.possibility_space[pos].discard(MountainCategory.VALLEY)
+                # left tile must be either ridge or light (ie, left tile cannot be dark)
+                if (pos[0] - 1, pos[1]) in self.tiles:
+                    self.possibility_space[pos].discard(MountainCategory.DARK)
+                # right tile must be either ridge or dark (ie, right tile cannot be light)
+                if (pos[0] + 1, pos[1]) in self.tiles:
+                    self.possibility_space[pos].discard(MountainCategory.LIGHT)
+                # If has top and bottom edge, then pass
+                # If has top or bottom edge, must have at least 1 8-adjacent ridge
+                # If has left or right edge or no edge at all, must have at least 2 8-adjacent ridges
+            elif choice == MountainCategory.VALLEY:
+                # if valley, then 4-adjacent tiles can't be right
+                for pos in self.get_adjacent_4_tiles(current_pos):
+                    self.possibility_space[pos].discard(MountainCategory.RIDGE)
+                # left tile must be dark (ie, left tile cannot be light or valley)
+                if (pos[0] - 1, pos[1]) in self.tiles:
+                    self.possibility_space[pos].discard(MountainCategory.LIGHT)
+                    self.possibility_space[pos].discard(MountainCategory.VALLEY)
+                # right tile must be light (ie, right tile cannot be dark or valley)
+                if (pos[0] + 1, pos[1]) in self.tiles:
+                    self.possibility_space[pos].discard(MountainCategory.DARK)
+                    self.possibility_space[pos].discard(MountainCategory.VALLEY)
+                # If has top and bottom edge, then pass
+                # If has top or bottom edge, must have at least 1 8-adjacent ridge
+                # If has left or right edge or no edge at all, must have at least 2 8-adjacent ridges
 
-            
+            assert all(len(v) >= 1 for v in self.possibility_space.values())
 
+        self.final_patterns = {pos: possibility[0] for pos, possibility in self.possibility_space.items()}
+        # Now given all the pattern, assign a coordinate to each one
 
-
-class Ridge():
-    def __init__(self):
-        self.placement: Dict[Tuple, MountainPattern] = {}
-        self.chain: List[Tuple] = []
-
-    def add(self, pos, pattern):
-        self.placement[pos] = pattern
-        self.chain.append(pos)
-
-class Valley(Ridge):
-    pass
-
+        self.organization = {}
+        for pos, category in self.final_patterns.items():
+            valid_patterns = [pattern for pattern in self.mountain_patterns.values() if pattern.category == category and pattern.edge_index == self.edge_indices[pos]]
+            if category == MountainCategory.RIDGE:
+                for adj_pos in self.find_adjacent(pos, MountainCategory.RIDGE):
+                    if adj_pos in self.organization:
+                        adj_coord = self.organization[adj_pos]
+                        valid_patterns = [pattern for pattern in valid_patterns if pattern.can_match(self.mountain_patterns[adj_coord])]
+            if category == MountainCategory.VALLEY:
+                for adj_pos in self.find_adjacent(pos, MountainCategory.VALLEY):
+                    if adj_pos in self.organization:
+                        adj_coord = self.organization[adj_pos]
+                        valid_patterns = [pattern for pattern in valid_patterns if pattern.can_match(self.mountain_patterns[adj_coord])]
+            if valid_patterns:
+                pattern = random_choice(valid_patterns, pos, offset=offset)
+                self.organization[pos] = pattern.coord
+            else:
+                return False
+        return True
