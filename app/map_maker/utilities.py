@@ -15,6 +15,14 @@ def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
     random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
     return random.choice(choices)
 
+def random_weighted_choice(weighted_choices: list, pos: tuple, seed: int = None, offset: int = 0):
+    if seed is None:
+        seed = RANDOM_SEED
+    random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
+    choices = [x[0] for x in weighted_choices]
+    weights = [x[1] for x in weighted_choices]
+    return random.choice(choices, weights=weights)
+
 def random_random(pos: tuple, seed: int = None, offset: int = 0):
     if seed is None:
         seed = RANDOM_SEED
