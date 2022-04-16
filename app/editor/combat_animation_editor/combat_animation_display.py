@@ -47,8 +47,8 @@ class CombatAnimProperties(QWidget):
         self._data = self.window._data
 
         # Populate resources
-        for combat_anim in self._data:
-            populate_anim_pixmaps(combat_anim)
+        # for combat_anim in self._data:
+        #     populate_anim_pixmaps(combat_anim)
 
         self.control_setup(current)
 
@@ -306,7 +306,7 @@ class CombatAnimProperties(QWidget):
                 klass.combat_anim_nid = new_nid
 
     def ask_permission(self, obj, text: str) -> bool:
-        ret = QMessageBox.warning(self, "Deletion Warning", 
+        ret = QMessageBox.warning(self, "Deletion Warning",
                                   "Really delete %s <b>%s</b>?" % (text, obj.nid),
                                   QMessageBox.Ok | QMessageBox.Cancel)
         if ret == QMessageBox.Ok:
@@ -420,7 +420,7 @@ class CombatAnimProperties(QWidget):
 
         # Restore pixmaps
         if has_pixmap:
-            current_weapon.pixmap = main_pixmap_backup           
+            current_weapon.pixmap = main_pixmap_backup
             new_weapon.pixmap = QPixmap(current_weapon.full_path)
 
             for index in range(len(current_weapon.frames)):
@@ -429,9 +429,9 @@ class CombatAnimProperties(QWidget):
                 x, y, width, height = frame.rect
 
                 frame.pixmap = current_weapon.pixmap.copy(x, y, width, height)
-                
+
                 new_frame.nid = frame.nid
-                new_frame.rect = frame.rect 
+                new_frame.rect = frame.rect
                 new_frame.pixmap = current_weapon.pixmap.copy(x, y, width, height)
 
         self.current.weapon_anims.append(new_weapon)
@@ -488,7 +488,7 @@ class CombatAnimProperties(QWidget):
         new_nid = self.make_pose(weapon_anim)
         if not new_nid:
             return
-        
+
         new_pose = combat_anims.Pose(new_nid)
         weapon_anim.poses.append(new_pose)
         self.pose_box.addItem(new_nid)
@@ -602,6 +602,7 @@ class CombatAnimProperties(QWidget):
         self.stop()
 
         self.current = current
+        populate_anim_pixmaps(self.current)
         self.nid_box.setText(self.current.nid)
 
         self.weapon_box.clear()
@@ -822,7 +823,7 @@ class CombatAnimProperties(QWidget):
         path = os.path.join(fn_dir, '%s.ltanim' % self.current.nid)
         if not os.path.exists(path):
             os.mkdir(path)
-        
+
         # Store all of this in anim_nid.ltanim folder
         # Gather reference to images for this effect
         RESOURCES.combat_anims.save_image(path, self.current)
@@ -929,16 +930,16 @@ class CombatAnimProperties(QWidget):
             else:
                 print("Missing Stand or Attack pose!")
                 return
-            
+
             left_palette_name, left_palette, right_palette_name, right_palette = self.get_test_palettes(self.current)
 
             item_nid = None
             for item in DB.items:
                 if item.magic and item.nid in RESOURCES.combat_effects.keys():
                     item_nid = item.nid
-            
+
             timer.get_timer().stop()
             GAME_ACTIONS.test_combat(
-                self.current, weapon_anim, left_palette_name, left_palette, item_nid, 
+                self.current, weapon_anim, left_palette_name, left_palette, item_nid,
                 self.current, weapon_anim, right_palette_name, right_palette, item_nid, current_pose_nid)
             timer.get_timer().start()
