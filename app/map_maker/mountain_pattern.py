@@ -11,7 +11,7 @@ class MountainCategory(Enum):
     VALLEY = 8
 
 class MountainPattern():
-    def __init__(self, coord, edge, category, ridges):
+    def __init__(self, coord, edge, category, ridges=None):
         self.coord: tuple = coord  # Position on tilemap
         self.category: MountainCategory = category
         self.edge_index: int = edge   # Wang 2-edge tiles
