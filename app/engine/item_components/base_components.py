@@ -170,3 +170,11 @@ class ItemPrefab(ItemComponent):
     tag = ItemTags.BASE
 
     expose = Type.Item
+
+class ItemTags(ItemComponent):
+    nid = 'item_tags'
+    desc = 'attach arbitrary tags to items. Useful for conditionals.'
+    tag = ItemTags.BASE
+
+    expose = (Type.List, Type.Tag)
+    value = []

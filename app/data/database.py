@@ -12,7 +12,6 @@ from app.data import (ai, constants, difficulty_modes, equations, factions,
                       overworld_node, parties, raw_data, skills, stats, varslot,
                       supports, tags, terrain, translations, units, weapons)
 from app.events import event_prefab
-from app.utilities.str_utils import is_int
 
 
 class Database(object):
@@ -110,7 +109,7 @@ class Database(object):
     # === Saving and loading important data functions ===
     def restore(self, save_obj):
         for data_type in self.save_data_types:
-            logging.info("Database: Restoring %s..." % data_type)
+            logging.info("Database: Restoring %s..." % (data_type))
             getattr(self, data_type).restore(save_obj[data_type])
 
     def save(self):

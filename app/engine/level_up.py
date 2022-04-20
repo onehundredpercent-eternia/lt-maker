@@ -46,9 +46,12 @@ class ExpState(State):
         self.max_mana = self.unit.get_max_mana()
         self.mana_to_gain = 0
         if game.mana_instance:
-            self.mana_to_gain = game.mana_instance.pop()[1]
-            if self.mana_to_gain + self.old_mana > self.max_mana:
-                self.mana_to_gain = self.max_mana - self.old_mana
+            mana_instances_for_unit = [idx for idx, instance in enumerate(game.mana_instance) if instance[0].nid == self.unit.nid]
+            if mana_instances_for_unit:
+                mana_instance = game.mana_instance.pop(mana_instances_for_unit[-1])
+                self.mana_to_gain = mana_instance[1]
+                if self.mana_to_gain + self.old_mana > self.max_mana:
+                    self.mana_to_gain = self.max_mana - self.old_mana
         self.mana_bar = None
 
         self.state = SimpleStateMachine(self.starting_state)
@@ -333,7 +336,7 @@ class ExpState(State):
         if not unit_prefab:
             return
         for level_needed, personal_skill_nid in unit_prefab.learned_skills:
-            if unit.level == level_needed:
+            if unit.get_internal_level() == level_needed:
                 if personal_skill_nid == 'Feat':
                     game.memory['current_unit'] = unit
                     game.state.change('feat_choice')

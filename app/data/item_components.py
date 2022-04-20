@@ -18,6 +18,7 @@ class ItemTags(Enum):
 
     CUSTOM = 'custom'
     HIDDEN = 'hidden'
+    DEPRECATED = 'deprecated'
 
 class ItemComponent(Component):
     item = None

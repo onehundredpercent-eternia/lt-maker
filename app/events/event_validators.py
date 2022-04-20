@@ -182,6 +182,16 @@ class PositiveInteger(Validator):
             return int(text)
         return None
 
+class IntegerList(Validator):
+    desc = "must be a comma-delimited list of integers (ie, `5,7,12`)"
+
+    def validate(self, text, level):
+        text = text.split(',')
+        for t in text:
+            if not str_utils.is_int(t):
+                return None                
+        return text
+
 class PositiveIntegerOrZero(Validator):
     desc = "must be a whole number"
 
@@ -753,6 +763,9 @@ class HAlign(OptionValidator):
 class VAlign(OptionValidator):
     valid = [align.value for align in VAlignment]
 
+class GrowthMethod(OptionValidator):
+    valid = ["random", "fixed", "dynamic"]
+
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
     desc = "specifies the order and type of actions in combat. Valid actions: (`hit1`, `hit2`, `crit1`, `crit2`, `miss1`, `miss2`, `--`, `end`)."
@@ -800,11 +813,11 @@ class ItemList(Validator):
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(item.name, item.nid) for item in DB.items.values()]
+        valids = [(None, item.nid) for item in DB.items.values()]
         return valids
 
 class StatList(Validator):
-    desc = "accepts a comma-delimited list of pairs of stat nids and stat changes. For example, `STR,2,SPD,-3` to increase STR by 2 and decrease SPD by 3."
+    desc = "accepts a comma-delimited list of pairs of stat nids and stat changes. For example, `STR,2,SPD,-3`."
 
     def validate(self, text, level):
         s_l = text.split(',')

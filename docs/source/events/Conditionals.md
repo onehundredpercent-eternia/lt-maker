@@ -86,7 +86,7 @@ Check name of terrain at a position
 `DB.terrain.get(game.tilemap.get_terrain(position)).name`
 
 Check the current mode
-`game.mode == 'Lunatic'`
+`game.mode.nid == 'Lunatic'`
 
 Check the current level
 `game.level.nid == 'Chapter 2'`

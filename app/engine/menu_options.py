@@ -364,7 +364,7 @@ class ValueItemOption(ItemOption):
                 value_color = 'blue'
             else:
                 value_string = '--'
-        FONT[main_font].blit_right(value_string, surf, (x + self.width() - 10, y), value_color)
+        FONT[main_font].blit_right(value_string, surf, (x + self.width() - 6, y), value_color)
 
 class RepairValueItemOption(ValueItemOption):
     def draw(self, surf, x, y):
@@ -392,6 +392,25 @@ class RepairValueItemOption(ValueItemOption):
             if value < game.get_money():
                 value_color = 'blue'
         FONT[main_font].blit_right(value_string, surf, (x + self.width() - 10, y), value_color)
+
+class StockValueItemOption(ValueItemOption):
+    def __init__(self, idx, item, disp_value, stock):
+        super().__init__(idx, item, disp_value)
+        self.stock = stock
+
+    def width(self):
+        return 168
+
+    def draw(self, surf, x, y):
+        super().draw(surf, x, y)
+
+        main_color, uses_color = self.get_color()
+        main_font = self.font
+
+        stock_string = '--'
+        if self.stock >= 0:
+            stock_string = str(self.stock)
+        FONT[main_font].blit_right(stock_string, surf, (x + 128, y), main_color)
 
 class UnitOption(BasicOption):
     def __init__(self, idx, unit):

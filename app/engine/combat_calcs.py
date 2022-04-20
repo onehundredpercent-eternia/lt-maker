@@ -462,7 +462,7 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
 
 def compute_assist_damage(unit, target, item, def_item, mode, attack_info, crit=False):
     return compute_damage(unit, target, item, def_item, mode, attack_info, crit, assist=True)
-    
+
 def outspeed(unit, target, item, def_item, mode, attack_info) -> bool:
     if not item:
         return 1

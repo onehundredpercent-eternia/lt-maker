@@ -32,7 +32,8 @@ class ValueNoise():
             true_noise_map = [n + tn for n, tn in zip(noise_map, true_noise_map)]
         # normalize map
         max_value = max(true_noise_map)
-        true_noise_map = [v / max_value for v in true_noise_map]
+        min_value = min(true_noise_map)
+        true_noise_map = [(v - min_value) / (max_value - min_value) for v in true_noise_map]
         return true_noise_map
 
     def _interp(self, a, b, t):
@@ -76,9 +77,9 @@ class ValueNoise():
 class GrassValueNoise(ValueNoise):
     num_octaves = 3
     pixels_per_lattice = 4
-    starting_frequency = 1.5
+    starting_frequency = 1
     frequency_mult = 2  # lacunarity
-    amplitude_mult = 0.35
+    amplitude_mult = 0.5
     starting_amplitude = 1
 
 GRASSVALUENOISE = None
@@ -99,3 +100,16 @@ def get_generic_noise_map(width, height):
     pixel_height = math.ceil(height / factory.pixels_per_lattice) * factory.pixels_per_lattice
     noise = ValueNoise(pixel_width, pixel_height, 0)
     return noise
+
+if __name__ == '__main__':
+    noise = get_grass_noise_map(20, 20)
+    total = 0
+    for y in range(20):
+        for x in range(20):
+            val = noise.get(x, y)
+            if val == 1 or val == 0:
+                print("Wow!")
+            total += val
+            print("%.2f " % val, end='')
+        print("")
+    print(total / (20 * 20))

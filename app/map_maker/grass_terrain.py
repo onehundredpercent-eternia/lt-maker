@@ -3,15 +3,18 @@ from PyQt5.QtGui import QPixmap, QPainter
 from app.constants import TILEWIDTH, TILEHEIGHT
 from app.map_maker.wang_terrain import WangCorner2Terrain
 from app.map_maker.utilities import flood_fill
-from app.map_maker.value_noise import get_grass_noise_map
+from app.map_maker.utilities import get_random_seed
+from app.map_maker import simplex_noise
 
 class GrassTerrain(WangCorner2Terrain):
     terrain_like = ('Plains')
     cliff_data = [(13, 9), (13, 10), (14, 9), (14, 10)]  # Topright, Bottomright, Bottomleft, Topleft
-    corner_chance = 0.6
-    edge_chance = 0.4
-    light_grass_chance = 0.4
-    min_group_size = 6
+    corner_chance = 0.7
+    edge_chance = 0.0
+    light_grass_chance = 0.7
+    border_effect = 0.3
+    patch_thickness = 0.3  # lower is thicker
+    min_group_size = 7
     vertices: dict = {}
     potential_light_positions: set = set()
 
@@ -35,18 +38,18 @@ class GrassTerrain(WangCorner2Terrain):
     def single_process(self, tilemap):
         positions: set = tilemap.get_all_terrain(self.nid)
         self.vertices.clear()
-        noise_map = get_grass_noise_map(tilemap.width, tilemap.height)
-        self.potential_light_positions = {pos for pos in positions if noise_map.get(*pos) > (1 - self.light_grass_chance)}
+        # noise_map = get_grass_noise_map(tilemap.width, tilemap.height)
+        noise_values = {pos: simplex_noise.get(pos[0] * self.patch_thickness, pos[1] * self.patch_thickness, get_random_seed()) for pos in positions}
 
-        # Remove any positions that are adjacent to 2 or more non-grass tiles
-        for pos in list(self.potential_light_positions):
+        for pos in noise_values:
             north, east, south, west = tilemap.get_cardinal_terrain(pos)
             north_is_grass = bool(not north or north in self.terrain_like)
             east_is_grass = bool(not east or east in self.terrain_like)
             south_is_grass = bool(not south or south in self.terrain_like)
             west_is_grass = bool(not west or west in self.terrain_like)
-            if sum((north_is_grass, east_is_grass, west_is_grass, south_is_grass)) < 3:
-                self.potential_light_positions.discard(pos)
+            noise_values[pos] += (sum((north_is_grass, east_is_grass, west_is_grass, south_is_grass)) - 4) * self.border_effect
+
+        self.potential_light_positions = {pos for pos, value in noise_values.items() if value > (1 - self.light_grass_chance)}
 
         # Remove small groups
         positions = set(self.potential_light_positions)

@@ -202,6 +202,15 @@ def raytrace(pos1: tuple, pos2: tuple) -> list:
         n -= 1
     return tiles
 
+def flatten_list(initial_list) -> list:
+    final_list = []
+    for item in initial_list:
+        if isinstance(item, list):
+            final_list += flatten_list(item)
+        else:
+            final_list.append(item)
+    return final_list
+
 # Testing
 if __name__ == '__main__':
     c = Counter()

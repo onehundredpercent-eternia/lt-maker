@@ -27,14 +27,8 @@ class UnitFlickeringTint(SkillComponent):
 
     expose = Type.Color3
 
-    def on_add(self, unit, skill):
-        unit.sprite.add_flicker_tint(self.value, 900, 300)
-
-    def re_add(self, unit, skill):
-        unit.sprite.add_flicker_tint(self.value, 900, 300)
-
-    def on_remove(self, unit, skill):
-        unit.sprite.remove_flicker_tint(self.value, 900, 300)
+    def unit_sprite_flicker_tint(self, unit, skill) -> tuple:
+        return (self.value, 900, 300)
 
 class UpkeepAnimation(SkillComponent):
     nid = 'upkeep_animation'

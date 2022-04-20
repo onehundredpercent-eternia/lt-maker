@@ -23,6 +23,8 @@ from app.engine.combat.map_combat import MapCombat
 from app.engine.combat.base_combat import BaseCombat
 from app.engine.combat.mock_combat import MockCombat
 
+import logging
+
 class AnimationCombat(BaseCombat, MockCombat):
     alerts: bool = True
 
@@ -326,6 +328,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         elif self.state == 'begin_phase':
             # Get playback
             if not self.state_machine.get_state():
+                logging.debug("End Combat")
                 self.state = 'end_combat'
                 self.actions.clear()
                 self.playback.clear()
@@ -333,6 +336,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.actions, self.playback = self.state_machine.do()
             self.full_playback += self.playback
             if not self.actions and not self.playback:
+                logging.debug("Set Up Next State")
                 self.state_machine.setup_next_state()
                 return False
             self._set_stats()
@@ -487,6 +491,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 return True
 
         if self.state != current_state:
+            logging.debug("New Animation Combat State: %s", self.state)
             self.last_update = engine.get_time()
 
         # Update hp bars

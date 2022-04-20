@@ -44,7 +44,7 @@ class ItemPrefab(Prefab):
 
         # NOTE: Backwards Compatability. Guarantees that additional paired components
         # added since last version are default initialized.
-        all_components = []
+        all_components = Data()
         for component in components:
             all_components.append(component)
             if component.paired_with:
@@ -54,11 +54,9 @@ class ItemPrefab(Prefab):
                         new_paired = ICA.restore_component((paired_nid, component_class.value))
                         all_components.append(new_paired)
 
-        for component in all_components:
-            item_components.append(component)
         i = cls(dat['nid'], dat['name'], dat['desc'],
                 dat['icon_nid'], dat['icon_index'],
-                item_components)
+                all_components)
         return i
 
 class ItemCatalog(Data[ItemPrefab]):

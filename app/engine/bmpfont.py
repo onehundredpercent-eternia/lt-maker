@@ -155,11 +155,11 @@ class BmpFont():
         else:
             normal_render(x, y, string, color)
 
-    def blit_right(self, string, surf, pos, color = None):
+    def blit_right(self, string, surf, pos, color=None):
         width = self.width(string)
         self.blit(string, surf, (pos[0] - width, pos[1]), color)
 
-    def blit_center(self, string, surf, pos, color = None):
+    def blit_center(self, string, surf, pos, color=None):
         width = self.width(string)
         self.blit(string, surf, (pos[0] - width//2, pos[1]), color)
 

@@ -5,15 +5,13 @@ If you have experience working with Python and want to use the Python version of
 
 The Windows executable version of the **Lex Talionis** editor can be downloaded at this link:  https://gitlab.com/rainlash/lt-maker/-/releases
 
+**MAKE SURE YOU DOWNLOAD THE FILE TITLED LEX_TALIONIS_MAKER**
+
 ![PictureOfDoubleClick](../Images/PictureOfDoubleClick.png)
 
 This executable will **ONLY** work on Windows. On Mac and Linux you must follow the Python Installation method linked above. Once you have downloaded and unzipped the file, locate the `double_click_to_run.bat`. Double-click it to run the editor.
 
-:warning:
-```
-IF YOU DOWNLOAD THE WINDOWS EXECUTABLE VERSION YOU DO NOT NEED TO PROCEED WITH ANY OTHER INSTALLATION STEPS.
-```
-:warning:
+**warning: IF YOU DOWNLOAD THE WINDOWS EXECUTABLE VERSION YOU DO NOT NEED TO PROCEED WITH ANY OTHER INSTALLATION STEPS.**
 
 After a couple of seconds, the editor should pop up.
 

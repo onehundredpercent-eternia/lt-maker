@@ -675,23 +675,47 @@ class Inventory(Choice):
 class Shop(Choice):
     default_option = menu_options.ValueItemOption
 
-    def __init__(self, owner, options, topleft=None, disp_value='sell', background='menu_bg_base', info=None):
+    def __init__(self, owner, options, topleft=None, disp_value='sell', background='menu_bg_base', info=None, stock=None):
         self.disp_value = disp_value
+        self.stock = stock
         super().__init__(owner, options, topleft, background, info)
 
     def get_menu_width(self):
-        return 152
+        if self.stock:
+            return 168
+        else:
+            return 152
+
+    def decrement_stock(self):
+        if self.stock:
+            self.options[self.current_index].stock -= 1
+
+    def get_stock(self):
+        if self.stock:
+            return self.options[self.current_index].stock
+        else:
+            return -1
+
+    def set_stock(self, stock):
+        self.stock = stock
+        for idx, option in enumerate(self.options):
+            option.stock[idx] = stock
 
     def create_options(self, options, info_descs=None):
         self.options.clear()
         for idx, option in enumerate(options):
-            option = self.default_option(idx, option, self.disp_value)
+            if self.stock:
+                option = menu_options.StockValueItemOption(idx, option, self.disp_value, self.stock[idx])
+            else:
+                option = self.default_option(idx, option, self.disp_value)
             option.help_box = option.get_help_box()
             self.options.append(option)
 
         if self.hard_limit:
             for num in range(self.limit - len(options)):
                 option = menu_options.EmptyOption(len(options) + num)
+                if self.stock:
+                    option._width = 168
                 self.options.append(option)
 
 class RepairShop(Shop):
@@ -1069,6 +1093,8 @@ class Table(Simple):
             col += 1
             if self._exists(row, col):
                 pass
+            elif idx >= len(self.options) - 1:
+                break  # Don't move right because we are on the last row
             elif row < self.rows - 1:
                 row += 1
                 col = 0
@@ -1522,9 +1548,10 @@ class Convoy():
         return did_move
 
 class Market(Convoy):
-    def __init__(self, owner, options, topleft, disp_value=None):
+    def __init__(self, owner, options, topleft, disp_value=None, show_stock: bool = False):
         self.options = options
         self.disp_value = disp_value
+        self.show_stock = show_stock
         super().__init__(owner, topleft, disp_value=disp_value)
         self.selection_index = 1
         self.menu_index = 0
@@ -1534,7 +1561,11 @@ class Market(Convoy):
         sorted_dict = self.get_sorted_dict()
         self.menus = {}
         for w_type in self.order:
-            new_menu = Shop(self.owner, sorted_dict[w_type], self.topleft, self.disp_value)
+            if self.show_stock:
+                stock = [game.market_items[item.nid] for item in sorted_dict[w_type]]
+            else:
+                stock = None
+            new_menu = Shop(self.owner, sorted_dict[w_type], self.topleft, self.disp_value, stock=stock)
             new_menu.set_limit(7)
             new_menu.set_hard_limit(True)
             new_menu.gem = False
@@ -1564,6 +1595,24 @@ class Market(Convoy):
             value.sort(key=lambda item: bool(item.owner_nid))
 
         return sorted_dict
+
+    def update_options(self):
+        if self.inventory:
+            self.inventory.update_options(self.owner.items)
+        sorted_dict = self.get_sorted_dict()
+        for name, menu in self.menus.items():
+            if self.show_stock:
+                menu.stock = [game.market_items[item.nid] for item in sorted_dict[name]]
+            menu.update_options(sorted_dict[name])
+
+    def get_stock(self):
+        if self.show_stock:
+            return self.menus[self.order[self.selection_index - 1]].get_stock()
+        return -1
+
+    def decrement_stock(self):
+        if self.show_stock:
+            self.menus[self.order[self.selection_index - 1]].decrement_stock()
 
     def get_current(self):
         return self.menus[self.order[self.selection_index - 1]].get_current()

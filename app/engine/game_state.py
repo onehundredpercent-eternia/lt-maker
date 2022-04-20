@@ -65,7 +65,7 @@ class GameState():
         self.unlocked_lore: List[NID] = []
         self.dialog_log: DialogLog = None
         self.already_triggered_events: List[NID] = []
-        self.market_items: set = []
+        self.market_items: Dict[NID, int] = {}  # Any negative number is infinite stock
 
         # global controllers
         self.supports: supports.SupportController = None
@@ -96,7 +96,7 @@ class GameState():
         self.ui_view: ui_view.UIView = None
         self.combat_instance: List[SimpleCombat] = []
         self.exp_instance: List[Tuple[UnitObject, int, promotion.PromotionState, str]] = []
-        self.mana_instance = []
+        self.mana_instance: List[Tuple[UnitObject, int]] = []
         self.ai: ai_controller.AIController = None
         self.overworld_controller: OverworldManager = None
 
@@ -167,7 +167,7 @@ class GameState():
         self.supports = supports.SupportController()
         self.records = records.Recordkeeper()
         self.speak_styles = speak_style.SpeakStyleLibrary()
-        self.market_items = set()
+        self.market_items = {}
         self.unlocked_lore = []
         from app.engine.dialog_log import DialogLog
         self.dialog_log = DialogLog()
@@ -376,7 +376,7 @@ class GameState():
                 subskill.parent_skill = skill
 
         self.parties = {party_data['nid']: PartyObject.restore(party_data) for party_data in s_dict['parties']}
-        self.market_items = s_dict.get('market_items', set())
+        self.market_items = s_dict.get('market_items', {})
         self.unlocked_lore = s_dict.get('unlocked_lore', [])
         self.dialog_log = dialog_log.DialogLog.restore(s_dict.get('dialog_log', []))
 

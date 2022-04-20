@@ -1,20 +1,18 @@
-from app.map_maker.value_noise import get_generic_noise_map
 from app.map_maker.terrain_database import DB_terrain
 from app.map_maker.map_prefab import MapPrefab
+from app.map_maker import simplex_noise
 
 # Generate truly random terrain
 
 def generate(tilemap: MapPrefab) -> MapPrefab:
     tilemap.resize(30, 30, 0, 0)
+    thickness = 0.25
     
-    noise_map = get_generic_noise_map(tilemap.width, tilemap.height)
     for x in range(tilemap.width):
         for y in range(tilemap.height):
             pos = (x, y)
-            value = noise_map.get(*pos)
+            value = simplex_noise.get(pos[0] * thickness, pos[1] * thickness, 0)
             if value > 0.75:
-                tilemap.set(pos, None, DB_terrain.get('Mountain'))
-            elif value > 0.7:
                 tilemap.set(pos, None, DB_terrain.get('Hill'))
             elif value > 0.4:
                 tilemap.set(pos, None, DB_terrain.get('Plains'))

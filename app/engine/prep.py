@@ -740,8 +740,10 @@ class PrepItemsState(State):
                             options.append('Restock')
                         if not options:
                             options.append('Nothing')
-                        topleft = (96, self.menu.get_current_index() * 16 + 68 - 8 * len(options))
-                        self.sub_menu = menus.Choice(current, options, topleft)
+                        top = self.menu.get_current_index() * 16 + 68 - 8 * len(options)
+                        left = 96
+                        top = min(top, WINHEIGHT - 4 - 16 * len(options))
+                        self.sub_menu = menus.Choice(current, options, (left, top))
                     else:
                         self.menu.move_to_convoy()
                 elif context == 'convoy':
@@ -953,9 +955,11 @@ class PrepMarketState(State):
         self.bg = game.memory['prep_bg']
         self.unit = game.memory['current_unit']
 
-        self.sell_menu = menus.Market(self.unit, None, (WINWIDTH - 160, 40), disp_value='sell')
-        market_items = item_funcs.create_items(self.unit, game.market_items)
-        self.buy_menu = menus.Market(self.unit, market_items, (WINWIDTH - 160, 40), disp_value='buy')
+        self.sell_menu = menus.Market(self.unit, None, (WINWIDTH - 164, 40), disp_value='sell')
+        market_items = game.market_items.keys()
+        market_items = item_funcs.create_items(self.unit, market_items)
+        show_stock = any(stock >= 0 for stock in game.market_items.values())
+        self.buy_menu = menus.Market(self.unit, market_items, (WINWIDTH - 164, 40), disp_value='buy', show_stock=show_stock)
         self.display_menu = self.buy_menu
         self.sell_menu.set_takes_input(False)
         self.buy_menu.set_takes_input(False)
@@ -1010,10 +1014,12 @@ class PrepMarketState(State):
                 item = self.menu.get_current()
                 if item:
                     value = item_funcs.buy_price(self.unit, item)
-                    if game.get_money() - value >= 0:
+                    if game.get_money() - value >= 0 and self.menu.get_stock() != 0:
                         get_sound_thread().play_sfx('GoldExchange')
                         game.set_money(game.get_money() - value)
                         self.money_counter_disp.start(-value)
+                        self.menu.decrement_stock()
+                        game.market_items[item.nid] -= 1
                         new_item = item_funcs.create_item(self.unit, item.nid)
                         game.register_item(new_item)
                         if not item_funcs.inventory_full(self.unit, new_item):
@@ -1022,6 +1028,9 @@ class PrepMarketState(State):
                             new_item.change_owner(None)
                             game.party.convoy.append(new_item)
                         self.update_options()
+                    elif self.menu.get_stock() == 0:
+                        # Market is out of stock
+                        get_sound_thread().play_sfx('Select 4')
                     else:
                         # You don't have enough money
                         get_sound_thread().play_sfx('Select 4')

@@ -112,13 +112,16 @@ class AllyLifelink(SkillComponent):
         damage = utils.clamp(total_damage_dealt, 0, target.get_hp())
         true_damage = int(damage * self.value)
         adj_positions = target_system.get_adjacent_positions(unit.position)
+        did_happen = False
         for adj_pos in adj_positions:
             other = game.board.get_unit(adj_pos)
-            if other.team == unit.team:
+            if other and skill_system.check_ally(other, unit):
                 actions.append(action.ChangeHP(other, true_damage))
                 playback.append(('heal_hit', unit, item, other, true_damage, true_damage))
+                did_happen = True
 
-        actions.append(action.TriggerCharge(unit, self.skill))
+        if did_happen:
+            actions.append(action.TriggerCharge(unit, self.skill))
 
 class Armsthrift(SkillComponent):
     nid = 'armsthrift'
@@ -261,8 +264,7 @@ class GiveStatusAfterHit(SkillComponent):
     def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         mark_playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit')]
 
-        if target and any(p[3] == unit or p[1] == p[3].strike_partner \
-                for p in mark_playbacks):  # Unit is overall attacker
+        if target and any(p[1] == unit for p in mark_playbacks):
             actions.append(action.AddSkill(target, self.value, unit))
             actions.append(action.TriggerCharge(unit, self.skill))
 
