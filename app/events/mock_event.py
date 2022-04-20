@@ -1,8 +1,10 @@
 from enum import Enum
 from typing import List
 
+from app.engine import engine
 from app.events import speak_style, event_commands
 from app.events.event import Event
+from app.engine.sprites import SPRITES
 from app.engine.text_evaluator import TextEvaluator
 
 class IfStatementStrategy(Enum):
@@ -37,6 +39,7 @@ class MockEvent(Event):
         self.if_statement_strategy = if_statement_strategy
 
         self.background = None
+        self.bg_black = SPRITES.get('bg_black').copy()
         self.game = MockGame()
 
         self._generic_setup()
@@ -49,6 +52,13 @@ class MockEvent(Event):
 
         self._update_state(dialog_log=False)
         self._update_transition()
+
+    def draw(self, surf):
+        # Necessary to clear out content from the previous frame
+        if not self.background:
+            engine.blit_center(surf, self.bg_black)
+        surf = super().draw(surf)
+        return surf
 
     def handle_loop(self, command: event_commands.EventCommand) -> bool:
         if command.nid == 'for':
