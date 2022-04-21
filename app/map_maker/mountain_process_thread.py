@@ -5,19 +5,144 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from app.map_maker.utilities import get_random_seed, random_choice
 from app.map_maker import rain_algorithm_x
 
-class MountainRidgeThread(QThread):
+class PatternBacktrackingThread(QThread):
     waiting = pyqtSignal()
 
-    def __init__(self, tilemap, group, parent=None):
+    def __init__(self, tilemap, mountain_data, group, gui_processing=True, parent=None):
         super().__init__(parent)
+        # Sort from top left to bottom right
+        # Break ties starting from the left
         self.tilemap = tilemap
+        self.mountain_data = mountain_data  # List of patterns
         self.group = group
+        self.gui_processing = gui_processing
+
+        self.to_process = sorted(self.group, key=lambda x: (x[0] + x[1], x[0]))
+        self.organization = {}
+        self.locked_values = {}
+        self.order = []
+
+        self.did_complete = False
+        self.broke_out = False
 
     def stop(self):
-        pass
+        self.to_process.clear()
+        self.broke_out = True
 
     def run(self):
         self.process_group()
+
+    def process_group(self):
+        print("--- Process Group ---", id(self))
+        # Determine coord 
+        self.organization.clear()
+        self.locked_values.clear()
+        self.order.clear()
+        
+        def process(seq, exact=True):
+            pos = seq[0]
+            did_work = self.find_valid_coord(self.tilemap, pos)
+            if did_work:
+                try:
+                    self.to_process.remove(pos)
+                except ValueError:
+                    pass
+                self.order.append(pos)
+            self.to_process = sorted(self.to_process, key=lambda x: (x[0] + x[1], x[0]))
+
+        counter = 0
+        max_counter = int(1e7)
+        step_size = 500
+        while self.to_process and counter < max_counter:
+            counter += 1
+            process(self.to_process)
+            if counter % step_size == 0 and self.gui_processing:
+                print("Processing %s %d..." % (id(self), counter//step_size))
+                self.waiting.emit()
+                time.sleep(0.1)
+        # Just throw shit at the wall
+        if self.to_process:
+            print("Inexact solution found")
+            while self.to_process:
+                process(self.to_process, exact=False)
+        
+        if not self.broke_out:
+            self.did_complete = True
+
+    def find_valid_coord(self, tilemap, pos, exact=True) -> bool:
+        north, east, south, west = tilemap.get_cardinal_terrain(pos)
+        # Whether there is a border to the north
+        north_edge = bool(north and north != 'Mountain')
+        south_edge = bool(south and south != 'Mountain')
+        east_edge = bool(east and east != 'Mountain')
+        west_edge = bool(west and west != 'Mountain')
+        valid_patterns = [pattern for pattern in self.mountain_data if pattern.edge_match(north_edge, east_edge, south_edge, west_edge)]
+        orig_valid_patterns = valid_patterns[:]
+
+        north_pos = (pos[0], pos[1] - 1)
+        south_pos = (pos[0], pos[1] + 1)
+        east_pos = (pos[0] + 1, pos[1])
+        west_pos = (pos[0] - 1, pos[1])
+        southwest_pos = (pos[0] - 1, pos[1] + 1)
+
+        # print("*Valid Coord", pos, self.order)
+        # print(sorted(valid_patterns))
+        # Remove locked patterns
+        if pos in self.locked_values and exact:
+            # print("Locked", sorted(self.locked_values[pos]))
+            valid_patterns = [pattern for pattern in valid_patterns if pattern not in self.locked_values[pos]]
+        if not north_edge and north_pos in self.organization:
+            chosen_pattern = self.organization[north_pos]
+            valid_patterns = [pattern for pattern in valid_patterns if chosen_pattern.matches(pattern, (0, 1))]
+        if not south_edge and south_pos in self.organization:
+            chosen_pattern = self.organization[south_pos]
+            valid_patterns = [pattern for pattern in valid_patterns if chosen_pattern.matches(pattern, (0, -1))]
+        if not east_edge and east_pos in self.organization:
+            chosen_pattern = self.organization[east_pos]
+            valid_patterns = [pattern for pattern in valid_patterns if chosen_pattern.matches(pattern, (-1, 0))]
+        if not west_edge and west_pos in self.organization:
+            chosen_pattern = self.organization[west_pos]
+            valid_patterns = [pattern for pattern in valid_patterns if chosen_pattern.matches(pattern, (1, 0))]
+        # If there's already a position filled to the southwest, check that we can find a reasonable
+        # choice for the 
+        if southwest_pos in self.organization and south and south == 'Mountain':
+            chosen_pattern = self.organization[southwest_pos]
+            valid_right_patterns = [pattern for pattern in valid_patterns if chosen_pattern.matches(pattern, (1, 0))]
+            # For the remaining valid patterns for this coordinate
+            # check if any of that coordinate's southward connections match with the rightward coordinates
+            # of the southwesst position
+            valid_patterns = [pattern for pattern in valid_patterns if any(pattern.matches(p, (0, 1)) for p in valid_right_patterns)]
+
+        # print(sorted(valid_patterns))
+        if not valid_pattern and not exact:
+            valid_patterns = orig_valid_patterns
+        if not valid_patterns:
+            # print("Reverting Order...")
+            if pos in self.locked_values:
+                del self.locked_values[pos]
+            self.revert_order()
+            # valid_coords = self.index_dict[15]
+            return False
+
+        valid_pattern = random_choice(valid_patterns, pos)
+        # print("Final", valid_pattern)
+        self.organization[pos] = valid_pattern
+        return True
+
+    def revert_order(self):
+        if not self.order:
+            print("Major loop error! No valid solution")
+            self.to_process.clear()
+            return False
+
+        pos = self.order.pop()
+        pattern = self.organization[pos]
+        del self.organization[pos]
+        self.to_process.insert(0, pos)
+        if pos not in self.locked_values:
+            self.locked_values[pos] = set()
+        self.locked_values[pos].add(pattern)
+        # print("Locking ", pattern, "for ", pos)
 
 class NaiveBacktrackingThread(QThread):
     waiting = pyqtSignal()
