@@ -56,43 +56,21 @@ class MountainPattern():
         x, y = direction
 
         # Find the valid categories
-        valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.RIDGE)
+        valid_categories = (MountainCategory.DARK, MountainCategory.LIGHT)
         if self.category == MountainCategory.LIGHT:
-            if x == 1 and y == 0:
-                valid_categories = (MountainCategory.LIGHT, MountainCategory.RIDGE)
-            elif x == -1 and y == 0:
-                valid_categories = (MountainCategory.LIGHT, MountainCategory.VALLEY)
-            elif y == 1 and x == 0:
-                valid_categories = (MountainCategory.LIGHT, MountainCategory.RIDGE, MountainCategory.VALLEY)
-            elif y == -1 and x == 0:
-                valid_categories = (MountainCategory.LIGHT, MountainCategory.RIDGE, MountainCategory.VALLEY)
+            valid_categories = (MountainCategory.LIGHT,)
         elif self.category == MountainCategory.DARK:
-            if x == 1 and y == 0:
-                valid_categories = (MountainCategory.DARK, MountainCategory.VALLEY)
-            elif x == -1 and y == 0:
-                valid_categories = (MountainCategory.DARK, MountainCategory.RIDGE)
-            elif y == 1 and x == 0:
-                valid_categories = (MountainCategory.DARK, MountainCategory.RIDGE, MountainCategory.VALLEY)
-            elif y == -1 and x == 0:
-                valid_categories = (MountainCategory.DARK, MountainCategory.RIDGE, MountainCategory.VALLEY)
+            valid_categories = (MountainCategory.DARK,)
         elif self.category == MountainCategory.RIDGE:
             if x == 1 and y == 0:
-                valid_categories = (MountainCategory.RIDGE, MountainCategory.DARK, MountainCategory.VALLEY)
+                valid_categories = (MountainCategory.DARK,)
             elif x == -1 and y == 0:
-                valid_categories = (MountainCategory.RIDGE, MountainCategory.LIGHT, MountainCategory.VALLEY)
-            elif y == 1 and x == 0:
-                valid_categories = (MountainCategory.RIDGE, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.VALLEY)
-            elif y == -1 and x == 0:
-                valid_categories = (MountainCategory.RIDGE, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.VALLEY)
+                valid_categories = (MountainCategory.LIGHT,)
         elif self.category == MountainCategory.VALLEY:
             if x == 1 and y == 0:
-                valid_categories = (MountainCategory.VALLEY, MountainCategory.LIGHT, MountainCategory.RIDGE)
+                valid_categories = (MountainCategory.LIGHT,)
             elif x == -1 and y == 0:
-                valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.RIDGE)
-            elif y == 1 and x == 0:
-                valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.RIDGE)
-            elif y == -1 and x == 0:
-                valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.RIDGE)
+                valid_categories = (MountainCategory.DARK,)
 
         return pattern.category in valid_categories
 
@@ -148,9 +126,5 @@ class MountainPattern():
         else:
             return False
 
-        if self.ridge_match(pattern, direction):
-            pass
-        else:
-            return False
         return True
         
