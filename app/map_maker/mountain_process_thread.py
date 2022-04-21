@@ -19,7 +19,6 @@ class ArtistPatternThread(QThread):
         self.orig_group = group
         self.gui_processing = gui_processing
 
-        self.organization_offset = {}
         self.organization = {}
         self.locked_values = {}
         self.order = []
@@ -124,6 +123,8 @@ class ArtistPatternThread(QThread):
         valid_patterns = self.find_edge_patterns(true_pos)
         curent_pattern = random_choice([pattern for pattern in valid_patterns if pattern.category == category], pos)
         fold[pos] = curent_pattern
+        adj_stack = []
+        
         return fold
 
     def place_valleys(self, offset=0):
