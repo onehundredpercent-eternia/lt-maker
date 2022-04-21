@@ -19,6 +19,7 @@ class ArtistPatternThread(QThread):
         self.orig_group = group
         self.gui_processing = gui_processing
 
+        self.organization_offset = {}
         self.organization = {}
         self.locked_values = {}
         self.order = []
@@ -100,6 +101,31 @@ class ArtistPatternThread(QThread):
                     return False
         return True
 
+    def find_edge_patterns(self, pos) -> list:
+        if pos in self.tilemap.tile_dict:
+            north, east, south, west = self.tilemap.get_cardinal_terrain(pos)
+            # Whether there is a border to the north
+            north_edge = bool(north and north != 'Mountain')
+            south_edge = bool(south and south != 'Mountain')
+            east_edge = bool(east and east != 'Mountain')
+            west_edge = bool(west and west != 'Mountain')
+            valid_patterns = [pattern for pattern in self.mountain_data if pattern.edge_match(north_edge, east_edge, south_edge, west_edge)]
+            return valid_patterns
+        else:
+            valid_patterns = [pattern for pattern in self.mountain_data if pattern.edge_match(False, False, False, False)]
+            return valid_patterns
+
+    def fill_fold(self, pos, category) -> dict:
+        """
+        Returns dictionary of position: pattern
+        """
+        fold = {}
+        true_pos = (pos[0] + self.min_x, pos[1] + self.min_y)
+        valid_patterns = self.find_edge_patterns(true_pos)
+        curent_pattern = random_choice([pattern for pattern in valid_patterns if pattern.category == category], pos)
+        fold[pos] = curent_pattern
+        return fold
+
     def place_valleys(self, offset=0):
         self.valleys = []
         for i in range(self.num_folds)
@@ -150,15 +176,15 @@ class ArtistPatternThread(QThread):
                         if ridge_count < 0:
                             return False
 
-        self.organization.update(proto_organization)
         if self.min_x == 0:
-            self.organization = {(pos[0] - self.width, pos[1]): pattern for pos, pattern in self.organization.values() if pos[0] >= self.width}
+            proto_organization = {(pos[0] - self.width, pos[1]): pattern for pos, pattern in proto_organization.values() if pos[0] >= self.width}
         if self.max_x == self.tilemap.width - 1:
-            self.organization = {pos: pattern for pos, pattern in self.organization.values() if pos[0] < self.width}
+            proto_organization = {pos: pattern for pos, pattern in proto_organization.values() if pos[0] < self.width}
         if self.min_y == 0:
-            self.organization = {(pos[0], pos[1] - self.height): pattern for pos, pattern in self.organization.values() if pos[1] >= self.height}
+            proto_organization = {(pos[0], pos[1] - self.height): pattern for pos, pattern in proto_organization.values() if pos[1] >= self.height}
         if self.max_y == self.tilemap.height - 1:
-            self.organization = {pos: pattern for pos, pattern in self.organization.values() if pos[1] < self.height}
+            proto_organization = {pos: pattern for pos, pattern in self.organization.values() if pos[1] < self.height}
+        self.organization = {(pos[0] + self.min_x, pos[1] + self.min_y): pattern for pos, pattern in proto_organization.items()}
         return True
 
     def process_group(self):
@@ -199,13 +225,7 @@ class ArtistPatternThread(QThread):
             return True
 
     def find_valid_pattern(self, tilemap, pos, exact=True) -> bool:
-        north, east, south, west = tilemap.get_cardinal_terrain(pos)
-        # Whether there is a border to the north
-        north_edge = bool(north and north != 'Mountain')
-        south_edge = bool(south and south != 'Mountain')
-        east_edge = bool(east and east != 'Mountain')
-        west_edge = bool(west and west != 'Mountain')
-        valid_patterns = [pattern for pattern in self.mountain_data if pattern.edge_match(north_edge, east_edge, south_edge, west_edge)]
+        valid_patterns = self.find_edge_patterns(pos)
         orig_valid_patterns = valid_patterns[:]
 
         north_pos = (pos[0], pos[1] - 1)
