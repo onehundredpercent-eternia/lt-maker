@@ -9,30 +9,148 @@ class MountainCategory(Enum):
     RIDGE_BRIGHT = 6
     RIDGE_TRANSITION = 7
     VALLEY = 8
+    LIGHT_RARE = 9
+    LIGHT_BRIGHT_RARE = 10
 
 class MountainPattern():
-    def __init__(self, coord, edge, category, ridges=None):
+    def __init__(self, coord, edges, category, ridges=None):
         self.coord: tuple = coord  # Position on tilemap
         self.category: MountainCategory = category
-        self.edge_index: int = edge   # Wang 2-edge tiles
-        self.ridges: list = ridges
+        self.edges: tuple = edges   # tuple containing 1 through 8
+        self.ridges: list = ridges or tuple()
 
     @property
     def top_edge(self) -> bool:
-        return self.edge_index in (1, 3, 5, 7, 9, 11, 13, 15)
+        return 1 in self.edges and 8 in self.edges
 
     @property
     def bottom_edge(self) -> bool:
-        return self.edge_index in (4, 5, 6, 7, 12, 13, 14, 15)
+        return 4 in self.edges and 5 in self.edges
     
     @property
     def left_edge(self) -> bool:
-        return self.edge_index in (8, 9, 10, 11, 12, 13, 14, 15)
+        return 6 in self.edges and 7 in self.edges
 
     @property
     def right_edge(self) -> bool:
-        return self.edge_index in (2, 3, 6, 7, 10, 11, 14, 15)
+        return 2 in self.edges and 3 in self.edges
 
-    @staticmethod
-    def edge_to_index(left=False, right=False, top=False, bottom=False) -> int:
-        return bool(top) * 1 + bool(right) * 2 + bool(bottom) * 4 + bool(left) * 8
+    def edge_match(self, top_edge: bool, left_edge: bool, bottom_edge: bool, right_edge: bool) -> bool:
+        if top_edge and not self.top_edge:
+            return False
+        if bottom_edge and not self.bottom_edge:
+            return False
+        if left_edge and not self.left_edge:
+            return False
+        if right_edge and not self.right_edge:
+            return False
+
+        edge_sum = sum((top_edge, left_edge, bottom_edge, right_edge))
+        if edge_sum == 0 and len(self.edges) > 0:
+            return False
+        if edge_sum == 1 and len(self.edges) > 4:
+            return False
+        return True
+
+    def category_match(self, pattern: MountainPattern, direction: tuple) -> bool:
+        x, y = direction
+
+        # Find the valid categories
+        valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.RIDGE)
+        if self.category == MountainCategory.LIGHT:
+            if x == 1 and y == 0:
+                valid_categories = (MountainCategory.LIGHT, MountainCategory.RIDGE)
+            elif x == -1 and y == 0:
+                valid_categories = (MountainCategory.LIGHT, MountainCategory.VALLEY)
+            elif y == 1 and x == 0:
+                valid_categories = (MountainCategory.LIGHT, MountainCategory.RIDGE, MountainCategory.VALLEY)
+            elif y == -1 and x == 0:
+                valid_categories = (MountainCategory.LIGHT, MountainCategory.RIDGE, MountainCategory.VALLEY)
+        elif self.category == MountainCategory.DARK:
+            if x == 1 and y == 0:
+                valid_categories = (MountainCategory.DARK, MountainCategory.VALLEY)
+            elif x == -1 and y == 0:
+                valid_categories = (MountainCategory.DARK, MountainCategory.RIDGE)
+            elif y == 1 and x == 0:
+                valid_categories = (MountainCategory.DARK, MountainCategory.RIDGE, MountainCategory.VALLEY)
+            elif y == -1 and x == 0:
+                valid_categories = (MountainCategory.DARK, MountainCategory.RIDGE, MountainCategory.VALLEY)
+        elif self.category == MountainCategory.RIDGE:
+            if x == 1 and y == 0:
+                valid_categories = (MountainCategory.RIDGE, MountainCategory.DARK, MountainCategory.VALLEY)
+            elif x == -1 and y == 0:
+                valid_categories = (MountainCategory.RIDGE, MountainCategory.LIGHT, MountainCategory.VALLEY)
+            elif y == 1 and x == 0:
+                valid_categories = (MountainCategory.RIDGE, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.VALLEY)
+            elif y == -1 and x == 0:
+                valid_categories = (MountainCategory.RIDGE, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.VALLEY)
+        elif self.category == MountainCategory.VALLEY:
+            if x == 1 and y == 0:
+                valid_categories = (MountainCategory.VALLEY, MountainCategory.LIGHT, MountainCategory.RIDGE)
+            elif x == -1 and y == 0:
+                valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.RIDGE)
+            elif y == 1 and x == 0:
+                valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.RIDGE)
+            elif y == -1 and x == 0:
+                valid_categories = (MountainCategory.VALLEY, MountainCategory.DARK, MountainCategory.LIGHT, MountainCategory.RIDGE)
+
+        return pattern.category in valid_categories
+
+    def pattern_edge_match(self, pattern: MountainPattern, direction: tuple) -> bool:
+        x, y = direction
+        if x == 1 and y == 0:
+            match1 = bool(2 in self.edges) == bool(7 in pattern.edges)
+            match2 = bool(3 in self.edges) == bool(6 in pattern.edges)
+            return match1 and match2
+        elif x == -1 and y == 0:
+            match1 = bool(6 in self.edges) == bool(3 in pattern.edges)
+            match2 = bool(7 in self.edges) == bool(2 in pattern.edges)
+            return match1 and match2
+        elif y == 1 and x == 0:
+            match1 = bool(4 in self.edges) == bool(1 in pattern.edges)
+            match2 = bool(5 in self.edges) == bool(8 in pattern.edges)
+            return match1 and match2
+        elif y == -1 and x == 0:
+            match1 = bool(1 in self.edges) == bool(4 in pattern.edges)
+            match2 = bool(8 in self.edges) == bool(5 in pattern.edges)
+            return match1 and match2
+        return True
+
+    def ridge_match(self, pattern: MountainPattern, direction: tuple) -> bool:
+        match = False
+        if x == 0 and y == -1:  # up, 1
+            match = bool(1 in self.ridges) == bool(5 in pattern.ridges)
+        elif x == 1 and y == -1:  # upright, 2
+            match = bool(2 in self.ridges) == bool(6 in pattern.ridges)
+        elif x == 1 and y == 0:  # right, 3
+            match = bool(3 in self.ridges) == bool(7 in pattern.ridges)
+        elif x == 1 and y == 1:  # downright, 4
+            match = bool(4 in self.ridges) == bool(8 in pattern.ridges)
+        elif x == 0 and y == 1:  # down, 5
+            match = bool(5 in self.ridges) == bool(1 in pattern.ridges)
+        elif x == -1 and y == 1:  # downleft, 6
+            match = bool(6 in self.ridges) == bool(2 in pattern.ridges)
+        elif x == -1 and y == 1:  # left, 7
+            match = bool(6 in self.ridges) == bool(3 in pattern.ridges)
+        elif x == -1 and y == -1:  # upleft, 8
+            match = bool(8 in self.ridges) == bool(4 in pattern.ridges)
+        return match
+
+    def matches(self, pattern: MountainPattern, direction: tuple) -> bool:
+        # direction is a 2-tuple that contains x, y direction for checking pattern
+        if self.category_match(pattern, direction):
+            pass
+        else:
+            return False
+
+        if self.pattern_edge_match(pattern, direction):
+            pass
+        else:
+            return False
+
+        if self.ridge_match(pattern, direction):
+            pass
+        else:
+            return False
+        return True
+        
