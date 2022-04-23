@@ -143,6 +143,22 @@ def get(x, y, seed):
     new_val = (val - -0.865) / (.865 - -0.865)
     return new_val
 
+def get_noise(x, y, seed, 
+              starting_freq=1.0, starting_amp=0.5, 
+              octaves=4, lacunarity=2.0, gain=0.5):
+    total = 0
+    freq = starting_freq
+    amp = starting_amp
+    denominator = 0
+    for _ in range(octaves):
+        val = get(x * freq, y * freq, seed)
+        total += val * amp
+        denominator += amp
+        freq *= lacunarity
+        amp *= gain
+    total /= denominator
+    return total
+
 if __name__ == '__main__':
     perm = _init(47)
     val = _noise2(0, 0, perm)
@@ -163,3 +179,9 @@ if __name__ == '__main__':
         print("")
     print(total / (width * height))
     print(minimum, maximum)
+
+    line = []
+    for x in range(100):
+        val = get(x*0.25, 0, 47)**2
+        line.append(val)
+    print(line)

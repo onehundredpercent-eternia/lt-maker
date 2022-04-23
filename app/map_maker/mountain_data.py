@@ -1,4 +1,4 @@
-from app.map_maker.mountain_data import MountainPattern, MountainCategory
+from app.map_maker.mountain_pattern import MountainPattern, MountainCategory
 
 mountain_patterns = [
     MountainPattern((7, 21), (1, 2, 3, 4, 5, 6, 7, 8), MountainCategory.RIDGE),
@@ -105,3 +105,12 @@ mountain_patterns = [
     MountainPattern((13, 15), (1, 5, 6, 7, 8), MountainCategory.LIGHT),
     MountainPattern((11, 13), 0, MountainCategory.RIDGE, (1, 5)),
 ]
+
+valid_categories = [
+    MountainCategory.DARK, 
+    MountainCategory.LIGHT,
+    MountainCategory.RIDGE,
+    MountainCategory.VALLEY
+]
+
+mountain_patterns = [pattern for pattern in mountain_patterns if pattern.category in valid_categories]

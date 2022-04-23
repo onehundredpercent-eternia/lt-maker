@@ -5,7 +5,7 @@ from app.map_maker import simplex_noise
 # Generate truly random terrain
 
 def generate(tilemap: MapPrefab) -> MapPrefab:
-    tilemap.resize(30, 30, 0, 0)
+    # tilemap.resize(30, 30, 0, 0)
     thickness = 0.25
     
     for x in range(tilemap.width):
@@ -13,6 +13,8 @@ def generate(tilemap: MapPrefab) -> MapPrefab:
             pos = (x, y)
             value = simplex_noise.get(pos[0] * thickness, pos[1] * thickness, 0)
             if value > 0.75:
+                tilemap.set(pos, None, DB_terrain.get('Mountain'))
+            elif value > 0.7:
                 tilemap.set(pos, None, DB_terrain.get('Hill'))
             elif value > 0.4:
                 tilemap.set(pos, None, DB_terrain.get('Plains'))

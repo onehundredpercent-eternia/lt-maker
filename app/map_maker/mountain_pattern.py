@@ -16,7 +16,7 @@ class MountainPattern():
     def __init__(self, coord, edges, category, ridges=None):
         self.coord: tuple = coord  # Position on tilemap
         self.category: MountainCategory = category
-        self.edges: tuple = edges   # tuple containing 1 through 8
+        self.edges: tuple = edges if edges else tuple()  # tuple containing 1 through 8
         self.ridges: list = ridges or tuple()
 
     @property
@@ -52,7 +52,7 @@ class MountainPattern():
             return False
         return True
 
-    def category_match(self, pattern: MountainPattern, direction: tuple) -> bool:
+    def category_match(self, pattern, direction: tuple) -> bool:
         x, y = direction
 
         # Find the valid categories
@@ -74,7 +74,7 @@ class MountainPattern():
 
         return pattern.category in valid_categories
 
-    def pattern_edge_match(self, pattern: MountainPattern, direction: tuple) -> bool:
+    def pattern_edge_match(self, pattern, direction: tuple) -> bool:
         x, y = direction
         if x == 1 and y == 0:
             match1 = bool(2 in self.edges) == bool(7 in pattern.edges)
@@ -94,27 +94,65 @@ class MountainPattern():
             return match1 and match2
         return True
 
-    def ridge_match(self, pattern: MountainPattern, direction: tuple) -> bool:
+    def ridge_match(self, pattern, direction: tuple) -> bool:
+        """
+        For determing whether these two patterns (self and pattern)
+        match in the chosen direction
+        """
+        x, y = direction
         match = False
         if x == 0 and y == -1:  # up, 1
             match = bool(1 in self.ridges) == bool(5 in pattern.ridges)
+            match &= bool(2 in self.ridges) == bool(4 in pattern.ridges)
+            match &= bool(8 in self.ridges) == bool(6 in pattern.ridges)
         elif x == 1 and y == -1:  # upright, 2
             match = bool(2 in self.ridges) == bool(6 in pattern.ridges)
         elif x == 1 and y == 0:  # right, 3
             match = bool(3 in self.ridges) == bool(7 in pattern.ridges)
+            match &= bool(2 in self.ridges) == bool(8 in pattern.ridges)
+            match &= bool(4 in self.ridges) == bool(6 in pattern.ridges)
         elif x == 1 and y == 1:  # downright, 4
             match = bool(4 in self.ridges) == bool(8 in pattern.ridges)
         elif x == 0 and y == 1:  # down, 5
             match = bool(5 in self.ridges) == bool(1 in pattern.ridges)
+            match &= bool(4 in self.ridges) == bool(2 in pattern.ridges)
+            match &= bool(6 in self.ridges) == bool(8 in pattern.ridges)
         elif x == -1 and y == 1:  # downleft, 6
             match = bool(6 in self.ridges) == bool(2 in pattern.ridges)
         elif x == -1 and y == 1:  # left, 7
-            match = bool(6 in self.ridges) == bool(3 in pattern.ridges)
+            match = bool(7 in self.ridges) == bool(3 in pattern.ridges)
+            match &= bool(6 in self.ridges) == bool(4 in pattern.ridges)
+            match &= bool(8 in self.ridges) == bool(2 in pattern.ridges)
         elif x == -1 and y == -1:  # upleft, 8
             match = bool(8 in self.ridges) == bool(4 in pattern.ridges)
         return match
 
-    def matches(self, pattern: MountainPattern, direction: tuple) -> bool:
+    def ridge_connects(self, direction: tuple) -> bool:
+        """
+        For determining whether this pattern could possibly
+        connect in the given direction
+        """
+        x, y = direction
+        match = False
+        if x == 0 and y == -1:  # up, 1
+            match = bool(1 in self.ridges) or bool(2 in self.ridges) or bool(0 in self.ridges)
+        elif x == 1 and y == -1:  # upright, 2
+            match = bool(2 in self.ridges)
+        elif x == 1 and y == 0:  # right, 3
+            match = bool(3 in self.ridges) or bool(2 in self.ridges) or bool(4 in self.ridges)
+        elif x == 1 and y == 1:  # downright, 4
+            match = bool(4 in self.ridges)
+        elif x == 0 and y == 1:  # down, 5
+            match = bool(5 in self.ridges) or bool(4 in self.ridges) or bool(6 in self.ridges)
+        elif x == -1 and y == 1:  # downleft, 6
+            match = bool(6 in self.ridges)
+        elif x == -1 and y == 1:  # left, 7
+            match = bool(7 in self.ridges) or bool(6 in self.ridges) or bool(8 in self.ridges)
+        elif x == -1 and y == -1:  # upleft, 8
+            match = bool(8 in self.ridges)
+        return match
+
+    def matches(self, pattern, direction: tuple) -> bool:
         # direction is a 2-tuple that contains x, y direction for checking pattern
         if self.category_match(pattern, direction):
             pass
@@ -127,4 +165,3 @@ class MountainPattern():
             return False
 
         return True
-        

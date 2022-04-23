@@ -1,10 +1,13 @@
-import itertools
 import time
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from app.map_maker.utilities import get_random_seed, random_choice
 from app.map_maker import rain_algorithm_x
+from app.map_maker.mountain_pattern import MountainCategory
+from app.utilities import utils
+from app.map_maker import simplex_noise
+from app.utilities.algorithms.interpolation import lerp
 
 class ArtistPatternThread(QThread):
     waiting = pyqtSignal()
@@ -28,23 +31,12 @@ class ArtistPatternThread(QThread):
 
         self.min_x = min(pos[0] for pos in group)
         self.max_x = max(pos[0] for pos in group)
-        self.min_y = min(pos[0] for pos in group)
-        self.max_y = max(pos[0] for pos in group)
+        self.min_y = min(pos[1] for pos in group)
+        self.max_y = max(pos[1] for pos in group)
         self.width = self.max_x - self.min_x + 1
         self.height = self.max_y - self.min_y + 1
 
-        self.group = [(pos[0] - self.min_x, pos[1] - self.min_y) for pos in group]  # Offset group; (0, 0) is topright
-
-        self.calc_width = self.width
-        self.calc_height = self.height
-        if self.min_x == 0:
-            self.calc_width += self.width
-        if self.max_x == self.tilemap.width - 1:
-            self.calc_width += self.width
-        if self.min_y == 0:
-            self.calc_height += self.height
-        if self.max_y == self.tilemap.height - 1:
-            self.calc_height += self.height
+        self.group = {(pos[0] - self.min_x, pos[1] - self.min_y) for pos in group}  # Offset group; (0, 0) is topright
 
     def stop(self):
         self.broke_out = True
@@ -54,54 +46,188 @@ class ArtistPatternThread(QThread):
         self.locked_values.clear()
         self.order.clear()
 
+    def true_organization(self):
+        return {(pos[0] + self.min_x, pos[1] + self.min_y): pattern for pos, pattern in self.organization.items()}
+
     def run(self):
         counter = 0
-        while counter < 10000 and not self.broke_out:
+        while counter < 5 and not self.broke_out:
             counter += 1
+            print("*** Artist Method: %d ***" % counter)
             self.clear()
             time.sleep(0.01)
-            success = self.place_ridges(counter)
+            print("Place Folds")
+            success = self.place_folds(counter)
             if not success or self.broke_out:
                 continue
-            success = self.place_valleys(counter)
+            print("Pattern Folds")
+            success = self.pattern_folds(counter)
             if not success or self.broke_out:
                 continue
+            print("Process Group")
             success = self.process_group()
             if not success or self.broke_out:
                 continue
 
-    def place_ridges(self, offset=0):
-        self.num_ridges = self.calc_width // ((self.peak_height + 1)  * 3)
-        self.num_valleys = self.num_ridges - 1
-        self.num_folds = self.num_ridges + self.num_valleys
-        self.ridges = []
-        for i in range(self.num_folds)
-            if i % 2 == 1:
-                continue  # This is a valley, so skip
+    def place_folds(self, offset=0):
+        self.fold_grid = {}
+        self.folds = []
 
-            x_pos = random_choice(list(range(self.calc_width)), (0, 0), offset=offset)
-            y_pos = random_choice(list(range(self.calc_height)), (0, 1), offset=offset)
-            starting_ridge_pos = (x_pos, y_pos)
+        # Define necessary constants for generation
+        peak_distance = self.peak_height + 1
+        max_x_deviation_off_centerline = peak_distance + 1
+        unique_line_distance = 5
+        num_lines = max(10, self.width * 2 // peak_distance)
+        num_lattice_lines = num_lines // unique_line_distance + 1
+        height = max(10, self.height * 2)
 
-            # while the ridge has not reached the limit of height or width in either direction
-            # keep filling it up
-            ridge = self.fill_fold(starting_ridge_pos, MountainCategory.RIDGE)
-            if ridge:
-                self.ridges.append(ridge)
+        seed = get_random_seed()
+
+        # Build lattice lines first
+        lattice_lines = []
+        for i in range(num_lattice_lines):
+            line = [simplex_noise.get(y, i + offset, seed) - 0.5 for y in range(height)]
+            line = [max_x_deviation_off_centerline * 2 * val for val in line]
+            lattice_lines.append(line)
+        print("Lattice Lines")
+        # print(lattice_lines)
+
+        # Lerp the lines between the lattice lines
+        all_lines = []
+        for i in range(num_lines):
+            if i % unique_line_distance == 0:
+                lattice_line = lattice_lines[i // unique_line_distance]
+                all_lines.append(lattice_line)
             else:
-                return False
+                lattice_line1 = lattice_lines[i // unique_line_distance]
+                lattice_line2 = lattice_lines[(i // unique_line_distance) + 1]
+                line = []
+                for lattice1, lattice2 in zip(lattice_line1, lattice_line2):
+                    t = (i % unique_line_distance) / unique_line_distance
+                    val = lerp(lattice1, lattice2, t)
+                    line.append(val)
+                all_lines.append(line)
+        print("Finished Generating All Lines")
 
-        # Assert that all ridges don't overlap and don't crisscross and are never adjacent to one another
-        for ridge in self.ridges:
-            for other_ridge in self.ridges:
-                if ridge is other_ridge:
-                    continue
-                if any(utils.calculate_distance(pos, other_pos) <= 1 for (pos, other_pos) in itertools.product(ridge.keys(), other_ridge.keys())):
+        # Transform abstract floating point line points into
+        # integer positions on the 2d grid
+        for i, line in enumerate(all_lines):
+            base_x = i * peak_distance
+            fold_line = []
+            for idx, (point1, point2) in enumerate(zip(line[:-1], line[1:])):
+                y1 = idx
+                y2 = idx + 1
+                x1 = int(point1) + base_x
+                x2 = int(point2) + base_x
+                trace = utils.raytrace((x1, y1), (x2, y2))
+                fold_line += trace
+            # remove duplicates while keeping order
+            fold_line = list(dict.fromkeys(fold_line))
+            self.folds.append(fold_line)
+
+        # Place these lines on the fold grid with a random offset
+        # of no more than self.width or self.height in a random direction
+        offset_x = random_choice(range(-self.width, 1), (self.min_x, self.min_y), offset=offset)
+        offset_y = random_choice(range(-self.height, 1), (self.min_x, self.min_y), offset=offset)
+        is_ridge = random_choice([True, False], (self.min_x, self.min_y), offset=offset)
+        new_folds = []  # Replace self.folds with offset positions
+        for fold in self.folds[:]:
+            new_fold = []
+            for pos in fold:
+                offset_pos = pos[0] + offset_x, pos[1] + offset_y
+                category = MountainCategory.RIDGE if is_ridge else MountainCategory.VALLEY
+                self.fold_grid[offset_pos] = category
+                new_fold.append(offset_pos)
+            is_ridge = not is_ridge
+            new_folds.append(new_fold)
+        self.folds = new_folds
+
+        print("Show Grid")
+
+        # Print fold grid
+        for y in range(self.height):
+            for x in range(self.width):
+                pos = (x, y)
+                val = self.fold_grid.get(pos)
+                if val == MountainCategory.RIDGE:
+                    print('1 ', end='')
+                elif val == MountainCategory.VALLEY:
+                    print('2 ', end='')
+                else:
+                    print('  ', end='')
+            print('')
+
+        # Assert that for each row in the bounding box, it goes ridge, valley, ridge, valley, ridge, etc.
+        for row in range(self.width):
+            ridge_count = 0
+            can_process = True
+            at_least_one_ridge = False
+            for col in range(self.height):
+                pos = row, col
+                print(pos, self.group)
+                if pos in self.group:
+                    category = self.fold_grid.get(pos)
+                    print("Category: %s" % category)
+                    if category == MountainCategory.RIDGE and can_process:
+                        ridge_count += 1
+                        at_least_one_ridge = True
+                        can_process = False  # Set to false so we don't count doubles of the same type
+                        if ridge_count > 1:
+                            print("FAIL: Two Ridges in a Row!")
+                            return False
+                    elif category == MountainCategory.VALLEY and can_process:
+                        ridge_count -= 1
+                        can_process = False
+                        if ridge_count < 0:
+                            print("FAIL: Two Valleys in a Row!")
+                            return False
+                    else:
+                        can_process = True
+            if not at_least_one_ridge:
+                print("FAIL: No ridge at all in this row")
+                return False
+        return True
+
+    def pattern_folds(self, offset=0) -> bool:
+        for fold in self.folds:
+            for idx, pos in enumerate(fold):
+                # if pos in self.group:
+                category = self.fold_grid[pos]
+                valid_patterns = [pattern for pattern in self.find_edge_patterns(pos) if pattern.category == category]
+                final_pattern = self.choose_ridge_pattern(valid_patterns, fold, idx, offset)
+                if final_pattern:
+                    self.organization[pos] = final_pattern
+                else:
+                    print("FAIL: Could not determine final pattern for position %s" % pos)
                     return False
         return True
 
+    def choose_ridge_pattern(self, patterns, fold, idx, offset=0) -> bool:
+        pos = fold[idx]
+        next_pos = fold[idx + 1] if idx + 1 < len(fold) else None
+        previous_pos = fold[idx - 1] if idx > 0 else None
+        print(previous_pos, pos, next_pos)
+        if next_pos and previous_pos:
+            next_pos_offset = (next_pos[0] - pos[0], next_pos[1] - pos[1])
+            pos_offset = (pos[0] - previous_pos[0], pos[1] - previous_pos[1])
+            prev_pattern = self.organization[previous_pos]
+            valid_patterns = [pattern for pattern in patterns if prev_pattern.ridge_match(pattern, pos_offset) and pattern.ridge_connects(next_pos_offset)]
+        elif previous_pos:
+            pos_offset = (pos[0] - previous_pos[0], pos[1] - previous_pos[1])
+            prev_pattern = self.organization[previous_pos]
+            valid_patterns = [pattern for pattern in patterns if prev_pattern.ridge_match(pattern, pos_offset)]
+        elif next_pos:
+            next_pos_offset = (next_pos[0] - pos[0], next_pos[1] - pos[1])
+            valid_patterns = [pattern for pattern in patterns if pattern.ridge_connects(next_pos_offset)]
+        else:
+            valid_patterns = patterns
+        
+        final_pattern = random_choice(valid_patterns, pos, offset=offset)
+        print(final_pattern)
+        return final_pattern
+
     def find_edge_patterns(self, pos) -> list:
-        if pos in self.tilemap.tile_dict:
+        if pos in self.tilemap.tile_grid:
             north, east, south, west = self.tilemap.get_cardinal_terrain(pos)
             # Whether there is a border to the north
             north_edge = bool(north and north != 'Mountain')
@@ -114,83 +240,10 @@ class ArtistPatternThread(QThread):
             valid_patterns = [pattern for pattern in self.mountain_data if pattern.edge_match(False, False, False, False)]
             return valid_patterns
 
-    def fill_fold(self, pos, category) -> dict:
-        """
-        Returns dictionary of position: pattern
-        """
-        fold = {}
-        true_pos = (pos[0] + self.min_x, pos[1] + self.min_y)
-        valid_patterns = self.find_edge_patterns(true_pos)
-        curent_pattern = random_choice([pattern for pattern in valid_patterns if pattern.category == category], pos)
-        fold[pos] = curent_pattern
-        adj_stack = []
-        
-        return fold
-
-    def place_valleys(self, offset=0):
-        self.valleys = []
-        for i in range(self.num_folds)
-            if i % 2 == 0:
-                continue  # This is a ridge, so skip
-
-            x_pos = random_choice(list(range(self.calc_width)), (0, 0), offset=offset)
-            y_pos = random_choice(list(range(self.calc_height)), (0, 1), offset=offset)
-            starting_valley_pos = (x_pos, y_pos)
-
-            # while the valley has not reached the limit of height or width in either direction
-            # keep filling it up
-            valley = self.fill_fold(starting_valley_pos, MountainCategory.VALLEY)
-            if valley:
-                self.valleys.append(valley)
-            else:
-                return False
-
-        # Assert that all valleys don't overlap and don't crisscross and are never adjacent to one another
-        for valley in self.valleys:
-            for other_valley in self.valleys:
-                if valley is other_valley:
-                    continue
-                if any(utils.calculate_distance(pos, other_pos) <= 1 for (pos, other_pos) in itertools.product(valley.keys(), other_valley.keys()):
-                    return False
-
-        # place ridges and valleys
-        proto_organization = {}
-        for ridge in self.ridges:
-            for pos, pattern in ridge.items():
-                proto_organization[pos] = pattern
-        for valley in self.valleys:
-            for pos, pattern in valley.items():
-                proto_organization[pos] = pattern
-
-        # Assert that for each row in the bounding box, it goes ridge, valley, ridge, valley, ridge, etc.
-        for row in range(self.calc_width):
-            ridge_count = 0
-            for col in range(self.calc_height):
-                if (row, col) in proto_organization:
-                    pattern = proto_organization[(row, col)]
-                    if pattern.category == MountainCategory.RIDGE:
-                        ridge_count += 1
-                        if ridge_count > 1:
-                            return False
-                    elif pattern.category == MountainCategory.VALLEY:
-                        ridge_count -= 1
-                        if ridge_count < 0:
-                            return False
-
-        if self.min_x == 0:
-            proto_organization = {(pos[0] - self.width, pos[1]): pattern for pos, pattern in proto_organization.values() if pos[0] >= self.width}
-        if self.max_x == self.tilemap.width - 1:
-            proto_organization = {pos: pattern for pos, pattern in proto_organization.values() if pos[0] < self.width}
-        if self.min_y == 0:
-            proto_organization = {(pos[0], pos[1] - self.height): pattern for pos, pattern in proto_organization.values() if pos[1] >= self.height}
-        if self.max_y == self.tilemap.height - 1:
-            proto_organization = {pos: pattern for pos, pattern in self.organization.values() if pos[1] < self.height}
-        self.organization = {(pos[0] + self.min_x, pos[1] + self.min_y): pattern for pos, pattern in proto_organization.items()}
-        return True
-
     def process_group(self):
         missing = self.group - self.organization.keys()
         self.to_process = sorted(missing, key=lambda x: (x[0] + x[1], x[0]))
+
         def process(seq, exact=True):
             pos = seq[0]
             did_work = self.find_valid_pattern(self.tilemap, pos)
@@ -226,7 +279,13 @@ class ArtistPatternThread(QThread):
             return True
 
     def find_valid_pattern(self, tilemap, pos, exact=True) -> bool:
-        valid_patterns = self.find_edge_patterns(pos)
+        north, east, south, west = self.tilemap.get_cardinal_terrain(pos)
+        # Whether there is a border to the north
+        north_edge = bool(north and north != 'Mountain')
+        south_edge = bool(south and south != 'Mountain')
+        east_edge = bool(east and east != 'Mountain')
+        west_edge = bool(west and west != 'Mountain')
+        valid_patterns = [pattern for pattern in self.mountain_data if pattern.edge_match(north_edge, east_edge, south_edge, west_edge)]
         orig_valid_patterns = valid_patterns[:]
 
         north_pos = (pos[0], pos[1] - 1)
@@ -264,7 +323,7 @@ class ArtistPatternThread(QThread):
             valid_patterns = [pattern for pattern in valid_patterns if any(pattern.matches(p, (0, 1)) for p in valid_right_patterns)]
 
         # print(sorted(valid_patterns))
-        if not valid_pattern and not exact:
+        if not valid_patterns and not exact:
             valid_patterns = orig_valid_patterns
         if not valid_patterns:
             # print("Reverting Order...")
@@ -403,7 +462,7 @@ class PatternBacktrackingThread(QThread):
             valid_patterns = [pattern for pattern in valid_patterns if any(pattern.matches(p, (0, 1)) for p in valid_right_patterns)]
 
         # print(sorted(valid_patterns))
-        if not valid_pattern and not exact:
+        if not valid_patterns and not exact:
             valid_patterns = orig_valid_patterns
         if not valid_patterns:
             # print("Reverting Order...")

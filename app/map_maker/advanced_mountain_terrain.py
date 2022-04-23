@@ -9,7 +9,8 @@ from PyQt5.QtCore import QThread
 
 from app.map_maker.utilities import random_choice, flood_fill
 from app.map_maker.terrain import Terrain
-from app.map_maker.mountain_process import NaiveBacktrackingThread, AlgorithmXThread
+from app.map_maker.mountain_process_thread import ArtistPatternThread
+from app.map_maker.mountain_data import mountain_patterns
 
 class MountainTerrain(Terrain):
     terrain_like = ('Mountain')
@@ -21,8 +22,8 @@ class MountainTerrain(Terrain):
         return True
 
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
-        group_coords = self.organization[pos]  # Mountain Group Coord
-        new_coords = random_choice(tuple(group_coords), pos)  # pick one randomly
+        pattern = self.organization[pos]  # Mountain Group Coord
+        new_coords = pattern.coord
         new_coords1 = [(new_coords[0]*2, new_coords[1]*2)]
         new_coords2 = [(new_coords[0]*2 + 1, new_coords[1]*2)]
         new_coords3 = [(new_coords[0]*2 + 1, new_coords[1]*2 + 1)]
@@ -30,8 +31,11 @@ class MountainTerrain(Terrain):
         return new_coords1, new_coords2, new_coords3, new_coords4
 
     def initial_process(self):
-        pass
-        # Here's where we determine which are index type 15
+        self.quit_all_threads()
+        self.mountain_data = mountain_patterns
+
+        self.solo_patterns = \
+            [pattern for pattern in self.mountain_data if len(pattern.edges) >= 8]
 
     def single_process(self, tilemap):
         positions: set = tilemap.get_all_terrain(self.nid)
@@ -72,7 +76,7 @@ class MountainTerrain(Terrain):
         #     thread = NaiveBacktrackingThread(tilemap, self.mountain_data, self.noneless_rules, group)
         # else:
         #     thread = AlgorithmXThread(tilemap, self.mountain_data, self.noneless_rules, group)
-        thread = MountainRidgeThread(tilemap, group)
+        thread = ArtistPatternThread(tilemap, self.mountain_data, group)
         thread.finished.connect(functools.partial(self.mountain_process_finished, thread))
         thread.waiting.connect(functools.partial(self.mountain_processing, thread))
         self.current_threads.append(thread)
@@ -80,9 +84,9 @@ class MountainTerrain(Terrain):
 
     def generic_fill(self, group):
         for pos in group:
-            valid_coords = self.solo_coords
-            valid_coord = random_choice(list(valid_coords), pos)
-            self.organization[pos] = valid_coord
+            valid_patterns = self.solo_patterns
+            valid_pattern = random_choice(list(valid_patterns), pos)
+            self.organization[pos] = valid_pattern
 
     def quit_thread(self, thread):
         thread.stop()
@@ -99,8 +103,8 @@ class MountainTerrain(Terrain):
     def mountain_process_finished(self, thread):
         print("Finished", id(thread), thread.did_complete)
         if thread.did_complete:
-            self.organization.update(thread.organization)
-            for pos in thread.organization.keys():
+            self.organization.update(thread.true_organization())
+            for pos in self.organization.keys():
                 c1, c2, c3, c4 = self.determine_sprite_coords(self.tilemap, pos)
                 self.tilemap.tile_grid[(pos[0] * 2, pos[1] * 2)] = c1[0]
                 self.tilemap.tile_grid[(pos[0] * 2 + 1, pos[1] * 2)] = c2[0]
