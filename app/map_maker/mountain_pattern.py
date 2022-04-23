@@ -132,6 +132,9 @@ class MountainPattern():
         For determining whether this pattern could possibly
         connect in the given direction
         """
+        # Solo objects always connect in all directions
+        if len(self.edges) >= 8:
+            return True
         x, y = direction
         match = False
         if x == 0 and y == -1:  # up, 1

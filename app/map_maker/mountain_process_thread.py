@@ -11,7 +11,7 @@ from app.utilities.algorithms.interpolation import lerp
 
 class ArtistPatternThread(QThread):
     waiting = pyqtSignal()
-    peak_height = 2
+    peak_height = 3
 
     def __init__(self, tilemap, mountain_data, group, gui_processing=True, parent=None):
         super().__init__(parent)
@@ -51,6 +51,8 @@ class ArtistPatternThread(QThread):
 
     def run(self):
         counter = 0
+        print("*** START ***")
+        print(self.orig_group)
         while counter < 5 and not self.broke_out:
             counter += 1
             print("*** Artist Method: %d ***" % counter)
@@ -75,7 +77,7 @@ class ArtistPatternThread(QThread):
 
         # Define necessary constants for generation
         peak_distance = self.peak_height + 1
-        max_x_deviation_off_centerline = peak_distance + 1
+        max_x_deviation_off_centerline = 0
         unique_line_distance = 5
         num_lines = max(10, self.width * 2 // peak_distance)
         num_lattice_lines = num_lines // unique_line_distance + 1
@@ -157,55 +159,59 @@ class ArtistPatternThread(QThread):
                     print('  ', end='')
             print('')
 
-        # Assert that for each row in the bounding box, it goes ridge, valley, ridge, valley, ridge, etc.
-        for row in range(self.width):
-            ridge_count = 0
-            can_process = True
-            at_least_one_ridge = False
-            for col in range(self.height):
-                pos = row, col
-                print(pos, self.group)
-                if pos in self.group:
-                    category = self.fold_grid.get(pos)
-                    print("Category: %s" % category)
-                    if category == MountainCategory.RIDGE and can_process:
-                        ridge_count += 1
-                        at_least_one_ridge = True
-                        can_process = False  # Set to false so we don't count doubles of the same type
-                        if ridge_count > 1:
-                            print("FAIL: Two Ridges in a Row!")
-                            return False
-                    elif category == MountainCategory.VALLEY and can_process:
-                        ridge_count -= 1
-                        can_process = False
-                        if ridge_count < 0:
-                            print("FAIL: Two Valleys in a Row!")
-                            return False
-                    else:
-                        can_process = True
-            if not at_least_one_ridge:
-                print("FAIL: No ridge at all in this row")
-                return False
+        # # Assert that for each row in the bounding box, it goes ridge, valley, ridge, valley, ridge, etc.
+        # for y in range(self.height):
+        #     ridge_count = 0
+        #     can_process = True
+        #     at_least_one_ridge = False
+        #     for x in range(self.width):
+        #         pos = x, y
+        #         if pos in self.group:
+        #             print(pos)
+        #             category = self.fold_grid.get(pos)
+        #             print("Category: %s" % category)
+        #             if category == MountainCategory.RIDGE and can_process:
+        #                 ridge_count += 1
+        #                 at_least_one_ridge = True
+        #                 can_process = False  # Set to false so we don't count doubles of the same type
+        #                 if ridge_count > 1:
+        #                     print("FAIL: Two Ridges in a Row!")
+        #                     return False
+        #             elif category == MountainCategory.VALLEY and can_process:
+        #                 ridge_count -= 1
+        #                 can_process = False
+        #                 if ridge_count < 0:
+        #                     print("FAIL: Two Valleys in a Row!")
+        #                     return False
+        #             else:
+        #                 can_process = True
+        #     if not at_least_one_ridge:
+        #         print("FAIL: No ridge at all in this row")
+        #         return False
         return True
 
     def pattern_folds(self, offset=0) -> bool:
         for fold in self.folds:
             for idx, pos in enumerate(fold):
-                # if pos in self.group:
-                category = self.fold_grid[pos]
-                valid_patterns = [pattern for pattern in self.find_edge_patterns(pos) if pattern.category == category]
-                final_pattern = self.choose_ridge_pattern(valid_patterns, fold, idx, offset)
-                if final_pattern:
-                    self.organization[pos] = final_pattern
-                else:
-                    print("FAIL: Could not determine final pattern for position %s" % pos)
-                    return False
+                if pos in self.group:
+                    category = self.fold_grid[pos]
+                    valid_patterns = [pattern for pattern in self.find_edge_patterns(pos) if pattern.category == category]
+                    final_pattern = self.choose_ridge_pattern(valid_patterns, fold, idx, offset)
+                    if final_pattern:
+                        self.organization[pos] = final_pattern
+                    else:
+                        print("FAIL: Could not determine final pattern for position", pos)
+                        return False
         return True
 
     def choose_ridge_pattern(self, patterns, fold, idx, offset=0) -> bool:
         pos = fold[idx]
         next_pos = fold[idx + 1] if idx + 1 < len(fold) else None
+        if next_pos not in self.group:
+            next_pos = None  # Don't bother if the pos is not actually going to show up on the map
         previous_pos = fold[idx - 1] if idx > 0 else None
+        if previous_pos not in self.group:
+            previous_pos = None
         print(previous_pos, pos, next_pos)
         if next_pos and previous_pos:
             next_pos_offset = (next_pos[0] - pos[0], next_pos[1] - pos[1])
@@ -221,7 +227,8 @@ class ArtistPatternThread(QThread):
             valid_patterns = [pattern for pattern in patterns if pattern.ridge_connects(next_pos_offset)]
         else:
             valid_patterns = patterns
-        
+        if not valid_patterns:
+            return None
         final_pattern = random_choice(valid_patterns, pos, offset=offset)
         print(final_pattern)
         return final_pattern
@@ -242,6 +249,10 @@ class ArtistPatternThread(QThread):
 
     def process_group(self):
         missing = self.group - self.organization.keys()
+        if not missing:
+            self.did_complete = True
+            return True
+
         self.to_process = sorted(missing, key=lambda x: (x[0] + x[1], x[0]))
 
         def process(seq, exact=True):
