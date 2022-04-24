@@ -17,7 +17,7 @@ from app.editor import timer
 from app.utilities import str_utils
 from app.extensions.custom_gui import PropertyBox, ComboBox, Dialog
 from app.editor.combat_animation_editor.frame_selector import FrameSelector
-from app.editor.combat_animation_editor import combat_animation_model
+from app.editor.combat_animation_editor import combat_animation_model, combat_effect_display
 from app.editor.combat_animation_editor.color_editor import ColorEditorWidget
 from app.resources.combat_anims import Frame
 from app.resources.combat_palettes import Palette
@@ -423,6 +423,38 @@ class WeaponAnimSelection(Dialog):
                     return combat_anim.nid, combat_anim.weapon_anims[0].nid
         return None, None
 
+class EffectSelection(Dialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.window = parent
+
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
+        
+        self.effect_box = PropertyBox("Combat Effects", ComboBox, self)
+        if RESOURCES.combat_effects:
+            self.effect_box.edit.addItems(RESOURCES.combat_effects.keys())
+
+        main_layout.addWidget(self.effect_box)
+        main_layout.addWidget(self.buttonbox)
+
+    @classmethod
+    def get(cls, parent) -> tuple:
+        dlg = cls(parent)
+        result = dlg.exec_()
+        if result == QDialog.Accepted:
+            return dlg.effect_box.edit.currentText()
+        else:
+            return None
+
+    @classmethod
+    def autoget(cls, current_palette: Palette) -> tuple:
+        for combat_effect in RESOURCES.combat_effects:
+            palette_nids = [nid for name, nid in combat_effect.palettes]
+            if current_palette.nid in palette_nids:
+                return combat_effect.nid
+        return None
+
 class PaletteProperties(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self, parent)
@@ -460,11 +492,17 @@ class PaletteProperties(QWidget):
         self.raw_view.setSceneRect(0, 0, WINWIDTH, WINHEIGHT)
         self.raw_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.autoselect_frame_button = QPushButton("Autoselect Frame", self)
+        self.autoselect_frame_button = QPushButton("Autoselect Animation Frame", self)
         self.autoselect_frame_button.clicked.connect(self.autoselect_frame)
 
-        self.select_frame_button = QPushButton("Select Frame...", self)
+        self.select_frame_button = QPushButton("Select Animation Frame...", self)
         self.select_frame_button.clicked.connect(self.select_frame)
+
+        self.autoselect_effect_frame_button = QPushButton("Autoselect Effect Frame", self)
+        self.autoselect_effect_frame_button.clicked.connect(self.autoselect_effect_frame)
+
+        self.select_effect_frame_button = QPushButton("Select Effect Frame...", self)
+        self.select_effect_frame_button.clicked.connect(self.select_effect_frame)
 
         self.easel_widget = EaselWidget(self)
         self.color_editor_widget = ColorEditorWidget(self)
@@ -477,10 +515,16 @@ class PaletteProperties(QWidget):
         top_layout.addWidget(self.easel_widget)
         view_layout = QVBoxLayout()
         view_layout.addWidget(self.raw_view)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.autoselect_frame_button)
-        button_layout.addWidget(self.select_frame_button)
-        view_layout.addLayout(button_layout)
+        anim_button_layout = QHBoxLayout()
+        anim_button_layout.addWidget(self.autoselect_frame_button)
+        anim_button_layout.addWidget(self.select_frame_button)
+        effect_button_layout = QHBoxLayout()
+        effect_button_layout.addWidget(self.autoselect_effect_frame_button)
+        effect_button_layout.addWidget(self.select_effect_frame_button)
+        combined_button_layout = QVBoxLayout()
+        combined_button_layout.addLayout(anim_button_layout)
+        combined_button_layout.addLayout(effect_button_layout)
+        view_layout.addLayout(combined_button_layout)
         top_layout.addLayout(view_layout)
         main_layout.addLayout(top_layout)
         main_layout.addWidget(self.color_editor_widget)
@@ -537,6 +581,19 @@ class PaletteProperties(QWidget):
             self.easel_widget.set_current(self.current_palette, self.current_frame)
             self.draw_frame()
 
+    def select_effect_frame(self):
+        effect_nid = EffectSelection.get(self)
+        effect_anim = RESOURCES.combat_effects.get(effect_nid)
+        if not effect_anim:
+            return
+        combat_effect_display.populate_effect_pixmaps(effect_anim)
+        frame, ok = FrameSelector.get(effect_anim, effect_anim, self)
+        if frame and ok:
+            self.current_frame_set = effect_anim
+            self.current_frame = frame
+            self.easel_widget.set_current(self.current_palette, self.current_frame)
+            self.draw_frame()
+
     def autoselect_frame(self):
         if not self.current_palette:
             return
@@ -555,6 +612,25 @@ class PaletteProperties(QWidget):
         frame = weapon_anim.frames[0]
         if frame:
             self.current_frame_set = weapon_anim
+            self.current_frame = frame
+            self.easel_widget.set_current(self.current_palette, self.current_frame)
+            self.draw_frame()
+
+    def autoselect_effect_frame(self):
+        if not self.current_palette:
+            return
+        effect_nid = EffectSelection.autoget(self.current_palette)
+        effect_anim = RESOURCES.combat_effects.get(effect_nid)
+        if not effect_anim:
+            QMessageBox.critical(self, "Autoselect Error", 'Could not find a good frame. Try using manual "Select".')
+            return
+        if not effect_anim.frames:
+            QMessageBox.critical(self, "Autoselect Error", 'Could not find a good frame. Try using manual "Select".')
+            return
+        combat_effect_display.populate_effect_pixmaps(effect_anim)
+        frame = effect_anim.frames[0]
+        if frame:
+            self.current_frame_set = effect_anim
             self.current_frame = frame
             self.easel_widget.set_current(self.current_palette, self.current_frame)
             self.draw_frame()

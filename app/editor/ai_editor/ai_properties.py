@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, \
     QMessageBox, QSpinBox, QHBoxLayout, QGroupBox, QRadioButton, \
     QVBoxLayout, QComboBox, QStackedWidget, QDoubleSpinBox, QCheckBox, \
-    QGridLayout
+    QGridLayout, QListWidget, QListWidgetItem, QPushButton
 from PyQt5.QtCore import Qt
 
 import app.data.ai as ai
@@ -359,19 +359,32 @@ class AIProperties(QWidget):
         self.offense_bias_box.edit.valueChanged.connect(self.offense_bias_changed)
         top_section.addWidget(self.offense_bias_box)
 
+        self.add_button = QPushButton("Add Behaviour", self)
+        self.add_button.clicked.connect(self.add_behaviour)
+        top_section.addWidget(self.add_button)
+
+        self.remove_button = QPushButton("Remove Behaviour", self)
+        self.remove_button.clicked.connect(self.pop_behaviour)
+        top_section.addWidget(self.remove_button)
+
         main_section = QVBoxLayout()
 
-        self.behaviour1 = BehaviourBox(self)
-        self.behaviour1.setTitle("Behaviour 1")
-        self.behaviour2 = BehaviourBox(self)
-        self.behaviour2.setTitle("Behaviour 2")
-        self.behaviour3 = BehaviourBox(self)
-        self.behaviour3.setTitle("Behaviour 3")
-        self.behaviour_boxes = [self.behaviour1, self.behaviour2, self.behaviour3]
+        self.behaviour_boxes = []
+        self.behaviour_list = QListWidget()
 
-        main_section.addWidget(self.behaviour1)
-        main_section.addWidget(self.behaviour2)
-        main_section.addWidget(self.behaviour3)
+        # self.behaviour1 = BehaviourBox(self)
+        # self.behaviour1.setTitle("Behaviour 1")
+        # self.behaviour2 = BehaviourBox(self)
+        # self.behaviour2.setTitle("Behaviour 2")
+        # self.behaviour3 = BehaviourBox(self)
+        # self.behaviour3.setTitle("Behaviour 3")
+        # self.behaviour_boxes = [self.behaviour1, self.behaviour2, self.behaviour3]
+
+        # main_section.addWidget(self.behaviour1)
+        # main_section.addWidget(self.behaviour2)
+        # main_section.addWidget(self.behaviour3)
+
+        main_section.addWidget(self.behaviour_list)
 
         total_section = QVBoxLayout()
         total_section.addLayout(top_section)
@@ -398,10 +411,42 @@ class AIProperties(QWidget):
     def offense_bias_changed(self, val):
         self.current.offense_bias = float(val)
 
+    def pop_behaviour(self, checked=False, set_current=True):
+        idx = len(self.behaviour_boxes)
+        self.behaviour_list.takeItem(idx - 1)
+        self.behaviour_boxes.pop()
+
+        if self.current and set_current:
+            self.current.pop_behaviour()
+
+    def add_behaviour(self, checked=False, set_current=True):
+        item = QListWidgetItem(self.behaviour_list)
+        self.behaviour_list.addItem(item)
+
+        idx = len(self.behaviour_boxes) + 1
+
+        behaviour_box = BehaviourBox(self)
+        behaviour_box.setTitle("Behaviour %d" % idx)
+        item.setSizeHint(behaviour_box.minimumSizeHint())
+
+        self.behaviour_list.setItemWidget(item, behaviour_box)
+        self.behaviour_boxes.append(behaviour_box)
+
+        if self.current and set_current:
+            self.current.add_default()
+            behaviour_box.set_current(self.current.behaviours[-1])
+
     def set_current(self, current):
         self.current = current
         self.nid_box.edit.setText(current.nid)
         self.priority_box.edit.setValue(current.priority)
         self.offense_bias_box.edit.setValue(current.offense_bias)
+        num_behaviours = len(current.behaviours)
+        # Remove all after num behaviours
+        while len(self.behaviour_boxes) > num_behaviours:
+            self.pop_behaviour(set_current=False)
+        while len(self.behaviour_boxes) < num_behaviours:
+            self.add_behaviour(set_current=False)
+        # Now set the rest to this
         for idx, behaviour in enumerate(current.behaviours):
             self.behaviour_boxes[idx].set_current(behaviour)

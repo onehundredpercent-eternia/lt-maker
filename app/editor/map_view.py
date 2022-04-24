@@ -1,10 +1,13 @@
-from app.editor.overworld_editor.road_sprite_wrapper import RoadSpriteWrapper
+import functools
 from enum import Enum
 
 from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 from app.data.database import DB
-from app.editor import timer, tilemap_editor
+from app.data.level_units import UniqueUnit
+from app.data.levels import LevelPrefab
+from app.editor import tilemap_editor, timer
 from app.editor.class_editor import class_model
+from app.editor.overworld_editor.road_sprite_wrapper import RoadSpriteWrapper
 from app.editor.settings import MainSettingsController
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
@@ -12,7 +15,6 @@ from app.utilities import utils
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
-
 
 class SimpleMapView(QGraphicsView):
     min_scale = 1
@@ -52,7 +54,7 @@ class SimpleMapView(QGraphicsView):
         self.centerOn(pos[0]*TILEWIDTH, pos[1]*TILEHEIGHT)
         self.update_view()
 
-    def set_current_level(self, level):
+    def set_current_level(self, level: LevelPrefab):
         self.current_level = level
         if level:
             self.current_map = RESOURCES.tilemaps.get(level.tilemap)
@@ -93,11 +95,12 @@ class SimpleMapView(QGraphicsView):
         else:
             pass  # TODO: for now  # Need a fallback option... CITIZEN??
 
-    def paint_units(self, current_level):
+    def paint_units(self, current_level: LevelPrefab):
         if self.working_image:
             painter = QPainter()
             painter.begin(self.working_image)
-            for unit in current_level.units:
+            drawn_units = [unit for unit in current_level.units if unit.starting_position]
+            for unit in sorted(drawn_units, key=lambda unit: tuple(unit.starting_position)):
                 if not unit.starting_position:
                     continue
                 if unit.starting_traveler:
@@ -198,7 +201,8 @@ class GlobalModeLevelMapView(SimpleMapView):
             painter = QPainter()
             painter.begin(self.working_image)
             if self.current_level:
-                for unit in self.current_level.units:
+                drawn_units = [unit for unit in self.current_level.units if unit.starting_position]
+                for unit in sorted(drawn_units, key=lambda unit: tuple(unit.starting_position)):
                     if not unit.starting_position:
                         continue
                     if unit.generic or unit.nid in DB.units.keys():
@@ -343,7 +347,8 @@ class NewMapView(SimpleMapView):
         if self.working_image:
             painter = QPainter()
             painter.begin(self.working_image)
-            for unit in self.current_level.units:
+            drawn_units = [unit for unit in self.current_level.units if unit.starting_position]
+            for unit in sorted(drawn_units, key=lambda unit: tuple(unit.starting_position)):
                 if not unit.starting_position:
                     continue
                 if unit.generic or unit.nid in DB.units.keys():

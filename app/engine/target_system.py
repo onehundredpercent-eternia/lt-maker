@@ -240,7 +240,6 @@ def get_valid_targets(unit, item=None) -> set:
     if ((item_system.no_attack_after_move(unit, item) or skill_system.no_attack_after_move(unit))
          and unit.has_moved_any_distance):
         return set()
-
     # Check sequence item targeting
     if item.sequence_item:
         all_targets = set()

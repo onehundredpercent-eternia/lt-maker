@@ -23,6 +23,8 @@ from app.engine.combat.map_combat import MapCombat
 from app.engine.combat.base_combat import BaseCombat
 from app.engine.combat.mock_combat import MockCombat
 
+import logging
+
 class AnimationCombat(BaseCombat, MockCombat):
     alerts: bool = True
 
@@ -326,6 +328,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         elif self.state == 'begin_phase':
             # Get playback
             if not self.state_machine.get_state():
+                logging.debug("End Combat")
                 self.state = 'end_combat'
                 self.actions.clear()
                 self.playback.clear()
@@ -333,6 +336,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.actions, self.playback = self.state_machine.do()
             self.full_playback += self.playback
             if not self.actions and not self.playback:
+                logging.debug("Set Up Next State")
                 self.state_machine.setup_next_state()
                 return False
             self._set_stats()
@@ -487,6 +491,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 return True
 
         if self.state != current_state:
+            logging.debug("New Animation Combat State: %s", self.state)
             self.last_update = engine.get_time()
 
         # Update hp bars
@@ -657,8 +662,10 @@ class AnimationCombat(BaseCombat, MockCombat):
 
     def finish(self):
         # Fade back music if and only if it was faded in
+        from_start = DB.constants.value('restart_battle_music')
         if self.battle_music:
-            get_sound_thread().battle_fade_back(self.battle_music)
+            # Don't battle fade back when we don't restart battle music
+            get_sound_thread().battle_fade_back(self.battle_music, from_start)
 
     def build_viewbox(self, current_time):
         vb_multiplier = utils.clamp(current_time / self.viewbox_time, 0, 1)
@@ -676,12 +683,13 @@ class AnimationCombat(BaseCombat, MockCombat):
         else:
             defender_battle = None
         battle_music = game.level.music['%s_battle' % self.attacker.team]
+        from_start = DB.constants.value('restart_battle_music')
         if attacker_battle:
-            self.battle_music = get_sound_thread().battle_fade_in(attacker_battle)
+            self.battle_music = get_sound_thread().battle_fade_in(attacker_battle, from_start=from_start)
         elif defender_battle:
-            self.battle_music = get_sound_thread().battle_fade_in(defender_battle)
+            self.battle_music = get_sound_thread().battle_fade_in(defender_battle, from_start=from_start)
         elif battle_music:
-            self.battle_music = get_sound_thread().battle_fade_in(battle_music)
+            self.battle_music = get_sound_thread().battle_fade_in(battle_music, from_start=from_start)
 
     def left_team(self):
         return self.left.team

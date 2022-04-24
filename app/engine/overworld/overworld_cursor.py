@@ -24,8 +24,6 @@ class OverworldCursor(BaseCursor):
         self.overworld: OverworldManager = None
         self._sprite = SPRITES.get('overworld_cursor')
 
-        # self._transition_duration = 250
-
     def set_overworld_manager(self, manager: OverworldManager):
         """Must be called in order to use the cursor.
 

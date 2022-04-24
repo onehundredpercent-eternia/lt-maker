@@ -1,8 +1,9 @@
+import colorsys
+import hashlib
 import math
 from collections import Counter
-import colorsys, hashlib
 from operator import add, sub
-from typing import List
+
 
 def frames_to_ms(num_frames: int) -> int:
     """at 60 fps, each frame would happen in 16.67 ms"""
@@ -200,6 +201,15 @@ def raytrace(pos1: tuple, pos2: tuple) -> list:
             error += dx
         n -= 1
     return tiles
+
+def flatten_list(initial_list) -> list:
+    final_list = []
+    for item in initial_list:
+        if isinstance(item, list):
+            final_list += flatten_list(item)
+        else:
+            final_list.append(item)
+    return final_list
 
 # Testing
 if __name__ == '__main__':

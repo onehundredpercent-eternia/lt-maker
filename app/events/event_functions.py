@@ -149,7 +149,7 @@ def multi_add_portrait(self: Event, portrait1, screen_position1, portrait2, scre
         flags = {'no_block'} if portrait4 else set()
         commands.append(event_commands.AddPortrait({'Portrait': portrait3, 'ScreenPosition': screen_position3}, flags))
     if portrait4:
-        commands.append(event_commands.AddPortrait({'Portrait': portrait3, 'ScreenPosition': screen_position3}, set()))
+        commands.append(event_commands.AddPortrait({'Portrait': portrait4, 'ScreenPosition': screen_position4}, set()))
     for command in reversed(commands):
         # Done backwards to preserve order upon insertion
         self.commands.insert(self.command_idx + 1, command)
@@ -549,6 +549,9 @@ def activate_turnwheel(self: Event, force=None, flags=None):
 def battle_save(self: Event, flags=None):
     self.battle_save_flag = True
 
+def clear_turnwheel(self: Event, flags=None):
+    self.game.action_log.set_first_free_action()
+
 def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None, flags=None):
     """
     Cannot be turnwheeled
@@ -670,6 +673,8 @@ def make_generic(self: Event, nid, klass, level, team, ai=None, faction=None, an
         self.text_evaluator.created_unit = new_unit
 
 def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_type=None, placement=None, flags=None):
+    flags = flags or set()
+
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Couldn't find unit %s" % unit)
@@ -699,9 +704,16 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
     if not placement:
         placement = 'giveup'
 
+    faction = unit.faction
+    if not faction:
+        faction = DB.factions[0].nid
     level_unit_prefab = GenericUnit(
-        unit_nid, unit.variant, int(level), unit.klass, unit.faction, [item.nid for item in unit.items], unit.team, unit.ai)
+        unit_nid, unit.variant, int(level), unit.klass, faction, [item.nid for item in unit.items], unit.team, unit.ai)
     new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
+
+    if 'copy_stats' in flags:
+        new_unit.stats = unit.stats[:]
+        
     position = self._check_placement(new_unit, position, placement)
     if not position:
         return None
@@ -1477,7 +1489,7 @@ def set_growths(self: Event, global_unit, stat_list, flags=None):
 
     self._apply_growth_changes(unit, growth_changes)
 
-def autolevel_to(self: Event, global_unit, level, flags=None):
+def autolevel_to(self: Event, global_unit, level, growth_method=None, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
@@ -1490,7 +1502,7 @@ def autolevel_to(self: Event, global_unit, level, flags=None):
     if diff <= 0:
         return
 
-    action.do(action.AutoLevel(unit, diff))
+    action.do(action.AutoLevel(unit, diff, growth_method))
     if 'hidden' in flags:
         pass
     else:
@@ -1674,14 +1686,30 @@ def unlock_support_rank(self: Event, unit1, unit2, support_rank, flags=None):
         self.logger.error("Couldn't find prefab for units %s and %s" % (_unit1.nid, _unit2.nid))
         return
 
-def add_market_item(self: Event, item, flags=None):
-    if item in DB.items.keys():
-        self.game.market_items.add(item)
-    else:
+def add_market_item(self: Event, item, stock=None, flags=None):
+    if item not in DB.items.keys():
         self.logger.warning("%s is not a legal item nid", item)
+        return
+    stock = int(stock) if stock else 0
+    if stock:
+        if item in self.game.market_items:
+            self.game.market_items[item] += stock
+        else:
+            self.game.market_items[item] = stock
+    else:
+        self.game.market_items[item] = -1  # Any negative number means infinite
 
-def remove_market_item(self: Event, item, flags=None):
-    self.game.market_items.discard(item)
+def remove_market_item(self: Event, item, stock=None, flags=None):
+    stock = int(stock) if stock else 0
+    if stock and item in self.game.market_items:
+        self.game.market_items[item] -= stock
+        if self.game.market_items[item] <= 0:
+            self.game.market_items.pop(item, None)
+    else:
+        self.game.market_items.pop(item, None)
+
+def clear_market_items(self: Event, flags=None):
+    self.game.market_items.clear()
 
 def add_region(self: Event, nid, position, size, region_type, string=None, flags=None):
     flags = flags or set()
@@ -1924,12 +1952,14 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
     self.game.state.change('base_main')
     self.state = 'paused'
 
-def shop(self: Event, unit, item_list, shop_flavor=None, flags=None):
+def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("Must have a unit visit the shop!")
         return
     unit = new_unit
+    shop_id = self.nid
+    self.game.memory['shop_id'] = shop_id
     self.game.memory['current_unit'] = unit
     item_list = item_list.split(',')
     shop_items = item_funcs.create_items(unit, item_list)
@@ -1939,6 +1969,18 @@ def shop(self: Event, unit, item_list, shop_flavor=None, flags=None):
         self.game.memory['shop_flavor'] = shop_flavor.lower()
     else:
         self.game.memory['shop_flavor'] = 'armory'
+
+    if stock_list:
+        stock_list = str_utils.intify(stock_list)
+        # Remember which items have already been bought for this shop...
+        for idx, item in enumerate(item_list):
+            item_history = '__shop_%s_%s' % (shop_id, item)
+            if item_history in self.game.level_vars:
+                stock_list[idx] -= self.game.level_vars[item_history] 
+        self.game.memory['shop_stock'] = stock_list
+    else:
+        self.game.memory['shop_stock'] = None
+        
     self.game.state.change('shop')
     self.state = 'paused'
 

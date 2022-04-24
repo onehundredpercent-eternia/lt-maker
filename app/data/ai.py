@@ -16,6 +16,12 @@ class AIPrefab(Prefab):
     def add_behaviour(self, behaviour):
         self.behaviours.append(behaviour)
 
+    def add_default(self):
+        self.behaviours.append(AIBehaviour.DoNothing())
+
+    def pop_behaviour(self):
+        self.behaviours.pop()
+
     def set_behaviour(self, idx, behaviour):
         self.behaviours[idx] = behaviour
 

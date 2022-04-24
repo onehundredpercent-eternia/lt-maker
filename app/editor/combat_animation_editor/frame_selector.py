@@ -50,6 +50,15 @@ class FrameSelector(Dialog):
             self.current = self.frames[0]
         else:
             self.current = None
+        # animations aren't loaded yet
+        if not self.frames[0].pixmap:
+            try:
+                from app.editor.combat_animation_editor.combat_animation_display import populate_anim_pixmaps
+                populate_anim_pixmaps(combat_anim)
+            except:
+                from app.editor.combat_animation_editor.combat_effect_display import populate_effect_pixmaps
+                populate_effect_pixmaps(combat_anim)
+
 
         self.display = IconView(self)
         self.display.static_size = True

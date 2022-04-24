@@ -1,8 +1,14 @@
-from app.data.skill_components import SkillComponent, SkillTags
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from app.data.components import Type
-
-from app.engine import equations, action, item_funcs, static_random, skill_system
+from app.data.skill_components import SkillComponent, SkillTags
+from app.engine import (action, equations, item_funcs, skill_system,
+                        static_random)
 from app.engine.game_state import game
+
+if TYPE_CHECKING:
+    from app.engine.objects.item import ItemObject
+
 
 class Ability(SkillComponent):
     nid = 'ability'
@@ -247,17 +253,20 @@ class DeathTether(SkillComponent):
                 if skill.initiator_nid == unit.nid:
                     action.do(action.RemoveSkill(other_unit, skill))
 
-class EmpowerHeal(SkillComponent):
-    nid = 'empower_heal'
-    desc = "Gives +X extra healing"
+class ItemOverride(SkillComponent):
+    nid = 'item_override'
+    desc = 'allows overriding of item properties'
     tag = SkillTags.ADVANCED
 
-    expose = Type.String
+    expose = Type.Item
+    value = ""
 
-    def empower_heal(self, unit, target):
-        from app.engine import evaluate
-        try:
-            return int(evaluate.evaluate(self.value, unit, target))
-        except:
-            print("Couldn't evaluate %s conditional" % self.value)
-            return 0
+    item: ItemObject = None
+
+    def get_components(self, unit):
+        if not self.value:
+            return []
+        if not self.item:
+            from app.engine import item_funcs
+            self.item = item_funcs.create_item(unit, self.value)
+        return self.item.components

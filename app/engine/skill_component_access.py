@@ -1,14 +1,29 @@
+from app.editor.settings.main_settings_controller import MainSettingsController
+from functools import lru_cache
 from app.utilities.data import Data
 from app.data.components import Type
 from app.data.skill_components import SkillComponent, SkillTags
 
-def get_skill_components():
+@lru_cache(1)
+def get_cached_skill_components(proj_name: str):
     from app.engine import skill_components
+
+    from app.engine import custom_component_access
+    if custom_component_access.get_components():
+        # Necessary for get_skill_components to find the item component subclasses
+        # defined here
+        import custom_components
+    # else:
+        # custom_component_access.clean()
 
     subclasses = SkillComponent.__subclasses__()
     # Sort by tag
     subclasses = sorted(subclasses, key=lambda x: list(SkillTags).index(x.tag) if x.tag in list(SkillTags) else 100)
     return Data(subclasses)
+
+def get_skill_components():
+    settings = MainSettingsController()
+    return get_cached_skill_components(settings.get_current_project())
 
 def get_skill_tags():
     return list(SkillTags)

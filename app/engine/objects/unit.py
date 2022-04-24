@@ -99,7 +99,7 @@ class UnitObject(Prefab):
         return None
 
     @classmethod
-    def from_prefab(cls, prefab: UniqueUnit | GenericUnit | UnitPrefab, current_mode: DifficultyModeObject = None, for_equation_test: bool = False):
+    def from_prefab(cls, prefab: UniqueUnit | GenericUnit | UnitPrefab, current_mode: DifficultyModeObject = None):
         self = cls(prefab.nid)
         is_level_unit = not isinstance(prefab, UnitPrefab)
         self.nid = prefab.nid
@@ -204,7 +204,7 @@ class UnitObject(Prefab):
         self.current_guard_gauge = 0
 
         # Handle items
-        if not for_equation_test:
+        if is_level_unit:
             items = item_funcs.create_items(self, prefab.starting_items)
             for item in items:
                 self.add_item(item)

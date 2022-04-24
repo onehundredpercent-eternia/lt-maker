@@ -39,6 +39,10 @@ class Uses(ItemComponent):
                 action.do(action.RemoveItem(unit, item))
             elif item in game.party.convoy:
                 action.do(action.RemoveItemFromConvoy(item))
+            else:
+                for other_unit in game.get_units_in_party():
+                    if item in other_unit.items:
+                        action.do(action.RemoveItem(other_unit, item))
             return True
         return False
 

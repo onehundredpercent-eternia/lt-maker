@@ -34,6 +34,14 @@ class ItemObject():
         self.subitems = []
         self.parent_item = None
 
+    @property
+    def tags(self) -> set:
+        all_tags = set()
+        for component in self.components:
+            if component.nid == 'item_tags':
+                all_tags |= set(self.components.get('item_tags').value)
+        return all_tags
+
     def change_owner(self, nid):
         self.owner_nid = nid
         for item in self.subitems:

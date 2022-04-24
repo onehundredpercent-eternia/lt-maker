@@ -23,21 +23,6 @@ run_tests:
         - python -m app.engine.component_system_compiler.source_generator
         - python -m unittest discover -s app/tests -p 'test*.py'
 
-get_metadata:
-    stage: generate
-    except:
-        refs:
-            - merge_requests
-    only:
-        - master
-    script:
-        - echo $CI_JOB_ID > version.txt
-        - echo "Metadata created!"
-    artifacts:
-        name: "Version Info"
-        paths:
-            - version.txt
-
 build_app:
     stage: generate
     image: "python:3.7.9"
@@ -47,7 +32,7 @@ build_app:
         refs:
             - merge_requests
     only:
-        - master
+        - release
     before_script:
         - choco install -y python --version=3.7.9
         - "C:\\Python37\\python.exe -m pip install -r requirements_editor.txt"
@@ -77,6 +62,7 @@ build_app:
         - echo "Copying generated files"
         - cp app/engine/item_system.py ./lt_editor/lt_editor/app/engine
         - cp app/engine/skill_system.py ./lt_editor/lt_editor/app/engine
+        - echo $CI_COMMIT_SHORT_SHA > ./lt_editor/lt_editor/version.txt
         - echo "Done!"
     artifacts:
         name: "Built Editor"
@@ -89,13 +75,11 @@ release:
     needs:
     - job: build_app
       artifacts: true
-    - job: get_metadata
-      artifacts: true
     except:
         refs:
             - merge_requests
     only:
-        - master
+        - release
     script:
         - echo 'running release'
         - echo 'remember to make sure your url is correct!'
@@ -106,9 +90,6 @@ release:
         assets:
             links: # IF SOMETHING IS BROKEN, IT'S PROBABLY THESE URLS FAULT
                 - name: 'Lex_Talionis_Maker'
-                  # url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=build_app"
-                  url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=build_app"
+                  filepath: /lex_talionis_maker
+                  url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/release/download?job=build_app"
                   link_type: package
-                - name: 'Version Info'
-                  # url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=get_metadata"
-                  url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/master/download?job=get_metadata"

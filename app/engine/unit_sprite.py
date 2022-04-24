@@ -104,7 +104,6 @@ class UnitSprite():
         self.offset = [0, 0]
 
         self.flicker = []
-        self.flicker_tint = []
         self.vibrate = []
         self.vibrate_counter = 0
         self.animations = {}
@@ -141,13 +140,6 @@ class UnitSprite():
     def remove_animation(self, animation_nid):
         if animation_nid in self.animations:
             del self.animations[animation_nid]
-
-    def add_flicker_tint(self, color, period, width):
-        self.flicker_tint.append((color, period, width))
-
-    def remove_flicker_tint(self, color, period, width):
-        if (color, period, width) in self.flicker_tint:
-            self.flicker_tint.remove((color, period, width))
 
     def begin_flicker(self, total_time, color, direction='add'):
         self.flicker.append((engine.get_time(), total_time, color, direction, False))
@@ -468,9 +460,10 @@ class UnitSprite():
                 color = (0, int(diff * .5), 0)  # Tint image green at magnitude depending on diff
                 image = image_mods.change_color(image.convert_alpha(), color)
 
-        for idx, flicker_tint in enumerate(self.flicker_tint):
-            color, period, width = flicker_tint
-            offset = idx * period / len(self.flicker_tint)
+        flicker_tint = skill_system.unit_sprite_flicker_tint(self.unit)
+        for idx, tint in enumerate(flicker_tint):
+            color, period, width = tint
+            offset = idx * period / len(flicker_tint)
             diff = utils.model_wave(current_time + offset, period, width)
             diff = utils.clamp(diff, 0, 1)
             color = tuple([int(c * diff) for c in color])

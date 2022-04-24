@@ -109,9 +109,9 @@ def detect_type_under_cursor(line: str, cursor_pos: int, arg_under_cursor: str =
                 flags = command.flags
                 i = arg_idx - len(command.keywords)
                 if i < len(command.optional_keywords):
-                    validator_name = command.keyword_types[arg_idx]
+                    validator_name = command.get_keyword_types()[arg_idx]
             else:
-                validator_name = command.keyword_types[arg_idx]
+                validator_name = command.get_keyword_types()[arg_idx]
         if validator_name:
             validator = event_validators.get(validator_name)
         else:
@@ -119,4 +119,6 @@ def detect_type_under_cursor(line: str, cursor_pos: int, arg_under_cursor: str =
         return (validator, flags)
     except Exception as e:
         print(e)
+        import traceback
+        traceback.print_exc()
         return (event_validators.Validator, [])

@@ -11,6 +11,7 @@ These pages will contain various guides.
     Build-Engine
     Choices-and-Battle-Saves
     Creating-Items
+    Custom-Components
     Leadership-Stars
     Overworld
     Overworld-Nodes

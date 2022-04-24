@@ -20,6 +20,8 @@ from app.map_maker import map_maker_palette
 from app.map_maker.terrain_database import DB_terrain
 import app.map_maker.utilities as map_utils
 
+from app.map_maker import meta_generation
+
 class CliffMarkerWidget(QWidget):
     def __init__(self, parent=None, tilemap=None):
         super().__init__(parent)
@@ -485,6 +487,7 @@ if __name__ == "__main__":
     theme = settings.get_theme(0)
     dark_theme.set(ap, theme)
     sample_tilemap = MapPrefab('sample')
+    # sample_tilemap = meta_generation.generate(sample_tilemap)
     map_editor = MapEditor(current=sample_tilemap)
     map_editor.show()
     ap.exec_()

@@ -1428,16 +1428,17 @@ class SetLevel(Action):
 
 
 class AutoLevel(Action):
-    def __init__(self, unit, diff):
+    def __init__(self, unit, diff, growth_method=None):
         self.unit = unit
         self.diff = diff
         self.old_stats = self.unit.stats
         self.old_growth_points = self.unit.growth_points
         self.old_hp = self.unit.get_hp()
         self.old_mana = self.unit.get_mana()
+        self.growth_method = growth_method
 
     def do(self):
-        unit_funcs.auto_level(self.unit, self.diff, self.unit.get_internal_level())
+        unit_funcs.auto_level(self.unit, self.diff, self.unit.get_internal_level(), False, self.growth_method)
 
     def reverse(self):
         self.unit.stats = self.old_stats

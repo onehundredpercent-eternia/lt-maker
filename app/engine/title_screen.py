@@ -222,10 +222,6 @@ class TitleMainState(State):
 
         return surf
 
-class ModeDialog(dialog.Dialog):
-    num_lines = 4
-    draw_cursor_flag = False
-
 class TitleModeState(State):
     name = 'title_mode'
     in_level = False
@@ -297,7 +293,7 @@ class TitleModeState(State):
         if self.menu:
             text = self.menu.get_current() + '_desc'
             text = text_funcs.translate(text)
-            self.dialog = ModeDialog(text)
+            self.dialog = dialog.Dialog(text, num_lines=4, draw_cursor=False)
             self.dialog.position = (140, 34)
             self.dialog.text_width = WINWIDTH - 142 - 12
             self.dialog.font = FONT['text']

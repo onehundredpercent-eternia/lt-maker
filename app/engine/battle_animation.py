@@ -240,7 +240,7 @@ class BattleAnimation():
         self.num_frames = 0
 
     def can_proceed(self):
-        return self.loop or self.state == 'wait'
+        return self.loop or self.state == 'wait' or self.done()
 
     def done(self) -> bool:
         return self.state == 'inert' or (self.state == 'run' and self.current_pose in self.idle_poses) or \

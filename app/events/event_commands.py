@@ -632,8 +632,8 @@ Creates a game variable or changes its value. Game variables are preserved betwe
 The *Nid* is the variable's identifier, and the *Condition* is the value that is given to the variable.
 *Condition* can be a number or a Python expression.
         """
-
-    keywords = ["Nid", "Expression"]
+    keywords = ['Nid', 'Expression']
+    keyword_types = ["GeneralVar", "Expression"]
 
 class IncGameVar(EventCommand):
     nid = 'inc_game_var'
@@ -647,6 +647,7 @@ Increments a game variable by one, or by a Python expression provided using the 
 
     keywords = ["Nid"]
     optional_keywords = ["Expression"]
+    keyword_types = ["GeneralVar", "Expression"]
 
 class LevelVar(EventCommand):
     nid = 'level_var'
@@ -661,6 +662,7 @@ value that is given to the variable. *Expression* can be a number or a Python ex
         """
 
     keywords = ["Nid", "Expression"]
+    keyword_types = ["GeneralVar", "Expression"]
 
 class IncLevelVar(EventCommand):
     nid = 'inc_level_var'
@@ -673,6 +675,7 @@ Increments a level variable by one, or by a Python expression provided using the
 
     keywords = ["Nid"]
     optional_keywords = ["Expression"]
+    keyword_types = ["GeneralVar", "Expression"]
 
 class WinGame(EventCommand):
     nid = 'win_game'
@@ -717,6 +720,16 @@ class BattleSave(EventCommand):
 The player is given the option of saving the game mid-battle.
 This can be useful if the player chose Classic Mode,
 as he or she would otherwise only be able to suspend and not save mid-battle.
+        """
+
+class ClearTurnwheel(EventCommand):
+    nid = 'clear_turnwheel'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+The turnwheel's history will be cleared. The player will not be able to
+return to any action that occurs before this event.
         """
 
 class ChangeTilemap(EventCommand):
@@ -775,6 +788,8 @@ Several optional keywords can also be provided to further modify the new unit:
 *AI* defines an AI preset to be given to the unit, *Faction* assignes the unit
 to one of the factions for the chapter, the unit can be given an animation variant
 (*AnimationVariant*), and finally the unit can be given an inventory of items (*ItemList*).
+
+
         """
 
     # Nid, class, level, team, ai, faction, anim variant
@@ -801,12 +816,15 @@ The *Level* value, if provided, sets the unit's level.
 The *Position* value indicates the map coordinates that the unit will be placed at.
 *EntryType* defines which placement animation is used.
 Finally, *Placement* defines the behavior that occurs if the chosen map position is already occupied.
+
+The optional flag *copy_stats* will cause the new unit to have exactly the same stats as the original *Unit*, rather than being calculated anew.
         """
 
     # Unit template
     keywords = ["Unit"]
     optional_keywords = ["Nid", "Level", "Position", "EntryType", "Placement"]
     keyword_types = ["Unit", "Nid", "PositiveInteger", "Position", "EntryType", "Placement"]
+    _flags = ["copy_stats"]
 
 class AddUnit(EventCommand):
     nid = 'add_unit'
@@ -1367,12 +1385,13 @@ class AutolevelTo(EventCommand):
     desc = \
         """
 Levels *GlobalUnit* up to *Level*. If *Level* is less than the unit's current level, this does nothing.
-
+If *GrowthMethod* is not specified, the unit will use whatever they would normally use for the player's selected difficulty setting.
 If the *hidden* flag is set, the unit still gains the effects of the indicated level-ups, but its actual level is not incremented. In other words, the unit gets more powerful but remains at the same level.
         """
 
     keywords = ["GlobalUnit", "Level"]
-    keyword_types = ["GlobalUnit", "PositiveInteger"]
+    optional_keywords = ["GrowthMethod"]
+    keyword_types = ["GlobalUnit", "PositiveInteger", "GrowthMethod"]
     # Whether to actually change the unit's level
     _flags = ["hidden"]
 
@@ -1549,10 +1568,12 @@ class AddMarketItem(EventCommand):
 
     desc = \
         """
-Adds *Item* to the list of purchaseable goods in the base's market.
+Adds *Item* to the list of purchaseable goods in the base's market. If the optional *Stock* is supplied, adds that amount of stock of the item to the base's market.
         """
 
     keywords = ["Item"]
+    optional_keywords = ["Stock"]
+    keywords_types = ["Item", "PositiveIntegerOrZero"]
 
 class RemoveMarketItem(EventCommand):
     nid = 'remove_market_item'
@@ -1560,10 +1581,21 @@ class RemoveMarketItem(EventCommand):
 
     desc = \
         """
-Removes *Item* from the list of purchaseable goods in the base's market.
+Removes *Item* from the list of purchaseable goods in the base's market. If the optional *Stock* is supplied, removes that amount of stock of the item from the base's market.
         """
 
     keywords = ["Item"]
+    optional_keywords = ["Stock"]
+    keywords_types = ["Item", "PositiveIntegerOrZero"]
+
+class ClearMarketItems(EventCommand):
+    nid = 'clear_market_items'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Removes all items from the list of purchaseable goods in the base's market.
+        """
 
 class AddRegion(EventCommand):
     nid = 'add_region'
@@ -1789,11 +1821,12 @@ class Shop(EventCommand):
 
     desc = \
         """
-Causes *Unit* to enter a shop that sells *ItemList* items. The optional *ShopFlavor* keyword determines whether the shop appears as a vendor or an armory.
+Causes *Unit* to enter a shop that sells *ItemList* items. The optional *ShopFlavor* keyword determines whether the shop appears as a vendor or an armory. The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock. 
         """
 
     keywords = ["Unit", "ItemList"]
-    optional_keywords = ["ShopFlavor"]
+    optional_keywords = ["ShopFlavor", "StockList"]
+    keyword_types = ["Unit", "ItemList", "ShopFlavor", "IntegerList"]
 
 class Choice(EventCommand):
     nid = 'choice'
@@ -1842,7 +1875,8 @@ Optional args:
 * *type_unit* will interpret all options as unit NIDs
 * *type_class* will interpret all options as class NIDs.
 * *type_icon* will use the following syntax: `iconsheetnid-iconx-icony-choicetext`, and will display the specific icon16 alongside the choice.
-* *type_sprite* will interpret the options as sprite NIDs.
+* *type_portrait* will interpret the options as portrait NIDs.
+* *type_chibi* will interpret the options as unit nids, and draw the chibi corresponding.
 
 * The *persist* flag indicates whether or not the choice ends after you make a selection. If *persist* is true, then the choice can only be exited
 via hitting the back button, and the event will go on as normal.
@@ -1857,7 +1891,7 @@ via hitting the back button, and the event will go on as normal.
 
     keywords = ['Nid', 'Title', 'Choices']
     optional_keywords = ['RowWidth', 'Orientation', 'Alignment', 'BG', 'EventNid', 'EntryType', 'Dimensions', 'TextAlign']
-    keyword_types = ['Nid', 'String', 'String', 'Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
+    keyword_types = ['GeneralVar', 'String', 'String', 'Width', 'Orientation', 'Align', 'Sprite', 'Event', 'TableEntryType', 'Size', 'HAlign']
     _flags = ['persist', 'expression', 'no_bg', 'no_cursor', 'arrows', 'scroll_bar', 'backable']
 
 class Unchoice(EventCommand):
@@ -1898,7 +1932,8 @@ expression would automatically update the gold.
 * *type_unit* will interpret all options as unit NIDs
 * *type_class* will interpret all options as class NIDs.
 * *type_icon* will use the following syntax: `iconsheetnid-iconx-icony-choicetext`, and will display the specific icon16 alongside the choice.
-* *type_sprite* will interpret the options as sprite NIDs.
+* *type_portrait* will interpret the options as portrait NIDs.
+* *type_chibi* will interpret the options as unit nids, and draw the chibi corresponding.
 
 * The *expression* flag indicates that the provided table data should be be continually parsed as a python expression and updated.
 * The *no_bg* flag removes the bg.
@@ -2299,7 +2334,7 @@ def restore_command(dat) -> EventCommand:
     elif len(dat) == 3:  # Old method
         nid, values, display_values = dat
     else:
-        logging.error("Couldn't restore event command: NID: %s; Display Values: %s", nid, display_values)
+        logging.error("Couldn't restore event command: Data: %s", dat)
         return None
 
     text = ';'.join([nid] + display_values)
@@ -2309,7 +2344,7 @@ def restore_command(dat) -> EventCommand:
     else:
         return Comment(display_values=[nid + ';' + str.join(';', display_values)])
 
-evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList')
+evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList', 'Nid')
 
 def determine_command_type(text: str) -> EventCommand:
     text = text.lstrip()
@@ -2342,7 +2377,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
         # if parentheses exists, then they contain the "true" arg, with everything outside parens essentially as comments
         # we do NOT want to use this with evals, hence the '{' and '}' stoppage
         if '(' in arg and ')' in arg and '{' not in arg and '}' not in arg and \
-                ('FLAG' in arg or cmd_keyword not in evaluables):
+                ('FLAG' in arg or (cmd_keyword and cmd_keyword not in evaluables and 'list' not in cmd_keyword.lower())):
             return arg[arg.find("(") + 1 : arg.find(")")]
         return arg
 

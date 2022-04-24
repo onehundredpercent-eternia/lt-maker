@@ -106,7 +106,13 @@ def run(game):
 
         game.playtime += clock.tick()
 
-def run_combat(mock_combat):
+def run_in_isolation(obj):
+    """
+    Requires that the object has
+    1) take_input function that takes in the event
+    2) update function
+    3) draw function that returns the surface to be drawn
+    """
     from app.engine.sound import get_sound_thread
     from app.engine.input_manager import get_input_manager
 
@@ -124,9 +130,9 @@ def run_combat(mock_combat):
             break
         event = get_input_manager().process_input(raw_events)
 
-        mock_combat.take_input(event)
-        mock_combat.update()
-        surf = mock_combat.draw(surf)
+        obj.take_input(event)
+        obj.update()
+        surf = obj.draw(surf)
 
         get_sound_thread().update(raw_events)
 
@@ -135,3 +141,9 @@ def run_combat(mock_combat):
 
         engine.update_display()
         clock.tick()
+
+def run_combat(mock_combat):
+    run_in_isolation(mock_combat)
+
+def run_event(event):
+    run_in_isolation(event)

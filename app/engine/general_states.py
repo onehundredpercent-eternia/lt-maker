@@ -1345,9 +1345,11 @@ class TargetingState(MapState):
                 else:
                     game.memory['trade_partner'] = unit
             else:
+                if unit and unit.traveler and unit == self.cur_unit and self.ability.name == 'Trade':
+                    game.memory['trade_partner'] = game.get_unit(unit.traveler)
+                else:
                 game.memory['trade_partner'] = unit
             self.ability.do(self.cur_unit)
-
         elif event == 'AUX':
             get_sound_thread().play_sfx('Select 6')
             self.traveler_mode = False
@@ -1421,8 +1423,10 @@ class TargetingState(MapState):
             if self.traveler_mode:
                 if unit.traveler:
                     game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
-            else:
+            elif unit != self.cur_unit:
                 game.ui_view.draw_trade_preview(unit, surf)
+            else:
+                game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
         elif self.ability.name == 'Steal':
             unit = game.cursor.get_hover()
             game.ui_view.draw_trade_preview(unit, surf)
@@ -1600,6 +1604,7 @@ class CombatTargetingState(MapState):
 
         elif event == 'AUX':
             adj_allies = target_system.get_adj_allies(self.cur_unit)
+            adj_allies = [u for u in adj_allies if u.get_weapon() and not item_system.cannot_dual_strike(u, u.get_weapon())]
             if not DB.constants.value('pairup'):
                 new_position = self.selection.get_next(game.cursor.position)
                 game.cursor.set_pos(new_position)
@@ -1610,13 +1615,7 @@ class CombatTargetingState(MapState):
             elif len(adj_allies) > 1 and self.num_targets == 1:
                 i = adj_allies.index(self.attacker_assist)
                 # Hardset attacker
-                if any(not item_system.cannot_dual_strike(ally, ally.get_weapon()) for ally in adj_allies):
-                    i = 0
-                    while i < 4:
                         self.attacker_assist = adj_allies[(i + 1) % len(adj_allies)]
-                        if not item_system.cannot_dual_strike(self.attacker_assist, self.attacker_assist.get_weapon()):
-                            break
-                        i += 1
                     game.ui_view.reset_info()
                     self.display_single_attack()
 
@@ -1858,6 +1857,9 @@ class AIState(MapState):
         self.cur_unit = None
         self.cur_group = None
 
+    def begin(self):
+        phase.fade_in_phase_music()
+
     def get_next_unit(self):
         # Initiative way
         if DB.constants.value('initiative'):
@@ -1968,6 +1970,7 @@ class ShopState(State):
     def start(self):
         self.fluid = FluidScroll()
 
+        self.shop_id = game.memory['shop_id']
         self.unit = game.memory['current_unit']
         self.flavor = game.memory['shop_flavor']
         if self.flavor == 'vendor':
@@ -1984,6 +1987,7 @@ class ShopState(State):
             self.leave_message = 'armory_leave'
 
         items = game.memory['shop_items']
+        self.stock = game.memory.get('shop_stock', None)
         my_items = item_funcs.get_all_tradeable_items(self.unit)
         topleft = (44, WINHEIGHT - 16 * 5 - 8 - 4)
         self.sell_menu = menus.Shop(self.unit, my_items, topleft, disp_value='sell')
@@ -1992,7 +1996,9 @@ class ShopState(State):
         self.sell_menu.gem = True
         self.sell_menu.shimmer = 0
         self.sell_menu.set_takes_input(False)
-        self.buy_menu = menus.Shop(self.unit, items, topleft, disp_value='buy')
+        if self.stock:
+            topleft = (36, topleft[1] + 4)
+        self.buy_menu = menus.Shop(self.unit, items, topleft, disp_value='buy', stock=self.stock)
         self.buy_menu.set_limit(5)
         self.buy_menu.set_hard_limit(True)
         self.buy_menu.gem = True
@@ -2066,10 +2072,13 @@ class ShopState(State):
                 item = self.buy_menu.get_current()
                 if item:
                     value = item_funcs.buy_price(self.unit, item)
-                    if game.get_money() - value >= 0:
+                    if game.get_money() - value >= 0 and self.buy_menu.get_stock() != 0:
                         action.do(action.HasTraded(self.unit))
                         get_sound_thread().play_sfx('GoldExchange')
                         action.do(action.GainMoney(game.current_party, -value))
+                        stock_marker = '__shop_%s_%s' % (self.shop_id, item.nid)
+                        action.do(action.SetLevelVar(stock_marker, game.level_vars.get(stock_marker, 0) + 1))  # Remember that we bought one of this
+                        self.buy_menu.decrement_stock()
                         self.money_counter_disp.start(-value)
                         new_item = item_funcs.create_item(self.unit, item.nid)
                         game.register_item(new_item)
@@ -2086,6 +2095,10 @@ class ShopState(State):
                             self.buy_menu.set_takes_input(False)
 
                         self.update_options()
+                    elif self.buy_menu.get_stock() == 0:
+                        # We don't have any more of this in stock
+                        get_sound_thread().play_sfx('Select 4')
+                        self.current_msg = self.get_dialog('shop_no_stock')
                     else:
                         # You don't have enough money
                         get_sound_thread().play_sfx('Select 4')
@@ -2170,6 +2183,7 @@ class ShopState(State):
 
         FONT['text-blue'].blit_right(str(game.get_money()), surf, (223, 48))
         self.money_counter_disp.draw(surf)
+
         return surf
 
     def draw(self, surf):
@@ -2181,6 +2195,11 @@ class ShopState(State):
             self.sell_menu.draw(surf)
         else:
             self.buy_menu.draw(surf)
+            if self.stock:
+                FONT['text'].blit_center(text_funcs.translate('Item'), surf, (80, 64), color='yellow')
+                FONT['text'].blit_center(text_funcs.translate('Uses'), surf, (128, 64), color='yellow')
+                FONT['text'].blit_center(text_funcs.translate('Stock'), surf, (156, 64), color='yellow')
+                FONT['text'].blit_center(text_funcs.translate('Price'), surf, (186, 64), color='yellow')
         if self.state == 'choice' and self.current_msg.is_done_or_wait():
             self.choice_menu.draw(surf)
 

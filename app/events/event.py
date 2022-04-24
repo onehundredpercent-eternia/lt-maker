@@ -52,6 +52,11 @@ class Event():
         else:
             self.dialog_background = None
 
+        self._generic_setup()
+
+        self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.item, self.position, self.region)
+
+    def _generic_setup(self):
         self.portraits: Dict[str, EventPortrait] = {}
         self.text_boxes: List[dialog.Dialog] = []
         self.other_boxes: List[Tuple[NID, Any]] = []
@@ -99,8 +104,6 @@ class Event():
 
         self.logger = logging.getLogger()
 
-        self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.item, self.position, self.region)
-
     @property
     def unit1(self):
         return self.unit
@@ -135,7 +138,6 @@ class Event():
         return self
 
     def update(self):
-        current_time = engine.get_time()
         # update all internal updates, remove the ones that are finished
         self.should_update = {name: to_update for name, to_update in self.should_update.items() if not to_update(self.do_skip)}
 
@@ -143,6 +145,11 @@ class Event():
         if self.game.movement:
             self.game.movement.update()
 
+        self._update_state()
+        self._update_transition()
+
+    def _update_state(self, dialog_log=True):
+        current_time = engine.get_time()
         # Can move through its own internal state up to 5 times in a frame
         counter = 0
         while counter < 5:
@@ -168,6 +175,7 @@ class Event():
             elif self.state == 'dialog':
                 if self.text_boxes:
                     if self.text_boxes[-1].is_done():
+                        if dialog_log:
                         action.do(action.LogDialog(self.text_boxes[-1]))
                         self.state = 'processing'
                 else:
@@ -193,6 +201,8 @@ class Event():
                     self.should_remain_blocked.clear()
                     self.state = 'processing'
 
+    def _update_transition(self):
+        current_time = engine.get_time()
         # Handle transition
         if self.transition_state:
             perc = (current_time - self.transition_update) / self.transition_speed
@@ -302,7 +312,7 @@ class Event():
                 arg_list = [self._object_to_str(arg) for arg in arg_list]
             except Exception as e:
                 self.logger.error("%s: Could not evaluate {%s}" % (e, command.parameters['Expression']))
-                return False
+                return True
             if not arg_list:
                 if show_warning:
                     self.logger.warning("Arg list is empty for: %s" % (command.parameters['Expression']))
@@ -323,8 +333,8 @@ class Event():
                 looped_commands.append(curr_command)
                 curr_idx += 1
                 if curr_idx > len(self.commands):
-                    self.logger.error("%s: could not find end command for loop %s" % ('handle_conditional', cond))
-                    return False
+                    self.logger.error("%s: could not find endf command for loop %s" % ('handle_conditional', cond))
+                    return True
                 curr_command = self.commands[curr_idx]
 
             # remove the initial for-loop, as we've templated out all the child fors
@@ -341,14 +351,7 @@ class Event():
             return True
         return False
 
-    def handle_conditional(self, command) -> bool:
-        """
-        Returns true if the processor should be processing this command
-        """
-        self.logger.disabled = False
-        if command.nid == 'if':
-            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
-            if not self.if_stack or self.if_stack[-1]:
+    def _get_truth(self, command) -> bool:
                 try:
                     cond = command.parameters['Expression']
                     cond = self._evaluate_all(cond)
@@ -357,6 +360,17 @@ class Event():
                     self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
                     truth = False
                 self.logger.info("Result: %s" % truth)
+        return truth
+
+    def handle_conditional(self, command) -> bool:
+        """
+        Returns true if the processor should be processing this command
+        """
+        self.logger.disabled = False
+        if command.nid == 'if':
+            self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
+            if not self.if_stack or self.if_stack[-1]:
+                truth = self._get_truth(command)                
                 self.if_stack.append(truth)
                 self.parse_stack.append(truth)
             else:
@@ -370,16 +384,9 @@ class Event():
                 return False
             # If we haven't encountered a truth yet
             if not self.parse_stack[-1]:
-                try:
-                    cond = command.parameters['Expression']
-                    cond = self._evaluate_all(cond)
-                    truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region))
-                except Exception as e:
-                    self.logger.error("Could not evaluate {%s}" % cond)
-                    truth = False
+                truth = self._get_truth(command)
                 self.if_stack[-1] = truth
                 self.parse_stack[-1] = truth
-                self.logger.info("Result: %s" % truth)
             else:
                 self.if_stack[-1] = False
             return False
