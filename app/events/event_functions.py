@@ -596,6 +596,18 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     # Can't use turnwheel to go any further back
     self.game.action_log.set_first_free_action()
 
+def set_game_board_bounds(self: Event, left, top, width, height, flags=None):
+    if game.board:
+        game.board.set_bounds(left, top, width, height)
+    else:
+        self.logger.warning("No game board available")
+
+def remove_game_board_bounds(self: Event, flags=None):
+    if game.board:
+        game.board.remove_bounds()
+    else:
+        self.logger.warning("No game board available")
+
 def load_unit(self: Event, unique_unit, team=None, ai=None, flags=None):
     unit_nid = unique_unit
     if self.game.get_unit(unit_nid):
