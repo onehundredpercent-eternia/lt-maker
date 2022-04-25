@@ -3,6 +3,7 @@ from typing import ClassVar
 
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.item import ItemObject
+from app.engine.objects.skill import SkillObject
 
 @dataclass
 class PlaybackBrush:
