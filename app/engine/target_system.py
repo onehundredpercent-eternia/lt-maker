@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 # Consider making these sections faster
-def get_shell(valid_moves: set, potential_range: set, width: int, height: int, manhattan_restriction: set = None) -> set:
+def get_shell(valid_moves: set, potential_range: set, bounds: Tuple[int, int, int, int], manhattan_restriction: set = None) -> set:
     valid_attacks = set()
     if manhattan_restriction:
         for valid_move in valid_moves:
@@ -22,7 +22,7 @@ def get_shell(valid_moves: set, potential_range: set, width: int, height: int, m
     else:
         for valid_move in valid_moves:
             valid_attacks |= find_manhattan_spheres(potential_range, valid_move[0], valid_move[1])
-    return {pos for pos in valid_attacks if 0 <= pos[0] < width and 0 <= pos[1] < height}
+    return {pos for pos in valid_attacks if bounds[0] <= pos[0] <= bounds[2] and bounds[1] <= pos[1] <= bounds[3]}
 
 def restricted_manhattan_spheres(rng: set, x: int, y: int, manhattan_restriction: set) -> set:
     sphere = cached_base_manhattan_spheres(frozenset(rng))
