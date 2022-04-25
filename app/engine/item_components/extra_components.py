@@ -3,6 +3,7 @@ from app.data.components import Type
 
 from app.utilities import utils
 from app.engine import action, combat_calcs, image_mods, engine, item_system
+from app.engine.combat import playback as pb
 
 class Effective(ItemComponent):
     nid = 'effective'
@@ -86,20 +87,19 @@ class Lifelink(ItemComponent):
 
     def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         total_damage_dealt = 0
-        playbacks = [p for p in playback if p[0] in ('damage_hit', 'damage_crit') and p[1] == unit]
+        playbacks = [p for p in playback if p.nid in ('damage_hit', 'damage_crit') and p.attacker == unit]
         for p in playbacks:
-            total_damage_dealt += p[5]
+            total_damage_dealt += p.true_damage
 
         damage = utils.clamp(total_damage_dealt, 0, target.get_hp())
         true_damage = int(damage * self.value)
         actions.append(action.ChangeHP(unit, true_damage))
 
-        playback.append(('heal_hit', unit, item, unit, true_damage, true_damage))
+        playback.append(pb.HealHit(unit, item, unit, true_damage, true_damage))
 
 class DamageOnMiss(ItemComponent):
     nid = 'damage_on_miss'
     desc = "Item deals a percentage of it's normal damage on a miss."
-    # requires = ['damage']
     tag = ItemTags.EXTRA
 
     expose = Type.Float
@@ -113,10 +113,10 @@ class DamageOnMiss(ItemComponent):
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation
-        playback.append(('damage_hit', unit, item, target, damage, true_damage))
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
         if true_damage == 0:
-            playback.append(('hit_sound', 'No Damage'))
-            playback.append(('hit_anim', 'MapNoDamage', target))
+            playback.append(pb.HitSound('No Damage'))
+            playback.append(pb.HitAnim('MapNoDamage', target))
 
 class Eclipse(ItemComponent):
     nid = 'Eclipse'
@@ -128,10 +128,10 @@ class Eclipse(ItemComponent):
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation
-        playback.append(('damage_hit', unit, item, target, damage, true_damage))
-        if damage == 0:
-            playback.append(('hit_sound', 'No Damage'))
-            playback.append(('hit_anim', 'MapNoDamage', target))
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
+        if true_damage == 0:
+            playback.append(pb.HitSound('No Damage'))
+            playback.append(pb.HitAnim('MapNoDamage', target))
 
 class NoDouble(ItemComponent):
     nid = 'no_double'
