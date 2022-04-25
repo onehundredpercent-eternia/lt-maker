@@ -256,7 +256,6 @@ class MapCombat(SimpleCombat):
             elif brush.nid == 'unit_tint_sub':
                 brush.unit.sprite.begin_flicker(333, brush.color, 'sub')
             elif brush.nid == 'crit_tint':
-                color = brush.color
                 brush.unit.sprite.begin_flicker(33, brush.color, 'add')
                 # Delay five frames
                 brush.unit.sprite.start_flicker(83, 33, brush.color, 'add')
@@ -269,7 +268,7 @@ class MapCombat(SimpleCombat):
                 get_sound_thread().play_sfx(brush.sound)
             elif brush.nid == 'shake':
                 shake = brush.shake
-                if 'attack_proc' in [brush.nid for brush in self.playback]:
+                if self.get_from_playback('attack_proc'):
                     shake = 3  # Force critical type shake
                 for health_bar in self.health_bars.values():
                     health_bar.shake(shake)
