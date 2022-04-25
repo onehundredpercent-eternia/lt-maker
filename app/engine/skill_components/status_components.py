@@ -62,6 +62,7 @@ class Regeneration(SkillComponent):
             actions.append(action.ChangeHP(unit, hp_change))
             # Playback
             playback.append(pb.HitSound('MapHeal'))
+            playback.append(pb.DamageNumbers(unit, -hp_change))
             if hp_change >= 30:
                 name = 'MapBigHealTrans'
             elif hp_change >= 15:
