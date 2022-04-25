@@ -192,7 +192,7 @@ class IntegerList(Validator):
                 return None                
         return text
 
-class PositiveIntegerOrZero(Validator):
+class WholeNumber(Validator):
     desc = "must be a whole number"
 
     def validate(self, text, level):
