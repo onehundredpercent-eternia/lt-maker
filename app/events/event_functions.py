@@ -596,9 +596,9 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     # Can't use turnwheel to go any further back
     self.game.action_log.set_first_free_action()
 
-def set_game_board_bounds(self: Event, left, top, width, height, flags=None):
+def set_game_board_bounds(self: Event, min_x, min_y, max_x, max_y, flags=None):
     if game.board:
-        game.board.set_bounds(left, top, width, height)
+        game.board.set_bounds(min_x, min_y, max_x, max_y)
     else:
         self.logger.warning("No game board available")
 
