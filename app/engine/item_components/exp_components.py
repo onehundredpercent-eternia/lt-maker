@@ -25,9 +25,9 @@ class LevelExp(ItemComponent):
 
     def _check_for_no_damage(self, playback, unit, item, target) -> bool:
         no_damage = False
-        for record in playback:
-            if record[0] == 'damage_hit' and record[1] == unit and record[3] == target:
-                if record[4] != 0:
+        for brush in playback:
+            if brush.nid in ('damage_hit', 'damage_crit') and brush.attacker == unit and brush.defender == target:
+                if brush.damage != 0:
                     return False
                 else:
                     no_damage = True
@@ -47,14 +47,13 @@ class LevelExp(ItemComponent):
 class HealExp(ItemComponent):
     nid = 'heal_exp'
     desc = "Item gives exp to user based on amount of damage healed"
-    # requires = ['heal']
     tag = ItemTags.EXP
 
     def exp(self, playback, unit, item, target) -> int:
         healing_done = 0
-        for record in playback:
-            if record[0] == 'heal_hit' and record[1] == unit and record[3] == target:
-                healing_done += record[5]
+        for brush in playback:
+            if brush.nid == 'heal_hit' and brush.attacker == unit and brush.defender == target:
+                healing_done += brush.true_damage
         if healing_done <= 0:
             return 0
         heal_diff = healing_done - unit.get_internal_level()
@@ -85,6 +84,6 @@ class Fatigue(ItemComponent):
     def end_combat(self, playback, unit, item, target, mode):
         if mode != 'attack':
             return
-        marks = [mark for mark in playback if mark[0].startswith('mark') and mark[1] is unit and mark[4] is item]
+        marks = [mark for mark in playback if mark.nid.startswith('mark') and mark.attacker is unit and mark.item is item]
         if marks:
             action.do(action.ChangeFatigue(unit, self.value))
