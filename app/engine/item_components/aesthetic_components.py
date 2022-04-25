@@ -11,7 +11,7 @@ class MapHitAddBlend(ItemComponent):
     value = (255, 255, 255)
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('unit_tint_add', target, self.value))
+        playback.append(pb.UnitTintAdd(target, self.value))
 
 class MapHitSubBlend(ItemComponent):
     nid = 'map_hit_sub_blend'
@@ -22,7 +22,7 @@ class MapHitSubBlend(ItemComponent):
     value = (0, 0, 0)
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('unit_tint_sub', target, self.value))
+        playback.append(pb.UnitTintSub(target, self.value))
 
 class MapHitSFX(ItemComponent):
     nid = 'map_hit_sfx'
@@ -33,7 +33,7 @@ class MapHitSFX(ItemComponent):
     value = 'Attack Hit 1'
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('hit_sound', self.value))
+        playback.append(pb.HitSound(self.value))
 
 class MapCastSFX(ItemComponent):
     nid = 'map_cast_sfx'
@@ -44,10 +44,10 @@ class MapCastSFX(ItemComponent):
     value = 'Attack Hit 1'
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('cast_sound', self.value))
+        playback.append(pb.CastSound(self.value))
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('cast_sound', self.value))
+        playback.append(pb.CastSound(self.value))
 
 class MapCastAnim(ItemComponent):
     nid = 'map_cast_anim'
@@ -57,10 +57,10 @@ class MapCastAnim(ItemComponent):
     expose = Type.MapAnimation
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('cast_anim', self.value))
+        pb.append(pb.CastAnim(self.value))
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback.append(('cast_anim', self.value))
+        pb.append(pb.CastAnim(self.value))
 
 class BattleCastAnim(ItemComponent):
     nid = 'battle_cast_anim'
