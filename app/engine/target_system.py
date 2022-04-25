@@ -166,10 +166,11 @@ def get_valid_moves(unit, force=False) -> set:
     from app.engine.movement import MovementManager
     mtype = MovementManager.get_movement_group(unit)
     grid = game.board.get_grid(mtype)
-    width, height = game.tilemap.width, game.tilemap.height
+    bounds = game.board.bounds
+    height = game.board.height
     pass_through = skill_system.pass_through(unit)
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
-    pathfinder = pathfinding.Djikstra(unit.position, grid, width, height, unit.team, pass_through, ai_fog_of_war)
+    pathfinder = pathfinding.Djikstra(unit.position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
     movement_left = equations.parser.movement(unit) if force else unit.movement_left
 
     valid_moves = pathfinder.process(game.board, movement_left)
@@ -183,10 +184,11 @@ def get_path(unit, position, ally_block=False, use_limit=False) -> list:
     mtype = MovementManager.get_movement_group(unit)
     grid = game.board.get_grid(mtype)
 
-    width, height = game.tilemap.width, game.tilemap.height
+    bounds = game.board.bounds
+    height = game.board.height
     pass_through = skill_system.pass_through(unit)
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
-    pathfinder = pathfinding.AStar(unit.position, position, grid, width, height, unit.team, pass_through, ai_fog_of_war)
+    pathfinder = pathfinding.AStar(unit.position, position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
 
     limit = unit.movement_left if use_limit else None
     path = pathfinder.process(game.board, ally_block=ally_block, limit=limit)
