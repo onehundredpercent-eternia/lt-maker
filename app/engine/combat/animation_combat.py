@@ -15,6 +15,7 @@ from app.engine import engine, combat_calcs, gui, action, battle_animation, \
     item_system, skill_system, icons, item_funcs, background, image_mods
 from app.engine.health_bar import CombatHealthBar
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 from app.engine.objects.item import ItemObject
 from app.engine.objects.unit import UnitObject
@@ -350,7 +351,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                     if effect_nid:
                         effect = current_battle_anim.get_effect(effect_nid, pose='Attack')
                         any_effect = True
-                        self.full_playback.append(playback.CombatEffect(attacker.nid))  # Mark that we've done their combat effect
+                        self.full_playback.append(pb.CombatEffect(attacker.nid))  # Mark that we've done their combat effect
                         current_battle_anim.add_effect(effect)
 
             if any_effect:
