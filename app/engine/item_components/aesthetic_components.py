@@ -2,6 +2,8 @@ from app.engine.fonts import NORMAL_FONT_COLORS
 from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
+from app.engine.combat import playback as pb
+
 class MapHitAddBlend(ItemComponent):
     nid = 'map_hit_add_blend'
     desc = "Changes the color that appears on the unit when hit -- Use to make brighter"
