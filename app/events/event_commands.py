@@ -762,7 +762,7 @@ specific bounds within the tilemap can be specified
 Bounds must form a rectangle
         """
 
-    keywords = ["Left", "Top", "Width", "Height"]
+    keywords = ["MinX", "MinY", "MaxX", "MaxY"]
     keyword_types = ["WholeNumber", "WholeNumber", "WholeNumber", "WholeNumber"]
 
 class RemoveGameBoardBounds(EventCommand):
