@@ -5,6 +5,7 @@ from app.data.components import Type
 
 from app.engine import equations, action, static_random
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 class Aura(SkillComponent):
     nid = 'aura'
@@ -60,14 +61,14 @@ class Regeneration(SkillComponent):
             hp_change = max_hp * self.value
             actions.append(action.ChangeHP(unit, hp_change))
             # Playback
-            playback.append(('hit_sound', 'MapHeal'))
+            playback.append(pb.HitSound('MapHeal'))
             if hp_change >= 30:
                 name = 'MapBigHealTrans'
             elif hp_change >= 15:
                 name = 'MapMediumHealTrans'
             else:
                 name = 'MapSmallHealTrans'
-            playback.append(('cast_anim', name, unit))
+            playback.append(pb.CastAnim(name, unit))
 
 class ManaRegeneration(SkillComponent):
     nid = 'mana_regeneration'
@@ -90,19 +91,19 @@ class UpkeepDamage(SkillComponent):
     def _playback_processing(self, playback, unit, hp_change):
         # Playback
         if hp_change < 0:
-            playback.append(('hit_sound', 'Attack Hit ' + str(random.randint(1, 5))))
-            playback.append(('unit_tint_add', unit, (255, 255, 255)))
-            playback.append(('damage_numbers', unit, self.value))
+            playback.append(pb.HitSound('Attack Hit ' + str(random.randint(1, 5))))
+            playback.append(pb.UnitTintAdd(unit, (255, 255, 255)))
+            playback.append(pb.DamageNumbers(unit, self.value))
         elif hp_change > 0:
-            playback.append(('hit_sound', 'MapHeal'))
+            playback.append(pb.HitSound('MapHeal'))
             if hp_change >= 30:
                 name = 'MapBigHealTrans'
             elif hp_change >= 15:
                 name = 'MapMediumHealTrans'
             else:
                 name = 'MapSmallHealTrans'
-            playback.append(('cast_anim', name, unit))
-            playback.append(('damage_numbers', unit, self.value))
+            playback.append(pb.CastAnim(name, unit))
+            playback.append(pb.DamageNumbers(unit, self.value))
 
     def on_upkeep(self, actions, playback, unit):
         hp_change = -self.value
