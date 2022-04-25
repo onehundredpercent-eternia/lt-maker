@@ -41,6 +41,7 @@ class GameBoard(object):
     def __init__(self, tilemap):
         self.width = tilemap.width
         self.height = tilemap.height
+        self.bounds = (0, self.width, 0, self.height)
         self.mcost_grids = {}
 
         self.reset_grid(tilemap)
@@ -64,8 +65,14 @@ class GameBoard(object):
         # For opacity
         self.opacity_grid = self.init_opacity_grid(tilemap)
 
+    def set_bounds(self, left, top, width, height):
+        self.bounds = (left, left + width, top, top + height)
+    
+    def remove_bounds(self):
+        self.bounds = (0, self.width, 0, self.height)
+
     def check_bounds(self, pos):
-        return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
+        return self.bounds[0] <= pos[0] < self.bounds[1] and self.bounds[2] <= pos[1] < self.bounds[3]
 
     def reset_grid(self, tilemap):
         # For each movement type
