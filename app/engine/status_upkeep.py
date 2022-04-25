@@ -96,28 +96,26 @@ class StatusUpkeepState(MapState):
 
     def handle_playback(self, playback):
         for brush in playback:
-            if brush[0] == 'unit_tint_add':
-                color = brush[2]
-                brush[1].sprite.begin_flicker(333, color, 'add')
-            elif brush[0] == 'unit_tint_sub':
-                color = brush[2]
-                brush[1].sprite.begin_flicker(333, color, 'sub')
-            elif brush[0] == 'cast_sound':
-                get_sound_thread().play_sfx(brush[1])
-            elif brush[0] == 'hit_sound':
-                get_sound_thread().play_sfx(brush[1])
-            elif brush[0] == 'cast_anim':
-                anim = RESOURCES.animations.get(brush[1])
+            if brush.nid == 'unit_tint_add':
+                brush.unit.sprite.begin_flicker(333, brush.color, 'add')
+            elif brush.nid == 'unit_tint_sub':
+                brush.unit.sprite.begin_flicker(333, brush.color, 'sub')
+            elif brush.nid == 'cast_sound':
+                get_sound_thread().play_sfx(brush.sound)
+            elif brush.nid == 'hit_sound':
+                get_sound_thread().play_sfx(brush.sound)
+            elif brush.nid == 'cast_anim':
+                anim = RESOURCES.animations.get(brush.anim)
                 pos = game.cursor.position
                 if anim:
                     anim = animations.MapAnimation(anim, pos)
                     self.animations.append(anim)
-            elif brush[0] == 'damage_numbers':
-                damage = brush[2]
+            elif brush.nid == 'damage_numbers':
+                damage = brush.damage
                 if damage == 0:
                     continue
                 str_damage = str(abs(damage))
-                target = brush[1]
+                target = brush.unit
                 if damage < 0:
                     color = 'small_cyan'
                 else:
