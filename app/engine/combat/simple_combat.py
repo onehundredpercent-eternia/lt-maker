@@ -73,10 +73,10 @@ class SimpleCombat():
             self.state_machine.setup_next_state()
 
     def get_from_playback(self, s):
-        return [brush for brush in self.playback if brush[0] == s]
+        return [brush for brush in self.playback if brush.nid == s]
 
     def get_from_full_playback(self, s):
-        return [brush for brush in self.full_playback if brush[0] == s]
+        return [brush for brush in self.full_playback if brush.nid == s]
 
     def skip(self):
         pass
@@ -387,7 +387,7 @@ class SimpleCombat():
         marks += self.get_from_full_playback('mark_crit')
         if DB.constants.value('miss_wexp'):
             marks += self.get_from_full_playback('mark_miss')
-        marks = [mark for mark in marks if mark[1] == unit and mark[4] == item]
+        marks = [mark for mark in marks if mark.attacker == unit and mark.item == item]
         wexp = item_system.wexp(self.full_playback, unit, item, target)
 
         if self.alerts:
@@ -397,11 +397,11 @@ class SimpleCombat():
 
         if DB.constants.value('double_wexp'):
             for mark in marks:
-                if mark[2]:
-                    multiplier = skill_system.wexp_multiplier(unit, mark[2]) * skill_system.enemy_wexp_multiplier(mark[2], unit)
+                if mark.defender:
+                    multiplier = skill_system.wexp_multiplier(unit, mark.defender) * skill_system.enemy_wexp_multiplier(mark.defender, unit)
                 else:
-                    multiplier = skill_system.wexp_multiplier(unit, mark[2])
-                if mark[2] and mark[2].is_dying and DB.constants.value('kill_wexp'):
+                    multiplier = skill_system.wexp_multiplier(unit, mark.defender)
+                if mark.defender and mark.defender.is_dying and DB.constants.value('kill_wexp'):
                     func(action.GainWexp(unit, item, (wexp * 2) * multiplier))
                 else:
                     func(action.GainWexp(unit, item, wexp * multiplier))
@@ -410,7 +410,7 @@ class SimpleCombat():
                 multiplier = skill_system.wexp_multiplier(unit, target) * skill_system.enemy_wexp_multiplier(target, unit)
             else:
                 multiplier = skill_system.wexp_multiplier(unit, target)
-            if DB.constants.value('kill_wexp') and any(mark[2] and mark[2].is_dying for mark in marks):
+            if DB.constants.value('kill_wexp') and any(mark.defender and mark.defender.is_dying for mark in marks):
                 func(action.GainWexp(unit, item, (wexp * 2) * multiplier))
             else:
                 func(action.GainWexp(unit, item, wexp * multiplier))
@@ -503,26 +503,22 @@ class SimpleCombat():
         """
         marks = self.get_from_full_playback('mark_hit')
         marks += self.get_from_full_playback('mark_crit')
-        marks = [mark for mark in marks if mark[1] == unit]
+        marks = [mark for mark in marks if mark.attacker == unit]
         damage_marks = self.get_from_full_playback('damage_hit')
-        damage_marks = [mark for mark in damage_marks if mark[1] == unit and skill_system.check_enemy(unit, mark[3])]
+        damage_marks = [mark for mark in damage_marks if mark.attacker == unit and skill_system.check_enemy(unit, mark.defender)]
         total_exp = 0
         all_defenders = set()
         for mark in marks:
-            attacker = mark[1]
-            defender = mark[2]
-            if defender in all_defenders:
+            if mark.defender in all_defenders:
                 continue  # Don't double count defenders
-            all_defenders.add(defender)
-            exp = self.get_exp(attacker, item, defender)
+            all_defenders.add(mark.defender)
+            exp = self.get_exp(mark.attacker, item, mark.defender)
             total_exp += exp
         for mark in damage_marks:
-            attacker = mark[1]
-            defender = mark[3]
-            if defender in all_defenders:
+            if mark.defender in all_defenders:
                 continue  # Don't double count defenders
-            all_defenders.add(defender)
-            exp = self.get_exp(attacker, item, defender)
+            all_defenders.add(mark.defender)
+            exp = self.get_exp(mark.attacker, item, mark.defender)
             total_exp += exp
 
         return total_exp
@@ -534,12 +530,9 @@ class SimpleCombat():
         # if not item:  #
             # return 0
         marks = self.get_from_full_playback('mark_hit')
-        marks += self.get_from_full_playback('mark_crit')
-        marks = [mark for mark in marks if len(mark) > 5 and mark[5] is True]
+        marks = [mark for mark in marks if mark.guard_hit]
         total_exp = 0
         for mark in marks:
-            # attacker = mark[1]
-            # defender = mark[2]
             exp = 10
             # exp = self.get_exp(game.get_unit(defender.traveler), item, attacker)
             total_exp += exp
@@ -565,46 +558,36 @@ class SimpleCombat():
         crit_marks = self.get_from_full_playback('mark_crit')
 
         for mark in miss_marks:
-            attacker = mark[1]
-            defender = mark[2]
-            action.do(action.UpdateRecords('miss', (attacker.nid, defender.nid)))
+            action.do(action.UpdateRecords('miss', (mark.attacker.nid, mark.defender.nid)))
 
         for mark in hit_marks:
-            attacker = mark[1]
-            defender = mark[2]
-            action.do(action.UpdateRecords('hit', (attacker.nid, defender.nid)))
+            action.do(action.UpdateRecords('hit', (mark.attacker.nid, mark.defender.nid)))
 
         for mark in crit_marks:
-            attacker = mark[1]
-            defender = mark[2]
-            action.do(action.UpdateRecords('crit', (attacker.nid, defender.nid)))
+            action.do(action.UpdateRecords('crit', (mark.attacker.nid, mark.defender.nid)))
 
         damage_marks = self.get_from_full_playback('damage_hit')
         damage_marks += self.get_from_full_playback('damage_crit')
         for mark in damage_marks:
-            kind, dealer, item, receiver, damage, true_damage = mark
-            action.do(action.UpdateRecords('damage', (dealer.nid, receiver.nid, item.nid, damage, true_damage, 'crit' if kind == 'damage_crit' else 'hit')))
+            action.do(action.UpdateRecords('damage', (mark.attacker.nid, mark.defender.nid, mark.item.nid, mark.damage, mark.true_damage, 'crit' if mark.nid == 'damage_crit' else 'hit')))
 
         heal_marks = self.get_from_full_playback('heal_hit')
         for mark in heal_marks:
-            kind, dealer, item, receiver, heal, true_heal = mark
-            action.do(action.UpdateRecords('heal', (dealer.nid, receiver.nid, item.nid, heal, true_heal, 'hit')))
+            action.do(action.UpdateRecords('heal', (mark.attacker.nid, mark.defender.nid, mark.item.nid, mark.damage, mark.true_damage, 'hit')))
 
         for mark in self.full_playback:
-            if mark[0] in ('mark_miss', 'mark_hit', 'mark_crit'):
-                attacker = mark[1]
-                defender = mark[2]
-                if defender.is_dying:
-                    act = action.UpdateRecords('kill', (attacker.nid, defender.nid))
+            if mark.nid in ('mark_miss', 'mark_hit', 'mark_crit'):
+                if mark.defender.is_dying:
+                    act = action.UpdateRecords('kill', (mark.attacker.nid, mark.defender.nid))
                     action.do(act)
-                    if defender.team == 'player':  # If player is dying, save this result even if we turnwheel back
-                        act = action.UpdateRecords('death', (attacker.nid, defender.nid))
+                    if mark.defender.team == 'player':  # If player is dying, save this result even if we turnwheel back
+                        act = action.UpdateRecords('death', (mark.attacker.nid, mark.defender.nid))
                         act.do()
-                if attacker.is_dying:
-                    act = action.UpdateRecords('kill', (defender.nid, attacker.nid))
+                if mark.attacker.is_dying:
+                    act = action.UpdateRecords('kill', (mark.defender.nid, mark.attacker.nid))
                     action.do(act)
-                    if defender.team == 'player':  # If player is dying, save this result even if we turnwheel back
-                        act = action.UpdateRecords('death', (defender.nid, attacker.nid))
+                    if mark.defender.team == 'player':  # If player is dying, save this result even if we turnwheel back
+                        act = action.UpdateRecords('death', (mark.defender.nid, mark.attacker.nid))
                         act.do()
 
     def handle_death(self, units):
