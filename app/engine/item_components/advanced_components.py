@@ -3,6 +3,7 @@ from app.data.components import Type
 from app.engine import action
 from app.engine import skill_system
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 class MultiItem(ItemComponent):
     nid = 'multi_item'
@@ -49,7 +50,7 @@ class StoreUnit(ItemComponent):
         if not skill_system.ignore_forced_movement(target):
             self.item.data['stored_unit'] = target.nid
             # actions.append(action.WarpOut(target))
-            playback.append(('rescue_hit', unit, item, target))
+            playback.append(pb.RescueHit(unit, item, target))
 
 class UnloadUnit(ItemComponent):
     nid = 'unload_unit'
