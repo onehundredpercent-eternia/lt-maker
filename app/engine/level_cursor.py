@@ -12,7 +12,7 @@ from app.engine.engine import Surface
 
 class LevelCursor(BaseCursor):
     def __init__(self, game: GameState):
-        super().__init__(camera=game.camera, tilemap=game.tilemap)
+        super().__init__(camera=game.camera, game_board=game.board)
         # this is frame-accurate to GBA
         self.cursor_counter = generic3counter(frames2ms(20), frames2ms(2), frames2ms(8))
         self.game = game
@@ -39,7 +39,7 @@ class LevelCursor(BaseCursor):
         return None
 
     def get_bounds(self) -> Tuple[int, int, int, int]:
-        self.tilemap = self.game.tilemap
+        self.game_board = self.game.board
         return super().get_bounds()
 
     def hide(self):
