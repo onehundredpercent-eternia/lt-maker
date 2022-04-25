@@ -8,6 +8,7 @@ from app.data.components import Type
 from app.engine import action, combat_calcs, equations, banner
 from app.engine import item_system, skill_system, item_funcs
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 class PermanentStatChange(ItemComponent):
     nid = 'permanent_stat_change'
@@ -15,6 +16,8 @@ class PermanentStatChange(ItemComponent):
     tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
+
+    _hit_count = 0
 
     def _target_restrict(self, defender):
         klass = DB.classes.get(defender.klass)
@@ -39,22 +42,20 @@ class PermanentStatChange(ItemComponent):
         # clamp stat changes
         stat_changes = {k: utils.clamp(v, -unit.stats[k], klass.max_stats.get(k, 30) - target.stats[k]) for k, v in stat_changes.items()}
         actions.append(action.ApplyStatChanges(target, stat_changes))
-        playback.append(('stat_hit', unit, item, target))
+        playback.append(pb.StatHit(unit, item, target))
+        self._hit_count += 1
 
     def end_combat(self, playback, unit, item, target, mode):
-        # Count number of stat hits
-        count = 0
-        for p in playback:
-            if p[0] == 'stat_hit':
-                count += 1
-        if count > 0:
-            stat_changes = {k: v*count for (k, v) in self.value}
+        if self._hit_count > 0:
+            stat_changes = {k: v*self._hit_count for (k, v) in self.value}
             klass = DB.classes.get(target.klass)
             # clamp stat changes
             stat_changes = {k: utils.clamp(v, -target.stats[k], klass.max_stats.get(k, 30) - target.stats[k]) for k, v in stat_changes.items()}
-            game.memory['stat_changes'] = stat_changes
-            game.exp_instance.append((target, 0, None, 'stat_booster'))
-            game.state.change('exp')
+            if any(v != 0 for v in stat_changes.values()):
+                game.memory['stat_changes'] = stat_changes
+                game.exp_instance.append((target, 0, None, 'stat_booster'))
+                game.state.change('exp')
+        self._hit_count = 0
 
 class PermanentGrowthChange(ItemComponent):
     nid = 'permanent_growth_change'
@@ -66,7 +67,7 @@ class PermanentGrowthChange(ItemComponent):
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         growth_changes = {k: v for (k, v) in self.value}
         actions.append(action.ApplyGrowthChanges(target, growth_changes))
-        playback.append(('stat_hit', unit, item, target))
+        playback.append(pb.StatHit(unit, item, target))
 
 class WexpChange(ItemComponent):
     nid = 'wexp_change'
@@ -79,7 +80,6 @@ class WexpChange(ItemComponent):
         wexp_changes = {k: v for (k, v) in self.value}
         for weapon_type, wexp_change in wexp_changes.items():
             actions.append(action.AddWexp(target, weapon_type, wexp_change))
-        playback.append(('hit', unit, item, target))
 
 class FatigueOnHit(ItemComponent):
     nid = 'fatigue_on_hit'
@@ -91,7 +91,6 @@ class FatigueOnHit(ItemComponent):
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         actions.append(action.ChangeFatigue(target, self.value))
-        playback.append(('hit', unit, item, target))
 
 def ai_status_priority(unit, target, item, move, status_nid) -> float:
     if target and status_nid not in [skill.nid for skill in target.skills]:
@@ -116,7 +115,7 @@ class StatusOnHit(ItemComponent):
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         act = action.AddSkill(target, self.value, unit)
         actions.append(act)
-        playback.append(('status_hit', unit, item, target, self.value))
+        playback.append(pb.StatusHit(unit, item, target, self.value))
 
     def ai_priority(self, unit, item, target, move):
         # Do I add a new status to the target
@@ -134,7 +133,7 @@ class StatusesOnHit(ItemComponent):
         for status_nid in self.value:
             act = action.AddSkill(target, status_nid, unit)
             actions.append(act)
-        playback.append(('status_hit', unit, item, target, self.value))
+        playback.append(pb.StatusHit(unit, item, target, self.value))
 
     def ai_priority(self, unit, item, target, move):
         # Do I add a new status to the target
@@ -191,7 +190,7 @@ class Shove(ItemComponent):
             new_position = self._check_shove(target, unit.position, self.value)
             if new_position:
                 actions.append(action.ForcedMovement(target, new_position))
-                playback.append(('shove_hit', unit, item, target))
+                playback.append(pb.ShoveHit(unit, item, target))
 
 class ShoveOnEndCombat(Shove):
     nid = 'shove_on_end_combat'
@@ -241,7 +240,7 @@ class Swap(ItemComponent):
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         if not skill_system.ignore_forced_movement(unit) and not skill_system.ignore_forced_movement(target):
             actions.append(action.Swap(unit, target))
-            playback.append(('swap_hit', unit, item, target))
+            playback.append(pb.SwapHit(unit, item, target))
 
 class Pivot(ItemComponent):
     nid = 'pivot'
@@ -270,7 +269,8 @@ class Pivot(ItemComponent):
             new_position = self._check_pivot(unit, target.position, self.value)
             if new_position:
                 actions.append(action.ForcedMovement(unit, new_position))
-                playback.append(('shove_hit', unit, item, unit))
+                playback.append(pb.ShoveHit(unit, item, target))
+
 
 class PivotTargetRestrict(Pivot, ItemComponent):
     nid = 'pivot_target_restrict'
@@ -330,9 +330,10 @@ class DrawBack(ItemComponent):
             new_position_user, new_position_target = self._check_draw_back(target, unit, self.value)
             if new_position_user and new_position_target:
                 actions.append(action.ForcedMovement(unit, new_position_user))
-                playback.append(('shove_hit', unit, item, unit))
+                playback.append(pb.ShoveHit(unit, item, unit))
                 actions.append(action.ForcedMovement(target, new_position_target))
-                playback.append(('shove_hit', unit, item, target))
+                playback.append(pb.ShoveHit(unit, item, target))
+
 
 class DrawBackTargetRestrict(DrawBack, ItemComponent):
     nid = 'draw_back_target_restrict'
