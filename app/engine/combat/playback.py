@@ -352,7 +352,7 @@ class CritVibrate(PlaybackBrush):
 class Shake(PlaybackBrush):
     """
     Aesthetic brush for shaking the health bars
-    Shake is an integer 0-3 which determines the intensity
+    Shake is an integer 1-4 which determines the intensity
     Processed by a Map Combat only (damage_hit and damage_crit brushes do the shaking in Animation Combat)
     """
     nid: ClassVar[str] = 'shake'
