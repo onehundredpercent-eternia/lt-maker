@@ -67,11 +67,11 @@ class DrainCharge(SkillComponent):
 
 def get_marks(playback, unit, item):
     from app.data.database import DB
-    marks = [mark for mark in playback if mark[0] == 'mark_hit']
-    marks += [mark for mark in playback if mark[0] == 'mark_crit']
+    marks = [mark for mark in playback if mark.nid == 'mark_hit']
+    marks += [mark for mark in playback if mark.nid == 'mark_crit']
     if DB.constants.value('miss_wexp'):
-        marks += [mark for mark in playback if mark[0] == 'mark_miss']
-    marks = [mark for mark in marks if mark[1] == unit and mark[2] != unit and mark[4] == item]
+        marks += [mark for mark in playback if mark.nid == 'mark_miss']
+    marks = [mark for mark in marks if mark.attacker == unit and mark.defender != unit and mark.item == item]
     return marks
 
 class CombatChargeIncrease(SkillComponent):
