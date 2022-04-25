@@ -233,7 +233,7 @@ class SwapHit(PlaybackBrush):
     Added to playback when an attack swaps
     Doesn't seem to actually be used for anything
     """
-    nid: ClassVar[str] = 'swaps_hit'
+    nid: ClassVar[str] = 'swap_hit'
     attacker: UnitObject
     item: ItemObject
     defender: UnitObject
