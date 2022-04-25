@@ -180,7 +180,7 @@ class Shove(ItemComponent):
                         unit_to_move.position[1] + offset_y * magnitude)
 
         mcost = game.movement.get_mcost(unit_to_move, new_position)
-        if game.tilemap.check_bounds(new_position) and \
+        if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
                 mcost <= equations.parser.movement(unit_to_move):
             return new_position
@@ -259,7 +259,7 @@ class Pivot(ItemComponent):
                         anchor_pos[1] + offset_y * -magnitude)
 
         mcost = game.movement.get_mcost(unit_to_move, new_position)
-        if game.tilemap.check_bounds(new_position) and \
+        if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
                 mcost <= equations.parser.movement(unit_to_move):
             return new_position
@@ -319,7 +319,7 @@ class DrawBack(ItemComponent):
         mcost_user = game.movement.get_mcost(user, new_position_user)
         mcost_target = game.movement.get_mcost(target, new_position_target)
 
-        if game.tilemap.check_bounds(new_position_user) and \
+        if game.board.check_bounds(new_position_user) and \
                 not game.board.get_unit(new_position_user) and \
                 mcost_user <= equations.parser.movement(user) and mcost_target <= equations.parser.movement(target):
             return new_position_user, new_position_target
