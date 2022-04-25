@@ -344,13 +344,13 @@ class AnimationCombat(BaseCombat, MockCombat):
             # Set up combat effects (legendary)
             attacker, item, defender, d_item, current_battle_anim = self.get_actors()
             any_effect: bool = False
-            if (attacker.nid + '_combat_effect',) not in self.full_playback:
+            if not any(brush.attacker_nid == attacker.nid for brush in self.get_from_full_playback('combat_effect')):
                 if item:
                     effect_nid = item_system.combat_effect(attacker, item, defender, 'attack')
                     if effect_nid:
                         effect = current_battle_anim.get_effect(effect_nid, pose='Attack')
                         any_effect = True
-                        self.full_playback.append((attacker.nid + '_combat_effect',))  # Mark that we've done their combat effect
+                        self.full_playback.append(playback.CombatEffect(attacker.nid))  # Mark that we've done their combat effect
                         current_battle_anim.add_effect(effect)
 
             if any_effect:
@@ -625,21 +625,21 @@ class AnimationCombat(BaseCombat, MockCombat):
         self._handle_playback()
 
         hp_brushes = ('damage_hit', 'damage_crit', 'heal_hit')
-        if not any(brush[0] in hp_brushes for brush in self.playback):
+        if not any(brush.nid in hp_brushes for brush in self.playback):
             self.current_battle_anim.resume()
 
     def _handle_playback(self, sound=True):
         hp_brushes = ('damage_hit', 'damage_crit', 'heal_hit')
         for brush in self.playback:
-            if brush[0] in hp_brushes:
+            if brush.nid in hp_brushes:
                 self.last_update = engine.get_time()
                 self.state = 'hp_change'
                 self.handle_damage_numbers(brush)
-            elif brush[0] == 'hit_sound' and sound:
-                sound = brush[1]
+            elif brush.nid == 'hit_sound' and sound:
+                play_sound = brush.sound
                 if sound == 'Attack Miss 2':
-                    sound = 'Miss'  # Replace with miss sound
-                get_sound_thread().play_sfx(sound)
+                    play_sound = 'Miss'  # Replace with miss sound
+                get_sound_thread().play_sfx(play_sound)
 
     def _apply_actions(self):
         """
@@ -739,8 +739,8 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.mark_proc(mark)
 
     def mark_proc(self, mark):
-        skill = mark[2]
-        unit = mark[1]
+        skill = mark.skill
+        unit = mark.unit
         if unit == self.right:
             effect = self.right_battle_anim.get_effect(skill.nid, pose='Attack')
             if effect:
@@ -766,9 +766,9 @@ class AnimationCombat(BaseCombat, MockCombat):
     def set_up_combat_animation(self):
         self.state = 'anim'
         _, _, defender, _, self.current_battle_anim = self.get_actors()
-        alternate_pose = self.get_from_playback('alternate_battle_pose')
-        if alternate_pose:
-            alternate_pose = alternate_pose[0][1]
+        alternate_pose_list = self.get_from_playback('alternate_battle_pose')
+        if alternate_pose_list:
+            alternate_pose = alternate_pose_list[0].alternate_pose
         if alternate_pose and self.current_battle_anim.has_pose(alternate_pose):
             self.current_battle_anim.start_anim(alternate_pose)
         elif self.get_from_playback('mark_crit') or self.special_boss_crit(defender):
@@ -785,37 +785,37 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.move_camera()
 
     def handle_damage_numbers(self, brush):
-        if brush[0] == 'damage_hit':
-            damage = brush[4]
+        if brush.nid == 'damage_hit':
+            damage = brush.damage
             if damage <= 0:
                 return
             str_damage = str(damage)
-            left = brush[3] == self.left
+            left = brush.defender == self.left
             for idx, num in enumerate(str_damage):
                 d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'red')
                 self.damage_numbers.append(d)
-        elif brush[0] == 'damage_crit':
-            damage = brush[4]
+        elif brush.nid == 'damage_crit':
+            damage = brush.damage
             if damage <= 0:
                 return
             str_damage = str(damage)
-            left = brush[3] == self.left
+            left = brush.defender == self.left
             for idx, num in enumerate(str_damage):
                 d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'yellow')
                 self.damage_numbers.append(d)
-        elif brush[0] == 'heal_hit':
-            damage = brush[4]
+        elif brush.nid == 'heal_hit':
+            damage = brush.damage
             if damage <= 0:
                 return
             str_damage = str(damage)
-            left = brush[3] == self.left
+            left = brush.defender == self.left
             for idx, num in enumerate(str_damage):
                 d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'cyan')
                 self.damage_numbers.append(d)
 
     def add_proc_icon(self, mark):
-        unit = mark[1]
-        skill = mark[2]
+        unit = mark.unit
+        skill = mark.skill
         c = False
         if (unit is self.right or unit is self.right.strike_partner) and self.rp_battle_anim:
             c = True
@@ -828,19 +828,19 @@ class AnimationCombat(BaseCombat, MockCombat):
         damage_hit_marks = self.get_from_playback('damage_hit')
         damage_crit_marks = self.get_from_playback('damage_crit')
         if damage_hit_marks:
-            damage = damage_hit_marks[0][4]
+            damage = damage_hit_marks[0].damage
         elif damage_crit_marks:
-            damage = damage_crit_marks[0][4]
+            damage = damage_crit_marks[0].damage
         else:
             damage = 0
         return damage
 
     def shake(self):
         for brush in self.playback:
-            if brush[0] == 'damage_hit':
-                damage = brush[4]
-                unit = brush[1]
-                item = brush[2]
+            if brush.nid == 'damage_hit':
+                damage = brush.damage
+                unit = brush.attacker
+                item = brush.item
                 magic = item_funcs.is_magic(unit, item, self.distance)
                 if damage > 0:
                     if magic:
@@ -849,8 +849,8 @@ class AnimationCombat(BaseCombat, MockCombat):
                         self._shake(1)
                 else:
                     self._shake(2)  # No damage
-            elif brush[0] == 'damage_crit':
-                damage = brush[4]
+            elif brush.nid == 'damage_crit':
+                damage = brush.damage
                 if damage > 0:
                     self._shake(4)  # Critical
                 else:
