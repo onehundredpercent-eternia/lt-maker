@@ -751,6 +751,29 @@ they cannot turn time back past the point when this command was executed.
     keyword_types = ["Tilemap", "PositionOffset", "Tilemap"]
     _flags = ["reload"]  # Should place units in previously recorded positions
 
+class SetGameBoardBounds(EventCommand):
+    nid = 'set_game_board_bounds'
+    tag = Tags.TILEMAP
+
+    desc = \
+        """
+Instead of using the natural boundaries of the tilemap as the board boundaries,
+specific bounds within the tilemap can be specified
+Bounds must form a rectangle
+        """
+
+    keywords = ["Left", "Top", "Width", "Height"]
+    keyword_types = ["WholeNumber", "WholeNumber", "WholeNumber", "WholeNumber"]
+
+class RemoveGameBoardBounds(EventCommand):
+    nid = 'remove_game_board_bounds'
+    tag = Tags.TILEMAP
+
+    desc = \
+        """
+Return to using the natural boundaries of the tilemap as the board boundaries
+        """
+
 class LoadUnit(EventCommand):
     nid = 'load_unit'
     tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
@@ -954,7 +977,7 @@ Sets *Unit*'s mana to *Mana*.
         """
 
     keywords = ["Unit", "Mana"]
-    keyword_types = ["Unit", "PositiveIntegerOrZero"]
+    keyword_types = ["Unit", "WholeNumber"]
 
 class AddFatigue(EventCommand):
     nid = 'add_fatigue'
@@ -1242,7 +1265,7 @@ Sets *GlobalUnit*'s current experience to *Experience*.
         """
 
     keywords = ["GlobalUnit", "Experience"]
-    keyword_types = ["GlobalUnit", "PositiveIntegerOrZero"]
+    keyword_types = ["GlobalUnit", "WholeNumber"]
 
 class GiveWexp(EventCommand):
     nid = 'give_wexp'
@@ -1565,7 +1588,7 @@ Adds *Item* to the list of purchaseable goods in the base's market. If the optio
 
     keywords = ["Item"]
     optional_keywords = ["Stock"]
-    keywords_types = ["Item", "PositiveIntegerOrZero"]
+    keywords_types = ["Item", "WholeNumber"]
 
 class RemoveMarketItem(EventCommand):
     nid = 'remove_market_item'
@@ -1578,7 +1601,7 @@ Removes *Item* from the list of purchaseable goods in the base's market. If the 
 
     keywords = ["Item"]
     optional_keywords = ["Stock"]
-    keywords_types = ["Item", "PositiveIntegerOrZero"]
+    keywords_types = ["Item", "WholeNumber"]
 
 class ClearMarketItems(EventCommand):
     nid = 'clear_market_items'
