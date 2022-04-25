@@ -71,9 +71,9 @@ class ManaOnHit(SkillComponent):
     expose = Type.Int
 
     def mana(self, playback, unit, item, target):
-        mark_playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit')]
+        mark_playbacks = [p for p in playback if p.nid in ('mark_hit', 'mark_crit')]
 
-        if target and any(p[2] == target for p in mark_playbacks):
+        if target and any(p.defender == target for p in mark_playbacks):
             return self.value
         return 0
 
