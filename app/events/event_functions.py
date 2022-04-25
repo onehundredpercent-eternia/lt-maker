@@ -597,10 +597,14 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     self.game.action_log.set_first_free_action()
 
 def set_game_board_bounds(self: Event, min_x, min_y, max_x, max_y, flags=None):
-    if game.board:
-        game.board.set_bounds(min_x, min_y, max_x, max_y)
-    else:
+    if not game.board:
         self.logger.warning("No game board available")
+    elif max_x <= min_x:
+        self.logger.warning("MaxX must be strictly greater than MinX, (MinX: %d, MaxX: %d)", min_x, max_x)
+    elif max_y <= min_y:
+        self.logger.warning("MaxY must be strictly greater than MinY, (MinY: %d, MaxY: %d)", min_y, max_y)
+    else:
+        game.board.set_bounds(min_x, min_y, max_x, max_y)
 
 def remove_game_board_bounds(self: Event, flags=None):
     if game.board:
