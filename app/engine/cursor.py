@@ -19,7 +19,8 @@ class BaseCursor():
     such as automatic camera manipulation, and cursor movement boundaries.
     """
     TRANSITION_FRAMES = 4
-    def __init__(self, camera: Camera = None, game_board = None):
+    
+    def __init__(self, camera: Camera = None, game_board=None):
         # internal scroll controller
         self.fluid: FluidScroll = FluidScroll(frames2ms(4), 3.25)
 
@@ -116,7 +117,7 @@ class BaseCursor():
             if self.camera:
                 self.camera.set_xy(*self.position)
         else:
-            logging.error("Attempted to set cursor's position out of bounds! %s", pos)
+            logging.error("Attempted to set cursor's position out of bounds! %s, %s", pos, bounds)
 
     def move(self, dx, dy, mouse=False, sound=True):
         x, y = self.position

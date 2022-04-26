@@ -2,13 +2,15 @@ import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
 
-from app.engine import engine
+from app.engine import engine, image_mods
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 
 class MapView():
     def __init__(self):
         self._unit_surf = engine.create_surface((WINWIDTH, WINHEIGHT), transparent=True)
+        self._line_surf = engine.copy_surface(self._unit_surf)
+        self._line_surf.fill((0, 0, 0, 0))
 
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
         # Surf is always 240x160 WxH
@@ -71,6 +73,8 @@ class MapView():
         surf = game.boundary.draw_fog_of_war(surf, full_size, cull_rect)
         surf = game.highlight.draw(surf, cull_rect)
 
+        self.draw_grid(surf, cull_rect)
+
         game.tilemap.animations = [anim for anim in game.tilemap.animations if not anim.update()]
         for anim in game.tilemap.animations:
             anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
@@ -108,3 +112,29 @@ class MapView():
                 pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
                 pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + 2 * math.sin(current_time//500))
                 font.blit(text, surf, pos)
+
+    def draw_grid(self, surf, cull_rect):
+        # Draw board grid
+        line_surf = engine.copy_surface(self._line_surf)
+
+        bounds = game.board.bounds
+        left = bounds[0] * TILEWIDTH - cull_rect[0]
+        right = (bounds[2] + 1) * TILEWIDTH - cull_rect[0]
+        top = bounds[1] * TILEHEIGHT - cull_rect[1]
+        bottom = (bounds[3] + 1) * TILEHEIGHT - cull_rect[1]
+
+        # Draw vertical lines
+        for x in range(left, right, TILEWIDTH):
+            engine.draw_line(line_surf, (0, 0, 0, 128), (x - 1, top), (x - 1, bottom))
+        # Draw horizontal lines            
+        for y in range(top, bottom, TILEHEIGHT):
+            engine.draw_line(line_surf, (0, 0, 0, 128), (left, y), (right, y))
+        # line_surf = image_mods.make_translucent(line_surf, transparency)
+        surf.blit(line_surf, (0, 0))
+        # Draw big lines
+        engine.draw_line(surf, (0, 0, 0), (left - 2, top - 1), (right + 1, top - 1), width=3)
+        engine.draw_line(surf, (0, 0, 0), (left - 1, top - 1), (left - 1, bottom), width=3)
+        engine.draw_line(surf, (0, 0, 0), (right, top - 1), (right, bottom), width=3)
+        engine.draw_line(surf, (0, 0, 0), (left - 2, bottom), (right + 1, bottom), width=3)
+
+        return surf

@@ -4,11 +4,11 @@ from typing import Tuple
 from app.utilities import utils
 
 class Djikstra():
-    __slots__ = ['open', 'closed', 'cells', 'width', 'height', 'start_pos',
+    __slots__ = ['open', 'closed', 'cells', 'bounds', 'height', 'start_pos',
                  'start_cell', 'unit_team', 'pass_through', 'ai_fog_of_war']
 
     def __init__(self, start_pos: tuple, grid: list, bounds: Tuple[int, int, int, int],
-                 hieght: int, unit_team: str, pass_through: bool, ai_fog_of_war: bool):
+                 height: int, unit_team: str, pass_through: bool, ai_fog_of_war: bool):
         self.open = []
         heapq.heapify(self.open)
         self.closed = set()

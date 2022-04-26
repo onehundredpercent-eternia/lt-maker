@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import FrozenSet, TYPE_CHECKING
+from typing import FrozenSet, TYPE_CHECKING, Tuple
 from functools import lru_cache
 
 from app.data.database import DB
@@ -110,7 +110,7 @@ def get_attacks(unit: UnitObject, item: ItemObject = None, force=False) -> set:
         attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
     else:
         manhattan_restriction = item_system.range_restrict(unit, item)
-        attacks = get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+        attacks = get_shell({unit.position}, item_range, game.board.bounds, manhattan_restriction)
 
     return attacks
 
@@ -128,9 +128,9 @@ def _get_possible_attacks(unit, valid_moves, items):
         else:
             manhattan_restriction = item_system.range_restrict(unit, item)
             if no_attack_after_move:
-                attacks |= get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+                attacks |= get_shell({unit.position}, item_range, game.board.bounds, manhattan_restriction)
             else:
-                attacks |= get_shell(valid_moves, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+                attacks |= get_shell(valid_moves, item_range, game.board.bounds, manhattan_restriction)
 
     if DB.constants.value('line_of_sight'):
         attacks = set(line_of_sight.line_of_sight(valid_moves, attacks, max_range))
