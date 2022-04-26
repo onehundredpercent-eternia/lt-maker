@@ -767,9 +767,9 @@ class AnimationCombat(BaseCombat, MockCombat):
     def set_up_combat_animation(self):
         self.state = 'anim'
         _, _, defender, _, self.current_battle_anim = self.get_actors()
-        alternate_pose_list = self.get_from_playback('alternate_battle_pose')
-        if alternate_pose_list:
-            alternate_pose = alternate_pose_list[0].alternate_pose
+        alternate_pose = self.get_from_playback('alternate_battle_pose')
+        if alternate_pose:
+            alternate_pose = alternate_pose[0].alternate_pose
         if alternate_pose and self.current_battle_anim.has_pose(alternate_pose):
             self.current_battle_anim.start_anim(alternate_pose)
         elif self.get_from_playback('mark_crit') or self.special_boss_crit(defender):

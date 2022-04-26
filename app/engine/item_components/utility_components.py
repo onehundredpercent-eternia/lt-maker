@@ -6,6 +6,7 @@ from app.data.components import Type
 from app.engine import action
 from app.engine import item_system, item_funcs, skill_system, equations
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 class Heal(ItemComponent):
     nid = 'heal'
@@ -37,15 +38,15 @@ class Heal(ItemComponent):
 
         # For animation
         if true_heal > 0:
-            playback.append(('heal_hit', unit, item, target, heal, true_heal))
-            playback.append(('hit_sound', 'MapHeal'))
+            playback.append(pb.HealHit(unit, item, target, heal, true_heal))
+            playback.append(pb.HitSound('MapHeal'))
             if heal >= 30:
                 name = 'MapBigHealTrans'
             elif heal >= 15:
                 name = 'MapMediumHealTrans'
             else:
                 name = 'MapSmallHealTrans'
-            playback.append(('hit_anim', name, target))
+            playback.append(pb.HitAnim(name, target))
 
     def ai_priority(self, unit, item, target, move):
         if skill_system.check_ally(unit, target):
@@ -82,7 +83,7 @@ class Refresh(ItemComponent):
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         actions.append(action.Reset(target))
-        playback.append(('refresh_hit', unit, item, target))
+        playback.append(pb.RefreshHit(unit, item, target))
 
 class Restore(ItemComponent):
     nid = 'restore'
@@ -107,7 +108,7 @@ class Restore(ItemComponent):
         for skill in target.skills:
             if self._can_be_restored(skill):
                 actions.append(action.RemoveSkill(target, skill))
-        playback.append(('restore_hit', unit, item, target))
+                playback.append(pb.RestoreHit(unit, item, target))
 
 class RestoreSpecific(Restore, ItemComponent):
     nid = 'restore_specific'
@@ -261,8 +262,6 @@ class AttackAfterCombat(ItemComponent):
 
     def can_attack_after_combat(self, unit, item):
         return True
-
-
 
 class NoAttackAfterMove(ItemComponent):
     nid = 'no_attack_after_move'
