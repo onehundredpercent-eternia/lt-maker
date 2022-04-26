@@ -123,7 +123,7 @@ class MapView():
         top = bounds[1] * TILEHEIGHT - cull_rect[1]
         bottom = (bounds[3] + 1) * TILEHEIGHT - cull_rect[1]
 
-        grid_transparency = cf.OPTIONS['grid_transparency']  # Higher numbers show more grid
+        grid_transparency = cf.SETTINGS['grid_lines']  # Higher numbers show more grid
         transparency = 255 - grid_transparency
         if transparency == 0:
             return surf
