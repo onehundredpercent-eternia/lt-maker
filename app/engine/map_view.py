@@ -123,18 +123,22 @@ class MapView():
         top = bounds[1] * TILEHEIGHT - cull_rect[1]
         bottom = (bounds[3] + 1) * TILEHEIGHT - cull_rect[1]
 
+        grid_transparency = cf.OPTIONS['grid_transparency']  # Higher numbers show more grid
+        transparency = 255 - grid_transparency
+        if transparency == 0:
+            return surf
+
         # Draw vertical lines
         for x in range(left, right, TILEWIDTH):
-            engine.draw_line(line_surf, (0, 0, 0, 128), (x - 1, top), (x - 1, bottom))
+            engine.draw_line(line_surf, (0, 0, 0, transparency), (x - 1, top), (x - 1, bottom))
         # Draw horizontal lines            
         for y in range(top, bottom, TILEHEIGHT):
-            engine.draw_line(line_surf, (0, 0, 0, 128), (left, y), (right, y))
-        # line_surf = image_mods.make_translucent(line_surf, transparency)
-        surf.blit(line_surf, (0, 0))
+            engine.draw_line(line_surf, (0, 0, 0, transparency), (left, y), (right, y))
         # Draw big lines
-        engine.draw_line(surf, (0, 0, 0), (left - 2, top - 1), (right + 1, top - 1), width=3)
-        engine.draw_line(surf, (0, 0, 0), (left - 1, top - 1), (left - 1, bottom), width=3)
-        engine.draw_line(surf, (0, 0, 0), (right, top - 1), (right, bottom), width=3)
-        engine.draw_line(surf, (0, 0, 0), (left - 2, bottom), (right + 1, bottom), width=3)
+        engine.draw_line(surf, (0, 0, 0, transparency), (left - 2, top - 1), (right + 1, top - 1), width=3)
+        engine.draw_line(surf, (0, 0, 0, transparency), (left - 1, top - 1), (left - 1, bottom), width=3)
+        engine.draw_line(surf, (0, 0, 0, transparency), (right, top - 1), (right, bottom), width=3)
+        engine.draw_line(surf, (0, 0, 0, transparency), (left - 2, bottom), (right + 1, bottom), width=3)
+        surf.blit(line_surf, (0, 0))
 
         return surf
