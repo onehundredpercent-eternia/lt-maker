@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, Tuple
 
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.item import ItemObject
@@ -114,18 +114,7 @@ class MarkMiss(PlaybackBrush):
     """
     Added to playback when an attack misses
     """
-    nid: ClassVar[str] = 'mark_crit'
-    attacker: UnitObject  # The actual attacker for this attack, which may not be the main attacker (e.g., pair up)
-    defender: UnitObject
-    main_attacker: UnitObject
-    item: ItemObject # The actual item used for this attack, which may not be the main item used for this combat (e.g., multi-items)
-
-@dataclass
-class MarkMiss(PlaybackBrush):
-    """
-    Added to playback when an attack misses
-    """
-    nid: ClassVar[str] = 'mark_crit'
+    nid: ClassVar[str] = 'mark_miss'
     attacker: UnitObject  # The actual attacker for this attack, which may not be the main attacker (e.g., pair up)
     defender: UnitObject
     main_attacker: UnitObject
@@ -387,5 +376,3 @@ class DamageNumbers(PlaybackBrush):
     nid: ClassVar[str] = 'damage_numbers'
     unit: UnitObject
     damage: int
-
-

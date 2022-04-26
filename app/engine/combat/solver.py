@@ -439,7 +439,6 @@ class CombatPhaseSolver():
             if defender:
                 playback.append(pb.MarkMiss(attacker, defender, self.attacker, item))
 
-
         # Gauge is set to 0. Damage is negated elsewhere
         if DB.constants.value('pairup') and item_system.is_weapon(attacker, item) and skill_system.check_enemy(attacker, defender):
             if defender.get_guard_gauge() >= defender.get_max_guard_gauge():

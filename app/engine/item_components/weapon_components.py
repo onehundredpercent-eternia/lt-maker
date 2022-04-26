@@ -120,7 +120,7 @@ class Damage(ItemComponent):
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation
-        playback.append(pb.DamageHit(unit, item, target, damage, true_damage)
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
         if damage == 0:
             playback.append(pb.HitSound('No Damage'))
             playback.append(pb.HitAnim('MapNoDamage', target))
@@ -137,7 +137,7 @@ class Damage(ItemComponent):
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation
-        playback.append(pb.DamageHit(unit, item, target, damage, true_damage)
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
         if damage == 0:
             playback.append(pb.HitAnim('MapNoDamage', target))
 
@@ -151,7 +151,7 @@ class Damage(ItemComponent):
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))
 
-        playback.append(pb.DamageCrit(unit, item, target, damage, true_damage)
+        playback.append(pb.DamageCrit(unit, item, target, damage, true_damage))
         if damage == 0:
             playback.append(pb.HitSound('No Damage'))
             playback.append(pb.HitAnim('MapNoDamage', target))

@@ -5,7 +5,7 @@ from app.data.skill_components import SkillComponent, SkillTags
 from app.engine import (action, equations, item_funcs, skill_system,
                         static_random)
 from app.engine.game_state import game
-from app.engine.combat.playback import pb
+import app.engine.combat.playback as pb
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
