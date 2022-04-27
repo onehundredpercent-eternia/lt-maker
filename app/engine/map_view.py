@@ -2,7 +2,8 @@ import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
 
-from app.engine import engine, image_mods
+from app.engine import config as cf
+from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 
@@ -118,27 +119,36 @@ class MapView():
         line_surf = engine.copy_surface(self._line_surf)
 
         bounds = game.board.bounds
+
+        # Don't bother showing bounds if there just normal bounds
+        if not cf.SETTINGS['show_bounds'] and \
+                bounds[0] == 0 and \
+                bounds[1] == 0 and \
+                bounds[2] == game.tilemap.width - 1 and \
+                bounds[3] == game.tilemap.height - 1:
+            return surf
+
         left = bounds[0] * TILEWIDTH - cull_rect[0]
         right = (bounds[2] + 1) * TILEWIDTH - cull_rect[0]
         top = bounds[1] * TILEHEIGHT - cull_rect[1]
         bottom = (bounds[3] + 1) * TILEHEIGHT - cull_rect[1]
 
-        grid_transparency = cf.SETTINGS['grid_lines']  # Higher numbers show more grid
-        transparency = 255 - grid_transparency
-        if transparency == 0:
+        opacity = cf.SETTINGS['grid_opacity']  # Higher numbers show more grid
+        if opacity == 255:
             return surf
+        outside_opacity = min(255, opacity + 56)
 
         # Draw vertical lines
         for x in range(left, right, TILEWIDTH):
-            engine.draw_line(line_surf, (0, 0, 0, transparency), (x - 1, top), (x - 1, bottom))
+            engine.draw_line(line_surf, (0, 0, 0, opacity), (x - 1, top), (x - 1, bottom))
         # Draw horizontal lines            
         for y in range(top, bottom, TILEHEIGHT):
-            engine.draw_line(line_surf, (0, 0, 0, transparency), (left, y), (right, y))
+            engine.draw_line(line_surf, (0, 0, 0, opacity), (left, y), (right, y))
         # Draw big lines
-        engine.draw_line(surf, (0, 0, 0, transparency), (left - 2, top - 1), (right + 1, top - 1), width=3)
-        engine.draw_line(surf, (0, 0, 0, transparency), (left - 1, top - 1), (left - 1, bottom), width=3)
-        engine.draw_line(surf, (0, 0, 0, transparency), (right, top - 1), (right, bottom), width=3)
-        engine.draw_line(surf, (0, 0, 0, transparency), (left - 2, bottom), (right + 1, bottom), width=3)
+        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, top - 1), (right + 1, top - 1), width=3)
+        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 1, top - 1), (left - 1, bottom), width=3)
+        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (right, top - 1), (right, bottom), width=3)
+        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, bottom), (right + 1, bottom), width=3)
         surf.blit(line_surf, (0, 0))
 
         return surf
