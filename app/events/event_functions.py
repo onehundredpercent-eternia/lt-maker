@@ -608,11 +608,13 @@ def set_game_board_bounds(self: Event, min_x, min_y, max_x, max_y, flags=None):
     elif max_y <= min_y:
         self.logger.warning("MaxY must be strictly greater than MinY, (MinY: %d, MaxY: %d)", min_y, max_y)
     else:
-        self.game.board.set_bounds(min_x, min_y, max_x, max_y)
+        bounds = (min_x, min_y, max_x, max_y)
+        action.do(action.SetGameBoardBounds(bounds))
 
 def remove_game_board_bounds(self: Event, flags=None):
     if self.game.board:
-        self.game.board.remove_bounds()
+        bounds = (0, 0, self.game.tilemap.width - 1, self.game.tilemap.height - 1)
+        action.do(action.SetGameBoardBounds(bounds))
     else:
         self.logger.warning("No game board available")
 
