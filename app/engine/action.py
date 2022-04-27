@@ -2179,10 +2179,10 @@ class SetGameBoardBounds(Action):
         self.new_bounds = bounds
 
     def do(self):
-        game.board.set_bounds(self.new_bounds)
+        game.board.set_bounds(*self.new_bounds)
 
     def reverse(self):
-        game.board.set_bounds(self.old_bounds)
+        game.board.set_bounds(*self.old_bounds)
 
 class AddRegion(Action):
     def __init__(self, region):
