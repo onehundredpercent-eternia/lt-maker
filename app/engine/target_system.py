@@ -77,7 +77,7 @@ def distance_to_closest_enemy(unit, pos=None):
 def get_adjacent_positions(pos):
     x, y = pos
     adjs = ((x, y - 1), (x - 1, y), (x + 1, y), (x, y + 1))
-    return [a for a in adjs if 0 <= a[0] < game.tilemap.width and 0 <= a[1] < game.tilemap.height]
+    return [a for a in adjs if game.board.check_bounds(a)]
 
 def get_adj_units(unit) -> list:
     adj_positions = get_adjacent_positions(unit.position)

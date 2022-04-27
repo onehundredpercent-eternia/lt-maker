@@ -21,7 +21,7 @@ class TargetsAnything(ItemComponent):
     def valid_targets(self, unit, item) -> set:
         rng = item_funcs.get_range(unit, item)
         positions = target_system.find_manhattan_spheres(rng, *unit.position)
-        return {pos for pos in positions if game.tilemap.check_bounds(pos)}
+        return {pos for pos in positions if game.board.check_bounds(pos)}
 
 class TargetsUnits(ItemComponent):
     nid = 'target_unit'
