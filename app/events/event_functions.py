@@ -2378,17 +2378,26 @@ def trigger_script(self: Event, event, unit1=None, unit2=None, flags=None):
 
     valid_events = DB.events.get_by_nid_or_name(event, self.game.level.nid)
     for event_prefab in valid_events:
-        self.game.events.trigger_specific_event(event_prefab.nid, unit, unit2, position=self.position, region=self.region)
+        self.game.events.trigger_specific_event(event_prefab.nid, unit, unit2, self.position, self.local_args)
         self.state = 'paused'
 
     if not valid_events:
         self.logger.error("Couldn't find any valid events matching name %s" % event)
 
-def trigger_script_with_args(self: Event, event: str, arg1: str = None, arg2: str = None, arg3: str = None, arg4: str = None, arg5: str = None, flags=None):
+def trigger_script_with_args(self: Event, event: str, arg_list: str = None, flags=None):
     trigger_script = event
     valid_events = DB.events.get_by_nid_or_name(trigger_script, self.game.level.nid)
+
+    # Process Arg List into local args directory
+    a_list = arg_list.split(',')
+    local_args = {}
+    for idx in range(len(a_list)//2):
+        arg_nid = a_list[idx*2]
+        arg_value = a_list[idx*2 + 1]
+        local_args[arg_nid] = arg_value
+
     for event_prefab in valid_events:
-        self.game.events.trigger_specific_event(event_prefab.nid, arg1, arg2, arg3, arg4, arg5)
+        self.game.events.trigger_specific_event(event_prefab.nid, local_args=local_args)
         self.state = 'paused'
     if not valid_events:
         self.logger.error("Couldn't find any valid events matching name %s" % trigger_script)
