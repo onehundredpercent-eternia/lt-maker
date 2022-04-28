@@ -89,7 +89,7 @@ class SupportAbility(Ability):
         rank = pair.locked_ranks[0]
         game.state.back()
         action.do(action.HasTraded(unit))
-        did_trigger = game.events.trigger('on_support', unit, u, rank, unit.position)
+        did_trigger = game.events.trigger('on_support', unit, u, unit.position, {'support_rank_nid': rank})
         action.do(action.UnlockSupportRank(pair.nid, rank))
 
 class DropAbility(Ability):
@@ -119,7 +119,7 @@ class DropAbility(Ability):
         else:
             game.state.change('free')
             game.cursor.set_pos(unit.position)
-            game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
+            game.events.trigger('unit_wait', unit, position=unit.position, local_args={'region': game.get_region_under_pos(unit.position)})
             action.do(action.Wait(unit))
 
 class RescueAbility(Ability):
@@ -144,7 +144,7 @@ class RescueAbility(Ability):
         else:
             game.state.change('free')
             game.cursor.set_pos(unit.position)
-            game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
+            game.events.trigger('unit_wait', unit, position=unit.position, local_args={'region': game.get_region_under_pos(unit.position)})
             action.do(action.Wait(unit))
 
 class TakeAbility(Ability):
@@ -230,7 +230,7 @@ class SeparateAbility(Ability):
         action.do(action.Separate(unit, u, game.cursor.position))
         game.state.change('free')
         game.cursor.set_pos(unit.position)
-        game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
+        game.events.trigger('unit_wait', unit, position=unit.position, local_args={'region': game.get_region_under_pos(unit.position)})
         action.do(action.Wait(unit))
 
 class SwapAbility(Ability):
