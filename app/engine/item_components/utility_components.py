@@ -163,7 +163,7 @@ class UnlockStaff(ItemComponent):
                     region = reg
                     break
             if region:
-                did_trigger = game.events.trigger(region.sub_nid, unit, position=pos, region=region)
+                did_trigger = game.events.trigger(region.sub_nid, unit, position=pos, local_args={'region': region})
                 if did_trigger and region.only_once:
                     action.do(action.RemoveRegion(region))
         self._did_hit = False
