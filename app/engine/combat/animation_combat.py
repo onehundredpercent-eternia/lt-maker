@@ -1081,7 +1081,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.turnwheel_death_messages(all_units)
 
         self.handle_state_stack()
-        game.events.trigger('combat_end', self.attacker, self.defender, self.main_item, self.attacker.position)
+        game.events.trigger('combat_end', self.attacker, self.defender, self.attacker.position, {'item': self.main_item})
         self.handle_item_gain(all_units)
 
         self.handle_supports(all_units)
