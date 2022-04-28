@@ -1,6 +1,6 @@
 # Summoning
 
-_last updated v0.1_
+_last updated 2022-04-28_
 
 ## Summoning a generic phantom
 
@@ -15,11 +15,11 @@ Items can call an event when they hit using the *Event on Hit* component. Assign
 if;game.get_unit('phantom')
     resurrect;phantom
     remove_unit;phantom;warp
-    autolevel_to;phantom;unit.level
+    autolevel_to;phantom;{eval:unit.level}
 else
-    make_generic;phantom;Fighter;unit.level;player
+    make_generic;phantom;Fighter;{eval:unit.level};player
 end
-add_unit;phantom;{position};warp
+add_unit;phantom;{eval:target_pos};warp
 wait;200
 ```
 
