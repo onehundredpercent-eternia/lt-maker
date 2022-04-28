@@ -1,6 +1,6 @@
 from app.data.database import DB
 from app.data.difficulty_modes import GrowthOption
-from app.engine import item_funcs, static_random
+from app.engine import action, item_funcs, static_random
 from app.engine.game_state import game
 from app.utilities import utils
 
@@ -290,3 +290,7 @@ def check_flanked(unit) -> bool:
     return False
 
 check_flanking = check_flanked
+
+def wait(unit):
+    game.events.trigger('unit_wait', unit, position=unit.position, local_args={'region': game.get_region_under_pos(unit.position)})
+    action.do(action.Wait(unit))
