@@ -29,8 +29,6 @@ class TextEvaluator():
         """
         if re.match(r'\{e:[^{}]*\}', text) or re.match(r'\{eval:[^{}]*\}', text): # eval statement
             return self._evaluate_evals(text)
-        elif re.match(r'\{[1-5]\}', text):
-            return self._evaluate_args(text)
         elif re.match(r'\{d:[^{}]*\}', text) or re.findall(r'\{data:[^{}]*\}', text):
             return self._evaluate_data(text)
         elif re.match(r'\{f:[^{}]*\}', text) or re.match(r'\{field:[^{}]*\}', text):
@@ -56,31 +54,6 @@ class TextEvaluator():
             parsed = str_utils.nested_expr(to_eval, '{', '}')
             evaled = recursive_parse(parsed)
             evaluated.append(evaled)
-        for idx in range(len(to_evaluate)):
-            text = text.replace(to_evaluate[idx], evaluated[idx])
-        return text
-
-    def _evaluate_args(self, text) -> str:
-        to_evaluate = re.findall(r'\{[1-5]\}', text)
-        evaluated = []
-        for to_eval in to_evaluate:
-            try:
-                if to_eval == '{1}':
-                    if not isinstance(self.unit, str):
-                        self.logger.error("{1} is not a string. If you wish to access {unit}, use that tag instead. Evaluating to %s" % self._object_to_str(self.unit))
-                    value = self._object_to_str(self.unit)
-                elif to_eval == '{2}':
-                    if not isinstance(self.unit2, str):
-                        self.logger.error("{2} is not a string. If you wish to access {unit2}, use that tag instead. Evaluating to %s" % self._object_to_str(self.unit2))
-                    value = self._object_to_str(self.unit2)
-                elif to_eval == '{3}':
-                    if not isinstance(self.position, str):
-                        self.logger.error("{3} is not a string. Evaluating to %s" % self._object_to_str(self.position))
-                    value = self._object_to_str(self.position)
-                evaluated.append(value)
-            except Exception as e:
-                self.logger.error("Could not evaluate %s (%s)" % (to_eval, e))
-                evaluated.append('??')
         for idx in range(len(to_evaluate)):
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
