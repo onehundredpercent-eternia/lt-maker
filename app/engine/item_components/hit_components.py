@@ -447,7 +447,7 @@ class GBASteal(Steal, ItemComponent):
 
 class EventOnHit(ItemComponent):
     nid = 'event_on_hit'
-    desc = "The selected event plays before a hit, if the unit will hit with this item. The event is triggered with args (unit1=attacking unit, unit2=target, item=item, position=attacking unit's position, region=targeted position)"
+    desc = "The selected event plays before a hit, if the unit will hit with this item. The event is triggered with args (unit1=attacking unit, unit2=target, item=item, position=attacking unit's position, target_pos=position of target, mode='attack' or 'defense', attack_info=a tuple containing which attack this is as the first element, and which subattack this is as the second element)"
     tag = ItemTags.SPECIAL
 
     expose = Type.Event
@@ -455,7 +455,8 @@ class EventOnHit(ItemComponent):
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit, target, item, unit.position, target_pos)
+            local_args = {'target_pos': target_pos, 'mode': mode, 'attack_info': attack_info, 'item': item}
+            game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args})
 
 class EventAfterCombat(ItemComponent):
     nid = 'event_after_combat'
@@ -474,35 +475,6 @@ class EventAfterCombat(ItemComponent):
         if self._did_hit and target:
             event_prefab = DB.events.get_from_nid(self.value)
             if event_prefab:
-                game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=self.target_pos)
+                local_args = {'target_pos': self.target_pos, 'item': item, 'mode': mode}
+                game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
         self._did_hit = False
-
-class EventOnUse(ItemComponent):
-    nid = 'event_on_use'
-    desc = 'Item calls an event on use, before any effects are played'
-    tag = ItemTags.SPECIAL
-
-    expose = Type.Event
-
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        event_prefab = DB.events.get_from_nid(self.value)
-        if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=target_pos)
-
-class EventAfterUse(ItemComponent):
-    nid = 'event_after_use'
-    desc = 'Item calls an event after use'
-    tag = ItemTags.SPECIAL
-
-    expose = Type.Event
-
-    _target_pos = None
-
-    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        self._target_pos = target_pos
-
-    def end_combat(self, playback, unit, item, target, mode):
-        event_prefab = DB.events.get_from_nid(self.value)
-        if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=self._target_pos)
-        self._target_pos = None
