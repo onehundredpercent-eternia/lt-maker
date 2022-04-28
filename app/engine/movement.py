@@ -153,7 +153,7 @@ class MovementManager():
         for region in game.level.regions:
             if region.contains(unit.position) and region.interrupt_move:
                 if region.region_type == 'event':
-                    did_trigger = game.events.trigger(region.sub_nid, unit, position=unit.position, region=region)
+                    did_trigger = game.events.trigger(region.sub_nid, unit, position=unit.position, local_args={'region': region})
                 if (region.region_type != 'event' or did_trigger) and region.only_once:
                     action.do(action.RemoveRegion(region))
 
