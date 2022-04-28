@@ -110,7 +110,7 @@ class Event():
         ser_dict['unit1'] = self.unit.nid if self.unit else None
         ser_dict['unit2'] = self.unit2.nid if self.unit2 else None
         ser_dict['position'] = self.position
-        ser_dict['local_args'] = action.save(self.local_args)
+        ser_dict['local_args'] = {k: action.Action.save_obj(v) for k, v in self.local_args}
         ser_dict['if_stack'] = self.if_stack
         ser_dict['parse_stack'] = self.parse_stack
         return ser_dict
@@ -121,7 +121,7 @@ class Event():
         unit2 = game.get_unit(ser_dict['unit2'])
         position = ser_dict['position']
         local_args = ser_dict.get('local_args', {})
-        local_args = {k: action.restore(v) for k, v in local_args.items()}
+        local_args = {k: action.Action.restore_obj(v) for k, v in local_args.items()}
         commands = ser_dict['commands']
         nid = ser_dict['nid']
         self = cls(nid, commands, unit, unit2, position, local_args, game)
