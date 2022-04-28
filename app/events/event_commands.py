@@ -2173,12 +2173,14 @@ class TriggerScriptWithArgs(EventCommand):
 
     desc = \
         """
-Executes the event script specified by *Event*. Can feed up to five arguments of your choice to the new event. These args can be accessed via {1}, {2}, {3}, {4}, and {5}.
+Executes the event script specified by *Event*. Can feed any number of arguments of your choice to the new event, as long as they are strings. You will give each of these arguments a name that you can access in the called event using `{eval:name}`, syntax.
+
+For example, if you called `trigger_script_with_args;MyEvent;Color,Purple,Animal,Dog`, when MyEvent runs you could access the color in that event using `{eval:Color}` which would return 'Purple'. Similarly, you could access the animal using `{eval:Animal}`.
         """
 
     keywords = ["Event"]
-    optional_keywords = ["Arg1", "Arg2", "Arg3", "Arg4", "Arg5"]
-    keyword_types = ["Event", "String", "String", "String", "String", "String"]
+    optional_keywords = ["ArgList"]
+    keyword_types = ["Event", "ArgList"]
 
 class LoopUnits(EventCommand):
     nid = 'loop_units'
