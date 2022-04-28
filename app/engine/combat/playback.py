@@ -207,6 +207,7 @@ class StatusHit(PlaybackBrush):
     defender: UnitObject
     status: str  # nid of status that is added
 
+@dataclass
 class ShoveHit(PlaybackBrush):
     """
     Added to playback when an attack shoves, pivots, or draws back
@@ -217,6 +218,7 @@ class ShoveHit(PlaybackBrush):
     item: ItemObject
     defender: UnitObject
 
+@dataclass
 class SwapHit(PlaybackBrush):
     """
     Added to playback when an attack swaps
@@ -227,6 +229,7 @@ class SwapHit(PlaybackBrush):
     item: ItemObject
     defender: UnitObject
 
+@dataclass
 class RefreshHit(PlaybackBrush):
     """
     Added to playback when an attack refreshes/resets that target
@@ -237,6 +240,7 @@ class RefreshHit(PlaybackBrush):
     item: ItemObject
     defender: UnitObject
 
+@dataclass
 class RestoreHit(PlaybackBrush):
     """
     Added to playback when an attack removes a status from the target
