@@ -80,7 +80,7 @@ class TurnChangeState(MapState):
                         region.sub_nid = int(region.sub_nid) - 1
                         if region.sub_nid <= 0:
                             action.do(action.RemoveRegion(region))
-                            game.events.trigger('time_region_complete', region=region)
+                            game.events.trigger('time_region_complete', local_args={'region': region})
                 game.events.trigger('turn_change')
                 if game.turncount - 1 <= 0:  # Beginning of the level
                     for unit in game.get_all_units_in_party():
@@ -505,8 +505,7 @@ class MoveState(MapState):
             game.state.change('free')
             if cur_unit.has_attacked or cur_unit.has_traded:
                 if not cur_unit.finished:
-                    game.events.trigger('unit_wait', cur_unit, position=cur_unit.position, region=game.get_region_under_pos(cur_unit.position))
-                    action.do(action.Wait(cur_unit))
+                    cur_unit.wait()
             else:
                 cur_unit.sprite.change_state('normal')
 
@@ -517,8 +516,7 @@ class MoveState(MapState):
                     game.state.clear()
                     game.state.change('free')
                     if not cur_unit.finished:
-                        game.events.trigger('unit_wait', cur_unit, position=cur_unit.position, region=game.get_region_under_pos(cur_unit.position))
-                        action.do(action.Wait(cur_unit))
+                        cur_unit.wait()
                 else:
                     # Just move in place
                     cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
@@ -580,8 +578,7 @@ class WaitState(MapState):
         game.state.back()
         for unit in game.units:
             if unit.has_attacked and not unit.finished:
-                game.events.trigger('unit_wait', unit, position=unit.position, region=game.get_region_under_pos(unit.position))
-                action.do(action.Wait(unit))
+                unit.wait()
         return 'repeat'
 
 class CantoWaitState(MapState):
@@ -601,8 +598,7 @@ class CantoWaitState(MapState):
         elif event == 'SELECT':
             game.state.clear()
             game.state.change('free')
-            game.events.trigger('unit_wait', self.cur_unit, position=self.cur_unit.position, region=game.get_region_under_pos(self.cur_unit.position))
-            action.do(action.Wait(self.cur_unit))
+            self.cur_unit.wait()
 
         elif event == 'BACK':
             if self.cur_unit.current_move:
@@ -747,8 +743,7 @@ class MenuState(MapState):
                 else:
                     game.state.clear()
                     game.state.change('free')
-                    game.events.trigger('unit_wait', self.cur_unit, position=self.cur_unit.position, region=game.get_region_under_pos(self.cur_unit.position))
-                    action.do(action.Wait(self.cur_unit))
+                    self.cur_unit.wait()
             else:
                 # Reverse Swap here
                 if not self.cur_unit.lead_unit and self.cur_unit.traveler:
@@ -792,15 +787,14 @@ class MenuState(MapState):
             elif selection == 'Wait':
                 game.state.clear()
                 game.state.change('free')
-                game.events.trigger('unit_wait', self.cur_unit, position=self.cur_unit.position, region=game.get_region_under_pos(self.cur_unit.position))
-                action.do(action.Wait(self.cur_unit))
+                self.cur_unit.wait()
             # A region event
             elif selection in [region.sub_nid for region in self.valid_regions]:
                 for region in self.valid_regions:
                     if region.sub_nid == selection:
-                        did_trigger = game.events.trigger(selection, self.cur_unit, position=self.cur_unit.position, region=region)
+                        did_trigger = game.events.trigger(selection, self.cur_unit, position=self.cur_unit.position, local_args={'region': region})
                         if not did_trigger: # maybe this uses the more dynamic region trigger
-                            did_trigger = game.events.trigger('on_region_interact', self.cur_unit, position=self.cur_unit.position, region=region)
+                            did_trigger = game.events.trigger('on_region_interact', self.cur_unit, position=self.cur_unit.position, local_args={'region': region})
                         if did_trigger:
                             self.menu = None  # Remove menu for a little (Don't worry, it will come back)
                         if did_trigger and region.only_once:
@@ -1927,8 +1921,7 @@ class AIState(MapState):
             if not change and game.ai.is_done():
                 logging.info("Current AI %s is done with turn.", self.cur_unit.nid)
                 if did_something:  # Don't turn grey if didn't actually do anything
-                    game.events.trigger('unit_wait', self.cur_unit, position=self.cur_unit.position, region=game.get_region_under_pos(self.cur_unit.position))
-                    action.do(action.Wait(self.cur_unit))
+                    self.cur_unit.wait()
                 game.ai.reset()
                 self.cur_unit.has_run_ai = True
                 self.cur_unit = None
