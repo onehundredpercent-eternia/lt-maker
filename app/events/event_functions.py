@@ -2057,9 +2057,8 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
     event_context = {
         'unit': self.unit,
         'unit2': self.unit2,
-        'item': self.item,
         'position': self.position,
-        'region': self.region
+        'local_args': self.local_args
     }
 
     self.game.memory['player_choice'] = (nid, header, data, row_width,
