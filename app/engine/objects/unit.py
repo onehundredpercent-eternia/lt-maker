@@ -530,6 +530,9 @@ class UnitObject(Prefab):
                     return running_total
             return running_total
 
+    def wait(self):
+        unit_funcs.wait(self)
+
     @property
     def finished(self):
         return self._finished
