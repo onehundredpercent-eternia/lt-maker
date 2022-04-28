@@ -126,7 +126,7 @@ class SimpleCombat():
         self.turnwheel_death_messages(all_units)
 
         self.handle_state_stack()
-        game.events.trigger('combat_end', self.attacker, self.defender, self.main_item, self.attacker.position)
+        game.events.trigger('combat_end', self.attacker, self.defender, self.attacker.position, {'item': self.main_item})
         self.handle_item_gain(all_units)
 
         self.handle_supports(all_units)
@@ -169,7 +169,7 @@ class SimpleCombat():
 
     def start_event(self, full_animation=False):
         # region is set to True or False depending on whether we are in a battle anim
-        game.events.trigger('combat_start', self.attacker, self.defender, self.main_item, self.attacker.position, full_animation)
+        game.events.trigger('combat_start', self.attacker, self.defender, self.attacker.position, {'item': self.main_item, 'is_animation_combat': full_animation})
 
     def start_combat(self):
         self.initial_random_state = static_random.get_combat_random_state()
@@ -619,7 +619,7 @@ class SimpleCombat():
                 killer = game.records.get_killer(unit.nid, game.level.nid if game.level else None)
                 if killer:
                     killer = game.get_unit(killer)
-                game.events.trigger('unit_death', unit, killer, position=unit.position)
+                game.events.trigger('unit_death', unit, killer, unit.position)
                 skill_system.on_death(unit)
 
         if self.arena_combat:
