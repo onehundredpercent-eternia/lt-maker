@@ -68,10 +68,10 @@ class FreeRoamState(MapState):
             max_speed = 0.1
 
         # Horizontal direction
-        if (get_input_manager().is_pressed('LEFT') or get_input_manager().just_pressed('LEFT')) and self.roam_unit.position[0] > 0:
+        if (get_input_manager().is_pressed('LEFT') or get_input_manager().just_pressed('LEFT')) and self.roam_unit.position[0] > game.board.bounds[0]:
             self.last_move = engine.get_time()
             self.direction[0] = -5
-        elif (get_input_manager().is_pressed('RIGHT') or get_input_manager().just_pressed('RIGHT')) and self.roam_unit.position[0] < game.tilemap.width - 1:
+        elif (get_input_manager().is_pressed('RIGHT') or get_input_manager().just_pressed('RIGHT')) and self.roam_unit.position[0] < game.board.bounds[2]:
             self.last_move = engine.get_time()
             self.direction[0] = 5
 
@@ -82,10 +82,10 @@ class FreeRoamState(MapState):
             self.direction[0] += 1
 
         # Vertical direction
-        if (get_input_manager().is_pressed('UP') or get_input_manager().just_pressed('UP')) and self.roam_unit.position[1] > 0:
+        if (get_input_manager().is_pressed('UP') or get_input_manager().just_pressed('UP')) and self.roam_unit.position[1] > game.board.bounds[1]:
             self.last_move = engine.get_time()
             self.direction[1] = -5
-        elif (get_input_manager().is_pressed('DOWN') or get_input_manager().just_pressed('DOWN')) and self.roam_unit.position[1] < game.tilemap.height - 1:
+        elif (get_input_manager().is_pressed('DOWN') or get_input_manager().just_pressed('DOWN')) and self.roam_unit.position[1] < game.board.bounds[3]:
             self.last_move = engine.get_time()
             self.direction[1] = 5
 

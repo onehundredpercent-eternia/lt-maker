@@ -124,6 +124,17 @@ class VarValidator(EvalValidator):
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         return [(None, var_name) for var_name in DB.game_var_slots.keys()]
 
+class UnitField(Validator):
+    desc = "can be nid of any unit field, including new ones"
+
+    def validate(self, text, level):
+        return text
+
+    def valid_entries(self, level: NID, text: str) -> List[Tuple[str, NID]]:
+        all_keys = set()
+        for unit in DB.units:
+            all_keys.update(set([key for (key, _) in unit.fields]))
+        return [(None, key) for key in all_keys]
 
 class GeneralVar(Validator):
     desc = "can be any nid"
@@ -192,7 +203,7 @@ class IntegerList(Validator):
                 return None                
         return text
 
-class PositiveIntegerOrZero(Validator):
+class WholeNumber(Validator):
     desc = "must be a whole number"
 
     def validate(self, text, level):

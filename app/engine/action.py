@@ -451,6 +451,7 @@ class Wait(Action):
         self.unit = unit
         self.action_state = self.unit.get_action_state()
         self.update_fow_action = UpdateFogOfWar(self.unit)
+        self.regions_removed = self.remove_interrupt_regions()
 
     def do(self):
         self.unit.has_moved = True
@@ -460,6 +461,8 @@ class Wait(Action):
         self.unit.current_move = None
         self.unit.sprite.change_state('normal')
         self.update_fow_action.do()
+        for region in self.regions_removed:
+            region.do()
         if game.cursor and game.cursor.cur_unit == self.unit:
             game.cursor.cur_unit = None
         if self.unit.traveler:
@@ -469,6 +472,18 @@ class Wait(Action):
     def reverse(self):
         self.unit.set_action_state(self.action_state)
         self.update_fow_action.reverse()
+        for region in self.regions_removed:
+            region.reverse()
+
+    def remove_interrupt_regions(self):
+        regions_to_remove = []
+        for region in game.level.regions:
+            if self.unit.position and region.contains(self.unit.position) and region.interrupt_move:
+                if region.region_type == 'event':
+                    did_trigger = game.events.trigger(region.sub_nid, self.unit, position=self.unit.position, region=region)
+                if (region.region_type != 'event' or did_trigger) and region.only_once:
+                    regions_to_remove.append(RemoveRegion(region))
+        return regions_to_remove
 
 
 class UpdateFogOfWar(Action):
@@ -2172,6 +2187,17 @@ class LogDialog(Action):
 
     def reverse(self):
         game.dialog_log.pop()
+
+class SetGameBoardBounds(Action):
+    def __init__(self, bounds):
+        self.old_bounds = game.board.bounds
+        self.new_bounds = bounds
+
+    def do(self):
+        game.board.set_bounds(*self.new_bounds)
+
+    def reverse(self):
+        game.board.set_bounds(*self.old_bounds)
 
 class AddRegion(Action):
     def __init__(self, region):

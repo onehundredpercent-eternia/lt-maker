@@ -4,13 +4,13 @@ _last updated v0.1_
 
 Conditionals are perhaps the most powerful tool in the game designer's arsenal. They allow you to further refine how and when certain events will occur, abilities can be activated, or items will behave, and much more.
 
-![ExampleConditionalInSkillEditor](../Images/SkillEditorConditional.png)
+![ExampleConditionalInSkillEditor](images/SkillEditorConditional.png)
 
 All conditionals in the **Lex Talionis** engine are evaluated at runtime by a Python evaluation engine. As such, this means that all conditionals must be written in valid Python. At first this may seem to have a strict learning curve, but the minimal Python needed to write conditionals can be learned easily. Having the conditionals evaluated by a real programming language like Python enables them to be much more powerful and expressive than would otherwise be possible.
 
 ## Event Objects
 
-![ExampleConditionalInEventEditor](../Images/EventEditorCondition.png)
+![ExampleConditionalInEventEditor](images/EventEditorCondition.png)
 
 While checking the conditionals for an event (whether that be through the Condition box in the left pane of the Event Editor or through an if statement), the event may expose certain variables with extra information.
 

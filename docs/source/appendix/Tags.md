@@ -6,7 +6,7 @@ This appendix details every tag that the **Lex Talionis** engine handles uniquel
 
 Both units and classes can be assigned tags. A unit in game has it's own tags as well as the tags of it's class. 
 
-## Tags
+## Special Tags
 
 **Lord** - If 'Autocursor' is **ON**, will be hovered over by the cursor when the player phase starts.
 

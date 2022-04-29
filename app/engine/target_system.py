@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import FrozenSet, TYPE_CHECKING
+from typing import FrozenSet, TYPE_CHECKING, Tuple
 from functools import lru_cache
 
 from app.data.database import DB
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 # Consider making these sections faster
-def get_shell(valid_moves: set, potential_range: set, width: int, height: int, manhattan_restriction: set = None) -> set:
+def get_shell(valid_moves: set, potential_range: set, bounds: Tuple[int, int, int, int], manhattan_restriction: set = None) -> set:
     valid_attacks = set()
     if manhattan_restriction:
         for valid_move in valid_moves:
@@ -22,7 +22,7 @@ def get_shell(valid_moves: set, potential_range: set, width: int, height: int, m
     else:
         for valid_move in valid_moves:
             valid_attacks |= find_manhattan_spheres(potential_range, valid_move[0], valid_move[1])
-    return {pos for pos in valid_attacks if 0 <= pos[0] < width and 0 <= pos[1] < height}
+    return {pos for pos in valid_attacks if bounds[0] <= pos[0] <= bounds[2] and bounds[1] <= pos[1] <= bounds[3]}
 
 def restricted_manhattan_spheres(rng: set, x: int, y: int, manhattan_restriction: set) -> set:
     sphere = cached_base_manhattan_spheres(frozenset(rng))
@@ -77,7 +77,7 @@ def distance_to_closest_enemy(unit, pos=None):
 def get_adjacent_positions(pos):
     x, y = pos
     adjs = ((x, y - 1), (x - 1, y), (x + 1, y), (x, y + 1))
-    return [a for a in adjs if 0 <= a[0] < game.tilemap.width and 0 <= a[1] < game.tilemap.height]
+    return [a for a in adjs if game.board.check_bounds(a)]
 
 def get_adj_units(unit) -> list:
     adj_positions = get_adjacent_positions(unit.position)
@@ -110,7 +110,7 @@ def get_attacks(unit: UnitObject, item: ItemObject = None, force=False) -> set:
         attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
     else:
         manhattan_restriction = item_system.range_restrict(unit, item)
-        attacks = get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+        attacks = get_shell({unit.position}, item_range, game.board.bounds, manhattan_restriction)
 
     return attacks
 
@@ -128,9 +128,9 @@ def _get_possible_attacks(unit, valid_moves, items):
         else:
             manhattan_restriction = item_system.range_restrict(unit, item)
             if no_attack_after_move:
-                attacks |= get_shell({unit.position}, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+                attacks |= get_shell({unit.position}, item_range, game.board.bounds, manhattan_restriction)
             else:
-                attacks |= get_shell(valid_moves, item_range, game.tilemap.width, game.tilemap.height, manhattan_restriction)
+                attacks |= get_shell(valid_moves, item_range, game.board.bounds, manhattan_restriction)
 
     if DB.constants.value('line_of_sight'):
         attacks = set(line_of_sight.line_of_sight(valid_moves, attacks, max_range))
@@ -166,10 +166,11 @@ def get_valid_moves(unit, force=False) -> set:
     from app.engine.movement import MovementManager
     mtype = MovementManager.get_movement_group(unit)
     grid = game.board.get_grid(mtype)
-    width, height = game.tilemap.width, game.tilemap.height
+    bounds = game.board.bounds
+    height = game.board.height
     pass_through = skill_system.pass_through(unit)
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
-    pathfinder = pathfinding.Djikstra(unit.position, grid, width, height, unit.team, pass_through, ai_fog_of_war)
+    pathfinder = pathfinding.Djikstra(unit.position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
     movement_left = equations.parser.movement(unit) if force else unit.movement_left
 
     valid_moves = pathfinder.process(game.board, movement_left)
@@ -183,10 +184,11 @@ def get_path(unit, position, ally_block=False, use_limit=False) -> list:
     mtype = MovementManager.get_movement_group(unit)
     grid = game.board.get_grid(mtype)
 
-    width, height = game.tilemap.width, game.tilemap.height
+    bounds = game.board.bounds
+    height = game.board.height
     pass_through = skill_system.pass_through(unit)
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
-    pathfinder = pathfinding.AStar(unit.position, position, grid, width, height, unit.team, pass_through, ai_fog_of_war)
+    pathfinder = pathfinding.AStar(unit.position, position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
 
     limit = unit.movement_left if use_limit else None
     path = pathfinder.process(game.board, ally_block=ally_block, limit=limit)

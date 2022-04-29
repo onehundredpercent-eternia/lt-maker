@@ -53,7 +53,7 @@ def propagate_aura(unit, skill, game):
     game.board.reset_aura(skill.subskill)
     aura_range = skill.aura_range.value
     aura_range = set(range(1, aura_range + 1))
-    positions = target_system.get_shell({unit.position}, aura_range, game.tilemap.width, game.tilemap.height)
+    positions = target_system.get_shell({unit.position}, aura_range, game.board.bounds)
     for pos in positions:
         game.board.add_aura(pos, unit, skill.subskill, skill.aura_target.value)
         # Propagate my aura to others
@@ -69,7 +69,7 @@ def repopulate_aura(unit, skill, game):
     game.board.reset_aura(skill.subskill)
     aura_range = skill.aura_range.value
     aura_range = set(range(1, aura_range + 1))
-    positions = target_system.get_shell({unit.position}, aura_range, game.tilemap.width, game.tilemap.height)
+    positions = target_system.get_shell({unit.position}, aura_range, game.board.bounds)
     for pos in positions:
         game.board.add_aura(pos, unit, skill.subskill, skill.aura_target.value)
 

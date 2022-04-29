@@ -392,7 +392,7 @@ class PostCombatSplashAOE(SkillComponent):
     def end_combat(self, playback, unit, item, target, mode):
         if target and skill_system.check_enemy(unit, target):
             r = set(range(self.value+1))
-            locations = target_system.get_shell({target.position}, r, game.tilemap.width, game.tilemap.height)
+            locations = target_system.get_shell({target.position}, r, game.board.bounds)
             damage = get_pc_damage(unit, self.skill)
             if damage > 0:
                 for loc in locations:

@@ -15,6 +15,8 @@ The item components in this dictionary are broken down by icon going from left t
 | **Unrepairable** | An item with the repair component cannot repair an item with this component. |
 | **Value** | The value that the item can be bought and sold for in shops. |
 | **Accessory** | The item is considered an accessory and takes up an accessory slot in a unit's inventory. Make sure to increase the number of accessory slots to more than zero and have a total number of inventory + accessory slots less than six. |
+| **Item Prefab** | The item inherits all the components of the selected item. |
+| **Item Tags** | The item gains all of the associated tags. Note: the tags are associated to the item instead of any unit.
 
 ## Targeting:
 

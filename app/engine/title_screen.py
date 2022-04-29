@@ -788,6 +788,10 @@ class TitleSaveState(State):
     menu = None
 
     def start(self):
+        if game.memory['_skip_save']:
+            game.memory['_skip_save'] = False
+            self.go_to_next_level(False)
+            return 'repeat'
         self.fluid = FluidScroll(128)
         imgs = RESOURCES.panoramas.get('title_background')
         self.bg = PanoramaBackground(imgs) if imgs else None

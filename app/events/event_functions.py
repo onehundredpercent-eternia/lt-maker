@@ -540,6 +540,10 @@ def win_game(self: Event, flags=None):
 def lose_game(self: Event, flags=None):
     self.game.level_vars['_lose_game'] = True
 
+def skip_save(self: Event, true_or_false: str, flags=None):
+    state = true_or_false in self.true_vals
+    action.do(action.SetLevelVar('_skip_save', state))
+
 def activate_turnwheel(self: Event, force=None, flags=None):
     if force and force.lower() not in self.true_vals:
         self.turnwheel_flag = 1
@@ -619,6 +623,28 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
 
     # Can't use turnwheel to go any further back
     self.game.action_log.set_first_free_action()
+
+def set_game_board_bounds(self: Event, min_x, min_y, max_x, max_y, flags=None):
+    min_x = int(min_x)
+    max_x = int(max_x)
+    min_y = int(min_y)
+    max_y = int(max_y)
+    if not self.game.board:
+        self.logger.warning("No game board available")
+    elif max_x <= min_x:
+        self.logger.warning("MaxX must be strictly greater than MinX, (MinX: %d, MaxX: %d)", min_x, max_x)
+    elif max_y <= min_y:
+        self.logger.warning("MaxY must be strictly greater than MinY, (MinY: %d, MaxY: %d)", min_y, max_y)
+    else:
+        bounds = (min_x, min_y, max_x, max_y)
+        action.do(action.SetGameBoardBounds(bounds))
+
+def remove_game_board_bounds(self: Event, flags=None):
+    if self.game.board:
+        bounds = (0, 0, self.game.tilemap.width - 1, self.game.tilemap.height - 1)
+        action.do(action.SetGameBoardBounds(bounds))
+    else:
+        self.logger.warning("No game board available")
 
 def load_unit(self: Event, unique_unit, team=None, ai=None, flags=None):
     unit_nid = unique_unit
@@ -1233,6 +1259,11 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
     if not subitem_prefab:
         self.logger.error("Couldn't find item with nid %s" % child_item)
         return
+    if 'no_duplicate' in flags:
+        children = {item.nid for item in item.subitems}
+        if child_item in children:
+            self.logger.info("Item %s already exists on multi-item %s on unit %s" % (child_item, item.nid, unit.nid))
+            return
     # Create subitem
     subitem = ItemObject.from_prefab(subitem_prefab)
     for component in subitem.components:
@@ -1262,6 +1293,8 @@ def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, c
         owner_nid = None
     else:
         owner_nid = unit.nid
+    # Unequip subitem if necessary
+    action.do(action.UnequipItem(unit, subitem))
     action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
 
 def give_money(self: Event, money, party=None, flags=None):

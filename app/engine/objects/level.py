@@ -72,20 +72,20 @@ class LevelObject():
         return s_dict
 
     @classmethod
-    def restore(cls, s_dict, game):
+    def restore(cls, s_dict: dict, game):
         level = cls()
         level.nid = s_dict['nid']
-        level.name = s_dict['name']
+        level.name = s_dict.get('name', "")
         level.tilemap = TileMapObject.restore(s_dict['tilemap'])
-        level.party = s_dict['party']
+        level.party = s_dict.get('party', "")
         level.roam = s_dict.get('roam', False)
         level.roam_unit = s_dict.get('roam_unit')
 
-        level.music = s_dict['music']
-        level.objective = s_dict['objective']
+        level.music = s_dict.get('music', {})
+        level.objective = s_dict.get('objective', {})
 
-        level.units = Data([game.get_unit(unit_nid) for unit_nid in s_dict['units']])
-        level.regions = Data([Region.restore(region) for region in s_dict['regions']])
-        level.unit_groups = Data([UnitGroup.restore(unit_group) for unit_group in s_dict['unit_groups']])
+        level.units = Data([game.get_unit(unit_nid) for unit_nid in s_dict.get('units', [])])
+        level.regions = Data([Region.restore(region) for region in s_dict.get('regions', [])])
+        level.unit_groups = Data([UnitGroup.restore(unit_group) for unit_group in s_dict.get('unit_groups', [])])
 
         return level

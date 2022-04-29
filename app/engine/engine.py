@@ -171,6 +171,9 @@ def set_colorkey(surf, color, rleaccel=True):
 def make_pixel_array(surf):
     return pygame.PixelArray(surf)
 
+def draw_line(surf, color, start, end, width=1):
+    return pygame.draw.line(surf, color, start, end, width)
+
 # === transform functions ===
 def flip_horiz(surf):
     return pygame.transform.flip(surf, 1, 0)

@@ -9,7 +9,7 @@ If you are working with an executable version of the editor, follow this process
 
 You can download the current version of the standalone engine from here: https://www.dropbox.com/s/lil6j8mf6dclz6f/lt_engine.zip?dl=1. 
 
-![GenericEngineProject](../Images/GenericEngineProject.png)
+![GenericEngineProject](images/GenericEngineProject.png)
 
 Unzip the download, stick your `.ltproj` file in the folder `lt_engine/lt_engine` (should be at the same level as `app`, `Include`, etc.), and then you should be good to go. Test that the engine works with your project, and then re-zip it all up for distribution to others!
 

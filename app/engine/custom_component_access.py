@@ -2,6 +2,7 @@ current_custom_path = None
 def get_components() -> bool:
     # For getting custom project components at runtime
     import importlib
+    import importlib.util
     import os
     import sys
     from app.resources.resources import RESOURCES

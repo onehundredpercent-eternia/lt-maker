@@ -7,6 +7,7 @@ These are guides on various useful skills and items.
     :maxdepth: 2
     :caption: Basic
 
+    Creating-Items
     Direct-Passives
     Conditional-Passives-I
     Auras
@@ -17,3 +18,4 @@ These are guides on various useful skills and items.
 
     Creating-Capture
     Recruit-Skill
+    Summoning

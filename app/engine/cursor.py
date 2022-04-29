@@ -6,7 +6,6 @@ from app.engine import engine
 from app.engine.camera import Camera
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.input_manager import get_input_manager
-from app.engine.objects.tilemap import TileMapObject
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.utilities.enums import Direction
@@ -16,17 +15,18 @@ from app.engine.engine import Surface
 class BaseCursor():
     """Basic Cursor Class, contains universal cursor functionality.
 
-    Camera and Tilemap are optional, but unlock some additional functionality
+    Camera and GameBoard are optional, but unlock some additional functionality
     such as automatic camera manipulation, and cursor movement boundaries.
     """
     TRANSITION_FRAMES = 4
-    def __init__(self, camera: Camera = None, tilemap: TileMapObject = None):
+    
+    def __init__(self, camera: Camera = None, game_board=None):
         # internal scroll controller
         self.fluid: FluidScroll = FluidScroll(frames2ms(4), 3.25)
 
         # fellow controllers
         self.camera = camera
-        self.tilemap = tilemap
+        self.game_board = game_board
 
         # some state information
         self.mouse_mode: bool = False
@@ -57,15 +57,15 @@ class BaseCursor():
         """Boundaries of the cursor traversal. Useful if you don't want
         the cursor to hover over the edges of the map. Format is
         min left, min top, max right, max bottom, i.e. the furthest you can go
-        left, top, right, and bottom. Defaults to (0, 0, game.tilemap,width - 1, game.tilemap.height - 1)
+        left, top, right, and bottom. Defaults to (0, 0, game.tilemap.width - 1, game.tilemap.height - 1)
 
         Returns:
             Tuple[int, int, int, int]: boundary for cursor
         """
         if self._bounds:
             return self._bounds
-        elif self.tilemap:
-            return (0, 0, self.tilemap.width - 1, self.tilemap.height - 1)
+        elif self.game_board:
+            return self.game_board.bounds
         else:
             return (0, 0, TILEX - 1, TILEY - 1)
 
@@ -117,7 +117,7 @@ class BaseCursor():
             if self.camera:
                 self.camera.set_xy(*self.position)
         else:
-            logging.error("Attempted to set cursor's position out of bounds! %s", pos)
+            logging.error("Attempted to set cursor's position out of bounds! %s, %s", pos, bounds)
 
     def move(self, dx, dy, mouse=False, sound=True):
         x, y = self.position

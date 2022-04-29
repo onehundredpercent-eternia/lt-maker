@@ -12,7 +12,7 @@ There are two ways of going about this, both using events. One is on an individu
 
 This solution already exists implemented in `default.ltproj`. This solution involves using an event that is triggered on the death of each unit. The event is as follows:
 
-![Screenshot_20210916_194901](../../uploads/20ce17b266241b8887154e62f66d79d0/Screenshot_20210916_194901.png)
+![Screenshot_20210916_194901](../images/DeathQuotes1.png)
 
 This event is fairly basic.
 
@@ -28,7 +28,7 @@ To sum, at any point in the game, if Vanessa dies, this event will play. The eve
 
 The vast majority of the death quotes in the game will be much simpler, following the above format - the portrait flashes, the character says their dying line, and finally, the portrait disappears. The following event makes use of Unit Fields to reduce event count and simplify the process. It is as follows:
 
-![Screenshot_20210916_195754](../../uploads/edd66041f61a09a1f30a8dab50711ee3/Screenshot_20210916_195754.png)
+![Screenshot_20210916_195754](../images/DeathQuotes2.png)
 
 It's pretty much the same, except that there is no condition attached. This will trigger every single time a unit dies.
 

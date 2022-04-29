@@ -7,7 +7,7 @@ Events are a powerful tool for any game designer, allowing you to implement uniq
 
 An event consists of four things:
 
-![Screenshot of event editor with these sections labeled](../Images/EventEditor.png)
+![Screenshot of event editor with these sections labeled](images/EventEditor.png)
 
 1. A unique **name** so that it can be uniquely identified in the engine
 2. A **trigger** that causes the event to activate
@@ -28,7 +28,7 @@ Event Regions can create their own triggers which can also be caught by the even
 
 ## Trigger List
 
-![Screenshot of event editor trigger list](../Images/EventEditorTriggerList.png)
+![Screenshot of event editor trigger list](images/EventEditorTriggerList.png)
 
 1. `level_start`: This trigger fires at the very beginning of the chapter. Useful for introductory dialogue or additional level setup.
 
@@ -70,7 +70,7 @@ Imagine you want an event to trigger when a specific unit dies. As stated above,
 
 Setting a Condition allows you to limit the event to activate to only when the Condition is true.
 
-![Screenshot of example condition](../Images/EventEditorCondition.png)
+![Screenshot of example condition](images/EventEditorCondition.png)
 
 The `on_unit_death` trigger supplys the unit that died under the name `unit`. So we can simply enter `unit.nid == 'Eirika'` in the Condition box for our event. Now, if the unit that died had an nid of `Eirika`, the event will activate. Otherwise, the event will be ignored.
 
@@ -88,7 +88,7 @@ remove_portrait;Eirika
 
 There are many event commands available, and it is not expected that you will remember them all off the top of your head. A searchable index of event commands is available within the event editor.
 
-![Screenshot of list of event commands](../Images/EventEditorShowCommandsList.png)
+![Screenshot of list of event commands](images/EventEditorShowCommandsList.png)
 
 Feel free to check out the events that already exist in the default project or the Lion Throne project. They can and should be used freely as reference.
 
