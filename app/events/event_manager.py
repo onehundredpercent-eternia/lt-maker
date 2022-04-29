@@ -61,7 +61,7 @@ class EventManager():
         return True
 
     def _add_event(self, nid, commands, unit=None, unit2=None, position=None, local_args=None):
-        event = Event(nid, commands, unit, unit2, item, position, region)
+        event = Event(nid, commands, unit, unit2, position, local_args)
         self.all_events.append(event)
         self.event_stack.append(event)
         game.state.change('event')

@@ -124,7 +124,6 @@ class MovementManager():
             if unit.team == 'player':
                 self.surprised = True
                 self.update_surprise()
-        self.remove_interrupt_regions(unit)
 
 
         del self.moving_units[unit_nid]
@@ -148,14 +147,6 @@ class MovementManager():
             if region.contains(unit.position) and region.interrupt_move:
                 return True
         return False
-
-    def remove_interrupt_regions(self, unit):
-        for region in game.level.regions:
-            if region.contains(unit.position) and region.interrupt_move:
-                if region.region_type == 'event':
-                    did_trigger = game.events.trigger(region.sub_nid, unit, position=unit.position, local_args={'region': region})
-                if (region.region_type != 'event' or did_trigger) and region.only_once:
-                    action.do(action.RemoveRegion(region))
 
     def update_surprise(self):
         game.state.clear()
@@ -187,7 +178,6 @@ class MovementManager():
                             self.done_moving(unit_nid, data, unit, surprise=True)
                             if unit.team == 'player':
                                 self.update_surprise()
-                                self.remove_interrupt_regions(unit)
                                 self.surprised = True
                             continue
 

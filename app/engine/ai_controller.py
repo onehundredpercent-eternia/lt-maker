@@ -71,7 +71,6 @@ class AIController():
             self.move_ai_complete = True
             self.attack_ai_complete = True
             self.canto_ai_complete = True
-            game.movement.remove_interrupt_regions(self.unit)
 
         if not self.move_ai_complete:
             if self.think():
