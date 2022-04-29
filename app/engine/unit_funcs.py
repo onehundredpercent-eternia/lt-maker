@@ -118,11 +118,14 @@ def _rd_bexp_levelup(unit, level, klass, stat_changes):
 
     return stat_changes
 
-def auto_level(unit, num_levels, starting_level=1, difficulty_growths=False):
+def auto_level(unit, num_levels, starting_level=1, difficulty_growths=False, growth_method=None):
     """
     Primarily for generics
     """
-    method = get_leveling_method(unit)
+    if growth_method:
+        method = growth_method.capitalize()
+    else:
+        method = get_leveling_method(unit)
     difficulty_growth_bonus = game.mode.get_growth_bonus(unit)
 
     if method == GrowthOption.FIXED:
@@ -185,6 +188,10 @@ def apply_stat_changes(unit, stat_changes: dict, increase_current_stats: bool = 
             unit.set_hp(current_max_hp - old_max_hp + unit.get_hp())
         if current_max_mana > old_max_mana:
             unit.set_mana(current_max_mana - old_max_mana + unit.get_mana())
+    if unit.get_hp() > current_max_hp:
+        unit.set_hp(current_max_hp)
+    if unit.get_mana() > current_max_mana:
+        unit.set_mana(current_max_mana)
 
 def apply_growth_changes(unit, growth_changes: dict):
     for nid, value in growth_changes.items():

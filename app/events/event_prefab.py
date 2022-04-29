@@ -45,7 +45,7 @@ class EventPrefab(Prefab):
         self.trigger = None
         self.level_nid = None
         self.condition: str = "True"
-        self.commands = []
+        self.commands: List[event_commands.EventCommand] = []
         self.only_once = False
         self.priority: int = 20
 

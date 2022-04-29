@@ -1,6 +1,8 @@
+import functools
 import logging
 import math
 import os
+import re
 from dataclasses import dataclass
 from app.extensions.markdown2 import Markdown
 
@@ -8,9 +10,11 @@ from app.data.database import DB
 from app.editor import table_model, timer
 from app.editor.base_database_gui import CollectionModel
 from app.editor.event_editor import event_autocompleter, find_and_replace
+import app.editor.game_actions.game_actions as GAME_ACTIONS
 from app.editor.map_view import SimpleMapView
 from app.editor.settings import MainSettingsController
 from app.events import event_commands, event_prefab, event_validators
+from app.events.mock_event import IfStatementStrategy
 from app.extensions.custom_gui import (ComboBox, PropertyBox, PropertyCheckBox,
                                        QHLine, TableView)
 from app.resources.resources import RESOURCES
@@ -26,7 +30,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QPlainTextEdit, QPushButton,
                              QSizePolicy, QSpinBox, QSplitter, QStyle,
                              QStyledItemDelegate, QTextEdit, QToolBar,
-                             QVBoxLayout, QWidget)
+                             QVBoxLayout, QWidget, QMenu)
 
 
 @dataclass
@@ -160,35 +164,29 @@ class Highlighter(QSyntaxHighlighter):
                             self.setFormat(special_start, start + idx - special_start + 1, self.special_text_format)
                             brace_mode -= 1
 
-    def validate_line(self, line) -> list:
+    def validate_line(self, line: str) -> list:
         try:
-            command = event_commands.parse_text(line, strict=True)
+            command, error_loc = event_commands.parse_text_to_command(line, strict=True)
             if command:
-                true_values, flags = event_commands.parse(command)
+                parameters, flags = event_commands.parse(command)
+                for keyword in command.keywords:
+                    if keyword not in parameters:
+                        return 'all'
                 broken_args = []
-                if len(command.keywords) > len(true_values):
-                    return 'all'
-                for idx, value in enumerate(true_values):
-                    if idx >= len(command.keywords):
-                        i = idx - len(command.keywords)
-                        if i < len(command.optional_keywords):
-                            validator = command.optional_keywords[i]
-                        elif value in flags:
-                            continue
-                        else:
-                            broken_args.append(idx + 1)
-                            continue
-                    else:
-                        validator = command.keywords[idx]
+                for keyword, value in parameters.items():
+                    validator = command.get_validator_from_keyword(keyword)
                     level_nid = self.window.current.level_nid
                     level = DB.levels.get(level_nid)
                     text = event_validators.validate(validator, value, level)
                     if text is None:
-                        broken_args.append(idx + 1)
+                        broken_args.append(command.get_index_from_keyword(keyword) + 1)
                 return broken_args
+            elif error_loc:
+                return [error_loc + 1]  # Integer that points to the first idx that is broken
             else:
                 return [0]  # First arg is broken
         except Exception as e:
+            logging.error("Error while validating %s %s", line, e)
             return 'all'
 
 class LineNumberArea(QWidget):
@@ -279,7 +277,7 @@ class CodeEditor(QPlainTextEdit):
         tc = self.textCursor()
         line = tc.block().text()
         cursor_pos = tc.positionInBlock()
-        if len(line) != cursor_pos and line[cursor_pos-1] !=';':
+        if len(line) != cursor_pos and line[cursor_pos - 1] != ';':
             self.function_annotator.hide()
             return  # Only do function hint on end of line or when clicking at the beginning of a field
         if tc.blockNumber() <= 0 and cursor_pos <= 0:  # don't do hint if cursor is at the very top left of event
@@ -302,12 +300,10 @@ class CodeEditor(QPlainTextEdit):
         hint_words = []
         hint_words.append(command.nid)
         all_keywords = command.keywords + command.optional_keywords
-        all_keyword_names = command.keyword_names
         for idx, keyword in enumerate(all_keywords):
-            keyword_name = ""
-            if idx < len(all_keyword_names):
-                keyword_name = all_keyword_names[idx]
-                hint_words.append(keyword_name + '=' + keyword)
+            if command.keyword_types:
+                keyword_type = command.keyword_types[idx]
+                hint_words.append(keyword + "=" + keyword_type)
             else:
                 hint_words.append(keyword)
         if command.flags:
@@ -741,7 +737,7 @@ class EventCollection(QWidget):
         if not level:
             self.level_filtered_model.setFilterFixedString("")
         else:
-            search = "^" + level + "$"
+            search = "^" + re.escape(level) + "$"
             self.level_filtered_model.setFilterRegularExpression(search)
         self.view.selectionModel().selectionChanged.connect(self.on_item_changed)
         # Determine if we should reselect something
@@ -861,6 +857,14 @@ class EventProperties(QWidget):
         self.show_commands_button.clicked.connect(self.show_commands)
         bottom_section.addWidget(self.show_commands_button)
 
+        self.test_event_button = QPushButton("Test Event")
+        test_menu = QMenu("Test", self)
+        test_menu.addAction(QAction("with If Statements always True", self, triggered=functools.partial(self.test_event, IfStatementStrategy.ALWAYS_TRUE)))
+        test_menu.addAction(QAction("with If Statements always False", self, triggered=functools.partial(self.test_event, IfStatementStrategy.ALWAYS_FALSE)))
+        self.test_event_button.setMenu(test_menu)
+        # self.test_event_button.clicked.connect(self.test_event)
+        bottom_section.addWidget(self.test_event_button)
+
     def setEnabled(self, val):
         super().setEnabled(val)
         # Need to also set these, since they are considered
@@ -920,6 +924,14 @@ class EventProperties(QWidget):
         if self.show_commands_dialog:
             self.show_commands_dialog.done(0)
             self.show_commands_dialog = None
+
+    def test_event(self, strategy):
+        if self.current:
+            commands = self.current.commands
+            cursor_position = 0
+            timer.get_timer().stop()
+            GAME_ACTIONS.test_event(commands, cursor_position, strategy)
+            timer.get_timer().start()
 
     def name_changed(self, text):
         self.current.name = text
@@ -990,7 +1002,7 @@ class EventProperties(QWidget):
             if line:
                 lines.append(line)
         for line in lines:
-            command = event_commands.parse_text(line)
+            command, error_loc = event_commands.parse_text_to_command(line)
             if command:
                 self.current.commands.append(command)
 
@@ -1170,8 +1182,8 @@ class ShowCommandsDialog(QDialog):
                 all_keywords = command.keywords + command.optional_keywords
                 for i, kwyd in enumerate(all_keywords):
                     next_text = kwyd
-                    if i < len(command.keyword_names) and command.keyword_names[i]: # it has a name
-                        next_text = '**' + command.keyword_names[i] + '**=' + next_text
+                    if command.keyword_types:
+                        next_text = next_text + '=' + command.keyword_types[i]
                     if not i < len(command.keywords): # it's an optional
                         next_text = '_' + next_text + '_'
                     next_text += ';'
@@ -1192,8 +1204,10 @@ class ShowCommandsDialog(QDialog):
                     else:
                         already.append(keyword)
                     validator = event_validators.get(keyword)
-                    if validator.desc:
+                    if validator and validator.desc:
                         text += '_%s_ %s\n\n' % (keyword, validator().desc)
+                    else:
+                        text += '_%s_ %s\n\n' % (keyword, "")
                 if command.desc:
                     text += " --- \n\n"
                 text += command.desc

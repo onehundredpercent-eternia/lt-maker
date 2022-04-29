@@ -10,7 +10,7 @@ import app.engine.config as cf
 
 from app.engine.combat.solver import CombatPhaseSolver
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, combat_calcs, gui, action, battle_animation, \
     item_system, skill_system, icons, item_funcs, background, image_mods
 from app.engine.health_bar import CombatHealthBar
@@ -22,6 +22,8 @@ from app.engine.objects.unit import UnitObject
 from app.engine.combat.map_combat import MapCombat
 from app.engine.combat.base_combat import BaseCombat
 from app.engine.combat.mock_combat import MockCombat
+
+import logging
 
 class AnimationCombat(BaseCombat, MockCombat):
     alerts: bool = True
@@ -236,9 +238,8 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.state = 'fade_in'
 
         elif self.state == 'fade_in':
-            if current_time <= self.viewbox_time:
                 self.build_viewbox(current_time)
-            else:
+            if current_time > self.viewbox_time:
                 self.viewbox = (self.viewbox[0], self.viewbox[1], 0, 0)
                 self.state = 'entrance'
                 self.pair_battle_animations(14)
@@ -326,6 +327,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         elif self.state == 'begin_phase':
             # Get playback
             if not self.state_machine.get_state():
+                logging.debug("End Combat")
                 self.state = 'end_combat'
                 self.actions.clear()
                 self.playback.clear()
@@ -333,6 +335,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.actions, self.playback = self.state_machine.do()
             self.full_playback += self.playback
             if not self.actions and not self.playback:
+                logging.debug("Set Up Next State")
                 self.state_machine.setup_next_state()
                 return False
             self._set_stats()
@@ -468,9 +471,8 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.state = 'fade_out'
 
         elif self.state == 'fade_out':
-            if current_time <= self.viewbox_time:
                 self.build_viewbox(self.viewbox_time - current_time)
-            else:
+            if current_time > self.viewbox_time:
                 self.finish()
                 self.clean_up2()
                 self.end_skip()
@@ -487,6 +489,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 return True
 
         if self.state != current_state:
+            logging.debug("New Animation Combat State: %s", self.state)
             self.last_update = engine.get_time()
 
         # Update hp bars
@@ -526,7 +529,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.left_bar = SPRITES.get('combat_main_left_' + left_color).copy()
         if self.left_item:
             name = self.left_item.name
-            if FONT['text-brown'].width(name) > 60:
+            if FONT['text-brown'].width(name) > 56:
                 font = FONT['narrow-brown']
             else:
                 font = FONT['text-brown']
@@ -559,7 +562,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.right_bar = SPRITES.get('combat_main_right_' + right_color).copy()
         if self.right_item:
             name = self.right_item.name
-            if FONT['text-brown'].width(name) > 60:
+            if FONT['text-brown'].width(name) > 56:
                 font = FONT['narrow-brown']
             else:
                 font = FONT['text-brown']
@@ -634,7 +637,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 sound = brush[1]
                 if sound == 'Attack Miss 2':
                     sound = 'Miss'  # Replace with miss sound
-                SOUNDTHREAD.play_sfx(sound)
+                get_sound_thread().play_sfx(sound)
 
     def _apply_actions(self):
         """
@@ -657,8 +660,10 @@ class AnimationCombat(BaseCombat, MockCombat):
 
     def finish(self):
         # Fade back music if and only if it was faded in
+        from_start = DB.constants.value('restart_battle_music')
         if self.battle_music:
-            SOUNDTHREAD.battle_fade_back(self.battle_music)
+            # Don't battle fade back when we don't restart battle music
+            get_sound_thread().battle_fade_back(self.battle_music, from_start)
 
     def build_viewbox(self, current_time):
         vb_multiplier = utils.clamp(current_time / self.viewbox_time, 0, 1)
@@ -676,12 +681,13 @@ class AnimationCombat(BaseCombat, MockCombat):
         else:
             defender_battle = None
         battle_music = game.level.music['%s_battle' % self.attacker.team]
+        from_start = DB.constants.value('restart_battle_music')
         if attacker_battle:
-            self.battle_music = SOUNDTHREAD.battle_fade_in(attacker_battle)
+            self.battle_music = get_sound_thread().battle_fade_in(attacker_battle, from_start=from_start)
         elif defender_battle:
-            self.battle_music = SOUNDTHREAD.battle_fade_in(defender_battle)
+            self.battle_music = get_sound_thread().battle_fade_in(defender_battle, from_start=from_start)
         elif battle_music:
-            self.battle_music = SOUNDTHREAD.battle_fade_in(battle_music)
+            self.battle_music = get_sound_thread().battle_fade_in(battle_music, from_start=from_start)
 
     def left_team(self):
         return self.left.team
@@ -1014,10 +1020,10 @@ class AnimationCombat(BaseCombat, MockCombat):
         icon = icons.get_icon(item)
         if icon:
             icon = item_system.item_icon_mod(unit, item, other, icon)
-            surf.blit(icon, (topleft[0] + 2, topleft[1] + 3))
+            surf.blit(icon, (topleft[0] + 2, topleft[1] + 4))
 
         if skill_system.check_enemy(unit, other):
-            game.ui_view.draw_adv_arrows(surf, unit, other, item, other_item, (topleft[0] + 11, topleft[1] + 7))
+            game.ui_view.draw_adv_arrows(surf, unit, other, item, other_item, (topleft[0] + 11, topleft[1] + 8))
 
     def draw_stats(self, surf, stats, topright):
         right, top = topright

@@ -6,11 +6,11 @@ First, go to "File" in the top left corner and select the sacred_stones.ltproj f
 
 Your window should now look like this: 
 
-![firstimage](../uploads/6c5a064b1c2bb8f728b9af6afa2c409c/firstimage.png)
+![firstimage](images/firstimage.png)
 
 Double click on chapter 1 to open the level editor. The right side of the window should now look like this:
 
-![secondimage](../uploads/0d15c9c7ada576b2a3a72122f78bbbb2/secondimage.png)
+![secondimage](images/secondimage.png)
 
 We'll go through each piece of information, starting from the top.
 
@@ -24,11 +24,11 @@ We'll go through each piece of information, starting from the top.
 
 Now that we've gone through these options, click "Select Tilemap". That'll open a window that looks like this:
 
- ![thirdimage](../uploads/dd7d9ba6ddc3e3eb9ed6a2efbf381fc1/thirdimage.png)
+ ![thirdimage](images/thirdimage.png)
 
 Select the image above Chapter 1 and choose "Edit Current Tilemap". That will open the tilemap editor. 
 
-![fourthimage](../uploads/461b7ebc478bf79d2328d2c460f7cdc4/fourthimage.png)
+![fourthimage](images/fourthimage.png)
 
 The window on the left side is your map preview. The box in the top right, currently with base highlighted and checked, is your layer selection. The map in the bottom right is your tileset. Left click on a tile in the tileset and then left click on the map. Voila, the map has changed!
 
@@ -38,13 +38,13 @@ Let's run a quick test. Hit "ok" in the Tilemap Editor, "ok" in the other pop-up
 
 Finally, we'll look at making and placing units. In the top left of the main window, click "Edit" and "Units". This will bring up the Unit editor. 
 
-![fifthimage](../uploads/dcd18023a249b657191321991e7ef3ae/fifthimage.png)
+![fifthimage](images/fifthimage.png)
 
 There's a lot of information here, but most is self explanatory. Try messing around with Eirika's stats or class, and maybe give her a few weapons. Remember, both the character and their class must be able to use a weapon type!
 
 Once you're done hit "Apply" and go back to the level editor. Click the "Units" tab in the bottom right.
 
-![sixthimage](../uploads/f51aac90683af585ffa82fdb5e503e92/sixthimage.png)
+![sixthimage](images/sixthimage.png)
 
 You can see a list of unit icons, names, and items. Each unit has a word in parentheses next to their names, which corresponds to their AI typing. Player units always have None for AI, while units here have a mix of guard and defend. From Meinerieve:
 
@@ -57,13 +57,13 @@ Double clicking on one of these units will show information about them, which is
 
 Finally, let's create a unit. Click the "Create Generic Unit" button at the bottom.
 
-![seventhimage](../uploads/1a7b0529d2365bd4899f23f6964efb72/seventhimage.png)
+![seventhimage](images/seventhimage.png)
 
 You can see a lot of information here, but it's largely the same as the Unit editor. The key difference is that the unit will be able to use any weapon you give them so long as their class can, and that you can't directly change these units' stats. Instead, they take their class average values at their level, plus any difficulty modifiers given to them.
 
 If you click on "Team" you can see four options. Most are self explanatory, but it's worthwhile to highlight enemy2, which are purple units that attack both red, green, and blue units. Anyway, go ahead and make a few, placing them down to block Eirika's path. You'll notice that it saves your last settings each time you go to make a new generic unit, making placing down a whole lot of enemies quite easy!
 
-![eigthimage](../uploads/328e179a20f18a91e775595c01fdd237/eigthimage.png)
+![eigthimage](images/eigthimage.png)
 
 Mwahaha!
 

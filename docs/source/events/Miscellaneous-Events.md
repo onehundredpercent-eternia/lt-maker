@@ -20,7 +20,7 @@ remove_unit;Eirika
 lose_game
 ```
 
-![ExampleDeathEvent](../Images/EventEditorDeathEvent.png)
+![ExampleDeathEvent](images/EventEditorDeathEvent.png)
 
 ## Fight Events
 
@@ -72,7 +72,7 @@ Create an event with the `on_talk` trigger, and write the content of the convers
 
 `unit.nid == 'Seth' and unit2.nid == 'Franz'`
 
-![ExampleTalkEvent](../Images/EventEditorTalkEvent.png)
+![ExampleTalkEvent](images/EventEditorTalkEvent.png)
 
 ## Base Conversations
 
@@ -86,4 +86,4 @@ Create an event with the `on_base_convo` trigger, and write the content of the c
 
 At the end of the base conversation, you can use the `ignore_base_convo` or `remove_base_convo` commands to either gray out the base conversation in the menu, or remove it altogether.
 
-![ExampleBaseEvent](../Images/EventEditorBaseEvent.png)
+![ExampleBaseEvent](images/EventEditorBaseEvent.png)

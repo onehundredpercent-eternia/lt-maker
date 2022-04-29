@@ -2,7 +2,7 @@ from app.resources.resources import RESOURCES
 
 from app.engine.combat.solver import CombatPhaseSolver
 
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, combat_calcs, gui, action, item_system
 from app.engine.health_bar import MapCombatInfo
 from app.engine.animations import MapAnimation
@@ -149,7 +149,7 @@ class MapCombat(SimpleCombat):
                     self.attacker.sprite.change_state('combat_anim')
                 sound_brushes = self.get_from_playback('cast_sound')
                 for brush in sound_brushes:
-                    SOUNDTHREAD.play_sfx(brush[1])
+                    get_sound_thread().play_sfx(brush[1])
 
                 self.state = 'anim'
 
@@ -269,7 +269,7 @@ class MapCombat(SimpleCombat):
                 brush[1].sprite.start_vibrate(166, 200)
             elif brush[0] == 'hit_sound':
                 sound = brush[1]
-                SOUNDTHREAD.play_sfx(sound)
+                get_sound_thread().play_sfx(sound)
             elif brush[0] == 'shake':
                 shake = brush[1]
                 if 'attack_proc' in [brush[0] for brush in self.playback]:

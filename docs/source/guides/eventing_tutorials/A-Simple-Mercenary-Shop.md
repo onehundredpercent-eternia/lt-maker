@@ -14,7 +14,7 @@ First, let's do some preparatory work. We need some data first; what classes sho
 
 In the **Raw Data Editor**, you can write all of these down:
 
-![image](../../uploads/3b5a087f5327389f67f15a6cb49e280e/image.png)
+![image](../images/MercShopRawData.png)
 
 This is just data; it doesn't do anything, but we can access it elsewhere.
 
@@ -46,7 +46,7 @@ choice;MercenaryHireChoice;Hire a merc;{eval:','.join([merc.nid + '|' + merc.Nam
 speak;Eirika;you chose {var:MercenaryHireChoice}
 ```
 
-![merc1](../../uploads/821c53555e391b8993da13d60852de29/merc1.gif)
+![merc1](../images/merc1.gif)
 
 Looking good. But wait; don't we want to know the price and our current money, to see if we can afford it?
 
@@ -79,7 +79,7 @@ Let's break it down:
 
 Let's look at our work:
 
-![merc2](../../uploads/7ea9e7f12768d3e38b2ed38ad20b5b15/merc2.gif)
+![merc2](../images/merc2.gif)
 
 Great success!
 
@@ -97,7 +97,7 @@ Another breakdown:
 4. `funds_display` is the name of the stunning BG you're about to see. Unlike the others, this one is a sprite, not a menu_bg, and therefore doesn't automatically resize itself. Tables and choices support both kinds of bgs.
 5. `FLAG(expression` - what would we do without you?
 
-![image](../../uploads/62c6c68775f85554ad645318425ee590/image.png)
+![image](../images/MercShopMenu.png)
 
 Lookin' good!
 
@@ -128,7 +128,7 @@ choice;MercenaryHireChoice;Hire a merc;{eval:','.join([merc.nid + '|' + merc.Nam
 
 Let's see what happens now:
 
-![merc5](../../uploads/98600a1753ebb704520ba28909510f19/merc5.gif)
+![merc5](../images/merc5.gif)
 
 And we're done.
 

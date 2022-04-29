@@ -62,10 +62,7 @@ class RawDataValidator(EvalValidator):
     tags = ['d', 'data']
 
     def validate(self, text, level):
-        try:
             return text
-        except:
-            return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         text = self.process_arg_text(text)
@@ -95,10 +92,7 @@ class UnitFieldValidator(EvalValidator):
     tags = ['f', 'field']
 
     def validate(self, text, level):
-        try:
             return text
-        except:
-            return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         text = self.process_arg_text(text)
@@ -108,10 +102,48 @@ class UnitFieldValidator(EvalValidator):
         elif level == 1:
             # we already have unit nid
             unit_nid = text.split('.')[0]
+            if unit_nid in ['_unit', '_unit2']:
+                # generic unit, get all keys
+                all_keys = set()
+                for unit in DB.units:
+                    all_keys.update(set([key for (key, _) in unit.fields]))
+                return [(None, key) for key in all_keys]
+            else:
             unit_prefab = DB.units.get(unit_nid)
             if unit_prefab: # get its predefined field keys
                 return [(None, key) for (key, _) in unit_prefab.fields]
         return []
+
+class VarValidator(EvalValidator):
+    desc = "must be a correct reference to an existing game_var or level_var"
+    tags = ['v', 'var']
+
+    def validate(self, text, level):
+        return text
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        return [(None, var_name) for var_name in DB.game_var_slots.keys()]
+
+class UnitField(Validator):
+    desc = "can be nid of any unit field, including new ones"
+
+    def validate(self, text, level):
+        return text
+
+    def valid_entries(self, level: NID, text: str) -> List[Tuple[str, NID]]:
+        all_keys = set()
+        for unit in DB.units:
+            all_keys.update(set([key for (key, _) in unit.fields]))
+        return [(None, key) for key in all_keys]
+
+class GeneralVar(Validator):
+    desc = "can be any nid"
+
+    def validate(self, text, level):
+        return text
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        return [(None, var_name) for var_name in DB.game_var_slots.keys()]
 
 class EventFunction(Validator):
     desc = "must be a valid event function"
@@ -125,9 +157,6 @@ class EventFunction(Validator):
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         valids = [(None, command.nid) for command in event_commands.get_commands()]
         return valids
-
-class Condition(Validator):
-    desc = "must be a valid Python condition to evaluate."
 
 class Expression(Validator):
     desc = "must be a valid Python expression to evaluate."
@@ -147,9 +176,10 @@ class Integer(Validator):
 
 class Float(Validator):
     desc = "Any number with a decimal"
+
     def validate(self, text, level):
         if str_utils.is_float(text):
-            return float(text)
+            return text
         return None
 
     def convert(self, text: str):
@@ -163,7 +193,17 @@ class PositiveInteger(Validator):
             return int(text)
         return None
 
-class PositiveIntegerOrZero(Validator):
+class IntegerList(Validator):
+    desc = "must be a comma-delimited list of integers (ie, `5,7,12`)"
+
+    def validate(self, text, level):
+        text = text.split(',')
+        for t in text:
+            if not str_utils.is_int(t):
+                return None
+        return text
+
+class WholeNumber(Validator):
     desc = "must be a whole number"
 
     def validate(self, text, level):
@@ -182,6 +222,9 @@ class Time(Validator):
         if str_utils.is_int(text):
             return int(text)
         return None
+
+    def convert(self, text: str) -> int:
+        return int(text)
 
 class Music(Validator):
     def validate(self, text, level):
@@ -210,12 +253,15 @@ class PhaseMusic(OptionValidator):
              'player_battle', 'enemy_battle', 'other_battle', 'enemy2_battle']
 
 class Volume(Validator):
-    desc = "A number between 0 and 1 (0 is muted, 1 is highest volume)"
+    desc = "A number between greater than 0 (0 is muted, 1 is current volume)"
 
     def validate(self, text, level):
         if str_utils.is_float(text) and float(text) >= 0:
             return float(text)
         return None
+
+    def convert(self, text: str) -> float:
+        return float(text)
 
 class PortraitNid(Validator):
     def validate(self, text, level):
@@ -279,10 +325,11 @@ class TextPosition(Validator):
     desc = """
 Determines position to place text. Supports either pixels (`x,y`) or the `center` position.
 """
+
     def validate(self, text, level):
         if text in self.valid_positions:
             return text
-        elif ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
+        elif text and ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
             return text
         return None
 
@@ -415,9 +462,6 @@ class PointList(Validator):
 class Speaker(Validator):
     pass  # Any text will do
 
-class Text(Validator):
-    pass  # Any text will do
-
 class Panorama(Validator):
     def validate(self, text, level):
         if text in RESOURCES.panoramas.keys():
@@ -464,7 +508,7 @@ class ShopFlavor(OptionValidator):
     valid = ['armory', 'vendor']
 
 class TableEntryType(OptionValidator):
-    valid = ['type_skill', 'type_base_item', 'type_game_item', 'type_unit', 'type_class', 'type_icon', 'type_portrait']
+    valid = ['type_skill', 'type_base_item', 'type_game_item', 'type_unit', 'type_class', 'type_icon', 'type_portrait', 'type_chibi']
 
 
 class Position(Validator):
@@ -654,6 +698,27 @@ class UniqueUnit(Validator):
         return valids
 
 class GlobalUnit(Validator):
+    desc = "accepts a unit's nid. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`) where appropriate."
+
+    def validate(self, text, level):
+        if level:
+            nids = [u.nid for u in level.units]
+            if text in nids:
+                return text
+        if text in DB.units.keys():
+            return text
+        elif text in ('{unit}', '{unit1}', '{unit2}'):
+            return True
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        valids = [(unit.name, unit.nid) for unit in DB.units.values()]
+        valids.append((None, "{unit}"))
+        valids.append((None, "{unit1}"))
+        valids.append((None, "{unit2}"))
+        return valids
+
+class GlobalUnitOrConvoy(Validator):
     desc = "accepts a unit's nid. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`) or `convoy` where appropriate."
 
     def validate(self, text, level):
@@ -709,6 +774,9 @@ class HAlign(OptionValidator):
 class VAlign(OptionValidator):
     valid = [align.value for align in VAlignment]
 
+class GrowthMethod(OptionValidator):
+    valid = ["random", "fixed", "dynamic"]
+
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
     desc = "specifies the order and type of actions in combat. Valid actions: (`hit1`, `hit2`, `crit1`, `crit2`, `miss1`, `miss2`, `--`, `end`)."
@@ -756,11 +824,11 @@ class ItemList(Validator):
         return None
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(item.name, item.nid) for item in DB.items.values()]
+        valids = [(None, item.nid) for item in DB.items.values()]
         return valids
 
 class StatList(Validator):
-    desc = "accepts a comma-delimited list of pairs of stat nids and stat changes. For example, `STR,2,SPD,-3` to increase STR by 2 and decrease SPD by 3."
+    desc = "accepts a comma-delimited list of pairs of stat nids and stat changes. For example, `STR,2,SPD,-3`."
 
     def validate(self, text, level):
         s_l = text.split(',')
@@ -853,6 +921,7 @@ class SupportRank(Validator):
 
 class Layer(Validator):
     def validate(self, text, level):
+        if level:
         tilemap_prefab = RESOURCES.tilemaps.get(level.tilemap)
         if text in tilemap_prefab.layers.keys():
             return text

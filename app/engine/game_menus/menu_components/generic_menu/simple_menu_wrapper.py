@@ -15,7 +15,7 @@ from app.engine.game_menus.menu_components.generic_menu.simple_menu import \
 from app.engine.game_state import game
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment, convert_align
-from app.engine.icons import get_icon, get_icon_by_nid
+from app.engine.icons import draw_chibi, get_icon, get_icon_by_nid
 from app.engine.objects.unit import UnitObject
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
@@ -85,6 +85,8 @@ class SimpleMenuUI():
             return [self.parse_klass(DB.classes.get(klass_nid), choice_text) for klass_nid, choice_text in split_data]
         elif self._data_type == 'type_portrait':
             return [self.parse_portrait(portrait_nid) for portrait_nid, _ in split_data]
+        elif self._data_type == 'type_chibi':
+            return [self.parse_chibi(chibi_nid) for chibi_nid, _ in split_data]
         elif self._data_type == 'type_icon':
             parsed_data = [(datum.split('-'), choice_text) for datum, choice_text in split_data]
             return [self.parse_custom_icon_data(tup, choice_text) for tup, choice_text in parsed_data]
@@ -142,13 +144,22 @@ class SimpleMenuUI():
             main_portrait = engine.create_surface((96, 80))
         return (main_portrait, "", "")
 
+    def parse_chibi(self, chibi_nid: NID) -> Tuple[engine.Surface, str, str]:
+        chibi_surf = engine.create_surface((32, 32), True)
+        chibi = draw_chibi(chibi_surf, chibi_nid, (0, 0))
+        return (chibi, "", "")
+
     def update(self):
         if self._get_data:
             new_data = self._get_data()
             self.set_data(new_data)
         elif self._data_type == 'type_unit': # we need to reset data to update sprites
             # elif because while not mutually exclusive, we only ever need one call of "set_data"
-            self.set_data(self._data)
+            if self._get_data:
+                new_data = self._get_data()
+            else:
+                new_data = self._data
+            self.set_data(new_data)
         return True
 
     def draw(self, surf):

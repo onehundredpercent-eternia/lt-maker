@@ -1,14 +1,14 @@
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.utilities import utils
 from app.engine import target_system, skill_system
-from app.engine.game_state import game 
+from app.engine.game_state import game
 
 class BlastAOE(ItemComponent):
     nid = 'blast_aoe'
-    desc = "Gives Blast AOE"
-    tag = 'aoe'
+    desc = "Blast extends outwards the specified number of tiles."
+    tag = ItemTags.AOE
 
     expose = Type.Int  # Radius
     value = 1
@@ -42,12 +42,12 @@ class BlastAOE(ItemComponent):
 class EnemyBlastAOE(BlastAOE, ItemComponent):
     nid = 'enemy_blast_aoe'
     desc = "Gives Blast AOE that only hits enemies"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         ranges = set(range(self._get_power(unit)))
         splash = target_system.find_manhattan_spheres(ranges, position[0], position[1])
-        splash = {pos for pos in splash if 0 <= pos[0] < game.tilemap.width and 0 <= pos[1] < game.tilemap.height}
+        splash = {pos for pos in splash if game.board.check_bounds(pos)}
         from app.engine import item_system, skill_system
         if item_system.is_spell(unit, item):
             # spell blast
@@ -72,7 +72,7 @@ class EnemyBlastAOE(BlastAOE, ItemComponent):
 class AllyBlastAOE(BlastAOE, ItemComponent):
     nid = 'ally_blast_aoe'
     desc = "Gives Blast AOE that only hits allies"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         ranges = set(range(self._get_power(unit)))
@@ -86,7 +86,7 @@ class AllyBlastAOE(BlastAOE, ItemComponent):
 class SmartBlastAOE(BlastAOE, ItemComponent):
     nid = 'smart_blast_aoe'
     desc = "Gives Enemy Blast AOE for items that target enemies, and Ally Blast AOE for items that target allies"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         if 'target_ally' in item.components.keys():
@@ -107,7 +107,7 @@ class SmartBlastAOE(BlastAOE, ItemComponent):
 class EquationBlastAOE(BlastAOE, ItemComponent):
     nid = 'equation_blast_aoe'
     desc = "Gives Equation-Sized Blast AOE"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     expose = Type.Equation  # Radius
     value = None
@@ -121,15 +121,15 @@ class EquationBlastAOE(BlastAOE, ItemComponent):
 class AllyBlastEquationAOE(AllyBlastAOE, EquationBlastAOE, ItemComponent):
     nid = 'ally_equation_blast_aoe'
     desc = "Gives Equation-Sized Blast AOE that only hits allies"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     expose = Type.Equation  # Radius
     value = None
 
 class EnemyCleaveAOE(ItemComponent):
     nid = 'enemy_cleave_aoe'
-    desc = "Gives Enemy Cleave AOE"
-    tag = 'aoe'
+    desc = "All enemies within one tile (or diagonal from the user) are affected by this attack's AOE."
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         from app.engine import skill_system
@@ -142,7 +142,7 @@ class EnemyCleaveAOE(ItemComponent):
                          (pos[0] - 1, pos[1] + 1),
                          (pos[0], pos[1] + 1),
                          (pos[0] + 1, pos[1] + 1)}
-        
+
         all_positions = {pos for pos in all_positions if game.tilemap.check_bounds(pos)}
         all_positions.discard(position)
         splash = all_positions
@@ -172,8 +172,8 @@ class EnemyCleaveAOE(ItemComponent):
 
 class AllAlliesAOE(ItemComponent):
     nid = 'all_allies_aoe'
-    desc = "Item affects all allies on the map including self"
-    tag = 'aoe'
+    desc = "Item affects all allies on the map including user"
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         from app.engine import skill_system
@@ -188,7 +188,7 @@ class AllAlliesAOE(ItemComponent):
 class AllAlliesExceptSelfAOE(ItemComponent):
     nid = 'all_allies_except_self_aoe'
     desc = "Item affects all allies on the map except user"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         from app.engine import skill_system
@@ -203,7 +203,7 @@ class AllAlliesExceptSelfAOE(ItemComponent):
 class AllEnemiesAOE(ItemComponent):
     nid = 'all_enemies_aoe'
     desc = "Item affects all enemies on the map"
-    tag = 'aoe'
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         from app.engine import skill_system
@@ -220,8 +220,8 @@ class AllEnemiesAOE(ItemComponent):
 
 class LineAOE(ItemComponent):
     nid = 'line_aoe'
-    desc = "Gives Line AOE"
-    tag = 'aoe'
+    desc = "A line is drawn from the user to the target, affecting each unit within it. Never extends past the target."
+    tag = ItemTags.AOE
 
     def splash(self, unit, item, position) -> tuple:
         splash = set(utils.raytrace(unit.position, position))

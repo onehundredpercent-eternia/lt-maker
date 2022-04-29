@@ -8,7 +8,7 @@ I would like to add personal skills that are gated behind promotions. **For exam
 
 Eventing. The solution is always eventing. Via the `give_skill` event command, we can give skills conditionally to any unit. The event will be as follows.
 
-![image](../../uploads/29410855720b9986fdf49bfcaf1e042e/image.png)
+![image](../images/ConditionalPersonalSkills1.png)
 
 ```
 if;unit.get_field(unit.klass + str(unit.level)) and unit.get_field(unit.klass + str(unit.level)) not in [skill.nid for skill in unit.skills]
@@ -22,10 +22,10 @@ This event is fairly basic. Every time any UNIT levels up, this event will check
 
 Like so (please ignore the debug terminal in the background):
 
-![image](../../uploads/c997225e0b873d94289586a9d8b25cd1/image.png)
+![image](../images/ConditionalPersonalSkills2.png)
 
-![image](../../uploads/5554f7265c321b0082911f934cfbbd28/image.png)
+![image](../images/ConditionalPersonalSkills3.png)
 
-![image](../../uploads/2cfe2f8d04f7ae4733185925f28dfa49/image.png)
+![image](../images/ConditionalPersonalSkills4.png)
 
 Voila!

@@ -1,4 +1,5 @@
-from app.data.item_components import ItemComponent
+from typing import Dict
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine import action, item_funcs
@@ -6,7 +7,8 @@ from app.engine import action, item_funcs
 class Uses(ItemComponent):
     nid = 'uses'
     desc = "Number of uses of item"
-    tag = 'uses'
+    paired_with = ('uses_options',)
+    tag = ItemTags.USES
 
     expose = Type.Int
     value = 1
@@ -26,6 +28,7 @@ class Uses(ItemComponent):
         actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        if item.uses_options.lose_uses_on_miss():
         actions.append(action.SetObjData(item, 'uses', item.data['uses'] - 1))
         actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
 
@@ -36,6 +39,10 @@ class Uses(ItemComponent):
                 action.do(action.RemoveItem(unit, item))
             elif item in game.party.convoy:
                 action.do(action.RemoveItemFromConvoy(item))
+            else:
+                for other_unit in game.get_units_in_party():
+                    if item in other_unit.items:
+                        action.do(action.RemoveItem(other_unit, item))
             return True
         return False
 
@@ -53,8 +60,9 @@ class Uses(ItemComponent):
 
 class ChapterUses(ItemComponent):
     nid = 'c_uses'
-    desc = "Number of uses per chapter for item. (Refreshes after each chapter)"
-    tag = 'uses'
+    desc = "The item’s uses per chapter. The uses recharge to full at chapter end, even if all are used. Do not combine with the uses component."
+    paired_with = ('uses_options',)
+    tag = ItemTags.USES
 
     expose = Type.Int
     value = 1
@@ -74,6 +82,7 @@ class ChapterUses(ItemComponent):
         actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        if item.uses_options.lose_uses_on_miss():
         actions.append(action.SetObjData(item, 'c_uses', item.data['c_uses'] - 1))
         actions.append(action.UpdateRecords('item_use', (unit.nid, item.nid)))
 
@@ -95,10 +104,30 @@ class ChapterUses(ItemComponent):
     def special_sort(self, unit, item):
         return item.data['c_uses']
 
+class UsesOptions(ItemComponent):
+    nid = 'uses_options'
+    desc = 'Additional options for uses'
+    tag = ItemTags.HIDDEN
+
+    expose = (Type.MultipleOptions)
+
+    value = [
+        ['LoseUsesOnMiss (T/F)', 'F', 'Lose uses even on miss']
+    ]
+
+    @property
+    def values(self) -> Dict[str, str]:
+        return {value[0]: value[1] for value in self.value}
+
+    def lose_uses_on_miss(self):
+        if self.values['LoseUsesOnMiss (T/F)'] == 'F':
+            return False
+        return True
+
 class HPCost(ItemComponent):
     nid = 'hp_cost'
-    desc = "Item costs HP to use"
-    tag = 'uses'
+    desc = "Item subtracts the specified amount of HP upon use. If the subtraction would kill the unit the item becomes unusable."
+    tag = ItemTags.USES
 
     expose = Type.Int
     value = 1
@@ -114,8 +143,8 @@ class HPCost(ItemComponent):
 
 class ManaCost(ItemComponent):
     nid = 'mana_cost'
-    desc = "Item costs mana to use"
-    tag = 'uses'
+    desc = "Item subtracts the specified amount of Mana upon use. MANA must be defined in the equations editor. If unit does not have enough mana the item will not be usable."
+    tag = ItemTags.USES
 
     expose = Type.Int
     value = 1
@@ -175,8 +204,8 @@ class EvalManaCost(ItemComponent):
 
 class Cooldown(ItemComponent):
     nid = 'cooldown'
-    desc = "After use, item cannot be used until X turns have passed"
-    tag = 'uses'
+    desc = "The item cannot be used for the specified number of turns. Since timers tick down at the start of the turn, setting cooldown to one will allow the unit to use the item on their next turn."
+    tag = ItemTags.USES
 
     expose = Type.Int
     value = 1
@@ -224,7 +253,7 @@ class Cooldown(ItemComponent):
 class PrfUnit(ItemComponent):
     nid = 'prf_unit'
     desc = 'Item can only be wielded by certain units'
-    tag = 'uses'
+    tag = ItemTags.USES
 
     expose = (Type.List, Type.Unit)
 
@@ -234,7 +263,7 @@ class PrfUnit(ItemComponent):
 class PrfClass(ItemComponent):
     nid = 'prf_class'
     desc = 'Item can only be wielded by certain classes'
-    tag = 'uses'
+    tag = ItemTags.USES
 
     expose = (Type.List, Type.Class)
 
@@ -244,7 +273,7 @@ class PrfClass(ItemComponent):
 class PrfTag(ItemComponent):
     nid = 'prf_tags'
     desc = 'Item can only be wielded by units with certain tags'
-    tag = 'uses'
+    tag = ItemTags.USES
 
     expose = (Type.List, Type.Tag)
 
@@ -254,7 +283,7 @@ class PrfTag(ItemComponent):
 class PrfAffinity(ItemComponent):
     nid = 'prf_affinity'
     desc = 'Item can only be wielded by units with certain affinity'
-    tag = 'uses'
+    tag = ItemTags.USES
 
     expose = (Type.List, Type.Affinity)
 
@@ -263,8 +292,8 @@ class PrfAffinity(ItemComponent):
 
 class Locked(ItemComponent):
     nid = 'locked'
-    desc = 'Item cannot be discarded, traded, or stolen'
-    tag = 'uses'
+    desc = 'Item cannot be taken or dropped from a units inventory. However, the trade command can be used to rearrange its position, and event commands can remove the item.'
+    tag = ItemTags.USES
 
     def locked(self, unit, item) -> bool:
         return True
@@ -275,7 +304,7 @@ class Locked(ItemComponent):
 class Unstealable(ItemComponent):
     nid = 'unstealable'
     desc = 'Item cannot be stolen'
-    tag = 'uses'
+    tag = ItemTags.USES
 
     def unstealable(self, unit, item) -> bool:
         return True

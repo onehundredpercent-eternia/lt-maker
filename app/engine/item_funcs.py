@@ -1,3 +1,5 @@
+import math
+
 from app.data.database import DB
 
 from app.utilities import utils
@@ -30,6 +32,15 @@ def can_use(unit, item) -> bool:
             return True
     return False
 
+def can_repair(unit, item) -> bool:
+    if item.uses and item.data['uses'] < item.data['starting_uses'] and \
+            not item_system.unrepairable(unit, item):
+        return True
+    return False
+
+def has_repair(unit) -> bool:
+    return any(can_repair(unit, item) for item in unit.items)
+
 def buy_price(unit, item):
     value = item_system.buy_price(unit, item)
     if value:
@@ -47,6 +58,14 @@ def sell_price(unit, item):
         return 0
     return int(value)
 
+def repair_price(unit, item):
+    repair_cost = 0
+    if item.uses:
+        charges_used = item.data['starting_uses'] - item.data['uses']
+        cost_per_charge = buy_price(unit, item) / item.data['uses']
+        repair_cost = math.ceil(charges_used * cost_per_charge)
+    return int(repair_cost)
+
 # def can_wield(unit, item) -> bool:
 #     weapon = item_system.is_weapon(unit, item)
 #     spell = item_system.is_weapon(unit, item)
@@ -58,7 +77,7 @@ def sell_price(unit, item):
 #             return False
 #     return True
 
-def create_item(unit, item_nid, droppable=False, parent: ItemObject = None):
+def create_item(unit, item_nid, droppable=False, parent: ItemObject = None) -> ItemObject:
     item_prefab = DB.items.get(item_nid)
     if not item_prefab:
         logging.error("Couldn't find %s" % item_nid)
@@ -99,7 +118,10 @@ def create_items(unit, item_nid_list: list) -> list:
             item_nid = val
             droppable = False
         item = create_item(unit, item_nid, droppable)
+        if item:
         items.append(item)
+        else:
+            logging.error("Cannot find item with nid %s" % item_nid)
     return items
 
 def get_all_items(unit) -> list:
@@ -140,14 +162,15 @@ def inventory_full(unit, item) -> bool:
 
 def get_range(unit, item) -> set:
     min_range, max_range = 0, 0
-    for component in item.components:
+    all_components = item_system.get_all_components(unit, item)
+    for component in all_components:
         if component.defines('minimum_range'):
             min_range = component.minimum_range(unit, item)
             break
     if item._force_max_range is not None:
         max_range = item._force_max_range
     else:
-        for component in item.components:
+        for component in all_components:
             if component.defines('maximum_range'):
                 max_range = component.maximum_range(unit, item)
                 break

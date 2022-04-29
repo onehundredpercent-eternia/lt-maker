@@ -34,6 +34,14 @@ class ItemObject():
         self.subitems = []
         self.parent_item = None
 
+    @property
+    def tags(self) -> set:
+        all_tags = set()
+        for component in self.components:
+            if component.nid == 'item_tags':
+                all_tags |= set(self.components.get('item_tags').value)
+        return all_tags
+
     def change_owner(self, nid):
         self.owner_nid = nid
         for item in self.subitems:
@@ -52,10 +60,12 @@ class ItemObject():
                 for component in item_prefab.components:
                     new_component = ICA.restore_component((component.nid, component.value))
                     components.append(new_component)
-        
+                break
+
         for component in prefab.components:
             new_component = ICA.restore_component((component.nid, component.value))
             components.append(new_component, overwrite=True)
+
         return cls(prefab.nid, prefab.name, prefab.desc, prefab.icon_nid, prefab.icon_index, components)
 
     # If the attribute is not found

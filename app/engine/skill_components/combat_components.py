@@ -1,12 +1,12 @@
 from app.data.database import DB
-from app.data.skill_components import SkillComponent
+from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 from app.engine import equations
 
 class StatChange(SkillComponent):
     nid = 'stat_change'
     desc = "Gives stat bonuses"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = (Type.Dict, Type.Stat)
     value = []
@@ -24,7 +24,7 @@ class StatChange(SkillComponent):
 class StatMultiplier(SkillComponent):
     nid = 'stat_multiplier'
     desc = "Gives stat bonuses"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = (Type.FloatDict, Type.Stat)
     value = []
@@ -35,7 +35,7 @@ class StatMultiplier(SkillComponent):
 class GrowthChange(SkillComponent):
     nid = 'growth_change'
     desc = "Gives growth rate % bonuses"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = (Type.Dict, Type.Stat)
     value = []
@@ -46,7 +46,7 @@ class GrowthChange(SkillComponent):
 class EquationGrowthChange(SkillComponent):
     nid = 'equation_growth_change'
     desc = "Gives growth rate % bonuses equal to chosen equation"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Equation
 
@@ -57,7 +57,7 @@ class EquationGrowthChange(SkillComponent):
 class Damage(SkillComponent):
     nid = 'damage'
     desc = "Gives +X damage"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 3
@@ -68,7 +68,7 @@ class Damage(SkillComponent):
 class EvalDamage(SkillComponent):
     nid = 'eval_damage'
     desc = "Gives +X damage solved using evaluate"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.String
 
@@ -83,7 +83,7 @@ class EvalDamage(SkillComponent):
 class Resist(SkillComponent):
     nid = 'resist'
     desc = "Gives +X damage resist"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 2
@@ -94,7 +94,7 @@ class Resist(SkillComponent):
 class Hit(SkillComponent):
     nid = 'hit'
     desc = "Gives +X accuracy"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 15
@@ -105,7 +105,7 @@ class Hit(SkillComponent):
 class Avoid(SkillComponent):
     nid = 'avoid'
     desc = "Gives +X avoid"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 20
@@ -119,7 +119,7 @@ class Avoid(SkillComponent):
 class Crit(SkillComponent):
     nid = 'crit'
     desc = "Gives +X crit"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 30
@@ -130,7 +130,7 @@ class Crit(SkillComponent):
 class CritAvoid(SkillComponent):
     nid = 'crit_avoid'
     desc = "Gives +X crit avoid"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 10
@@ -141,7 +141,7 @@ class CritAvoid(SkillComponent):
 class AttackSpeed(SkillComponent):
     nid = 'attack_speed'
     desc = "Gives +X attack speed"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 4
@@ -152,7 +152,7 @@ class AttackSpeed(SkillComponent):
 class DefenseSpeed(SkillComponent):
     nid = 'defense_speed'
     desc = "Gives +X defense speed"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Int
     value = 4
@@ -163,7 +163,7 @@ class DefenseSpeed(SkillComponent):
 class DamageMultiplier(SkillComponent):
     nid = 'damage_multiplier'
     desc = "Multiplies damage given by a fraction"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Float
     value = 0.5
@@ -174,7 +174,7 @@ class DamageMultiplier(SkillComponent):
 class DynamicDamageMultiplier(SkillComponent):
     nid = 'dynamic_damage_multiplier'
     desc = "Multiplies damage given by a fraction"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.String
 
@@ -189,7 +189,7 @@ class DynamicDamageMultiplier(SkillComponent):
 class ResistMultiplier(SkillComponent):
     nid = 'resist_multiplier'
     desc = "Multiplies damage taken by a fraction"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Float
     value = 0.5
@@ -200,7 +200,7 @@ class ResistMultiplier(SkillComponent):
 class PCC(SkillComponent):
     nid = 'pcc'
     desc = "Multiplies crit chance by a stat on second strike"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
 
     expose = Type.Stat
 
@@ -211,7 +211,7 @@ class PCC(SkillComponent):
 class PCCStatic(SkillComponent):
     nid = 'pcc_static'
     desc = "Multiplies crit chance by a fixed value on second strike"
-    tag = 'combat'
+    tag = SkillTags.COMBAT
     author = 'BigMood'
 
     expose = Type.Float

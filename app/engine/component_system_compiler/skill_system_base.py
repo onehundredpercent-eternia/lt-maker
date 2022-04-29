@@ -1,3 +1,6 @@
+from app.engine.objects.item import ItemObject
+
+
 class Defaults():
     @staticmethod
     def can_select(unit) -> bool:
@@ -149,7 +152,7 @@ def condition(skill, unit) -> bool:
     return True
 
 def hidden(skill, unit) -> bool:
-    return skill.hidden or (skill.hidden_if_inactive and not condition(skill, unit))
+    return skill.hidden or skill.is_terrain or (skill.hidden_if_inactive and not condition(skill, unit))
 
 def available(unit, item) -> bool:
     """
@@ -168,9 +171,12 @@ def stat_change(unit, stat_nid) -> int:
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('stat_change'):
+                d = component.stat_change(unit)
+                d_bonus = d.get(stat_nid, 0)
+                if d_bonus == 0:
+                    continue
                 if component.ignore_conditional or condition(skill, unit):
-                    d = component.stat_change(unit)
-                    bonus += d.get(stat_nid, 0)
+                    bonus += d_bonus
     return bonus
 
 def stat_change_contribution(unit, stat_nid) -> dict:
@@ -197,6 +203,23 @@ def growth_change(unit, stat_nid) -> int:
                     d = component.growth_change(unit)
                     bonus += d.get(stat_nid, 0)
     return bonus
+
+def unit_sprite_flicker_tint(unit) -> list:
+    flicker = []
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('unit_sprite_flicker_tint'):
+                if component.ignore_conditional or condition(skill, unit):
+                    d = component.unit_sprite_flicker_tint(unit, skill)
+                    flicker.append(d)
+    return flicker
+
+def additional_tags(unit) -> set:
+    new_tags = set()
+    for skill in unit.skills:
+        if skill.has_tags and skill.has_tags.value and condition(skill, unit):
+            new_tags = new_tags | set(skill.has_tags.value)
+    return new_tags
 
 def mana(playback, unit, item, target) -> int:
     mana = 0
@@ -374,3 +397,28 @@ def on_separate(unit, leader):
         for component in skill.components:
             if component.defines('on_separate'):
                 component.on_separate(unit, leader)
+
+item_override_recursion_stack = set()
+def item_override(unit, item: ItemObject):
+    all_override_components = []
+    components_so_far = set()
+    if not unit or not item:
+        return all_override_components
+    for skill in reversed(unit.skills):
+        for component in skill.components:
+            if component.nid == 'item_override':
+                # Conditions for item overrides might rely on e.g.
+                # what item is equipped, which would itself
+                # make an item override call on the same skill.
+                # Therefore, we simply assume - probably safely -
+                # that the skill cannot influence its own condition.
+                if skill.nid not in item_override_recursion_stack:
+                    item_override_recursion_stack.add(skill.nid)
+                    if condition(skill, unit):
+                        new_override_components = list(component.get_components(unit))
+                        new_override_components = [comp for comp in new_override_components if comp.nid not in components_so_far]
+                        components_so_far |= set([comp.nid for comp in new_override_components])
+                        all_override_components += new_override_components
+                    item_override_recursion_stack.remove(skill.nid)
+                break
+    return all_override_components

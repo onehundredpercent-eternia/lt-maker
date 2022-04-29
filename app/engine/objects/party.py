@@ -19,6 +19,10 @@ class PartyObject(Prefab):
             self.convoy = []
         self.bexp = bexp
 
+    @property
+    def items(self):
+        return self.convoy
+
     def save(self):
         return {'nid': self.nid,
                 'name': self.name,

@@ -200,6 +200,7 @@ class UnitObject(Prefab):
         self.current_guard_gauge = 0
 
         # Handle items
+        if is_level_unit:
         items = item_funcs.create_items(self, prefab.starting_items)
         for item in items:
             self.add_item(item)
@@ -299,7 +300,7 @@ class UnitObject(Prefab):
     def get_gauge_inc(self):
         return equations.parser.get_gauge_inc(self)
 
-    def get_field(self, key: str, default: str='FIELD_NOT_DEFINED') -> str:
+    def get_field(self, key: str, default:str = None) -> str:
         if not getattr(self, '_fields'):
             return default
         if key in self._fields:
@@ -386,9 +387,7 @@ class UnitObject(Prefab):
 
     @property
     def tags(self):
-        unit_tags = self._tags
-        class_tags = DB.classes.get(self.klass).tags
-        return unit_tags + class_tags
+        return set(self._tags) | set(DB.classes.get(self.klass).tags) | skill_system.additional_tags(self)
 
     def get_ai(self):
         return skill_system.change_ai(self)

@@ -54,8 +54,9 @@ def compile_item_system():
     for hook in false_priority_hooks:
         func = """
 def %s(unit, item):
+    all_components = get_all_components(unit, item)
     all_true = False
-    for component in item.components:
+    for component in all_components:
         if component.defines('%s'):
             if not component.%s(unit, item):
                 return False
@@ -69,7 +70,8 @@ def %s(unit, item):
     for hook in default_hooks:
         func = """
 def %s(unit, item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('%s'):
             return component.%s(unit, item)
     return Defaults.%s(unit, item)""" \
@@ -80,8 +82,9 @@ def %s(unit, item):
     for hook in simple_target_hooks:
         func = """
 def %s(unit, item, target):
+    all_components = get_all_components(unit, item)
     val = 0
-    for component in item.components:
+    for component in all_components:
         if component.defines('%s'):
             val += component.%s(unit, item, target)
     return val""" \
@@ -92,8 +95,9 @@ def %s(unit, item, target):
     for hook in target_hooks:
         func = """
 def %s(playback, unit, item, target):
+    all_components = get_all_components(unit, item)
     val = 0
-    for component in item.components:
+    for component in all_components:
         if component.defines('%s'):
             val += component.%s(playback, unit, item, target)
     return val""" \
@@ -104,8 +108,9 @@ def %s(playback, unit, item, target):
     for hook in modify_hooks:
         func = """
 def %s(unit, item):
+    all_components = get_all_components(unit, item)
     val = 0
-    for component in item.components:
+    for component in all_components:
         if component.defines('%s'):
             val += component.%s(unit, item)
     return val""" \
@@ -116,8 +121,9 @@ def %s(unit, item):
     for hook in dynamic_hooks:
         func = """
 def %s(unit, item, target, mode, attack_info, base_value):
+    all_components = get_all_components(unit, item)
     val = 0
-    for component in item.components:
+    for component in all_components:
         if component.defines('%s'):
             val += component.%s(unit, item, target, mode, attack_info, base_value)
     return val""" \
@@ -128,7 +134,8 @@ def %s(unit, item, target, mode, attack_info, base_value):
     for hook in event_hooks:
         func = """
 def %s(unit, item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('%s'):
             component.%s(unit, item)
     if item.parent_item:
@@ -142,7 +149,8 @@ def %s(unit, item):
     for hook in combat_event_hooks:
         func = """
 def %s(playback, unit, item, target, mode):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('%s'):
             component.%s(playback, unit, item, target, mode)
     if item.parent_item:
@@ -156,7 +164,8 @@ def %s(playback, unit, item, target, mode):
     for hook in status_event_hooks:
         func = """
 def %s(actions, playback, unit, item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('%s'):
             component.%s(actions, playback, unit, item)
     if item.parent_item:
@@ -170,7 +179,8 @@ def %s(actions, playback, unit, item):
     for hook in aesthetic_combat_hooks:
         func = """
 def %s(unit, item, target, mode):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('%s'):
             return component.%s(unit, item, target, mode)
     return None""" \

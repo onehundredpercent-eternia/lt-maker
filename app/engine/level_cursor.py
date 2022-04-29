@@ -6,14 +6,14 @@ from app.counters import generic3counter
 from app.engine import engine, target_system, image_mods, skill_system
 from app.engine.cursor import BaseCursor
 from app.engine.game_state import GameState
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine.sprites import SPRITES
 from app.utilities.utils import frames2ms, tclamp
 from app.engine.engine import Surface
 
 class LevelCursor(BaseCursor):
     def __init__(self, game: GameState):
-        super().__init__(camera=game.camera, tilemap=game.tilemap)
+        super().__init__(camera=game.camera, game_board=game.board)
         # this is frame-accurate to GBA
         self.cursor_counter = generic3counter(frames2ms(20), frames2ms(2), frames2ms(8))
         self.game = game
@@ -40,7 +40,7 @@ class LevelCursor(BaseCursor):
         return None
 
     def get_bounds(self) -> Tuple[int, int, int, int]:
-        self.tilemap = self.game.tilemap
+        self.game_board = self.game.board
         return super().get_bounds()
 
     def hide(self):
@@ -182,13 +182,13 @@ class LevelCursor(BaseCursor):
         if self.game.highlight.check_in_move(self.position):
             if directions:
                 # If we would move off the current move
-                if ('LEFT' in directions and not INPUT.just_pressed('LEFT') and
+                if ('LEFT' in directions and not get_input_manager().just_pressed('LEFT') and
                         not self.game.highlight.check_in_move((self.position[0] - 1, self.position[1]))) or \
-                        ('RIGHT' in directions and not INPUT.just_pressed('RIGHT') and
+                        ('RIGHT' in directions and not get_input_manager().just_pressed('RIGHT') and
                          not self.game.highlight.check_in_move((self.position[0] + 1, self.position[1]))) or \
-                        ('UP' in directions and not INPUT.just_pressed('UP') and
+                        ('UP' in directions and not get_input_manager().just_pressed('UP') and
                          not self.game.highlight.check_in_move((self.position[0], self.position[1] - 1))) or \
-                        ('DOWN' in directions and not INPUT.just_pressed('DOWN') and
+                        ('DOWN' in directions and not get_input_manager().just_pressed('DOWN') and
                          not self.game.highlight.check_in_move((self.position[0], self.position[1] + 1))):
                     # Then we can just keep going
                     if self.stopped_at_move_border:
@@ -219,12 +219,12 @@ class LevelCursor(BaseCursor):
             self.mouse_mode = False
 
         # Handle mouse
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             self.mouse_mode = True
         if self.mouse_mode:
             # Get the actual mouse position, irrespective if actually used recently
-            mouse_pos = INPUT.get_real_mouse_position()
+            mouse_pos = get_input_manager().get_real_mouse_position()
             if mouse_pos:
                 from_mouse = True
                 new_pos = (mouse_pos[0] - STATWIDTH) // TILEWIDTH, mouse_pos[1] // TILEHEIGHT

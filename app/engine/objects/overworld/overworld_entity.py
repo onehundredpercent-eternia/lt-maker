@@ -110,8 +110,7 @@ class OverworldEntityObject():
             return entity_object
         elif entity_dtype == OverworldEntityTypes.UNIT: # dummy entity
             entity_position = s_dict['position']
-            entity_object = OverworldEntityObject.from_unit_prefab(entity_nid, entity_position, prefab_nid)
-            entity_object.team = s_dict['team']
+            entity_object = OverworldEntityObject.from_unit_prefab(entity_nid, entity_position, prefab_nid, s_dict['team'])
             return entity_object
         else:
             raise TypeError("Unknown OverworldEntityType")

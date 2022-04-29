@@ -451,6 +451,7 @@ class Wait(Action):
         self.unit = unit
         self.action_state = self.unit.get_action_state()
         self.update_fow_action = UpdateFogOfWar(self.unit)
+        self.regions_removed = self.remove_interrupt_regions()
 
     def do(self):
         self.unit.has_moved = True
@@ -460,6 +461,8 @@ class Wait(Action):
         self.unit.current_move = None
         self.unit.sprite.change_state('normal')
         self.update_fow_action.do()
+        for region in self.regions_removed:
+            region.do()
         if game.cursor and game.cursor.cur_unit == self.unit:
             game.cursor.cur_unit = None
         if self.unit.traveler:
@@ -469,6 +472,18 @@ class Wait(Action):
     def reverse(self):
         self.unit.set_action_state(self.action_state)
         self.update_fow_action.reverse()
+        for region in self.regions_removed:
+            region.reverse()
+
+    def remove_interrupt_regions(self):
+        regions_to_remove = []
+        for region in game.level.regions:
+            if self.unit.position and region.contains(self.unit.position) and region.interrupt_move:
+                if region.region_type == 'event':
+                    did_trigger = game.events.trigger(region.sub_nid, self.unit, position=self.unit.position, region=region)
+                if (region.region_type != 'event' or did_trigger) and region.only_once:
+                    regions_to_remove.append(RemoveRegion(region))
+        return regions_to_remove
 
 
 class UpdateFogOfWar(Action):
@@ -1291,13 +1306,13 @@ class ChangeItemDesc(Action):
         self.item.desc = self.old_desc
 
 class AddItemToMultiItem(Action):
-    def __init__(self, unit, item, subitem):
-        self.unit = unit
+    def __init__(self, owner_nid, item, subitem):
+        self.owner_nid = owner_nid
         self.item = item
         self.subitem = subitem
 
     def do(self):
-        self.subitem.owner_nid = self.unit.nid
+        self.subitem.owner_nid = self.owner_nid
         self.item.subitem_uids.append(self.subitem.uid)
         self.item.subitems.append(self.subitem)
         self.subitem.parent_item = self.item
@@ -1309,8 +1324,8 @@ class AddItemToMultiItem(Action):
         self.subitem.parent_item = None
 
 class RemoveItemFromMultiItem(Action):
-    def __init__(self, unit, item, subitem):
-        self.unit = unit
+    def __init__(self, owner_nid, item, subitem):
+        self.owner_nid = owner_nid
         self.item = item
         self.subitem = subitem
 
@@ -1321,7 +1336,7 @@ class RemoveItemFromMultiItem(Action):
         self.subitem.parent_item = None
 
     def reverse(self):
-        self.subitem.owner_nid = self.unit.nid
+        self.subitem.owner_nid = self.owner_nid
         self.item.subitem_uids.append(self.subitem.uid)
         self.item.subitems.append(self.subitem)
         self.subitem.parent_item = self.item
@@ -1428,16 +1443,17 @@ class SetLevel(Action):
 
 
 class AutoLevel(Action):
-    def __init__(self, unit, diff):
+    def __init__(self, unit, diff, growth_method=None):
         self.unit = unit
         self.diff = diff
         self.old_stats = self.unit.stats
         self.old_growth_points = self.unit.growth_points
         self.old_hp = self.unit.get_hp()
         self.old_mana = self.unit.get_mana()
+        self.growth_method = growth_method
 
     def do(self):
-        unit_funcs.auto_level(self.unit, self.diff, self.unit.get_internal_level())
+        unit_funcs.auto_level(self.unit, self.diff, self.unit.get_internal_level(), False, self.growth_method)
 
     def reverse(self):
         self.unit.stats = self.old_stats
@@ -2172,6 +2188,17 @@ class LogDialog(Action):
     def reverse(self):
         game.dialog_log.pop()
 
+class SetGameBoardBounds(Action):
+    def __init__(self, bounds):
+        self.old_bounds = game.board.bounds
+        self.new_bounds = bounds
+
+    def do(self):
+        game.board.set_bounds(*self.new_bounds)
+
+    def reverse(self):
+        game.board.set_bounds(*self.old_bounds)
+
 class AddRegion(Action):
     def __init__(self, region):
         self.region = region
@@ -2358,17 +2385,20 @@ class RemoveMapAnim(Action):
         self.nid = nid
         self.pos = pos
         self.speed_mult = 1
+        self.did_remove = False
 
     def do(self):
         for anim in game.tilemap.animations[:]:
             if anim.nid == self.nid and anim.xy_pos == self.pos:
                 self.speed_mult = anim.speed_adj
                 game.tilemap.animations.remove(anim)
+                self.did_remove = True
 
     def reverse(self):
-        anim = RESOURCES.animations.get(self.nid)
-        anim = animations.MapAnimation(anim, self.pos, loop=True, speed_adj=self.speed_mult)
-        game.tilemap.animations.append(anim)
+        if self.did_remove:
+            anim = RESOURCES.animations.get(self.nid)
+            anim = animations.MapAnimation(anim, self.pos, loop=True, speed_adj=self.speed_mult)
+            game.tilemap.animations.append(anim)
 
 class ChangeObjective(Action):
     def __init__(self, key, string):

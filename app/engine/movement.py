@@ -4,7 +4,7 @@ import app.engine.config as cf
 from app.data.database import DB
 from app.engine import action, engine, equations, skill_system
 from app.engine.game_state import game
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.utilities import utils
 
 
@@ -73,21 +73,21 @@ class MovementManager():
         return mcost
 
     def check_traversable(self, unit_to_move, pos) -> bool:
-        if not game.tilemap.check_bounds(pos):
+        if not game.board.check_bounds(pos):
             return False
         mcost = self.get_mcost(unit_to_move, pos)
         movement = equations.parser.movement(unit_to_move)
         return mcost <= movement
 
     def check_weakly_traversable(self, unit_to_move, pos) -> bool:
-        if not game.tilemap.check_bounds(pos):
+        if not game.board.check_bounds(pos):
             return False
         mcost = self.get_mcost(unit_to_move, pos)
         movement = equations.parser.movement(unit_to_move)
         return mcost <= 5 or mcost <= movement
 
     def check_simple_traversable(self, pos) -> bool:
-        if not game.tilemap.check_bounds(pos):
+        if not game.board.check_bounds(pos):
             return False
         mcost = self.get_mcost(None, pos)
         return mcost <= 5
@@ -117,14 +117,13 @@ class MovementManager():
 
     def done_moving(self, unit_nid, data, unit, surprise=False):
         if surprise:
-            SOUNDTHREAD.play_sfx('Surprise')
+            get_sound_thread().play_sfx('Surprise')
             unit.sprite.change_state('normal')
             unit.sprite.reset()
             action.do(action.HasAttacked(unit))
             if unit.team == 'player':
                 self.surprised = True
                 self.update_surprise()
-        self.remove_interrupt_regions(unit)
 
 
         del self.moving_units[unit_nid]
@@ -148,13 +147,6 @@ class MovementManager():
             if region.contains(unit.position) and region.interrupt_move:
                 return True
         return False
-
-    def remove_interrupt_regions(self, unit):
-        for region in game.level.regions:
-            if region.contains(unit.position) and region.interrupt_move:
-                did_trigger = game.events.trigger(region.sub_nid, unit, position=unit.position, region=region)
-                if did_trigger and region.only_once:
-                    action.do(action.RemoveRegion(region))
 
     def update_surprise(self):
         game.state.clear()
@@ -186,7 +178,6 @@ class MovementManager():
                             self.done_moving(unit_nid, data, unit, surprise=True)
                             if unit.team == 'player':
                                 self.update_surprise()
-                                self.remove_interrupt_regions(unit)
                                 self.surprised = True
                             continue
 

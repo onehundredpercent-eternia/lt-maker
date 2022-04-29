@@ -8,17 +8,17 @@ Since the breakable wall is a unit, it can interact in interesting ways with all
 
 ## Creating a breakable wall
 
-![WallClass](../Images/WallClass.png)
+![WallClass](images/WallClass.png)
 
 1. Create a "Wall" class. The wall class should use an invisible map sprite. The HP of the "Wall" class determines the HP of the resulting breakable wall.
 
-![NoAvoidSkill](../Images/NoAvoidSkill.png)
+![NoAvoidSkill](images/NoAvoidSkill.png)
 
 2. If you want the "Wall" to behave like a GBA wall where it can't be doubled, can't be crit, and cannot avoid attacks, you'll need to give it a skill that gives it a lot of defense speed, a lot of crit avoid and a negative amount of regular avoid.
 
 3. For the chapter you want the wall to be present in, create a generic unit of the "Wall" class for each wall.
 
-![BreakableWallEvent](../Images/BreakableWallEvent.png)
+![BreakableWallEvent](images/BreakableWallEvent.png)
 
 4. Now, you just need to catch the wall's death event and do something when the wall dies.
 

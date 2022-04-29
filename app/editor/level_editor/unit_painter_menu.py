@@ -435,7 +435,7 @@ class LoadUnitDialog(Dialog):
             unit_group.swap(old_nid, self.current.nid)
         # Swap travelers
         for unit in self.window.current_level.units:
-            if unit.starting_traveler == old_nid:
+            if old_nid and unit.starting_traveler == old_nid:
                 unit.starting_traveler = self.current.nid
 
     # def set_current(self, current):

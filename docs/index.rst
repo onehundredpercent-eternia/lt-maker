@@ -18,6 +18,15 @@ Welcome to lt-maker's documentation!
 
    source/getting_started/index
 
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Editor Guides:
+
+   source/editors/Var-Slots-Editor
+   source/editors/Supports
+
+
 .. toctree::
    :maxdepth: 4
    :caption: Events:

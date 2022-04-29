@@ -11,7 +11,7 @@ from app.data.database import DB
 from app.utilities import utils
 
 from app.engine.sprites import SPRITES
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine import engine, image_mods, health_bar, equations
 from app.engine import item_funcs, item_system, skill_system, particles
 import app.engine.config as cf
@@ -44,7 +44,7 @@ class MapSprite():
             if DB.constants.value('dark_sprites'):
                 conversion_dict = player_dark_colors
             else:
-                return map_sprite.standing_image, map_sprite.moving_image
+                conversion_dict = {}
         elif self.team == 'enemy':
             if DB.constants.value('dark_sprites'):
                 conversion_dict = enemy_dark_colors
@@ -104,7 +104,6 @@ class UnitSprite():
         self.offset = [0, 0]
 
         self.flicker = []
-        self.flicker_tint = []
         self.vibrate = []
         self.vibrate_counter = 0
         self.animations = {}
@@ -141,13 +140,6 @@ class UnitSprite():
     def remove_animation(self, animation_nid):
         if animation_nid in self.animations:
             del self.animations[animation_nid]
-
-    def add_flicker_tint(self, color, period, width):
-        self.flicker_tint.append((color, period, width))
-
-    def remove_flicker_tint(self, color, period, width):
-        if (color, period, width) in self.flicker_tint:
-            self.flicker_tint.remove((color, period, width))
 
     def begin_flicker(self, total_time, color, direction='add'):
         self.flicker.append((engine.get_time(), total_time, color, direction, False))
@@ -212,32 +204,32 @@ class UnitSprite():
         elif self.transition_state == 'fade_move':
             self.fake_position = self.unit.position
         elif self.transition_state == 'warp_in':
-            SOUNDTHREAD.play_sfx('WarpEnd')
+            get_sound_thread().play_sfx('WarpEnd')
             self.fake_position = None
             self.add_warp_anim('warp_in')
             self.add_warp_flowers(reverse=True)
         elif self.transition_state == 'warp_out':
-            SOUNDTHREAD.play_sfx('Warp')
+            get_sound_thread().play_sfx('Warp')
             self.fake_position = self.unit.position
             self.add_warp_anim('warp_out')
             self.begin_flicker(self.transition_time, (255, 255, 255))
             self.add_warp_flowers()
         elif self.transition_state == 'warp_move':
-            SOUNDTHREAD.play_sfx('Warp')
+            get_sound_thread().play_sfx('Warp')
             self.fake_position = self.unit.position
             self.add_warp_anim('warp_move')
             self.begin_flicker(self.transition_time, (255, 255, 255))
             self.add_warp_flowers()
         elif self.transition_state == 'swoosh_in':
-            SOUNDTHREAD.play_sfx('Sword Whoosh')
+            get_sound_thread().play_sfx('Sword Whoosh')
             self.fake_position = None
             self.add_swoosh_anim()
         elif self.transition_state == 'swoosh_out':
-            SOUNDTHREAD.play_sfx('Sword Whoosh')
+            get_sound_thread().play_sfx('Sword Whoosh')
             self.fake_position = self.unit.position
             self.add_swoosh_anim(reverse=True)
         elif self.transition_state == 'swoosh_move':
-            SOUNDTHREAD.play_sfx('Sword Whoosh')
+            get_sound_thread().play_sfx('Sword Whoosh')
             self.fake_position = self.unit.position
             self.add_swoosh_anim(reverse=True)
 
@@ -468,9 +460,10 @@ class UnitSprite():
                 color = (0, int(diff * .5), 0)  # Tint image green at magnitude depending on diff
                 image = image_mods.change_color(image.convert_alpha(), color)
 
-        for idx, flicker_tint in enumerate(self.flicker_tint):
-            color, period, width = flicker_tint
-            offset = idx * period / len(self.flicker_tint)
+        flicker_tint = skill_system.unit_sprite_flicker_tint(self.unit)
+        for idx, tint in enumerate(flicker_tint):
+            color, period, width = tint
+            offset = idx * period / len(flicker_tint)
             diff = utils.model_wave(current_time + offset, period, width)
             diff = utils.clamp(diff, 0, 1)
             color = tuple([int(c * diff) for c in color])
@@ -574,6 +567,8 @@ class UnitSprite():
         return surf
 
     def check_draw_hp(self) -> bool:
+        if game.level.roam and DB.constants.value('roam_hide_hp'):
+            return False
         if self.unit.is_dying or self.unit.dead:
             return False
         if (cf.SETTINGS['hp_map_team'] == 'All') or \

@@ -24,13 +24,13 @@ class MapPrefab(Prefab):
             self.terrain_grid_to_update.add(position)
 
     def set(self, pos: tuple, old_terrain, new_terrain):
-        if old_terrain and old_terrain.check_flood_fill:
+        if old_terrain and old_terrain.check_flood_fill and pos not in self.terrain_grid_to_update:
             self._update_flood_fill(pos, old_terrain.check_flood_fill == 'diagonal')  # Need to check flood fill both before and after changing terrain
         self.terrain_grid[pos] = new_terrain.nid
         self.terrain_grid_to_update.add(pos)
         self._update_adjacent(pos)
         self._update_diagonal(pos)
-        if new_terrain.check_flood_fill:
+        if new_terrain.check_flood_fill and pos not in self.terrain_grid_to_update:
             self._update_flood_fill(pos, new_terrain.check_flood_fill == 'diagonal')
 
     def _update_adjacent(self, pos):

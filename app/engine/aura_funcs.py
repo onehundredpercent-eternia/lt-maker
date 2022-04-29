@@ -53,13 +53,25 @@ def propagate_aura(unit, skill, game):
     game.board.reset_aura(skill.subskill)
     aura_range = skill.aura_range.value
     aura_range = set(range(1, aura_range + 1))
-    positions = target_system.get_shell({unit.position}, aura_range, game.tilemap.width, game.tilemap.height)
+    positions = target_system.get_shell({unit.position}, aura_range, game.board.bounds)
     for pos in positions:
         game.board.add_aura(pos, unit, skill.subskill, skill.aura_target.value)
         # Propagate my aura to others
         other = game.board.get_unit(pos)
         if other:
             apply_aura(unit, other, skill.subskill, skill.aura_target.value)
+
+def repopulate_aura(unit, skill, game):
+    """
+    Called only on loading a level in order to
+    re-populate the game.board with the aura connections
+    """
+    game.board.reset_aura(skill.subskill)
+    aura_range = skill.aura_range.value
+    aura_range = set(range(1, aura_range + 1))
+    positions = target_system.get_shell({unit.position}, aura_range, game.board.bounds)
+    for pos in positions:
+        game.board.add_aura(pos, unit, skill.subskill, skill.aura_target.value)
 
 def release_aura(unit, skill, game):
     for pos in list(game.board.get_aura_positions(skill.subskill)):

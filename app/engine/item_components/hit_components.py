@@ -2,7 +2,7 @@ from app.utilities import utils
 
 from app.data.database import DB
 
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine import action, combat_calcs, equations, banner
@@ -11,8 +11,8 @@ from app.engine.game_state import game
 
 class PermanentStatChange(ItemComponent):
     nid = 'permanent_stat_change'
-    desc = "Item changes target's stats on hit."
-    tag = 'special'
+    desc = "Using this item permanently changes the stats of the target in the specified ways. The target and user are often the same unit (think of normal FE stat boosters)."
+    tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
 
@@ -29,7 +29,7 @@ class PermanentStatChange(ItemComponent):
         if not defender:
             return False
         return self._target_restrict(defender)
-        
+
     def simple_target_restrict(self, unit, item):
         return self._target_restrict(unit)
 
@@ -58,8 +58,8 @@ class PermanentStatChange(ItemComponent):
 
 class PermanentGrowthChange(ItemComponent):
     nid = 'permanent_growth_change'
-    desc = "Item changes target's growths on hit"
-    tag = 'special'
+    desc = "Using this item permanently changes the growth values of the target in the specified ways."
+    tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.Stat)
 
@@ -70,8 +70,8 @@ class PermanentGrowthChange(ItemComponent):
 
 class WexpChange(ItemComponent):
     nid = 'wexp_change'
-    desc = "Item changes target's wexp on hit"
-    tag = 'special'
+    desc = "Using this item permanently changes the WEXP of the target. Can specify individual amounts for different weapon types. Useful for Arms Scroll."
+    tag = ItemTags.SPECIAL
 
     expose = (Type.Dict, Type.WeaponType)
 
@@ -83,8 +83,8 @@ class WexpChange(ItemComponent):
 
 class FatigueOnHit(ItemComponent):
     nid = 'fatigue_on_hit'
-    desc = "Item changes target's fatigue on hit"
-    tag = 'special'
+    desc = "If fatigue is enabled, increases the amount of fatigue a target suffers when hit by this item. Can be negative in order to remove fatigue."
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -108,8 +108,8 @@ def ai_status_priority(unit, target, item, move, status_nid) -> float:
 
 class StatusOnHit(ItemComponent):
     nid = 'status_on_hit'
-    desc = "Item gives status to target when it hits"
-    tag = 'special'
+    desc = "Target gains the specified status on hit. Applies instantly, potentially causing values to change mid-combat."
+    tag = ItemTags.SPECIAL
 
     expose = Type.Skill  # Nid
 
@@ -125,7 +125,7 @@ class StatusOnHit(ItemComponent):
 class StatusesOnHit(ItemComponent):
     nid = 'statuses_on_hit'
     desc = "Item gives statuses to target when it hits"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = 'BigMood'
 
     expose = (Type.List, Type.Skill)  # Nid
@@ -145,8 +145,8 @@ class StatusesOnHit(ItemComponent):
 
 class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
     nid = 'status_after_combat_on_hit'
-    desc = "Item gives status to target after it hits"
-    tag = 'special'
+    desc = "If the target is hit they gain the specified status at the end of combat. Prevents changes being applied mid-combat."
+    tag = ItemTags.SPECIAL
 
     expose = Type.Skill  # Nid
 
@@ -168,7 +168,7 @@ class StatusAfterCombatOnHit(StatusOnHit, ItemComponent):
 class Shove(ItemComponent):
     nid = 'shove'
     desc = "Item shoves target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -180,7 +180,7 @@ class Shove(ItemComponent):
                         unit_to_move.position[1] + offset_y * magnitude)
 
         mcost = game.movement.get_mcost(unit_to_move, new_position)
-        if game.tilemap.check_bounds(new_position) and \
+        if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
                 mcost <= equations.parser.movement(unit_to_move):
             return new_position
@@ -196,7 +196,7 @@ class Shove(ItemComponent):
 class ShoveOnEndCombat(Shove):
     nid = 'shove_on_end_combat'
     desc = "Item shoves target at the end of combat"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -209,8 +209,8 @@ class ShoveOnEndCombat(Shove):
 
 class ShoveTargetRestrict(Shove, ItemComponent):
     nid = 'shove_target_restrict'
-    desc = "Target restriction for Shove"
-    tag = 'special'
+    desc = "Works the same as shove but will not allow the item to be selected if the action cannot be performed."
+    tag = ItemTags.SPECIAL
 
     expose = Type.Int
     value = 1
@@ -236,7 +236,7 @@ class ShoveTargetRestrict(Shove, ItemComponent):
 class Swap(ItemComponent):
     nid = 'swap'
     desc = "Item swaps user with target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         if not skill_system.ignore_forced_movement(unit) and not skill_system.ignore_forced_movement(target):
@@ -246,7 +246,7 @@ class Swap(ItemComponent):
 class Pivot(ItemComponent):
     nid = 'pivot'
     desc = "User moves to other side of target on hit."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -259,7 +259,7 @@ class Pivot(ItemComponent):
                         anchor_pos[1] + offset_y * -magnitude)
 
         mcost = game.movement.get_mcost(unit_to_move, new_position)
-        if game.tilemap.check_bounds(new_position) and \
+        if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
                 mcost <= equations.parser.movement(unit_to_move):
             return new_position
@@ -275,7 +275,7 @@ class Pivot(ItemComponent):
 class PivotTargetRestrict(Pivot, ItemComponent):
     nid = 'pivot_target_restrict'
     desc = "Suppresses the Pivot command when it would be invalid."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -302,7 +302,7 @@ class PivotTargetRestrict(Pivot, ItemComponent):
 class DrawBack(ItemComponent):
     nid = 'draw_back'
     desc = "Item moves both user and target back on hit."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -319,7 +319,7 @@ class DrawBack(ItemComponent):
         mcost_user = game.movement.get_mcost(user, new_position_user)
         mcost_target = game.movement.get_mcost(target, new_position_target)
 
-        if game.tilemap.check_bounds(new_position_user) and \
+        if game.board.check_bounds(new_position_user) and \
                 not game.board.get_unit(new_position_user) and \
                 mcost_user <= equations.parser.movement(user) and mcost_target <= equations.parser.movement(target):
             return new_position_user, new_position_target
@@ -337,7 +337,7 @@ class DrawBack(ItemComponent):
 class DrawBackTargetRestrict(DrawBack, ItemComponent):
     nid = 'draw_back_target_restrict'
     desc = "Suppresses the Draw Back command when it would be invalid."
-    tag = 'special'
+    tag = ItemTags.SPECIAL
     author = "Lord Tweed"
 
     expose = Type.Int
@@ -365,7 +365,7 @@ class DrawBackTargetRestrict(DrawBack, ItemComponent):
 class Steal(ItemComponent):
     nid = 'steal'
     desc = "Steal any unequipped item from target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     _did_steal = False
 
@@ -434,7 +434,7 @@ class Steal(ItemComponent):
 class GBASteal(Steal, ItemComponent):
     nid = 'gba_steal'
     desc = "Steal any non-weapon, non-spell from target on hit"
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     def item_restrict(self, unit, item, defender, def_item) -> bool:
         if item_system.unstealable(defender, def_item):
@@ -447,8 +447,8 @@ class GBASteal(Steal, ItemComponent):
 
 class EventOnHit(ItemComponent):
     nid = 'event_on_hit'
-    desc = "Calls event on hit"
-    tag = 'special'
+    desc = "The selected event plays before a hit, if the unit will hit with this item. The event is triggered with args (unit1=attacking unit, unit2=target, item=item, position=attacking unit's position, region=targeted position)"
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
@@ -459,8 +459,8 @@ class EventOnHit(ItemComponent):
 
 class EventAfterCombat(ItemComponent):
     nid = 'event_after_combat'
-    desc = "Item calls an event after hit"
-    tag = 'special'
+    desc = "The selected event plays at the end of combat so long as an attack in combat hit."
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
@@ -480,7 +480,7 @@ class EventAfterCombat(ItemComponent):
 class EventOnUse(ItemComponent):
     nid = 'event_on_use'
     desc = 'Item calls an event on use, before any effects are played'
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
@@ -492,14 +492,17 @@ class EventOnUse(ItemComponent):
 class EventAfterUse(ItemComponent):
     nid = 'event_after_use'
     desc = 'Item calls an event after use'
-    tag = 'special'
+    tag = ItemTags.SPECIAL
 
     expose = Type.Event
 
+    _target_pos = None
+
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        self.target_pos = target_pos
+        self._target_pos = target_pos
 
     def end_combat(self, playback, unit, item, target, mode):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=self.target_pos)
+            game.events.trigger_specific_event(event_prefab.nid, unit=unit, unit2=target, item=item, position=unit.position, region=self._target_pos)
+        self._target_pos = None

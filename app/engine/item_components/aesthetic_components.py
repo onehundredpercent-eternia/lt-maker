@@ -1,11 +1,11 @@
 from app.engine.fonts import NORMAL_FONT_COLORS
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 class MapHitAddBlend(ItemComponent):
     nid = 'map_hit_add_blend'
     desc = "Changes the color that appears on the unit when hit -- Use to make brighter"
-    tag = 'aesthetic'
+    tag = ItemTags.AESTHETIC
 
     expose = Type.Color3
     value = (255, 255, 255)
@@ -16,7 +16,7 @@ class MapHitAddBlend(ItemComponent):
 class MapHitSubBlend(ItemComponent):
     nid = 'map_hit_sub_blend'
     desc = "Changes the color that appears on the unit when hit -- Use to make darker"
-    tag = 'aesthetic'
+    tag = ItemTags.AESTHETIC
 
     expose = Type.Color3
     value = (0, 0, 0)
@@ -26,8 +26,8 @@ class MapHitSubBlend(ItemComponent):
 
 class MapHitSFX(ItemComponent):
     nid = 'map_hit_sfx'
-    desc = "Changes the sound the item will make on hit"
-    tag = 'aesthetic'
+    desc = "When the target is hit by this item the selected sound is played."
+    tag = ItemTags.AESTHETIC
 
     expose = Type.Sound
     value = 'Attack Hit 1'
@@ -37,8 +37,8 @@ class MapHitSFX(ItemComponent):
 
 class MapCastSFX(ItemComponent):
     nid = 'map_cast_sfx'
-    desc = "Adds a sound to the item on cast"
-    tag = 'aesthetic'
+    desc = "When item is used the selected sound is played."
+    tag = ItemTags.AESTHETIC
 
     expose = Type.Sound
     value = 'Attack Hit 1'
@@ -51,8 +51,8 @@ class MapCastSFX(ItemComponent):
 
 class MapCastAnim(ItemComponent):
     nid = 'map_cast_anim'
-    desc = "Adds a map animation to the item on cast"
-    tag = 'aesthetic'
+    desc = "Adds a specific animation effect when the item is used. Relevant in map combat situations."
+    tag = ItemTags.AESTHETIC
 
     expose = Type.MapAnimation
 
@@ -64,8 +64,8 @@ class MapCastAnim(ItemComponent):
 
 class BattleCastAnim(ItemComponent):
     nid = 'battle_cast_anim'
-    desc = "Set a specific effect animation to the item in battle"
-    tag = 'aesthetic'
+    desc = "Adds a specific animation effect when the item is used. This does not change the battle animation used, think instead of the spell's effect."
+    tag = ItemTags.AESTHETIC
 
     expose = Type.EffectAnimation
 
@@ -75,7 +75,7 @@ class BattleCastAnim(ItemComponent):
 class BattleAnimationMusic(ItemComponent):
     nid = 'battle_animation_music'
     desc = "Uses custom battle music"
-    tag = 'aesthetic'
+    tag = ItemTags.AESTHETIC
 
     expose = Type.Music
     value = None
@@ -83,10 +83,10 @@ class BattleAnimationMusic(ItemComponent):
     def battle_music(self, unit, item, target, mode):
         return self.value
 
-class NoMapCombatDispla(ItemComponent):
+class NoMapCombatDisplay(ItemComponent):
     nid = 'no_map_hp_display'
     desc = "Item does not show full map hp display when used"
-    tag = 'base'
+    tag = ItemTags.BASE
 
     def no_map_hp_display(self, unit, item):
         return True
@@ -94,7 +94,7 @@ class NoMapCombatDispla(ItemComponent):
 class PreCombatEffect(ItemComponent):
     nid = 'pre_combat_effect'
     desc = "Item plays a combat effect right before combat."
-    tag = 'aesthetic'
+    tag = ItemTags.AESTHETIC
 
     expose = Type.EffectAnimation
 
@@ -103,16 +103,16 @@ class PreCombatEffect(ItemComponent):
 
 class Warning(ItemComponent):
     nid = 'warning'
-    desc = "Yellow warning sign appears above wielder's head"
-    tag = 'aesthetic'
+    desc = "A yellow exclamation mark appears above the wielder's head. Often used for killing weapons."
+    tag = ItemTags.AESTHETIC
 
     def warning(self, unit, item, target) -> bool:
         return True
 
 class EvalWarning(ItemComponent):
     nid = 'eval_warning'
-    desc = "Yellow warning sign appears above wielder's head if current unit meets eval"
-    tag = 'aesthetic'
+    desc = "A red exclamation mark appears above the wielder’s head if the selected unit matches the evaluated string. Often used for effective weapons."
+    tag = ItemTags.AESTHETIC
 
     expose = Type.String
     value = 'True'
@@ -129,7 +129,7 @@ class EvalWarning(ItemComponent):
 class TextColor(ItemComponent):
     nid = 'text_color'
     desc = 'Special color for item text.'
-    tag = 'aesthetic'
+    tag = ItemTags.AESTHETIC
 
     expose = (Type.MultipleChoice, NORMAL_FONT_COLORS)
     value = 'white'

@@ -447,7 +447,53 @@ class ValueItemOption(ItemOption):
                 value_color = 'blue'
             else:
                 value_string = '--'
+        FONT[main_font].blit_right(value_string, surf, (x + self.width() - 6, y), value_color)
+
+class RepairValueItemOption(ValueItemOption):
+    def draw(self, surf, x, y):
+        icon = icons.get_icon(self.item)
+        if icon:
+            surf.blit(icon, (x + 2, y))
+        main_color, uses_color = self.get_color()
+        main_font = self.font
+        width = FONT[main_font].width(self.item.name)
+        if width > 60:
+            main_font = 'narrow'
+        FONT[main_font].blit(self.item.name, surf, (x + 20, y), main_color)
+
+        uses_string = '--'
+        if self.item.data.get('uses') is not None:
+            uses_string = str(self.item.data['uses'])
+        FONT[main_font].blit_right(uses_string, surf, (x + 100, y), main_color)
+
+        value_color = 'grey'
+        value_string = '--'
+        owner = game.get_unit(self.item.owner_nid)
+        value = item_funcs.repair_price(owner, self.item)
+        if value:
+            value_string = str(value)
+            if value < game.get_money():
+                value_color = 'blue'
         FONT[main_font].blit_right(value_string, surf, (x + self.width() - 10, y), value_color)
+
+class StockValueItemOption(ValueItemOption):
+    def __init__(self, idx, item, disp_value, stock):
+        super().__init__(idx, item, disp_value)
+        self.stock = stock
+
+    def width(self):
+        return 168
+
+    def draw(self, surf, x, y):
+        super().draw(surf, x, y)
+
+        main_color, uses_color = self.get_color()
+        main_font = self.font
+
+        stock_string = '--'
+        if self.stock >= 0:
+            stock_string = str(self.stock)
+        FONT[main_font].blit_right(stock_string, surf, (x + 128, y), main_color)
 
 class UnitOption(BasicOption):
     def __init__(self, idx, unit):

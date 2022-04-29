@@ -12,6 +12,7 @@ class TextEvaluator():
         self.game: GameState = game
         self.unit = unit
         self.unit2 = unit2
+        self.created_unit = None
         self.item = item
         self.position = position
         self.region = region

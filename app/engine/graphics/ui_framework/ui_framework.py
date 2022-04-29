@@ -152,7 +152,8 @@ class ComponentProperties():
             self._parent_pointer._recalculate_cached_dimensions_from_props()
 
         try:
-            self._parent_pointer._should_redraw = _should_redraw
+            if _should_redraw:
+                self._parent_pointer._should_redraw = True
         except: # probably hasn't been initialized yet
             pass
 

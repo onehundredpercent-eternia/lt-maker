@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.data import raw_data
 
 import random
 import time
@@ -64,7 +65,7 @@ class GameState():
         self.unlocked_lore: List[NID] = []
         self.dialog_log: DialogLog = None
         self.already_triggered_events: List[NID] = []
-        self.market_items: set = []
+        self.market_items: Dict[NID, int] = {}  # Any negative number is infinite stock
 
         # global controllers
         self.supports: supports.SupportController = None
@@ -96,7 +97,7 @@ class GameState():
         self.stat_screen: stat_screen.StatScreen = None
         self.combat_instance: List[SimpleCombat] = []
         self.exp_instance: List[Tuple[UnitObject, int, promotion.PromotionState, str]] = []
-        self.mana_instance = []
+        self.mana_instance: List[Tuple[UnitObject, int]] = []
         self.ai: ai_controller.AIController = None
         self.overworld_controller: OverworldManager = None
 
@@ -167,7 +168,7 @@ class GameState():
         self.supports = supports.SupportController()
         self.records = records.Recordkeeper()
         self.speak_styles = speak_style.SpeakStyleLibrary()
-        self.market_items = set()
+        self.market_items = {}
         self.unlocked_lore = []
         from app.engine.dialog_log import DialogLog
         self.dialog_log = DialogLog()
@@ -328,7 +329,7 @@ class GameState():
         return s_dict, meta_dict
 
     def load(self, s_dict):
-        from app.engine import action, records, save, supports, turnwheel, dialog_log
+        from app.engine import action, aura_funcs, records, save, supports, turnwheel, dialog_log
         from app.engine.objects.difficulty_mode import DifficultyModeObject
         from app.engine.objects.item import ItemObject
         from app.engine.objects.level import LevelObject
@@ -377,7 +378,7 @@ class GameState():
                 subskill.parent_skill = skill
 
         self.parties = {party_data['nid']: PartyObject.restore(party_data) for party_data in s_dict['parties']}
-        self.market_items = s_dict.get('market_items', set())
+        self.market_items = s_dict.get('market_items', {})
         self.unlocked_lore = s_dict.get('unlocked_lore', [])
         self.dialog_log = dialog_log.DialogLog.restore(s_dict.get('dialog_log', []))
 
@@ -424,6 +425,9 @@ class GameState():
             for unit in self.units:
                 if unit.position:
                     self.board.set_unit(unit.position, unit)
+                    for skill in unit.skills:
+                        if skill.aura:
+                            aura_funcs.repopulate_aura(unit, skill, self)
                     self.boundary.arrive(unit)
                     action.UpdateFogOfWar(unit).execute()
 
@@ -449,6 +453,7 @@ class GameState():
                 unit.traveler = None
                 action.execute(action.RemoveSkill(unit, 'Rescue'))
             unit.set_hp(1000)  # Set to full health
+            unit.set_guard_gauge(0) # Remove all guard gauge
             if DB.constants.value('reset_mana'):
                 unit.set_mana(1000)  # Set to full mana
             unit.position = None
@@ -618,7 +623,9 @@ class GameState():
         self.region_registry[region.nid] = region
 
     def get_data(self, raw_data_nid):
+        if str(raw_data_nid) in DB.raw_data.keys():
         return DB.raw_data.get(str(raw_data_nid)).value
+        return None
 
     def get_unit(self, unit_nid):
         """

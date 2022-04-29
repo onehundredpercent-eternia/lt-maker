@@ -1,4 +1,8 @@
-# Attribute Components
+# Skill Component Dictionary
+
+The item components in this dictionary are broken down by icon going from left to right, with each icon's aspects being explained top to bottom.
+
+## Attribute Components
 
 | Component | Description |
 | ------ | ------ |
@@ -11,7 +15,7 @@
 | **Negate** |  Negates all effective damage. |
 | **Negate Tags** |  Negates effective damage against the specified tags. For example, to recreate Iote's shield, we would select the "Flying" tag. |
 
-# Base Components
+## Base Components
 
 | Component | Description |
 | ------ | ------ |
@@ -32,7 +36,7 @@
 | **Decreasing Sight Range Bonus** |  Unit can illuminate additional spaces when Fog of War is active. This bonus lowers by 1 every turn. |
 | **Ignore Fatigue** |  The affected unit will not accumulate Fatigue. |
 
-# Movement Components
+## Movement Components
 
 | Component | Description |
 | ------ | ------ |
@@ -46,7 +50,7 @@
 | **Grounded** | Unit cannot be forcibly moved such as through shove or reposition. |
 | **No Attack After Move** | Unit can either move or attack, but not both. |
 
-# Combat Components
+## Combat Components
 
 | Component | Description |
 | ------ | ------ |
@@ -68,7 +72,7 @@
 | **Resist Multiplier** | Multiplies damage taken by the specified decimal number. |
 | **PCC** | Multiplies critical chance by the chosen stat on any strike after the first. |
 
-# Advanced Combat Components
+## Advanced Combat Components
 
 | Component | Description |
 | ------ | ------ |

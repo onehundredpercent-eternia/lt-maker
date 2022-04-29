@@ -102,11 +102,19 @@ class Defaults():
     def text_color(unit, item) -> str:
         return None
 
+def get_all_components(unit, item) -> list:
+    from app.engine import skill_system
+    override_components = skill_system.item_override(unit, item)
+    override_component_nids = [c.nid for c in override_components]
+    all_components = override_components + [c for c in item.components if c.nid not in override_component_nids]
+    return all_components
+
 def available(unit, item) -> bool:
     """
     If any hook reports false, then it is false
     """
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('available'):
             if not component.available(unit, item):
                 return False
@@ -119,7 +127,8 @@ def available(unit, item) -> bool:
 
 def stat_change(unit, item, stat_nid) -> int:
     bonus = 0
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('stat_change'):
             d = component.stat_change(unit)
             bonus += d.get(stat_nid, 0)
@@ -127,7 +136,8 @@ def stat_change(unit, item, stat_nid) -> int:
 
 def stat_change_contribution(unit, item, stat_nid) -> list:
     contribution = {}
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('stat_change'):
             d = component.stat_change(unit)
             val = d.get(stat_nid, 0)
@@ -142,7 +152,8 @@ def is_broken(unit, item) -> bool:
     """
     If any hook reports true, then it is true
     """
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('is_broken'):
             if component.is_broken(unit, item):
                 return True
@@ -155,7 +166,8 @@ def is_broken(unit, item) -> bool:
 
 def on_broken(unit, item) -> bool:
     alert = False
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('on_broken'):
             if component.on_broken(unit, item):
                 alert = True
@@ -168,14 +180,16 @@ def on_broken(unit, item) -> bool:
 
 def valid_targets(unit, item) -> set:
     targets = set()
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('valid_targets'):
             targets |= component.valid_targets(unit, item)
     return targets
 
 def ai_targets(unit, item) -> set:
     targets = set()
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('ai_targets'):
             if targets:  # If we already have targets, just make them smaller
                 targets &= component.ai_targets(unit, item)
@@ -184,7 +198,8 @@ def ai_targets(unit, item) -> set:
     return targets
 
 def target_restrict(unit, item, def_pos, splash) -> bool:
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('target_restrict'):
             if not component.target_restrict(unit, item, def_pos, splash):
                 return False
@@ -193,7 +208,8 @@ def target_restrict(unit, item, def_pos, splash) -> bool:
 def range_restrict(unit, item) -> Tuple[Set, bool]:
     restricted_range = set()
     any_defined = False
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('range_restrict'):
             any_defined = True
             restricted_range |= component.range_restrict(unit, item)
@@ -203,7 +219,8 @@ def range_restrict(unit, item) -> Tuple[Set, bool]:
         return None
 
 def item_restrict(unit, item, defender, def_item) -> bool:
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('item_restrict'):
             if not component.item_restrict(unit, item, defender, def_item):
                 return False
@@ -212,7 +229,8 @@ def item_restrict(unit, item, defender, def_item) -> bool:
 def ai_priority(unit, item, target, move) -> float:
     custom_ai_flag: bool = False
     ai_priority = 0
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('ai_priority'):
             custom_ai_flag = True
             ai_priority += component.ai_priority(unit, item, target, move)
@@ -228,7 +246,8 @@ def splash(unit, item, position) -> tuple:
     """
     main_target = []
     splash = []
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('splash'):
             new_target, new_splash = component.splash(unit, item, position)
             main_target.append(new_target)
@@ -256,7 +275,8 @@ def splash(unit, item, position) -> tuple:
 
 def splash_positions(unit, item, position) -> set:
     positions = set()
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('splash_positions'):
             positions |= component.splash_positions(unit, item, position)
     # DEFAULT
@@ -279,7 +299,8 @@ def find_hp(actions, target):
     return starting_hp
 
 def after_hit(actions, playback, unit, item, target, mode, attack_info):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('after_hit'):
             component.after_hit(actions, playback, unit, item, target, mode, attack_info)
     if item.parent_item:
@@ -288,7 +309,8 @@ def after_hit(actions, playback, unit, item, target, mode, attack_info):
                 component.after_hit(actions, playback, unit, item.parent_item, target, mode, attack_info)
 
 def on_hit(actions, playback, unit, item, target, target_pos, mode, attack_info, first_item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('on_hit'):
             component.on_hit(actions, playback, unit, item, target, target_pos, mode, attack_info)
     if item.parent_item and first_item:
@@ -309,7 +331,8 @@ def on_hit(actions, playback, unit, item, target, target_pos, mode, attack_info,
         playback.append(('unit_tint_add', target, (255, 255, 255)))
 
 def on_crit(actions, playback, unit, item, target, target_pos, mode, attack_info, first_item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('on_crit'):
             component.on_crit(actions, playback, unit, item, target, target_pos, mode, attack_info)
         elif component.defines('on_hit'):
@@ -334,7 +357,8 @@ def on_crit(actions, playback, unit, item, target, target_pos, mode, attack_info
             playback.append(('crit_tint', target, (255, 255, 255)))
 
 def on_glancing_hit(actions, playback, unit, item, target, target_pos, mode, attack_info, first_item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('on_glancing_hit'):
             component.on_glancing_hit(actions, playback, unit, item, target, target_pos, mode, attack_info)
         elif component.defines('on_hit'):
@@ -359,7 +383,8 @@ def on_glancing_hit(actions, playback, unit, item, target, target_pos, mode, att
         playback.append(('unit_tint_add', target, (255, 255, 255)))
 
 def on_miss(actions, playback, unit, item, target, target_pos, mode, attack_info, first_item):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('on_miss'):
             component.on_miss(actions, playback, unit, item, target, target_pos, mode, attack_info)
     if item.parent_item and first_item:
@@ -372,13 +397,15 @@ def on_miss(actions, playback, unit, item, target, target_pos, mode, attack_info
     playback.append(('hit_anim', 'MapMiss', target))
 
 def item_icon_mod(unit, item, target, sprite):
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('item_icon_mod'):
             sprite = component.item_icon_mod(unit, item, target, sprite)
     return sprite
 
 def can_unlock(unit, item, region) -> bool:
-    for component in item.components:
+    all_components = get_all_components(unit, item)
+    for component in all_components:
         if component.defines('can_unlock'):
             if component.can_unlock(unit, item, region):
                 return True

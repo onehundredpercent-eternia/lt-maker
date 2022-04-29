@@ -34,8 +34,8 @@ class Banner():
             self.time_to_start = engine.get_time()
             # play sound
             if self.sound:
-                from app.engine.sound import SOUNDTHREAD
-                SOUNDTHREAD.play_sfx(self.sound)
+                from app.engine.sound import get_sound_thread
+                get_sound_thread().play_sfx(self.sound)
         if engine.get_time() - self.time_to_start > self.time_to_wait:
             self.remove_flag = True
 
@@ -53,11 +53,11 @@ class Banner():
             self.surf = image_mods.make_translucent(self.surf, .1)
 
         bg_surf = self.surf.copy()
-        
+
         FONT['text'].blit(self.text, bg_surf, (6, self.size[1]//2 - self.font_height//2 + 3))
 
         self.draw_icon(bg_surf)
-        
+
         engine.blit_center(surf, bg_surf)
         return surf
 
@@ -166,7 +166,7 @@ class CustomIcon(Banner):
         self.item = icon
         self.figure_out_size()
         self.sound = sound
-    
+
     def figure_out_size(self):
         self.length = FONT['text'].width(self.text)
         self.length += 16
@@ -174,14 +174,14 @@ class CustomIcon(Banner):
         self.length += (10 if self.item else 0)
         self.font_height = 16
         self.size = self.length, 24
-    
+
     def draw_icon(self, surf):
         if self.item:
             if isinstance(self.item, skills.SkillPrefab):
                 icons.draw_skill(surf, self.item, (2, 7), simple=True)
             elif isinstance(self.item, items.ItemPrefab):
                 icons.draw_item(surf, self.item, (2,7), cooldown=False)
-    
+
     def draw(self, surf):
         if not self.surf:
             w, h = self.size
@@ -192,11 +192,11 @@ class CustomIcon(Banner):
             self.surf = image_mods.make_translucent(self.surf, .1)
 
         bg_surf = self.surf.copy()
-        
+
         FONT['text'].blit(self.text, bg_surf, (20, self.size[1]//2 - self.font_height//2 + 3))
 
         self.draw_icon(bg_surf)
-        
+
         engine.blit_center(surf, bg_surf)
         return surf
 

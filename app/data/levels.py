@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import OrderedDict
 
 from app.data.level_units import GenericUnit, UniqueUnit, UnitGroup
@@ -23,7 +24,7 @@ class LevelPrefab(Prefab):
 
         self.go_to_overworld: bool = False
 
-        self.units = Data()
+        self.units = Data[UniqueUnit]()
         self.regions = Data()
         self.unit_groups = Data()
 

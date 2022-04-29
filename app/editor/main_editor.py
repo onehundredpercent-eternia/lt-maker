@@ -51,6 +51,7 @@ from app.editor.ai_editor.ai_tab import AIDatabase
 from app.editor.difficulty_mode_editor.difficulty_mode_tab import DifficultyModeDatabase
 from app.editor.constant_tab import ConstantDatabase
 from app.editor.tag_widget import TagDialog
+from app.editor.game_var_slot_widget import GameVarSlotDialog
 from app.editor.mcost_dialog import McostDialog
 from app.editor.translation_widget import TranslationDialog
 from app.editor.equation_widget import EquationDialog
@@ -225,6 +226,7 @@ class MainEditor(QMainWindow):
                             "Parties": PartyDatabase.edit,
                             "Classes": ClassDatabase.edit,
                             "Tags": self.edit_tags,
+                            "Game Vars": self.edit_game_vars,
                             "Weapon Types": WeaponDatabase.edit,
                             "Items": ItemDatabase.edit,
                             "Skills": SkillDatabase.edit,
@@ -510,6 +512,10 @@ class MainEditor(QMainWindow):
 
     def edit_tags(self, parent=None):
         dialog = TagDialog.create()
+        dialog.exec_()
+
+    def edit_game_vars(self, parent=None):
+        dialog = GameVarSlotDialog.create()
         dialog.exec_()
 
     def edit_supports(self, parent=None):

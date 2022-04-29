@@ -1,0 +1,16 @@
+[
+    {
+        "name": "Prep",
+        "trigger": "turn_change",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "prep",
+                []
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

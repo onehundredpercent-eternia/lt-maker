@@ -10,12 +10,8 @@ These pages will contain various guides.
     Breakable-Walls
     Build-Engine
     Choices-and-Battle-Saves
-    Creating-Items
     Leadership-Stars
     Overworld
-    Overworld-Nodes
-    Summoning
-    Supports
     Unit-Groups
     Title-Screen
 
@@ -30,3 +26,9 @@ These pages will contain various guides.
     :caption: Skill and Item Tutorials:
 
     skill_item_tutorials/index.rst
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Component Tutorials:
+
+    component_tutorials/index.rst

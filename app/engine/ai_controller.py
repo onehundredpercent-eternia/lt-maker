@@ -71,7 +71,6 @@ class AIController():
             self.move_ai_complete = True
             self.attack_ai_complete = True
             self.canto_ai_complete = True
-            game.movement.remove_interrupt_regions(self.unit)
 
         if not self.move_ai_complete:
             if self.think():
@@ -662,7 +661,7 @@ class SecondaryAI():
         self.grid = game.board.get_grid(movement_group)
         self.pathfinder = \
             pathfinding.AStar(self.unit.position, None, self.grid,
-                              game.tilemap.width, game.tilemap.height,
+                              game.board.bounds, game.tilemap.height,
                               self.unit.team, skill_system.pass_through(self.unit),
                               DB.constants.value('ai_fog_of_war'))
 

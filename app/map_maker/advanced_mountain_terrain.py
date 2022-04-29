@@ -21,7 +21,9 @@ class MountainTerrain(Terrain):
         return True
 
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
-        new_coords = self.organization[pos]
+        new_coords = self.organization[pos]  # Mountain Group Coord
+        if new_coords == (12, 16):
+            new_coords = random_choice([(12, 16), (11, 16)], pos)
         new_coords1 = [(new_coords[0]*2, new_coords[1]*2)]
         new_coords2 = [(new_coords[0]*2 + 1, new_coords[1]*2)]
         new_coords3 = [(new_coords[0]*2 + 1, new_coords[1]*2 + 1)]
@@ -90,7 +92,7 @@ class MountainTerrain(Terrain):
         self.tilemap = tilemap
 
         # But then, start the thread
-        if len(group) < 20:
+        if len(group) < 12:
             thread = NaiveBacktrackingThread(tilemap, self.mountain_data, self.noneless_rules, group)
         else:
             thread = AlgorithmXThread(tilemap, self.mountain_data, self.noneless_rules, group)

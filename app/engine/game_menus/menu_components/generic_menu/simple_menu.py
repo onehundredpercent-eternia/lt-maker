@@ -91,7 +91,7 @@ class SimpleIconTable(UIComponent):
                 nid = datum[1]
             row = IconRow(text, text=text, icon=icon, data=nid, text_align=self.text_align)
         else:
-            row =  IconRow(datum, text=datum, data=datum)
+            row = IconRow(datum, text=datum, data=datum)
         row.overflow = (15, 0, 15, 0)
         return row
 
@@ -120,8 +120,21 @@ class SimpleIconTable(UIComponent):
         if self.header:
             self.header.set_text(self._title)
 
+    def _update_data_instead(self, data: List):
+        for idx, item in enumerate(data):
+            col = idx % len(self.column_data)
+            row = math.floor(idx / self.num_display_columns)
+            new_entry = self.construct_row(item)
+            old_entry = self.column_data[col][row]
+            old_entry.set_icon(new_entry.icon)
+            old_entry.set_text(new_entry.text.text)
+        self._reset('_update_data_instead')
+
     def set_data(self, data: List):
         if data == self._data:
+            return
+        if len(data) == len(self._data):
+            self._update_data_instead(data)
             return
         self._data = data
         num_columns = self.calculate_num_cols(self.num_rows, self.num_display_columns, len(data), self.orientation)

@@ -35,7 +35,7 @@ class UnitObjectUnitTests(unittest.TestCase):
 
         self.assertEqual(unit.name, "Eirika")
         self.assertEqual(unit.desc, "The princess of the Kingdom of\nRenais. She's elegant and kind.")
-        self.assertEqual(unit.tags, ['Lord', 'Sword'])
+        self.assertEqual(unit.tags, set({'Lord', 'Sword'}))
         self.assertEqual(unit.party, None)
         self.assertEqual(unit.level, 1)
         self.assertEqual(unit.exp, 0)
@@ -154,7 +154,7 @@ class UnitObjectUnitTests(unittest.TestCase):
 
         self.assertEqual(unit.name, "Eirika")
         self.assertEqual(unit.desc, "The princess of the Kingdom of\nRenais. She's elegant and kind.")
-        self.assertEqual(unit.tags, ['Lord', 'Sword'])
+        self.assertEqual(unit.tags, set({'Lord', 'Sword'}))
         self.assertEqual(unit.party, 'Eirika')
         self.assertEqual(unit.level, 1)
         self.assertEqual(unit.exp, 0)

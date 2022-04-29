@@ -21,6 +21,9 @@ class Terrain(Prefab):
     autotiles: dict = None
     autotile_pixmap: QPixmap = None
 
+    def has_autotiles(self):
+        return self.autotiles and self.autotile_pixmap
+
     @property
     def check_flood_fill(self):
         return False
@@ -61,7 +64,7 @@ class Terrain(Prefab):
         pass
 
     def get_pixmap(self, tile_coord: tuple, ms: float = 0, autotile_fps: float = 29) -> QPixmap:
-        if autotile_fps and self.autotile_pixmap and self.autotiles and tile_coord in self.autotiles:
+        if autotile_fps and self.has_autotiles() and tile_coord in self.autotiles:
             column = self.autotiles[tile_coord]
             autotile_wait = autotile_fps * 16.66
             num = int(ms / autotile_wait) % AUTOTILE_FRAMES

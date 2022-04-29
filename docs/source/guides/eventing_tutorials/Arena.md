@@ -2,8 +2,7 @@
 
 *last updated 22-01-31*
 
-![Screenshot of GBA arena menu screen created by this tutorial](../images/Arena
-Menu.png)
+![Screenshot of GBA arena menu screen created by this tutorial](../images/ArenaMenu.png)
 
 This tutorial will explain how to create an arena where your units can fight, earn experience and money, and potentially die. In this guide, an arena based off the Fire Emblem GBA games will be created, but the features shown here are powerful enough to create significantly different variants on the base idea.
 

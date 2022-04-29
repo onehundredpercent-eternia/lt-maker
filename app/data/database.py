@@ -9,19 +9,18 @@ from typing import Any, Dict, List
 
 from app.data import (ai, constants, difficulty_modes, equations, factions,
                       items, klass, levels, lore, mcost, minimap, overworld,
-                      overworld_node, parties, raw_data, skills, stats,
+                      overworld_node, parties, raw_data, skills, stats, varslot,
                       supports, tags, terrain, translations, units, weapons)
 from app.events import event_prefab
-from app.utilities.str_utils import is_int
 
 
 class Database(object):
     save_data_types = ("constants", "stats", "equations", "mcost", "terrain", "weapon_ranks",
-                       "weapons", "factions", "items", "skills", "tags", "classes",
+                       "weapons", "factions", "items", "skills", "tags", "game_var_slots", "classes",
                        "support_constants", "support_ranks", "affinities", "units", "support_pairs",
                        "ai", "parties", "difficulty_modes",
                        "translations", "lore", "levels", "events", "overworlds", "raw_data")
-    save_as_chunks = ("events", 'items', 'skills', 'units', 'classes')
+    save_as_chunks = ("events", 'items', 'skills', 'units', 'classes', 'levels')
 
     def __init__(self):
         self.constants = constants.constants
@@ -37,6 +36,7 @@ class Database(object):
         self.items = items.ItemCatalog()
         self.skills = skills.SkillCatalog()
         self.tags = tags.TagCatalog(['Lord', 'Boss', 'Armor', 'Horse', 'Mounted', 'Dragon', 'ZeroMove', 'AutoPromote', 'NoAutoPromote'])
+        self.game_var_slots = varslot.VarSlotCatalog([])
         self.classes = klass.ClassCatalog()
 
         self.support_constants = supports.constants
@@ -109,7 +109,7 @@ class Database(object):
     # === Saving and loading important data functions ===
     def restore(self, save_obj):
         for data_type in self.save_data_types:
-            logging.info("Database: Restoring %s..." % data_type)
+            logging.info("Database: Restoring %s..." % (data_type))
             getattr(self, data_type).restore(save_obj[data_type])
 
     def save(self):
@@ -135,7 +135,7 @@ class Database(object):
         to_save = self.save()
         # This section is what takes so long!
         for key, value in to_save.items():
-            if not key in self.save_as_chunks:
+            if key not in self.save_as_chunks:
                 save_loc = os.path.join(data_dir, key + '.json')
                 logging.info("Serializing %s to %s" % (key, save_loc))
                 self.json_save(save_loc, value)

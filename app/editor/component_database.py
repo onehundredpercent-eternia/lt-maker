@@ -285,6 +285,18 @@ class SkillItemComponent(BoolItemComponent):
         self.editor.currentTextChanged.connect(self.on_value_changed)
         hbox.addWidget(self.editor)
 
+class MusicItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        self.editor = ComboBox(self)
+        self.editor.setMaximumWidth(120)
+        for music in RESOURCES.music.values():
+            self.editor.addItem(music.nid)
+        if not self._data.value and RESOURCES.music:
+            self._data.value = RESOURCES.music[0].nid
+        self.editor.setValue(self._data.value)
+        self.editor.currentTextChanged.connect(self.on_value_changed)
+        hbox.addWidget(self.editor)
+
 class SoundItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
@@ -502,6 +514,8 @@ def get_display_widget(component, parent):
         c = EffectAnimationItemComponent(component, parent)
     elif component.expose == Type.Equation:
         c = EquationItemComponent(component, parent)
+    elif component.expose == Type.Music:
+        c = MusicItemComponent(component, parent)
     elif component.expose == Type.Sound:
         c = SoundItemComponent(component, parent)
     elif component.expose == Type.AI:

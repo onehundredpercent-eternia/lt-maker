@@ -124,7 +124,6 @@ class NaiveBacktrackingThread(QThread):
             # check if any of that coordinate's southward connections match with the rightward coordinates
             # of the southwesst position
             valid_coords = [coord for coord in valid_coords if any(c in valid_right_coords for c in self.noneless_rules[coord]['down'])]
-        # print(sorted(valid_coords))
 
         # print(sorted(valid_coords))
         if not valid_coords and not exact:
@@ -207,6 +206,10 @@ class AlgorithmXThread(QThread):
         self.process_group()
 
     def process_group(self):
+        if not self.to_process:
+            print("No positions to process!")
+            return
+
         columns = [(pos, True) for pos in self.to_process]
         # valid_coords = [self.find_valid_coords(pos) for pos in self.to_process]
         valid_coords_dict = {pos: self.find_valid_coords(pos) for pos in self.to_process}
@@ -281,7 +284,10 @@ class AlgorithmXThread(QThread):
         counter = 0
         limit = int(1e6)
         while counter < limit:
-            time.sleep(0)
+            # time.sleep(0)
+            if counter % 10000 == 0:
+                time.sleep(0.01)
+                print("Still Processing", id(self), counter)
             if self.broke_out:
                 return
             counter += 1

@@ -2,15 +2,15 @@ import math
 
 from app.data.database import DB
 
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine import skill_system, action
 
 class Exp(ItemComponent):
     nid = 'exp'
-    desc = "Item gives a custom number of exp to user on use"
-    tag = 'exp'
+    desc = "Item gives a fixed integer of EXP each use. Useful for staves like Warp or Rescue."
+    tag = ItemTags.EXP
 
     expose = Type.Int
     value = 15
@@ -20,8 +20,8 @@ class Exp(ItemComponent):
 
 class LevelExp(ItemComponent):
     nid = 'level_exp'
-    desc = "Item gives exp to user based on level difference"
-    tag = 'exp'
+    desc = "Gives EXP based on the level difference between attacker and defender. How EXP is normally calculated for weapons. Equation for EXP can be edited in the Constants menu."
+    tag = ItemTags.EXP
 
     def _check_for_no_damage(self, playback, unit, item, target) -> bool:
         no_damage = False
@@ -48,7 +48,7 @@ class HealExp(ItemComponent):
     nid = 'heal_exp'
     desc = "Item gives exp to user based on amount of damage healed"
     # requires = ['heal']
-    tag = 'exp'
+    tag = ItemTags.EXP
 
     def exp(self, playback, unit, item, target) -> int:
         healing_done = 0
@@ -66,7 +66,7 @@ class HealExp(ItemComponent):
 class Wexp(ItemComponent):
     nid = 'wexp'
     desc = "Item gives a custom number of wexp to user while using"
-    tag = 'exp'
+    tag = ItemTags.EXP
 
     expose = Type.Int
     value = 2
@@ -76,8 +76,8 @@ class Wexp(ItemComponent):
 
 class Fatigue(ItemComponent):
     nid = 'fatigue'
-    desc = "Item gives extra fatigue to user while using"
-    tag = 'exp'
+    desc = "If fatigue is enabled, increases the amount of fatigue a user suffers while using this item. Can be negative in order to remove fatigue."
+    tag = ItemTags.EXP
 
     expose = Type.Int
     value = 1

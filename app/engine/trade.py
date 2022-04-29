@@ -1,13 +1,10 @@
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.engine.game_state import game
 from app.engine import action, menus, item_system, item_funcs
 from app.engine.objects.item import ItemObject
 
-def check_trade(item1: ItemObject, item2: ItemObject) -> bool:
-    return _check_trade(item1, game.get_unit(item1.owner_nid), item2, game.get_unit(item2.owner_nid))
-
-def _check_trade(item1: ItemObject, item1_owner, item2: ItemObject, item2_owner) -> bool:
+def check_trade(item1: ItemObject, item1_owner, item2: ItemObject, item2_owner) -> bool:
     # Can't trade the same item to itself
     if item1 is item2:
         return False
@@ -69,9 +66,9 @@ class TradeState(MapState):
         else:
             self.item2_owner = self.partner
 
-        if not _check_trade(item1, self.item1_owner, item2, self.item2_owner):
+        if not check_trade(item1, self.item1_owner, item2, self.item2_owner):
             self.menu.unset_selected_option()
-            SOUNDTHREAD.play_sfx('Error')
+            get_sound_thread().play_sfx('Error')
             return False
 
         if self.menu.other_hand[0] == 0:
@@ -101,20 +98,20 @@ class TradeState(MapState):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-                SOUNDTHREAD.play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         if event == 'RIGHT':
             if self.menu.move_right():
-                SOUNDTHREAD.play_sfx('TradeRight')
+                get_sound_thread().play_sfx('TradeRight')
         elif event == 'LEFT':
             if self.menu.move_left():
-                SOUNDTHREAD.play_sfx('TradeRight')
+                get_sound_thread().play_sfx('TradeRight')
 
         elif event == 'BACK':
-            SOUNDTHREAD.play_sfx('Select 4')
+            get_sound_thread().play_sfx('Select 4')
             if self.menu.selected_option():
                 self.menu.unset_selected_option()
             else:
@@ -123,11 +120,11 @@ class TradeState(MapState):
         elif event == 'SELECT':
             if self.menu.selected_option():
                 if self.do_trade():
-                    SOUNDTHREAD.play_sfx('Select 1')
+                    get_sound_thread().play_sfx('Select 1')
                 else:
-                    SOUNDTHREAD.play_sfx('Error')
+                    get_sound_thread().play_sfx('Error')
             else:
-                SOUNDTHREAD.play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 1')
                 self.menu.set_selected_option()
 
         elif event == 'INFO':

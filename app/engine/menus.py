@@ -7,7 +7,7 @@ from app.utilities import utils
 from app.data import lore
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine.input_manager import INPUT
+from app.engine.input_manager import get_input_manager
 from app.engine import engine, image_mods, icons, help_menu, menu_options, \
     item_system, gui, item_funcs
 from app.engine.gui import ScrollBar
@@ -334,7 +334,7 @@ class Simple():
         return NotImplementedError
 
     def handle_mouse(self) -> bool:
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
             idxs, option_rects = self.get_rects()
@@ -673,24 +673,53 @@ class Inventory(Choice):
             self.options.append(option)
 
 class Shop(Choice):
-    def __init__(self, owner, options, topleft=None, disp_value='sell', background='menu_bg_base', info=None):
+    default_option = menu_options.ValueItemOption
+
+    def __init__(self, owner, options, topleft=None, disp_value='sell', background='menu_bg_base', info=None, stock=None):
         self.disp_value = disp_value
+        self.stock = stock
         super().__init__(owner, options, topleft, background, info)
 
     def get_menu_width(self):
+        if self.stock:
+            return 168
+        else:
         return 152
+
+    def decrement_stock(self):
+        if self.stock:
+            self.options[self.current_index].stock -= 1
+
+    def get_stock(self):
+        if self.stock:
+            return self.options[self.current_index].stock
+        else:
+            return -1
+
+    def set_stock(self, stock):
+        self.stock = stock
+        for idx, option in enumerate(self.options):
+            option.stock[idx] = stock
 
     def create_options(self, options, info_descs=None):
         self.options.clear()
         for idx, option in enumerate(options):
-            option = menu_options.ValueItemOption(idx, option, self.disp_value)
+            if self.stock:
+                option = menu_options.StockValueItemOption(idx, option, self.disp_value, self.stock[idx])
+            else:
+                option = self.default_option(idx, option, self.disp_value)
             option.help_box = option.get_help_box()
             self.options.append(option)
 
         if self.hard_limit:
             for num in range(self.limit - len(options)):
                 option = menu_options.EmptyOption(len(options) + num)
+                if self.stock:
+                    option._width = 168
                 self.options.append(option)
+
+class RepairShop(Shop):
+    default_option = menu_options.RepairValueItemOption
 
 class Trade(Simple):
     """
@@ -900,7 +929,7 @@ class Trade(Simple):
         return surf
 
     def handle_mouse(self) -> bool:
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         did_move = False
         if mouse_position:
             mouse_x, mouse_y = mouse_position
@@ -1064,13 +1093,17 @@ class Table(Simple):
             col += 1
             if self._exists(row, col):
                 pass
-            elif first_push:
+            elif idx >= len(self.options) - 1:
+                break  # Don't move right because we are on the last row
+            elif row < self.rows - 1:
+                row += 1
                 col = 0
             else:
                 break
             idx = self._idx_coords(row, col)
             if not self.options[idx].ignore:
                 break
+        if not self.options[idx].ignore:
         self.current_index = idx
         return old_index != self.current_index
 
@@ -1084,13 +1117,15 @@ class Table(Simple):
             col -= 1
             if self._exists(row, col):
                 pass
-            elif first_push:
+            elif row > 0:
+                row -= 1
                 col = self._get_right(row)
             else:
                 break
             idx = self._idx_coords(row, col)
             if not self.options[idx].ignore:
                 break
+        if not self.options[idx].ignore:
         self.current_index = idx
         return old_index != self.current_index
 
@@ -1153,7 +1188,6 @@ class Table(Simple):
         start_index = self.scroll * self.columns
         end_index = (self.scroll + self.rows) * self.columns
         choices = self.options[start_index:end_index]
-        # print(self.scroll, start_index, end_index)
         width = max(option.width() for option in self.options)
         width -= width%8
         height = max(option.height() for option in self.options)
@@ -1279,7 +1313,7 @@ class Convoy():
         for name, menu in self.menus.items():
             menu.update_options(sorted_dict[name])
 
-    def get_menu(self):
+    def get_menu(self) -> Choice:
         return self.menus[self.order[self.menu_index]]
 
     def get_current(self):
@@ -1299,6 +1333,9 @@ class Convoy():
             return self.inventory.get_current_index()
         else:
             return self.get_menu().get_current_index()
+
+    def get_scrolled_index(self):
+        return self.get_menu().scroll
 
     def get_context(self):
         if self.selection_index == 0:
@@ -1488,7 +1525,7 @@ class Convoy():
         return surf
 
     def handle_mouse(self) -> bool:
-        mouse_position = INPUT.get_mouse_position()
+        mouse_position = get_input_manager().get_mouse_position()
         did_move = False
         if mouse_position:
             mouse_x, mouse_y = mouse_position
@@ -1511,9 +1548,10 @@ class Convoy():
         return did_move
 
 class Market(Convoy):
-    def __init__(self, owner, options, topleft, disp_value=None):
+    def __init__(self, owner, options, topleft, disp_value=None, show_stock: bool = False):
         self.options = options
         self.disp_value = disp_value
+        self.show_stock = show_stock
         super().__init__(owner, topleft, disp_value=disp_value)
         self.selection_index = 1
         self.menu_index = 0
@@ -1523,7 +1561,11 @@ class Market(Convoy):
         sorted_dict = self.get_sorted_dict()
         self.menus = {}
         for w_type in self.order:
-            new_menu = Shop(self.owner, sorted_dict[w_type], self.topleft, self.disp_value)
+            if self.show_stock:
+                stock = [game.market_items[item.nid] for item in sorted_dict[w_type]]
+            else:
+                stock = None
+            new_menu = Shop(self.owner, sorted_dict[w_type], self.topleft, self.disp_value, stock=stock)
             new_menu.set_limit(7)
             new_menu.set_hard_limit(True)
             new_menu.gem = False
@@ -1553,6 +1595,24 @@ class Market(Convoy):
             value.sort(key=lambda item: bool(item.owner_nid))
 
         return sorted_dict
+
+    def update_options(self):
+        if self.inventory:
+            self.inventory.update_options(self.owner.items)
+        sorted_dict = self.get_sorted_dict()
+        for name, menu in self.menus.items():
+            if self.show_stock:
+                menu.stock = [game.market_items[item.nid] for item in sorted_dict[name]]
+            menu.update_options(sorted_dict[name])
+
+    def get_stock(self):
+        if self.show_stock:
+            return self.menus[self.order[self.selection_index - 1]].get_stock()
+        return -1
+
+    def decrement_stock(self):
+        if self.show_stock:
+            self.menus[self.order[self.selection_index - 1]].decrement_stock()
 
     def get_current(self):
         return self.menus[self.order[self.selection_index - 1]].get_current()

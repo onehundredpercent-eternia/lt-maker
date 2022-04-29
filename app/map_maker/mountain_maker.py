@@ -5,7 +5,6 @@ from PyQt5.QtGui import QImage
 from app.editor.tile_editor.autotiles import PaletteData
 
 from app.constants import TILEWIDTH, TILEHEIGHT
-
 DIRECTIONS = ('left', 'right', 'up', 'down')
 
 class QuadPaletteData():
@@ -67,6 +66,50 @@ def get_mountain_coords(fn) -> set:
         return topleft | main | right | bottomleft | bottom | bottomright | extra
     return set()
 
+# def get_mountain_groups() -> list:
+#     black_bottomright_group_a = ((16, 13), (16, 14))
+#     black_right_group_a = ((16, 15), (17, 14), (16, 16))
+#     black_topright_group = ((17, 15), (17, 16), (17, 17), (17, 19))
+#     black_black_bottomright_group_b = ((16, 17), (16, 18))
+#     black_right_group_b = ((17, 18), (16, 20))
+#     black = ((12, 13), (12, 14), (12, 15), (13, 13), (13, 14))
+#     black_white_a = ((9, 17), (10, 18))
+#     white = ((12, 16), (12, 17), (12, 18), (12, 19), (11, 16), (11, 17), (11, 18), (11, 19), (10, 17), (4, 19), (13, 16))
+#     mountain_top_a = ((2, 18), (3, 18), (4, 18))
+#     mountain_top_b = ((2, 15), (3, 15), (4, 15), (5, 15), (4, 22), (5, 22), (6, 22), (3, 19), (2, 19))
+#     mountain_top_c = ((2, 14), (3, 14), (0, 19), (1, 19))
+#     diagonal_black_white = ((6, 18), (6, 17))
+#     white_bottomleft = ((8, 17), (8, 16), (7, 16), (6, 16), (2, 17), (3, 17), (5, 17), (18, 17))
+#     white_topleft = ((0, 11), (0, 12), (15, 20), (15, 18), (16, 23), (13, 23))
+#     mountain = ((0, 17), (1, 17), (15, 19))
+#     mountain2 = ((0, 16), (1, 16), (0, 18), (1, 18))
+#     straight_ridge = ((6, 13), (7, 13), (8, 13), (9, 13), (10, 13), (11, 13), (11, 14), (10, 14), (9, 16), (10, 16))
+#     cross_ridge = ((6, 14), (7, 14), (8, 14), (9, 14), (10, 15), (11, 15))
+#     a = ((2, 16), (3, 16), (4, 16), (5, 16))
+#     bottom = ((13, 18), (14, 17), (18, 16))
+#     b = ((15, 17), (17, 21))
+#     c = ((15, 23), (14, 18))
+#     d = ((14, 14), (15, 14))
+#     e = ((9, 18), (7, 19))
+#     f = ((0, 13), (1, 13))
+#     g = ((4, 14), (5, 14))
+#     h = ((3, 13), (2, 13))
+#     littletop = ((7, 23), (6, 23), (6, 24), (14, 21))
+#     left_right = ((8, 23), (8, 24), (9, 21))
+#     loner = ((7, 21), (7, 22))
+#     right = ((9, 23), (9, 24), (16, 21))
+#     i = ((6, 15), (7, 15))
+#     little_black_top_right = ((16, 19), (15, 21))
+#     k = ((10, 23), (13, 24))
+#     all_groups = [black_bottomright_group_a, black_right_group_a, black_topright_group, black_black_bottomright_group_b, black_right_group_b,
+#                   black, black_white_a, white, mountain_top_a, mountain_top_b, mountain_top_c, diagonal_black_white, white_bottomleft,
+#                   white_topleft, mountain, mountain2, straight_ridge, cross_ridge, a, bottom, b, c, d, e, f, g, h, littletop,
+#                   left_right, loner, right, i, little_black_top_right, k]
+#     # Confirm they all have unique elements, no shared coords
+#     for a, b in itertools.combinations(all_groups, 2):
+#         assert len(set(a) & set(b)) == 0, ("%s, %s" % (a, b))
+#     return all_groups
+
 def load_mountain_palettes(fn, coords) -> dict:
     palettes = {}
     image = QImage(fn)
@@ -117,29 +160,21 @@ def assign_rules(palette_templates: dict, fns: list):
                     mountain_match.rules['left'][left_palette.coord] += 1
                 else:
                     mountain_match.rules['left'][None] += 1
-                    if mountain_match.coord in ((11, 16), (11, 18), (13, 16)):
-                        print(fn, position, 'left', mountain_match.coord)
             if right[0] < num_tiles_x:
                 if right_palette:
                     mountain_match.rules['right'][right_palette.coord] += 1
                 else:
                     mountain_match.rules['right'][None] += 1
-                    if mountain_match.coord in ((11, 23), (12, 15)):
-                        print(fn, position, 'right', mountain_match.coord)
             if up[1] >= 0:
                 if up_palette:
                     mountain_match.rules['up'][up_palette.coord] += 1
                 else:
                     mountain_match.rules['up'][None] += 1
-                    # if mountain_match.coord in ((2, 12), (1, 16), (1, 17), (4, 18), (8, 19), (9, 19)):
-                    #     print(fn, position, 'up', mountain_match.coord)
             if down[1] < num_tiles_y:
                 if down_palette:
                     mountain_match.rules['down'][down_palette.coord] += 1
                 else:
                     mountain_match.rules['down'][None] += 1
-                    if mountain_match.coord in ((13, 16), (17, 15)):
-                        print(fn, position, 'down', mountain_match.coord)
 
 def is_present(palette: QuadPaletteData, palette_templates: dict) -> MountainQuadPaletteData:
     MUST_MATCH = 4
@@ -148,9 +183,15 @@ def is_present(palette: QuadPaletteData, palette_templates: dict) -> MountainQua
             return mountain
     return None
 
-def remove_useless_palettes(mountain_palettes: dict):
-    # Remove useless palettes
-    useless_limit = 8
+def remove_connections_that_only_appear_once(mountain_palettes: dict):
+    for palette in mountain_palettes.values():
+        for direction in DIRECTIONS:
+            palette.rules[direction] = {k: v for k, v in palette.rules[direction].items() if v > 1}
+    return mountain_palettes
+
+def remove_infrequent_palettes(mountain_palettes: dict):
+    # Remove palettes that don't appear very often
+    useless_limit = 30
     for coord in list(mountain_palettes.keys()):
         palette = mountain_palettes[coord]
         # Only bother with the ones that actually have rules
@@ -175,6 +216,80 @@ def remove_adjacent_palettes(mountain_palettes: dict):
             palette.rules[direction] = {k: v for k, v in palette.rules[direction].items() if k != coord}
     return mountain_palettes
 
+def fuse(mountain_palettes: dict, parent: tuple, child: tuple):
+    assert parent != child
+    if parent in mountain_palettes and child in mountain_palettes:
+        parent_palette = mountain_palettes[parent]
+        child_palette = mountain_palettes[child]
+        for direction in DIRECTIONS:
+            parent_palette.rules[direction].update(child_palette.rules[direction])
+        # Replace connections to child with parent
+        for coord, palette in mountain_palettes.items():
+            for direction in DIRECTIONS:
+                if child in palette.rules[direction]:
+                    if parent in palette.rules[direction]:
+                        palette.rules[direction][parent] += palette.rules[direction][child]
+                    else:
+                        palette.rules[direction][parent] = palette.rules[direction][child]
+        del mountain_palettes[child]
+    else:
+        print("Could not find both ", parent, " and ", child, " in mountain_palettes")
+    return mountain_palettes
+
+def fuse_bright_palettes(mountain_palettes: dict):
+    fuse(mountain_palettes, (1, 13), (0, 13))  # Fuse (0, 13) into (1, 13)
+    fuse(mountain_palettes, (3, 13), (2, 13))
+    fuse(mountain_palettes, (5, 13), (4, 13))
+    fuse(mountain_palettes, (1, 14), (0, 14))
+    fuse(mountain_palettes, (3, 14), (2, 14))
+    fuse(mountain_palettes, (5, 14), (4, 14))
+    fuse(mountain_palettes, (1, 16), (0, 16))
+    fuse(mountain_palettes, (1, 17), (0, 17))
+    fuse(mountain_palettes, (1, 18), (0, 18))
+    fuse(mountain_palettes, (1, 19), (0, 19))
+    fuse(mountain_palettes, (8, 13), (7, 13))
+    fuse(mountain_palettes, (8, 13), (6, 13))
+    fuse(mountain_palettes, (8, 13), (9, 13))
+    fuse(mountain_palettes, (8, 13), (10, 14))
+    fuse(mountain_palettes, (8, 13), (11, 14))
+    fuse(mountain_palettes, (8, 13), (3, 12))
+    fuse(mountain_palettes, (8, 14), (7, 14))
+    fuse(mountain_palettes, (8, 14), (6, 14))
+    fuse(mountain_palettes, (8, 14), (9, 14))
+    fuse(mountain_palettes, (8, 14), (10, 15))
+    fuse(mountain_palettes, (8, 14), (11, 15))
+    fuse(mountain_palettes, (5, 15), (2, 15))
+    fuse(mountain_palettes, (5, 15), (3, 15))
+    fuse(mountain_palettes, (5, 15), (4, 15))
+    fuse(mountain_palettes, (5, 16), (2, 16))
+    fuse(mountain_palettes, (5, 16), (3, 16))
+    fuse(mountain_palettes, (5, 16), (4, 16))
+    fuse(mountain_palettes, (8, 17), (6, 16))
+    fuse(mountain_palettes, (8, 17), (7, 16))
+    fuse(mountain_palettes, (8, 17), (8, 16))
+    fuse(mountain_palettes, (5, 17), (2, 17))
+    fuse(mountain_palettes, (5, 17), (3, 17))
+    fuse(mountain_palettes, (4, 18), (2, 18))
+    fuse(mountain_palettes, (4, 18), (3, 18))
+    fuse(mountain_palettes, (3, 19), (2, 19))
+    fuse(mountain_palettes, (9, 15), (8, 15))
+    fuse(mountain_palettes, (10, 16), (9, 16))
+    fuse(mountain_palettes, (6, 22), (4, 22))
+    fuse(mountain_palettes, (6, 22), (5, 22))
+    fuse(mountain_palettes, (8, 18), (6, 21))
+    # Bright sheets
+    fuse(mountain_palettes, (12, 16), (11, 16))
+    fuse(mountain_palettes, (12, 16), (10, 17))
+    fuse(mountain_palettes, (12, 16), (11, 17))
+    fuse(mountain_palettes, (12, 16), (12, 17))
+    fuse(mountain_palettes, (12, 16), (11, 18))
+    fuse(mountain_palettes, (12, 16), (12, 18))
+    fuse(mountain_palettes, (12, 16), (11, 19))
+    fuse(mountain_palettes, (12, 16), (12, 19))
+    fuse(mountain_palettes, (12, 16), (4, 19))
+
+    return mountain_palettes
+
 if __name__ == '__main__':
     import os, sys, glob
     try:
@@ -193,32 +308,27 @@ if __name__ == '__main__':
     mountain_data_dir = glob.glob(home_dir + '/Pictures/Fire Emblem/MapReferences/custom_mountain_data/*.png')
     # Stores rules in the palette data itself
     assign_rules(mountain_palettes, mountain_data_dir)
-    mountain_palettes = remove_adjacent_palettes(mountain_palettes)
-    mountain_palettes = remove_useless_palettes(mountain_palettes)
+    # mountain_palettes = remove_adjacent_palettes(mountain_palettes)
+    mountain_palettes = fuse_bright_palettes(mountain_palettes)
+    mountain_palettes = remove_connections_that_only_appear_once(mountain_palettes)
+    mountain_palettes = remove_infrequent_palettes(mountain_palettes)
 
     print("--- Final Rules ---")
     final_rules = {coord: mountain_palette.rules for coord, mountain_palette in mountain_palettes.items()}
-    # to_watch = []
-    # for coord, rules in sorted(final_rules.items()):
-    #     print("---", coord, "---")
-    #     if rules['left']:
-    #         print('left', rules['left'])
-    #     if rules['right']:
-    #         print('right', rules['right'])
-    #     if rules['up']:
-    #         print('up', rules['up'])
-    #     if rules['down']:
-    #         print('down', rules['down'])
-    #     if None in rules['left'] and rules['left'][None] < (0.1 * sum(rules['left'].values())):
-    #         to_watch.append((coord, 'left'))
-    #     if None in rules['right'] and rules['right'][None] < (0.1 * sum(rules['right'].values())):
-    #         to_watch.append((coord, 'right'))
-    #     if None in rules['up'] and rules['up'][None] < (0.1 * sum(rules['up'].values())):
-    #         to_watch.append((coord, 'up'))
-    #     if None in rules['down'] and rules['down'][None] < (0.1 * sum(rules['down'].values())):
-    #         to_watch.append((coord, 'down'))
-    # print("--- Watch for: ---")
-    # print(to_watch)
+    to_watch = []
+    for coord, rules in sorted(final_rules.items()):
+        print("---", coord, "---")
+        if rules['left']:
+            print('left', rules['left'])
+        if rules['right']:
+            print('right', rules['right'])
+        if rules['up']:
+            print('up', rules['up'])
+        if rules['down']:
+            print('down', rules['down'])
+
+    print("Number of Coordinates:", len(final_rules))
+    print("Number of Rules: ", sum(sum(len(mountain_palette[direction]) for direction in DIRECTIONS) for mountain_palette in final_rules.values()))
 
     data_loc = 'app/map_maker/mountain_data.p'
     with open(data_loc, 'wb') as fp:

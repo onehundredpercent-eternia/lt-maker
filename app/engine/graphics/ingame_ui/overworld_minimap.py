@@ -2,7 +2,7 @@ from __future__ import annotations
 from app.engine.overworld.overworld_manager import OverworldManager
 from app.utilities.typing import Point
 from app.utilities.utils import tmult, tuple_add, tuple_sub
-from app.engine.sound import SOUNDTHREAD
+from app.engine.sound import get_sound_thread
 import app.engine.graphics.ui_framework as uif
 from app.engine import engine
 from app.engine.objects.overworld import OverworldObject

@@ -1,7 +1,7 @@
 from app.utilities import utils
 from app.data.database import DB
 
-from app.data.item_components import ItemComponent
+from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine import action, combat_calcs, equations, item_system, skill_system
@@ -9,8 +9,8 @@ from app.engine.game_state import game
 
 class WeaponType(ItemComponent):
     nid = 'weapon_type'
-    desc = "Item has a weapon type and can only be used by certain classes"
-    tag = 'weapon'
+    desc = "The type of weapon that the wielder must be able to use in order to attack with this item."
+    tag = ItemTags.WEAPON
 
     expose = Type.WeaponType
 
@@ -29,7 +29,7 @@ class WeaponRank(ItemComponent):
     nid = 'weapon_rank'
     desc = "Item has a weapon rank and can only be used by units with high enough rank"
     requires = ['weapon_type']
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     expose = Type.WeaponRank
 
@@ -47,7 +47,7 @@ class WeaponRank(ItemComponent):
 class Magic(ItemComponent):
     nid = 'magic'
     desc = 'Makes Item use magic damage formula'
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     def damage_formula(self, unit, item):
         return 'MAGIC_DAMAGE'
@@ -58,7 +58,7 @@ class Magic(ItemComponent):
 class MagicAtRange(ItemComponent):
     nid = 'magic_at_range'
     desc = 'Makes Item use magic damage formula at range'
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     def dynamic_damage(self, unit, item, target, mode, attack_info, base_value) -> int:
         running_damage = 0
@@ -78,7 +78,7 @@ class MagicAtRange(ItemComponent):
 class Hit(ItemComponent):
     nid = 'hit'
     desc = "Item has a chance to hit. If left off, item will always hit."
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     expose = Type.Int
     value = 75
@@ -89,7 +89,7 @@ class Hit(ItemComponent):
 class Damage(ItemComponent):
     nid = 'damage'
     desc = "Item does damage on hit"
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     expose = Type.Int
     value = 0
@@ -158,7 +158,7 @@ class Damage(ItemComponent):
 class Crit(ItemComponent):
     nid = 'crit'
     desc = "Item has a chance to crit. If left off, item cannot crit."
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     expose = Type.Int
     value = 0
@@ -168,8 +168,8 @@ class Crit(ItemComponent):
 
 class Weight(ItemComponent):
     nid = 'weight'
-    desc = "Item has a weight."
-    tag = 'weapon'
+    desc = "Lowers attack speed. At first, subtracted from the CONSTITUTION equation. If negative, subtracts from overall attack speed."
+    tag = ItemTags.WEAPON
 
     expose = Type.Int
     value = 0
@@ -183,7 +183,7 @@ class Weight(ItemComponent):
 class Unwieldy(ItemComponent):
     nid = 'Unwieldy'
     desc = "Item lowers unit's defense by X"
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     expose = Type.Int
     value = 0
@@ -193,8 +193,8 @@ class Unwieldy(ItemComponent):
 
 class StatChange(ItemComponent):
     nid = 'stat_change'
-    desc = "Gives stat bonuses"
-    tag = 'weapon'
+    desc = "A list of stats that correspond to integers. When equipped, stats are changed by that amount."
+    tag = ItemTags.WEAPON
 
     expose = (Type.Dict, Type.Stat)
     value = []
@@ -205,7 +205,7 @@ class StatChange(ItemComponent):
 class CannotDS(ItemComponent):
     nid = 'exempt_from_dual_strike'
     desc = 'Disallows the item\'s wielder from having or being a dual strike partner while equipped'
-    tag = 'weapon'
+    tag = ItemTags.WEAPON
 
     author = 'KD'
     
