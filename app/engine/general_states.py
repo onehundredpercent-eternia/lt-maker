@@ -665,7 +665,7 @@ class MenuState(MapState):
         for region in game.level.regions:
             if region.region_type == 'event' and region.contains(self.cur_unit.position):
                 try:
-                    truth = evaluate.evaluate(region.condition, self.cur_unit, region=region)
+                    truth = evaluate.evaluate(region.condition, self.cur_unit, local_args={'region': region})
                     logging.debug("Testing region: %s %s", region.condition, truth)
                     # No duplicates
                     if truth and region.sub_nid not in options:

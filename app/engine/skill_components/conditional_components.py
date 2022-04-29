@@ -15,7 +15,7 @@ class CombatCondition(SkillComponent):
     def pre_combat(self, playback, unit, item, target, mode):
         from app.engine import evaluate
         try:
-            x = bool(evaluate.evaluate(self.value, unit, target, item, mode=mode))
+            x = bool(evaluate.evaluate(self.value, unit, target, unit.position, {'item': item, 'mode': mode}))
             self._condition = x
             return x
         except Exception as e:
@@ -46,6 +46,6 @@ class Condition(SkillComponent):
     def condition(self, unit):
         from app.engine import evaluate
         try:
-            return bool(evaluate.evaluate(self.value, unit))
+            return bool(evaluate.evaluate(self.value, unit, position=unit.position))
         except Exception as e:
             print("%s: Could not evaluate condition %s" % (e, self.value))

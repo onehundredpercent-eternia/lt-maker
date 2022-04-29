@@ -1746,9 +1746,7 @@ def region_condition(self: Event, nid, expression, flags=None):
         self.logger.error("Couldn't find Region %s" % nid)
 
 def remove_region(self: Event, nid, flags=None):
-    if nid == '{region}' and self.region:
-        action.do(action.RemoveRegion(self.region))
-    elif nid in self.game.level.regions.keys():
+    if nid in self.game.level.regions.keys():
         region = self.game.level.regions.get(nid)
         action.do(action.RemoveRegion(region))
     else:
@@ -2309,17 +2307,18 @@ def find_unlock(self: Event, unit, flags=None):
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
     unit = new_unit
-    if not self.region:
+    region = self.local_args.get('region')
+    if not region:
         self.logger.error("Can only find_unlock within a region's event script")
         return
-    if skill_system.can_unlock(unit, self.region):
+    if skill_system.can_unlock(unit, region):
         self.game.memory['unlock_item'] = None
         return  # We're done here
 
     all_items = []
     for item in item_funcs.get_all_items(unit):
         if item_funcs.available(unit, item) and \
-                item_system.can_unlock(unit, item, self.region):
+                item_system.can_unlock(unit, item, region):
             all_items.append(item)
 
     if len(all_items) > 1:

@@ -248,7 +248,7 @@ class FreeRoamState(MapState):
         for region in game.level.regions:
             if region.region_type == 'event' and region.fuzzy_contains(self.roam_unit.position):
                 try:
-                    truth = evaluate.evaluate(region.condition, self.roam_unit, region=region, position=self.roam_unit.position)
+                    truth = evaluate.evaluate(region.condition, self.roam_unit, position=self.roam_unit.position, local_args={'region': region})
                     if truth:
                         return region
                 except Exception as e:

@@ -141,7 +141,7 @@ class AIController():
             for r in game.level.regions:
                 if r.contains(self.goal_position) and r.region_type == 'event' and r.sub_nid == self.behaviour.target_spec:
                     try:
-                        if not r.condition or evaluate.evaluate(r.condition, self.unit, position=self.goal_position):
+                        if not r.condition or evaluate.evaluate(r.condition, self.unit, position=self.goal_position, local_args={'region': r}):
                             region = r
                             break
                     except:
@@ -619,7 +619,7 @@ def get_targets(unit, behaviour):
         all_targets = []
         for region in game.level.regions:
             try:
-                if region.region_type == 'event' and region.sub_nid == target_spec and (not region.condition or evaluate.evaluate(region.condition, unit)):
+                if region.region_type == 'event' and region.sub_nid == target_spec and (not region.condition or evaluate.evaluate(region.condition, unit, local_args={'region': region})):
                     all_targets += region.get_all_positions()
             except:
                 logging.warning("Region Condition: Could not parse %s" % region.condition)

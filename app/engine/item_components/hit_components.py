@@ -456,7 +456,7 @@ class EventOnHit(ItemComponent):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
             local_args = {'target_pos': target_pos, 'mode': mode, 'attack_info': attack_info, 'item': item}
-            game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args})
+            game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
 
 class EventAfterCombat(ItemComponent):
     nid = 'event_after_combat'
