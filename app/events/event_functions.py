@@ -2019,12 +2019,13 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
             ast.parse(choices)
             def tryexcept(callback_expr):
                 try:
-                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr, True), self.unit, self.unit2, self.item, self.position, self.region, game=self.game)
+                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.item, self.position, self.region, game=self.game)
                     if isinstance(val, list):
                         return val
                     else:
                         return [self._object_to_str(val)]
-                except:
+                except Exception as e:
+                    self.logger.error("Choice %s failed to evaluate expression %s with error %s", nid, callback_expr, str(e))
                     return [""]
             data = lambda: tryexcept(choices)
         except:
