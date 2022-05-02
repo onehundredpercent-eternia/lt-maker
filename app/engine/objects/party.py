@@ -3,7 +3,7 @@ from app.utilities.data import Prefab
 from app.engine.game_state import game
 
 class PartyObject(Prefab):
-    def __init__(self, nid, name, leader_nid, units=None, money=0, convoy=None, bexp=0, rations=0, special=0, crystals=0):
+    def __init__(self, nid, name, leader_nid, units=None, money=0, convoy=None, bexp=0):
         self.nid = nid
         self.name = name
         self.leader_nid = leader_nid
@@ -18,9 +18,6 @@ class PartyObject(Prefab):
         else:
             self.convoy = []
         self.bexp: int = bexp
-        self.rations: int = rations
-        self.special: int = special
-        self.crystals: int = crystals
 
     @property
     def items(self):
@@ -33,15 +30,11 @@ class PartyObject(Prefab):
                 'units': self.units,
                 'money': self.money,
                 'convoy': [item.uid for item in self.convoy],
-                'bexp': self.bexp,
-                'rations': self.rations,
-                'special': self.special,
-                'crystals': self.crystals}
+                'bexp': self.bexp}
 
     @classmethod
     def restore(cls, s_dict):
         party = cls(s_dict['nid'], s_dict['name'], s_dict['leader_nid'],
                     s_dict['units'], s_dict['money'], s_dict['convoy'],
-                    s_dict['bexp'], s_dict.get('rations', 0),
-                    s_dict.get('special', 0), s_dict.get('crystals', 0))
+                    s_dict['bexp'])
         return party
