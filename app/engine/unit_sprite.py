@@ -567,6 +567,8 @@ class UnitSprite():
         return surf
 
     def check_draw_hp(self) -> bool:
+        if game.level.roam and DB.constants.value('roam_hide_hp'):
+            return False
         if self.unit.is_dying or self.unit.dead:
             return False
         if (cf.SETTINGS['hp_map_team'] == 'All') or \

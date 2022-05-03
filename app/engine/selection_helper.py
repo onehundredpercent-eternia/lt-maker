@@ -18,8 +18,8 @@ class SelectionHelper():
     def handle_mouse(self):
         mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
-            new_pos_x = mouse_position[0] // TILEWIDTH + game.camera.get_x()
-            new_pos_y = mouse_position[1] // TILEHEIGHT + game.camera.get_y()
+            new_pos_x = int(mouse_position[0] // TILEWIDTH + game.camera.get_x())
+            new_pos_y = int(mouse_position[1] // TILEHEIGHT + game.camera.get_y())
             new_pos = new_pos_x, new_pos_y
             if new_pos in self.pos_list:
                 return new_pos

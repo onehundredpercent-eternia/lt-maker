@@ -67,6 +67,7 @@ constants = ConstantCatalog([
     Constant('min_damage', "Min damage dealt by an attack", int, 0),
     Constant('boss_crit', "Final blow on boss will use critical animation", bool, False, 'aesthetic'),
     Constant('battle_platforms', "Use battle platforms when battle backgrounds are on", bool, True, 'aesthetic'),
+    Constant('roam_hide_hp', "Hide hp bars during free roam", bool, False, 'aesthetic'),
     Constant('convoy_on_death', "Items held by dead player units are sent to convoy", bool),
     Constant('repair_shop', "Access the Repair Shop in prep and base", bool, False),
     Constant('give_and_take', "Units can give a unit after taking a unit", bool),

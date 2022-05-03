@@ -21,12 +21,16 @@ class PlayerChoiceState(MapState):
         if self.size:
             rows, ncols = self.size
         else:
+            if callable(options_list):
+                data = options_list()
+            else:
+                data = options_list
             if self.orientation == 'horizontal':
-                ncols = len(options_list)
+                ncols = len(data)
                 self.size = (1, ncols)
                 rows, ncols = self.size
             else:
-                nrows = len(options_list)
+                nrows = len(data)
                 self.size = (nrows, 1)
                 rows, ncols = self.size
         self.menu = ChoiceMenuUI(options_list, data_type=self.data_type, rows=rows, row_width=self.row_width,

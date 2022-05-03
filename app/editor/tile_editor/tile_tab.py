@@ -12,6 +12,58 @@ from app.editor.tile_editor import tile_model
 from app.editor.tilemap_editor import MapEditor
 from app.editor.icon_editor.icon_tab import IconListView
 
+# from PyQt5.QtWidgets import QStyle, QStyledItemDelegate, QApplication
+# from PyQt5.QtGui import QIcon, QPen, QFontMetrics
+# from PyQt5.QtCore import Qt, QRect
+
+# class TileViewDelegate(QStyledItemDelegate):
+#     """
+#     https://stackoverflow.com/a/69489044
+#     """
+#     width, height = 96, 96
+#     grid_width, grid_height = 120, 120
+
+#     def paint(self, painter, option, index):
+#         if not index.isValid():
+#             return
+
+#         painter.save()
+
+#         icon_rect = QRect(option.rect)
+#         icon_rect.setSize(QSize(self.width, self.height))
+
+#         # Selected
+#         # if option.state & QStyle.State_Selected:
+#         #     painter.fillRect(icon_rect, option.palette.highlight())
+
+#         # Icon
+#         icon = index.data(Qt.DecorationRole)
+
+#         mode = QIcon.Normal
+#         state = QIcon.On if option.state & QStyle.State_Open else QIcon.Off
+#         # icon_rect = option.rect
+#         icon.paint(painter, icon_rect, alignment=Qt.AlignHCenter | Qt.AlignBottom, mode=mode, state=state)
+
+#         # Text
+#         text = index.data(Qt.DisplayRole)
+#         font = QApplication.font()
+#         font_metrics = QFontMetrics(font)
+#         height = font_metrics.height()
+#         padding = 8
+#         text_rect = font_metrics.boundingRect(icon_rect.left() + padding/2,
+#                                               icon_rect.bottom() + padding/2,
+#                                               icon_rect.width() - padding,
+#                                               height + padding/2,
+#                                               Qt.AlignHCenter | Qt.AlignTop,
+#                                               text)
+#         color = QApplication.palette().text().color()
+#         pen = QPen(color)
+#         painter.setPen(pen)
+#         painter.setFont(font)
+#         painter.drawText(text_rect, Qt.AlignCenter | Qt.AlignBottom, text)
+
+#         painter.restore()
+
 class TileTab(QWidget):
     def __init__(self, data, title, model, parent=None):
         super().__init__(parent)
@@ -27,7 +79,6 @@ class TileTab(QWidget):
 
         self.view = IconListView()
         self.view.setMinimumSize(360, 360)
-        self.view.setUniformItemSizes(True)
         self.view.setIconSize(QSize(96, 96))
         self.model = model(self._data, self)
         self.view.setModel(self.model)
@@ -36,6 +87,10 @@ class TileTab(QWidget):
         self.view.setResizeMode(QListView.Adjust)
         self.view.setMovement(QListView.Static)
         self.view.setGridSize(QSize(120, 120))
+        # delegate = TileViewDelegate(self)
+        # delegate.width, delegate.height = 96, 96
+        # delegate.grid_width, delegate.grid_height = 120, 120
+        # self.view.setItemDelegate(delegate)
 
         self.layout.addWidget(self.view, 0, 0, 1, 3)
         self.button = QPushButton("Add New %s..." % self.title)

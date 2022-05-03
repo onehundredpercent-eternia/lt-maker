@@ -298,7 +298,7 @@ class OptionMenuState(MapState):
         if not game.level or not game.level.roam:
             options.append('End')
             info_desc.append('End_desc')
-        ignore.append(False)
+            ignore.append(False)
         unlocked_lore = [lore for lore in DB.lore if lore.nid in game.unlocked_lore and lore.category == 'Guide']
         if unlocked_lore:
             options.insert(2, 'Guide')

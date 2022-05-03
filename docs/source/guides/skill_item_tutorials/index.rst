@@ -19,3 +19,4 @@ These are guides on various useful skills and items.
     Creating-Capture
     Recruit-Skill
     Summoning
+    Multi-Items

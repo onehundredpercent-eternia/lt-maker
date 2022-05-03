@@ -687,6 +687,18 @@ class LoseGame(EventCommand):
 Ends the current chapter in defeat. The game over screen will be displayed.
         """
 
+class SkipSave(EventCommand):
+    nid = 'skip_save'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+    """
+Sets whether or not to bring up the save screen after the level ends.
+    """
+
+    keywords = ["TrueOrFalse"]
+    keyword_types = ["Bool"]
+
 class ActivateTurnwheel(EventCommand):
     nid = 'activate_turnwheel'
     tag = Tags.MISCELLANEOUS
@@ -1004,7 +1016,7 @@ If the flag `increment_mode` is supplied, this will add the value to the existin
 Please try to avoid using `increment_mode` with non-numerical fields. That would erase your field and then nobody will be happy.
     """
     keywords = ["Unit", "Key", "Value"]
-    keyword_types = ['Unit', 'String', 'String']
+    keyword_types = ['Unit', 'UnitField', 'String']
     _flags = ['increment_mode']
 
 class Resurrect(EventCommand):
@@ -1192,10 +1204,14 @@ class AddItemToMultiitem(EventCommand):
     desc = \
         """
 Adds a new item to an existing multi-item in the inventory of *GlobalUnitOrConvoy*.
+
+Flags:
+-`no_duplicate` will not add if the item already exists on the multi-item.
         """
 
     keywords = ["GlobalUnitOrConvoy", "MultiItem", "ChildItem"]
     keyword_types = ["GlobalUnitOrConvoy", "Item", "Item"]
+    _flags = ['no_duplicate']
 
 class RemoveItemFromMultiitem(EventCommand):
     nid = 'remove_item_from_multiitem'
@@ -1836,7 +1852,7 @@ class Shop(EventCommand):
 
     desc = \
         """
-Causes *Unit* to enter a shop that sells *ItemList* items. The optional *ShopFlavor* keyword determines whether the shop appears as a vendor or an armory. The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock. 
+Causes *Unit* to enter a shop that sells *ItemList* items. The optional *ShopFlavor* keyword determines whether the shop appears as a vendor or an armory. The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock.
         """
 
     keywords = ["Unit", "ItemList"]

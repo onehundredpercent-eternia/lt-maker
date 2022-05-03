@@ -516,6 +516,10 @@ def win_game(self: Event, flags=None):
 def lose_game(self: Event, flags=None):
     self.game.level_vars['_lose_game'] = True
 
+def skip_save(self: Event, true_or_false: str, flags=None):
+    state = true_or_false in self.true_vals
+    action.do(action.SetLevelVar('_skip_save', state))
+
 def activate_turnwheel(self: Event, force=None, flags=None):
     if force and force.lower() not in self.true_vals:
         self.turnwheel_flag = 1
@@ -711,7 +715,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
 
     if 'copy_stats' in flags:
         new_unit.stats = unit.stats[:]
-        
+
     position = self._check_placement(new_unit, position, placement)
     if not position:
         return None
@@ -1231,6 +1235,11 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
     if not subitem_prefab:
         self.logger.error("Couldn't find item with nid %s" % child_item)
         return
+    if 'no_duplicate' in flags:
+        children = {item.nid for item in item.subitems}
+        if child_item in children:
+            self.logger.info("Item %s already exists on multi-item %s on unit %s" % (child_item, item.nid, unit.nid))
+            return
     # Create subitem
     subitem = ItemObject.from_prefab(subitem_prefab)
     for component in subitem.components:
@@ -1759,6 +1768,9 @@ def show_layer(self: Event, layer, layer_transition=None, flags=None):
     if not layer_transition:
         layer_transition = 'fade'
 
+    if self.game.level.tilemap.layers.get(layer).visible:
+        self.logger.warning("Layer %s is already visible!" % layer)
+        return
     action.do(action.ShowLayer(layer, layer_transition))
 
 def hide_layer(self: Event, layer, layer_transition=None, flags=None):
@@ -1768,6 +1780,9 @@ def hide_layer(self: Event, layer, layer_transition=None, flags=None):
     if not layer_transition:
         layer_transition = 'fade'
 
+    if not self.game.level.tilemap.layers.get(layer).visible:
+        self.logger.warning("Layer %s is already hidden!" % layer)
+        return
     action.do(action.HideLayer(layer, layer_transition))
 
 def add_weather(self: Event, weather, position=None, flags=None):
@@ -1974,11 +1989,11 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, flags=
         for idx, item in enumerate(item_list):
             item_history = '__shop_%s_%s' % (shop_id, item)
             if item_history in self.game.level_vars:
-                stock_list[idx] -= self.game.level_vars[item_history] 
+                stock_list[idx] -= self.game.level_vars[item_history]
         self.game.memory['shop_stock'] = stock_list
     else:
         self.game.memory['shop_stock'] = None
-        
+
     self.game.state.change('shop')
     self.state = 'paused'
 
@@ -2008,12 +2023,13 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
             ast.parse(choices)
             def tryexcept(callback_expr):
                 try:
-                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr, True), self.unit, self.unit2, self.position, self.local_args, game=self.game)
+                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.position, self.local_args, game=self.game)
                     if isinstance(val, list):
                         return val
                     else:
                         return [self._object_to_str(val)]
-                except:
+                except Exception as e:
+                    self.logger.error("Choice %s failed to evaluate expression %s with error %s", nid, callback_expr, str(e))
                     return [""]
             data = lambda: tryexcept(choices)
         except:

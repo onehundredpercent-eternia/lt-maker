@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.engine.objects.item import ItemObject
 from app.engine.text_evaluator import TextEvaluator
 
 import logging
@@ -360,7 +361,7 @@ class Event():
         if command.nid == 'if':
             self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             if not self.if_stack or self.if_stack[-1]:
-                truth = self._get_truth(command)                
+                truth = self._get_truth(command)
                 self.if_stack.append(truth)
                 self.parse_stack.append(truth)
             else:
@@ -485,6 +486,7 @@ class Event():
                 return
             path = target_system.get_path(unit, position)
             action.do(action.Move(unit, position, path, event=True, follow=follow))
+        return position
 
     def _add_unit_from_direction(self, unit, position, direction, placement) -> bool:
         offsets = [-1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7]
@@ -548,6 +550,8 @@ class Event():
             self.logger.error("%s: position out of bounds %s", 'check_placement', position)
             return None
         current_occupant = self.game.board.get_unit(position)
+        if not current_occupant:
+            current_occupant = self.game.movement.check_if_occupied_in_future(position)
         if current_occupant:
             if placement == 'giveup':
                 self.logger.warning("Check placement (giveup): Unit already present on tile %s", position)
@@ -583,7 +587,7 @@ class Event():
         self.game.full_register(new_unit)
         return new_unit
 
-    def _get_item_in_inventory(self, unit_nid: str, item: str) -> tuple:
+    def _get_item_in_inventory(self, unit_nid: str, item: str) -> tuple[UnitObject, ItemObject]:
         if unit_nid.lower() == 'convoy':
             unit = self.game.get_party()
         else:

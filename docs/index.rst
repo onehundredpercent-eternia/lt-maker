@@ -46,6 +46,7 @@ Welcome to lt-maker's documentation!
    source/appendix/Difficulty-Mode-Options
    source/appendix/Item-Component-Reference
    source/appendix/Skill-Component-Reference
+   source/appendix/Constants-Dictionary
    source/appendix/Special-Variables
    source/appendix/Tags
    source/appendix/Trigger-Reference

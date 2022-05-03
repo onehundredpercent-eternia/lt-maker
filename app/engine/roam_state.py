@@ -218,7 +218,7 @@ class FreeRoamState(MapState):
         new_pos = (int(round(self.roam_unit.position[0])), int(round(self.roam_unit.position[1])))
         current_occupant = game.board.get_unit(new_pos)
         if current_occupant:
-            new_pos = target_system.get_nearest_open_tile(current_occupant, new_pos)
+            new_pos = target_system.get_nearest_open_tile(self.roam_unit, new_pos)
         self.roam_unit.position = new_pos
         game.arrive(self.roam_unit)
         self.roam_unit.sprite.change_state('normal')

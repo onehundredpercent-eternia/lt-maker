@@ -463,7 +463,7 @@ class CombatPhaseSolver():
 
     def defender_has_vantage(self) -> bool:
         return self.allow_counterattack() and \
-            skill_system.vantage(self.defender)
+            (skill_system.vantage(self.defender) or skill_system.disvantage(self.attacker))
 
     def allow_counterattack(self) -> bool:
         return combat_calcs.can_counterattack(self.attacker, self.main_item, self.defender, self.def_item)

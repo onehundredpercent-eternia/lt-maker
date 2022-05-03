@@ -61,6 +61,10 @@ class Defaults():
         return False
 
     @staticmethod
+    def wexp_unusable_skill(unit1, unit2) -> float:
+        return False
+
+    @staticmethod
     def change_variant(unit) -> str:
         return unit.variant
 
@@ -82,6 +86,10 @@ class Defaults():
 
     @staticmethod
     def empower_heal(unit1, unit2) -> int:
+        return 0
+
+    @staticmethod
+    def empower_heal_received(unit2, unit1) -> int:
         return 0
 
     @staticmethod

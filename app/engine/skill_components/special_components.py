@@ -62,6 +62,21 @@ class EmpowerHeal(SkillComponent):
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
 
+class EmpowerHealReceived(SkillComponent):
+    nid = 'empower_heal_received'
+    desc = "Gives +X extra healing received"
+    tag = SkillTags.ADVANCED
+
+    expose = Type.String
+
+    def empower_heal_received(self, target, unit):
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, target, unit))
+        except:
+            print("Couldn't evaluate %s conditional" % self.value)
+            return 0
+
 class ManaOnHit(SkillComponent):
     nid = 'mana_on_hit'
     desc = 'Gives +X mana on hit'

@@ -220,3 +220,14 @@ class PCCStatic(SkillComponent):
 
     def crit_multiplier(self, unit, item, target, mode, attack_info, base_value):
         return self.value if attack_info[0] > 0 else 1
+
+class ResistFollowUp(SkillComponent):
+    nid = 'resist_follow_up'
+    desc = "Multiplies damage taken by a fraction after the first strike"
+    tag = SkillTags.COMBAT
+
+    expose = Type.Float
+    value = 0.5
+
+    def resist_multiplier(self, unit, item, target, mode, attack_info, base_value):
+        return self.value if attack_info[0] > 0 else 1

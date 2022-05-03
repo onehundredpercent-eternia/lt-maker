@@ -77,3 +77,47 @@ The item components in this dictionary are broken down by icon going from left t
 | Component | Description |
 | ------ | ------ |
 | **Miracle** | Unit cannot be reduced below 1 HP. Often used with the charges system or Proc Rate component. |
+| **Ignore Damage** | Unit cannot take damage. HP can still be set via event. |
+| **Live to Serve** | Unit heals self X% of healing given to others. |
+| **Lifetaker** | Unit heals self X% of max HP after a kill. |
+| **Lifelink** | Unit heals self X% of damage dealt to others, such as with Nosferatu or Sol. |
+| **Ally Lifelink** | Unit heals adjacent allies X% of damage dealt to others. |
+| **Armsthrift** | Attacking with a weapon restores X uses on hit. Uses will not be restored above max. |
+| **Limit Maximum Range** | Caps the unit's maximum range with any item to X. |
+| **Modify Maximum Range** | Adjusts the maximum range of any item wielded by the unit by X. |
+| **Eval Maximum Range** | Functions as Modify Maximum Range, but by providing an equation. |
+| **Cannot Double** | Cmon bruh. |
+| **Can Double on Defense** | Only meant to be used when units are prevented from doubling on defense through the Constants editor. |
+| **Vantage** | Unit attacks first when defending. If two units with Vantage fight, the defender always attacks first. |
+| **Guaranteed Crit** | Unit will always crit even if critical hits are turned off in Constants. |
+| **Distant Counter** | Unit can counter an attack from any range regardless of weapon effective range. |
+| **Cleave** | Unit's attacks will hit all enemies within 1 tile (diagonals included). Functions identically to the Enemy Cleave AoE item component. |
+| **Give Status After Combat** | The target is granted the skill after combat, even if the unit did not hit or even attack at all. |
+| **Give Status After Attack** | The target is granted the skill after combat if the unit was the attacker, even if the unit does not hit. |
+| **Give Status On Hit** | The target is granted the skill after being hit, even if combat has not yet ended. |
+| **Gain Skill After Kill** | The unit is granted the skill after killing a target in combat. |
+| **Gain Skill After Attacking** | The unit is granted the skill after combat if the unit was the attacker, even if the unit does not hit. |
+| **Gain Skill After Active Kill** | The unit is granted the skill after killing a target in combat that the unit initiated. |
+| **Delay Initiative Order** | Delays the target's turn by X. Only applies when attacking. |
+| **Recoil** | Unit takes X nonlethal damage after combat. |
+| **Post Combat Damage** | Target takes X nonlethal damage after combat. |
+| **Post Combat Damage Percent** | Target takes X% of max HP nonlethal damage after combat. |
+| **Post Combat Splash** | Enemies within AoE range of target take X nonlethal damage after combat. AoE range is defined by the Post Combat Splash AOE component. |
+| **Post Combat Splash AOE** | Enemies within X range of target take nonlethal damage after combat as defined by the Post Combat Splash component. |
+
+## Status Components
+
+| Component | Description |
+| ------ | ------ |
+| **Aura** | Grants skill to qualifying units within aura range. |
+| **Aura Range** | Associated aura spreads out to targets within X tiles of unit. |
+| **Aura Target** | Must be ally, enemy, or unit. Enemy encompasses both enemy types (enemy, enemy2), while unit encompasses all units. |
+| **Pair Up Bonus** | While this unit is the sub unit in guard stance, grants skill to the main unit. |
+| **Regeneration** | Unit restores X% of max HP at the beginning of its phase/turn. |
+| **Mana Regeneration** | Unit restores X mana at the beginning of its phase/turn. |
+| **Upkeep Damage** | Unit takes X damage at the beginning of its phase/turn. Can be lethal. |
+| **Endstep Damage** | Unit takes X damage at the beginning of its phase/turn. Can be lethal. |
+| **GBAPoison** | Unit randomly takes 1 to X damage at the beginning of its phase/turn. Can be lethal. |
+| **Resist Status** | Other skills gained with a time component of duration 2 or greater have that duration decreased to 1 turn. |
+| **Immune Status** | Unit cannot acquire skills with the Negative component. |
+| **Reflect Status** | When the unit acquires a skill with a Negative component, causes the granter of that skill to also receive it. Does *not* prevent acquisition of the Negative skill. |
