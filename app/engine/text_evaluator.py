@@ -163,7 +163,6 @@ class TextEvaluator():
     def _evaluate_vars(self, text) -> str:
         if not self.game:
             return "??"
-        text = self._evaluate_args(text)
         to_evaluate = re.findall(r'\{v:[^{}]*\}', text) + re.findall(r'\{var:[^{}]*\}', text)
         evaluated = []
         for to_eval in to_evaluate:
