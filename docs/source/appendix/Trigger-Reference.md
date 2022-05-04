@@ -7,23 +7,23 @@ This page contains a description of all triggers currently in the editor, along 
 Anywhere `unit1` is a supported field, you can also use `unit`. Anywhere `unit2` is a supported field, you can also use `target`.
 
 > `level_start`: Occurs at the very beginning of a level. The chapter screen and title is usually displayed here, as well as introductory cinematics.
-    **No custom fields**
+    - **No custom fields**
 
 > `level_end`: This occurs once `win_game` is set in another event. This is called at the end of gameplay, and usually handles end cinematics before going to the save screen or overworld.
-    **No custom fields**
+    - **No custom fields**
 
 > `overworld_start`: Occurs upon entering the overworld.
-    **No custom fields**
+    - **No custom fields**
 
 > `level_select`: Occurs when an overworld entity is about to issue a move to the node containing the next level. Because of implementation detail, when this event occurs, it supersedes any queued moves. Therefore, the entity will _not move_ to the selected node. Any events that use this trigger should include a scripted move if movement is desired.
-    **No custom fields**
+    - **No custom fields**
 
 > `on_overworld_node_select`: Occurs when an entity is about to issue a move to a node (which may or may not contain the next level, or any level at all). Because of implementation detail, when this event occurs, it supersedes any queued moves. Therefore, the entity will _not move_ to the selected node. Any events that use this trigger should include a scripted move if movement is desired.
-    **entity_nid**: Contains the id of entity that will issue a move.
-    **node_nid**: Contains the id of the node.
+    - **entity_nid**: Contains the id of entity that will issue a move.
+    - **node_nid**: Contains the id of the node.
 
 > `turn_change`" Occurs immediately before turn changes to Player Phase. Useful for dialogue or reinforcements.
-    **No custom fields**
+    - **No custom fields**
 
 > `enemy_turn_change`: Occurs immediately before turn changes to Enemy Phase. Useful for "same turn reinforcements" and other evil deeds.
     **No custom fields**
