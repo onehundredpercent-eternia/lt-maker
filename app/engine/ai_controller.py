@@ -148,6 +148,8 @@ class AIController():
                         logging.warning("Could not evaluate region conditional %s" % r.condition)
             if region:
                 did_trigger = game.events.trigger(region.sub_nid, self.unit, position=self.unit.position, local_args={'region': region})
+                if not did_trigger:  # Just in case we need the generic one
+                    did_trigger = game.events.trigger('on_region_interact', self.unit, position=self.unit.position, local_args={'region': region})
                 if did_trigger and region.only_once:
                     action.do(action.RemoveRegion(region))
                 if did_trigger:
