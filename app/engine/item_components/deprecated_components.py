@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.data.database import DB
 
 from app.data.components import Type
 from app.data.item_components import ItemComponent, ItemTags

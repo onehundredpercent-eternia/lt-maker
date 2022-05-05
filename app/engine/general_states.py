@@ -2177,6 +2177,8 @@ class ShopState(State):
                 FONT['text'].blit_center(text_funcs.translate('Uses'), surf, (128, 64), color='yellow')
                 FONT['text'].blit_center(text_funcs.translate('Stock'), surf, (156, 64), color='yellow')
                 FONT['text'].blit_center(text_funcs.translate('Price'), surf, (186, 64), color='yellow')
+            if self.buy_menu.info_flag:
+                surf = self.buy_menu.vert_draw_info(surf)
         if self.state == 'choice' and self.current_msg.is_done_or_wait():
             self.choice_menu.draw(surf)
 

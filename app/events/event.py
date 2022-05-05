@@ -111,7 +111,7 @@ class Event():
         ser_dict['unit1'] = self.unit.nid if self.unit else None
         ser_dict['unit2'] = self.unit2.nid if self.unit2 else None
         ser_dict['position'] = self.position
-        ser_dict['local_args'] = {k: action.Action.save_obj(v) for k, v in self.local_args}
+        ser_dict['local_args'] = {k: action.Action.save_obj(v) for k, v in self.local_args.items()}
         ser_dict['if_stack'] = self.if_stack
         ser_dict['parse_stack'] = self.parse_stack
         return ser_dict

@@ -9,7 +9,7 @@ import logging
 def get_leveling_method(unit, custom_method=None) -> str:
     if custom_method:
         method = custom_method
-    if unit.team == 'player':
+    elif unit.team == 'player':
         method = game.current_mode.growths
     else:
         method = DB.constants.value('enemy_leveling')
