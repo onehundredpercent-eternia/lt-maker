@@ -52,3 +52,9 @@ class ComponentSettingsController():
 
     def get_sort(self, editor_name):
         return self.state.value(SORT_SETTING_PREFIX + editor_name)
+
+    def set_property(self, editor_name, property_name, value):
+        self.state.setValue(STATE_SETTING_PREFIX + editor_name + property_name, value)
+
+    def get_property(self, editor_name, property_name):
+        return self.state.value(STATE_SETTING_PREFIX + editor_name + property_name)

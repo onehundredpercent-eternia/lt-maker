@@ -1535,6 +1535,7 @@ def set_mode_autolevels(self: Event, level, flags=None):
         self.game.current_mode.enemy_truelevels = autolevel
 
 def promote(self: Event, global_unit, klass=None, flags=None):
+    flags = flags or set()
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
@@ -1552,7 +1553,18 @@ def promote(self: Event, global_unit, klass=None, flags=None):
             new_klass = None
 
     self.game.memory['current_unit'] = unit
-    if new_klass:
+    silent = 'silent' in flags
+    if silent and new_klass:
+        swap_class = action.Promote(unit, new_klass)
+        action.do(swap_class)
+        _, new_wexp = swap_class.get_data()
+        # check for weapon experience gain
+        if new_wexp:
+            for weapon_nid, value in new_wexp.items():
+                # Execute for silent mode
+                action.execute(action.AddWexp(unit, weapon_nid, value))
+        action.do(action.UpdateRecords('level_gain', (unit.nid, unit.level, unit.klass)))
+    elif new_klass:
         self.game.memory['next_class'] = new_klass
         self.game.state.change('promotion')
         self.game.state.change('transition_out')
