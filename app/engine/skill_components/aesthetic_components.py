@@ -39,7 +39,7 @@ class UpkeepAnimation(SkillComponent):
     expose = Type.MapAnimation
 
     def on_upkeep(self, actions, playback, unit):
-        playback.append(pb.CastAnim(self.value, unit))
+        playback.append(pb.CastAnim(self.value))
 
 # Get proc skills working before bothering with this one
 class DisplaySkillIconInCombat(SkillComponent):

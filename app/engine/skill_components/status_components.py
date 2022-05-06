@@ -69,7 +69,7 @@ class Regeneration(SkillComponent):
                 name = 'MapMediumHealTrans'
             else:
                 name = 'MapSmallHealTrans'
-            playback.append(pb.CastAnim(name, unit))
+            playback.append(pb.CastAnim(name))
 
 class ManaRegeneration(SkillComponent):
     nid = 'mana_regeneration'
@@ -103,7 +103,7 @@ class UpkeepDamage(SkillComponent):
                 name = 'MapMediumHealTrans'
             else:
                 name = 'MapSmallHealTrans'
-            playback.append(pb.CastAnim(name, unit))
+            playback.append(pb.CastAnim(name))
             playback.append(pb.DamageNumbers(unit, self.value))
 
     def on_upkeep(self, actions, playback, unit):
