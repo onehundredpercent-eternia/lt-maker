@@ -1,17 +1,16 @@
-from typing import List
+from typing import List, Dict, Set
 
 from app.events import event_commands
 from app.utilities.data import Data, Prefab
 
 
 class Trigger(object):
-    def __init__(self, nid, unit1=False, unit2=False, item=False, position=False, region=False):
+    def __init__(self, nid, unit1=False, unit2=False, position=False, local_args=None):
         self.nid: str = nid
         self.unit1: bool = unit1
         self.unit2: bool = unit2
-        self.item: bool = item
         self.position: bool = position
-        self.region: bool = region
+        self.local_args: Set = local_args or set()
 
 all_triggers = Data([
     Trigger('level_start'),
@@ -22,21 +21,21 @@ all_triggers = Data([
     Trigger('enemy_turn_change'),
     Trigger('enemy2_turn_change'),
     Trigger('other_turn_change'),
-    Trigger('on_region_interact', unit1=True, position=True, region=True),
-    Trigger('unit_death', True, False, False, True),
-    Trigger('unit_wait', True, False, False, True, True),
-    Trigger('unit_select', True, False, False, True),
-    Trigger('unit_level_up', True, True, False, False),
-    Trigger('during_unit_level_up', True, True, False, False),
-    Trigger('combat_start', True, True, True, True, True),  # Region is whether we are in full battle anim
-    Trigger('combat_end', True, True, True, True),
-    Trigger('on_talk', True, True, False, True),
-    Trigger('on_support', True, True, True, True),  # Item is support rank nid
-    Trigger('on_base_convo', True, True, False, False),
+    Trigger('on_region_interact', True, False, True, {'region'}),
+    Trigger('unit_death', True, False, True),
+    Trigger('unit_wait', True, False, True, {'region'}),
+    Trigger('unit_select', True, False, True),
+    Trigger('unit_level_up', True, False, False, {'stat_changes'}),
+    Trigger('during_unit_level_up', True, False, False, {'stat_changes'}),
+    Trigger('combat_start', True, True, True, {'item', 'is_animation_combat'}),
+    Trigger('combat_end', True, True, True, {'item'}),
+    Trigger('on_talk', True, True, True),
+    Trigger('on_support', True, True, True, {'support_rank_nid'}),  # Item is support rank nid
+    Trigger('on_base_convo', True, True, False),
     Trigger('on_turnwheel'),
     Trigger('on_title_screen'),
-    Trigger('time_region_complete', region=True),
-    Trigger('on_overworld_node_select', unit1=True, region=True) # unit1 is entity nid, region is node nid
+    Trigger('time_region_complete', False, False, False, {'region'}),
+    Trigger('on_overworld_node_select', False, False, False, {'entity_nid', 'node_nid'}) # unit1 is entity nid, region is node nid
 ])
 
 class EventPrefab(Prefab):

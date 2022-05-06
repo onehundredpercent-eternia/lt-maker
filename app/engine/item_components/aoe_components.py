@@ -47,7 +47,7 @@ class EnemyBlastAOE(BlastAOE, ItemComponent):
     def splash(self, unit, item, position) -> tuple:
         ranges = set(range(self._get_power(unit)))
         splash = target_system.find_manhattan_spheres(ranges, position[0], position[1])
-        splash = {pos for pos in splash if 0 <= pos[0] < game.tilemap.width and 0 <= pos[1] < game.tilemap.height}
+        splash = {pos for pos in splash if game.board.check_bounds(pos)}
         from app.engine import item_system, skill_system
         if item_system.is_spell(unit, item):
             # spell blast

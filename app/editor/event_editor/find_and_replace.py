@@ -69,9 +69,15 @@ class Find(QDialog):
         if self.whole_words.isChecked():
             query = r'\W' + query + r'\W'
 
-        flags = 0 if self.case_sens.isChecked() else re.I
-        pattern = re.compile(query, flags)
+        if self.normal_radio.isChecked():
+            query = re.escape(query)
 
+        flags = 0 if self.case_sens.isChecked() else re.I
+        try:
+            pattern = re.compile(query, flags)
+        except:
+            # todo(rainlash): display an error message for invalid regex or smth
+            return
         start = self.last_match.start() + 1 if self.last_match else 0
         self.last_match = pattern.search(text, start)
 

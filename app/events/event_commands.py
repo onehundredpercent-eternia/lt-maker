@@ -687,6 +687,18 @@ class LoseGame(EventCommand):
 Ends the current chapter in defeat. The game over screen will be displayed.
         """
 
+class SkipSave(EventCommand):
+    nid = 'skip_save'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+    """
+Sets whether or not to bring up the save screen after the level ends.
+    """
+
+    keywords = ["TrueOrFalse"]
+    keyword_types = ["Bool"]
+
 class ActivateTurnwheel(EventCommand):
     nid = 'activate_turnwheel'
     tag = Tags.MISCELLANEOUS
@@ -750,6 +762,29 @@ they cannot turn time back past the point when this command was executed.
     optional_keywords = ["PositionOffset", "LoadTilemap"]
     keyword_types = ["Tilemap", "PositionOffset", "Tilemap"]
     _flags = ["reload"]  # Should place units in previously recorded positions
+
+class SetGameBoardBounds(EventCommand):
+    nid = 'set_game_board_bounds'
+    tag = Tags.TILEMAP
+
+    desc = \
+        """
+Instead of using the natural boundaries of the tilemap as the board boundaries,
+specific bounds within the tilemap can be specified
+Bounds must form a rectangle
+        """
+
+    keywords = ["MinX", "MinY", "MaxX", "MaxY"]
+    keyword_types = ["WholeNumber", "WholeNumber", "WholeNumber", "WholeNumber"]
+
+class RemoveGameBoardBounds(EventCommand):
+    nid = 'remove_game_board_bounds'
+    tag = Tags.TILEMAP
+
+    desc = \
+        """
+Return to using the natural boundaries of the tilemap as the board boundaries
+        """
 
 class LoadUnit(EventCommand):
     nid = 'load_unit'
@@ -954,7 +989,7 @@ Sets *Unit*'s mana to *Mana*.
         """
 
     keywords = ["Unit", "Mana"]
-    keyword_types = ["Unit", "PositiveIntegerOrZero"]
+    keyword_types = ["Unit", "WholeNumber"]
 
 class AddFatigue(EventCommand):
     nid = 'add_fatigue'
@@ -981,7 +1016,7 @@ If the flag `increment_mode` is supplied, this will add the value to the existin
 Please try to avoid using `increment_mode` with non-numerical fields. That would erase your field and then nobody will be happy.
     """
     keywords = ["Unit", "Key", "Value"]
-    keyword_types = ['Unit', 'String', 'String']
+    keyword_types = ['Unit', 'UnitField', 'String']
     _flags = ['increment_mode']
 
 class Resurrect(EventCommand):
@@ -1169,10 +1204,14 @@ class AddItemToMultiitem(EventCommand):
     desc = \
         """
 Adds a new item to an existing multi-item in the inventory of *GlobalUnitOrConvoy*.
+
+Flags:
+-`no_duplicate` will not add if the item already exists on the multi-item.
         """
 
     keywords = ["GlobalUnitOrConvoy", "MultiItem", "ChildItem"]
     keyword_types = ["GlobalUnitOrConvoy", "Item", "Item"]
+    _flags = ['no_duplicate']
 
 class RemoveItemFromMultiitem(EventCommand):
     nid = 'remove_item_from_multiitem'
@@ -1242,7 +1281,7 @@ Sets *GlobalUnit*'s current experience to *Experience*.
         """
 
     keywords = ["GlobalUnit", "Experience"]
-    keyword_types = ["GlobalUnit", "PositiveIntegerOrZero"]
+    keyword_types = ["GlobalUnit", "WholeNumber"]
 
 class GiveWexp(EventCommand):
     nid = 'give_wexp'
@@ -1408,10 +1447,12 @@ class Promote(EventCommand):
     desc = \
         """
 Promotes *GlobalUnit* into a specified class (*Klass*) or, if no *Klass* is given, the unit promotes as normal using its promotion data.
+If the *silent* flag is given, the unit will promote immediately into the specified class (*Klass*).
         """
 
     keywords = ["GlobalUnit"]
     optional_keywords = ["Klass"]
+    _flags = ["silent"]
 
 class ChangeClass(EventCommand):
     nid = 'change_class'
@@ -1565,7 +1606,7 @@ Adds *Item* to the list of purchaseable goods in the base's market. If the optio
 
     keywords = ["Item"]
     optional_keywords = ["Stock"]
-    keywords_types = ["Item", "PositiveIntegerOrZero"]
+    keywords_types = ["Item", "WholeNumber"]
 
 class RemoveMarketItem(EventCommand):
     nid = 'remove_market_item'
@@ -1578,7 +1619,7 @@ Removes *Item* from the list of purchaseable goods in the base's market. If the 
 
     keywords = ["Item"]
     optional_keywords = ["Stock"]
-    keywords_types = ["Item", "PositiveIntegerOrZero"]
+    keywords_types = ["Item", "WholeNumber"]
 
 class ClearMarketItems(EventCommand):
     nid = 'clear_market_items'
@@ -1813,7 +1854,7 @@ class Shop(EventCommand):
 
     desc = \
         """
-Causes *Unit* to enter a shop that sells *ItemList* items. The optional *ShopFlavor* keyword determines whether the shop appears as a vendor or an armory. The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock. 
+Causes *Unit* to enter a shop that sells *ItemList* items. The optional *ShopFlavor* keyword determines whether the shop appears as a vendor or an armory. The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock.
         """
 
     keywords = ["Unit", "ItemList"]
@@ -2150,12 +2191,14 @@ class TriggerScriptWithArgs(EventCommand):
 
     desc = \
         """
-Executes the event script specified by *Event*. Can feed up to five arguments of your choice to the new event. These args can be accessed via {1}, {2}, {3}, {4}, and {5}.
+Executes the event script specified by *Event*. Can feed any number of arguments of your choice to the new event, as long as they are strings. You will give each of these arguments a name that you can access in the called event using `{eval:name}`, syntax.
+
+For example, if you called `trigger_script_with_args;MyEvent;Color,Purple,Animal,Dog`, when MyEvent runs you could access the color in that event using `{eval:Color}` which would return 'Purple'. Similarly, you could access the animal using `{eval:Animal}`.
         """
 
     keywords = ["Event"]
-    optional_keywords = ["Arg1", "Arg2", "Arg3", "Arg4", "Arg5"]
-    keyword_types = ["Event", "String", "String", "String", "String", "String"]
+    optional_keywords = ["ArgList"]
+    keyword_types = ["Event", "ArgList"]
 
 class LoopUnits(EventCommand):
     nid = 'loop_units'

@@ -167,19 +167,30 @@ class IgnoreWeaponAdvantage(ItemComponent):
 
 class Reaver(ItemComponent):
     nid = 'reaver'
-    desc = "Weapon advantage relationships defined in the weapon types editor are doubled and reversed against this weapon. If two reaver weapons are in combat with each other weapon advantage works as normal."
+    desc = "Weapon advantage relationships defined in the weapon types editor are doubled and reversed against this weapon. If two reaver weapons are in combat with each other weapon advantage works as normal. Identical to a custom_triangle_multiplier of -2.0."
     tag = ItemTags.EXTRA
 
     def modify_weapon_triangle(self, unit, item):
-        return -2
+        return -2.0
 
 class DoubleTriangle(ItemComponent):
     nid = 'double_triangle'
-    desc = "The effects of weapon advantage relationships are doubled by this item."
+    desc = "The effects of weapon advantage relationships are doubled by this item. Identical to a custom_triangle_multiplier of 2.0."
     tag = ItemTags.EXTRA
 
     def modify_weapon_triangle(self, unit, item):
-        return 2
+        return 2.0
+
+class CustomTriangleMultiplier(ItemComponent):
+    nid = 'custom_triangle_multiplier'
+    desc = "Weapon advantage effects are multiplied by the provided value."
+    tag = ItemTags.EXTRA
+
+    expose = Type.Float
+    value = 1.0
+
+    def modify_weapon_triangle(self, unit, item):
+        return self.value
 
 class StatusOnEquip(ItemComponent):
     nid = 'status_on_equip'

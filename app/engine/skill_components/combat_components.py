@@ -75,7 +75,7 @@ class EvalDamage(SkillComponent):
     def modify_damage(self, unit, item):
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, item=item))
+            return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
         except:
             print("Couldn't evaluate %s conditional" % self.value)
         return 0
@@ -181,7 +181,8 @@ class DynamicDamageMultiplier(SkillComponent):
     def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
         from app.engine import evaluate
         try:
-            return float(evaluate.evaluate(self.value, unit, target, item, mode=mode, skill=self.skill, attack_info=attack_info, base_value=base_value))
+            local_args = {'item': item, 'mode': mode, 'skill': self.skill, 'attack_info': attack_info, 'base_value': base_value}
+            return float(evaluate.evaluate(self.value, unit, target, unit.position, local_args))
         except Exception:
             print("Couldn't evaluate %s conditional" % self.value)
             return 1
@@ -218,4 +219,15 @@ class PCCStatic(SkillComponent):
     value = 1
 
     def crit_multiplier(self, unit, item, target, mode, attack_info, base_value):
+        return self.value if attack_info[0] > 0 else 1
+
+class ResistFollowUp(SkillComponent):
+    nid = 'resist_follow_up'
+    desc = "Multiplies damage taken by a fraction after the first strike"
+    tag = SkillTags.COMBAT
+
+    expose = Type.Float
+    value = 0.5
+
+    def resist_multiplier(self, unit, item, target, mode, attack_info, base_value):
         return self.value if attack_info[0] > 0 else 1

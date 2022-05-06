@@ -68,10 +68,10 @@ class FreeRoamState(MapState):
             max_speed = 0.1
 
         # Horizontal direction
-        if (get_input_manager().is_pressed('LEFT') or get_input_manager().just_pressed('LEFT')) and self.roam_unit.position[0] > 0:
+        if (get_input_manager().is_pressed('LEFT') or get_input_manager().just_pressed('LEFT')) and self.roam_unit.position[0] > game.board.bounds[0]:
             self.last_move = engine.get_time()
             self.direction[0] = -5
-        elif (get_input_manager().is_pressed('RIGHT') or get_input_manager().just_pressed('RIGHT')) and self.roam_unit.position[0] < game.tilemap.width - 1:
+        elif (get_input_manager().is_pressed('RIGHT') or get_input_manager().just_pressed('RIGHT')) and self.roam_unit.position[0] < game.board.bounds[2]:
             self.last_move = engine.get_time()
             self.direction[0] = 5
 
@@ -82,10 +82,10 @@ class FreeRoamState(MapState):
             self.direction[0] += 1
 
         # Vertical direction
-        if (get_input_manager().is_pressed('UP') or get_input_manager().just_pressed('UP')) and self.roam_unit.position[1] > 0:
+        if (get_input_manager().is_pressed('UP') or get_input_manager().just_pressed('UP')) and self.roam_unit.position[1] > game.board.bounds[1]:
             self.last_move = engine.get_time()
             self.direction[1] = -5
-        elif (get_input_manager().is_pressed('DOWN') or get_input_manager().just_pressed('DOWN')) and self.roam_unit.position[1] < game.tilemap.height - 1:
+        elif (get_input_manager().is_pressed('DOWN') or get_input_manager().just_pressed('DOWN')) and self.roam_unit.position[1] < game.board.bounds[3]:
             self.last_move = engine.get_time()
             self.direction[1] = 5
 
@@ -148,7 +148,7 @@ class FreeRoamState(MapState):
                     self.rationalize()
             elif region:
                 get_sound_thread().play_sfx('Select 2')
-                did_trigger = game.events.trigger(region.sub_nid, self.roam_unit, position=self.roam_unit.position, region=region)
+                did_trigger = game.events.trigger(region.sub_nid, self.roam_unit, position=self.roam_unit.position, local_args={'region': region})
                 if did_trigger:
                     self.rationalize()
                 if did_trigger and region.only_once:
@@ -218,7 +218,7 @@ class FreeRoamState(MapState):
         new_pos = (int(round(self.roam_unit.position[0])), int(round(self.roam_unit.position[1])))
         current_occupant = game.board.get_unit(new_pos)
         if current_occupant:
-            new_pos = target_system.get_nearest_open_tile(current_occupant, new_pos)
+            new_pos = target_system.get_nearest_open_tile(self.roam_unit, new_pos)
         self.roam_unit.position = new_pos
         game.arrive(self.roam_unit)
         self.roam_unit.sprite.change_state('normal')
@@ -248,7 +248,7 @@ class FreeRoamState(MapState):
         for region in game.level.regions:
             if region.region_type == 'event' and region.fuzzy_contains(self.roam_unit.position):
                 try:
-                    truth = evaluate.evaluate(region.condition, self.roam_unit, region=region, position=self.roam_unit.position)
+                    truth = evaluate.evaluate(region.condition, self.roam_unit, position=self.roam_unit.position, local_args={'region': region})
                     if truth:
                         return region
                 except Exception as e:

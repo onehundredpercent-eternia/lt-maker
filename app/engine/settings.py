@@ -37,6 +37,8 @@ config = [('animation', ['Always', 'Your Turn', 'Combat Only', 'Never'], 0),
           ('music_volume', [x/10.0 for x in range(0, 11, 1)], 15),
           ('sound_volume', [x/10.0 for x in range(0, 11, 1)], 16),
           ('talk_boop', bool, 16),
+          ('show_bounds', bool, 7),
+          ('grid_opacity', [int(255 * x / 10.0) for x in range(11)], 7),
           ('autoend_turn', bool, 14),
           ('confirm_end', bool, 14),
           ('display_hints', bool, 3)]

@@ -2,7 +2,7 @@
 
 _last update v0.1_
 
-![RegionEventPane](../Images/RegionEventPane.png)
+![RegionEventPane](images/RegionEventPane.png)
 
 Event regions are a flexible way for the game designer to give the player additional actions their characters can perform while on specific regions of the map. With event regions, you can implement visiting villages, visiting shops, seizing thrones, escaping the map, flicking switches, and unlocking chests or doors, and much more.
 
@@ -10,9 +10,9 @@ The condition box in the Region pane allows you to specify which units will be a
 
 ## Villages / Houses
 
-![VillageRegion](../Images/VillageRegion.png)
+![VillageRegion](images/VillageRegion.png)
 
-![VillageRegionEvent](../Images/VillageRegionEvent.png)
+![VillageRegionEvent](images/VillageRegionEvent.png)
 
 The condition in the Event Editor specifies *which* region this event corresponds to.
 
@@ -38,9 +38,9 @@ The `has_attacked` command at the end is important if you don't want the unit to
 
 ## Shops / Armories
 
-![ShopRegion](../Images/ShopRegion.png)
+![ShopRegion](images/ShopRegion.png)
 
-![ShopRegionEvent](../Images/ShopRegionEvent.png)
+![ShopRegionEvent](images/ShopRegionEvent.png)
 
 A normal shop event looks something like this
 
@@ -63,9 +63,9 @@ win_game
 
 ## Escape
 
-![EscapeRegion](../Images/EscapeRegion.png)
+![EscapeRegion](images/EscapeRegion.png)
 
-![EscapeRegionEvent](../Images/EscapeRegionEvent.png)
+![EscapeRegionEvent](images/EscapeRegionEvent.png)
 
 A normal escape event looks something like this
 
@@ -79,17 +79,17 @@ end
 
 ## Switch
 
-![SwitchRegion](../Images/SwitchRegion.png)
+![SwitchRegion](images/SwitchRegion.png)
 
-![SwitchRegionEvent](../Images/SwitchRegionEvent.png)
+![SwitchRegionEvent](images/SwitchRegionEvent.png)
 
 You can increment a counter every time a switch event is processed if you want to keep track
 
 ## Chest / Door
 
-![ChestRegion](../Images/ChestRegion.png)
+![ChestRegion](images/ChestRegion.png)
 
-![ChestRegionEvent](../Images/ChestRegionEvent.png)
+![ChestRegionEvent](images/ChestRegionEvent.png)
 
 A normal chest event looks something like this
 

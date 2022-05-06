@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.engine.objects.item import ItemObject
 from app.engine.text_evaluator import TextEvaluator
 
 import logging
@@ -28,7 +29,7 @@ class Event():
     skippable = {"speak", "wait", "bop_portrait",
                  "sound", "location_card", "credits", "ending"}
 
-    def __init__(self, nid, commands, unit=None, unit2=None, item=None, position=None, region=None, game: GameState = None):
+    def __init__(self, nid, commands, unit=None, unit2=None, position=None, local_args: Dict = None, game: GameState = None):
         self.nid = nid
         self.commands: List[event_commands.EventCommand] = commands.copy()
         self.command_idx = 0
@@ -38,9 +39,8 @@ class Event():
         self.unit = unit
         self.unit2 = unit2
         self.created_unit = None
-        self.item = item
         self.position = position
-        self.region = region
+        self.local_args = local_args or {}
         if game:
             self.game = game
         else:
@@ -49,7 +49,7 @@ class Event():
 
         self._generic_setup()
 
-        self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.item, self.position, self.region)
+        self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.position, self.local_args)
 
     def _generic_setup(self):
         self.portraits: Dict[str, EventPortrait] = {}
@@ -110,9 +110,8 @@ class Event():
         ser_dict['command_idx'] = self.command_idx
         ser_dict['unit1'] = self.unit.nid if self.unit else None
         ser_dict['unit2'] = self.unit2.nid if self.unit2 else None
-        ser_dict['region'] = self.region.nid if self.region else None
-        ser_dict['item'] = self.item.uid if self.item else None
         ser_dict['position'] = self.position
+        ser_dict['local_args'] = {k: action.Action.save_obj(v) for k, v in self.local_args.items()}
         ser_dict['if_stack'] = self.if_stack
         ser_dict['parse_stack'] = self.parse_stack
         return ser_dict
@@ -121,12 +120,12 @@ class Event():
     def restore(cls, ser_dict, game: GameState):
         unit = game.get_unit(ser_dict['unit1'])
         unit2 = game.get_unit(ser_dict['unit2'])
-        region = game.get_region(ser_dict['region'])
-        item = game.get_item(ser_dict.get('item'))
         position = ser_dict['position']
+        local_args = ser_dict.get('local_args', {})
+        local_args = {k: action.Action.restore_obj(v) for k, v in local_args.items()}
         commands = ser_dict['commands']
         nid = ser_dict['nid']
-        self = cls(nid, commands, unit, unit2, item, position, region, game)
+        self = cls(nid, commands, unit, unit2, position, local_args, game)
         self.command_idx = ser_dict['command_idx']
         self.if_stack = ser_dict['if_stack']
         self.parse_stack = ser_dict['parse_stack']
@@ -300,7 +299,7 @@ class Event():
             cond = command.parameters['Expression']
             cond = self._evaluate_all(cond)
             try:
-                arg_list = evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region)
+                arg_list = evaluate.evaluate(cond, self.unit, self.unit2, self.position, self.local_args)
                 arg_list = [self._object_to_str(arg) for arg in arg_list]
             except Exception as e:
                 self.logger.error("%s: Could not evaluate {%s}" % (e, command.parameters['Expression']))
@@ -347,7 +346,7 @@ class Event():
         try:
             cond = command.parameters['Expression']
             cond = self._evaluate_all(cond)
-            truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.item, self.position, self.region))
+            truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.position, self.local_args))
         except Exception as e:
             self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
             truth = False
@@ -362,7 +361,7 @@ class Event():
         if command.nid == 'if':
             self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
             if not self.if_stack or self.if_stack[-1]:
-                truth = self._get_truth(command)                
+                truth = self._get_truth(command)
                 self.if_stack.append(truth)
                 self.parse_stack.append(truth)
             else:
@@ -487,6 +486,7 @@ class Event():
                 return
             path = target_system.get_path(unit, position)
             action.do(action.Move(unit, position, path, event=True, follow=follow))
+        return position
 
     def _add_unit_from_direction(self, unit, position, direction, placement) -> bool:
         offsets = [-1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7]
@@ -550,6 +550,8 @@ class Event():
             self.logger.error("%s: position out of bounds %s", 'check_placement', position)
             return None
         current_occupant = self.game.board.get_unit(position)
+        if not current_occupant:
+            current_occupant = self.game.movement.check_if_occupied_in_future(position)
         if current_occupant:
             if placement == 'giveup':
                 self.logger.warning("Check placement (giveup): Unit already present on tile %s", position)
@@ -585,7 +587,7 @@ class Event():
         self.game.full_register(new_unit)
         return new_unit
 
-    def _get_item_in_inventory(self, unit_nid: str, item: str) -> tuple:
+    def _get_item_in_inventory(self, unit_nid: str, item: str) -> tuple[UnitObject, ItemObject]:
         if unit_nid.lower() == 'convoy':
             unit = self.game.get_party()
         else:

@@ -124,6 +124,17 @@ class VarValidator(EvalValidator):
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         return [(None, var_name) for var_name in DB.game_var_slots.keys()]
 
+class UnitField(Validator):
+    desc = "can be nid of any unit field, including new ones"
+
+    def validate(self, text, level):
+        return text
+
+    def valid_entries(self, level: NID, text: str) -> List[Tuple[str, NID]]:
+        all_keys = set()
+        for unit in DB.units:
+            all_keys.update(set([key for (key, _) in unit.fields]))
+        return [(None, key) for key in all_keys]
 
 class GeneralVar(Validator):
     desc = "can be any nid"
@@ -189,10 +200,10 @@ class IntegerList(Validator):
         text = text.split(',')
         for t in text:
             if not str_utils.is_int(t):
-                return None                
+                return None
         return text
 
-class PositiveIntegerOrZero(Validator):
+class WholeNumber(Validator):
     desc = "must be a whole number"
 
     def validate(self, text, level):
@@ -835,6 +846,15 @@ class StatList(Validator):
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         valids = [(stat.name, stat.nid) for stat in DB.stats.values()]
         return valids
+
+class ArgList(Validator):
+    desc = "accepts a comma-delimited list of pairs of keywords and values. For example, `Color,Purple,Animal,Dog`."
+
+    def validate(self, text, level):
+        s_l = text.split(',')
+        if len(s_l)%2 != 0:  # Must be divisible by 2
+            return None
+        return text
 
 class Skill(Validator):
     def validate(self, text, level):

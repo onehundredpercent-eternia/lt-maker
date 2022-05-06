@@ -10,13 +10,8 @@ These pages will contain various guides.
     Breakable-Walls
     Build-Engine
     Choices-and-Battle-Saves
-    Creating-Items
-    Custom-Components
     Leadership-Stars
     Overworld
-    Overworld-Nodes
-    Summoning
-    Supports
     Unit-Groups
     Title-Screen
 

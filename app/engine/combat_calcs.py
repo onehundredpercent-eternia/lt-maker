@@ -95,7 +95,8 @@ def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
                 item_system.can_counter(defender, dweapon):
             if not attacker.position or \
                     attacker.position in item_system.valid_targets(defender, dweapon) or \
-                    skill_system.distant_counter(defender):
+                    skill_system.distant_counter(defender) or \
+                    (skill_system.close_counter(defender) and utils.calculate_distance(attacker.position, defender.position) == 1):
                 return True
     return False
 

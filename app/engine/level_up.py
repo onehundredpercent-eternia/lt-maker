@@ -220,7 +220,7 @@ class ExpState(State):
                     self, self.unit, self.stat_changes, self.old_level, self.unit.level)
             if self.level_up_screen.update(current_time):
                 game.state.back()
-                game.events.trigger('unit_level_up', self.unit, unit2=self.stat_changes)
+                game.events.trigger('unit_level_up', self.unit, local_args={'stat_changes': self.stat_changes})
                 if self.combat_object:
                     self.combat_object.lighten_ui()
 
@@ -444,7 +444,7 @@ class LevelUpScreen():
         elif self.state == 'get_next_spark':
             done = self.inc_spark()
             if done:
-                game.events.trigger('during_unit_level_up', self.unit, unit2=self.parent.stat_changes)
+                game.events.trigger('during_unit_level_up', self.unit, local_args={'stat_changes': self.parent.stat_changes})
                 self.state = 'level_up_wait'
                 self.start_time = current_time
             else:

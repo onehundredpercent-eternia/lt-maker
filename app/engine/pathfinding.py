@@ -1,18 +1,20 @@
 import heapq
+from typing import Tuple
 
 from app.utilities import utils
 
 class Djikstra():
-    __slots__ = ['open', 'closed', 'cells', 'width', 'height', 'start_pos',
+    __slots__ = ['open', 'closed', 'cells', 'bounds', 'height', 'start_pos',
                  'start_cell', 'unit_team', 'pass_through', 'ai_fog_of_war']
 
-    def __init__(self, start_pos: tuple, grid: list, width: int, height: int,
-                 unit_team: str, pass_through: bool, ai_fog_of_war: bool):
+    def __init__(self, start_pos: tuple, grid: list, bounds: Tuple[int, int, int, int],
+                 height: int, unit_team: str, pass_through: bool, ai_fog_of_war: bool):
         self.open = []
         heapq.heapify(self.open)
         self.closed = set()
         self.cells = grid # Must keep order
-        self.width, self.height = width, height
+        self.bounds: Tuple[int, int, int, int] = bounds
+        self.height = height
         self.reset_grid()
         self.start_pos = start_pos
         self.start_cell = self.get_cell(start_pos[0], start_pos[1])
@@ -32,13 +34,13 @@ class Djikstra():
         Returns adjacent cells to a cell.
         """
         cells = []
-        if cell.y < self.height - 1:
+        if cell.y < self.bounds[3]:
             cells.append(self.get_cell(cell.x, cell.y + 1))
-        if cell.x < self.width - 1:
+        if cell.x < self.bounds[2]:
             cells.append(self.get_cell(cell.x + 1, cell.y))
-        if cell.x > 0:
+        if cell.x > self.bounds[0]:
             cells.append(self.get_cell(cell.x - 1, cell.y))
-        if cell.y > 0:
+        if cell.y > self.bounds[1]:
             cells.append(self.get_cell(cell.x, cell.y - 1))
         return cells
 
@@ -91,10 +93,10 @@ class Djikstra():
 
 class AStar():
     def __init__(self, start_pos: tuple, goal_pos: tuple, grid: list,
-                 width: int, height: int, unit_team: str,
+                 bounds: Tuple[int, int, int, int], height: int, unit_team: str,
                  pass_through: bool = False, ai_fog_of_war: bool = False):
         self.cells = grid
-        self.width = width
+        self.bounds = bounds
         self.height = height
         self.start_pos = start_pos
         self.goal_pos = goal_pos
@@ -155,13 +157,13 @@ class AStar():
 
     def get_adjacent_cells(self, cell) -> list:
         cells = []
-        if cell.y < self.height - 1:
+        if cell.y < self.bounds[3]:
             cells.append(self.get_cell(cell.x, cell.y + 1))
-        if cell.x < self.width - 1:
+        if cell.x < self.bounds[2]:
             cells.append(self.get_cell(cell.x + 1, cell.y))
-        if cell.x > 0:
+        if cell.x > self.bounds[0]:
             cells.append(self.get_cell(cell.x - 1, cell.y))
-        if cell.y > 0:
+        if cell.y > self.bounds[1]:
             cells.append(self.get_cell(cell.x, cell.y - 1))
         return cells
 

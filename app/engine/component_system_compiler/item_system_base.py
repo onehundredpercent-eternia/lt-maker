@@ -39,8 +39,8 @@ class Defaults():
         return None
 
     @staticmethod
-    def modify_weapon_triangle(unit, item) -> int:
-        return 1
+    def modify_weapon_triangle(unit, item) -> float:
+        return 1.0
 
     @staticmethod
     def effect_animation(unit, item) -> str:

@@ -25,6 +25,9 @@ class IconModel(ResourceCollectionModel):
             for i in new_icons:
                 self.sub_data.append(i)
 
+    def rearrange_data(self):
+        pass
+
     def rowCount(self, parent=None):
         return len(self.sub_data)
 
@@ -157,6 +160,15 @@ class Icon16Model(IconModel):
         for skill in DB.skills:
             if skill.icon_nid == old_nid:
                 skill.icon_nid = new_nid
+
+    def rearrange_data(self, horizontal):
+        self.sub_data.clear()
+        for icon in self._data:
+            new_icons = icon_view.icon_slice(icon, self.width, self.height, not horizontal)
+            for i in new_icons:
+                self.sub_data.append(i)
+        self.window.update_list()
+
 
 class Icon32Model(Icon16Model):
     database = RESOURCES.icons32

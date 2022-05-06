@@ -94,14 +94,14 @@ class WitchWarp(SkillComponent):
     def witch_warp(self, unit: UnitObject) -> Set[Tuple[int, int]]:
         warp_spots = set()
         for ally in game.get_all_units():
-            if ally.team == unit.team and ally.position and game.tilemap.check_bounds(ally.position):
+            if ally.team == unit.team and ally.position and game.board.check_bounds(ally.position):
                 pos = ally.position
                 up = (pos[0], pos[1] - 1)
                 down = (pos[0], pos[1] + 1)
                 left = (pos[0] - 1, pos[1])
                 right = (pos[0] + 1, pos[1])
                 for point in [up, down, left, right]:
-                    if game.tilemap.check_bounds(point):
+                    if game.board.check_bounds(point):
                         warp_spots.add(point)
         return warp_spots
 

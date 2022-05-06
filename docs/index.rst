@@ -23,7 +23,8 @@ Welcome to lt-maker's documentation!
    :maxdepth: 4
    :caption: Editor Guides:
 
-   source/editors/var_slots_editor
+   source/editors/Var-Slots-Editor
+   source/editors/Supports
 
 
 .. toctree::
@@ -45,6 +46,7 @@ Welcome to lt-maker's documentation!
    source/appendix/Difficulty-Mode-Options
    source/appendix/Item-Component-Reference
    source/appendix/Skill-Component-Reference
+   source/appendix/Constants-Dictionary
    source/appendix/Special-Variables
    source/appendix/Tags
    source/appendix/Trigger-Reference

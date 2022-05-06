@@ -171,7 +171,7 @@ class EvalMaximumRange(SkillComponent):
     def modify_maximum_range(self, unit, item):
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, item=item))
+            return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
         except:
             print("Couldn't evaluate %s conditional" % self.value)
         return 0
@@ -205,7 +205,7 @@ class Vantage(SkillComponent):
 
 class GuaranteedCrit(SkillComponent):
     nid = 'guaranteed_crit'
-    desc = "Unit will have chance to crit even if crit constant is turned off"
+    desc = "Unit will always crit even if crit constant is turned off"
     tag = SkillTags.COMBAT2
 
     def crit_anyway(self, unit):
@@ -219,6 +219,14 @@ class DistantCounter(SkillComponent):
     def distant_counter(self, unit):
         return True
 
+class CloseCounter(SkillComponent):
+    nid = 'close_counter'
+    desc = "Unit can retaliate against adjacent foes even if otherwise unable to"
+    tag = SkillTags.COMBAT2
+
+    def close_counter(self, unit):
+        return True
+
 class Cleave(SkillComponent):
     nid = 'Cleave'
     desc = "Grants unit the ability to cleave with all their non-splash attacks"
@@ -230,7 +238,7 @@ class Cleave(SkillComponent):
 
 class GiveStatusAfterCombat(SkillComponent):
     nid = 'give_status_after_combat'
-    desc = "Gives a status to target after combat"
+    desc = "Gives a status to target enemy after combat"
     tag = SkillTags.COMBAT2
 
     expose = Type.Skill
@@ -238,6 +246,19 @@ class GiveStatusAfterCombat(SkillComponent):
     def end_combat(self, playback, unit, item, target, mode):
         from app.engine import skill_system
         if target and skill_system.check_enemy(unit, target):
+            action.do(action.AddSkill(target, self.value, unit))
+            action.do(action.TriggerCharge(unit, self.skill))
+
+class GiveAllyStatusAfterCombat(SkillComponent):
+    nid = 'give_ally_status_after_combat'
+    desc = "Gives a status to target ally after combat"
+    tag = SkillTags.COMBAT2
+
+    expose = Type.Skill
+
+    def end_combat(self, playback, unit, item, target, mode):
+        from app.engine import skill_system
+        if target and skill_system.check_ally(unit, target):
             action.do(action.AddSkill(target, self.value, unit))
             action.do(action.TriggerCharge(unit, self.skill))
 
@@ -393,7 +414,7 @@ class PostCombatSplashAOE(SkillComponent):
     def end_combat(self, playback, unit, item, target, mode):
         if target and skill_system.check_enemy(unit, target):
             r = set(range(self.value+1))
-            locations = target_system.get_shell({target.position}, r, game.tilemap.width, game.tilemap.height)
+            locations = target_system.get_shell({target.position}, r, game.board.bounds)
             damage = get_pc_damage(unit, self.skill)
             if damage > 0:
                 for loc in locations:

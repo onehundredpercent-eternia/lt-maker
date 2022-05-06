@@ -13,12 +13,8 @@ Essentially just a repository that imports a lot of different things so that man
 will be accepted
 """
 
-def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
-             region=None, mode=None, skill=None, attack_info=None, base_value=None,
+def evaluate(string: str, unit1=None, unit2=None, position=None,
              local_args: Dict = None, game=None) -> bool:
-    unit = unit1  # noqa: F841
-    target = unit2  # noqa: F841
-
     if not game:
         from app.engine.game_state import game
 
@@ -50,13 +46,7 @@ def evaluate(string: str, unit1=None, unit2=None, item=None, position=None,
         'unit': unit1,
         'unit2': unit2,
         'target': unit2,
-        'item': item,
         'position': position,
-        'region': region,
-        'mode': mode,
-        'skill': skill,
-        'attack_info': attack_info,
-        'base_value': base_value,
         'check_pair': check_pair,
         'check_default': check_default,
         'game': game

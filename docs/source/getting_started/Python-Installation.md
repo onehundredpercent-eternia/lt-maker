@@ -16,7 +16,7 @@ https://git-scm.com/download/win
 
 If I don't mention a specific screen, just use the defaults provided.
 
-![GitConfig1](../Images/InstallationGit1.png)
+![GitConfig1](images/InstallationGit1.png)
 
 I recommend this setup for first time git users. Being able to access "Git Bash" from right clicking on the explorer menu is invaluable, but Git GUI is rather useless. You shouldn't need Git LFS for this project.
 
@@ -24,7 +24,7 @@ Make sure you change the text editor to your text editor of choice. I recommend 
 
 Choose the second option under "Adjusting your PATH Environment", unless you are sure you never want to use git outside of Git Bash (if so, choose the first).
 
-![GitConfig2](../Images/InstallationGit2.png)
+![GitConfig2](images/InstallationGit2.png)
 
 Choose the defaults for the remaining options, unless you have a good reason not to.
 
@@ -36,7 +36,7 @@ Let's make sure git works.
 
 You should be able to right-click in the File Explorer and open Git Bash by left-clicking "Git Bash"
 
-![GitConfig3](../Images/InstallationGit3.png)
+![GitConfig3](images/InstallationGit3.png)
 
 A command line terminal should pop up.
 
@@ -71,7 +71,7 @@ The download should start automatically, then run the installer executable.
 
 I highly highly **HIGHLY** recommend adding Python 3.7 to PATH. This makes so many of the errors that new users of Python run into just disappear. Make sure to click that check box. Then, click "Install Now". the default installation options should be fine.
 
-![PythonConfig1](../Images/InstallationPython1.png)
+![PythonConfig1](images/InstallationPython1.png)
 
 Now you should have Python installed on your machine. Open a new Git Bash somewhere on your machine and type `python --version` or `py --version` or `python3 --version` to confirm that Python works.
 
@@ -81,7 +81,7 @@ Whichever one works (`python` or `py` or `python3`) will be the command you will
 
 You can type just `python` on the Git Bash command line to get the interactive Python REPL, which lets you enter in python commands interactively. For instance, typing in "2 + 2" gives you...
 
-![PythonConfig2](../Images/InstallationPython2.png)
+![PythonConfig2](images/InstallationPython2.png)
 
 To run a Python script, just type `python` and then the script's file name. You must be in the same directory as the script, otherwise you must give python the relative path to the script.
 
@@ -97,19 +97,19 @@ If you navigate to there, you should see a python.exe executable. This is the ac
 
 In Windows 10, type "env" in the search bar and click the "Edit the System Environment Variables" option.
 
-![PythonPath1](../Images/PythonPath1.png)
+![PythonPath1](images/PythonPath1.png)
 
 A dialog box will pop up. Click "Environment Variables...".
 
-![PythonPath2](../Images/PythonPath2.png)
+![PythonPath2](images/PythonPath2.png)
 
 Under User Variables (the top table), click on the "Path" row, then click "Edit...".
 
-![PythonPath3](../Images/PythonPath3.png)
+![PythonPath3](images/PythonPath3.png)
 
 Click "New" on the right. Type the location of your Python executable, in this case: `C:\Users\{Your User}\AppData\Local\Programs\Python\Python37`. Hit Enter. Click New again and type in the path to the associated Scripts directory. `C:\Users\{Your User}\AppData\Local\Programs\Python\Python37\Scripts`.
 
-![PythonPath4](../Images/PythonPath4.png)
+![PythonPath4](images/PythonPath4.png)
 
 Now click OK, exit out of the whole thing, and open a new Git Bash. Try running `python --version` again, and your Python should work now.
 
@@ -159,7 +159,7 @@ from within the "lt-maker" directory.
 
 The engine main screen should pop up and you should be able to play the Lion Throne.
 
-![TitleScreen](../Images/TitleScreen.png)
+![TitleScreen](images/TitleScreen.png)
 
 Now test if LT-Maker works by typing
 ```
@@ -169,7 +169,7 @@ from within the "lt-maker" directory.
 
 The editor should pop up and you should be able to begin making your own fangame.
 
-![EditorScreen](../Images/EditorScreen.png)
+![EditorScreen](images/EditorScreen.png)
 
 > Some users have reported that on Linux systems (specifically Ubuntu), PyQt5 installation does not work. In that case, try: `sudo apt-get install python3-pyqt5` instead.
 

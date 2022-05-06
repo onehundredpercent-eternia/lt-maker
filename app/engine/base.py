@@ -275,7 +275,7 @@ class BaseConvosChildState(State):
                 get_sound_thread().play_sfx('Select 1')
                 # Auto-ignore
                 game.base_convos[selection] = True
-                game.events.trigger('on_base_convo', selection)
+                game.events.trigger('on_base_convo', selection, local_args={'base_convo': selection})
 
     def update(self):
         if self.menu:
@@ -340,10 +340,10 @@ class SupportDisplay():
             bonus = prefab.requirements[self.rank_idx]
             rank = bonus.support_rank
             if rank in pair.unlocked_ranks:
-                game.events.trigger('on_support', game.get_unit(self.unit_nid), game.get_unit(other_unit_nid), rank)
+                game.events.trigger('on_support', game.get_unit(self.unit_nid), game.get_unit(other_unit_nid), local_args={'support_rank_nid': rank})
                 return True
             elif pair.can_support() and rank in pair.locked_ranks:
-                game.events.trigger('on_support', game.get_unit(self.unit_nid), game.get_unit(other_unit_nid), rank)
+                game.events.trigger('on_support', game.get_unit(self.unit_nid), game.get_unit(other_unit_nid), local_args={'support_rank_nid': rank})
                 action.do(action.UnlockSupportRank(pair.nid, rank))
                 return True
         return False
