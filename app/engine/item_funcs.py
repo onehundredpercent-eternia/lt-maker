@@ -119,7 +119,7 @@ def create_items(unit, item_nid_list: list) -> list:
             droppable = False
         item = create_item(unit, item_nid, droppable)
         if item:
-        items.append(item)
+            items.append(item)
         else:
             logging.error("Cannot find item with nid %s" % item_nid)
     return items

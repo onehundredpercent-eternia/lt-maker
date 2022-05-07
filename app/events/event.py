@@ -10,7 +10,7 @@ import app.engine.graphics.ui_framework as uif
 from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
 from app.data.database import DB
 from app.engine import (action, dialog, engine, evaluate,
-                        memento_dialog, static_random, target_system)
+                        static_random, target_system)
 from app.engine.game_state import GameState
 from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.unit import UnitObject
@@ -48,6 +48,7 @@ class Event():
             self.game = game
 
         if MEMENTO_MODE:
+            from app.engine import memento_dialog
             self.dialog_background = memento_dialog.MementoDialogBackground()
         else:
             self.dialog_background = None
@@ -175,7 +176,7 @@ class Event():
                 if self.text_boxes:
                     if self.text_boxes[-1].is_done():
                         if dialog_log:
-                        action.do(action.LogDialog(self.text_boxes[-1]))
+                            action.do(action.LogDialog(self.text_boxes[-1]))
                         self.state = 'processing'
                 else:
                     self.state = 'processing'
@@ -351,14 +352,14 @@ class Event():
         return False
 
     def _get_truth(self, command) -> bool:
-                try:
-                    cond = command.parameters['Expression']
-                    cond = self._evaluate_all(cond)
+        try:
+            cond = command.parameters['Expression']
+            cond = self._evaluate_all(cond)
             truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.position, self.local_args))
-                except Exception as e:
-                    self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
-                    truth = False
-                self.logger.info("Result: %s" % truth)
+        except Exception as e:
+            self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
+            truth = False
+        self.logger.info("Result: %s" % truth)
         return truth
 
     def handle_conditional(self, command) -> bool:
