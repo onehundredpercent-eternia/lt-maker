@@ -127,7 +127,7 @@ class MapCombat(SimpleCombat):
                 game.highlight.remove_highlights()
                 animation_brushes = self.get_from_playback('cast_anim')
                 for brush in animation_brushes:
-                    anim = RESOURCES.animations.get(brush[1])
+                    anim = RESOURCES.animations.get(brush.anim)
                     pos = game.cursor.position
                     if anim:
                         anim = MapAnimation(anim, pos)
@@ -149,7 +149,7 @@ class MapCombat(SimpleCombat):
                     self.attacker.sprite.change_state('combat_anim')
                 sound_brushes = self.get_from_playback('cast_sound')
                 for brush in sound_brushes:
-                    get_sound_thread().play_sfx(brush[1])
+                    get_sound_thread().play_sfx(brush.sound)
 
                 self.state = 'anim'
 
@@ -251,61 +251,57 @@ class MapCombat(SimpleCombat):
 
     def _handle_playback(self):
         for brush in self.playback:
-            if brush[0] == 'unit_tint_add':
-                color = brush[2]
-                brush[1].sprite.begin_flicker(333, color, 'add')
-            elif brush[0] == 'unit_tint_sub':
-                color = brush[2]
-                brush[1].sprite.begin_flicker(333, color, 'sub')
-            elif brush[0] == 'crit_tint':
-                color = brush[2]
-                brush[1].sprite.begin_flicker(33, color, 'add')
+            if brush.nid == 'unit_tint_add':
+                brush.unit.sprite.begin_flicker(333, brush.color, 'add')
+            elif brush.nid == 'unit_tint_sub':
+                brush.unit.sprite.begin_flicker(333, brush.color, 'sub')
+            elif brush.nid == 'crit_tint':
+                brush.unit.sprite.begin_flicker(33, brush.color, 'add')
                 # Delay five frames
-                brush[1].sprite.start_flicker(83, 33, color, 'add')
+                brush.unit.sprite.start_flicker(83, 33, brush.color, 'add')
                 # Delay five more frames
-                brush[1].sprite.start_flicker(166, 333, color, 'add', fade_out=True)
-            elif brush[0] == 'crit_vibrate':
+                brush.unit.sprite.start_flicker(166, 333, brush.color, 'add', fade_out=True)
+            elif brush.nid == 'crit_vibrate':
                 # In 10 frames, start vibrating for 12 frames
-                brush[1].sprite.start_vibrate(166, 200)
-            elif brush[0] == 'hit_sound':
-                sound = brush[1]
-                get_sound_thread().play_sfx(sound)
-            elif brush[0] == 'shake':
-                shake = brush[1]
-                if 'attack_proc' in [brush[0] for brush in self.playback]:
+                brush.unit.sprite.start_vibrate(166, 200)
+            elif brush.nid == 'hit_sound':
+                get_sound_thread().play_sfx(brush.sound)
+            elif brush.nid == 'shake':
+                shake = brush.shake
+                if self.get_from_playback('attack_proc'):
                     shake = 3  # Force critical type shake
                 for health_bar in self.health_bars.values():
                     health_bar.shake(shake)
-            elif brush[0] == 'hit_anim':
-                anim = RESOURCES.animations.get(brush[1])
-                pos = brush[2].position
+            elif brush.nid == 'hit_anim':
+                anim = RESOURCES.animations.get(brush.anim)
+                pos = brush.defender.position
                 if anim and pos:
                     anim = MapAnimation(anim, pos)
                     self.animations.append(anim)
-            elif brush[0] == 'damage_hit':
-                damage = brush[4]
+            elif brush.nid == 'damage_hit':
+                damage = brush.damage
                 if damage <= 0:
                     continue
                 str_damage = str(damage)
-                target = brush[3]
+                target = brush.defender
                 for idx, num in enumerate(str_damage):
                     d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, 'small_red')
                     target.sprite.damage_numbers.append(d)
-            elif brush[0] == 'damage_crit':
-                damage = brush[4]
+            elif brush.nid == 'damage_crit':
+                damage = brush.damage
                 if damage <= 0:
                     continue
                 str_damage = str(damage)
-                target = brush[3]
+                target = brush.defender
                 for idx, num in enumerate(str_damage):
                     d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, 'small_yellow')
                     target.sprite.damage_numbers.append(d)
-            elif brush[0] == 'heal_hit':
-                damage = brush[4]
+            elif brush.nid == 'heal_hit':
+                damage = brush.damage
                 if damage <= 0:
                     continue
                 str_damage = str(damage)
-                target = brush[3]
+                target = brush.defender
                 for idx, num in enumerate(str_damage):
                     d = gui.DamageNumber(int(num), idx, len(str_damage), target.position, 'small_cyan')
                     target.sprite.damage_numbers.append(d)
@@ -328,8 +324,8 @@ class MapCombat(SimpleCombat):
             self.add_proc_icon(mark)
 
     def add_proc_icon(self, mark):
-        unit = mark[1]
-        skill = mark[2]
+        unit = mark.unit
+        skill = mark.skill
         if unit in self.health_bars:
             health_bar = self.health_bars[unit]
             right = health_bar.ordering == 'right' or health_bar.ordering == 'middle'

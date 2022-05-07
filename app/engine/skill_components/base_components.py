@@ -117,6 +117,19 @@ class CanUseWeaponType(SkillComponent):
         except: # sometimes you just want to see if unit can use item TYPE
             return item == self.value
 
+class CannotUseWeaponType(SkillComponent):
+    nid = 'wexp_unusable_skill'
+    desc = 'Unit cannot use this weapon type, regardless of class'
+    tag = SkillTags.BASE
+
+    expose = Type.WeaponType
+
+    def wexp_unusable_skill(self, unit, item):
+        try: # get type from item and then compare
+            return item_system.weapon_type(unit, item) == self.value
+        except: # sometimes you just want to see if unit can use item TYPE
+            return item == self.value
+
 class EnemyWexpMultiplier(SkillComponent):
     nid = 'enemy_wexp_multiplier'
     desc = "Unit gives a multiplier to the wexp gained by others in combat"

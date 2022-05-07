@@ -7,15 +7,14 @@ from app.utilities import str_utils
 import logging
 
 class TextEvaluator():
-    def __init__(self, logger: logging.Logger, game: GameState, unit=None, unit2=None, item=None, position=None, region=None) -> None:
+    def __init__(self, logger: logging.Logger, game: GameState, unit=None, unit2=None, position=None, local_args=None) -> None:
         self.logger = logger
         self.game: GameState = game
         self.unit = unit
         self.unit2 = unit2
         self.created_unit = None
-        self.item = item
         self.position = position
-        self.region = region
+        self.local_args = local_args or {}
 
     def _object_to_str(self, obj) -> str:
         if hasattr(obj, 'uid'):
@@ -30,8 +29,6 @@ class TextEvaluator():
         """
         if re.match(r'\{e:[^{}]*\}', text) or re.match(r'\{eval:[^{}]*\}', text): # eval statement
             return self._evaluate_evals(text)
-        elif re.match(r'\{[1-5]\}', text):
-            return self._evaluate_args(text)
         elif re.match(r'\{d:[^{}]*\}', text) or re.findall(r'\{data:[^{}]*\}', text):
             return self._evaluate_data(text)
         elif re.match(r'\{f:[^{}]*\}', text) or re.match(r'\{field:[^{}]*\}', text):
@@ -57,39 +54,6 @@ class TextEvaluator():
             parsed = str_utils.nested_expr(to_eval, '{', '}')
             evaled = recursive_parse(parsed)
             evaluated.append(evaled)
-        for idx in range(len(to_evaluate)):
-            text = text.replace(to_evaluate[idx], evaluated[idx])
-        return text
-
-    def _evaluate_args(self, text) -> str:
-        to_evaluate = re.findall(r'\{[1-5]\}', text)
-        evaluated = []
-        for to_eval in to_evaluate:
-            try:
-                if to_eval == '{1}':
-                    if not isinstance(self.unit, str):
-                        self.logger.error("{1} is not a string. If you wish to access {unit}, use that tag instead. Evaluating to %s" % self._object_to_str(self.unit))
-                    value = self._object_to_str(self.unit)
-                elif to_eval == '{2}':
-                    if not isinstance(self.unit2, str):
-                        self.logger.error("{2} is not a string. If you wish to access {unit2}, use that tag instead. Evaluating to %s" % self._object_to_str(self.unit2))
-                    value = self._object_to_str(self.unit2)
-                elif to_eval == '{3}':
-                    if not isinstance(self.item, str):
-                        self.logger.error("{3} is not a string. Evaluating to %s" % self._object_to_str(self.item))
-                    value = self._object_to_str(self.item)
-                elif to_eval == '{4}':
-                    if not isinstance(self.position, str):
-                        self.logger.error("{4} is not a string. Evaluating to %s" % self._object_to_str(self.position))
-                    value = self._object_to_str(self.position)
-                elif to_eval == '{5}':
-                    if not isinstance(self.region, str):
-                        self.logger.error("{5} is not a string. Evaluating to %s" % self._object_to_str(self.region))
-                    value = self._object_to_str(self.region)
-                evaluated.append(value)
-            except Exception as e:
-                self.logger.error("Could not evaluate %s (%s)" % (to_eval, e))
-                evaluated.append('??')
         for idx in range(len(to_evaluate)):
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
@@ -187,7 +151,7 @@ class TextEvaluator():
         for to_eval in to_evaluate:
             to_eval = self.trim_eval_tags(to_eval)
             try:
-                val = evaluate.evaluate(to_eval, self.unit, self.unit2, self.item, self.position, self.region)
+                val = evaluate.evaluate(to_eval, self.unit, self.unit2, self.position, self.local_args)
                 evaluated.append(self._object_to_str(val))
             except Exception as e:
                 self.logger.error("Could not evaluate %s (%s)" % (to_eval[6:-1], e))
@@ -199,7 +163,6 @@ class TextEvaluator():
     def _evaluate_vars(self, text) -> str:
         if not self.game:
             return "??"
-        text = self._evaluate_args(text)
         to_evaluate = re.findall(r'\{v:[^{}]*\}', text) + re.findall(r'\{var:[^{}]*\}', text)
         evaluated = []
         for to_eval in to_evaluate:

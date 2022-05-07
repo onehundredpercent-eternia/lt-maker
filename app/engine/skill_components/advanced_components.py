@@ -5,6 +5,7 @@ from app.data.skill_components import SkillComponent, SkillTags
 from app.engine import (action, equations, item_funcs, skill_system,
                         static_random)
 from app.engine.game_state import game
+import app.engine.combat.playback as pb
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
@@ -48,7 +49,7 @@ class CombatArt(SkillComponent):
 
     def start_combat(self, playback, unit, item, target, mode):
         if self._action:
-            playback.append(('attack_pre_proc', unit, self._action.skill_obj))
+            playback.append(pb.AttackPreProc(unit, self._action.skill_obj))
 
     def on_activation(self, unit):
         # I don't think this needs to use an action
@@ -99,7 +100,7 @@ class AllowedWeapons(SkillComponent):
     def weapon_filter(self, unit, item) -> bool:
         from app.engine import evaluate
         try:
-            return bool(evaluate.evaluate(self.value, unit, item=item))
+            return bool(evaluate.evaluate(self.value, unit, local_args={'item': item}))
         except Exception as e:
             print("Couldn't evaluate conditional {%s} %s" % (self.value, e))
         return False
@@ -154,7 +155,7 @@ class AttackProc(SkillComponent):
             if static_random.get_combat() < proc_rate:
                 act = action.AddSkill(unit, self.value)
                 action.do(act)
-                playback.append(('attack_proc', unit, act.skill_obj))
+                playback.append(pb.AttackProc(unit, act.skill_obj))
                 self._did_action = True
 
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
@@ -177,7 +178,7 @@ class DefenseProc(SkillComponent):
             if static_random.get_combat() < proc_rate:
                 act = action.AddSkill(unit, self.value)
                 action.do(act)
-                playback.append(('defense_proc', unit, act.skill_obj))
+                playback.append(pb.DefenseProc(unit, act.skill_obj))
                 self._did_action = True
 
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
@@ -200,7 +201,7 @@ class AttackPreProc(SkillComponent):
             if static_random.get_combat() < proc_rate:
                 act = action.AddSkill(unit, self.value)
                 action.do(act)
-                playback.append(('attack_pre_proc', unit, act.skill_obj))
+                playback.append(pb.AttackPreProc(unit, act.skill_obj))
                 self._did_action = True
 
     def end_combat(self, playback, unit, item, target, mode):
@@ -224,7 +225,7 @@ class DefensePreProc(SkillComponent):
             if static_random.get_combat() < proc_rate:
                 act = action.AddSkill(unit, self.value)
                 action.do(act)
-                playback.append(('defense_pre_proc', unit, act.skill_obj))
+                playback.append(pb.DefensePreProc(unit, act.skill_obj))
                 self._did_action = True
 
     def end_combat(self, playback, unit, item, target, mode):

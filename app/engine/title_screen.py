@@ -788,7 +788,7 @@ class TitleSaveState(State):
     menu = None
 
     def start(self):
-        if game.memory['_skip_save']:
+        if game.memory.get('_skip_save', False):
             game.memory['_skip_save'] = False
             self.go_to_next_level(False)
             return 'repeat'

@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 from app.constants import WINWIDTH, WINHEIGHT
-from app.engine.objects.item import ItemObject
-from app.engine.objects.skill import SkillObject
-from app.engine.objects.unit import UnitObject
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine import engine, base_surf, image_mods, icons, text_funcs, item_system
 from app.data import skills, items
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.engine.objects.item import ItemObject
+    from app.engine.objects.skill import SkillObject
+    from app.engine.objects.unit import UnitObject
 
 class Banner():
     update_flag = False

@@ -3,6 +3,7 @@ from app.data.difficulty_modes import RNGOption
 from app.engine import (combat_calcs, item_funcs, item_system, skill_system,
                         static_random, action)
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 import logging
 
@@ -87,7 +88,7 @@ class AttackerState(SolverState):
             return 'done'
 
     def process(self, solver, actions, playback):
-        playback.append(('attacker_phase',))
+        playback.append(pb.AttackerPhase())
         attack_info = solver.get_attack_info()
         # Check attack proc
         skill_system.start_sub_combat(actions, playback, solver.attacker, solver.main_item, solver.defender, 'attack', attack_info)
@@ -158,7 +159,7 @@ class AttackerPartnerState(SolverState):
             return 'done'
 
     def process(self, solver, actions, playback):
-        playback.append(('attacker_partner_phase',))
+        playback.append(pb.AttackerPartnerPhase())
         # Check attack proc
         atk_p = solver.attacker.strike_partner
         attack_info = solver.get_attack_info()
@@ -231,7 +232,7 @@ class DefenderState(SolverState):
             return 'done'
 
     def process(self, solver, actions, playback):
-        playback.append(('defender_phase',))
+        playback.append(pb.DefenderPhase())
         attack_info = solver.get_defense_info()
         # Check for proc skills
         skill_system.start_sub_combat(actions, playback, solver.defender, solver.def_item, solver.attacker, 'attack', attack_info)
@@ -289,7 +290,7 @@ class DefenderPartnerState(SolverState):
             return 'done'
 
     def process(self, solver, actions, playback):
-        playback.append(('defender_partner_phase',))
+        playback.append(pb.DefenderPartnerPhase())
         def_p = solver.defender.strike_partner
         attack_info = solver.get_defense_info()
         # Check for proc skills
@@ -392,7 +393,7 @@ class CombatPhaseSolver():
         elif rng_mode == RNGOption.GRANDMASTER:
             roll = 0
         else:  # Default to True Hit
-            logging.warning("Not a valid rng_mode: %s (defaulting to true hit)", game.mode.rng_choice)
+            logging.error("Not a valid rng_mode: %s (defaulting to true hit)", game.mode.rng_choice)
             roll = (static_random.get_combat() + static_random.get_combat()) // 2
         return roll
 
@@ -438,21 +439,21 @@ class CombatPhaseSolver():
                 skill_system.before_crit(actions, playback, attacker, item, defender, mode, attack_info)
                 item_system.on_crit(actions, playback, attacker, item, defender, def_pos, mode, attack_info, first_item)
                 if defender:
-                    playback.append(('mark_crit', attacker, defender, self.attacker, item))
+                    playback.append(pb.MarkCrit(attacker, defender, self.attacker, item))
             elif DB.constants.value('glancing_hit') and roll >= to_hit - 20 and not guard_hit:
                 item_system.on_glancing_hit(actions, playback, attacker, item, defender, def_pos, mode, attack_info, first_item)
                 if defender:
-                    playback.append(('mark_hit', attacker, defender, self.attacker, item, guard_hit))
-                    playback.append(('mark_glancing_hit', attacker, defender, self.attacker, item))
+                    playback.append(pb.MarkHit(attacker, defender, self.attacker, item, guard_hit))
+                    playback.append(pb.MarkGlancingHit(attacker, defender, self.attacker, item))
             else:
                 if guard_hit: # Mocks the playback that would be created in weapon_components
-                    playback.append(('damage_hit', attacker, item, defender, 0, 0))
-                    playback.append(('hit_sound', 'No Damage'))
-                    playback.append(('hit_anim', 'MapNoDamage', defender))
+                    playback.append(pb.DamageHit(attacker, item, defender, 0, 0))
+                    playback.append(pb.HitSound('No Damage'))
+                    playback.append(pb.HitAnim('MapNoDamage', defender))
                 else:
                     item_system.on_hit(actions, playback, attacker, item, defender, def_pos, mode, attack_info, first_item)
                 if defender:
-                    playback.append(('mark_hit', attacker, defender, self.attacker, item, guard_hit))
+                    playback.append(pb.MarkHit(attacker, defender, self.attacker, item, guard_hit))
             if not guard_hit:
                 item_system.after_hit(actions, playback, attacker, item, defender, mode, attack_info)
                 skill_system.after_hit(actions, playback, attacker, item, defender, mode, attack_info)
@@ -460,7 +461,7 @@ class CombatPhaseSolver():
         else:
             item_system.on_miss(actions, playback, attacker, item, defender, def_pos, mode, attack_info, first_item)
             if defender:
-                playback.append(('mark_miss', attacker, defender, self.attacker, item))
+                playback.append(pb.MarkMiss(attacker, defender, self.attacker, item))
 
         # Gauge is set to 0. Damage is negated elsewhere
         if DB.constants.value('pairup') and item_system.is_weapon(attacker, item) and skill_system.check_enemy(attacker, defender):
@@ -477,7 +478,7 @@ class CombatPhaseSolver():
 
         item_system.on_hit(actions, playback, attacker, item, defender, def_pos, mode, (0, 0), first_item)
         if defender:
-            playback.append(('mark_hit', attacker, defender, self.attacker, item, False))
+            playback.append(pb.MarkHit(attacker, defender, self.attacker, item, False))
 
     def attacker_alive(self):
         return self.attacker.get_hp() > 0
@@ -487,7 +488,7 @@ class CombatPhaseSolver():
 
     def defender_has_vantage(self) -> bool:
         return self.allow_counterattack() and \
-            skill_system.vantage(self.defender)
+            (skill_system.vantage(self.defender) or skill_system.disvantage(self.attacker))
 
     def allow_counterattack(self) -> bool:
         return combat_calcs.can_counterattack(self.attacker, self.main_item, self.defender, self.def_item)

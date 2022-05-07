@@ -40,7 +40,8 @@ class Action():
         s = s[:-2]
         return s
 
-    def save_obj(self, value):
+    @staticmethod
+    def save_obj(value):
         if isinstance(value, UnitObject):
             value = ('unit', value.nid)
         elif isinstance(value, ItemObject):
@@ -50,7 +51,7 @@ class Action():
         elif isinstance(value, Region):
             value = ('region', value.nid)
         elif isinstance(value, list):
-            value = ('list', [self.save_obj(v) for v in value])
+            value = ('list', [Action.save_obj(v) for v in value])
         elif isinstance(value, Action):
             value = ('action', value.save())
         else:
@@ -65,7 +66,8 @@ class Action():
             ser_dict[name] = value
         return (self.__class__.__name__, ser_dict)
 
-    def restore_obj(self, value):
+    @staticmethod
+    def restore_obj(value):
         if value[0] == 'unit':
             return game.get_unit(value[1])
         elif value[0] == 'item':
@@ -75,7 +77,7 @@ class Action():
         elif value[0] == 'region':
             return game.get_region(value[1])
         elif value[0] == 'list':
-            return [self.restore_obj(v) for v in value[1]]
+            return [Action.restore_obj(v) for v in value[1]]
         elif value[0] == 'action':
             name, value = value[1][0], value[1][1]
             action = getattr(sys.modules[__name__], name)
@@ -480,7 +482,7 @@ class Wait(Action):
         for region in game.level.regions:
             if self.unit.position and region.contains(self.unit.position) and region.interrupt_move:
                 if region.region_type == 'event':
-                    did_trigger = game.events.trigger(region.sub_nid, self.unit, position=self.unit.position, region=region)
+                    did_trigger = game.events.trigger(region.sub_nid, self.unit, position=self.unit.position, local_args={'region': region})
                 if (region.region_type != 'event' or did_trigger) and region.only_once:
                     regions_to_remove.append(RemoveRegion(region))
         return regions_to_remove

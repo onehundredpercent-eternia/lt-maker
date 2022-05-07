@@ -1,8 +1,8 @@
 from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 
-from app.engine import equations, action, item_system, item_funcs
-from app.engine.game_state import game
+from app.engine import equations, item_system, item_funcs
+from app.engine.combat import playback as pb
 
 class UnitAnim(SkillComponent):
     nid = 'unit_anim'
@@ -38,7 +38,7 @@ class UpkeepAnimation(SkillComponent):
     expose = Type.MapAnimation
 
     def on_upkeep(self, actions, playback, unit):
-        playback.append(('cast_anim', self.value, unit))
+        playback.append(pb.CastAnim(self.value))
 
 # Get proc skills working before bothering with this one
 class DisplaySkillIconInCombat(SkillComponent):
@@ -95,9 +95,9 @@ class AlternateBattleAnim(SkillComponent):
     value = 'Critical'
 
     def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
-        marks = [mark[0] for mark in playback]
+        marks = [mark.nid for mark in playback]
         if 'mark_hit' in marks or 'mark_crit' in marks:
-            playback.append(('alternate_battle_pose', self.value))
+            playback.append(pb.AlternateBattlePose(self.value))
 
 class ChangeVariant(SkillComponent):
     nid = 'change_variant'
@@ -129,4 +129,4 @@ class MapCastAnim(SkillComponent):
     expose = Type.MapAnimation
 
     def start_combat(self, playback, unit, item, target, mode):
-        playback.append(('cast_anim', self.value))
+        playback.append(pb.CastAnim(self.value))

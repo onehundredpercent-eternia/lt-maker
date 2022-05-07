@@ -680,7 +680,7 @@ class GameState():
     def get_all_units_in_party(self, party=None) -> List[UnitObject]:
         if party is None:
             party = self.current_party
-        party_units =  [unit for unit in self.units if unit.team == 'player' and unit.persistent and unit.party == party]
+        party_units = [unit for unit in self.units if unit.team == 'player' and unit.persistent and unit.party == party]
         return party_units
 
     def get_units_in_party(self, party=None) -> List[UnitObject]:

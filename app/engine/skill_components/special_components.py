@@ -57,7 +57,22 @@ class EmpowerHeal(SkillComponent):
     def empower_heal(self, unit, target):
         from app.engine import evaluate
         try:
-            return int(evaluate.evaluate(self.value, unit, target))
+            return int(evaluate.evaluate(self.value, unit, target, unit.position))
+        except:
+            print("Couldn't evaluate %s conditional" % self.value)
+            return 0
+
+class EmpowerHealReceived(SkillComponent):
+    nid = 'empower_heal_received'
+    desc = "Gives +X extra healing received"
+    tag = SkillTags.ADVANCED
+
+    expose = Type.String
+
+    def empower_heal_received(self, target, unit):
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, target, unit))
         except:
             print("Couldn't evaluate %s conditional" % self.value)
             return 0
@@ -71,9 +86,9 @@ class ManaOnHit(SkillComponent):
     expose = Type.Int
 
     def mana(self, playback, unit, item, target):
-        mark_playbacks = [p for p in playback if p[0] in ('mark_hit', 'mark_crit')]
+        mark_playbacks = [p for p in playback if p.nid in ('mark_hit', 'mark_crit')]
 
-        if target and any(p[2] == target for p in mark_playbacks):
+        if target and any(p.defender == target for p in mark_playbacks):
             return self.value
         return 0
 
@@ -100,4 +115,4 @@ class EventAfterInitiatedCombat(SkillComponent):
 
     def end_combat(self, playback, unit: UnitObject, item, target: UnitObject, mode):
         if mode == 'attack':
-            game.events.trigger_specific_event(self.value, unit, target, item, unit.position)
+            game.events.trigger_specific_event(self.value, unit, target, unit.position, {'item': item, 'mode': mode})

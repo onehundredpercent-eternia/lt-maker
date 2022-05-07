@@ -880,7 +880,8 @@ class InfoMenuState(State):
         class_obj = DB.classes.get(self.unit.klass)
         wexp_to_draw: List[Tuple[str, int]] = []
         for weapon, wexp in self.unit.wexp.items():
-            if wexp > 0 and (class_obj.wexp_gain.get(weapon).usable or skill_system.wexp_usable_skill(self.unit, weapon)):
+            if wexp > 0 and (class_obj.wexp_gain.get(weapon).usable or skill_system.wexp_usable_skill(self.unit, weapon)) \
+            and not skill_system.wexp_unusable_skill(self.unit, weapon):
                 wexp_to_draw.append((weapon, wexp))
         width = (WINWIDTH - 102) // 2
         height = 16 * 2 + 4
@@ -971,7 +972,7 @@ class InfoMenuState(State):
 
     def create_skill_surf(self):
         surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)
-        skills = [skill for skill in self.unit.skills if not (skill.class_skill or skill_system.hidden(skill, self.unit))][:6]
+        skills = [skill for skill in self.unit.skills if not (skill.class_skill or skill_system.hidden(skill, self.unit))]
         # stacked skills appear multiple times, but should be drawn only once
         skill_counter = {}
         unique_skills = []
@@ -981,7 +982,7 @@ class InfoMenuState(State):
                 unique_skills.append(skill)
             else:
                 skill_counter[skill.nid] += 1
-        for idx, skill in enumerate(unique_skills):
+        for idx, skill in enumerate(unique_skills[:6]):
             left_pos = idx * 24
             icons.draw_skill(surf, skill, (left_pos + 8, 4), compact=False)
             if skill_counter[skill.nid] > 1:

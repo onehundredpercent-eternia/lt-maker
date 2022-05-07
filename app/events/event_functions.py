@@ -501,7 +501,7 @@ def flicker_cursor(self: Event, position, flags=None):
 
 def game_var(self: Event, nid, expression, flags=None):
     try:
-        val = evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region)
+        val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
         action.do(action.SetGameVar(nid, val))
     except Exception as e:
         self.logger.error("Could not evaluate %s (%s)" % (expression, e))
@@ -509,7 +509,7 @@ def game_var(self: Event, nid, expression, flags=None):
 def inc_game_var(self: Event, nid, expression=None, flags=None):
     if expression:
         try:
-            val = evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region)
+            val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
             action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
         except Exception as e:
             self.logger.error("Could not evaluate %s (%s)" % (expression, e))
@@ -518,7 +518,7 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
 
 def level_var(self: Event, nid, expression, flags=None):
     try:
-        val = evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region)
+        val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
         action.do(action.SetLevelVar(nid, val))
     except Exception as e:
         self.logger.error("Could not evaluate %s (%s)" % (expression, e))
@@ -527,7 +527,7 @@ def level_var(self: Event, nid, expression, flags=None):
 def inc_level_var(self: Event, nid, expression=None, flags=None):
     if expression:
         try:
-            val = evaluate.evaluate(expression, self.unit, self.unit2, self.item, self.position, self.region)
+            val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
             action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
         except Exception as e:
             self.logger.error("Could not evaluate %s (%s)" % (expression, e))
@@ -992,7 +992,7 @@ def set_unit_field(self: Event, unit, key, value, flags=None):
         self.logger.error("Couldn't find unit %s" % unit)
         return
     try:
-        value = evaluate.evaluate(value)
+        value = evaluate.evaluate(value, self.unit, self.unit2, self.position, self.local_args)
     except:
         self.logger.error("Could not evaluate {%s}" % value)
         return
@@ -1559,6 +1559,7 @@ def set_mode_autolevels(self: Event, level, flags=None):
         self.game.current_mode.enemy_truelevels = autolevel
 
 def promote(self: Event, global_unit, klass=None, flags=None):
+    flags = flags or set()
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("Couldn't find unit %s" % global_unit)
@@ -1576,7 +1577,18 @@ def promote(self: Event, global_unit, klass=None, flags=None):
             new_klass = None
 
     self.game.memory['current_unit'] = unit
-    if new_klass:
+    silent = 'silent' in flags
+    if silent and new_klass:
+        swap_class = action.Promote(unit, new_klass)
+        action.do(swap_class)
+        _, new_wexp = swap_class.get_data()
+        # check for weapon experience gain
+        if new_wexp:
+            for weapon_nid, value in new_wexp.items():
+                # Execute for silent mode
+                action.execute(action.AddWexp(unit, weapon_nid, value))
+        action.do(action.UpdateRecords('level_gain', (unit.nid, unit.level, unit.klass)))
+    elif new_klass:
         self.game.memory['next_class'] = new_klass
         self.game.state.change('promotion')
         self.game.state.change('transition_out')
@@ -1779,9 +1791,7 @@ def region_condition(self: Event, nid, expression, flags=None):
         self.logger.error("Couldn't find Region %s" % nid)
 
 def remove_region(self: Event, nid, flags=None):
-    if nid == '{region}' and self.region:
-        action.do(action.RemoveRegion(self.region))
-    elif nid in self.game.level.regions.keys():
+    if nid in self.game.level.regions.keys():
         region = self.game.level.regions.get(nid)
         action.do(action.RemoveRegion(region))
     else:
@@ -1794,6 +1804,9 @@ def show_layer(self: Event, layer, layer_transition=None, flags=None):
     if not layer_transition:
         layer_transition = 'fade'
 
+    if self.game.level.tilemap.layers.get(layer).visible:
+        self.logger.warning("Layer %s is already visible!" % layer)
+        return
     action.do(action.ShowLayer(layer, layer_transition))
 
 def hide_layer(self: Event, layer, layer_transition=None, flags=None):
@@ -1803,6 +1816,9 @@ def hide_layer(self: Event, layer, layer_transition=None, flags=None):
     if not layer_transition:
         layer_transition = 'fade'
 
+    if not self.game.level.tilemap.layers.get(layer).visible:
+        self.logger.warning("Layer %s is already hidden!" % layer)
+        return
     action.do(action.HideLayer(layer, layer_transition))
 
 def add_weather(self: Event, weather, position=None, flags=None):
@@ -2043,12 +2059,13 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
             ast.parse(choices)
             def tryexcept(callback_expr):
                 try:
-                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr, True), self.unit, self.unit2, self.item, self.position, self.region, game=self.game)
+                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.position, self.local_args, game=self.game)
                     if isinstance(val, list):
                         return val
                     else:
                         return [self._object_to_str(val)]
-                except:
+                except Exception as e:
+                    self.logger.error("Choice %s failed to evaluate expression %s with error %s", nid, callback_expr, str(e))
                     return [""]
             data = lambda: tryexcept(choices)
         except:
@@ -2090,9 +2107,8 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
     event_context = {
         'unit': self.unit,
         'unit2': self.unit2,
-        'item': self.item,
         'position': self.position,
-        'region': self.region
+        'local_args': self.local_args
     }
 
     self.game.memory['player_choice'] = (nid, header, data, row_width,
@@ -2148,7 +2164,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
             ast.parse(table_data)
             def tryexcept(callback_expr):
                 try:
-                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.item, self.position, self.region, game=self.game)
+                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.position, self.local_args, game=self.game)
                     if isinstance(val, list):
                         return val
                     else:
@@ -2343,17 +2359,18 @@ def find_unlock(self: Event, unit, flags=None):
         self.logger.error("Couldn't find unit with nid %s" % unit)
         return
     unit = new_unit
-    if not self.region:
+    region = self.local_args.get('region')
+    if not region:
         self.logger.error("Can only find_unlock within a region's event script")
         return
-    if skill_system.can_unlock(unit, self.region):
+    if skill_system.can_unlock(unit, region):
         self.game.memory['unlock_item'] = None
         return  # We're done here
 
     all_items = []
     for item in item_funcs.get_all_items(unit):
         if item_funcs.available(unit, item) and \
-                item_system.can_unlock(unit, item, self.region):
+                item_system.can_unlock(unit, item, region):
             all_items.append(item)
 
     if len(all_items) > 1:
@@ -2411,17 +2428,26 @@ def trigger_script(self: Event, event, unit1=None, unit2=None, flags=None):
 
     valid_events = DB.events.get_by_nid_or_name(event, self.game.level.nid)
     for event_prefab in valid_events:
-        self.game.events.trigger_specific_event(event_prefab.nid, unit, unit2, position=self.position, region=self.region)
+        self.game.events.trigger_specific_event(event_prefab.nid, unit, unit2, self.position, self.local_args)
         self.state = 'paused'
 
     if not valid_events:
         self.logger.error("Couldn't find any valid events matching name %s" % event)
 
-def trigger_script_with_args(self: Event, event: str, arg1: str = None, arg2: str = None, arg3: str = None, arg4: str = None, arg5: str = None, flags=None):
+def trigger_script_with_args(self: Event, event: str, arg_list: str = None, flags=None):
     trigger_script = event
     valid_events = DB.events.get_by_nid_or_name(trigger_script, self.game.level.nid)
+
+    # Process Arg List into local args directory
+    a_list = arg_list.split(',')
+    local_args = {}
+    for idx in range(len(a_list)//2):
+        arg_nid = a_list[idx*2]
+        arg_value = a_list[idx*2 + 1]
+        local_args[arg_nid] = arg_value
+
     for event_prefab in valid_events:
-        self.game.events.trigger_specific_event(event_prefab.nid, arg1, arg2, arg3, arg4, arg5)
+        self.game.events.trigger_specific_event(event_prefab.nid, local_args=local_args)
         self.state = 'paused'
     if not valid_events:
         self.logger.error("Couldn't find any valid events matching name %s" % trigger_script)
@@ -2430,7 +2456,7 @@ def trigger_script_with_args(self: Event, event: str, arg1: str = None, arg2: st
 def loop_units(self: Event, expression, event, flags=None):
     unit_list_str = expression
     try:
-        unit_list = evaluate.evaluate(unit_list_str)
+        unit_list = evaluate.evaluate(unit_list_str, self.unit, self.unit2, self.position, self.local_args)
     except Exception as e:
         self.logger.error("%s: Could not evalute {%s}" % (e, unit_list_str))
         return

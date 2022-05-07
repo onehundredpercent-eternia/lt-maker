@@ -95,11 +95,21 @@ Access a level variable
 `game.level_vars['num_switches']`
 
 Access a game variable
-`game.game_vars['villagers_saved']`
+`game.game_vars['villages_saved']`
 
 Example:
 ```
 if;game.game_vars['villages_saved'] >= 3
+    give_item;Protagonist;Reward
+end
+```
+
+Variables can also be accessed in the following manner in the event editor:
+`{v:num_switches}` or `{v:villages_saved}`
+
+Example:
+```
+if;{v:villages_saved} >= 3
     give_item;Protagonist;Reward
 end
 ```

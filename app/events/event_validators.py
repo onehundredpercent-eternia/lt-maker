@@ -847,6 +847,15 @@ class StatList(Validator):
         valids = [(stat.name, stat.nid) for stat in DB.stats.values()]
         return valids
 
+class ArgList(Validator):
+    desc = "accepts a comma-delimited list of pairs of keywords and values. For example, `Color,Purple,Animal,Dog`."
+
+    def validate(self, text, level):
+        s_l = text.split(',')
+        if len(s_l)%2 != 0:  # Must be divisible by 2
+            return None
+        return text
+
 class Skill(Validator):
     def validate(self, text, level):
         if text in DB.skills.keys():

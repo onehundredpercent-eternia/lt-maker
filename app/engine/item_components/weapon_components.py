@@ -6,6 +6,7 @@ from app.data.components import Type
 
 from app.engine import action, combat_calcs, equations, item_system, skill_system
 from app.engine.game_state import game
+from app.engine.combat import playback as pb
 
 class WeaponType(ItemComponent):
     nid = 'weapon_type'
@@ -21,7 +22,7 @@ class WeaponType(ItemComponent):
         klass = DB.classes.get(unit.klass)
         wexp_gain = klass.wexp_gain.get(self.value)
         if wexp_gain:
-            klass_usable = wexp_gain.usable or skill_system.wexp_usable_skill(unit, item)
+            klass_usable = (wexp_gain.usable or skill_system.wexp_usable_skill(unit, item)) and not skill_system.wexp_unusable_skill(unit, item)
             return unit.wexp[self.value] > 0 and klass_usable
         return False
 
@@ -109,7 +110,7 @@ class Damage(ItemComponent):
         return False
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback_nids = [_[0] for _ in playback]
+        playback_nids = [brush.nid for brush in playback]
         if 'attacker_partner_phase' in playback_nids or 'defender_partner_phase' in playback_nids:
             damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info)
         else:
@@ -119,13 +120,13 @@ class Damage(ItemComponent):
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation
-        playback.append(('damage_hit', unit, item, target, damage, true_damage))
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
         if damage == 0:
-            playback.append(('hit_sound', 'No Damage'))
-            playback.append(('hit_anim', 'MapNoDamage', target))
+            playback.append(pb.HitSound('No Damage'))
+            playback.append(pb.HitAnim('MapNoDamage', target))
 
     def on_glancing_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback_nids = [_[0] for _ in playback]
+        playback_nids = [brush.nid for brush in playback]
         if 'attacker_partner_phase' in playback_nids or 'defender_partner_phase' in playback_nids:
             damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info)
         else:
@@ -136,12 +137,12 @@ class Damage(ItemComponent):
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation
-        playback.append(('damage_hit', unit, item, target, damage, true_damage))
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
         if damage == 0:
-            playback.append(('hit_anim', 'MapNoDamage', target))
+            playback.append(pb.HitAnim('MapNoDamage', target))
 
     def on_crit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        playback_nids = [_[0] for _ in playback]
+        playback_nids = [brush.nid for brush in playback]
         if 'attacker_partner_phase' in playback_nids or 'defender_partner_phase' in playback_nids:
             damage = combat_calcs.compute_assist_damage(unit, target, item, target.get_weapon(), mode, attack_info, crit=True)
         else:
@@ -150,10 +151,10 @@ class Damage(ItemComponent):
         true_damage = min(damage, target.get_hp())
         actions.append(action.ChangeHP(target, -damage))
 
-        playback.append(('damage_crit', unit, item, target, damage, true_damage))
+        playback.append(pb.DamageCrit(unit, item, target, damage, true_damage))
         if damage == 0:
-            playback.append(('hit_sound', 'No Damage'))
-            playback.append(('hit_anim', 'MapNoDamage', target))
+            playback.append(pb.HitSound('No Damage'))
+            playback.append(pb.HitAnim('MapNoDamage', target))
 
 class Crit(ItemComponent):
     nid = 'crit'

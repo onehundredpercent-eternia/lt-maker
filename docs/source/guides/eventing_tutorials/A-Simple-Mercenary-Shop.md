@@ -109,7 +109,7 @@ Let's write a confirmation dialogue event, similar to the one in the existing ch
 
 ```
 choice;Confirmation;You sure?;Yes,No
-if;game.game_vars.get('Confirmation', None) == 'Yes'
+if;'{v:Confirmation}' == 'Yes'
     alert;You hired {d:MercenaryHiringList.{v:MercenaryHireChoice}.Name}.
     give_money;{eval: -1 * int({d:MercenaryHiringList.{v:MercenaryHireChoice}.Cost})};FLAG(no_banner)
     make_generic;;{d:MercenaryHiringList.{v:MercenaryHireChoice}.Class};{e:game.get_unit('Eirika').level};player;;Soldier (Soldier);;Iron Sword (Iron Sword)
@@ -150,10 +150,11 @@ rmtable;GoldDisplay
 
 ```
 choice;Confirmation;You sure?;Yes,No
-if;game.game_vars.get('Confirmation', None) == 'Yes'
-    alert;You hired {eval:game.get_data('MercenaryHiringList').get(game.game_vars.get("MercenaryHireChoice")).Name}.
-    give_money;{eval: -1 * int(game.get_data('MercenaryHiringList').get(game.game_vars.get("MercenaryHireChoice")).Cost)};FLAG(no_banner)
-    make_generic;;{eval:game.get_data('MercenaryHiringList').get(game.game_vars.get("MercenaryHireChoice")).Class};{eval:game.get_unit('Eirika').level};player;;Soldier (Soldier);;Iron Sword (Iron Sword)
+if;'{v:Confirmation}' == 'Yes'
+    alert;You hired {d:MercenaryHiringList.{v:MercenaryHireChoice}.Name}.
+    give_money;{eval: -1 * int({d:MercenaryHiringList.{v:MercenaryHireChoice}.Cost})};FLAG(no_banner)
+    make_generic;;{d:MercenaryHiringList.{v:MercenaryHireChoice}.Class};{e:game.get_unit('Eirika').level};player;;Soldier (Soldier);;Iron Sword (Iron Sword)
     add_unit;{created_unit};(3, 4);immediate;closest
+    speak;;{d:MercenaryHiringList.{v:MercenaryHireChoice}.Class}
 end
 ```
