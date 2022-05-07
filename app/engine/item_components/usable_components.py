@@ -179,7 +179,7 @@ class ManaCost(ItemComponent):
 class EvalManaCost(ItemComponent):
     nid = 'eval_mana_cost'
     desc = "Item costs mana to use, the amount is eval'd at runtime"
-    tag = 'uses'
+    tag = ItemTags.USES
 
     expose = Type.String
 

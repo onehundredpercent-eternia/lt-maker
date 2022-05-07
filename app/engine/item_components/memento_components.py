@@ -187,10 +187,3 @@ class MementoPull(ItemComponent):
                 playback.append(('shove_hit', unit, item, target))
             else:  # Immobilize Status
                 action.do(action.AddSkill(target, self.value, unit))
-
-class ItemPrefab(ItemComponent):
-    nid = 'item_prefab'
-    desc = "This item will automatically inherit the components of the chosen item"
-    tag = 'base'
-
-    expose = Type.Item
