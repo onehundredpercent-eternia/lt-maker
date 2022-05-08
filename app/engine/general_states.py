@@ -1342,7 +1342,7 @@ class TargetingState(MapState):
                 if unit and unit.traveler and unit == self.cur_unit and self.ability.name == 'Trade':
                     game.memory['trade_partner'] = game.get_unit(unit.traveler)
                 else:
-                game.memory['trade_partner'] = unit
+                    game.memory['trade_partner'] = unit
             self.ability.do(self.cur_unit)
         elif event == 'AUX':
             get_sound_thread().play_sfx('Select 6')
@@ -1609,9 +1609,9 @@ class CombatTargetingState(MapState):
             elif len(adj_allies) > 1 and self.num_targets == 1:
                 i = adj_allies.index(self.attacker_assist)
                 # Hardset attacker
-                        self.attacker_assist = adj_allies[(i + 1) % len(adj_allies)]
-                    game.ui_view.reset_info()
-                    self.display_single_attack()
+                self.attacker_assist = adj_allies[(i + 1) % len(adj_allies)]
+                game.ui_view.reset_info()
+                self.display_single_attack()
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 4')

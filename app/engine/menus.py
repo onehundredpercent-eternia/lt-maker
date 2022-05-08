@@ -684,7 +684,7 @@ class Shop(Choice):
         if self.stock:
             return 168
         else:
-        return 152
+            return 152
 
     def decrement_stock(self):
         if self.stock:
@@ -707,7 +707,7 @@ class Shop(Choice):
             if self.stock:
                 option = menu_options.StockValueItemOption(idx, option, self.disp_value, self.stock[idx])
             else:
-            option = self.default_option(idx, option, self.disp_value)
+                option = self.default_option(idx, option, self.disp_value)
             option.help_box = option.get_help_box()
             self.options.append(option)
 

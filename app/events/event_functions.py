@@ -755,6 +755,12 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
 
     self._place_unit(new_unit, position, entry_type)
 
+def generate_groups(self: Event, flags=None):
+    flags = flags or set()
+
+    from app.engine import random_groups
+    random_groups.build_groups()
+
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:

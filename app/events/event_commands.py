@@ -861,6 +861,16 @@ The optional flag *copy_stats* will cause the new unit to have exactly the same 
     keyword_types = ["Unit", "Nid", "PositiveInteger", "Position", "EntryType", "Placement"]
     _flags = ["copy_stats"]
 
+class GenerateGroups(EventCommand):
+    nid = 'generate_groups'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = \
+        """
+Iterates through each of the 'group' regions and generates random enemies for
+each region. 
+        """
+
 class AddUnit(EventCommand):
     nid = 'add_unit'
     nickname = 'add'

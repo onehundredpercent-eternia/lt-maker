@@ -239,7 +239,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.state = 'fade_in'
 
         elif self.state == 'fade_in':
-                self.build_viewbox(current_time)
+            self.build_viewbox(current_time)
             if current_time > self.viewbox_time:
                 self.viewbox = (self.viewbox[0], self.viewbox[1], 0, 0)
                 self.state = 'entrance'
@@ -472,7 +472,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.state = 'fade_out'
 
         elif self.state == 'fade_out':
-                self.build_viewbox(self.viewbox_time - current_time)
+            self.build_viewbox(self.viewbox_time - current_time)
             if current_time > self.viewbox_time:
                 self.finish()
                 self.clean_up2()

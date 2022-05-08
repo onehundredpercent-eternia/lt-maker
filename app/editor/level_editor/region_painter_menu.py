@@ -228,6 +228,12 @@ class ModifyRegionWidget(QWidget):
         self.group_tags_box.edit.updated.connect(self.group_tags_changed)
         layout.addWidget(self.group_tags_box)
 
+        self.valid_ai_box = PropertyBox("AI", ComboBox, self)
+        valid_ais = list(DB.ai.keys())
+        self.valid_ai_box.edit.addItems(valid_ais)
+        self.valid_ai_box.edit.activated.connect(self.valid_ai_changed)
+        layout.addWidget(self.valid_ai_box)
+
         self.sub_nid_box.hide()
         self.condition_box.hide()
         self.only_once_box.hide()
@@ -235,6 +241,7 @@ class ModifyRegionWidget(QWidget):
         self.status_box.hide()
         self.group_class_box.hide()
         self.group_tags_box.hide()
+        self.valid_ai_box.hide()
 
     def nid_changed(self, text):
         if self.current:
@@ -267,6 +274,7 @@ class ModifyRegionWidget(QWidget):
         self.status_box.hide()
         self.group_class_box.hide()
         self.group_tags_box.hide()
+        self.valid_ai_box.hide()
         if self.current.region_type in ('normal', 'formation'):
             pass
         elif self.current.region_type == 'status':
@@ -281,6 +289,7 @@ class ModifyRegionWidget(QWidget):
         elif self.current.region_type == 'group':
             self.group_class_box.show()
             self.group_tags_box.show()
+            self.valid_ai_box.show()
 
     def sub_nid_changed(self, text):
         self.current.sub_nid = text
@@ -306,6 +315,9 @@ class ModifyRegionWidget(QWidget):
     def group_tags_changed(self):
         self.current.group_data['valid_tags'] = self.group_tags_box.edit.currentText()
 
+    def valid_ai_changed(self):
+        self.current.group_data['ai'] = self.valid_ai_box.edit.currentText()
+
     def set_current(self, current):
         self.current = current
         self.nid_box.edit.setText(current.nid)
@@ -329,3 +341,9 @@ class ModifyRegionWidget(QWidget):
         self.group_tags_box.edit.clear()
         self.group_tags_box.edit.addItems(DB.tags.keys())
         self.group_tags_box.edit.setCurrentTexts(tags)
+
+        ai = current.group_data.get('ai', 'Attack')
+        self.valid_ai_box.edit.clear()
+        valid_ais = list(DB.ai.keys())
+        self.valid_ai_box.edit.addItems(valid_ais)
+        self.valid_ai_box.edit.setValue(ai)

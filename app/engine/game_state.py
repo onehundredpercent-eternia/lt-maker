@@ -594,6 +594,10 @@ class GameState():
     def units(self):
         return list(self.unit_registry.values())
 
+    @property
+    def regions(self):
+        return list(self.region_registry.values())
+
     def register_unit(self, unit):
         logging.debug("Registering unit %s as %s", unit, unit.nid)
         self.unit_registry[unit.nid] = unit
