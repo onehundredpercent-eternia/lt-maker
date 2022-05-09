@@ -82,6 +82,14 @@ class BasicOption():
         self.draw(surf, x, y)
         return surf
 
+class NullOption(BasicOption):
+    def __init__(self, idx):
+        super().__init__(idx, "Nothing")
+        self.ignore = True
+
+    def get(self):
+        return None
+
 class HorizOption(BasicOption):
     def width(self):
         return FONT[self.font].width(self.display_text)

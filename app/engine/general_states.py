@@ -970,8 +970,8 @@ class SubItemChildState(MapState):
         elif event == 'SELECT':
             if self.menu.info_flag:
                 pass
-            elif self.menu.get_current() == 'Nothing':
-                pass
+            elif not self.menu.get_current():
+                get_sound_thread().play_sfx('Error')
             else:
                 get_sound_thread().play_sfx('Select 1')
                 game.memory['parent_menu'] = self.menu
