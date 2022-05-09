@@ -914,7 +914,7 @@ class GameState():
         idx = static_random.get_other(0, len(choices) - 1)
         new = static_random.get_other_random_state()
         action.do(action.RecordOtherRandomState(old, new))
-        return choices[idx]
+        return list(choices)[idx]
 
     def get_random_weighted_choice(self, choices: List, weights: List[float]):
         from app.engine import action
