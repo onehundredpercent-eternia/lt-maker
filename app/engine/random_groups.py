@@ -9,27 +9,56 @@ from app.engine.game_state import game
 
 from app.utilities import str_utils
 
-class_points = {
-    'Myrmidon': 3,
-    'Errant': 2,
-    'Mercenary': 2,
-    'Thief': 2,
-    'Armor': 3,
-    'Cavalier': 2,
-    'Falcoknight': 4,
-    'Skirmisher': 2,
-    'Dracoknight': 5,
-    'Fighter': 2,
-    'Vanguard': 3,
-    'Raider': 2,
-    'Archer': 2,
-    'Hunter': 2,
-    'Soldier': 1.5,
-    'Brigand': 1.5, 
-}   
+@dataclass
+class ClassData:
+    nid: str
+    points: float
+    weapon_type: str
+    chapter_min: int
+    chapter_max: int = 12
+
+class_data = Data([
+    ClassData('Myrmidon', 3, 'Sword', 3),
+    ClassData('Errant', 2, 'Sword', 1),
+    ClassData('Mercenary', 2, 'Sword', 2),
+    ClassData('Thief', 2, 'Sword', 4),
+    ClassData('Armor', 3, 'Lance', 1),
+    ClassData('Cavalier', 2, 'Lance', 2),
+    ClassData('Falcoknight', 4, 'Lance', 5),
+    ClassData('Skirmisher', 2, 'Lance', 1),
+    ClassData('Dracoknight', 5, 'Lance', 5),
+    ClassData('Fighter', 2, 'Lance', 1),
+    ClassData('Vanguard', 3, 'Lance', 3),
+    ClassData('Raider', 2, 'Lance', 2),
+    ClassData('Archer', 2, 'Bow', 1),
+    ClassData('Hunter', 2, 'Bow', 2),
+    ClassData('Soldier', 1.5, 'Lance', 1),
+    ClassData('Brigand', 1.5, 'Axe', 1),
+    ClassData('Seeress', 4, 'Light', 4),
+    ClassData('Cleric', 3, 'Light', 3),
+    ClassData('Mage', 2, 'Anima', 2),
+    ClassData('Shaman', 3.5, 'Anima', 3),
+    ClassData('Acolyte', 2, 'Anima', 2),
+    ClassData('Sorceror', 3, 'Anima', 2),
+])
+
+base_items = {
+    'Sword': 'Grave Sword',
+    'Lance': 'Grave Lance',
+    'Axe': 'Grave Axe',
+    'Bow': 'Grave Bow',
+    'Light': 'Light',
+    'Anima': 'Anima',
+    'Dark': 'Dark',
+}
+
+group_kinds = ('Single', 'Double', 'Leader', 'Elite', 'Mage Support')
+
+def completed_chapters() -> int:
+    return game.game_vars.get('completed_chapters', 0)
 
 def determine_avg_level():
-    num_complete = game.game_vars.get('completed_chapters', 0)
+    num_complete = completed_chapters()
     return num_complete * 2
 
 def build_groups():
@@ -41,7 +70,7 @@ def build_group(region):
     group_data: Dict = region.group_data
 
     # Determine which classes we can put here
-    all_classes = set(class_points.keys())
+    all_classes = set(class_data.keys())
     valid_classes: List[str] = group_data.get('valid_classes', [])
     if valid_classes:
         all_classes &= set(valid_classes)
@@ -59,9 +88,11 @@ def build_group(region):
     # Don't overlap other units
     positions = [pos for pos in positions if not game.get_unit(pos)]
 
+    current_chapter = completed_chapters()
+    all_classes = [klass for klass in all_classes if class_data[klass].chapter_min >= current_chapter and class_data[klass].chapter_max <= current_chapter]
     class_idx = game.get_random(0, len(all_classes) - 1)
     class_to_add = all_classes[class_idx]
-    num_to_add = num_points // class_points[class_to_add] + 1
+    num_to_add = num_points // class_data[class_to_add].points + 1
 
     # Assign units to positions
     position_to_add = []
@@ -80,7 +111,7 @@ def build_group(region):
     for position in position_to_add:
         unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
         klass = class_to_add
-        starting_items = []
+        starting_items = [base_items[class_data[klass].weapon_type]]
         team = 'enemy'
         ai = group_data.get('ai', 'Attack')
         ai_group = region.nid  # All units in a region work in the same group
