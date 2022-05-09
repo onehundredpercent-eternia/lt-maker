@@ -22,7 +22,7 @@ class_data = Data([
     ClassData('Errant', 2, 'Sword', 1),
     ClassData('Mercenary', 2, 'Sword', 2),
     ClassData('Thief', 2, 'Sword', 4),
-    ClassData('Armor', 3, 'Lance', 1),
+    ClassData('Armor', 3, 'Lance', 2),
     ClassData('Cavalier', 2, 'Lance', 2),
     ClassData('Falcoknight', 4, 'Lance', 5),
     ClassData('Skirmisher', 2, 'Lance', 1),
@@ -38,8 +38,8 @@ class_data = Data([
     ClassData('Cleric', 3, 'Light', 3),
     ClassData('Mage', 2, 'Anima', 2),
     ClassData('Shaman', 3.5, 'Anima', 3),
-    ClassData('Acolyte', 2, 'Anima', 2),
-    ClassData('Sorceror', 3, 'Anima', 2),
+    ClassData('Acolyte', 2, 'Dark', 2),
+    ClassData('Sorceror', 3, 'Dark', 2),
 ])
 
 base_items = {
@@ -52,7 +52,9 @@ base_items = {
     'Dark': 'Dark',
 }
 
-group_kinds = ('Single', 'Double', 'Leader', 'Elite', 'Mage Support')
+group_kinds = ('Single Type', 'Double Type', 'Leader', 'Single Type Mage Support', 'Double Type Mage Support')
+
+# Elite is just a %chance modifier that gets applied after the fact
 
 def completed_chapters() -> int:
     return game.game_vars.get('completed_chapters', 0)
