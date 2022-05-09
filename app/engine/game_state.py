@@ -891,10 +891,11 @@ class GameState():
     def set_bexp(self, amount):
         self.parties[self.current_party].bexp = amount
 
-    def get_random(self, a: int, b: int):
+    def get_random(self, a: int, b: int) -> int:
         """
-        Canonical method for getting a random number from within an event
+        Canonical method for getting a random integer from within an event
         without screwing up the turnwheel
+        Inclusive between a and b
         """
         from app.engine import action
         old = static_random.get_other_random_state()
@@ -902,6 +903,26 @@ class GameState():
         new = static_random.get_other_random_state()
         action.do(action.RecordOtherRandomState(old, new))
         return result
+
+    def get_random_choice(self, choices):
+        """
+        Canonical method for getting a random choice from an iterable
+        without screwing up the turnwheel
+        """
+        from app.engine import action
+        old = static_random.get_other_random_state()
+        idx = static_random.get_other(0, len(choices) - 1)
+        new = static_random.get_other_random_state()
+        action.do(action.RecordOtherRandomState(old, new))
+        return choices[idx]
+
+    def get_random_weighted(self, choices: List, weights: List[float]):
+        from app.engine import action
+        old = static_random.get_other_random_state()
+        idx = static_random.weighted_choice(weights, static_random.r.other_random)
+        new = static_random.get_other_random_state()
+        action.do(action.RecordOtherRandomState(old, new))
+        return choices[idx]
 
 game = GameState()
 
