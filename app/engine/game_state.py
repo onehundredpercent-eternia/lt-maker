@@ -904,6 +904,18 @@ class GameState():
         action.do(action.RecordOtherRandomState(old, new))
         return result
 
+    def get_random_float(self) -> float:
+        """
+        Canonical method for getting a random float (0, 1]
+        without screwing up the turnwheel
+        """
+        from app.engine import action
+        old = static_random.get_other_random_state()
+        result = static_random.r.other_random.random()
+        new = static_random.get_other_random_state()
+        action.do(action.RecordOtherRandomState(old, new))
+        return result
+
     def get_random_choice(self, choices):
         """
         Canonical method for getting a random choice from an iterable
