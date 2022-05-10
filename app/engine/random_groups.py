@@ -13,7 +13,13 @@ from app.utilities import str_utils
 
 import logging
 
+# TODO:
+# Elite modifier
+# Promotion chance/requirement
+# Better Items
+
 POSITIONS_TO_POINTS = 0.5
+ELITE_CHANCE = 0.15
 
 @dataclass
 class ClassData:
@@ -67,14 +73,12 @@ class GroupKind(Enum):
     BOSS = 'Boss'
 
 group_kind_incidence = {
-    GroupKind.SINGLE_TYPE = 1,
-    GroupKind.DOUBLE_TYPE = 2,
+    GroupKind.SINGLE_TYPE = 2,
+    GroupKind.DOUBLE_TYPE = 4,
     GroupKind.LEADER = 1,
     GroupKind.SINGLE_TYPE_WITH_MAGE_SUPPORT = 1,
     GroupKind.DOUBLE_TYPE_WITH_MAGE_SUPPORT = 1,
 }
-
-# Elite is just a %chance modifier that gets applied after the fact
 
 def completed_chapters() -> int:
     return game.game_vars.get('completed_chapters', 0)
@@ -83,7 +87,7 @@ def determine_avg_level():
     num_complete = completed_chapters()
     return num_complete * 2
 
-def create_unit(klass, position, ai, ai_group):
+def create_unit(klass, position, ai, ai_group, elite=False):
     unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
     starting_items = [base_items[class_data[klass].weapon_type]]
     team = 'enemy'
@@ -92,10 +96,7 @@ def create_unit(klass, position, ai, ai_group):
     level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, ai_group, starting_position)
     new_unit = UnitObject.from_prefab(level_unit_prefab)
     new_unit.party = game.current_party
-    if len(position_to_add) == 1:
-        new_unit._tags.append('Boss')
     game.full_register(new_unit)
-    # game.arrive(new_unit)
     action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit
 
@@ -137,9 +138,14 @@ def build_group(region):
     else:  # Only select traversable positions
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
 
+    is_elite = game.get_random_float() < ELITE_CHANCE
+
     # Determine level
     avg_level: int = determine_avg_level()
-    level = game.get_random(max(1, avg_level - 1), avg_level + 1)
+    if is_elite:
+        level = avg_level + 1
+    else:
+        level = game.get_random(max(1, avg_level - 1), avg_level + 1)
 
     if len(positions) == 1:
         kind = GroupKind.BOSS
@@ -156,7 +162,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(class_to_add, position, ai, ai_group)
+            new_unit = create_unit(class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -183,7 +189,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(class_to_add, position, ai, ai_group)
+            new_unit = create_unit(class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -210,7 +216,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(main_class_to_add, position, ai, ai_group)
+            new_unit = create_unit(main_class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -223,7 +229,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(mage_class_to_add, position, ai, ai_group)
+            new_unit = create_unit(mage_class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -257,7 +263,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(main_class_to_add, position, ai, ai_group)
+            new_unit = create_unit(main_class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -270,7 +276,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(second_class_to_add, position, ai, ai_group)
+            new_unit = create_unit(second_class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -283,7 +289,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(mage_class_to_add, position, ai, ai_group)
+            new_unit = create_unit(mage_class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -301,7 +307,7 @@ def build_group(region):
 
         ai = group_data.get('ai', 'Attack')
         ai_group = region.nid
-        create_unit(leader_class_to_add, position, ai, ai_group)
+        new_unit = create_unit(leader_class_to_add, position, ai, ai_group, is_elite)
 
         if not positions:
             logging.error("No more valid positions in region to place units")
@@ -315,8 +321,26 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            create_unit(regular_class_to_add, position, ai, ai_group)
+            new_unit = create_unit(regular_class_to_add, position, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
                 return
+
+    elif kind == GroupKind.BOSS:
+        boss_classes = [c for c in all_classes if c != 'Soldier']
+        class_to_add = game.get_random_choice(boss_classes)
+        position = game.get_random_choice(positions)
+        positions.remove(position)
+
+        ai = group_data.get('ai', 'Guard')
+        ai_group = region.nid
+        new_unit = create_unit(class_to_add, position, ai, ai_group)
+        new_unit._tags.append('Boss')
+        # Give the Boss some bonuses
+        stat_changes = {'HP': 5, 'POW': 2, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 2, 'RES': 3}
+        # Make sure we don't go over max
+        stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).maximum.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
+        unit_funcs.apply_stat_changes(stat_changes)
+        # Give the Boss 5 free autolevels
+        unit_funcs.auto_level(new_unit, 5, new_unit.level, growth_method='fixed')
