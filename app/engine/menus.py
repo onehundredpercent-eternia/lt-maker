@@ -289,7 +289,7 @@ class Simple():
         if options is not None:
             bare_options = options
         else:
-            bare_options = [option.get() for option in self.options]
+            bare_options = [option.get() for option in self.options if option.get()]
         self.create_options(bare_options)
         self.current_index = utils.clamp(self.current_index, 0, len(self.options) - 1)
 
@@ -985,6 +985,9 @@ class Table(Simple):
 
     def create_options(self, options, info_descs=None):
         self.options.clear()
+        if not options:
+            null_option = menu_options.NullOption(0)
+            self.options.append(null_option)
         for idx, option in enumerate(options):
             if isinstance(option, UnitObject):
                 option = menu_options.UnitOption(idx, option)

@@ -1986,7 +1986,7 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, flags=
     shop_id = self.nid
     self.game.memory['shop_id'] = shop_id
     self.game.memory['current_unit'] = unit
-    item_list = item_list.split(',')
+    item_list = item_list.split(',') if item_list else []
     shop_items = item_funcs.create_items(unit, item_list)
     self.game.memory['shop_items'] = shop_items
 

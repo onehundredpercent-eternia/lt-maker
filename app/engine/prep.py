@@ -193,6 +193,9 @@ class PrepPickUnitsState(State):
 
         if event == 'SELECT':
             unit = self.menu.get_current()
+            if not unit:
+                get_sound_thread().play_sfx('Error')
+                return
             if unit.position and not game.check_for_region(unit.position, 'formation'):
                 get_sound_thread().play_sfx('Select 4')  # Locked/Lord character
             elif unit.position and 'Required' in unit.tags:
@@ -261,7 +264,8 @@ class PrepPickUnitsState(State):
     def draw(self, surf):
         if self.bg:
             self.bg.draw(surf)
-        menus.draw_unit_items(surf, (4, 44), self.menu.get_current(), include_top=True)
+        if self.menu.get_current():
+            menus.draw_unit_items(surf, (4, 44), self.menu.get_current(), include_top=True)
 
         self.draw_pick_units_card(surf)
         if DB.constants.value('fatigue') and game.game_vars.get('_fatigue'):
