@@ -20,6 +20,7 @@ import logging
 
 POSITIONS_TO_POINTS = 0.5
 ELITE_CHANCE = 0.15
+# Higher level when Elite, also gain better weapons (anything else?)
 
 @dataclass
 class ClassData:
@@ -64,6 +65,8 @@ base_items = {
     'Dark': 'Dark',
 }
 
+
+
 class GroupKind(Enum):
     SINGLE_TYPE = 'Single Type'
     DOUBLE_TYPE = 'Double Type'
@@ -87,9 +90,10 @@ def determine_avg_level():
     num_complete = completed_chapters()
     return num_complete * 2
 
-def create_unit(klass, position, ai, ai_group, elite=False):
+def create_unit(klass, position, level, ai, ai_group, elite=False):
     unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
-    starting_items = [base_items[class_data[klass].weapon_type]]
+    base_item = base_items[class_data[klass].weapon_type]
+    starting_items = [base_item]
     team = 'enemy'
     ai_group = region.nid  # All units in a region work in the same group
     starting_position = position
@@ -143,7 +147,7 @@ def build_group(region):
     # Determine level
     avg_level: int = determine_avg_level()
     if is_elite:
-        level = avg_level + 1
+        level = avg_level + 2
     else:
         level = game.get_random(max(1, avg_level - 1), avg_level + 1)
 
@@ -162,7 +166,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -189,7 +193,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -216,7 +220,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(main_class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(main_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -229,7 +233,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(mage_class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(mage_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -263,7 +267,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(main_class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(main_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -276,7 +280,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(second_class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(second_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -289,7 +293,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(mage_class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(mage_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -307,7 +311,7 @@ def build_group(region):
 
         ai = group_data.get('ai', 'Attack')
         ai_group = region.nid
-        new_unit = create_unit(leader_class_to_add, position, ai, ai_group, is_elite)
+        new_unit = create_unit(leader_class_to_add, position, level, ai, ai_group, is_elite)
 
         if not positions:
             logging.error("No more valid positions in region to place units")
@@ -321,7 +325,7 @@ def build_group(region):
 
             ai = group_data.get('ai', 'Attack')
             ai_group = region.nid
-            new_unit = create_unit(regular_class_to_add, position, ai, ai_group, is_elite)
+            new_unit = create_unit(regular_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -335,7 +339,8 @@ def build_group(region):
 
         ai = group_data.get('ai', 'Guard')
         ai_group = region.nid
-        new_unit = create_unit(class_to_add, position, ai, ai_group)
+        level += 2  # Boss is two levels above by default
+        new_unit = create_unit(class_to_add, position, level, ai, ai_group)
         new_unit._tags.append('Boss')
         # Give the Boss some bonuses
         stat_changes = {'HP': 5, 'POW': 2, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 2, 'RES': 3}
