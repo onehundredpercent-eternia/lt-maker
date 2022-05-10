@@ -191,7 +191,7 @@ class Simple():
     def create_options(self, options, info_descs=None):
         self.options.clear()
         if not options:
-            null_option = menu_options.NullOption(0, "Nothing")
+            null_option = menu_options.NullOption(0)
             self.options.append(null_option)
         else:
             for idx, option in enumerate(options):
