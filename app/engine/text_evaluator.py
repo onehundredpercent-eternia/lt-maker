@@ -307,4 +307,4 @@ class TextEvaluator():
 
     def evaluate_as_object(self, text: str) -> str:
         text_eval = self._evaluate_all(text)
-        return evaluate.evaluate(text_eval, self.unit, self.unit2, self.item, self.position, self.region, local_args=self.local_args, game=self.game)
+        return evaluate.evaluate(text_eval, self.unit, self.unit2, self.position, local_args=self.local_args, game=self.game)

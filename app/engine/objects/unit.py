@@ -207,13 +207,22 @@ class UnitObject(Prefab):
         if is_level_unit:
             items = item_funcs.create_items(self, prefab.starting_items)
             for item in items:
-            if is_level_unit:
                 self.add_item(item)
-            else:
-                self.simple_add_item(item)
 
             if self.generic:
                 self.calculate_needed_wexp_from_items()
+
+            # Handle skills
+            global_skills = unit_funcs.get_global_skills(self)
+            self.skills += global_skills
+            personal_skills = unit_funcs.get_personal_skills(self, prefab)
+            self.skills += personal_skills
+            class_skills = unit_funcs.get_starting_skills(self)
+            self.skills += class_skills
+        else:
+            items = item_funcs.create_items(self, prefab.starting_items)
+            for item in items:
+                self.simple_add_item(item)
 
             # Handle skills
             global_skills = unit_funcs.get_global_skills(self)
@@ -264,8 +273,8 @@ class UnitObject(Prefab):
 
         # -- Equipped Items
         if is_level_unit:
-        self.equipped_weapon = self.get_weapon()
-        self.equipped_accessory = self.get_accessory()
+            self.equipped_weapon = self.get_weapon()
+            self.equipped_accessory = self.get_accessory()
 
         # Reset these so max hp can be changed by skills and items
         self.current_hp = self.get_max_hp()

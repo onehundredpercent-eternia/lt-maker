@@ -161,6 +161,8 @@ class Icon(SurfComponent):
                 self.source = DB.items.get(source)
             elif source in DB.skills.keys():
                 self.source = DB.skills.get(source)
+            else:
+                self.source = None
         else:
             self.source: ItemPrefab | SkillPrefab = source
 
@@ -221,9 +223,6 @@ def draw_component_surf(ui_object: UIObject, create_surface: Callable[[], engine
         except Exception as e:
             if log_errors:
                 logging.error("Drawing of component '%s' in component '%s' failed with error '%s'", component.nid, ui_object.nid, repr(e))
-            if component.can_be_invalid:
-                pass
-            else:
-                return create_surface(ui_object.size, transparent=True)
+            return create_surface(ui_object.size, transparent=component.can_be_invalid)
 
     return surf
