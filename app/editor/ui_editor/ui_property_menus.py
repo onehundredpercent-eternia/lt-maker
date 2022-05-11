@@ -190,10 +190,16 @@ class UIContainerProperties(QWidget):
         self.enable_outlines_checkbox.clicked.connect(self.toggle_outlines)
         editor_tools_layout.addWidget(self.enable_outlines_checkbox, 2, 0, 1, 3)
 
+        self.toggle_component_drag = QCheckBox("Lock component dragging?", None)
+        self.toggle_component_drag.setChecked(False)
+        self.toggle_component_drag.clicked.connect(self.toggle_drag)
+        editor_tools_layout.addWidget(self.toggle_component_drag, 2, 3, 1, 3)
+
         editor_tools_section.setLayout(editor_tools_layout)
         editor_tools_frame.addWidget(editor_tools_section)
 
         form.addWidget(editor_tools_frame)
+        editor_tools_frame.toggleCollapsed()
         self.set_selected(self.current_container)
 
     def nid_done_editing(self):
@@ -228,6 +234,10 @@ class UIContainerProperties(QWidget):
         self.ui_editor.view.show_outlines = self.enable_outlines_checkbox.isChecked()
         self.state_manager.change_and_broadcast('ui_refresh_signal', None)
 
+    def toggle_drag(self):
+        self.ui_editor.can_drag = not self.toggle_component_drag.isChecked()
+        self.state_manager.change_and_broadcast('ui_refresh_signal', None)
+
     def set_selected(self, ui_prefab: UIObjectPrefab):
         self.current_container = ui_prefab
         any_selection = False
@@ -250,6 +260,7 @@ class UIContainerProperties(QWidget):
         self.x_offset_box.setDisabled(disable)
         self.y_offset_box.setDisabled(disable)
         self.enable_outlines_checkbox.setDisabled(disable)
+        self.toggle_component_drag.setDisabled(disable)
         self.canvas_select.setDisabled(disable)
         self.background_select.setDisabled(disable)
 

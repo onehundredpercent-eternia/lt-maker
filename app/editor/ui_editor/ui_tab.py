@@ -107,6 +107,7 @@ class UIEditor(QDialog):
 
         self.state_manager = EditorStateManager()
         self.model = ComponentModel(DB.custom_ui, self)
+        self.can_drag = True
 
         desktop = QDesktopWidget()
         main_screen_size = desktop.availableGeometry(desktop.primaryScreen())
@@ -172,6 +173,15 @@ class UIEditor(QDialog):
             self.reject()
         elif keypress.key() == Qt.Key_Delete:
             self.delete_selected()
+        elif not self.can_drag:
+            if keypress.key() == Qt.Key_A:
+                self.shift_component(-1, 0)
+            elif keypress.key() == Qt.Key_D:
+                self.shift_component(1, 0)
+            elif keypress.key() == Qt.Key_W:
+                self.shift_component(0, -1)
+            elif keypress.key() == Qt.Key_S:
+                self.shift_component(0, 1)
         else:
             pass
 
@@ -246,7 +256,7 @@ class UIEditor(QDialog):
                 self.deselect_component()
 
     def move_component(self, x, y):
-        if self.view.is_dragging:
+        if self.view.is_dragging and self.can_drag:
             if x > -1 and y > -1:
                 if self.selected_component:
                     component_idx = -1
@@ -262,6 +272,23 @@ class UIEditor(QDialog):
                         self.current.subcomponents.append(new_pair)
                     self.view.set_selected_component(self.selected_component)
                     self.view.update_view()
+
+    def shift_component(self, dx, dy):
+        if self.selected_component:
+            component_idx = -1
+            for idx, pair in enumerate(self.current.subcomponents):
+                _, component = pair
+                if component == self.selected_component:
+                    component_idx = idx
+                    break
+            if component_idx != -1:
+                pos, component = self.current.subcomponents.pop(component_idx)
+                new_pos = tuple_add(pos, (dx, dy))
+                new_pair = new_pos, component
+                self.current.subcomponents.append(new_pair)
+            self.view.set_selected_component(self.selected_component)
+            self.view.update_view()
+
 
     def delete_selected(self):
         if self.selected_component:
