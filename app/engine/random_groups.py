@@ -18,6 +18,16 @@ import logging
 # Promotion chance/requirement
 # Better Items
 
+# Memento Chapter = Lion Throne Chapter
+# 1 = 2
+# 2-3 = 3-4  # Interesting gimmicks start here, some unique weapon usage, some magic
+# 4-5 = 5-6  # Promoted Boss starts here, enemy AoE and Long-Range magics
+# 6 = 6  # Promoted leaders start here
+# 7-8 = 7  # Unique weapons for most units by this point
+# 9-10 = 8  # All Promoted Leaders and half promoted scrubs
+# 11 = 9  # Fully Promoted
+# 12 = 10
+
 POSITIONS_TO_POINTS = 0.5
 ELITE_CHANCE = 0.15
 # Higher level when Elite, also gain better weapons (anything else?)
@@ -27,6 +37,13 @@ class ClassData:
     nid: str
     points: float
     weapon_type: str
+    chapter_min: int
+    chapter_max: int = 12
+
+@dataclass
+class ItemData:
+    nid: str
+    points: float
     chapter_min: int
     chapter_max: int = 12
 
@@ -65,7 +82,23 @@ base_items = {
     'Dark': 'Dark',
 }
 
+sword_item_data = Data({
+    ItemData('Sword', 0, 0),
+    ItemData('Mercian Sword', 1, 3),
+    ItemData('Cimbrian Sword', 2, 5),
+    ItemData('Aellulian Sword', 4, 6),
+})
 
+anima_item_data = Data({
+    ItemData('Anima', 0, 0),
+    ItemData('Elfire', 2, 5),
+    ItemData('Wyrmsfire', 5, 6),
+})
+
+item_data = {
+    'Sword': sword_item_data,
+    'Anima': anima_item_data
+}
 
 class GroupKind(Enum):
     SINGLE_TYPE = 'Single Type'
@@ -83,6 +116,27 @@ group_kind_incidence = {
     GroupKind.DOUBLE_TYPE_WITH_MAGE_SUPPORT = 1,
 }
 
+def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bool = False) -> float:
+    """
+    Returns a floating point number between 0 and 1 describing the chance that an enemy unit
+    should be promoted by this point
+    """
+    starting_promotion_chapter = 6  # Chapter 7 is first chapter with promoted units, normally
+    if is_elite and is_leader:
+        starting_promotion_chapter = 3  # Chapter 4
+    elif is_elite or is_leader:
+        starting_promotion_chapter = 5  # Chapter 6
+    base_val = (max(0, chapter_num - starting_promotion_chapter) / 5) ** 2
+    return base_val
+
+def get_promoted_class(klass_nid: str):
+    klass = DB.classes.get(klass_nid)
+    turns_into = klass.turns_into
+    if turns_into:
+        return klass.turns_into[0]
+    else:
+        return klasS_nid
+
 def completed_chapters() -> int:
     return game.game_vars.get('completed_chapters', 0)
 
@@ -90,7 +144,7 @@ def determine_avg_level():
     num_complete = completed_chapters()
     return num_complete * 2
 
-def create_unit(klass, position, level, ai, ai_group, elite=False):
+def create_unit(klass, position, level, ai, ai_group):
     unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
     base_item = base_items[class_data[klass].weapon_type]
     starting_items = [base_item]
@@ -159,6 +213,9 @@ def build_group(region):
     if kind == GroupKind.SINGLE_TYPE:
         class_to_add = game.get_random_choice(all_classes)
         point_cost = class_data[class_to_add].points
+        promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
+        if game.get_random_float() < promotion_chance:
+            class_to_add = get_promoted_class(class_to_add)
         while num_points > 0:
             num_points -= point_cost
             position = game.get_random_choice(positions)
@@ -179,15 +236,32 @@ def build_group(region):
             second_class_to_add = game.get_random_choice(all_classes)
         else:
             second_class_to_add = class_to_add
-        
-        # TODO
-            # Do we want to enforce a roughly equal number of each unit?
-            # Or roughly equal by class points? Each gets assigned the same number of points?
-            # Or leave it completely up to chance, like it currently works?
-        while num_points > 0:
-            klass = game.get_random_choice([class_to_add, second_class_to_add])
-            point_cost = class_data[klass].points
-            num_points -= point_cost
+        main_points = 0.5 * num_points
+        second_points = 0.5 * num_points
+        main_cost = class_data[class_to_add].points
+        second_cost = class_data[second_class_to_add].points
+
+        promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
+        if game.get_random_float() < promotion_chance:
+            class_to_add = get_promoted_class(class_to_add)
+        if game.get_random_float() < promotion_chance:
+            second_class_to_add = get_promoted_class(second_class_to_add)
+
+        while main_points > 0:
+            num_points -= main_cost
+            position = game.get_random_choice(positions)
+            positions.remove(position)
+
+            ai = group_data.get('ai', 'Attack')
+            ai_group = region.nid
+            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
+
+            if not positions:
+                logging.error("No more valid positions in region to place units")
+                return
+
+        while second_points > 0:
+            num_points -= second_cost
             position = game.get_random_choice(positions)
             positions.remove(position)
 
@@ -213,6 +287,13 @@ def build_group(region):
         # Split 3 to 1  # TODO is this actually a good split?
         main_points = num_points * 0.75
         mage_points = num_points * 0.25
+
+        promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
+        if game.get_random_float() < promotion_chance:
+            main_class_to_add = get_promoted_class(main_class_to_add)
+        if game.get_random_float() < promotion_chance:
+            mage_class_to_add = get_promoted_class(mage_class_to_add)
+
         while main_points > 0:
             main_points -= main_cost
             position = game.get_random_choice(positions)
@@ -260,6 +341,15 @@ def build_group(region):
         main_points = num_points * 0.375
         second_points = num_points * 0.375
         mage_points = num_points * 0.25
+
+        promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
+        if game.get_random_float() < promotion_chance:
+            main_class_to_add = get_promoted_class(main_class_to_add)
+        if game.get_random_float() < promotion_chance:
+            second_class_to_add = get_promoted_class(second_class_to_add)
+        if game.get_random_float() < promotion_chance:
+            mage_class_to_add = get_promoted_class(mage_class_to_add)
+
         while main_points > 0:
             main_points -= main_cost
             position = game.get_random_choice(positions)
@@ -304,7 +394,16 @@ def build_group(region):
         leader_classes = get_potential_leaders(regular_class_to_add)
         leader_class_to_add = game.get_random_choice(leader_classes)
 
+        promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
+        if game.get_random_float() < promotion_chance:
+            regular_class_to_add = get_promoted_class(regular_class_to_add)
+        leader_promotion_chance = get_promotion_chance(completed_chapters(), is_elite, True)
+        if game.get_random_float() < leader_promotion_chance:
+            leader_class_to_add = get_promoted_class(leader_class_to_add)
+
         leader_cost = class_data[leader_class_to_add].points
+
+        
         num_points -= leader_cost
         position = game.get_random_choice(positions)
         positions.remove(position)
@@ -336,6 +435,10 @@ def build_group(region):
         class_to_add = game.get_random_choice(boss_classes)
         position = game.get_random_choice(positions)
         positions.remove(position)
+
+        promotion_chance = get_promotion_chance(completed_chapters(), True, True)
+        if game.get_random_float() < promotion_chance:
+            class_to_add = get_promoted_class(class_to_add)
 
         ai = group_data.get('ai', 'Guard')
         ai_group = region.nid
