@@ -31,19 +31,13 @@ import logging
 POSITIONS_TO_POINTS = 0.5
 ELITE_CHANCE = 0.15
 # Higher level when Elite, also gain better weapons (anything else?)
+# Tag Elite groups so they are visible
 
 @dataclass
 class ClassData:
     nid: str
     points: float
     weapon_type: str
-    chapter_min: int
-    chapter_max: int = 12
-
-@dataclass
-class ItemData:
-    nid: str
-    points: float
     chapter_min: int
     chapter_max: int = 12
 
@@ -62,8 +56,8 @@ class_data = Data([
     ClassData('Raider', 2, 'Axe', 2),
     ClassData('Archer', 2, 'Bow', 1),
     ClassData('Hunter', 2, 'Bow', 2),
-    ClassData('Soldier', 1.5, 'Lance', 1),
-    ClassData('Brigand', 1.5, 'Axe', 1),
+    ClassData('Soldier', 1.5, 'Lance', 1, 9),
+    ClassData('Brigand', 1.5, 'Axe', 1, 9),
     ClassData('Seeress', 4, 'Light', 4),
     ClassData('Cleric', 3, 'Light', 3),
     ClassData('Mage', 2.5, 'Anima', 2),
@@ -71,6 +65,13 @@ class_data = Data([
     ClassData('Acolyte', 2.5, 'Dark', 2),
     ClassData('Sorceror', 3, 'Dark', 2),
 ])
+
+@dataclass
+class ItemData:
+    nid: str
+    points: float
+    chapter_min: int
+    chapter_max: int = 12
 
 base_items = {
     'Sword': 'Sword',
@@ -81,6 +82,19 @@ base_items = {
     'Anima': 'Anima',
     'Dark': 'Dark',
 }
+
+# Ideally we standardize item access, so we minimize having to read characters
+# Elite units have different loadouts
+# Take a look at items in Conquest?
+
+# Take for instance, soldiers:
+    # from Chapter 1 to 2, regular Lance
+    # from chapter 3 to 9, mercian lance
+
+# Or Myrmidons:
+    # from chapter 1 to 3, regular sword
+    # from chapter 3 to 6, cimbrian sword
+    # from chapter 7 to 12, killing edge
 
 sword_item_data = Data({
     ItemData('Sword', 0, 0),
@@ -146,7 +160,8 @@ def determine_avg_level():
 
 def create_unit(klass, position, level, ai, ai_group):
     unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
-    base_item = base_items[class_data[klass].weapon_type]
+    weapon_type = class_data[klass].weapon_type
+    base_item = base_items[weapon_type]
     starting_items = [base_item]
     team = 'enemy'
     ai_group = region.nid  # All units in a region work in the same group
