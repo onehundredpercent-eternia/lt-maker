@@ -158,7 +158,7 @@ def determine_avg_level():
     num_complete = completed_chapters()
     return num_complete * 2
 
-def create_unit(klass, position, level, ai, ai_group):
+def create_unit(klass, position, level, ai, ai_group, is_elite=False):
     unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
     weapon_type = class_data[klass].weapon_type
     base_item = base_items[weapon_type]
@@ -168,6 +168,8 @@ def create_unit(klass, position, level, ai, ai_group):
     starting_position = position
     level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, ai_group, starting_position)
     new_unit = UnitObject.from_prefab(level_unit_prefab)
+    if is_elite:
+        new_unit._tags.append('Elite')
     new_unit.party = game.current_party
     game.full_register(new_unit)
     action.ArriveOnMap(new_unit, new_unit.position))
