@@ -79,7 +79,7 @@
             "MOV": 0
         },
         "player_autolevels": 0,
-        "enemy_autolevels": 0,
+        "enemy_autolevels": 6,
         "boss_autolevels": 0
     }
 ]
