@@ -562,16 +562,6 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     """
     flags = flags or set()
 
-    reload_map = 'reload' in flags
-    if reload_map and self.game.is_displaying_overworld(): # just go back to the level
-        from app.engine import level_cursor, map_view, movement
-        self.game.cursor = level_cursor.LevelCursor(self.game)
-        self.game.movement = movement.MovementManager()
-        self.game.map_view = map_view.MapView()
-        self.game.boundary = self.prev_game_boundary
-        self.game.board = self.prev_board
-        return
-
     tilemap_nid = tilemap
     tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
     if not tilemap_prefab:
@@ -586,6 +576,24 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
         reload_map_nid = load_tilemap
     else:
         reload_map_nid = tilemap_nid
+
+    reload_map = 'reload' in flags
+    if reload_map and self.game.is_displaying_overworld(): # just go back to the level
+        from app.engine import level_cursor, map_view, movement
+        self.game.cursor = level_cursor.LevelCursor(self.game)
+        self.game.movement = movement.MovementManager()
+        self.game.map_view = map_view.MapView()
+        self.game.boundary = self.prev_game_boundary
+        self.game.board = self.prev_board
+        if reload_map and self.game.level_vars.get('_prev_pos_%s' % reload_map_nid):
+            for unit_nid, pos in self.game.level_vars['_prev_pos_%s' % reload_map_nid].items():
+                # Reload unit's position with position offset
+                final_pos = pos[0] + position_offset[0], pos[1] + position_offset[1]
+                if self.game.tilemap.check_bounds(final_pos):
+                    unit = self.game.get_unit(unit_nid)
+                    act = action.ArriveOnMap(unit, final_pos)
+                    act.execute()
+        return
 
     # Reset cursor position
     self.game.cursor.set_pos((0, 0))
@@ -1281,6 +1289,8 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
     else:
         owner_nid = unit.nid
     action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
+    if 'equip' in flags:
+        action.do(action.EquipItem(unit, subitem))
 
 def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item, flags=None):
     unit, item = self._get_item_in_inventory(global_unit_or_convoy, multi_item)
@@ -1300,6 +1310,7 @@ def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, c
     else:
         owner_nid = unit.nid
     # Unequip subitem if necessary
+    if owner_nid:
     action.do(action.UnequipItem(unit, subitem))
     action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
 
@@ -2016,7 +2027,7 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, flags=
     shop_id = self.nid
     self.game.memory['shop_id'] = shop_id
     self.game.memory['current_unit'] = unit
-    item_list = item_list.split(',')
+    item_list = item_list.split(',') if item_list else []
     shop_items = item_funcs.create_items(unit, item_list)
     self.game.memory['shop_items'] = shop_items
 
@@ -2079,7 +2090,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
     else: # list of NIDs
         choices = self.text_evaluator._evaluate_all(choices)
         data = choices.split(',')
-        data = [s.strip() for s in data]
+        data = [s.strip().replace('{comma}', ',') for s in data]
 
     row_width = int(row_width)
 
@@ -2184,7 +2195,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
     else: # list of NIDs
         table_data = self.text_evaluator._evaluate_all(table_data)
         data = table_data.split(',')
-        data = [s.strip() for s in data]
+        data = [s.strip().replace('{comma}', ',') for s in data]
 
     align = Alignments.TOP_LEFT
     if alignment:

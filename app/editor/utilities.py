@@ -76,8 +76,8 @@ def convert_to_correct_colorkey(pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
 
 def find_palette(image: QtGui.QImage) -> list:
     palette = []
-    for x in range(image.width()):
-        for y in range(image.height()):
+    for y in range(image.height()):
+        for x in range(image.width()):
             current_color = image.pixel(x, y)
             if current_color not in palette:
                 palette.append(current_color)
@@ -88,8 +88,8 @@ def find_palette(image: QtGui.QImage) -> list:
 def find_palette_from_multiple(images: list):
     palette = []
     for image in images:
-        for x in range(image.width()):
-            for y in range(image.height()):
+        for y in range(image.height()):
+            for x in range(image.width()):
                 current_color = image.pixel(x, y)
                 if current_color not in palette:
                     palette.append(current_color)
@@ -102,8 +102,8 @@ def get_full_palette(image) -> list:
     Returns list of 3-tuples
     """
     palette = []
-    for x in range(image.width()):
-        for y in range(image.height()):
+    for y in range(image.height()):
+        for x in range(image.width()):
             color = image.pixelColor(x, y)
             palette.append((color.red(), color.green(), color.blue()))
     return palette

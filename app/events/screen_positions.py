@@ -35,7 +35,7 @@ if MEMENTO_MODE:
 def parse_screen_position(pos) -> tuple:
     x, y = 0, 0
     mirror = False
-    if ',' in pos:
+    if pos and ',' in pos:
         split_pos = pos.split(',')
         # Handle first part of tuple
         if split_pos[0] in horizontal_screen_positions:

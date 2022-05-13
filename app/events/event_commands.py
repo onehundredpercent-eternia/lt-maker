@@ -1225,11 +1225,12 @@ Adds a new item to an existing multi-item in the inventory of *GlobalUnitOrConvo
 
 Flags:
 -`no_duplicate` will not add if the item already exists on the multi-item.
+If the *equip* flag is set, the unit will automatically equip the added item.
         """
 
     keywords = ["GlobalUnitOrConvoy", "MultiItem", "ChildItem"]
     keyword_types = ["GlobalUnitOrConvoy", "Item", "Item"]
-    _flags = ['no_duplicate']
+    _flags = ['no_duplicate', 'equip']
 
 class RemoveItemFromMultiitem(EventCommand):
     nid = 'remove_item_from_multiitem'

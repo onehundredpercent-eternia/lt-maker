@@ -71,7 +71,7 @@ class ChangeBuyPrice(SkillComponent):
 
     expose = Type.Float
 
-    def modify_buy_price(self, unit):
+    def modify_buy_price(self, unit, item):
         return self.value
 
 class ExpMultiplier(SkillComponent):

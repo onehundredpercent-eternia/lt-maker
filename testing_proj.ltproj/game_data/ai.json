@@ -84,6 +84,34 @@
         "offense_bias": 2.0
     },
     {
+        "nid": "PursueSupport",
+        "behaviours": [
+            {
+                "action": "Attack",
+                "target": "Enemy",
+                "target_spec": null,
+                "view_range": -4,
+                "invert_targeting": false
+            },
+            {
+                "action": "Support",
+                "target": "Ally",
+                "target_spec": null,
+                "view_range": -4,
+                "invert_targeting": false
+            },
+            {
+                "action": "None",
+                "target": "None",
+                "target_spec": null,
+                "view_range": 0,
+                "invert_targeting": false
+            }
+        ],
+        "priority": 20,
+        "offense_bias": 2.0
+    },
+    {
         "nid": "Defend",
         "behaviours": [
             {
@@ -197,6 +225,34 @@
         ],
         "priority": 20,
         "offense_bias": 2.0
+    },
+    {
+        "nid": "Destroy",
+        "behaviours": [
+            {
+                "action": "Interact",
+                "target": "Event",
+                "target_spec": "Destructible",
+                "view_range": -4,
+                "invert_targeting": false
+            },
+            {
+                "action": "None",
+                "target": "None",
+                "target_spec": "Destructible",
+                "view_range": -4,
+                "invert_targeting": false
+            },
+            {
+                "action": "None",
+                "target": "None",
+                "target_spec": null,
+                "view_range": 0,
+                "invert_targeting": false
+            }
+        ],
+        "priority": 20,
+        "offense_bias": 0.01
     },
     {
         "nid": "FollowBoss",

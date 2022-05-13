@@ -929,11 +929,14 @@ class SubItemChildState(MapState):
         parent_menu: menus.Choice = game.memory['parent_menu']
         self.parent_item: ItemObject = game.memory['selected_item']
         options = self._get_options(self.parent_item)
+        if not options:
+            options = ["Nothing"]
         self.menu = menus.Choice(self.parent_item, options, parent_menu)
 
     def begin(self):
         game.cursor.hide()
-        self.menu.update_options(self._get_options(self.parent_item))
+        options = self._get_options(self.parent_item)
+        self.menu.update_options(options)
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
 
     def _item_desc_update(self):
@@ -970,6 +973,8 @@ class SubItemChildState(MapState):
         elif event == 'SELECT':
             if self.menu.info_flag:
                 pass
+            elif not self.menu.get_current():
+                get_sound_thread().play_sfx('Error')
             else:
                 get_sound_thread().play_sfx('Select 1')
                 game.memory['parent_menu'] = self.menu

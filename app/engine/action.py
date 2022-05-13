@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 import sys
 
@@ -92,6 +93,14 @@ class Action():
             setattr(self, name, self.restore_obj(value))
         return self
 
+def recalculate_unit(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        func(*args, **kwargs)
+        self = args[0]
+        if self.unit.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.unit)
+    return wrapper
 
 class Move(Action):
     """
@@ -1059,11 +1068,13 @@ class TakeItemFromConvoy(Action):
         self.item = item
         self.party_nid = party_nid
 
+    @recalculate_unit
     def do(self):
         party = game.get_party(self.party_nid)
         party.convoy.remove(self.item)
         self.unit.add_item(self.item)
 
+    @recalculate_unit
     def reverse(self):
         self.unit.remove_item(self.item)
         party = game.get_party(self.party_nid)
@@ -1090,13 +1101,21 @@ class MoveItem(Action):
         self.unit = unit
         self.item = item
 
+    @recalculate_unit
     def do(self):
         self.owner.remove_item(self.item)
         self.unit.add_item(self.item)
 
+        if self.owner.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.owner)
+
+    @recalculate_unit
     def reverse(self):
         self.unit.remove_item(self.item)
         self.owner.add_item(self.item)
+
+        if self.owner.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.owner)
 
 
 class TradeItemWithConvoy(Action):
@@ -1106,12 +1125,14 @@ class TradeItemWithConvoy(Action):
         self.unit_item = unit_item
         self.unit_idx = self.unit.items.index(self.unit_item)
 
+    @recalculate_unit
     def do(self):
         self.unit.remove_item(self.unit_item)
         game.party.convoy.remove(self.convoy_item)
         game.party.convoy.append(self.unit_item)
         self.unit.insert_item(self.unit_idx, self.convoy_item)
 
+    @recalculate_unit
     def reverse(self):
         self.unit.remove_item(self.convoy_item)
         game.party.convoy.remove(self.unit_item)
@@ -1124,14 +1145,15 @@ class GiveItem(Action):
         self.unit = unit
         self.item = item
 
+    @recalculate_unit
     def do(self):
         if self.unit.team == 'player' or not item_funcs.inventory_full(self.unit, self.item):
             self.unit.add_item(self.item)
 
+    @recalculate_unit
     def reverse(self):
         if self.item in self.unit.items:
             self.unit.remove_item(self.item)
-
 
 class DropItem(Action):
     def __init__(self, unit, item):
@@ -1139,14 +1161,15 @@ class DropItem(Action):
         self.item = item
         self.is_droppable: bool = item.droppable
 
+    @recalculate_unit
     def do(self):
         self.item.droppable = False
         self.unit.add_item(self.item)
 
+    @recalculate_unit
     def reverse(self):
         self.item.droppable = self.is_droppable
         self.unit.remove_item(self.item)
-
 
 class MakeItemDroppable(Action):
     def __init__(self, unit, item):
@@ -1173,19 +1196,22 @@ class StoreItem(Action):
         self.item = item
         self.item_index = self.unit.items.index(self.item)
 
+    @recalculate_unit
     def do(self):
         self.unit.remove_item(self.item)
         game.party.convoy.append(self.item)
 
+    @recalculate_unit
     def reverse(self):
         game.party.convoy.remove(self.item)
         self.unit.insert_item(self.item_index, self.item)
 
-
 class RemoveItem(StoreItem):
+    @recalculate_unit
     def do(self):
         self.unit.remove_item(self.item)
 
+    @recalculate_unit
     def reverse(self):
         self.unit.insert_item(self.item_index, self.item)
 
@@ -1261,8 +1287,18 @@ class TradeItem(Action):
     def do(self):
         self.swap(self.unit1, self.unit2, self.item1, self.item2, self.item_index1, self.item_index2)
 
+        if self.unit1.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.unit1)
+        if self.unit2.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.unit2)
+
     def reverse(self):
         self.swap(self.unit1, self.unit2, self.item2, self.item1, self.item_index2, self.item_index1)
+
+        if self.unit1.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.unit1)
+        if self.unit2.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(self.unit2)
 
 
 class RepairItem(Action):
@@ -1319,11 +1355,19 @@ class AddItemToMultiItem(Action):
         self.item.subitems.append(self.subitem)
         self.subitem.parent_item = self.item
 
+        unit = game.get_unit(self.owner_nid)
+        if unit and unit.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(unit)
+
     def reverse(self):
         self.subitem.owner_nid = None
         self.item.subitem_uids.remove(self.subitem.uid)
         self.item.subitems.remove(self.subitem)
         self.subitem.parent_item = None
+
+        unit = game.get_unit(self.owner_nid)
+        if unit and unit.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(unit)
 
 class RemoveItemFromMultiItem(Action):
     def __init__(self, owner_nid, item, subitem):
@@ -1337,11 +1381,19 @@ class RemoveItemFromMultiItem(Action):
         self.item.subitems.remove(self.subitem)
         self.subitem.parent_item = None
 
+        unit = game.get_unit(self.owner_nid)
+        if unit and unit.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(unit)
+
     def reverse(self):
         self.subitem.owner_nid = self.owner_nid
         self.item.subitem_uids.append(self.subitem.uid)
         self.item.subitems.append(self.subitem)
         self.subitem.parent_item = self.item
+
+        unit = game.get_unit(self.owner_nid)
+        if unit and unit.position and game.tilemap and game.boundary:
+            game.boundary.recalculate_unit(unit)
 
 class SetObjData(Action):
     def __init__(self, obj, keyword, value):
@@ -1984,15 +2036,13 @@ class ChangeAI(Action):
         self.ai = ai
         self.old_ai = self.unit.ai
 
+    @recalculate_unit
     def do(self):
         self.unit.ai = self.ai
-        if game.tilemap and game.boundary:
-            game.boundary.recalculate_unit(self.unit)
 
+    @recalculate_unit
     def reverse(self):
         self.unit.ai = self.old_ai
-        if game.tilemap and game.boundary:
-            game.boundary.recalculate_unit(self.unit)
 
 
 class ChangeAIGroup(Action):
@@ -2536,6 +2586,7 @@ class AddSkill(Action):
         self.subactions = []
         self.reset_action = ResetUnitVars(self.unit)
 
+    @recalculate_unit
     def do(self):
         self.subactions.clear()
         if not self.skill_obj:
@@ -2557,9 +2608,8 @@ class AddSkill(Action):
 
         # Handle affects movement
         self.reset_action.execute()
-        if game.tilemap and game.boundary:
-            game.boundary.recalculate_unit(self.unit)
 
+    @recalculate_unit
     def reverse(self):
         self.reset_action.reverse()
         if not self.skill_obj:
@@ -2610,17 +2660,18 @@ class RemoveSkill(Action):
 
         # Handle affects movement
         self.reset_action.execute()
-        if game.tilemap and game.boundary:
-            game.boundary.recalculate_unit(self.unit)
 
+    @recalculate_unit
     def do(self):
         # Actually call on true remove hook
         self._remove(True)
 
+    @recalculate_unit
     def execute(self):
         # Don't call on true remove hook
         self._remove(False)
 
+    @recalculate_unit
     def reverse(self):
         self.reset_action.reverse()
         for skill in self.removed_skills:
@@ -2650,8 +2701,16 @@ def execute(action):
 
 
 def reverse(action):
-    game.action_log.action_depth += 1
-    action.reverse()
-    game.action_log.action_depth -= 1
+    # The only time this function is called is when
+    # reversing a move or canto move
+    logging.debug("Reverse Action %s", action)
+    # game.action_log.action_depth += 1
+    # action.reverse()
+    # game.action_log.action_depth -= 1
     if game.action_log.record and game.action_log.action_depth <= 0:
+        # Handles reversing the action
         game.action_log.hard_remove(action)
+    else: # Right now, this section will never happen
+        game.action_log.action_depth += 1
+        action.reverse()
+        game.action_log.action_depth -= 1

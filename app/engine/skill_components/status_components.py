@@ -58,7 +58,7 @@ class Regeneration(SkillComponent):
     def on_upkeep(self, actions, playback, unit):
         max_hp = equations.parser.hitpoints(unit)
         if unit.get_hp() < max_hp:
-            hp_change = max_hp * self.value
+            hp_change = int(max_hp * self.value)
             actions.append(action.ChangeHP(unit, hp_change))
             # Playback
             playback.append(pb.HitSound('MapHeal'))

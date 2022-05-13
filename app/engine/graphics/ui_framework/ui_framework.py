@@ -247,6 +247,7 @@ class UIComponent():
         self._cached_surf: engine.Surface = None
         # for testing
         self._times_drawn: int = 0
+        self._logging: bool = False
 
         self._done_init = True
         self._recalculate_cached_dimensions_from_props()
@@ -670,8 +671,12 @@ class UIComponent():
         if self.is_root:
             self.update()
         if not self.should_redraw() and self._cached_surf:
+            if self._logging:
+                print("returning cached for", self.name)
             base_surf = self._cached_surf
         else:
+            if self._logging:
+                print("regenerating for", self.name)
             self._reset('to_surf' + self.name if self.name else "")
             # draw the background.
             base_surf = self._create_bg_surf().copy()
@@ -724,7 +729,7 @@ class UIComponent():
             ret_surf = engine.subsurface(base_surf, (scroll_x, scroll_y, scroll_width, scroll_height))
         else:
             ret_surf = base_surf
-        return ret_surf
+        return ret_surf.copy()
 
     #################################
     # hidden methods for performance#

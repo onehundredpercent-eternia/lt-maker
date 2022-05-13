@@ -605,6 +605,7 @@ class UnitObject(Prefab):
         self.has_dropped = False
         self.has_taken = False
         self.has_given = False
+        self.has_run_ai = False
 
         self.strike_partner = None
 

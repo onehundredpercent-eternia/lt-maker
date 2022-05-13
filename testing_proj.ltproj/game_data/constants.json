@@ -104,6 +104,10 @@
         false
     ],
     [
+        "class_change_same_tier",
+        false
+    ],
+    [
         "generic_feats",
         false
     ],
@@ -120,7 +124,15 @@
         true
     ],
     [
+        "roam_hide_hp",
+        false
+    ],
+    [
         "convoy_on_death",
+        false
+    ],
+    [
+        "repair_shop",
         false
     ],
     [
@@ -178,6 +190,10 @@
     [
         "restart_phase_music",
         false
+    ],
+    [
+        "restart_battle_music",
+        true
     ],
     [
         "kill_wexp",

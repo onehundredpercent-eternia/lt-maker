@@ -293,5 +293,7 @@ check_flanking = check_flanked
 
 def wait(unit):
     from app.engine import action
-    game.events.trigger('unit_wait', unit, position=unit.position, local_args={'region': game.get_region_under_pos(unit.position)})
-    action.do(action.Wait(unit))
+    if not unit.finished:  # Only wait if we aren't finished
+        # To prevent double-waiting
+        game.events.trigger('unit_wait', unit, position=unit.position, local_args={'region': game.get_region_under_pos(unit.position)})
+        action.do(action.Wait(unit))
