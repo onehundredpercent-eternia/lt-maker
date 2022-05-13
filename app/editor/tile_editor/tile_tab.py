@@ -10,7 +10,7 @@ from app.editor.data_editor import SingleResourceEditor, MultiResourceEditor
 
 from app.editor.tile_editor import tile_model
 from app.editor.tilemap_editor import MapEditor
-from app.editor.icon_editor.icon_tab import IconListView
+from app.extensions.delete_list_view import DeleteListView
 
 # from PyQt5.QtWidgets import QStyle, QStyledItemDelegate, QApplication
 # from PyQt5.QtGui import QIcon, QPen, QFontMetrics
@@ -77,7 +77,7 @@ class TileTab(QWidget):
         self.layout = QGridLayout(self)
         self.setLayout(self.layout)
 
-        self.view = IconListView()
+        self.view = DeleteListView()
         self.view.setMinimumSize(360, 360)
         self.view.setIconSize(QSize(96, 96))
         self.model = model(self._data, self)
