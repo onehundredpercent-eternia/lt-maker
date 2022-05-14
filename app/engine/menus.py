@@ -386,7 +386,7 @@ class Choice(Simple):
 
     def create_options(self, options, info_descs=None):
         self.options.clear()
-        if not options:
+        if not options and not self.hard_limit:
             null_option = menu_options.NullOption(0)
             self.options.append(null_option)
         else:

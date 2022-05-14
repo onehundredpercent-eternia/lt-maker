@@ -86,6 +86,13 @@ class NullOption(BasicOption):
     def __init__(self, idx):
         super().__init__(idx, "Nothing")
         self.ignore = True
+        self._width = 0
+
+    def width(self):
+        if self._width:
+            return self._width
+        else:
+            return super().width()
 
     def get(self):
         return None
