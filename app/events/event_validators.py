@@ -1,4 +1,6 @@
 from __future__ import annotations
+from app.data.items import ItemPrefab
+from app.data.skills import SkillPrefab
 
 import re
 from typing import TYPE_CHECKING, Dict, List, Tuple
@@ -55,7 +57,10 @@ class EvalValidator(Validator):
 
     def process_arg_text(self, text: str):
         eval_begin = text.find(':')
-        return text[eval_begin+1:]
+        eval_text = text[eval_begin+1:]
+        # remove internal evals from consideration
+        eval_text = re.sub(r'\{[^)]*\}', '', eval_text)
+        return eval_text
 
 class RawDataValidator(EvalValidator):
     desc = "must be a correct reference to raw data"
@@ -124,6 +129,69 @@ class VarValidator(EvalValidator):
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         return [(None, var_name) for var_name in DB.game_var_slots.keys()]
 
+class SkillAttrValidator(EvalValidator):
+    desc = "expression to evaluate skill field"
+    tags = ['s', 'skill']
+
+    def validate(self, text, level):
+        text = self.process_arg_text(text)
+        if not '.' in text:
+            return None
+        skill_nid, attribute = text.split('.', 1)
+        if not skill_nid in DB.skills:
+            return None
+        skill = DB.skills.get(skill_nid)
+        if not attribute in dir(skill):
+            return None
+        return text
+
+    def valid_entries(self, level: NID, text: str) -> List[Tuple[str, NID]]:
+        text = self.process_arg_text(text)
+        level = text.count('.')
+        if level == 0: # we want to select a specific skill
+            return [(None, key) for key in DB.skills.keys()]
+        elif level == 1:
+            # we already have skill nid
+            skill_nid = text.split('.')[0]
+            skill_prefab = DB.skills.get(skill_nid)
+            if skill_prefab: # get all attrs of skill
+                return [(None, key) for key in vars(skill_prefab)]
+            else: # return common attrs from empty obj
+                return [(None, key) for key in vars(SkillPrefab(None, None, None))]
+        return []
+
+class ItemAttrValidator(EvalValidator):
+    desc = "expression to evaluate item field"
+    tags = ['i', 'item']
+
+    def validate(self, text, level):
+        text = self.process_arg_text(text)
+        if not '.' in text:
+            return None
+        item_nid, attribute = text.split('.', 1)
+        if not item_nid in DB.items:
+            return None
+        item = DB.items.get(item_nid)
+        if not attribute in dir(item):
+            return None
+        return text
+
+    def valid_entries(self, level: NID, text: str) -> List[Tuple[str, NID]]:
+        text = self.process_arg_text(text)
+        level = text.count('.')
+        if level == 0: # we want to select a specific item
+            return [(None, key) for key in DB.items.keys()]
+        elif level == 1:
+            # we already have item nid
+            item_nid = text.split('.')[0]
+            item_prefab = DB.items.get(item_nid)
+            if item_prefab: # get all attrs of item
+                return [(None, key) for key in vars(item_prefab)]
+            else: # return common attrs from empty obj
+                return [(None, key) for key in vars(ItemPrefab(None, None, None))]
+        return []
+
+
 class UnitField(Validator):
     desc = "can be nid of any unit field, including new ones"
 
@@ -135,7 +203,6 @@ class UnitField(Validator):
         for unit in DB.units:
             all_keys.update(set([key for (key, _) in unit.fields]))
         return [(None, key) for key in all_keys]
-
 class GeneralVar(Validator):
     desc = "can be any nid"
 
