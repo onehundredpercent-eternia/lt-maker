@@ -158,17 +158,17 @@ class TextEvaluator():
             to_eval = self.trim_eval_tags(to_eval)
             # expected syntax: {s:skill.key}
             if not '.' in to_eval:
-                self.logger.error("eval of {f:%s} failed, no period", to_eval)
+                self.logger.error("eval of {s:%s} failed, no period", to_eval)
                 evaluated.append('??')
                 continue
             skill_nid, attribute = to_eval.split('.', 1)
             skill = DB.skills.get(skill_nid, None)
             if not skill:
-                self.logger.error("eval of {f:%s} failed, no such skill %s", to_eval, skill_nid)
+                self.logger.error("eval of {s:%s} failed, no such skill %s", to_eval, skill_nid)
                 evaluated.append('??')
                 continue
             if not hasattr(skill, attribute):
-                self.logger.error("eval of {f:%s} failed, no such attribute %s for skill %s", to_eval, attribute, skill_nid)
+                self.logger.error("eval of {s:%s} failed, no such attribute %s for skill %s", to_eval, attribute, skill_nid)
                 evaluated.append('??')
                 continue
             attribute_obj = getattr(skill, attribute)
@@ -188,17 +188,17 @@ class TextEvaluator():
             to_eval = self.trim_eval_tags(to_eval)
             # expected syntax: {i:item.key}
             if not '.' in to_eval:
-                self.logger.error("eval of {f:%s} failed, no period", to_eval)
+                self.logger.error("eval of {i:%s} failed, no period", to_eval)
                 evaluated.append('??')
                 continue
             item_nid, attribute = to_eval.split('.', 1)
             item = DB.items.get(item_nid, None)
             if not item:
-                self.logger.error("eval of {f:%s} failed, no such item %s", to_eval, item_nid)
+                self.logger.error("eval of {i:%s} failed, no such item %s", to_eval, item_nid)
                 evaluated.append('??')
                 continue
             if not hasattr(item, attribute):
-                self.logger.error("eval of {f:%s} failed, no such attribute %s for item %s", to_eval, attribute, item_nid)
+                self.logger.error("eval of {i:%s} failed, no such attribute %s for item %s", to_eval, attribute, item_nid)
                 evaluated.append('??')
                 continue
             attribute_obj = getattr(item, attribute)
