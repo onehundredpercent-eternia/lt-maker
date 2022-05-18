@@ -69,49 +69,24 @@ class_data = Data([
 @dataclass
 class ItemData:
     nid: str
-    points: float
     chapter_min: int
     chapter_max: int = 12
 
-base_items = {
-    'Sword': 'Sword',
-    'Lance': 'Lance',
-    'Axe': 'Axe',
-    'Bow': 'Bow',
-    'Light': 'Light',
-    'Anima': 'Anima',
-    'Dark': 'Dark',
-}
-
-# Ideally we standardize item access, so we minimize having to read characters
-# Elite units have different loadouts
-# Take a look at items in Conquest?
-
-# Take for instance, soldiers:
-    # from Chapter 1 to 2, regular Lance
-    # from chapter 3 to 9, mercian lance
-
-# Or Myrmidons:
-    # from chapter 1 to 3, regular sword
-    # from chapter 3 to 6, cimbrian sword
-    # from chapter 7 to 12, killing edge
-
-sword_item_data = Data({
-    ItemData('Sword', 0, 0),
-    ItemData('Mercian Sword', 1, 3),
-    ItemData('Cimbrian Sword', 2, 5),
-    ItemData('Aellulian Sword', 4, 6),
-})
-
-anima_item_data = Data({
-    ItemData('Anima', 0, 0),
-    ItemData('Elfire', 2, 5),
-    ItemData('Wyrmsfire', 5, 6),
-})
-
 item_data = {
-    'Sword': sword_item_data,
-    'Anima': anima_item_data
+    'Myrmidon': [ItemData('Myrmidon Sword', 0, 3), ItemData('Myrmidon Sword+', 4, 7), ItemData('Myrmidon Sword++', 8)],
+    'Errant': [ItemData('Errant Sword', 2, 3), ItemData('Errant Sword+', 4, 7), ItemData('Errant Sword++', 8)],
+    'Mercenary': [ItemData('Mercenary Sword', 0, 3), ItemData('Mercenary Sword+', 4, 7), ItemData('Mercenary Sword++', 8)],
+    'Thief': [ItemData('Thief Sword', 0, 3), ItemData('Thief Sword+', 4, 7), ItemData('Thief Sword++', 8)],
+    'Soldier': [ItemData('Soldier Lance', 0, 5), ItemData('Soldier Lance+', 6)],
+    'Cavalier': [ItemData('Cavalier Lance', 0, 3), ItemData('Cavalier Lance+', 4, 7), ItemData('Cavalier Lance++', 8)],
+    'Armor': [ItemData('Armor Lance', 0, 3), ItemData('Armor Lance+', 4, 7), ItemData('Armor Lance++', 8)],
+    'Falcoknight': [ItemData('Falcoknight Lance', 0, 3), ItemData('Falcoknight Lance+', 4, 7), ItemData('Falcoknight Lance++', 8)],
+    'Skirmisher': [ItemData('Skirmisher Lance', 0, 3), ItemData('Skirmisher Lance+', 4, 7), ItemData('Skirmisher Lance++', 8)],
+    'Fighter': [ItemData('Fighter Axe', 0, 3), ItemData('Fighter Axe+', 4, 7), ItemData('Fighter Axe++', 8)],
+    'Raider': [ItemData('Raider Axe', 0, 3), ItemData('Raider Axe+', 4, 7), ItemData('Raider Axe++', 8)],
+    'Dracoknight': [ItemData('Dracoknight Axe', 0, 3), ItemData('Dracoknight Axe+', 4, 7), ItemData('Dracoknight Axe++', 8)],
+    'Vanguard': [ItemData('Vanguard Axe', 0, 3), ItemData('Vanguard Axe+', 4, 7), ItemData('Vanguard Axe++', 8)],
+    'Brigand': [ItemData('Brigand Axe', 0, 5), ItemData('Brigand Axe+', 6)],
 }
 
 class GroupKind(Enum):
@@ -143,13 +118,21 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
     base_val = (max(0, chapter_num - starting_promotion_chapter) / 5) ** 2
     return base_val
 
-def get_promoted_class(klass_nid: str):
+def get_promoted_class(klass_nid: str) -> str:
     klass = DB.classes.get(klass_nid)
     turns_into = klass.turns_into
     if turns_into:
         return klass.turns_into[0]
     else:
-        return klasS_nid
+        return klass_nid
+
+def get_unpromoted_class(klass_nid: str) -> str:
+    klass = DB.classes.get(klass_nid)
+    promotes_from = klass.promotes_from
+    if turns_into:
+        return klass.promotes_from
+    else:
+        return klass_nid
 
 def completed_chapters() -> int:
     return game.game_vars.get('completed_chapters', 0)
@@ -160,9 +143,18 @@ def determine_avg_level():
 
 def create_unit(klass, position, level, ai, ai_group, is_elite=False):
     unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
-    weapon_type = class_data[klass].weapon_type
-    base_item = base_items[weapon_type]
-    starting_items = [base_item]
+
+    # Give items
+    current_chapter = completed_chapters()
+    base_klass = get_unpromoted_class(klass)
+    if base_klass in item_data:
+        choices = [item_data.nid for item_data in item_data[base_klass] if item_data.chapter_min <= current_chapter <= item_data.chapter_max]
+        starting_items = [game.get_random(choices)]
+    else:
+        weapon_type = class_data[klass].weapon_type
+        base_item = weapon_type
+        starting_items = [base_item]
+
     team = 'enemy'
     ai_group = region.nid  # All units in a region work in the same group
     starting_position = position

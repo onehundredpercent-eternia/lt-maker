@@ -27,6 +27,7 @@ class UIView():
         self.attack_info_disp = None
         self.spell_info_disp = None
         self.initiative_info_disp = None
+        self.memory_info_disp = None
 
         self.cursor_right: bool = False
 
@@ -34,6 +35,8 @@ class UIView():
         self.obj_info_offset = 0
         self.attack_info_offset = 0
         self.initiative_info_offset = 0
+        self.memory_info_offset = 0
+        self.memory_history = None
 
         # Tile Info Offset
         self.tile_transition_state = 'normal'
@@ -104,6 +107,7 @@ class UIView():
             if self.obj_info_offset >= 200:
                 self.obj_info_disp = None
 
+        # Initiative info handling
         if (game.state.current() in self.legal_states or game.state.current() in self.initiative_states) \
                 and DB.constants.value('initiative') \
                 and not game.current_level.roam and game.initiative.draw_me:
@@ -115,6 +119,20 @@ class UIView():
 
         if DB.constants.value('initiative') and not game.initiative.draw_me:
             self.initiative_info_disp = None
+
+        # Memory info handling
+        if game.state.current() in self.legal_states:
+            if game.party.money == self.memory_history:
+                pass
+            else:
+                self.memory_info_disp = self.create_memory_info()
+                self.memory_history = game.party.money
+            self.memory_info_offset -= 4
+            self.memory_info_offset = max(0, self.memory_info_offset)
+        elif self.memory_info_offset:
+            self.memory_info_offset += 4
+            if self.memory_info_offset >= 40:
+                self.memory_info_disp = None
 
         # === Final drawing
         # Should be in topleft, unless cursor is in topleft, in which case it should be in bottomleft
@@ -174,32 +192,9 @@ class UIView():
         if self.initiative_info_disp:
             surf.blit(self.initiative_info_disp, (0, 0))
 
-        return surf
+        if self.memory_info_disp:
+            surf.blit(self.memory_info_disp, (WINWIDTH//2 - self.memory_info_disp.get_width(), 0 - self.memory_info_offset))
 
-    def create_initiative_info(self):
-        x_increment = 20
-        y_offset = 0
-        surf = engine.subsurface(SPRITES.get('bg_black').copy(), (0, 0, WINWIDTH, 40))
-        surf = image_mods.make_translucent(surf, .75)
-
-        current_unit = game.initiative.get_current_unit()
-        unit_list = game.initiative.unit_line[:]
-        current_idx = game.initiative.current_idx
-        min_scroll, max_scroll = current_idx - 9, current_idx + 10
-        min_scroll = max(min_scroll, 0)
-        max_scroll = min(max_scroll, len(unit_list))
-        unit_list = unit_list[min_scroll:max_scroll]
-
-        for idx, unit_nid in enumerate(unit_list):
-            unit = game.get_unit(unit_nid)
-            if current_unit and unit is current_unit:
-                y_offset = 10
-                char_sprite = unit.sprite.create_image('active')
-            else:
-                y_offset = 0
-                char_sprite = unit.sprite.create_image('passive')
-            surf.blit(SPRITES.get('initiative_platform'), (idx * x_increment, 8 + y_offset))
-            surf.blit(char_sprite, (-17 + idx * x_increment, -19 + y_offset))
         return surf
 
     def create_unit_info(self, unit):
@@ -305,6 +300,66 @@ class UIView():
         for idx, line in enumerate(text_lines):
             pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 6)
             font.blit(line, surf, pos)
+
+        return surf
+
+    def create_initiative_info(self):
+        x_increment = 20
+        y_offset = 0
+        surf = engine.subsurface(SPRITES.get('bg_black').copy(), (0, 0, WINWIDTH, 40))
+        surf = image_mods.make_translucent(surf, .75)
+
+        current_unit = game.initiative.get_current_unit()
+        unit_list = game.initiative.unit_line[:]
+        current_idx = game.initiative.current_idx
+        min_scroll, max_scroll = current_idx - 9, current_idx + 10
+        min_scroll = max(min_scroll, 0)
+        max_scroll = min(max_scroll, len(unit_list))
+        unit_list = unit_list[min_scroll:max_scroll]
+
+        for idx, unit_nid in enumerate(unit_list):
+            unit = game.get_unit(unit_nid)
+            if current_unit and unit is current_unit:
+                y_offset = 10
+                char_sprite = unit.sprite.create_image('active')
+            else:
+                y_offset = 0
+                char_sprite = unit.sprite.create_image('passive')
+            surf.blit(SPRITES.get('initiative_platform'), (idx * x_increment, 8 + y_offset))
+            surf.blit(char_sprite, (-17 + idx * x_increment, -19 + y_offset))
+        return surf
+
+    def create_memory_info(self):
+        font = FONT['info-white']
+        surf = engine.create_surface((72, 40), transparent=True)
+
+        # Background
+        mem_bar_bg = SPRITES.get('health_bar2_bg')
+        left, top = (surf.get_width()//2 - mem_bar_bg.get_width()//2, 4)
+        surf.blit(mem_bar_bg, (left, top))
+
+        current_mem = game.party.money
+        max_mem = DB.raw_data.get('max_memory', 30)
+
+        # Mem Bar
+        mem_ratio = utils.clamp(current_mem / float(max_mem)), 0, 1)
+        if mem_ratio > 0:
+            mem_surf = SPRITES.get('health_bar2')
+            idx = int(mem_ratio * mem_surf.get_width())
+            mem_surf = engine.subsurface(mem_surf, (0, 0, idx, 2))
+            surf.blit(mem_surf, (left + 1, top + 1))
+
+        super_mem_ratio = utils.clamp(current_hp - max_mem / max_mem, 0, 1)
+        if super_mem_ratio > 0:
+            mem_surf = SPRITES.get('health_bar3')
+            idx = int(super_mem_ratio * mem_surf.get_width())
+            mem_surf = engine.subsurface(mem_surf, (0, 0, idx, 2))
+            surf.blit(mem_surf, (left + 1, top + 1))
+
+        # Mem text
+        surf.blit(SPRITES.get('unit_info_slash'), (surf.get_width()//2 - 2, top))
+        font.blit_right(str(current_mem), surf, (surf.get_width()//2 - 2, top))
+        font.blit(str(max_mem), surf, (surf.get_width()//2 + 1, top))
 
         return surf
 
