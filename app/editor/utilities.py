@@ -140,7 +140,6 @@ def get_bbox(image):
     test_color = image.pixel(image.width() - 1, 0)
     if test_color == qCOLORKEY:
         exclude_color = qCOLORKEY
-
     for x in range(image.width()):
         for y in range(image.height()):
             current_color = image.pixel(x, y)

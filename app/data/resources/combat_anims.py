@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources import combat_commands
@@ -9,10 +10,11 @@ import logging
 required_poses = ('Stand', 'Attack', 'Miss', 'Dodge')
 other_poses = ('RangedStand', 'RangedDodge', 'Critical')
 
+
 class Pose():
     def __init__(self, nid):
         self.nid = nid
-        self.timeline = []
+        self.timeline: List[combat_commands.CombatAnimationCommand] = []
 
     def save(self):
         return (self.nid, [command.save() for command in self.timeline])
@@ -29,6 +31,7 @@ class Pose():
             else:
                 logging.error("Unable to restore command with nid %s.", nid)
         return self
+
 
 class Frame():
     def __init__(self, nid, rect, offset, pixmap=None, image=None):
@@ -49,6 +52,7 @@ class Frame():
         self.rect = tuple(self.rect)
         self.offset = tuple(self.offset)
         return self
+
 
 class WeaponAnimation():
     def __init__(self, nid, full_path=None):
@@ -79,6 +83,7 @@ class WeaponAnimation():
             self.poses.append(Pose.restore(pose_save))
         return self
 
+
 class CombatAnimation():
     def __init__(self, nid):
         self.nid = nid
@@ -88,7 +93,8 @@ class CombatAnimation():
     def save(self):
         s_dict = {}
         s_dict['nid'] = self.nid
-        s_dict['weapon_anims'] = [weapon_anim.save() for weapon_anim in self.weapon_anims]
+        s_dict['weapon_anims'] = [weapon_anim.save()
+                                  for weapon_anim in self.weapon_anims]
         s_dict['palettes'] = self.palettes[:]
         return s_dict
 
@@ -101,6 +107,7 @@ class CombatAnimation():
         for weapon_anim_save in s_dict['weapon_anims']:
             self.weapon_anims.append(WeaponAnimation.restore(weapon_anim_save))
         return self
+
 
 class EffectAnimation():
     def __init__(self, nid, full_path=None):
@@ -136,6 +143,7 @@ class EffectAnimation():
             self.palettes.append([palette_name, palette_nid])
         return self
 
+
 class CombatCatalog(ManifestCatalog):
     manifest = 'combat_anims.json'
     title = 'Combat Animations'
@@ -146,14 +154,15 @@ class CombatCatalog(ManifestCatalog):
         for s_dict in combat_dict:
             new_combat_anim = CombatAnimation.restore(s_dict)
             for weapon_anim in new_combat_anim.weapon_anims:
-                short_path = "%s-%s.png" % (new_combat_anim.nid, weapon_anim.nid)
+                short_path = "%s-%s.png" % (new_combat_anim.nid,
+                                            weapon_anim.nid)
                 weapon_anim.set_full_path(os.path.join(loc, short_path))
             self.append(new_combat_anim)
 
     def save_image(self, loc, combat_anim, temp=False):
         for weapon_anim in combat_anim.weapon_anims:
             short_path = "%s-%s.png" % (combat_anim.nid, weapon_anim.nid)
-            new_full_path = os.path.join(loc, short_path)    
+            new_full_path = os.path.join(loc, short_path)
             if temp and weapon_anim.pixmap:
                 weapon_anim.pixmap.save(new_full_path, "PNG")
             elif not weapon_anim.full_path and weapon_anim.pixmap:
@@ -177,6 +186,7 @@ class CombatCatalog(ManifestCatalog):
                 short_path = "%s-%s.png" % (combat_anim.nid, weapon_anim.nid)
                 valid_filenames.add(short_path)
         return valid_filenames
+
 
 class CombatEffectCatalog(ManifestCatalog):
     manifest = 'combat_effects.json'
@@ -207,7 +217,8 @@ class CombatEffectCatalog(ManifestCatalog):
 
     def save(self, loc):
         for effect_anim in self:
-            if effect_anim.pixmap or effect_anim.full_path:  # Possible that no pixmap is associated with a simple control script
+            # Possible that no pixmap is associated with a simple control script
+            if effect_anim.pixmap or effect_anim.full_path:
                 self.save_image(loc, effect_anim)
         self.dump(loc)
 
