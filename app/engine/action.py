@@ -1535,12 +1535,17 @@ class ApplyStatChanges(Action):
         self.stat_changes = stat_changes
         self.increase_current_stats = increase_current_stats
 
+        self.current_hp = self.unit.get_hp()
+        self.current_mana = self.unit.get_mana()
+
     def do(self):
         unit_funcs.apply_stat_changes(self.unit, self.stat_changes, self.increase_current_stats)
 
     def reverse(self):
         negative_changes = {k: -v for k, v in self.stat_changes.items()}
         unit_funcs.apply_stat_changes(self.unit, negative_changes, self.increase_current_stats)
+        self.unit.set_hp(self.current_hp)
+        self.unit.set_mana(self.current_mana)
 
 
 class ApplyGrowthChanges(Action):
@@ -1562,6 +1567,9 @@ class Promote(Action):
         self.old_level = self.unit.level
         self.old_klass = self.unit.klass
         self.new_klass = new_class_nid
+
+        self.current_hp = self.unit.get_hp()
+        self.current_mana = self.unit.get_mana()
 
         promotion_gains = DB.classes.get(self.new_klass).promotion
         current_stats = self.unit.stats
@@ -1612,6 +1620,8 @@ class Promote(Action):
 
         reverse_stat_changes = {k: -v for k, v in self.stat_changes.items()}
         unit_funcs.apply_stat_changes(self.unit, reverse_stat_changes)
+        self.unit.set_hp(self.current_hp)
+        self.unit.set_mana(self.current_mana)
 
         for act in self.subactions:
             act.reverse()
@@ -1625,6 +1635,9 @@ class ClassChange(Action):
         self.old_level = self.unit.level
         self.old_klass = self.unit.klass
         self.new_klass = new_class_nid
+
+        self.current_hp = self.unit.get_hp()
+        self.current_mana = self.unit.get_mana()
 
         current_stats = self.unit.stats
         old_klass_bases = DB.classes.get(self.old_klass).bases
@@ -1670,6 +1683,8 @@ class ClassChange(Action):
 
         reverse_stat_changes = {k: -v for k, v in self.stat_changes.items()}
         unit_funcs.apply_stat_changes(self.unit, reverse_stat_changes)
+        self.unit.set_hp(self.current_hp)
+        self.unit.set_mana(self.current_mana)
 
         for act in self.subactions:
             act.reverse()

@@ -234,7 +234,7 @@ class ItemHelpDialog(HelpDialog):
         self.vals = [weapon_rank, rng, weight, might, hit, crit]
 
         if self.item.desc:
-            self.lines = text_funcs.line_wrap(self.font, self.item.desc, 148)
+            self.build_lines(self.item.desc, 148)
         else:
             self.lines = []
 
@@ -246,6 +246,21 @@ class ItemHelpDialog(HelpDialog):
             size_y = 32 + self.font.height * len(self.lines)
         self.help_surf = base_surf.create_base_surf(160, size_y, 'message_bg_base')
         self.h_surf = engine.create_surface((160, size_y + 3), transparent=True)
+
+    def build_lines(self, desc, width):
+        if not desc:
+            desc = ''
+        desc = text_funcs.translate(desc)
+        # Hard set num lines if desc is very short
+        if '\n' in desc:
+            lines = desc.splitlines()
+            self.lines = []
+            for line in lines:
+                num = self.find_num_lines(line)
+                line = text_funcs.line_wrap(self.font, line, width)
+                self.lines.extend(line)
+        else:
+            self.lines = text_funcs.line_wrap(self.font, desc, width)
 
     def draw(self, surf, pos, right=False):
         time = engine.get_time()

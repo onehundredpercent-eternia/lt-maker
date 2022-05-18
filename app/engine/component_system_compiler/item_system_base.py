@@ -7,11 +7,11 @@ class Defaults():
         return None
 
     @staticmethod
-    def buy_price(unit, item) -> int:
+    def buy_price(unit, item) -> float:
         return None
 
     @staticmethod
-    def sell_price(unit, item) -> int:
+    def sell_price(unit, item) -> float:
         return None
 
     @staticmethod
@@ -106,6 +106,8 @@ def get_all_components(unit, item) -> list:
     from app.engine import skill_system
     override_components = skill_system.item_override(unit, item)
     override_component_nids = [c.nid for c in override_components]
+    if not item:
+        return override_components
     all_components = override_components + [c for c in item.components if c.nid not in override_component_nids]
     return all_components
 

@@ -128,14 +128,14 @@ class Value(ItemComponent):
     def buy_price(self, unit, item):
         if item.uses:
             frac = item.data['uses'] / item.data['starting_uses']
-            return int(self.value * frac)
+            return self.value * frac
         return self.value
 
     def sell_price(self, unit, item):
         if item.uses:
             frac = item.data['uses'] / item.data['starting_uses']
-            return int(self.value * frac // 2)
-        return self.value // 2
+            return self.value * frac / 2
+        return self.value / 2
 
 class Accessory(ItemComponent):
     nid = 'accessory'

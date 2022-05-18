@@ -1239,9 +1239,11 @@ class RemoveItemFromMultiitem(EventCommand):
     desc = \
         """
 Removes an item from an existing multi-item in the inventory of *GlobalUnitOrConvoy*.
+If *ChildItem* is not specified, all items will be removed form the existing multi-item in the inventory of *GlobalUnitOrConvoy*.
         """
 
-    keywords = ["GlobalUnitOrConvoy", "MultiItem", "ChildItem"]
+    keywords = ["GlobalUnitOrConvoy", "MultiItem"]
+    optional_keywords = ['ChildItem']
     keyword_types = ["GlobalUnitOrConvoy", "Item", "Item"]
 
 class GiveMoney(EventCommand):
@@ -2324,6 +2326,7 @@ class RevealOverworldNode(EventCommand):
             'By default, fades in via animation; use the *immediate* flag to skip this anim.')
 
     keywords = ['OverworldNodeNid']
+    keyword_types = ["OverworldLocation"]
     _flags = ["immediate"]
 
 class RevealOverworldRoad(EventCommand):

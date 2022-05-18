@@ -219,7 +219,8 @@ class MapIconDatabase(IconTab):
         indices = self.view.selectionModel().selectedIndexes()
         if indices:
             index = indices[0]
-            icon = self.model.sub_data[index.row()]
+            index = self.model.mapToSource(index)
+            icon = self.full_model.sub_data[index.row()]
             return icon
         return None
 

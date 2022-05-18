@@ -1292,23 +1292,31 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
     if 'equip' in flags:
         action.do(action.EquipItem(unit, subitem))
 
-def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item, flags=None):
+def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item=None, flags=None):
     unit, item = self._get_item_in_inventory(global_unit_or_convoy, multi_item)
     if not unit or not item:
         return
     if not item.multi_item:
         self.logger.error("Item %s is not a multi-item!" % item.nid)
         return
+    if global_unit_or_convoy.lower() == 'convoy':
+        owner_nid = None
+    else:
+        owner_nid = unit.nid
+    if not child_item:
+        # remove all subitems
+        subitems = [subitem for subitem in item.subitems]
+        for subitem in subitems:
+            if owner_nid:
+                action.do(action.UnequipItem(unit, subitem))
+            action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
+    else:
     # Check if item in multiitem
     subitem_nids = [subitem.nid for subitem in item.subitems]
     if child_item not in subitem_nids:
         self.logger.error("Couldn't find subitem with nid %s" % child_item)
         return
     subitem = [subitem for subitem in item.subitems if subitem.nid == child_item][0]
-    if global_unit_or_convoy.lower() == 'convoy':
-        owner_nid = None
-    else:
-        owner_nid = unit.nid
     # Unequip subitem if necessary
     if owner_nid:
     action.do(action.UnequipItem(unit, subitem))

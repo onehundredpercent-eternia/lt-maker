@@ -1,7 +1,7 @@
 from typing import List
-from app.data.database import DB
 
 def translate(string):
+    from app.data.database import DB
     if string in DB.translations.keys():
         return DB.translations.get(string).text
     else:
@@ -11,6 +11,13 @@ def get_max_width(font, text_list):
     return max(font.width(t) for t in text_list)
 
 def split(font, string, num_lines, max_width):
+    """
+    This takes a string of text and wraps it into multiple lines
+    In general, unlike the text_wrap function below, it tries
+    to make the lines roughly equal in length,
+    and no more than `max_width` pixels in length
+    No method to force a skip: (`\n`, {br}) are ignored
+    """
     total_length = font.width(string)
     lines = []
     for line in range(num_lines):
@@ -45,6 +52,10 @@ def line_chunk(string: str) -> list:
 def line_wrap(font, string: str, width: int, pad=False) -> List[str]:
     """
     Adapted from text wrap module
+    This takes a string of text and wraps it into multiple lines
+    Each line cannot be more than `width` pixels wide
+    Splits on spaces.
+    No method to force a skip: (`\n`, {br}) are ignored
     """
     assert width > 0
     chunks = line_chunk(string)
@@ -81,3 +92,12 @@ def line_wrap(font, string: str, width: int, pad=False) -> List[str]:
             lines.append(chunks.pop())
 
     return lines
+
+if __name__ == '__main__':
+    from app.engine.fonts import FONT
+    font = FONT['text-white']
+    text = 'Hello there, General Kenobi. A pleasure doing business with you'
+    lines = line_wrap(font, text, 220)
+    print(lines)
+    lines = split(font, text, 2, 220)
+    print(lines)

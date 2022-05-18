@@ -1,3 +1,5 @@
+from app.data.components import Component
+from app.data.database import DB
 from app.engine.game_state import GameState
 from app.engine import evaluate
 import re
@@ -35,6 +37,10 @@ class TextEvaluator():
             return self._evaluate_unit_fields(text)
         elif re.match(r'\{v:[^{}]*\}', text) or re.match(r'\{var:[^{}]*\}', text):
             return self._evaluate_vars(text)
+        elif re.match(r'\{s:[^{}]*\}', text) or re.match(r'\{skill:[^{}]*\}', text):
+            return self._evaluate_skill_db(text)
+        elif re.match(r'\{i:[^{}]*\}', text) or re.match(r'\{item:[^{}]*\}', text):
+            return self._evaluate_item_db(text)
         else:
             return text
 
@@ -140,6 +146,66 @@ class TextEvaluator():
                 continue
             field_value = unit.get_field(field, fallback)
             evaluated.append(self._object_to_str(field_value))
+        for idx in range(len(to_evaluate)):
+            text = text.replace(to_evaluate[idx], evaluated[idx])
+        return text
+
+    def _evaluate_skill_db(self, text) -> str:
+        # find skill queries
+        to_evaluate: List[str] = re.findall(r'\{s:[^{}]*\}', text) + re.findall(r'\{skill:[^{}]*\}', text)
+        evaluated = []
+        for to_eval in to_evaluate:
+            to_eval = self.trim_eval_tags(to_eval)
+            # expected syntax: {s:skill.key}
+            if not '.' in to_eval:
+                self.logger.error("eval of {s:%s} failed, no period", to_eval)
+                evaluated.append('??')
+                continue
+            skill_nid, attribute = to_eval.split('.', 1)
+            skill = DB.skills.get(skill_nid, None)
+            if not skill:
+                self.logger.error("eval of {s:%s} failed, no such skill %s", to_eval, skill_nid)
+                evaluated.append('??')
+                continue
+            if not hasattr(skill, attribute):
+                self.logger.error("eval of {s:%s} failed, no such attribute %s for skill %s", to_eval, attribute, skill_nid)
+                evaluated.append('??')
+                continue
+            attribute_obj = getattr(skill, attribute)
+            if isinstance(attribute_obj, Component):
+                attribute_obj = attribute_obj.value
+            attribute_value = str(attribute_obj)
+            evaluated.append(self._object_to_str(attribute_value))
+        for idx in range(len(to_evaluate)):
+            text = text.replace(to_evaluate[idx], evaluated[idx])
+        return text
+
+    def _evaluate_item_db(self, text) -> str:
+        # find item queries
+        to_evaluate: List[str] = re.findall(r'\{i:[^{}]*\}', text) + re.findall(r'\{item:[^{}]*\}', text)
+        evaluated = []
+        for to_eval in to_evaluate:
+            to_eval = self.trim_eval_tags(to_eval)
+            # expected syntax: {i:item.key}
+            if not '.' in to_eval:
+                self.logger.error("eval of {i:%s} failed, no period", to_eval)
+                evaluated.append('??')
+                continue
+            item_nid, attribute = to_eval.split('.', 1)
+            item = DB.items.get(item_nid, None)
+            if not item:
+                self.logger.error("eval of {i:%s} failed, no such item %s", to_eval, item_nid)
+                evaluated.append('??')
+                continue
+            if not hasattr(item, attribute):
+                self.logger.error("eval of {i:%s} failed, no such attribute %s for item %s", to_eval, attribute, item_nid)
+                evaluated.append('??')
+                continue
+            attribute_obj = getattr(item, attribute)
+            if isinstance(attribute_obj, Component):
+                attribute_obj = attribute_obj.value
+            attribute_value = str(attribute_obj)
+            evaluated.append(self._object_to_str(attribute_value))
         for idx in range(len(to_evaluate)):
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
