@@ -266,7 +266,7 @@ class UIView():
         # Draw memory
 
         current_mem = game.party.money
-        max_mem = DB.raw_data.get('max_memory', 30)
+        max_mem = int(DB.raw_data.get('max_memory', 30))
 
         text = 'M: ' + str(current_mem) + '/' + str(max_mem)
         color = 'white'
