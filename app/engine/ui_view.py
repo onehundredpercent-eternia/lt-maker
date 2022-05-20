@@ -27,7 +27,6 @@ class UIView():
         self.attack_info_disp = None
         self.spell_info_disp = None
         self.initiative_info_disp = None
-        self.memory_info_disp = None
 
         self.cursor_right: bool = False
 
@@ -35,8 +34,6 @@ class UIView():
         self.obj_info_offset = 0
         self.attack_info_offset = 0
         self.initiative_info_offset = 0
-        self.memory_info_offset = 0
-        self.memory_history = None
 
         # Tile Info Offset
         self.tile_transition_state = 'normal'
@@ -119,20 +116,6 @@ class UIView():
 
         if DB.constants.value('initiative') and not game.initiative.draw_me:
             self.initiative_info_disp = None
-
-        # Memory info handling
-        if game.state.current() in self.legal_states:
-            if game.party.money == self.memory_history:
-                pass
-            else:
-                self.memory_info_disp = self.create_memory_info()
-                self.memory_history = game.party.money
-            self.memory_info_offset -= 4
-            self.memory_info_offset = max(0, self.memory_info_offset)
-        elif self.memory_info_offset:
-            self.memory_info_offset += 4
-            if self.memory_info_offset >= 40:
-                self.memory_info_disp = None
 
         # === Final drawing
         # Should be in topleft, unless cursor is in topleft, in which case it should be in bottomleft
@@ -279,6 +262,27 @@ class UIView():
 
     def create_obj_info(self):
         font = FONT['text']
+
+        # Draw memory
+
+        current_mem = game.party.money
+        max_mem = DB.raw_data.get('max_memory', 30)
+
+        text = 'M: ' + str(current_mem) + '/' + str(max_mem)
+        color = 'white'
+        if current_mem > 30:
+            color = 'green'
+        elif current_mem <= 0:
+            color = 'red'
+        elif current_mem <= 10:
+            color = 'yellow'
+        width = font.width('M: 00/30')
+
+        mem_surf = base_surf.create_base_surf(width, 24)
+        mem_surf = image_mods.make_translucent(mem_surf, .1)
+        font.blit_right(text, mem_surf, (width, 0), color=color)
+
+        # Draw Objective
         obj = game.level.objective['simple']
         text_parser = TextEvaluator(logging.getLogger(), game)
         text_lines = text_parser._evaluate_all(obj).split(',')
@@ -301,7 +305,11 @@ class UIView():
             pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 6)
             font.blit(line, surf, pos)
 
-        return surf
+        big_surf = engine.create_surface((max(surf.get_width(), mem_surf.get_width()), mem_surf.get_height() + surf.get_height()), transparent=True)
+        big_surf.blit(mem_surf, (0 - mem_surf.get_width(), 0))
+        big_surf.blit(surf, (0 - surf.get_width(), mem_surf.get_height()))
+
+        return big_surf
 
     def create_initiative_info(self):
         x_increment = 20
@@ -327,40 +335,6 @@ class UIView():
                 char_sprite = unit.sprite.create_image('passive')
             surf.blit(SPRITES.get('initiative_platform'), (idx * x_increment, 8 + y_offset))
             surf.blit(char_sprite, (-17 + idx * x_increment, -19 + y_offset))
-        return surf
-
-    def create_memory_info(self):
-        font = FONT['info-white']
-        surf = engine.create_surface((72, 40), transparent=True)
-
-        # Background
-        mem_bar_bg = SPRITES.get('health_bar2_bg')
-        left, top = (surf.get_width()//2 - mem_bar_bg.get_width()//2, 4)
-        surf.blit(mem_bar_bg, (left, top))
-
-        current_mem = game.party.money
-        max_mem = DB.raw_data.get('max_memory', 30)
-
-        # Mem Bar
-        mem_ratio = utils.clamp(current_mem / float(max_mem)), 0, 1)
-        if mem_ratio > 0:
-            mem_surf = SPRITES.get('health_bar2')
-            idx = int(mem_ratio * mem_surf.get_width())
-            mem_surf = engine.subsurface(mem_surf, (0, 0, idx, 2))
-            surf.blit(mem_surf, (left + 1, top + 1))
-
-        super_mem_ratio = utils.clamp(current_hp - max_mem / max_mem, 0, 1)
-        if super_mem_ratio > 0:
-            mem_surf = SPRITES.get('health_bar3')
-            idx = int(super_mem_ratio * mem_surf.get_width())
-            mem_surf = engine.subsurface(mem_surf, (0, 0, idx, 2))
-            surf.blit(mem_surf, (left + 1, top + 1))
-
-        # Mem text
-        surf.blit(SPRITES.get('unit_info_slash'), (surf.get_width()//2 - 2, top))
-        font.blit_right(str(current_mem), surf, (surf.get_width()//2 - 2, top))
-        font.blit(str(max_mem), surf, (surf.get_width()//2 + 1, top))
-
         return surf
 
     def prepare_attack_info(self):

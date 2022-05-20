@@ -871,6 +871,21 @@ Iterates through each of the 'group' regions and generates random enemies for
 each region. 
         """
 
+class GetRecruitableUnit(EventCommand):
+    nid = 'get_recruitable_unit'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = \
+        """
+        Creates a random recruitable unit with the chosen characteristics.
+        Stores the unit's nid in the game's level_vars under the 
+        key of the level_var_nid
+        """
+
+    keywords = ["LevelVarNid", "Position", "Level", "Tag"]
+    optional_keywords = ["Team"]
+    keyword_types = ["Nid", "Position", "PositiveInteger", "Tag", "Team"]
+
 class AddUnit(EventCommand):
     nid = 'add_unit'
     nickname = 'add'

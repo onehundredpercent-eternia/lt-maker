@@ -586,11 +586,14 @@ class UnitSprite():
         if self.check_draw_hp():
             self.health_bar.draw(surf, left, top)
 
-        if 'Boss' in self.unit.tags and self.transition_state == 'normal' and not self.unit.is_dying and \
+        if self.transition_state == 'normal' and not self.unit.is_dying and \
                 self.image_state in ('gray', 'passive') and int((current_time%450) // 150) in (1, 2):
-            boss_icon = SPRITES.get('boss_icon')
-            surf.blit(boss_icon, (left - 8, top - 8))
-
+            if 'Boss' in self.unit.tags:
+                icon = SPRITES.get('boss_icon')
+            elif 'Elite' in self.unit.tags:
+                icon = SPRITES.get('elite_icon')
+            surf.blit(icon, (left - 8, top - 8))
+        
         if self.unit.traveler and self.transition_state == 'normal' and \
                 not self.unit.is_dying and not DB.constants.value('pairup'):
             if game.get_unit(self.unit.traveler).team == 'player':
