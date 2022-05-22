@@ -73,6 +73,7 @@ class BoundaryInterface():
         self.should_reset_surf = True
 
     def reset_fog_of_war(self):
+        self.reset_surf()  # Also needs to reset surf since the units you can see in fog of war may have changed
         self.fog_of_war_surf = None
 
     def _set(self, positions, mode, nid):

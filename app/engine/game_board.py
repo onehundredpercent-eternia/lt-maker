@@ -165,14 +165,7 @@ class GameBoard(object):
                 return True
         else:
             if DB.constants.value('fog_los'):
-                ai_fog_of_war_radius = \
-                    game.level_vars.get('_ai_fog_of_war_radius',
-                                        game.level_vars.get('_fog_of_war_radius', 0))
-                if team == 'other':
-                    fog_of_war_radius = \
-                        game.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius)
-                else:
-                    fog_of_war_radius = ai_fog_of_war_radius
+                fog_of_war_radius = self.get_fog_of_war_radius(team)
                 valid = line_of_sight.simple_check(pos, team, fog_of_war_radius)
                 if not valid:
                     return False
@@ -180,6 +173,16 @@ class GameBoard(object):
             if grid[idx]:
                 return True
         return False
+
+    def get_fog_of_war_radius(self, team: str) -> int:
+        ai_fog_of_war_radius = game.level_vars.get('_ai_fog_of_war_radius', game.level_vars.get('_fog_of_war_radius', 0))
+        if team == 'player':
+            fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+        elif team == 'other':
+            fog_of_war_radius = game.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius)
+        else:
+            fog_of_war_radius = ai_fog_of_war_radius
+        return fog_of_war_radius
 
     # Line of sight
     def init_opacity_grid(self, tilemap):

@@ -263,6 +263,10 @@ class UnitObject(Prefab):
         self.equipped_weapon = self.get_weapon()
         self.equipped_accessory = self.get_accessory()
 
+        # Reset these so max hp can be changed by skills and items
+        self.current_hp = self.get_max_hp()
+        self.current_mana = self.get_max_mana()
+
         return self
 
     def get_max_hp(self):

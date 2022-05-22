@@ -565,10 +565,10 @@ class MovementState(State):
         super().update()
         game.movement.update()
         if len(game.movement) <= 0:
+            game.boundary.frozen = False
             if game.movement.surprised:
                 game.movement.surprised = False
             else:
-                game.boundary.frozen = False
                 game.state.back()
             return 'repeat'
 
@@ -2070,7 +2070,11 @@ class ShopState(State):
                 item = self.buy_menu.get_current()
                 if item:
                     value = item_funcs.buy_price(self.unit, item)
-                    if game.get_money() - value >= 0 and self.buy_menu.get_stock() != 0:
+                    new_item = item_funcs.create_item(self.unit, item.nid)
+                    if game.get_money() - value >= 0 and \
+                            self.buy_menu.get_stock() != 0 and \
+                            (not item_funcs.inventory_full(self.unit, new_item) or
+                             game.game_vars.get('_convoy')):
                         action.do(action.HasTraded(self.unit))
                         get_sound_thread().play_sfx('GoldExchange')
                         action.do(action.GainMoney(game.current_party, -value))
@@ -2078,7 +2082,6 @@ class ShopState(State):
                         action.do(action.SetLevelVar(stock_marker, game.level_vars.get(stock_marker, 0) + 1))  # Remember that we bought one of this
                         self.buy_menu.decrement_stock()
                         self.money_counter_disp.start(-value)
-                        new_item = item_funcs.create_item(self.unit, item.nid)
                         game.register_item(new_item)
                         if not item_funcs.inventory_full(self.unit, new_item):
                             action.do(action.GiveItem(self.unit, new_item))
@@ -2086,21 +2089,20 @@ class ShopState(State):
                         elif game.game_vars.get('_convoy'):
                             action.do(action.PutItemInConvoy(new_item))
                             self.current_msg = self.get_dialog('shop_convoy')
-                        else:
-                            self.current_msg = self.get_dialog('shop_max')
-                            self.state = 'choice'
-                            self.menu = self.choice_menu
-                            self.buy_menu.set_takes_input(False)
 
-                        self.update_options()
+                    # How it could fail
                     elif self.buy_menu.get_stock() == 0:
                         # We don't have any more of this in stock
                         get_sound_thread().play_sfx('Select 4')
                         self.current_msg = self.get_dialog('shop_no_stock')
-                    else:
+                    elif game.get_money() - value < 0:
                         # You don't have enough money
                         get_sound_thread().play_sfx('Select 4')
                         self.current_msg = self.get_dialog('shop_no_money')
+                    else:
+                        # No inventory space
+                        get_sound_thread().play_sfx('Select 4')
+                        self.current_msg = self.get_dialog('shop_max')
 
             elif self.state == 'sell':
                 item = self.sell_menu.get_current()

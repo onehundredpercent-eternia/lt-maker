@@ -2,6 +2,8 @@ from app.utilities import utils
 from enum import IntEnum
 
 from app.engine.game_state import game
+from app.engine import skill_system
+
 
 class Visibility(IntEnum):
     Unknown = 0
@@ -99,14 +101,14 @@ def line_of_sight(source_pos: list, dest_pos: list, max_range: int) -> list:
     lit_tiles = [pos for pos in dest_pos if all_tiles[pos] != Visibility.Dark]
     return lit_tiles
 
-def simple_check(dest_pos: tuple, team: str, max_range: int) -> bool:
+def simple_check(dest_pos: tuple, team: str, default_range: int) -> bool:
     """
     Returns true if can see position with line of sight
     """
-    player_pos = [unit.position for unit in game.units if unit.position and unit.team == team]
-    for s_pos in player_pos:
+    info = [(unit.position, skill_system.sight_range(unit)) for unit in game.units if unit.position and unit.team == team]
+    for s_pos, extra_range in info:
         if s_pos == dest_pos:
             return True
-        elif utils.calculate_distance(dest_pos, s_pos) <= max_range and get_line(s_pos, dest_pos):
+        elif utils.calculate_distance(dest_pos, s_pos) <= default_range + extra_range and get_line(s_pos, dest_pos):
             return True
     return False

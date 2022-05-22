@@ -59,10 +59,10 @@ class MapCastAnim(ItemComponent):
     expose = Type.MapAnimation
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        pb.append(pb.CastAnim(self.value))
+        playback.append(pb.CastAnim(self.value))
 
     def on_miss(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
-        pb.append(pb.CastAnim(self.value))
+        playback.append(pb.CastAnim(self.value))
 
 class BattleCastAnim(ItemComponent):
     nid = 'battle_cast_anim'

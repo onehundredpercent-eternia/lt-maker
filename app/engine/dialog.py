@@ -626,15 +626,12 @@ class Ending():
         self.portrait = portrait
         self.title = title
         self.plain_text = text
+        self.speaker = None  # Unused attribute to match Dialog
         self.unit = unit
         self.font = FONT['text']
 
         # Build dialog
-        class EndingDialog(Dialog):
-            num_lines = 6
-            draw_cursor_flag = False
-
-        self.dialog = EndingDialog(text)
+        self.dialog = Dialog(text, num_lines=6, draw_cursor=False)
         self.dialog.position = (8, 40)
         self.dialog.text_width = WINWIDTH - 32
         self.dialog.width = self.dialog.text_width + 16

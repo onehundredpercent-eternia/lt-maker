@@ -58,10 +58,11 @@ class OverworldMovementManager():
 
     def get_movement_speed_multiplier(self, nid: NID) -> float:
         data = self.moving_entities.get(nid)
-        if data and data.speed_adj:
-            return data.speed_adj
+        if data and data.speed_adj and data.speed_adj != 1.0:
+            # 120 is default movespeed
+            return data.speed_adj * 120
         else:
-            return 1
+            return cf.SETTINGS['unit_speed']
 
     def get_following_unit(self) -> Optional[NID]:
         """Gets the nid of the unit that the camera is meant to follow.
@@ -149,7 +150,7 @@ class OverworldMovementManager():
                 progress = current_time - data.last_update
 
                 # set the position of the unit based on progress
-                unit_speed = cf.SETTINGS['unit_speed'] * OVERWORLD_MOVEMENT_SPEED_MULTIPLIER * data.speed_adj
+                unit_speed = OVERWORLD_MOVEMENT_SPEED_MULTIPLIER * self.get_movement_speed_multiplier(entity_nid)
                 percentage_progress = utils.clamp(progress / self._time_to_walk_segment(unit_speed, segment_being_traversed), 0, 1)
 
             if percentage_progress <= 0: # brief pause, don't play sound

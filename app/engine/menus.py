@@ -289,7 +289,7 @@ class Simple():
         if options is not None:
             bare_options = options
         else:
-            bare_options = [option.get() for option in self.options if option.get()]
+            bare_options = [option.get() for option in self.options if option.get() is not None]
         self.create_options(bare_options)
         self.current_index = utils.clamp(self.current_index, 0, len(self.options) - 1)
 
@@ -1739,9 +1739,12 @@ class ChapterSelect(Main):
 
     def set_color(self, idx, color):
         self.colors[idx] = color
+        self.options[idx].set_bg_color(color)
 
     def set_colors(self, colors):
         self.colors = colors
+        for idx, option in enumerate(self.options):
+            option.set_bg_color(self.colors[idx])
 
     def create_options(self, options):
         self.options.clear()

@@ -103,9 +103,9 @@ class MovementManager():
         # Check if we run into an enemy
         # Returns True if position is OK
         """
-        for region in game.level.regions:
-            if region.contains(unit.position) and region.interrupt_move:
-                return False
+        interrupted = self.check_region_interrupt(unit)
+        if interrupted:
+            return False
         if data.event:
             return True
         elif skill_system.pass_through(unit):

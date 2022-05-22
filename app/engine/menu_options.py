@@ -166,12 +166,16 @@ class ChapterSelectOption(TitleOption):
         self.idx = idx
         self.text = text
         self.display_text = text_funcs.translate(text)
-        self.bg_color = bg_color
-        self.option_bg_name = option_bg_name + '_' + bg_color
+        self.option_bg_prefix = option_bg_name
+        self.set_bg_color(bg_color)
 
         self.font = 'chapter'
         self.color = 'grey'
         self.ignore = False
+
+    def set_bg_color(self, color):
+        self.bg_color = color
+        self.option_bg_name = self.option_bg_prefix + '_' + self.bg_color
 
     def draw_flicker(self, surf, x, y):
         left = x - self.width()//2

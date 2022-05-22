@@ -174,8 +174,10 @@ class DecreasingSightRangeBonus(SkillComponent):
         return max(0, self.value - self.skill.data['torch_counter'])
 
     def on_upkeep(self, actions, playback, unit):
-        val = self.skill.data['torch_counter'] - 1
+        val = self.skill.data['torch_counter'] + 1
+        action.do(action.UpdateFogOfWar(unit))
         action.do(action.SetObjData(self.skill, 'torch_counter', val))
+        action.do(action.UpdateFogOfWar(unit))
 
 class IgnoreFatigue(SkillComponent):
     nid = 'ignore_fatigue'

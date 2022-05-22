@@ -841,7 +841,6 @@ class TitleSaveState(State):
         game.state.state.append(current_state)
         game.state.change('transition_pop')
 
-
     def take_input(self, event):
         if self.wait_time > 0:
             return

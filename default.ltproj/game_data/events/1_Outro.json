@@ -205,12 +205,8 @@
             [
                 "reveal_overworld_node",
                 [
-                    "0",
-                    "t"
-                ],
-                [
                     "Border Mulan (0)",
-                    "t"
+                    "FLAG(immediate)"
                 ]
             ],
             [

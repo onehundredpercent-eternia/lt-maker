@@ -57,7 +57,10 @@ class OverworldFreeState(MapState):
         # the free state requires that the main party is initialized.
         # if not game.overworld_controller.selected_party_node():
         #     # if it's not, add it to the current level's node and forcibly enable it
-        #     current_level = game.memory['_prev_level_nid']
+        #     try:
+        #         current_level = DB.levels[DB.levels.index(game.overworld_controller.next_level) - 1].nid
+        #     except:
+        #         current_level = DB.levels.values()[0].nid
         #     current_level_node = game.overworld_controller.node_by_level(current_level)
         #     if not current_level_node:
         #         current_level_node = list(game.overworld_controller.nodes.values())[0]

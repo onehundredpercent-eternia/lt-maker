@@ -1,0 +1,20 @@
+[
+    {
+        "name": "GroupSpawn",
+        "trigger": "testevent",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [
+            [
+                "add_group",
+                [
+                    "New Group",
+                    "New Group",
+                    "warp"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]
