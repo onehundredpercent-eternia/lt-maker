@@ -2068,7 +2068,7 @@ class AIGroupPing(Action):
         self.old_ai_group_state = unit.ai_group_active
 
     def do(self):
-        self.unit.ai_group_active = True
+        self.unit.ai_group_active += 1
 
     def reverse(self):
         self.unit.ai_group_active = self.old_ai_group_state
