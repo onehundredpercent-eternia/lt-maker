@@ -82,7 +82,7 @@ class UnitObject(Prefab):
     has_dropped: bool = False
 
     has_run_ai: bool = False
-    ai_group_active: int = 0
+    ai_group_active: bool = False
 
     _sprite = None
     _sound = None
@@ -174,8 +174,8 @@ class UnitObject(Prefab):
         self.has_dropped = False
 
         self.has_run_ai = False
-        self.ai_group_active = 0
-
+        self.ai_group_active = False
+        
         self._sprite = None
         self._sound = None
         self._battle_anim = None
