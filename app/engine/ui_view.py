@@ -306,9 +306,9 @@ class UIView():
             font.blit(line, surf, pos)
 
         big_surf = engine.create_surface((max(surf.get_width(), mem_surf.get_width()), mem_surf.get_height() + surf.get_height()), transparent=True)
-        big_surf.blit(mem_surf, (0 - mem_surf.get_width(), 0))
-        big_surf.blit(surf, (0 - surf.get_width(), mem_surf.get_height()))
-
+        big_surf.blit(surf, (0 - surf.get_width(), 0))
+        big_surf.blit(mem_surf, (0 - mem_surf.get_width(), surf.get_height()))
+        
         return big_surf
 
     def create_initiative_info(self):
