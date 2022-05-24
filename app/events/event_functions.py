@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 from typing import TYPE_CHECKING
 
-from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
+from app.constants import WINHEIGHT, WINWIDTH, FANCY_DIALOG_MODE
 from app.data.database import DB
 from app.data.level_units import GenericUnit, UniqueUnit
 from app.engine import (action, background, banner, dialog, engine, evaluate,
@@ -116,7 +116,7 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
     if 'immediate' in flags or self.do_skip:
         transition = False
 
-    if MEMENTO_MODE:
+    if FANCY_DIALOG_MODE:
         new_portrait = MementoEventPortrait(portrait, position, priority, transition, 'right', mirror, name)
     else:
         new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror, name)
@@ -217,7 +217,7 @@ def mirror_portrait(self: Event, portrait, flags=None):
     if not portrait:
         return False
 
-    if MEMENTO_MODE:
+    if FANCY_DIALOG_MODE:
         portrait_type = MementoEventPortrait
     else:
         portrait_type = EventPortrait
@@ -381,7 +381,7 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
     if speak_style and speak_style.flags:
         flags = speak_style.flags.union(flags)
 
-    if MEMENTO_MODE:
+    if FANCY_DIALOG_MODE:
         new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
         if portrait:
             self._saturate_portrait(portrait)
