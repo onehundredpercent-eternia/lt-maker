@@ -35,14 +35,16 @@ class PaletteModel(DragDropCollectionModel):
         if not index.isValid():
             return None
         if role == Qt.DisplayRole:
-            palette = self._data[index.row()]
-            text = palette.nid
-            return text
+            if len(self._data) > index.row():
+                palette = self._data[index.row()]
+                text = palette.nid
+                return text
         elif role == Qt.DecorationRole:
-            palette = self._data[index.row()]
-            pixmap = get_palette_pixmap(palette)
-            if pixmap:
-                return QIcon(pixmap)
+            if len(self._data) > index.row():
+                palette = self._data[index.row()]
+                pixmap = get_palette_pixmap(palette)
+                if pixmap:
+                    return QIcon(pixmap)
         return None
 
     def create_new(self):

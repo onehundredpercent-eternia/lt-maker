@@ -673,7 +673,7 @@ class TitleExtrasState(TitleLoadState):
         self.bg = game.memory['title_bg']
         self.particles = game.memory['title_particles']
 
-        options = ['Options', 'Credits']
+        options = ['Options', 'Credits', 'Sound Room']
         if cf.SETTINGS['debug']:
             options.insert(0, 'All Saves')
         self.menu = menus.Main(options, 'title_menu_dark')
@@ -722,6 +722,10 @@ class TitleExtrasState(TitleLoadState):
                 game.state.change('transition_to')
             elif selection == 'All Saves':
                 game.memory['next_state'] = 'title_all_saves'
+                game.state.change('transition_to')
+            elif selection == 'Sound Room':
+                game.memory['next_state'] = 'extras_sound_room'
+                game.memory['base_bg'] = self.bg
                 game.state.change('transition_to')
 
 class TitleAllSavesState(TitleLoadState):

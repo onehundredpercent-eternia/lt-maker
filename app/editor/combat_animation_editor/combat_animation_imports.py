@@ -18,7 +18,9 @@ def populate_palettes(current, images, nid):
     for image_fn in images:
         palette_name = os.path.split(image_fn)[-1][:-4].split('-')[-1]
         palette_nid = nid + '_' + palette_name
+        logging.debug("palette_nid: %s", palette_nid)
         palette_names = [_[0] for _ in current.palettes]
+        logging.debug("palette name: %s %s", palette_name, palette_name in palette_names)
         if palette_name in palette_names:
             # Check whether this palette is bigger
             idx = palette_names.index(palette_name)
@@ -37,6 +39,7 @@ def populate_palettes(current, images, nid):
                 # Need to create palette
                 pix = QPixmap(image_fn)
                 palette_colors = editor_utilities.find_palette(pix.toImage())
+                logging.debug("Creating new palette %s", palette_colors)
                 new_palette = combat_palettes.Palette(palette_nid)
                 new_palette.assign_colors(palette_colors)
                 RESOURCES.combat_palettes.append(new_palette)
@@ -54,6 +57,7 @@ def add_frames(index_fn, current, new_weapon, images):
 
     # Need to convert to universal coord palette
     convert_dict = editor_utilities.get_color_conversion(palette)
+    logging.debug("Add Frames: Palette Name: %s, Palette Nid: %s, Conversion Dict: %s", palette_name, palette_nid, editor_utilities.human_readable(convert_dict))
     main_pixmap = QPixmap(images[0])
     for i in index_lines:
         # Only accepts length 4 lines
@@ -65,9 +69,11 @@ def add_frames(index_fn, current, new_weapon, images):
         width, height = [int(_) for _ in i[2].split(',')]
         offset_x, offset_y = [int(_) for _ in i[3].split(',')]
         new_pixmap = main_pixmap.copy(x, y, width, height)
-        # Need to convert to universal base palette
+        assert width > 0 and height > 0
+        # Convert to universal base palette
         new_pixmap = editor_utilities.color_convert_pixmap(new_pixmap, convert_dict)
         new_frame = combat_anims.Frame(nid, (x, y, width, height), (offset_x, offset_y), pixmap=new_pixmap)
+        # print(new_frame.nid, id(new_frame.pixmap), new_frame.pixmap.width(), new_frame.pixmap.height(), editor_utilities.find_palette(QImage(new_frame.pixmap)))
         new_weapon.frames.append(new_frame)
     return main_pixmap
 
@@ -114,7 +120,7 @@ def import_from_legacy(current, fn):
         QMessageBox.critical(None, "Error", "Not a valid combat animation script file: %s" % fn)
         return
     kind = os.path.split(fn)[-1].replace('-Script.txt', '')
-    logging.info("Script kind: %s", fn)
+    logging.info("Script kind: %s", kind)
     nid, weapon = kind.split('-')
     index_fn = fn.replace('-Script.txt', '-Index.txt')
     if not os.path.exists(index_fn):
@@ -130,15 +136,20 @@ def import_from_legacy(current, fn):
     new_weapon = combat_anims.WeaponAnimation(weapon)
 
     main_pixmap = add_frames(index_fn, current, new_weapon, images)
+    # print([(frame.nid, id(frame.pixmap)) for frame in new_weapon.frames])
 
     # Need to build full image file now
     build_full_image(main_pixmap, new_weapon)
+    # print(id(new_weapon), new_weapon.nid, id(new_weapon.pixmap), new_weapon.pixmap.width(), new_weapon.pixmap.height())
+    main_pixmap.save("main_pixmap.png")
+    new_weapon.pixmap.save("new_weapon_pixmap.png")
 
     add_poses(fn, new_weapon)
     # Actually add weapon to current
     if new_weapon.nid in current.weapon_anims.keys():
         current.weapon_anims.remove_key(new_weapon.nid)
     current.weapon_anims.append(new_weapon)
+    # print(id(new_weapon), id(new_weapon.pixmap))
 
 def get_child_effects(fn_dir: str, current: combat_anims.EffectAnimation):
     for pose in current.poses:

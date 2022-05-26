@@ -265,6 +265,8 @@ class UnitSprite():
             self.handle_net_position(self.net_position)
         elif self.state == 'selected':
             self.image_state = 'down'
+        elif self.state == 'normal':
+            self.set_transition('normal')
 
     def handle_net_position(self, pos):
         if abs(pos[0]) >= abs(pos[1]):
@@ -303,7 +305,8 @@ class UnitSprite():
             self.offset[0] = utils.clamp(self.net_position[0], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
             self.offset[1] = utils.clamp(self.net_position[1], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
         elif self.state == 'chosen':
-            test_position = game.cursor.position[0] - self.unit.position[0], game.cursor.position[1] - self.unit.position[1]
+            pos = self.unit.position or self.fake_position
+            test_position = game.cursor.position[0] - pos[0], game.cursor.position[1] - pos[1]
             if test_position != (0, 0):
                 self.net_position = test_position
             if self.net_position:

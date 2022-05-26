@@ -1141,7 +1141,7 @@ class Table(Simple):
         return old_index != self.current_index
 
     def get_menu_width(self):
-        max_width = max(option.width() for option in self.options)
+        max_width = max(option.width() - option.width()%8 for option in self.options)
         total_width = max_width * self.columns
         total_width = total_width - total_width%8
         if self.mode in ('unit',):

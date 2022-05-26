@@ -121,6 +121,7 @@ class SimpleIconTable(UIComponent):
             self.header.set_text(self._title)
 
     def _update_data_instead(self, data: List):
+        self._data = data
         for idx, item in enumerate(data):
             col = idx % len(self.column_data)
             row = math.floor(idx / self.num_display_columns)

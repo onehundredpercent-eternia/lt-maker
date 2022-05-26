@@ -1,3 +1,5 @@
+import math
+import random
 from typing import List, Tuple
 from app.engine.game_counters import ANIMATION_COUNTERS
 from app.constants import WINWIDTH, WINHEIGHT
@@ -15,7 +17,8 @@ from app.engine.state import State
 from app.engine.state import MapState
 from app.engine.game_state import game
 from app.engine import menus, base_surf, background, text_funcs, \
-    image_mods, gui, icons, prep, record_book, unit_sprite, action
+    image_mods, gui, icons, prep, record_book, unit_sprite, action, \
+    engine
 from app.engine.fluid_scroll import FluidScroll
 import app.engine.config as cf
 
@@ -612,6 +615,8 @@ class BaseCodexChildState(State):
         if game.game_vars['_world_map_in_base']:
             options.append('Map')
         options.append('Records')
+        if DB.constants.value('sound_room_in_codex'):
+            options.append('Sound Room')
         # TODO Achievements?
         # TODO Tactics?
         unlocked_guide = [lore for lore in unlocked_lore if lore.category == 'Guide']
@@ -654,6 +659,9 @@ class BaseCodexChildState(State):
                 game.state.change('transition_to')
             elif selection == 'Guide':
                 game.memory['next_state'] = 'base_guide'
+                game.state.change('transition_to')
+            elif selection == 'Sound Room':
+                game.memory['next_state'] = 'base_sound_room'
                 game.state.change('transition_to')
 
     def update(self):
@@ -1246,3 +1254,120 @@ class BaseBEXPAllocateState(State):
         menus.draw_unit_bexp(surf, (6, 72), self.unit, self.new_exp, self.new_bexp, self.current_bexp,
                              include_face=True, include_top=True, shimmer=2)
         return surf
+
+
+class BaseSoundRoomState(State):
+    name = 'base_sound_room'
+
+    def start(self):
+        self.fluid = FluidScroll()
+        self.bg = game.memory.get('base_bg')
+
+        self.music_names = list(RESOURCES.music.keys())
+
+        layout = (6, 4)
+        topleft = (80, 48)
+        self.menu = menus.Table(None, [str(i + 1) for i in range(len(self.music_names))], layout, topleft)
+        self.menu.gem = True
+        self.menu.shimmer = 2
+
+        self.playing = False
+        full_sound_room_volume_sprite = SPRITES.get('sound_room_volume')
+        self.green_volume = engine.subsurface(full_sound_room_volume_sprite, (0, 0, 2, 8))
+        self.yellow_volume = engine.subsurface(full_sound_room_volume_sprite, (2, 0, 2, 8))
+        self.red_volume = engine.subsurface(full_sound_room_volume_sprite, (4, 0, 2, 8))
+
+        game.state.change('transition_in')
+        return 'repeat'
+
+    def begin(self):
+        get_sound_thread().fade_clear()
+        self.playing = False
+        
+    def take_input(self, event):
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        self.menu.handle_mouse()
+
+        if 'DOWN' in directions:
+            if self.menu.move_down(first_push):
+                get_sound_thread().play_sfx('Select 5')
+        elif 'UP' in directions:
+            if self.menu.move_up(first_push):
+                get_sound_thread().play_sfx('Select 5')
+        elif 'LEFT' in directions:
+            if self.menu.move_left(first_push):
+                get_sound_thread().play_sfx('Select 5')
+        elif 'RIGHT' in directions:
+            if self.menu.move_right(first_push):
+                get_sound_thread().play_sfx('Select 5')
+
+        if event == 'BACK':
+            get_sound_thread().play_sfx('Select 4')
+            game.state.change('transition_pop')
+            if self.name == 'base_sound_room':
+                base_music = game.game_vars.get('_base_music')
+                if base_music:
+                    get_sound_thread().fade_in(base_music)
+            elif self.name == 'extras_sound_room':
+                get_sound_thread().clear()
+                if DB.constants.value('music_main'):
+                    get_sound_thread().fade_in(DB.constants.value('music_main'), fade_in=50)
+
+        elif event == 'SELECT':
+            current_music_index = int(self.menu.get_current()) - 1
+            music = self.music_names[current_music_index]
+            get_sound_thread().fade_in(music)
+            self.playing = True
+
+        elif event == 'START':
+            get_sound_thread().fade_clear()
+            self.playing = False
+
+        elif event == 'INFO':
+            rand_idx = random.randrange(0, len(self.music_names))
+            self.menu.move_to(rand_idx)
+            music = self.music_names[rand_idx]
+            get_sound_thread().fade_in(music)
+            self.playing = True
+
+    def update(self):
+        if self.menu:
+            self.menu.update()
+
+    def draw(self, surf):
+        if self.bg:
+            self.bg.draw(surf)
+        surf.blit(SPRITES.get('sound_player'), (8, 56))
+        if self.playing:
+            self.draw_volume(surf)
+        self.menu.draw(surf)
+        current_music_index = int(self.menu.get_current()) - 1
+        music = self.music_names[current_music_index]
+        self.draw_sound_room_title(surf, (24, 6), music)
+        return surf
+
+    def draw_sound_room_title(self, surf, topleft, music_name):
+        surf.blit(SPRITES.get('chapter_select_green'), (topleft[0], topleft[1]))
+        FONT['chapter-white'].blit_center(music_name, surf, (topleft[0] + 98, topleft[1] + 8))
+        return surf
+
+    def draw_volume(self, surf):
+        scale = 1500
+        t = engine.get_time() / scale
+        n = 13
+        t2 = t + (20/scale)
+        left_volume = n * math.sin(n * (t + 1)) + n*0.5 * math.sin(n*2 * (t + 2)) + n*0.25 * math.sin(n*4 * (t + 3))
+        right_volume = n * math.sin(n * (t2 + 1)) + n*0.5 * math.sin(n*2 * (t2 + 2)) + n*0.25 * math.sin(n*4 * (t2 + 3))
+        left_volume = int(abs(left_volume)) + 4
+        right_volume = int(abs(right_volume)) + 4
+        for idx, vol in enumerate([left_volume, right_volume]):
+            for i in range(vol):
+                if i > 22:
+                    sprite = self.red_volume
+                elif i > 12:
+                    sprite = self.yellow_volume
+                else:
+                    sprite = self.green_volume
+                surf.blit(sprite, (9 + i * 2, 60 + idx * 8))

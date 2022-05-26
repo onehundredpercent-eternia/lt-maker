@@ -140,6 +140,8 @@ class StateMachine():
              'base_library': base.BaseLibraryState,
              'base_guide': base.BaseGuideState,
              'base_records': base.BaseRecordsState,
+             'base_sound_room': base.BaseSoundRoomState,
+             'extras_sound_room': base.BaseSoundRoomState,
              'free_roam': roam_state.FreeRoamState,
              'debug': debug_mode.DebugState,
              'overworld': overworld_states.OverworldFreeState,

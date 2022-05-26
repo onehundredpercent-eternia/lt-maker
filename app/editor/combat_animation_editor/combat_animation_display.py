@@ -33,12 +33,14 @@ import app.editor.game_actions.game_actions as GAME_ACTIONS
 
 import logging
 
-def populate_anim_pixmaps(combat_anim):
+def populate_anim_pixmaps(combat_anim, force=False):
     for weapon_anim in combat_anim.weapon_anims:
-        weapon_anim.pixmap = QPixmap(weapon_anim.full_path)
+        if not weapon_anim.pixmap or force:
+            weapon_anim.pixmap = QPixmap(weapon_anim.full_path)
         for frame in weapon_anim.frames:
-            x, y, width, height = frame.rect
-            frame.pixmap = weapon_anim.pixmap.copy(x, y, width, height)
+            if not frame.pixmap or force:
+                x, y, width, height = frame.rect
+                frame.pixmap = weapon_anim.pixmap.copy(x, y, width, height)
 
 class CombatAnimProperties(QWidget):
     def __init__(self, parent, current=None):
@@ -638,6 +640,7 @@ class CombatAnimProperties(QWidget):
 
     def modify_for_palette(self, pixmap: QPixmap) -> QImage:
         current_palette_nid = self.get_current_palette()
+        # print("modify for palette", current_palette_nid)
         return palette_swap(pixmap, current_palette_nid)
 
     def update(self):
@@ -724,13 +727,17 @@ class CombatAnimProperties(QWidget):
 
         if self.frame_nid:
             weapon_anim = self.get_current_weapon_anim()
+
             if weapon_anim:
+                # print(id(weapon_anim), weapon_anim.nid, id(weapon_anim.pixmap))
                 frame = weapon_anim.frames.get(self.frame_nid)
                 if frame:
                     if self.custom_frame_offset:
                         offset_x, offset_y = self.custom_frame_offset
                     else:
                         offset_x, offset_y = frame.offset
+                    # print(frame.nid, id(frame.pixmap), offset_x, offset_y)
+                    # print(editor_utilities.find_palette(QImage(frame.pixmap)))
                     actor_im = self.modify_for_palette(frame.pixmap)
         if self.under_frame_nid:
             weapon_anim = self.get_current_weapon_anim()
