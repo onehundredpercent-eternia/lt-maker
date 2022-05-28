@@ -194,11 +194,11 @@ class Simple():
             null_option = menu_options.NullOption(0)
             self.options.append(null_option)
         else:
-        for idx, option in enumerate(options):
-            option = menu_options.BasicOption(idx, option)
-            if info_descs:
-                option.help_box = help_menu.HelpDialog(info_descs[idx])
-            self.options.append(option)
+            for idx, option in enumerate(options):
+                option = menu_options.BasicOption(idx, option)
+                if info_descs:
+                    option.help_box = help_menu.HelpDialog(info_descs[idx])
+                self.options.append(option)
 
     def get_current(self):
         if self.options:
@@ -390,30 +390,30 @@ class Choice(Simple):
             null_option = menu_options.NullOption(0)
             self.options.append(null_option)
         else:
-        for idx, option in enumerate(options):
-            if isinstance(option, ItemObject):
-                if self.display_total_uses:
-                    option = menu_options.FullItemOption(idx, option)
-                elif self.is_convoy:
-                    option = menu_options.ConvoyItemOption(idx, option, self.owner)
+            for idx, option in enumerate(options):
+                if isinstance(option, ItemObject):
+                    if self.display_total_uses:
+                        option = menu_options.FullItemOption(idx, option)
+                    elif self.is_convoy:
+                        option = menu_options.ConvoyItemOption(idx, option, self.owner)
+                    else:
+                        option = menu_options.ItemOption(idx, option)
+                    option.help_box = option.get_help_box()
+                    self.options.append(option)
+                elif isinstance(option, lore.Lore):
+                    option = menu_options.LoreOption(idx, option)
+                    self.options.append(option)
                 else:
-                    option = menu_options.ItemOption(idx, option)
-                option.help_box = option.get_help_box()
-                self.options.append(option)
-            elif isinstance(option, lore.Lore):
-                option = menu_options.LoreOption(idx, option)
-                self.options.append(option)
-            else:
-                if self.horizontal:
-                    option = menu_options.HorizOption(idx, option)
-                elif option:
-                    option = menu_options.BasicOption(idx, option)
-                else:
-                    option = menu_options.BasicOption(idx, option)
-                    option.display_text = ' ' * 20  # 80 pixels
-                if info_descs:
-                    option.help_box = help_menu.HelpDialog(info_descs[idx])
-                self.options.append(option)
+                    if self.horizontal:
+                        option = menu_options.HorizOption(idx, option)
+                    elif option:
+                        option = menu_options.BasicOption(idx, option)
+                    else:
+                        option = menu_options.BasicOption(idx, option)
+                        option.display_text = ' ' * 20  # 80 pixels
+                    if info_descs:
+                        option.help_box = help_menu.HelpDialog(info_descs[idx])
+                    self.options.append(option)
 
         if self.hard_limit:
             for num in range(self.limit - len(options)):

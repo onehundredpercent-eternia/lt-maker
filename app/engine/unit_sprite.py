@@ -591,11 +591,13 @@ class UnitSprite():
 
         if self.transition_state == 'normal' and not self.unit.is_dying and \
                 self.image_state in ('gray', 'passive') and int((current_time%450) // 150) in (1, 2):
+            icon = None
             if 'Boss' in self.unit.tags:
                 icon = SPRITES.get('boss_icon')
             elif 'Elite' in self.unit.tags:
                 icon = SPRITES.get('elite_icon')
-            surf.blit(icon, (left - 8, top - 8))
+            if icon:
+                surf.blit(icon, (left - 8, top - 8))
         
         if self.unit.traveler and self.transition_state == 'normal' and \
                 not self.unit.is_dying and not DB.constants.value('pairup'):

@@ -1318,16 +1318,16 @@ def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, c
                 action.do(action.UnequipItem(unit, subitem))
             action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
     else:
-    # Check if item in multiitem
-    subitem_nids = [subitem.nid for subitem in item.subitems]
-    if child_item not in subitem_nids:
-        self.logger.error("Couldn't find subitem with nid %s" % child_item)
-        return
-    subitem = [subitem for subitem in item.subitems if subitem.nid == child_item][0]
+        # Check if item in multiitem
+        subitem_nids = [subitem.nid for subitem in item.subitems]
+        if child_item not in subitem_nids:
+            self.logger.error("Couldn't find subitem with nid %s" % child_item)
+            return
+        subitem = [subitem for subitem in item.subitems if subitem.nid == child_item][0]
     # Unequip subitem if necessary
     if owner_nid:
-    action.do(action.UnequipItem(unit, subitem))
-    action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
+        action.do(action.UnequipItem(unit, subitem))
+        action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
 
 def give_money(self: Event, money, party=None, flags=None):
     flags = flags or set()
@@ -2380,7 +2380,7 @@ def ending(self: Event, portrait, title, text, flags=None):
 
 def pop_dialog(self: Event, flags=None):
     if self.text_boxes:
-    self.text_boxes.pop()
+        self.text_boxes.pop()
 
 def unlock(self: Event, unit, flags=None):
     # This is a macro that just adds new commands to command list

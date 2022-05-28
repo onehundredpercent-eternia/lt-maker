@@ -126,17 +126,19 @@ class InfoGraph():
             max_distance = 1e6
             # First try to find a close box by moving in the right direction
             horiz_penalty, vert_penalty = 1, 1
-                if horiz:
+            if horiz:
                 vert_penalty = 6
-                else:
+            else:
                 horiz_penalty = 6
+            
             for bb in boxes:
                 curr_topleft = self.current_bb.aabb[:2]
                 other_topleft = bb.aabb[:2]
                 distance = horiz_penalty * (curr_topleft[0] - other_topleft[0])**2 + vert_penalty * (curr_topleft[1] - other_topleft[1])**2
-                        if distance < max_distance:
-                            max_distance = distance
-                            closest_box = bb
+                if distance < max_distance:
+                    max_distance = distance
+                    closest_box = bb
+
             # Find the closest box from boxes by comparing center points
             if not closest_box:
                 for bb in boxes:

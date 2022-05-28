@@ -175,9 +175,6 @@ class UIView():
         if self.initiative_info_disp:
             surf.blit(self.initiative_info_disp, (0, 0))
 
-        if self.memory_info_disp:
-            surf.blit(self.memory_info_disp, (WINWIDTH//2 - self.memory_info_disp.get_width(), 0 - self.memory_info_offset))
-
         return surf
 
     def create_unit_info(self, unit):

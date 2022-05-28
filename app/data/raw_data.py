@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from app.utilities.data import Data, Prefab
+from app.utilities.typing import NID
 
 valid_types = ["str", "list", "kv"]
 
@@ -19,7 +20,7 @@ class RawDataPrefab(Prefab):
     oattrs: List[str] = field(default_factory=lambda:['nid'])             # official object attributes for objs in lovalue; all objects should have nid (see RawListDataObjectBase)
 
     def __repr__(self):
-        return vars(self)
+        return str(vars(self))
 
     def __str__(self) -> str:
         return str(vars(self))
@@ -64,3 +65,8 @@ class RawDataPrefab(Prefab):
 
 class RawDataCatalog(Data[RawDataPrefab]):
     datatype = RawDataPrefab
+
+    def get(self, key: NID, fallback=None):
+        if key in self.keys():
+            return super().get(key).value
+        return super().get(key, fallback)
