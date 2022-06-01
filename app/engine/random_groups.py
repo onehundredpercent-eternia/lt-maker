@@ -16,11 +16,6 @@ from app.utilities import utils, str_utils
 
 import logging
 
-# TODO:
-# Elite modifier
-# Promotion chance/requirement
-# Better Items
-
 # Memento Chapter = Lion Throne Chapter
 # 1 = 2
 # 2-3 = 3-4  # Interesting gimmicks start here, some unique weapon usage, some magic
@@ -33,8 +28,6 @@ import logging
 
 POSITIONS_TO_POINTS = 0.5
 ELITE_CHANCE = 0.15
-# Higher level when Elite, also gain better weapons (anything else?)
-# Tag Elite groups so they are visible
 
 @dataclass
 class ClassData:
@@ -162,16 +155,16 @@ def completed_chapters() -> int:
 
 def determine_avg_level():
     num_complete = completed_chapters()
-    return num_complete * 2
+    return num_complete * 2 + 1
 
 def create_unit(klass, position, level, ai, ai_group, is_elite=False):
-    unit_nid = str_utils.get_next_int('301', [unit.nid for unit in game.units])
+    unit_nid = str_utils.get_next_generic_nid('301', [unit.nid for unit in game.units])
 
     # Give items
     if klass in item_data:
         starting_items = [item_data[klass]]
     else:
-        weapon_type = class_data[klass].weapon_type
+        weapon_type = class_data.get(klass).weapon_type
         base_item = weapon_type
         starting_items = [base_item]
 
@@ -183,7 +176,7 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False):
         new_unit._tags.append('Elite')
     new_unit.party = game.current_party
     game.full_register(new_unit)
-    action.ArriveOnMap(new_unit, new_unit.position)
+    action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit
 
 def build_groups():
@@ -194,6 +187,7 @@ def build_groups():
         build_group(region)
 
 def build_group(region):
+    logging.debug("Build Group %s", region.nid)
     group_data: Dict = region.group_data
 
     # Determine which classes we can put here
@@ -208,9 +202,12 @@ def build_group(region):
              if any(tag in DB.classes.get(klass).tags for tag in valid_tags)]
         all_classes &= set(valid_classes)
     all_classes = list(all_classes)
+    logging.debug(all_classes)
+    logging.debug("Completed Chapters: %s", completed_chapters())
     
-    all_classes = [klass for klass in all_classes if class_data[klass].chapter_min >= completed_chapters() and class_data[klass].chapter_max <= completed_chapters()]
+    all_classes = [klass for klass in all_classes if class_data.get(klass).chapter_min <= completed_chapters() + 1 and class_data.get(klass).chapter_max >= completed_chapters() + 1]
     # So now we have the complete list of classes we can use
+    logging.debug(all_classes)
 
     # Determine how many and which specific classes will belong here
     positions: List[Tuple] = region.get_all_positions()
@@ -223,8 +220,11 @@ def build_group(region):
         pass
     else:  # Only select traversable positions
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
+    logging.debug("#Positions: %s", len(positions))
+    logging.debug("#Points: %s", num_points)
 
     is_elite = game.get_random_float() < ELITE_CHANCE
+    logging.debug("Elite: %s", is_elite)
 
     # Determine level
     avg_level: int = determine_avg_level()
@@ -233,14 +233,19 @@ def build_group(region):
     else:
         level = game.get_random(max(1, avg_level - 1), avg_level + 1)
 
+    logging.debug("Avg Level: %s", level)
+
     if len(positions) == 1:
         kind = GroupKind.BOSS
     else:
-        kind = game.get_weighted_random_choice(group_kind_incidence.keys(), group_kind_incidence.values())
+        kind = game.get_random_weighted_choice(list(group_kind_incidence.keys()), list(group_kind_incidence.values()))
+
+    logging.debug("Kind: %s", kind)
 
     if kind == GroupKind.SINGLE_TYPE:
         class_to_add = game.get_random_choice(all_classes)
-        point_cost = class_data[class_to_add].points
+        point_cost = class_data.get(class_to_add).points
+        logging.debug("Point Cost: %s", point_cost)
         promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
         if game.get_random_float() < promotion_chance:
             class_to_add = get_promoted_class(class_to_add)
@@ -266,8 +271,8 @@ def build_group(region):
             second_class_to_add = class_to_add
         main_points = 0.5 * num_points
         second_points = 0.5 * num_points
-        main_cost = class_data[class_to_add].points
-        second_cost = class_data[second_class_to_add].points
+        main_cost = class_data.get(class_to_add).points
+        second_cost = class_data.get(second_class_to_add).points
 
         promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
         if game.get_random_float() < promotion_chance:
@@ -276,7 +281,7 @@ def build_group(region):
             second_class_to_add = get_promoted_class(second_class_to_add)
 
         while main_points > 0:
-            num_points -= main_cost
+            main_points -= main_cost
             position = game.get_random_choice(positions)
             positions.remove(position)
 
@@ -289,7 +294,7 @@ def build_group(region):
                 return
 
         while second_points > 0:
-            num_points -= second_cost
+            second_points -= second_cost
             position = game.get_random_choice(positions)
             positions.remove(position)
 
@@ -310,8 +315,8 @@ def build_group(region):
             mage_class_to_add = game.get_random_choice(all_mage_classes)
         else:
             mage_class_to_add = main_class_to_add
-        main_cost = class_data[main_class_to_add].points
-        mage_cost = class_data[mage_class_to_add].points
+        main_cost = class_data.get(main_class_to_add).points
+        mage_cost = class_data.get(mage_class_to_add).points
         # Split 3 to 1  # TODO is this actually a good split?
         main_points = num_points * 0.75
         mage_points = num_points * 0.25
@@ -362,9 +367,9 @@ def build_group(region):
             mage_class_to_add = game.get_random_choice(all_mage_classes)
         else:
             mage_class_to_add = main_class_to_add
-        main_cost = class_data[main_class_to_add].points
-        second_cost = class_data[second_class_to_add].points
-        mage_cost = class_data[mage_class_to_add].points
+        main_cost = class_data.get(main_class_to_add).points
+        second_cost = class_data.get(second_class_to_add).points
+        mage_cost = class_data.get(mage_class_to_add).points
         # Split 1.5 to 1.5 to 1  # TODO is this actually a good split?
         main_points = num_points * 0.375
         second_points = num_points * 0.375
@@ -429,7 +434,7 @@ def build_group(region):
         if game.get_random_float() < leader_promotion_chance:
             leader_class_to_add = get_promoted_class(leader_class_to_add)
 
-        leader_cost = class_data[leader_class_to_add].points
+        leader_cost = class_data.get(leader_class_to_add).points
 
         num_points -= leader_cost
         position = game.get_random_choice(positions)
@@ -444,7 +449,7 @@ def build_group(region):
             return
 
         while num_points > 0:
-            point_cost = class_data[regular_class_to_add].points
+            point_cost = class_data.get(regular_class_to_add).points
             num_points -= point_cost
             position = game.get_random_choice(positions)
             positions.remove(position)
@@ -475,8 +480,8 @@ def build_group(region):
         # Give the Boss some bonuses
         stat_changes = {'HP': 5, 'POW': 2, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 2, 'RES': 3}
         # Make sure we don't go over max
-        stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).maximum.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
-        unit_funcs.apply_stat_changes(stat_changes)
+        stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).max_stats.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
+        unit_funcs.apply_stat_changes(new_unit, stat_changes)
         # Give the Boss 5 free autolevels
         unit_funcs.auto_level(new_unit, 5, new_unit.level, growth_method='fixed')
 

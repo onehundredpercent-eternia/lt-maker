@@ -593,7 +593,9 @@ class InfoMenuState(State):
         im, offset = icons.get_portrait(self.unit)
         if im:
             x_pos = (im.get_width() - 86)//2
-            portrait_surf = engine.subsurface(im, (x_pos, offset//2, 86, 76))
+            rect = (x_pos, offset//2, 86, 76)
+            print(rect)
+            portrait_surf = engine.subsurface(im, rect)
             surf.blit(portrait_surf, (103, 4))
 
         x_offset = 4

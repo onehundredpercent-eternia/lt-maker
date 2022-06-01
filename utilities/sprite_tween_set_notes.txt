@@ -1,0 +1,77 @@
+I wrote up some brainstorming notes on how I envision the API changing for something simpler than unit sprites (placing sprite_sets/animations on the tilemap). Obviously not final...
+
+Current API for display animations on the map (explosions, etc.):
+
+```python
+game.tilemap.animations = [anim for anim in game.tilemap.animations if not anim.update()]
+        for anim in game.tilemap.animations:
+            anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
+```
+
+Refactor:
+
+```python
+game.tilemap.sprite_tween_sets = {pos: sts for pos, sts in game.tilemap.sprite_tween_sets.items() if sts.update()]
+offset = -game.camera.get_x(), -game.camera.get_y()
+for pos, sts in game.tilemap.sprite_tween_sets:
+    sts.draw(surf, utils.tuple_add(pos, offset))
+```
+
+```python
+class SpriteTweenSet():
+    def __init__(self, prefab):
+        self.nid = prefab.nid
+
+        # Load images
+        self.full_image = engine.image_load(prefab.full_path)
+        self.full_image = self.full_image.convert_alpha()
+        width = self.full_image.get_width() // prefab.frame_x
+        height = self.full_image.get_height() // prefab.frame_y
+        self.images = [engine.subsurface(self.full_image, (i % prefab.frame_x, i // prefab.frame_x, width, height))][:prefab.num_images]
+
+        self.current_idx = 0
+        self.current_image = self.images[self.current_idx].copy()
+
+        self.offset = (0, 0)
+        self.tweens = []
+        self.parent: SpriteTweenSet = None
+        self.kill_me = False
+
+    def get_image(self):
+        return self.current_image
+
+    def add_tween(self, tween):
+        self.tweens.append(tween)
+
+    def update(self):
+        self.tweens = [tween for tween in self.tweens if tween.update()]
+
+    def draw(self, surf, pos):
+        if self.parent:
+            pos = utils.tuple_add(pos, self.parent.offset)
+        pos = utils.tuple_add(pos, self.offset)
+        surf.blit(self.current_image, pos)
+```
+
+```python
+class AddMapSpriteSet(Action):
+    def __init__(self, nid, pos):
+        self.nid = nid
+        self.pos = pos
+
+    def do(self):
+        sprite_set_prefab = RESOURCES.sprite_sets.get(self.nid)
+        sprite_tween_set = tween.SpriteTweenSet(sprite_set_prefab)
+        
+        # Let's say this animation should be tinted 
+        permanently, vibrate, and fade in at the beginning
+        # Still question on how the game designer chooses these tweens without being in code.
+
+        # Tweens register themselves with the sprite_tween_set
+        anim_tween = tween.Animate(sprite_tween_set, speed=5, loop=True)
+        tint_tween = tween.TintColor(sprite_tween_set, (200, 0, 200))
+        vibrate_tween = tween.Vibrate(sprite_tween_set, (1, 1))
+        fade_in_tween = tween.FadeIn(sprite_tween_set, frames=20, curve=tween.Curve.Linear)
+
+        game.tilemap.sprite_tween_set[pos] = sprite_tween_set
+```

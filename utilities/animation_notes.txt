@@ -1,0 +1,102 @@
+Thoughts on Sprite and Sprite Effect Refactor
+
+All of these effects can be animated ("Tweened") over time:
+    - Move Sprite (unit sprite, sprite set)
+        - Also vibrations of sprite
+    - Fade transparency (unit sprite, sprite set)
+    - Color Changes (unit sprite, sprite set)
+        - Additive blend
+        - Set color exactly
+        - Subtractive blend
+        - Tints in general
+    - Scaling effects (unit sprite, sprite set)
+    - Changing the sprite's current image itself
+
+- What can add these:
+    - Lots of stuff, including basic things like player-directed movement
+    - Combat Playbacks
+    - Skills
+    - Event calls
+
+Instead of calling MapAnimations "Animations"/"MapAnimations" we call them SpriteSets
+
+SpriteSets are things like a specific unit sprite animation, poison anim over the units head, talk icon over the units head, boss icon, Level Up animation on map, miss words animation on map, healing animation on map, Level Up animation in an AnimationCombat, Miss words animation in an AnimationCombat, etc.
+Some of these loop, some don't.
+Basically, anytime a set of >=1 sprites are shown in specific order on the screen or change over time and they are present:
+    - On a unit sprite
+    - On a map position
+    - In global screen space (for combat, for instance)
+
+UnitSprites will be refactored to contain collections of SpriteSets (passive SpriteSet, active/focus SpriteSet, move right SpriteSet, move up SpriteSet etc.) (This would be a significant refactor!)
+
+Tweens can be applied to a SpriteSet to modify the SpriteSet (make a SpriteSet gray, make translucent, scale, etc.)
+
+TweenSequences are collections of Tweens that can operate upon SpriteSets.
+
+We would completely remove the current Animation and MapAnimation implementations
+
+**SpriteSetPrefab API**
+nid: str
+full_path: str
+pixmap: QPixmap
+frame_x, frame_y: int (how the images are packed)
+num_frames: int (total number of images)
+
+**SpriteSet API**
+nid: str
+images: List[pygame.Surface]
+idx: int
+current_image: pygame.Surface @property
+def draw(surf)
+
+**TweenSequence API**
+timeline: Dict[int: AnimationEffect] # key: starting frame num, value: Tween
+current_frame: int  # Dynamic
+last_frame: int  # Static
+loop: bool
+add(tween, with_delay=False)
+add_delay(int)  # Num frames
+
+**Tween API**
+sprite_set: SpriteSet (that is operated upon)
+?? otherwise varies significantly
+
+Tween -> the basic operation
+TweenSequences are only necessary when things must be done in a certain order
+
+sequence = TweenSequence(loop=True)
+sequence.add(AlphaFadeTween(sprite_set, a=0.0, frames=20, curve=Quad))
+sequence.add_delay(10)
+sequence.add(Vibrate(sprite_set, direction=(1, 0)))
+
+sequence = TweenSequence()
+sequence.add(AlphaFadeTween(sprite_set), with_delay=True)
+sequence.add(Vibrate(sprite_set, direction=(1, 0)))
+
+Tweens are kept in a separate tween module, that can just be globally accessed (separation of Tween and SpriteSet (func and data))
+
+# Example Tweens
+
+AlphaFadeTween(sprite_set, target_alpha: float, num_frames: int, curve: Curve = Linear)
+
+MovementTween(sprite_set, target_pos: (x, y), num_frames: int, curve: Curve = Linear)
+
+AnimateTween(sprite_set, speed: int, reverse: bool = False)  # Actually updates the sprite_set's current image
+
+TintTween(sprite_set, target_tint: (r, g, b), num_frames: int, curve: Curve = Linear)
+
+VibrateTween(sprite_set, magnitude: (x, y), num_frames: int)  # Yes, this could be done with a TweenSequence of several MovementTweens
+
+# What do Curves look like? 
+For now, Linear (lerp), Quadratic, Cubic, maybe Sin
+
+# Remaining questions - What owns Tweens and TweenSequences?
+ - Auto-register tweens with a static system in the tween module that updates them? As long as you keep a handle to the tween, you can kill it later...
+ - Force all tweens to places themselves with a TweenSpawner/TweenController/"just plain list" that keeps track of their lifetimes and runs their update funcs. Objects or states will need to run the TweenController's update func that updates all the individual tweens, and removes the dead ones. (I prefer this one better, I think)
+
+# Particle Systems
+ParticleSystems are hopefully self-explanatory
+Some ParticleSystems last forever, some don't
+    - on a sprite set (uses Tweens),
+    - on a map position
+    - global screen space (for weather)
