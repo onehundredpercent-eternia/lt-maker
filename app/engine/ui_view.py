@@ -153,6 +153,7 @@ class UIView():
                     ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
                     surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
 
+        print(self.obj_info_disp)
         if self.obj_info_disp and not self.initiative_info_disp:
             # Should be in topright, unless the cursor is in the topright
             # TopRight - I believe this has RIGHT precedence
@@ -273,14 +274,15 @@ class UIView():
             color = 'red'
         elif current_mem <= 10:
             color = 'yellow'
-        width = font.width('M: 00/30')
+        width = font.width('Mem: 00/30') + 4
 
         mem_surf = base_surf.create_base_surf(width, 24)
         mem_surf = image_mods.make_translucent(mem_surf, .1)
-        font.blit_right(text, mem_surf, (width, 0), color=color)
+        font.blit_right(text, mem_surf, (mem_surf.get_width() - 2, 4), color=color)
 
         # Draw Objective
         obj = game.level.objective['simple']
+        print(obj)
         text_parser = TextEvaluator(logging.getLogger(), game)
         text_lines = text_parser._evaluate_all(obj).split(',')
         text_lines = [line.replace('{comma}', ',') for line in text_lines]
@@ -303,8 +305,8 @@ class UIView():
             font.blit(line, surf, pos)
 
         big_surf = engine.create_surface((max(surf.get_width(), mem_surf.get_width()), mem_surf.get_height() + surf.get_height()), transparent=True)
-        big_surf.blit(surf, (0 - surf.get_width(), 0))
-        big_surf.blit(mem_surf, (0 - mem_surf.get_width(), surf.get_height()))
+        big_surf.blit(surf, (bg_surf.get_width() - surf.get_width(), 0))
+        big_surf.blit(mem_surf, (big_surf.get_width() - mem_surf.get_width(), surf.get_height()))
         
         return big_surf
 

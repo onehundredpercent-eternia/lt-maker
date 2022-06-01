@@ -213,7 +213,7 @@ def build_group(region):
     positions: List[Tuple] = region.get_all_positions()
     num_points = len(positions) * POSITIONS_TO_POINTS
     # Don't overlap other units
-    positions = [pos for pos in positions if not game.get_unit(pos)]
+    positions = [pos for pos in positions if not game.board.get_unit(pos)]
 
     # If they can all fly, then this is a designated Flying zone, and so we should allow untraversable spots
     if all('Flying' in DB.classes.get(klass).tags for klass in all_classes):
@@ -223,7 +223,7 @@ def build_group(region):
     logging.debug("#Positions: %s", len(positions))
     logging.debug("#Points: %s", num_points)
 
-    is_elite = game.get_random_float() < ELITE_CHANCE
+    is_elite = game.get_random_float() < ELITE_CHANCE and completed_chapters() > 0
     logging.debug("Elite: %s", is_elite)
 
     # Determine level
@@ -245,6 +245,7 @@ def build_group(region):
     if kind == GroupKind.SINGLE_TYPE:
         class_to_add = game.get_random_choice(all_classes)
         point_cost = class_data.get(class_to_add).points
+        logging.debug("Class To Add: %s", class_to_add)
         logging.debug("Point Cost: %s", point_cost)
         promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
         if game.get_random_float() < promotion_chance:
@@ -269,6 +270,8 @@ def build_group(region):
             second_class_to_add = game.get_random_choice(all_classes)
         else:
             second_class_to_add = class_to_add
+        logging.debug("Class To Add: %s", class_to_add)
+        logging.debug("Second Class To Add: %s", second_class_to_add)
         main_points = 0.5 * num_points
         second_points = 0.5 * num_points
         main_cost = class_data.get(class_to_add).points

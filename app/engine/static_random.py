@@ -86,7 +86,6 @@ def weighted_choice(choices, generator=None) -> int:
         rn = generator.randint(0, sum(choices) - 1)
     else:
         rn = r.growth_random.randint(0, sum(choices) - 1)
-    print(rn, generator.state)
     upto = 0
     for index, w in enumerate(choices):
         upto += w
