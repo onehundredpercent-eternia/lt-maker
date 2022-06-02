@@ -439,7 +439,7 @@ class BattleAnimation():
             self.frame_count = 0
             self.num_frames = self.get_num_frames(values[0])
             self.current_frame = self.get_frame(values[1])
-            self.under_frame = self.get_frame(values[1])
+            self.under_frame = self.get_frame(values[2])
             self.over_frame = None
             self.processing = False
         elif command.nid == 'wait':

@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, TILEX, MEMENTO_MODE
 from app.data.database import DB
+from app.events.regions import RegionType
 from app.engine.objects.item import ItemObject
 
 from app.engine.sprites import SPRITES
@@ -76,7 +77,7 @@ class TurnChangeState(MapState):
                 # EVENTS TRIGGER HERE
                 # Update time regions
                 for region in game.level.regions.values()[:]:
-                    if region.region_type == 'time':
+                    if region.region_type == RegionType.TIME:
                         region.sub_nid = int(region.sub_nid) - 1
                         if region.sub_nid <= 0:
                             action.do(action.RemoveRegion(region))
@@ -668,7 +669,7 @@ class MenuState(MapState):
         # Handle region event options
         self.valid_regions = []
         for region in game.level.regions:
-            if region.region_type == 'event' and region.contains(self.cur_unit.position):
+            if region.region_type == RegionType.EVENT and region.contains(self.cur_unit.position):
                 try:
                     truth = evaluate.evaluate(region.condition, self.cur_unit, local_args={'region': region})
                     logging.debug("Testing region: %s %s", region.condition, truth)

@@ -136,6 +136,10 @@
         false
     ],
     [
+        "sound_room_in_codex",
+        true
+    ],
+    [
         "give_and_take",
         false
     ],

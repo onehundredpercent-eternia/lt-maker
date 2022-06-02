@@ -86,6 +86,22 @@
                 "condition": "True",
                 "only_once": true,
                 "interrupt_move": false
+            },
+            {
+                "nid": "New Region",
+                "region_type": "status",
+                "position": [
+                    2,
+                    1
+                ],
+                "size": [
+                    9,
+                    8
+                ],
+                "sub_nid": "Skill +5",
+                "condition": "True",
+                "only_once": false,
+                "interrupt_move": false
             }
         ],
         "unit_groups": []

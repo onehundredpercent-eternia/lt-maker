@@ -459,8 +459,8 @@ class EventOnHit(ItemComponent):
             local_args = {'target_pos': target_pos, 'mode': mode, 'attack_info': attack_info, 'item': item}
             game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
 
-class EventAfterCombat(ItemComponent):
-    nid = 'event_after_combat'
+class EventAfterCombatOnHit(ItemComponent):
+    nid = 'event_after_combat_on_hit'
     desc = "The selected event plays at the end of combat so long as an attack in combat hit."
     tag = ItemTags.SPECIAL
 
@@ -479,3 +479,4 @@ class EventAfterCombat(ItemComponent):
                 local_args = {'target_pos': self.target_pos, 'item': item, 'mode': mode}
                 game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
         self._did_hit = False
+

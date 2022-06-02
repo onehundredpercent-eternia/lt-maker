@@ -123,17 +123,28 @@ class LostOnEndCombat(SkillComponent):
 
     expose = (Type.MultipleOptions)
 
-    value = [["LostOnSelf (T/F)", "F", 'Lost after self combat (e.g. vulnerary)']]
+    value = [["LostOnSelf (T/F)", "T", 'Lost after self combat (e.g. vulnerary)'],["LostOnAlly (T/F)", "T", 'Lost after combat with an ally'],["LostOnEnemy (T/F)", "T", 'Lost after combat with an enemy'],["LostOnSplash (T/F)", "T", 'Lost after combat if using an AOE item']]
 
     @property
     def values(self) -> Dict[str, str]:
         return {value[0]: value[1] for value in self.value}
 
     def post_combat(self, playback, unit, item, target, mode):
-        if self.values['LostOnSelf (T/F)'] == 'F':
+        from app.engine import skill_system
+        if self.values['LostOnSelf (T/F)'] == 'T':
             if unit == target:
-                return
-        action.do(action.RemoveSkill(unit, self.skill))
+                action.do(action.RemoveSkill(unit, self.skill))
+        if self.values['LostOnAlly (T/F)'] == 'T':
+            if target:
+                if skill_system.check_ally(unit, target):
+                    action.do(action.RemoveSkill(unit, self.skill))
+        if self.values['LostOnEnemy (T/F)'] == 'T':
+            if target:
+                if skill_system.check_enemy(unit, target):
+                    action.do(action.RemoveSkill(unit, self.skill))
+        if self.values['LostOnSplash (T/F)'] == 'T':
+            if not target:
+                action.do(action.RemoveSkill(unit, self.skill))
 
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))

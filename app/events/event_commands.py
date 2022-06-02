@@ -1816,6 +1816,23 @@ class RemoveMapAnim(EventCommand):
             ' the "permanent" flag')
     keywords = ["MapAnim", "Position"]
 
+class AddUnitMapAnim(EventCommand):
+    nid = 'add_unit_map_anim'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+    desc = ('Plays a map animation denoted by the nid *MapAnim* on *Unit*. Optional args: a speed multiplier'
+            ' which increases the length of time it takes to play the animation (larger is slower)')
+    keywords = ["MapAnim", "Unit"]
+    optional_keywords = ["Speed"]
+    keyword_types = ["MapAnim", "Unit", "Float"]
+    _flags = ["no_block", "permanent", "blend"]
+
+class RemoveUnitMapAnim(EventCommand):
+    nid = 'remove_unit_map_anim'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+    desc = ('Removes a map animation denoted by the nid *MapAnim* from *Unit*. Only removes MapAnims that were created using'
+            ' the "permanent" flag')
+    keywords = ["MapAnim", "Unit"]
+
 class MergeParties(EventCommand):
     nid = 'merge_parties'
     tag = Tags.MISCELLANEOUS

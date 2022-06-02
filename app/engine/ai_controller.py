@@ -2,6 +2,7 @@ import logging
 import math
 
 from app.data.database import DB
+from app.events.regions import RegionType
 from app.engine import (action, combat_calcs, engine, equations, evaluate,
                         item_funcs, item_system, line_of_sight, pathfinding,
                         skill_system, target_system)
@@ -139,7 +140,7 @@ class AIController():
             # Get region
             region = None
             for r in game.level.regions:
-                if r.contains(self.goal_position) and r.region_type == 'event' and r.sub_nid == self.behaviour.target_spec:
+                if r.contains(self.goal_position) and r.region_type == RegionType.EVENT and r.sub_nid == self.behaviour.target_spec:
                     try:
                         if not r.condition or evaluate.evaluate(r.condition, self.unit, position=self.goal_position, local_args={'region': r}):
                             region = r
@@ -621,7 +622,7 @@ def get_targets(unit, behaviour):
         all_targets = []
         for region in game.level.regions:
             try:
-                if region.region_type == 'event' and region.sub_nid == target_spec and (not region.condition or evaluate.evaluate(region.condition, unit, local_args={'region': region})):
+                if region.region_type == RegionType.EVENT and region.sub_nid == target_spec and (not region.condition or evaluate.evaluate(region.condition, unit, local_args={'region': region})):
                     all_targets += region.get_all_positions()
             except:
                 logging.warning("Region Condition: Could not parse %s" % region.condition)

@@ -2,6 +2,7 @@ from app.utilities import utils
 
 from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
+from app.events.regions import RegionType
 
 from app.engine import action
 from app.engine import item_system, item_funcs, skill_system, equations
@@ -130,7 +131,7 @@ class UnlockStaff(ItemComponent):
     _did_hit = False
 
     def _valid_region(self, region) -> bool:
-        return region.region_type == 'event' and 'can_unlock' in region.condition
+        return region.region_type == RegionType.EVENT and 'can_unlock' in region.condition
 
     def ai_targets(self, unit, item) -> set:
         targets = set()

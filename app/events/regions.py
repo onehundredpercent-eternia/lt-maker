@@ -1,11 +1,18 @@
+from enum import Enum
 from app.utilities.data import Prefab
 
-region_types = ['normal', 'status', 'event', 'formation', 'time', 'group']
+class RegionType(str, Enum):
+    NORMAL = 'normal'
+    STATUS = 'status'
+    EVENT = 'event'
+    FORMATION = 'formation'
+    TIME = 'time'
+    GROUP = 'group'
 
 class Region(Prefab):
     def __init__(self, nid):
         self.nid = nid
-        self.region_type = 'normal'
+        self.region_type = RegionType.NORMAL
         self.position = None
         self.size = [1, 1]
 
@@ -16,6 +23,13 @@ class Region(Prefab):
 
         # Only used for group regions
         self.group_data = {}
+
+    def restore_attr(self, name, value):
+        if name == 'region_type':
+            value = RegionType(value)
+        else:
+            value = super().save_attr(name, value)
+        return value
 
     @property
     def area(self):

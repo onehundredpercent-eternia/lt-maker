@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 from app.constants import VERSION
 from app.data.database import DB
 from app.data.difficulty_modes import GrowthOption, PermadeathOption
+from app.events.regions import RegionType
 from app.engine import config as cf
 from app.engine import state_machine, static_random
 from app.resources.resources import RESOURCES
@@ -734,7 +735,7 @@ class GameState():
                         aura_funcs.release_aura(unit, skill, self)
             # Regions
             for region in game.level.regions:
-                if region.region_type == 'status' and region.contains(unit.position):
+                if region.region_type == RegionType.STATUS and region.contains(unit.position):
                     skill_uid = self.get_terrain_status(region.nid)
                     skill_obj = self.get_skill(skill_uid)
                     if skill_obj and skill_obj in unit.skills:
@@ -787,7 +788,7 @@ class GameState():
             # Regions
             if not skill_system.ignore_region_status(unit):
                 for region in game.level.regions:
-                    if region.region_type == 'status' and region.contains(unit.position):
+                    if region.region_type == RegionType.STATUS and region.contains(unit.position):
                         self.add_region_status(unit, region, test)
             # Auras
             aura_funcs.pull_auras(unit, self, test)
@@ -848,7 +849,7 @@ class GameState():
                     action.do(act)
                     return act
 
-    def check_for_region(self, position, region_type, sub_nid=None):
+    def check_for_region(self, position, region_type: RegionType, sub_nid=None):
         if not position:
             return None
         for region in game.level.regions:
@@ -860,7 +861,7 @@ class GameState():
     def get_all_formation_spots(self) -> list:
         legal_spots = set()
         for region in game.level.regions:
-            if region.region_type == 'formation':
+            if region.region_type == RegionType.FORMATION:
                 for x in range(region.size[0]):
                     for y in range(region.size[1]):
                         legal_spots.add((region.position[0] + x, region.position[1] + y))

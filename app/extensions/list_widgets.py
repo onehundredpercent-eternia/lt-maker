@@ -39,6 +39,8 @@ class BasicSingleListWidget(QWidget):
     def set_current(self, data):
         self.current = data
         self.model.set_new_data(self.current)
+        for col in range(self.model.columnCount()):
+            self.view.resizeColumnToContents(col)
 
 class AppendSingleListWidget(BasicSingleListWidget):
     def __init__(self, data, title, dlgate, parent=None):
@@ -109,8 +111,6 @@ class AppendMultiListWidget(BasicSingleListWidget):
         self.view.setModel(self.model)
         delegate = dlgate(self.view)
         self.view.setItemDelegate(delegate)
-        for col in range(len(attrs)):
-            self.view.resizeColumnToContents(col)
 
         self.placement(data, title)
 

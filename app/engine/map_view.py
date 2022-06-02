@@ -1,6 +1,7 @@
 import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, STATWIDTH, WINWIDTH, WINHEIGHT, MAPWIDTH
+from app.events.regions import RegionType
 
 from app.engine import config as cf
 from app.engine import engine
@@ -109,7 +110,7 @@ class MapView():
         font = FONT['text-yellow']
         current_time = engine.get_time()
         for region in game.level.regions:
-            if region.region_type == 'time' and region.position:
+            if region.region_type == RegionType.TIME and region.position:
                 text = str(region.sub_nid)
                 w = font.width(text)
                 pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])

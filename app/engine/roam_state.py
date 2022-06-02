@@ -1,4 +1,5 @@
 from app.utilities import utils
+from app.events.regions import RegionType
 
 from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
@@ -246,7 +247,7 @@ class FreeRoamState(MapState):
         Returns first region that is close enough to visit
         """
         for region in game.level.regions:
-            if region.region_type == 'event' and region.fuzzy_contains(self.roam_unit.position):
+            if region.region_type == RegionType.EVENT and region.fuzzy_contains(self.roam_unit.position):
                 try:
                     truth = evaluate.evaluate(region.condition, self.roam_unit, position=self.roam_unit.position, local_args={'region': region})
                     if truth:

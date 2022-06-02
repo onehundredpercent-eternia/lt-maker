@@ -35,6 +35,8 @@ class LevelPrefab(Prefab):
             value = [unit_group.save() for unit_group in value]
         elif name == 'regions':
             value = [region.save() for region in value]
+        elif name == 'objective':
+            value = value.copy()  # Must make a copy so we don't keep a reference to the same one
         else:
             value = super().save_attr(name, value)
         return value

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from app.extensions.markdown2 import Markdown
 
 from app.data.database import DB
+from app.events.regions import RegionType
 from app.editor import table_model, timer
 from app.editor.base_database_gui import CollectionModel
 from app.editor.event_editor import event_autocompleter, find_and_replace
@@ -30,7 +31,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QMessageBox, QPlainTextEdit, QPushButton,
                              QSizePolicy, QSpinBox, QSplitter, QStyle,
                              QStyledItemDelegate, QTextEdit, QToolBar,
-                             QVBoxLayout, QWidget, QMenu)
+                             QVBoxLayout, QWidget, QMenu, QHeaderView)
 
 
 @dataclass
@@ -570,6 +571,8 @@ class EventCollection(QWidget):
         self.view.setModel(self.level_filtered_model)
         # self.view.setModel(self.model)
         self.view.setSortingEnabled(True)
+        self.view.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         # sort is stored as (col, dir)
         # see leaveEvent
         sort = self.settings.component_controller.get_sort(self.__class__.__name__)
@@ -881,7 +884,7 @@ class EventProperties(QWidget):
         for level in DB.levels:
             if level_nid == 'Global' or level_nid == level.nid:
                 for region in level.regions:
-                    if region.region_type == 'event':
+                    if region.region_type == RegionType.EVENT:
                         all_custom_triggers.add(region.sub_nid)
         all_items += list(all_custom_triggers)
         all_items += [trigger.nid for trigger in event_prefab.all_triggers]

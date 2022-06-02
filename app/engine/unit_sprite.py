@@ -1,3 +1,4 @@
+from typing import Dict
 from app.engine.game_counters import ANIMATION_COUNTERS
 import math
 
@@ -17,6 +18,7 @@ from app.engine import item_funcs, item_system, skill_system, particles
 import app.engine.config as cf
 from app.engine.animations import Animation
 from app.engine.game_state import game
+from app.utilities.typing import NID
 
 class MapSprite():
     def __init__(self, map_sprite, team):
@@ -106,7 +108,7 @@ class UnitSprite():
         self.flicker = []
         self.vibrate = []
         self.vibrate_counter = 0
-        self.animations = {}
+        self.animations: Dict[NID, Animation] = {}
         self.particles = []
         self.damage_numbers = []
 
@@ -131,15 +133,21 @@ class UnitSprite():
             return int(round(self.fake_position[0])), int(round(self.fake_position[1]))
         return None
 
-    def add_animation(self, animation_nid, loop=True):
-        anim = RESOURCES.animations.get(animation_nid)
-        if anim:
-            anim = Animation(anim, (-16, -16), loop=loop)
-            self.animations[animation_nid] = anim
+    def add_animation(self, anim):
+        if isinstance(anim, str):
+            anim = RESOURCES.animations.get(anim)
+            if anim:
+                anim = Animation(anim, (-16, -16), loop=True)
+        if anim.nid in self.animations.keys():
+            return False
+        self.animations[anim.nid] = anim
+        return True
 
     def remove_animation(self, animation_nid):
         if animation_nid in self.animations:
             del self.animations[animation_nid]
+            return True
+        return False
 
     def begin_flicker(self, total_time, color, direction='add'):
         self.flicker.append((engine.get_time(), total_time, color, direction, False))
