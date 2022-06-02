@@ -433,6 +433,7 @@ class TurnwheelState(MapState):
         # Whether the player MUST move the turnwheel back
         self.force = game.memory.get('force_turnwheel', False)
         game.memory['force_turnwheel'] = False
+        game.game_vars['turnwheel_starting_turn'] = game.turncount
 
         self.mouse_indicator = gui.MouseIndicator()
         # Kill off any units who are currently dying

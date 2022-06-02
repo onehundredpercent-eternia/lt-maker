@@ -26,7 +26,6 @@ import logging
 # 11 = 9  # Fully Promoted
 # 12 = 10
 
-POSITIONS_TO_POINTS = 0.5
 ELITE_CHANCE = 0.15
 
 @dataclass
@@ -134,6 +133,9 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
     base_val = (max(0, chapter_num - starting_promotion_chapter) / 5) ** 2
     return base_val
 
+def get_num_points(chapter_num: int):
+    
+
 def get_promoted_class(klass_nid: str) -> str:
     klass = DB.classes.get(klass_nid)
     turns_into = klass.turns_into
@@ -211,7 +213,7 @@ def build_group(region):
 
     # Determine how many and which specific classes will belong here
     positions: List[Tuple] = region.get_all_positions()
-    num_points = len(positions) * POSITIONS_TO_POINTS
+    num_points = get_num_points(completed_chapters())
     # Don't overlap other units
     positions = [pos for pos in positions if not game.board.get_unit(pos)]
 
@@ -505,4 +507,5 @@ def get_recruitable_unit(level_var_nid, position, level, tag, team):
     new_unit.level = level
     game.full_register(new_unit)
     action.do(action.SetLevelVar(level_var_nid, unit.nid))
+    action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit

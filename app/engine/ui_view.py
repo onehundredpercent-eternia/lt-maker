@@ -266,7 +266,7 @@ class UIView():
         current_mem = game.party.money
         max_mem = int(DB.raw_data.get('max_memory', 30))
 
-        text = 'M: ' + str(current_mem) + '/' + str(max_mem)
+        text = 'Mem: ' + str(current_mem) + '/' + str(max_mem)
         color = 'white'
         if current_mem > 30:
             color = 'green'
@@ -274,7 +274,7 @@ class UIView():
             color = 'red'
         elif current_mem <= 10:
             color = 'yellow'
-        width = font.width('Mem: 00/30') + 4
+        width = font.width('Mem: -00/30') + 4
 
         mem_surf = base_surf.create_base_surf(width, 24)
         mem_surf = image_mods.make_translucent(mem_surf, .1)
@@ -282,7 +282,6 @@ class UIView():
 
         # Draw Objective
         obj = game.level.objective['simple']
-        print(obj)
         text_parser = TextEvaluator(logging.getLogger(), game)
         text_lines = text_parser._evaluate_all(obj).split(',')
         text_lines = [line.replace('{comma}', ',') for line in text_lines]
