@@ -418,10 +418,10 @@ class SimpleCombat():
 
     def handle_mana(self, all_units):
         # Attacker mana
-            total_mana = 0
-            for unit in all_units:
-                if unit is not self.attacker:
-                    total_mana += skill_system.mana(self.full_playback, self.attacker, self.main_item, unit)
+        total_mana = 0
+        for unit in all_units:
+            if unit is not self.attacker:
+                total_mana += skill_system.mana(self.full_playback, self.attacker, self.main_item, unit)
             # This is being left open - if something effects mana gain it will be done here
         if self.attacker.team == 'player':
             game.mana_instance.append((self.attacker, total_mana))
@@ -433,7 +433,7 @@ class SimpleCombat():
             # This is being left open - if something effects mana gain it will be done here
             mana_gain = skill_system.mana(self.full_playback, self.defender, self.def_item, self.attacker)
             if self.defender.team == 'player':
-            game.mana_instance.append((self.defender, mana_gain))
+                game.mana_instance.append((self.defender, mana_gain))
             else:
                 action.do(action.ChangeMana(self.defender, mana_gain))
 

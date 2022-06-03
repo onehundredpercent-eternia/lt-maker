@@ -9,12 +9,12 @@ from app.constants import COLORKEY
 from app.engine import engine, image_mods
 
 class EventPortrait():
-    width, height = 128, 112
-    main_portrait_coords = (0, 0, 96, 80)
-    chibi_coords = (96, 16, 32, 32)
+    width, height = 160, 112
+    main_portrait_coords = (0, 0, 128, 80)
+    chibi_coords = (width - 32, 16, 32, 32)
 
-    halfblink = (96, 48, 32, 16)
-    fullblink = (96, 64, 32, 16)
+    halfblink = (width - 32, 48, 32, 16)
+    fullblink = (width - 32, 64, 32, 16)
 
     openmouth = (0, 96, 32, 16)
     halfmouth = (32, 96, 32, 16)

@@ -73,7 +73,7 @@ class Dialog():
                 pos_x += 4
             if pos_x == 0:
                 pos_x = 4
-            pos_y = WINHEIGHT - self.height - 80
+            pos_y = WINHEIGHT - self.height - 96
         else:
             pos_x = 4
             pos_y = WINHEIGHT - self.height - 4

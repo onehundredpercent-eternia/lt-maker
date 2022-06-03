@@ -153,7 +153,6 @@ class UIView():
                     ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
                     surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
 
-        print(self.obj_info_disp)
         if self.obj_info_disp and not self.initiative_info_disp:
             # Should be in topright, unless the cursor is in the topright
             # TopRight - I believe this has RIGHT precedence
@@ -179,7 +178,7 @@ class UIView():
         return surf
 
     def create_unit_info(self, unit):
-        font = FONT['info-white']
+        font = FONT['info-black']
         dimensions = (112, 40)
         width, height = dimensions
         surf = SPRITES.get('unit_info_bg').copy()

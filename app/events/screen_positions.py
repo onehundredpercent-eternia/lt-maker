@@ -1,4 +1,4 @@
-from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
+from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE, FANCY_DIALOG_MODE
 
 if MEMENTO_MODE:
     horizontal_screen_positions = {'OffscreenLeft': -128,
@@ -55,7 +55,7 @@ def parse_screen_position(pos) -> tuple:
             y = int(split_pos[1])
     elif pos in horizontal_screen_positions:
         x = horizontal_screen_positions[pos]
-        if MEMENTO_MODE:
+        if FANCY_DIALOG_MODE:
             y = vertical_screen_positions['Top']
         else:
             y = vertical_screen_positions['Bottom']

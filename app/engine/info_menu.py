@@ -64,6 +64,8 @@ class BoundingBox():
 info_states = ('combat', 'extra')
 
 class InfoGraph():
+    draw_all_bbs: bool = True
+
     def __init__(self):
         self.registry = {state: [] for state in info_states}
         self.registry.update({'growths': []})
@@ -173,10 +175,11 @@ class InfoGraph():
                 self.current_bb = bb
 
     def draw(self, surf):
-        # for bb in self.registry[self.current_state]:
-        #     s = engine.create_surface((bb.aabb[2], bb.aabb[3]), transparent=True)
-        #     engine.fill(s, (10 * bb.idx, 10 * bb.idx, 0, 128))
-        #     surf.blit(s, (bb.aabb[0], bb.aabb[1]))
+        if self.draw_all_bbs:
+            for bb in self.registry[self.current_state]:
+                s = engine.create_surface((bb.aabb[2], bb.aabb[3]), transparent=True)
+                engine.fill(s, (10 * bb.idx, 10 * bb.idx, 0, 128))
+                surf.blit(s, (bb.aabb[0], bb.aabb[1]))
         if self.current_bb:
             # right = self.current_bb.aabb[0] >= int(0.75 * WINWIDTH)
             right = False
@@ -771,7 +774,7 @@ class InfoMenuState(State):
             contribution = self.unit.stat_contribution(stat_nid)
             contribution['Base Value'] = base_value
             help_box = help_menu.StatDialog('%s_desc' % stat_nid, contribution)
-            self.info_graph.register((0 + 8 + stat_offset * x_idx, 16 * y_idx, 64, 16), help_box, state, first=(idx == 0))
+            self.info_graph.register((WINWIDTH//2 + 4 + 8 + stat_offset * x_idx, self.portrait_section_height + 16 * y_idx, 64, 16), help_box, state, first=(idx == 0))
 
         # for idx, stat_nid in enumerate(right_stats):
         #     if growths:
@@ -870,7 +873,7 @@ class InfoMenuState(State):
         wexp_to_draw: List[Tuple[str, int]] = []
         for weapon, wexp in self.unit.wexp.items():
             if wexp > 0 and (class_obj.wexp_gain.get(weapon).usable or skill_system.wexp_usable_skill(self.unit, weapon)) \
-            and not skill_system.wexp_unusable_skill(self.unit, weapon):
+                and not skill_system.wexp_unusable_skill(self.unit, weapon):
                 wexp_to_draw.append((weapon, wexp))
         width = (WINWIDTH - 102) // 2
         height = 16 * 2 + 4
@@ -932,7 +935,7 @@ class InfoMenuState(State):
                     surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 item_option = menu_options.FullItemOption(idx, item)
             item_option.draw(surf, 8, idx * 16 + 4)
-            self.info_graph.register((WINWIDTH//2 + 8, idx * 16 + 4 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
+            self.info_graph.register((4 + 8, idx * 16 + 4 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
 
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):
@@ -980,12 +983,12 @@ class InfoMenuState(State):
                 charge = ' %d / %d' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
-            self.info_graph.register((WINWIDTH//2 + left_pos + 8, WINHEIGHT - 28, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+            self.info_graph.register((8 + left_pos + 8, WINHEIGHT - 28, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
 
         return surf
 
     def draw_skill_surf(self, surf):
-        surf.blit(self.skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 32))
+        surf.blit(self.skill_surf, (4, WINHEIGHT - 32))
 
     def create_class_skill_surf(self):
         surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)
@@ -998,13 +1001,13 @@ class InfoMenuState(State):
                 charge = ' (%d/%d)' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
-            self.info_graph.register((WINWIDTH//2 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
-            self.info_graph.register((WINWIDTH//2 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'growths')
+            self.info_graph.register((4 + WINWIDTH//2 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+            # self.info_graph.register((WINWIDTH//2 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'growths')
 
         return surf
 
     def draw_class_skill_surf(self, surf):
-        surf.blit(self.class_skill_surf, (4, WINHEIGHT - 36))
+        surf.blit(self.class_skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 36))
 
     def create_support_surf(self):
         surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)

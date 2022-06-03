@@ -49,7 +49,7 @@ class_data = Data([
     ClassData('Fighter', 2, 'Axe', 1),
     ClassData('Vanguard', 3, 'Axe', 3),
     ClassData('Raider', 2, 'Axe', 2),
-    ClassData('Archer', 2, 'Bow', 1),
+    ClassData('Archer', 2.5, 'Bow', 1),
     ClassData('Hunter', 2, 'Bow', 2),
     ClassData('Soldier', 1.5, 'Lance', 1, 9),
     ClassData('Brigand', 1.5, 'Axe', 1, 9),
@@ -134,7 +134,7 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
     return base_val
 
 def get_num_points(chapter_num: int):
-    
+    return 5 + chapter_num//2
 
 def get_promoted_class(klass_nid: str) -> str:
     klass = DB.classes.get(klass_nid)
@@ -498,14 +498,15 @@ def get_recruitable_unit(level_var_nid, position, level, tag, team):
     if not possible_unit_prefabs:
         logging.error("No possible unit to recruit with tag %s", tag)
         return
-    unit = game.get_random(possible_unit_prefabs)
+    unit = game.get_random_choice(possible_unit_prefabs)
     ai = 'None'
-    level_unit_prefab = UniqueUnit(unit.nid, team, ai, None)
+    level_unit_prefab = UniqueUnit(unit.nid, team, ai, None, None, position)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     new_unit.party = game.current_party
     unit_funcs.auto_level(new_unit, level - new_unit.level, new_unit.level, growth_method='fixed')
     new_unit.level = level
     game.full_register(new_unit)
     action.do(action.SetLevelVar(level_var_nid, unit.nid))
-    action.do(action.ArriveOnMap(new_unit, new_unit.position))
+    if new_unit.position:
+        action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit

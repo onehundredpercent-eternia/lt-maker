@@ -773,6 +773,8 @@ def get_recruitable_unit(self: Event, level_var_nid, position, level, tag, team=
     flags = flags or set()
 
     from app.engine import random_groups
+    position = self._parse_pos(position)
+    level = int(level)
     team = team or 'player'
     random_groups.get_recruitable_unit(level_var_nid, position, level, tag, team)
 
@@ -862,7 +864,7 @@ def remove_unit(self: Event, unit, remove_type=None, flags=None):
         return
     unit = new_unit
     if not unit.position:
-        self.logger.error("Unit not on map!")
+        self.logger.error("remove_unit: Unit not on map!")
         return
     if not remove_type:
         remove_type = 'fade'
@@ -1802,7 +1804,7 @@ def add_region(self: Event, nid, position, size, region_type, string=None, flags
     size = self._parse_pos(size)
     if not size:
         size = (1, 1)
-    region_type = region_type.value.lower()
+    region_type = region_type.lower()
     sub_region_type = string
 
     new_region = regions.Region(nid)

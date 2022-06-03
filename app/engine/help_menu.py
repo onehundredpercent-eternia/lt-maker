@@ -30,7 +30,7 @@ class HelpDialog():
             self.num_lines += 1
         self.height = self.font.height * self.num_lines + 16
 
-        self.help_surf = base_surf.create_base_surf(self.width, self.height, 'message_bg_base')
+        self.help_surf = base_surf.create_base_surf(self.width, self.height, 'help_bg_base')
         self.h_surf = engine.create_surface((self.width, self.height + 3), transparent=True)
 
     def get_width(self):
@@ -154,7 +154,7 @@ class StatDialog(HelpDialog):
         self.lines = text_funcs.line_wrap(self.font, self.desc, 148)
         self.size_y = self.font.height * (len(self.lines) + len(self.bonuses)) + 16
 
-        self.help_surf = base_surf.create_base_surf(160, self.size_y, 'message_bg_base')
+        self.help_surf = base_surf.create_base_surf(160, self.size_y, 'help_bg_base')
         self.h_surf = engine.create_surface((160, self.size_y + 3), transparent=True)
 
     def draw(self, surf, pos, right=False):
@@ -244,7 +244,7 @@ class ItemHelpDialog(HelpDialog):
             size_y = 48 + self.font.height * len(self.lines)
         else:
             size_y = 32 + self.font.height * len(self.lines)
-        self.help_surf = base_surf.create_base_surf(160, size_y, 'message_bg_base')
+        self.help_surf = base_surf.create_base_surf(160, size_y, 'help_bg_base')
         self.h_surf = engine.create_surface((160, size_y + 3), transparent=True)
 
     def build_lines(self, desc, width):
