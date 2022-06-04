@@ -162,6 +162,7 @@ class AttackerPartnerState(SolverState):
                     return 'attacker'
                 # When you double but your ally doesn't and also the opponent doesn't counter you.
                 elif solver.num_attacks == 1 and can_double_in_pairup:
+                    solver.num_attacks += 1
                     return 'attacker_partner'
                 return None
             else:

@@ -46,14 +46,14 @@ class MementoShove(SkillComponent):
     """
     Do 1.5x damage when the unit would be shoved into an obstacle
     """
-    def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
-        if not skill_system.ignore_forced_movement(target) and mode != 'splash':
-            new_position = self._check_shove(target, unit.position, 1)
-            if new_position:
-                return 1
-            else:
-                return 1.5
-        return 1
+    # def damage_multiplier(self, unit, item, target, mode, attack_info, base_value):
+    #     if not skill_system.ignore_forced_movement(target) and mode != 'splash':
+    #         new_position = self._check_shove(target, unit.position, 1)
+    #         if new_position:
+    #             return 1
+    #         else:
+    #             return 1.5
+    #     return 1
 
     def cleanup_combat(self, playback, unit, item, target, mode):
         marks = [mark for mark in playback if mark.nid in ('mark_hit', 'mark_crit') and mark.attacker is unit and mark.defender is target]

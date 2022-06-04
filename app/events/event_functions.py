@@ -89,6 +89,7 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
 
     name = portrait
     unit = self._get_unit(name)
+    name = unit.nid
     if unit and unit.portrait_nid:
         portrait = RESOURCES.portraits.get(unit.portrait_nid)
     elif name in DB.units.keys():

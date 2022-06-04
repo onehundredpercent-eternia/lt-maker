@@ -261,14 +261,14 @@ class MockCombat():
             anim = Animation(animation, position)
             self.animations.append(anim)
         # Also offset battle animation by lr_offset
-        self.current_battle_anim.lr_offset = [-1, -3, -5, -3, -1]
+        self.current_battle_anim.lr_offset = [-1, -2, -3, -2, -1]
 
     def glancing_hit(self):
         if self.current_battle_anim is self.right_battle_anim or self.current_battle_anim is self.rp_battle_anim:
-            position = (52, 21)
+            position = (48, 6)
             team = self.right_team()
         else:
-            position = (110, 21)
+            position = (106, 6)
             team = self.left_team()
         color = utils.get_team_color(team)
         anim_nid = 'GlancingHit%s' % color.capitalize()
@@ -277,7 +277,7 @@ class MockCombat():
             anim = Animation(animation, position)
             self.animations.append(anim)
         # Also offset battle animation by lr_offset
-        self.current_battle_anim.lr_offset = [-1, -2, -3, -2, -1]
+        self.current_battle_anim.lr_offset = [-1, -3, -5, -3, -1]
 
     def miss_anim(self):
         if self.current_battle_anim is self.right_battle_anim:
