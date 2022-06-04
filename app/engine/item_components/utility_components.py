@@ -35,7 +35,7 @@ class Heal(ItemComponent):
 
     def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
         heal = self._get_heal_amount(unit, target)
-        true_heal = min(heal, equations.parser.hitpoints(target) - target.get_hp())
+        true_heal = min(heal, target.get_max_hp() - target.get_hp())
         actions.append(action.ChangeHP(target, heal))
 
         # For animation

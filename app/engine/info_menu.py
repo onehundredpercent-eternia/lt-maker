@@ -64,7 +64,7 @@ class BoundingBox():
 info_states = ('combat', 'extra')
 
 class InfoGraph():
-    draw_all_bbs: bool = True
+    draw_all_bbs: bool = False
 
     def __init__(self):
         self.registry = {state: [] for state in info_states}

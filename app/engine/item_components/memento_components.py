@@ -1,59 +1,13 @@
+from app.resources.resources import RESOURCES
+
 from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.utilities import utils
 from app.engine import target_system, skill_system, action, equations
+from app.engine.combat import playback as pb
+from app.engine.animations import MapAnimation
 from app.engine.game_state import game 
-
-class MementoStaff(ItemComponent):
-    nid = 'memento_staff'
-    desc = "Item contains a ward of the weapon types you want to use"
-    tag = ItemTags.CUSTOM
-
-    expose = (Type.List, Type.Item)
-
-    def get_ward(self, spell):
-        for subitem in spell.subitems:
-            if subitem.memento_rune_type.value == spell.memento_rune_type.value:
-                return subitem
-        return None
-
-class MementoWard(ItemComponent):
-    nid = 'memento_ward'
-    desc = "Item is a ward"
-    tag = ItemTags.CUSTOM
-
-    def get_spell(self, unit, selection):
-        spells = target_system.get_all_spells(self.cur_unit)
-        spells_that_share_memento_type = \
-            [spell for spell in spells if spell.memento_rune_type.value == selection.memento_rune_type.value]
-        return spells_that_share_memento_type[0]
-
-class MementoRuneType(ItemComponent):
-    nid = 'memento_rune_type'
-    desc = "Item has a rune type and can only be used by those with the right affinity"
-    tag = ItemTags.CUSTOM
-
-    expose = Type.Affinity  # Nid
-
-    def available(self, unit, item) -> bool:
-        return self.value == 'None' or self.value in unit.affinity or unit.affinity == 'All'
-
-class MementoSkillOnHold(ItemComponent):
-    nid = 'memento_skill_on_hold'
-    desc = "Item gives status while in unit's inventory"
-    tag = ItemTags.CUSTOM
-
-    expose = Type.Skill  # Nid
-
-    def on_add_item(self, unit, item):
-        if 'Mage' in unit.tags:
-            return
-        if not item.memento_rune_type or item.memento_rune_type.available(unit, item):
-            action.do(action.AddSkill(unit, self.value))
-
-    def on_remove_item(self, unit, item):
-        action.do(action.RemoveSkill(unit, self.value))
 
 class MementoEnemyCleaveAOE(ItemComponent):
     nid = 'memento_enemy_cleave_aoe'
@@ -184,6 +138,90 @@ class MementoPull(ItemComponent):
             new_position_target = self._pull(unit, target, 1)
             if new_position_target:
                 action.do(action.ForcedMovement(target, new_position_target))
-                playback.append(('shove_hit', unit, item, target))
+                playback.append(pb.ShoveHit(unit, item, target))
             else:  # Immobilize Status
                 action.do(action.AddSkill(target, self.value, unit))
+
+class MementoRallyStatus(ItemComponent):
+    nid = 'memento_rally_status'
+    desc = "Item gives this status to nearby allies after combat"
+    tag = ItemTags.CUSTOM
+
+    expose = Type.Skill
+    distance = 2
+
+    def end_combat(self, playback, unit, item, target, mode):
+        for other in game.get_all_units():
+            if other is not unit and other.team == unit.team and utils.calculate_distance(other.position, unit.position) <= self.distance:
+                playback.append(pb.StatusHit(unit, item, other, self.value))
+                action.do(action.AddSkill(other, self.value, unit))
+                # A E S T H E T I C
+                other.sprite.begin_flicker(200, (255, 255, 255))
+        # Display Rally Sprite
+        anim_nid = 'AOE_Rally'
+        anim = RESOURCES.animations.get(anim_nid)
+        if anim:
+            anim = MapAnimation(anim, unit.position)
+            game.tilemap.animations.append(anim)
+
+class MementoRallyHeals(ItemComponent):
+    nid = 'memento_rally_heal'
+    desc = "Item heals this amount to nearby allies after combat"
+    tag = ItemTags.CUSTOM
+
+    expose = Type.Int
+    value = 10
+    distance = 2
+
+    def _get_heal_amount(self, unit, target):
+        empower_heal = skill_system.empower_heal(unit, target)
+        empower_heal_received = skill_system.empower_heal_received(target, unit)
+        return self.value + equations.parser.heal(unit) + empower_heal + empower_heal_received
+
+    def end_combat(self, playback, unit, item, target, mode):
+        from app.engine import gui
+
+        if unit.dead or unit.is_dying:
+            return
+            
+        for other in game.get_all_units():
+            if other is not unit and other.team == unit.team and utils.calculate_distance(other.position, unit.position) <= self.distance:
+                heal = self._get_heal_amount(unit, other)
+                true_heal = min(heal, other.get_max_hp() - other.get_hp())
+                playback.append(pb.HealHit(unit, item, other, heal, true_heal))
+                action.do(action.ChangeHP(other, heal))
+                # A E S T H E T I C
+                other.sprite.begin_flicker(200, (96, 144, 232))
+                str_damage = str(heal)
+                for idx, num in enumerate(str_damage):
+                    d = gui.DamageNumber(int(num, idx, len(str_damage), other.position, 'small_cyan'))
+                    other.sprite.damage_numbers.append(d)
+        # Display Rally Sprite
+        anim_nid = 'AOE_Rally'
+        anim = RESOURCES.animations.get(anim_nid)
+        if anim:
+            anim = MapAnimation(anim, unit.position)
+            game.tilemap.animations.append(anim)
+
+class MementoAnimaAvailable(ItemComponent):
+    nid = 'memento_anima_available'
+    desc = "Item can only be used when in the correct mode"
+    tag = ItemTags.CUSTOM
+
+    expose = Type.Item
+
+    def available(self, unit, item) -> bool:
+        for item in unit.items:
+            if item.multi_item:
+                first_subitem = item.subitems[0]
+                if first_subitem.nid == self.value:
+                    return True
+        return False
+
+class MementoFullMoonAvailable(ItemComponent):
+    nid = 'memento_full_moon_available'
+    desc = "Item can only be used when in full moon"
+    tag = ItemTags.CUSTOM
+
+    def available(self, unit, item) -> bool:
+        return game.game_vars.get('full_moon', False)

@@ -3,6 +3,7 @@ from app.data.components import Type
 
 from app.utilities import utils
 from app.engine import equations, action, item_funcs, static_random, skill_system, combat_calcs, target_system
+from app.engine.combat import playback as pb
 from app.engine.game_state import game
 
 class MementoHitBonus(SkillComponent):
@@ -55,13 +56,13 @@ class MementoShove(SkillComponent):
         return 1
 
     def cleanup_combat(self, playback, unit, item, target, mode):
-        marks = [mark[0] for mark in playback if mark[0] in ('mark_hit', 'mark_crit') and mark[1] is unit and mark[2] is target]
+        marks = [mark for mark in playback if mark.nid in ('mark_hit', 'mark_crit') and mark.attacker is unit and mark.defender is target]
         did_hit = len(marks) > 0
         if did_hit and not skill_system.ignore_forced_movement(target) and mode != 'splash':
             new_position = self._check_shove(target, unit.position, 1)
             if new_position:
                 action.do(action.ForcedMovement(target, new_position))
-                playback.append(('shove_hit', unit, item, target))
+                playback.append(pb.ShoveHit(unit, item, target))
 
 class MementoTempo(SkillComponent):
     nid = 'memento_tempo'
@@ -113,16 +114,6 @@ class WitchWarp(SkillComponent):
                 positions += target_system.get_adjacent_positions(partner_pos)
         return positions
 
-class MementoRuneType(SkillComponent):
-    nid = 'memento_rune_type'
-    desc = "Skill has a rune type and can only be used by those with the right affinity"
-    tag = SkillTags.CUSTOM
-
-    expose = Type.Affinity  # Nid
-
-    def available(self, unit, skill) -> bool:
-        return self.value in unit.affinity
-
 class MementoAttackStanceDouble(SkillComponent):
     nid = 'memento_attack_stance_double'
     desc = "Unit will ALWAYS double while supporting in a pairup"
@@ -130,3 +121,38 @@ class MementoAttackStanceDouble(SkillComponent):
 
     def attack_stance_double(self, unit) -> bool:
         return True
+
+class MementoInitiateFullMoon(SkillComponent):
+    nid = 'memento_initiate_full_moon'
+    desc = "Unit can initiate and partake of full moon bonuses"
+    tag = SkillTags.CUSTOM
+
+    def init(self, skill):
+        self.skill.data['_last_turn_with_kill'] = -1
+
+    def _activate_full_moon(self):
+        action.do(action.SetGameVar('full_moon', True))
+        # A E S T H E T I C
+        # TODO Global change
+
+    def keep_full_moon(self) -> bool:
+        # You've gone two turns without killing anybody
+        return self.skill.data['_last_turn_with_kill'] > game.turncount - 2
+
+    def unit_sprite_flicker_tint(self, unit, skill):
+        if game.game_vars.get('full_moon', False):
+            return ((255, 255, 255), 900, 300)
+        return None
+
+    def end_combat(self, playback, unit, item, target, mode):
+        if target and target.get_hp() <= 0:
+            if self.skill.data['_last_turn_with_kill'] == game.turncount - 1:
+                # You've done it twice in a row, so FULL MOON ACTIVATE
+                self._activate_full_moon()
+            action.do(action.SetObjData(self.skill, '_last_turn_with_kill', game.turncount))
+
+    def modify_damage(self, unit, item):
+        return 3 if game.game_vars.get('full_moon', False) else 0
+
+    def modify_accuracy(self, unit, item):
+        return 30 if game.game_vars.get('full_moon', False) else 0

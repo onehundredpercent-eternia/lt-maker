@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import random
 
 from enum import Enum
 from typing import Dict, List, Tuple
@@ -61,6 +62,8 @@ class_data = Data([
     ClassData('Sorceror', 3, 'Dark', 2),
 ])
 
+anima_users = ('Mage', 'Sage', 'Shaman', 'Druid')
+
 item_data = {
     'Myrmidon': 'Crit Sword',
     'Swordmaster': 'Vantage Sword',
@@ -92,6 +95,18 @@ item_data = {
     'Ranger': 'Mageslayer Bow',
     'Soldier': 'Soldier Lance',
     'Brigand': 'Attack Axe', 
+    'Cleric': 'Grave Light',
+    'Saint': 'Grave Light',
+    'Seer': 'Grave Light',
+    'Valkyrie': 'Grave Light',
+    'Sorceror': 'Grave Dark',
+    'Warlock': 'Grave Dark',
+    'Acolyte': 'Grave Dark',
+    'Wizard': 'Grave Dark'
+}
+
+item_data2 = {
+    'Cleric': 'Heal'
 }
 
 def get_potential_leaders(klass_nid) -> List[str]:
@@ -165,6 +180,17 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False):
     # Give items
     if klass in item_data:
         starting_items = [item_data[klass]]
+        if klass in item_data2:
+            starting_items.append(item_data2[klass])
+    elif klass in anima_users:
+        random.seed(ai_group)
+        anima_type = random.randchoice(['Fire', 'Wind', 'Thunder'])
+        if anima_type == 'Fire':
+            starting_items = ['Grave Fire']
+        elif anima_type == 'Wind':
+            starting_items = ['Grave Wind']
+        elif anima_type == 'Thunder':
+            starting_items = ['Grave Thunder']
     else:
         weapon_type = class_data.get(klass).weapon_type
         base_item = weapon_type
@@ -173,7 +199,7 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False):
     team = 'enemy'
     starting_position = position
     level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, ai_group, starting_position)
-    new_unit = UnitObject.from_prefab(level_unit_prefab)
+    new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     if is_elite:
         new_unit._tags.append('Elite')
     new_unit.party = game.current_party
