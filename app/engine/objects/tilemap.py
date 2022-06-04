@@ -264,6 +264,7 @@ class TileMapObject(Prefab):
                 hold=anim['hold'],
                 reverse=anim['reverse'],
                 speed_adj=anim['speed_adj'])
+            new_anim.set_tint(anim.get('tint', False))
             self.animations.append(new_anim)
 
         return self

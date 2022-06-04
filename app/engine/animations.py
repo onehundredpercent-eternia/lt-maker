@@ -41,7 +41,8 @@ class Animation():
                 'loop': self.loop,
                 'hold': self.hold, 
                 'reverse': self.reverse, 
-                'speed_adj': self.speed_adj}
+                'speed_adj': self.speed_adj,
+                'tint': self.tint}
 
     @property
     def speed(self):

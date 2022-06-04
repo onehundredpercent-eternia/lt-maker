@@ -321,6 +321,11 @@ def find_strike_partners(attacker, defender, item):
         attacker_partner = None
     if defender.get_weapon() and item_system.cannot_dual_strike(defender, defender.get_weapon()):
         defender_partner = None
+    if DB.constants.value('player_pairup_only'):
+        if attacker.team != 'player':
+            attacker_partner = None
+        if defender.team != 'player':
+            defender_partner = None
 
     if attacker_partner is defender_partner:
         # If both attacker and defender have the same partner something is weird

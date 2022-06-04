@@ -440,6 +440,7 @@ class GameState():
 
         supports.increment_end_chapter_supports()
 
+        self.game_vars['_turnwheel_uses'] = 0
         self.game_vars['_current_turnwheel_uses'] = \
             self.game_vars.get('_max_turnwheel_uses', -1)
 

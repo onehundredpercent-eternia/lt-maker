@@ -216,13 +216,13 @@ class SimpleCombat():
         skill_system.end_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
         item_system.end_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
         if self.attacker.strike_partner:
-            skill_system.end_combat(self.full_playback, self.attacker.strike_partner, self.main_item, self.defender, 'attack')
-            item_system.end_combat(self.full_playback, self.attacker.strike_partner, self.main_item, self.defender, 'attack')
+            skill_system.end_combat(self.full_playback, self.attacker.strike_partner, self.attacker.strike_partner.get_weapon(), self.defender, 'attack')
+            item_system.end_combat(self.full_playback, self.attacker.strike_partner, self.attacker.strike_partner.get_weapon(), self.defender, 'attack')
             self.attacker.strike_partner = None
         if self.defender:
             if self.defender.strike_partner:
-                skill_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.get_weapon(), self.attacker, 'defense')
-                item_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.get_weapon(), self.attacker, 'defense')
+                skill_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.strike_partner.get_weapon(), self.attacker, 'defense')
+                item_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.strike_partner.get_weapon(), self.attacker, 'defense')
                 self.defender.strike_partner = None
         already_pre = [self.attacker]
         for idx, defender in enumerate(self.defenders):

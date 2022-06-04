@@ -508,6 +508,8 @@ class TurnwheelState(MapState):
                 self.turnwheel_effect()
                 self.bg.fade_out()
                 self.turnwheel_activated = True
+                # Record how many times the turnwheel has been used
+                game.game_vars['_turnwheel_uses'] = game.game_vars.get('_turnwheel_uses', 0) + 1
                 if game.game_vars['_current_turnwheel_uses'] > 0:
                     game.game_vars['_current_turnwheel_uses'] -= 1
             elif not self.force and not game.action_log.locked:

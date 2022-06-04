@@ -153,6 +153,12 @@ class MementoRallyStatus(ItemComponent):
     def end_combat(self, playback, unit, item, target, mode):
         if unit.dead or unit.is_dying:
             return
+        # Only do this if you actually attempted to attack
+        mark_playbacks = [p for p in playback if p.nid in ('mark_miss', 'mark_hit', 'mark_crit')]
+        if any(p.attacker is unit for p in mark_playbacks):
+            pass
+        else:
+            return
 
         for other in game.get_all_units():
             if other is not unit and other.team == unit.team and utils.calculate_distance(other.position, unit.position) <= self.distance:
@@ -186,6 +192,12 @@ class MementoRallyHeals(ItemComponent):
         from app.engine import gui
 
         if unit.dead or unit.is_dying:
+            return
+        # Only do this if you actually attempted to attack
+        mark_playbacks = [p for p in playback if p.nid in ('mark_miss', 'mark_hit', 'mark_crit')]
+        if any(p.attacker is unit for p in mark_playbacks):
+            pass
+        else:
             return
             
         for other in game.get_all_units():

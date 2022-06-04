@@ -165,11 +165,7 @@ class BaseCursor():
 
         self.position = final_x, final_y
 
-    def take_input(self):
-        self.fluid.update()
-        is_speed_state = self._transition_speed > 1
-        directions = self.fluid.get_directions(double_speed=is_speed_state)
-
+    def _handle_move(self, directions):
         # handle the move
         dx, dy = 0, 0
         from_mouse = False
@@ -195,8 +191,9 @@ class BaseCursor():
             mouse_pos = get_input_manager().get_real_mouse_position()
             if mouse_pos:
                 from_mouse = True
-                new_pos = mouse_pos[0] // TILEWIDTH, mouse_pos[1] // TILEHEIGHT
-                new_pos = int(new_pos[0] + self.camera.get_x()), int(new_pos[1] + self.camera.get_y())
+                new_pos_x = (mouse_pos[0] + self.camera.get_x() * TILEWIDTH) // TILEWIDTH
+                new_pos_y = (mouse_pos[1] + self.camera.get_y() * TILEHEIGHT) // TILEHEIGHT
+                new_pos = int(new_pos_x), int(new_pos_y)
                 new_pos = tclamp(new_pos, self.get_bounds()[:2], self.get_bounds()[2:])
                 dpos = new_pos[0] - self.position[0], new_pos[1] - self.position[1]
                 dx = dpos[0]
@@ -213,6 +210,13 @@ class BaseCursor():
                 else:
                     self.camera.cursor_x(self.position[0])
                     self.camera.cursor_y(self.position[1])
+
+    def take_input(self):
+        self.fluid.update()
+        is_speed_state = self._transition_speed > 1
+        directions = self.fluid.get_directions(double_speed=is_speed_state)
+
+        self._handle_move(directions)
 
     def update_offset(self):
         # update offset for movement
