@@ -129,9 +129,9 @@ class InfoGraph():
             # First try to find a close box by moving in the right direction
             horiz_penalty, vert_penalty = 1, 1
             if horiz:
-                vert_penalty = 6
+                vert_penalty = 10
             else:
-                horiz_penalty = 6
+                horiz_penalty = 10
             
             for bb in boxes:
                 curr_topleft = self.current_bb.aabb[:2]

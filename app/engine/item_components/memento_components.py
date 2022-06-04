@@ -151,12 +151,16 @@ class MementoRallyStatus(ItemComponent):
     distance = 2
 
     def end_combat(self, playback, unit, item, target, mode):
+        if unit.dead or unit.is_dying:
+            return
+
         for other in game.get_all_units():
             if other is not unit and other.team == unit.team and utils.calculate_distance(other.position, unit.position) <= self.distance:
                 playback.append(pb.StatusHit(unit, item, other, self.value))
                 action.do(action.AddSkill(other, self.value, unit))
                 # A E S T H E T I C
                 other.sprite.begin_flicker(200, (255, 255, 255))
+
         # Display Rally Sprite
         anim_nid = 'AOE_Rally'
         anim = RESOURCES.animations.get(anim_nid)
@@ -196,6 +200,7 @@ class MementoRallyHeals(ItemComponent):
                 for idx, num in enumerate(str_damage):
                     d = gui.DamageNumber(int(num, idx, len(str_damage), other.position, 'small_cyan'))
                     other.sprite.damage_numbers.append(d)
+
         # Display Rally Sprite
         anim_nid = 'AOE_Rally'
         anim = RESOURCES.animations.get(anim_nid)

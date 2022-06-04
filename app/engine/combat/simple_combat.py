@@ -221,8 +221,8 @@ class SimpleCombat():
             self.attacker.strike_partner = None
         if self.defender:
             if self.defender.strike_partner:
-                skill_system.end_combat(self.full_playback, self.defender.strike_partner, self.main_item, self.attacker, 'defense')
-                item_system.end_combat(self.full_playback, self.defender.strike_partner, self.main_item, self.attacker, 'defense')
+                skill_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.get_weapon(), self.attacker, 'defense')
+                item_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.get_weapon(), self.attacker, 'defense')
                 self.defender.strike_partner = None
         already_pre = [self.attacker]
         for idx, defender in enumerate(self.defenders):

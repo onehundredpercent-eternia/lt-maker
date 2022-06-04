@@ -128,6 +128,14 @@ class AttackerPartnerState(SolverState):
 
     def get_next_state(self, solver):
         command = solver.get_script()
+
+        if solver.attacker.strike_partner:
+            can_double_in_pairup = \
+                not DB.constants.value('limit_attack_stance') or \
+                skill_system.attack_stance_double(solver.attacker.strike_partner)
+        else:
+            can_double_in_pairup = False
+
         if solver.attacker_alive() and solver.defender_alive():
             if command == '--':
                 if solver.defender:
@@ -152,6 +160,9 @@ class AttackerPartnerState(SolverState):
                         solver.num_attacks < attacker_outspeed:
                     solver.num_subattacks = 0
                     return 'attacker'
+                # When you double but your ally doesn't and also the opponent doesn't counter you.
+                elif solver.num_attacks == 1 and can_double_in_pairup:
+                    return 'attacker_partner'
                 return None
             else:
                 return self.process_command(command)

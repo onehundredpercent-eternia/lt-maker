@@ -149,7 +149,7 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
     return base_val
 
 def get_num_points(chapter_num: int):
-    return 5 + chapter_num//2
+    return 4 + chapter_num//2
 
 def get_promoted_class(klass_nid: str) -> str:
     klass = DB.classes.get(klass_nid)
@@ -172,7 +172,7 @@ def completed_chapters() -> int:
 
 def determine_avg_level():
     num_complete = completed_chapters()
-    return num_complete * 2 + 1
+    return num_complete * 2
 
 def create_unit(klass, position, level, ai, ai_group, is_elite=False):
     unit_nid = str_utils.get_next_generic_nid('301', [unit.nid for unit in game.units])

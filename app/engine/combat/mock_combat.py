@@ -203,6 +203,10 @@ class MockCombat():
     def get_damage(self):
         return self.damage
 
+    def get_glancing_hit(self):
+        glancing_hit_marks = self.get_from_playback('mark_glancing_hit')
+        return glancing_hit_marks
+
     def left_team(self):
         return 'enemy'
 
@@ -211,16 +215,19 @@ class MockCombat():
 
     def hit_spark(self):
         if self.get_damage() > 0:
-            if self.current_battle_anim is self.right_battle_anim:
-                position = (-110, -30)
+            if self.get_glancing_hit():
+                self.glancing_hit()
             else:
-                position = (-40, -30)
-            anim_nid = 'HitSpark'
-            animation = RESOURCES.animations.get(anim_nid)
-            if animation:
-                anim = Animation(animation, position)
-                anim.set_tint(True)
-                self.animations.append(anim)
+                if self.current_battle_anim is self.right_battle_anim:
+                    position = (-110, -30)
+                else:
+                    position = (-40, -30)
+                anim_nid = 'HitSpark'
+                animation = RESOURCES.animations.get(anim_nid)
+                if animation:
+                    anim = Animation(animation, position)
+                    anim.set_tint(True)
+                    self.animations.append(anim)
         else:
             self.no_damage()
 
@@ -249,6 +256,22 @@ class MockCombat():
             team = self.left_team()
         color = utils.get_team_color(team)
         anim_nid = 'NoDamage%s' % color.capitalize()
+        animation = RESOURCES.animations.get(anim_nid)
+        if animation:
+            anim = Animation(animation, position)
+            self.animations.append(anim)
+        # Also offset battle animation by lr_offset
+        self.current_battle_anim.lr_offset = [-1, -3, -5, -3, -1]
+
+    def glancing_hit(self):
+        if self.current_battle_anim is self.right_battle_anim or self.current_battle_anim is self.rp_battle_anim:
+            position = (52, 21)
+            team = self.right_team()
+        else:
+            position = (110, 21)
+            team = self.left_team()
+        color = utils.get_team_color(team)
+        anim_nid = 'GlancingHit%s' % color.capitalize()
         animation = RESOURCES.animations.get(anim_nid)
         if animation:
             anim = Animation(animation, position)
