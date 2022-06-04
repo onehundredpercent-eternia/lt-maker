@@ -132,7 +132,7 @@ class InfoGraph():
                 vert_penalty = 10
             else:
                 horiz_penalty = 10
-            
+
             for bb in boxes:
                 curr_topleft = self.current_bb.aabb[:2]
                 other_topleft = bb.aabb[:2]

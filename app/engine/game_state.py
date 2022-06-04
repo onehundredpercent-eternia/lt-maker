@@ -893,6 +893,7 @@ class GameState():
     def set_bexp(self, amount):
         self.parties[self.current_party].bexp = amount
 
+    # Random funcs
     def get_random(self, a: int, b: int) -> int:
         """
         Canonical method for getting a random integer from within an event

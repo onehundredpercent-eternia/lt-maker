@@ -28,6 +28,14 @@
         false
     ],
     [
+        "attack_stance_only",
+        true
+    ],
+    [
+        "player_pairup_only",
+        true
+    ],
+    [
         "lead",
         false
     ],
@@ -85,6 +93,10 @@
     ],
     [
         "def_double",
+        true
+    ],
+    [
+        "unit_stats_as_bonus",
         true
     ],
     [
@@ -154,6 +166,10 @@
     [
         "num_save_slots",
         3
+    ],
+    [
+        "sell_modifier",
+        0.5
     ],
     [
         "attack_zero_hit",

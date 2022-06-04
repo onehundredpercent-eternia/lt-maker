@@ -7,6 +7,8 @@ from app.utilities import utils
 from app.engine import action, target_system
 from app.engine.game_state import game
 
+import logging
+
 class SupportPair():
     """
     Keeps track of necessary values for each support pair
@@ -149,6 +151,9 @@ class SupportController():
         pairs = []
         for key, pair in self.support_pairs.items():
             prefab = DB.support_pairs.get(key)
+            if not prefab:  # In case you somehow deleted a pair!
+                logging.warning("Support Pair with key %s no longer exists in database! Skipping..." % key)
+                continue
             if prefab.unit1 == unit_nid or (prefab.unit2 == unit_nid and not prefab.one_way):
                 pairs.append(pair)
         return pairs
@@ -363,4 +368,4 @@ def increment_interact_supports(combatant, target) -> bool:
     return increment_supports(combatant, target, 'interact_points')
 
 def increment_pairup_supports(combatant, partner) -> bool:
-    return increment_supports(combatant, target, 'pairup_points')
+    return increment_supports(combatant, partner, 'pairup_points')

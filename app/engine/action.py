@@ -2306,6 +2306,17 @@ class DecrementTimeRegion(Action):
     def reverse(self):
         self.region.sub_nid = int(self.region.sub_nid) + 1
 
+class DecrementTimeRegion(Action):
+    def __init__(self, region):
+        self.region = region
+
+    def do(self):
+        self.region.sub_nid = int(self.region.sub_nid) - 1
+
+    def reverse(self):
+        self.region.sub_nid = int(self.region.sub_nid) + 1
+
+
 class RemoveRegion(Action):
     def __init__(self, region):
         self.region = region

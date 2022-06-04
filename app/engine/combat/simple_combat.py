@@ -559,7 +559,7 @@ class SimpleCombat():
                     pairs += supports.increment_end_combat_supports(self.attacker, self.defender)
                 else:
                     pairs += supports.increment_end_combat_supports(unit)
-            
+
             enemies = all_units.copy()
             enemies.remove(self.attacker)
             for unit in enemies:

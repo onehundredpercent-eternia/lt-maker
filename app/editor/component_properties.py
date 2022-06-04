@@ -92,7 +92,7 @@ class ComponentProperties(QWidget):
         self.toolbar.addWidget(self.show_components_button)
 
         for component in self.get_components():
-            if component.tag.value not in {'hidden', 'deprecated'}:
+            if component.tag.value not in ('hidden', 'deprecated'):
                 if component.tag.value not in self.menus:
                     new_menu = QHelpMenu(self)
                     self.menus[component.tag.value] = new_menu
