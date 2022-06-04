@@ -79,6 +79,7 @@ constants = ConstantCatalog([
     Constant('reset_mana', "Mana resets to full for units upon completion of the chapter", bool),
     Constant('double_splash', "When doubling, splash/aoe damage is applied on the second strike as well", bool),
     Constant('num_save_slots', "Number of save slots", int, 3, 'title'),
+    Constant('sell_modifier', "Value multiplier when selling an item", float, 0.5, 'inventory'),
     Constant('attack_zero_hit', "Enemy AI attacks even if Hit is 0", bool, True, 'ai'),
     Constant('attack_zero_dam', "Enemy AI attacks even if Damage is 0", bool, True, 'ai'),
     Constant('zero_move', "Show Movement as 0 if AI does not move", bool, False, 'ai'),

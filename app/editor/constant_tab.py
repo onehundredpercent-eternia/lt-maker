@@ -369,7 +369,7 @@ class ConstantDatabase(DatabaseTab):
                        "How should enemy units get their automatic level ups")
         battle_section = self.create_section(battle_constants, battle_info)
         battle_section.setTitle("Battle Constants")
-        misc_constants = ('game_nid', 'title', 'num_save_slots')
+        misc_constants = ('game_nid', 'title', 'num_save_slots', 'sell_modifier')
         misc_section = self.create_section(misc_constants)
         misc_section.setTitle("Miscellaneous Constants")
         music_constants = ('music_main', 'music_promotion', 'music_class_change')
@@ -430,6 +430,13 @@ class ConstantDatabase(DatabaseTab):
                 box = PropertyBox(constant.name, QSpinBox, self)
                 box.edit.setRange(0, 10)
                 box.edit.setValue(constant.value)
+                box.edit.setAlignment(Qt.AlignRight)
+                box.edit.valueChanged.connect(constant.set_value)
+            elif constant.attr == float:
+                box = PropertyBox(constant.name, QDoubleSpinBox, self)
+                box.edit.setRange(0, 10)
+                box.edit.setValue(constant.value)
+                box.edit.setDecimals(1)
                 box.edit.setAlignment(Qt.AlignRight)
                 box.edit.valueChanged.connect(constant.set_value)
             elif constant.attr == str:

@@ -1,5 +1,6 @@
 from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
+from app.data.database import DB
 
 class Spell(ItemComponent):
     nid = 'spell'
@@ -116,7 +117,7 @@ class Unsplashable(ItemComponent):
 
 class Value(ItemComponent):
     nid = 'value'
-    desc = "Item has a value and can be bought and sold. Items sell for half their value."
+    desc = "Item has a value and can be bought and sold. Items sell for a reduced value based on the value multiplier constant."
     tag = ItemTags.BASE
 
     expose = Type.Int
@@ -134,8 +135,8 @@ class Value(ItemComponent):
     def sell_price(self, unit, item):
         if item.uses:
             frac = item.data['uses'] / item.data['starting_uses']
-            return self.value * frac / 2
-        return self.value / 2
+            return self.value * frac * DB.constants.value('sell_modifier')
+        return self.value * DB.constants.value('sell_modifier')
 
 class Accessory(ItemComponent):
     nid = 'accessory'

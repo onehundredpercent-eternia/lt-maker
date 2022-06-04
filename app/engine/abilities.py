@@ -155,7 +155,7 @@ class TakeAbility(Ability):
         if not unit.traveler and not unit.has_attacked and not unit.has_given and not unit.has_dropped:
             adj_allies = target_system.get_adj_allies(unit)
             return set([u.position for u in adj_allies if u.traveler and
-                        equations.parser.rescue_aid(unit) > equations.parser.rescue_weight(game.get_unit(u.traveler))])
+                        equations.parser.rescue_aid(unit) >= equations.parser.rescue_weight(game.get_unit(u.traveler))])
 
     @staticmethod
     def do(unit):
@@ -175,7 +175,7 @@ class GiveAbility(Ability):
         if unit.traveler and not unit.has_attacked and (not unit.has_taken or DB.constants.value('give_and_take')) and not unit.has_rescued:
             adj_allies = target_system.get_adj_allies(unit)
             return set([u.position for u in adj_allies if not u.traveler and
-                        equations.parser.rescue_aid(u) > equations.parser.rescue_weight(game.get_unit(unit.traveler))])
+                        equations.parser.rescue_aid(u) >= equations.parser.rescue_weight(game.get_unit(unit.traveler))])
 
     @staticmethod
     def do(unit):
