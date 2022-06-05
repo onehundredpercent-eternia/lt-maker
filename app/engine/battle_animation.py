@@ -1,4 +1,4 @@
-from app.constants import WINWIDTH, COLORKEY
+from app.constants import WINWIDTH, WINHEIGHT, COLORKEY
 from app.utilities import utils
 from app.resources.resources import RESOURCES
 from app.data.database import DB
@@ -726,7 +726,7 @@ class BattleAnimation():
         image = self.image_directory[frame.nid].copy()
         if not self.right:
             image = engine.flip_horiz(image)
-        offset = frame.offset
+        offset = frame.offset[0] + (WINWIDTH - 240)//2, frame.offset[1] + (WINHEIGHT - 160)
         # Handle offset (placement of the object on the screen)
         if self.lr_offset:
             offset = offset[0] + self.lr_offset.pop(), offset[1] + y_offset

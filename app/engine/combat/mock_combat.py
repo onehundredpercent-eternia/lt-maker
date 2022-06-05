@@ -360,8 +360,8 @@ class MockCombat():
             self.darken_ui_background += 1
 
     def draw_ui(self, surf) -> tuple:
-        platform_trans = 88
-        platform_top = 88
+        platform_trans = 88 + 20
+        platform_top = 88 + 20
         if self.darken_background or self.target_dark:
             bg = image_mods.make_translucent(SPRITES.get('bg_black'), 1 - self.darken_background)
             surf.blit(bg, (0, 0))
@@ -386,8 +386,8 @@ class MockCombat():
         if not self.battle_background or DB.constants.value('battle_platforms'):
             top = platform_top + (platform_trans - self.bar_offset * platform_trans) + total_shake_y
             if self.at_range:
-                surf.blit(self.left_platform, (9 - self.pan_max + total_shake_x + self.pan_offset, top))
-                surf.blit(self.right_platform, (131 + self.pan_max + total_shake_x + self.pan_offset, top))
+                surf.blit(self.left_platform, (WINWIDTH//2 - self.left_platform.get_width() - 11 - self.pan_max + total_shake_x + self.pan_offset, top))
+                surf.blit(self.right_platform, (WINWIDTH // 2 + 11 + self.pan_max + total_shake_x + self.pan_offset, top))
             else:
                 surf.blit(self.left_platform, (WINWIDTH // 2 - self.left_platform.get_width() + total_shake_x, top))
                 surf.blit(self.right_platform, (WINWIDTH // 2 + total_shake_x, top))
@@ -409,9 +409,9 @@ class MockCombat():
         for damage_num in self.damage_numbers:
             damage_num.update()
             if damage_num.left:
-                x_pos = 94 + left_range_offset - total_shake_x + self.pan_offset
+                x_pos = WINWIDTH//2 - 26 + left_range_offset - total_shake_x + self.pan_offset
             else:
-                x_pos = 146 + right_range_offset - total_shake_x + self.pan_offset
+                x_pos = WINWIDTH//2 + 26 + right_range_offset - total_shake_x + self.pan_offset
             damage_num.draw(surf, (x_pos, 40))
         self.damage_numbers = [d for d in self.damage_numbers if not d.done]
 

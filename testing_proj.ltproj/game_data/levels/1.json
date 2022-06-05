@@ -68,6 +68,18 @@
                 ],
                 "starting_traveler": null,
                 "generic": false
+            },
+            {
+                "nid": "Joshua",
+                "team": "other",
+                "ai": "None",
+                "ai_group": null,
+                "starting_position": [
+                    6,
+                    4
+                ],
+                "starting_traveler": null,
+                "generic": false
             }
         ],
         "regions": [

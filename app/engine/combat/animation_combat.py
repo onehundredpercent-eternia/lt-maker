@@ -512,6 +512,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         else:
             font = FONT['text-brown']
         font.blit_center(self.left.name, self.left_name, (30, 8))
+        # Partner name tag
         if self.lp_battle_anim:
             if self.left.strike_partner:
                 ln = self.left.strike_partner.name
@@ -534,7 +535,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 font = FONT['narrow-brown']
             else:
                 font = FONT['text-brown']
-            font.blit_center(name, self.left_bar, (91, 5 + (8 if crit_flag else 0)))
+            font.blit_center(name, self.left_bar, (61 + 50, 5 + (8 if crit_flag else 0)))
 
         # Right
         right_color = utils.get_team_color(self.right.team)
@@ -567,7 +568,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 font = FONT['narrow-brown']
             else:
                 font = FONT['text-brown']
-            font.blit_center(name, self.right_bar, (47, 5 + (8 if crit_flag else 0)))
+            font.blit_center(name, self.right_bar, (1 + 16 + 50, 5 + (8 if crit_flag else 0)))
 
         # Platforms
         if self.left.position:
@@ -968,7 +969,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.draw_item(right_bar, self.right_item, self.left_item, self.right, self.left, (1, 2 + crit))
         # Stats
         self.draw_stats(left_bar, self.left_stats, (42, 0))
-        self.draw_stats(right_bar, self.right_stats, (WINWIDTH // 2 - 3, 0))
+        self.draw_stats(right_bar, self.right_stats, (160 - 3, 0))
 
         bar_trans = 52
         left_pos_x = -3 + self.shake_offset[0]
@@ -979,7 +980,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         combat_surf.blit(right_bar, (right_pos_x, right_pos_y))
 
         # Guard gauge counter
-        if DB.constants.value('pairup'):
+        if DB.constants.value('pairup') and not DB.constants.value('attack_stance_only'):
             left_color = utils.get_team_color(self.left.team)
             right_color = utils.get_team_color(self.right.team)
             right_gauge = None
