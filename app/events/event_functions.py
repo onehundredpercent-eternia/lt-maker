@@ -1404,7 +1404,7 @@ def give_wexp(self: Event, global_unit, weapon_type, positive_integer, flags=Non
     else:
         action.do(action.AddWexp(unit, weapon_type, wexp))
 
-def give_skill(self: Event, global_unit, skill, flags=None):
+def give_skill(self: Event, global_unit, skill, initiator=None, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
@@ -1415,8 +1415,13 @@ def give_skill(self: Event, global_unit, skill, flags=None):
     if skill_nid not in DB.skills.keys():
         self.logger.error("Couldn't find skill with nid %s" % skill)
         return
+    if initiator is not None:
+        initiator = self._get_unit(initiator)
+        if not initiator:
+            self.logger.error("Couldn't find unit with nid %s" % initiator)
+            return
     banner_flag = 'no_banner' not in flags
-    action.do(action.AddSkill(unit, skill_nid))
+    action.do(action.AddSkill(unit, skill_nid, initiator))
     if banner_flag:
         skill = DB.skills.get(skill_nid)
         b = banner.GiveSkill(unit, skill)

@@ -1338,9 +1338,12 @@ class GiveSkill(EventCommand):
     desc = \
         """
 *GlobalUnit* gains *Skill*. If the *no_banner* flag is set, the player will not be informed of this.
+Optional *Initiator* global unit can be given to give the skill an initiator.
         """
 
     keywords = ["GlobalUnit", "Skill"]
+    optional_keywords = ["Initiator"]
+    keyword_types = ["GlobalUnit", "Skill", "GlobalUnit"]
     _flags = ['no_banner']
 
 class RemoveSkill(EventCommand):
