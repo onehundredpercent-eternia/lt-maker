@@ -11,12 +11,17 @@ class CurveType(IntEnum):
     Quad = 2
     Cubic = 3
 
+# Draft of a very generic tween object that can tween any property
+# of any object
 class Tween():
     def __init__(self, getter, setter, final_value, duration, curve=None, starting_time=None):
         """
         getter -> function to call to get value
-        to -> what the value should become
+        setter -> function to call to set the value
+        final_value -> what the value should become
         duration -> how long the tween should last  # milliseconds
+        curve -> How to lerp the value over time
+        starting_time -> delay the start by some amount of time
         """
         self.getter = getter
         self.setter = setter
@@ -29,6 +34,7 @@ class Tween():
 
         self.is_tuple = isinstance(self.starting_value, tuple)
 
+        # State variables
         self.playing = True
         self.done = False
 
@@ -52,7 +58,9 @@ class Tween():
                     val = tlerp(self.starting_value, self.final_value, perc)
                 else:
                     val = lerp(self.starting_value, self.final_value, perc)
+            # Now set the calculated value
             self.setter(val)
+            # Hey, we're done!
             if perc >= 1:
                 self.done = True
 
@@ -91,10 +99,12 @@ if __name__ == '__main__':
         tween.update(counter)
         print(obj.color)
 
-    print("Now cubic position!")
+    print("Now cubic curve!")
     tween = Tween(lambda: obj.pos, pos_setter, 7, 5, CurveType.Cubic)
     counter = 0
     while not tween.done:
         counter += 0.5
         tween.update(counter)
         print(obj.pos)
+
+# TODO: TweenSequences, QuadLerp?
