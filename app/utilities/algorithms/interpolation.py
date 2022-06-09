@@ -62,6 +62,14 @@ def tlog_interp(a: tuple, b: tuple, t: float, skew: float = 10) -> float:
     interp_func = lambda t1, t2: log_interp(t1, t2, t, skew)
     return tuple(map(interp_func, a, b))
 
+def quad_easing_in_out(a: float, b: float, t: float) -> float:
+    ratio = 2 * t * t if t < 0.5 else (-1 + (4 - 2 * t) * t)
+    return (b - a) * ratio + a
+
+def tquad_easing_in_out(a: tuple, b: tuple, t: float) -> tuple:
+    ease_func = lambda t1, t2: quad_easing_in_out(t1, t2, t)
+    return tuple(map(ease_func, a, b))
+
 def cubic_easing(a: float, b: float, t: float) -> float:
     ratio = 4 * t * t * t if t < 0.5 else (1 - math.pow(-2 * t + 2, 3) / 2)
     return (b - a) * ratio + a
