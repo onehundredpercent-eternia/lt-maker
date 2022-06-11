@@ -49,6 +49,8 @@ class LevelPrefab(Prefab):
             value = Data([UnitGroup.restore(val) for val in value])
         elif name == 'regions':
             value = Data([Region.restore(val) for val in value])
+        elif name == 'music':
+            value = {k: value.get(k) for k in self.music.keys()}
         else:
             value = super().restore_attr(name, value)
         return value

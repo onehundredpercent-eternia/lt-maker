@@ -56,8 +56,12 @@
         true
     ],
     [
-        "unit_notes",
+        "overworld_start",
         false
+    ],
+    [
+        "unit_notes",
+        true
     ],
     [
         "crit",
@@ -97,7 +101,7 @@
     ],
     [
         "unit_stats_as_bonus",
-        true
+        false
     ],
     [
         "enemy_leveling",
@@ -277,6 +281,10 @@
     ],
     [
         "glancing_hit",
+        false
+    ],
+    [
+        "display_attack_speed",
         false
     ]
 ]

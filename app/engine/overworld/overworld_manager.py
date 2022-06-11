@@ -122,7 +122,7 @@ class OverworldManager():
             return
         if isinstance(party, OverworldEntityObject):
             party = party.nid
-        selected_entity = self._overworld.overworld_entities[party]
+        selected_entity = self._overworld.overworld_entities.get(party, None)
         if selected_entity and selected_entity.dtype == OverworldEntityTypes.PARTY:
             self._overworld.selected_party_nid = party
         else:

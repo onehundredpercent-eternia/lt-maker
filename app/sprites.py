@@ -31,7 +31,7 @@ class SpriteDict(dict):
         if val in self:
             return self[val].image
         # Defaults to this
-        return self['bg_black_tile'].iamge
+        return self['bg_black_tile'].image
 
 def load_sprites(root):
     for root, dirs, files in os.walk(root):

@@ -2560,6 +2560,7 @@ def loop_units(self: Event, expression, event, flags=None):
 def change_roaming(self: Event, free_roam_enabled, flags=None):
     val = free_roam_enabled.lower()
     if self.game.level:
+        self.game.action_log.set_first_free_action()
         self.game.level.roam = val in self.true_vals
 
 def change_roaming_unit(self: Event, unit, flags=None):

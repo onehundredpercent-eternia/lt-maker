@@ -45,7 +45,7 @@ class LiveToServe(SkillComponent):
         total_amount_healed = 0
         playbacks = [p for p in playback if p.nid == 'heal_hit' and p.attacker is unit and p.defender is not unit]
         for p in playbacks:
-            total_amount_healed += p[4]
+            total_amount_healed += p.damage
 
         amount = int(total_amount_healed * self.value)
         if amount > 0:

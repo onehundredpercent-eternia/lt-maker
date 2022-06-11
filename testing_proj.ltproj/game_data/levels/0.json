@@ -12,8 +12,7 @@
             "player_battle": "Attack",
             "enemy_battle": "Defense",
             "other_battle": null,
-            "enemy2_battle": null,
-            "base": null
+            "enemy2_battle": null
         },
         "objective": {
             "simple": "Defeat boss",

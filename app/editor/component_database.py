@@ -1,5 +1,6 @@
 from functools import partial
 
+from app.utilities import utils
 from app.data.components import Type
 from app.data.database import DB
 from app.extensions import list_models
@@ -18,6 +19,9 @@ from PyQt5.QtWidgets import (QComboBox, QDoubleSpinBox, QHBoxLayout,
                              QItemDelegate, QLabel, QLineEdit, QListWidgetItem,
                              QSpinBox, QToolButton, QWidget)
 
+MIN_DROP_DOWN_WIDTH = 120
+MAX_DROP_DOWN_WIDTH = 640
+DROP_DOWN_BUFFER = 24
 
 class ComponentList(WidgetList):
     def add_component(self, component):
@@ -171,9 +175,10 @@ class OptionsItemComponent(BoolItemComponent):
 class WeaponTypeItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for weapon_type in DB.weapons.values():
             self.editor.addItem(weapon_type.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.weapons:
             self._data.value = DB.weapons[0].nid
         self.editor.setValue(self._data.value)
@@ -183,9 +188,10 @@ class WeaponTypeItemComponent(BoolItemComponent):
 class WeaponRankItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for weapon_rank in DB.weapon_ranks.values():
             self.editor.addItem(weapon_rank.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.weapon_ranks:
             self._data.value = DB.weapon_ranks[0].nid
         self.editor.setValue(self._data.value)
@@ -195,8 +201,9 @@ class WeaponRankItemComponent(BoolItemComponent):
 class EquationItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         self.editor.addItems(DB.equations.keys())
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.equations:
             self._data.value = DB.equations[0].nid
         self.editor.setValue(self._data.value)
@@ -240,9 +247,10 @@ class Color4ItemComponent(BoolItemComponent):
 class ClassItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for klass in DB.classes.values():
             self.editor.addItem(klass.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.classes:
             self._data.value = DB.classes[0].nid
         self.editor.setValue(self._data.value)
@@ -252,9 +260,10 @@ class ClassItemComponent(BoolItemComponent):
 class AffinityItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for affinity in DB.affinities.values():
             self.editor.addItem(affinity.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.affinities:
             self._data.value = DB.affinities[0].nid
         self.editor.setValue(self._data.value)
@@ -264,9 +273,10 @@ class AffinityItemComponent(BoolItemComponent):
 class ItemItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for item in DB.items.values():
             self.editor.addItem(item.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.items:
             self._data.value = DB.items[0].nid
         self.editor.setValue(self._data.value)
@@ -276,9 +286,10 @@ class ItemItemComponent(BoolItemComponent):
 class SkillItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for skill in DB.skills.values():
             self.editor.addItem(skill.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.skills:
             self._data.value = DB.skills[0].nid
         self.editor.setValue(self._data.value)
@@ -288,9 +299,10 @@ class SkillItemComponent(BoolItemComponent):
 class MusicItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for music in RESOURCES.music.values():
             self.editor.addItem(music.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and RESOURCES.music:
             self._data.value = RESOURCES.music[0].nid
         self.editor.setValue(self._data.value)
@@ -300,9 +312,10 @@ class MusicItemComponent(BoolItemComponent):
 class SoundItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for sound in RESOURCES.sfx.values():
             self.editor.addItem(sound.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and RESOURCES.sfx:
             self._data.value = RESOURCES.sfx[0].nid
         self.editor.setValue(self._data.value)
@@ -312,9 +325,10 @@ class SoundItemComponent(BoolItemComponent):
 class MapAnimationItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for map_anim in RESOURCES.animations.values():
             self.editor.addItem(map_anim.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and RESOURCES.animations:
             self._data.value = RESOURCES.animations[0].nid
         self.editor.setValue(self._data.value)
@@ -324,9 +338,10 @@ class MapAnimationItemComponent(BoolItemComponent):
 class EffectAnimationItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         for effect_anim in RESOURCES.combat_effects.values():
             self.editor.addItem(effect_anim.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and RESOURCES.combat_effects:
             self._data.value = RESOURCES.combat_effects[0].nid
         self.editor.setValue(self._data.value)
@@ -336,8 +351,9 @@ class EffectAnimationItemComponent(BoolItemComponent):
 class AIItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         self.editor.addItems(DB.ai.keys())
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.ai:
             self._data.value = DB.ai[0].nid
         self.editor.setValue(self._data.value)
@@ -351,8 +367,9 @@ class AIItemComponent(BoolItemComponent):
 class MovementTypeItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         self.editor.addItems(DB.mcost.unit_types)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.mcost.unit_types:
             self._data.value = DB.mcost.unit_types[0]
         self.editor.setValue(self._data.value)
@@ -366,8 +383,9 @@ class MovementTypeItemComponent(BoolItemComponent):
 class StatItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         self.editor.addItems(DB.stats.keys())
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and DB.stats:
             self._data.value = DB.stats[0].nid
         self.editor.setValue(self._data.value)
@@ -381,11 +399,12 @@ class StatItemComponent(BoolItemComponent):
 class EventItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
-        self.editor.setMaximumWidth(120)
         # Only use global events
         valid_events = [event for event in DB.events.values() if not event.level_nid]
         for event in valid_events:
             self.editor.addItem(event.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width() + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
         if not self._data.value and valid_events:
             self._data.value = valid_events[0].nid
         self.editor.setValue(self._data.value)

@@ -483,8 +483,6 @@ class UIComponent():
         self._should_redraw = True
         for child in self.children:
             child.exit(False)
-        if '!exit' not in self.saved_animations:
-            self.enabled = False
         if not is_top_level:
             return
         if self.any_children_animating() or self.is_animating():

@@ -280,6 +280,7 @@ def toggle_narration_mode(self: Event, direction, speed=None, flags=None):
             self.wait_time = engine.get_time() + anim_duration
             self.state = 'waiting'
 
+
 def narrate(self: Event, speaker, string, flags=None):
     if not self.overlay_ui.has_child('event_narration'):
         self.logger.error("%s: Not currently in overworld narration mode", "overworld_speak")

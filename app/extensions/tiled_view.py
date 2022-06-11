@@ -41,7 +41,7 @@ class DraggableTileImageView(QGraphicsView):
         if event.button() == Qt.LeftButton:
             self.left_clicked.emit(*tile_pos)
         elif event.button() == Qt.MiddleButton:
-            self.drag_origin = tile_pos
+            self.drag_origin = event.pos()
             self.middle_clicked.emit(*tile_pos)
 
     def mouseMoveEvent(self, event):
@@ -51,13 +51,15 @@ class DraggableTileImageView(QGraphicsView):
         self.mouse_moved.emit(*tile_pos)
         if self.drag_origin:
             offset = self.drag_origin - event.pos()
-            self.drag_origin = tile_pos
+            self.drag_origin = event.pos()
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() + offset.y())
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + offset.x())
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.left_released.emit()
+        elif event.button() == Qt.MiddleButton:
+            self.drag_origin = None
 
     def zoom_in(self):
         if self.screen_scale < self.max_scale:

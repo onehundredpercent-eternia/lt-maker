@@ -2332,7 +2332,8 @@ class OverworldCinematic(EventCommand):
     tag = Tags.OVERWORLD
     desc = 'Sets the background to the overworld, allowing us to create cutscenes set in the overworld'
 
-    optional_keywords = ['OverworldNid']
+    optional_keywords = ['OverworldNID']
+    keyword_types = ['OverworldNID']
 
 class SetOverworldPosition(EventCommand):
     nid = 'set_overworld_position'

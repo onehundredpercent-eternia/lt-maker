@@ -244,7 +244,7 @@ class ChoiceTable(SimpleIconTable):
 
     def update_cursor_and_highlight(self):
         x, y = self.selected_index
-        cy = (y - self.column_components[x].scrolled_index) * self.column_components[x].row_height + 3
+        cy = min(max(0, (y - self.column_components[x].scrolled_index)), (self.num_rows - 1) if self.num_rows > 0 else 99) * self.column_components[x].row_height + 3
         cursor_y = cy + self.header_height - 8
         cursor_x = x * self.column_components[0].width - 4
         self.cursor_offset_index = (self.cursor_offset_index + 1) % len(self.cursor_offsets)

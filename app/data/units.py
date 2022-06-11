@@ -58,6 +58,8 @@ class UnitPrefab(Prefab):
             return value.copy()  # So we don't make a copy
         elif name == 'learned_skills':
             return [val.copy() for val in value]  # So we don't make a copy
+        elif name == 'unit_notes':
+            return [val.copy() for val in value]
         elif name == 'wexp_gain':
             return {k: v.save() for (k, v) in self.wexp_gain.items()}
         else:

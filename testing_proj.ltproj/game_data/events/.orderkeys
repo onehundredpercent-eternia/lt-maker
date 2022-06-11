@@ -1,3 +1,9 @@
 {
-    "1_TurnChange.json": 0
+    "1_TurnChange.json": 0,
+    "1_Switch.json": 1,
+    "0_New_Event.json": 2,
+    "0_Test_Event.json": 3,
+    "0_Test_Event_(1).json": 4,
+    "1_FogOfwar.json": 5,
+    "1_GroupSpawn.json": 6
 }

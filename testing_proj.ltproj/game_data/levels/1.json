@@ -70,16 +70,26 @@
                 "generic": false
             },
             {
-                "nid": "Joshua",
-                "team": "other",
+                "nid": "102",
+                "variant": null,
+                "level": 1,
+                "klass": "Mage",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Aether",
+                        false
+                    ]
+                ],
+                "team": "player",
                 "ai": "None",
                 "ai_group": null,
                 "starting_position": [
-                    6,
-                    4
+                    4,
+                    2
                 ],
                 "starting_traveler": null,
-                "generic": false
+                "generic": true
             }
         ],
         "regions": [
@@ -97,23 +107,25 @@
                 "sub_nid": "Destructible",
                 "condition": "True",
                 "only_once": true,
-                "interrupt_move": false
+                "interrupt_move": false,
+                "group_data": {}
             },
             {
-                "nid": "New Region",
-                "region_type": "status",
+                "nid": "Switch",
+                "region_type": "event",
                 "position": [
                     2,
-                    1
+                    0
                 ],
                 "size": [
-                    9,
-                    8
+                    7,
+                    5
                 ],
-                "sub_nid": "Skill +5",
+                "sub_nid": "Switch",
                 "condition": "True",
-                "only_once": false,
-                "interrupt_move": false
+                "only_once": true,
+                "interrupt_move": false,
+                "group_data": {}
             }
         ],
         "unit_groups": []

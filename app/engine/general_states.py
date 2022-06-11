@@ -591,6 +591,7 @@ class CantoWaitState(MapState):
     name = 'canto_wait'
 
     def start(self):
+        get_sound_thread().play_sfx('Select 2')
         self.cur_unit = game.cursor.cur_unit
         self.menu = menus.Choice(self.cur_unit, ['Wait'])
 
@@ -701,8 +702,11 @@ class MenuState(MapState):
             if target_system.get_valid_targets(self.cur_unit, ability) and item_system.available(self.cur_unit, ability):
                 options.insert(start_index, ability_name)
 
-        # Handle combat art options
-        self.combat_arts = skill_system.get_combat_arts(self.cur_unit)
+        # Handle combat art options (only available if you haven't attacked)
+        if not self.cur_unit.has_attacked:
+            self.combat_arts = skill_system.get_combat_arts(self.cur_unit)
+        else:
+            self.combat_arts = []
         if 'Attack' in options:
             start_index = options.index('Attack') + 1
         else:
