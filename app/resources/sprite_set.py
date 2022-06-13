@@ -34,5 +34,5 @@ class SpriteSet():
 
 class SpriteSetCatalog(ManifestCatalog[SpriteSet]):
     manifest = 'animations.json'
-    title = 'animation'
+    title = 'animations'
     datatype = SpriteSet
