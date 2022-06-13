@@ -249,7 +249,7 @@ class MainEditor(QMainWindow):
 
         resource_actions = {"Icons": self.edit_icons,
                             "Portraits": PortraitDatabase.edit,
-                            # "Map Animations": AnimationDatabase.edit_resource,
+                            # "Sprite Sets": SpriteSetDatabase.edit,
                             "Backgrounds": PanoramaDatabase.edit,
                             "Map Sprites": MapSpriteDatabase.edit,
                             "Combat Animations": self.edit_combat_animations,
