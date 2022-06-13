@@ -4,6 +4,8 @@ from app.engine import engine
 from app.utilities import utils
 from app.utilities.algorithms.interpolation import lerp, tlerp, cubic_easing, tcubic_easing
 
+# TODO: TweenSequences
+
 # Time is always measured in milliseconds
 
 class CurveType(IntEnum):
@@ -38,26 +40,36 @@ class Tween():
         self.playing = True
         self.done = False
 
+    def ease(self, perc: float) -> float:
+        if self.curve == CurveType.Linear:
+            if self.is_tuple:
+                val = tlerp(self.starting_value, self.final_value, perc)
+            else:
+                val = lerp(self.starting_value, self.final_value, perc)
+        elif self.curve == CurveType.Quad:
+            if self.is_tuple:
+                val = tquad_easing(self.starting_value, self.final_value, perc)
+            else:
+                val = quad_easing(self.starting_value, self.final_value, perc)
+        elif self.curve == CurveType.Cubic:
+            if self.is_tuple:
+                val = tcubic_easing(self.starting_value, self.final_value, perc)
+            else:
+                val = cubic_easing(self.starting_value, self.final_value, perc)
+        else:
+            if self.is_tuple:
+                val = tlerp(self.starting_value, self.final_value, perc)
+            else:
+                val = lerp(self.starting_value, self.final_value, perc)
+        return val
+
     def update(self, current_time=None):
         if self.playing:
             current_time = current_time or engine.get_time()
             offset_time = current_time - self.starting_time
             perc = utils.clamp(offset_time / self.duration, 0, 1)
-            if self.curve == CurveType.Linear:
-                if self.is_tuple:
-                    val = tlerp(self.starting_value, self.final_value, perc)
-                else:
-                    val = lerp(self.starting_value, self.final_value, perc)
-            elif self.curve == CurveType.Cubic:
-                if self.is_tuple:
-                    val = tcubic_easing(self.starting_value, self.final_value, perc)
-                else:
-                    val = cubic_easing(self.starting_value, self.final_value, perc)
-            else:  # LOL
-                if self.is_tuple:
-                    val = tlerp(self.starting_value, self.final_value, perc)
-                else:
-                    val = lerp(self.starting_value, self.final_value, perc)
+            val = self.ease(perc)
+            
             # Now set the calculated value
             self.setter(val)
             # Hey, we're done!
@@ -106,5 +118,3 @@ if __name__ == '__main__':
         counter += 0.5
         tween.update(counter)
         print(obj.pos)
-
-# TODO: TweenSequences, QuadLerp?
