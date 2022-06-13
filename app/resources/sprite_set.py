@@ -33,6 +33,6 @@ class SpriteSet():
         return self
 
 class SpriteSetCatalog(ManifestCatalog[SpriteSet]):
-    manifest = 'sprite_set.json'
-    title = 'sprite_sets'
+    manifest = 'animations.json'
+    title = 'animation'
     datatype = SpriteSet
