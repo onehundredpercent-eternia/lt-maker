@@ -6,7 +6,7 @@ from app import sprites
 from app.resources.fonts import FontCatalog
 from app.resources.icons import Icon16Catalog, Icon32Catalog, Icon80Catalog
 from app.resources.portraits import PortraitCatalog
-from app.resources.animations import AnimationCatalog
+from app.resources.sprite_sets import SpriteSetCatalog
 from app.resources.panoramas import PanoramaCatalog
 from app.resources.map_icons import MapIconCatalog
 from app.resources.map_sprites import MapSpriteCatalog
@@ -58,7 +58,7 @@ class Resources():
         self.icons80 = Icon80Catalog()
 
         self.portraits = PortraitCatalog()
-        self.animations = AnimationCatalog()
+        self.sprite_sets = SpriteSetCatalog()
 
         self.panoramas = PanoramaCatalog()
         self.map_icons = MapIconCatalog()
