@@ -6,6 +6,7 @@ class SpriteSet():
         self.nid = nid
         self.full_path = full_path
         self.image = None
+        self.images = []
 
         self.frame_x, self.frame_y = 1, 1
         self.num_frames = 1
