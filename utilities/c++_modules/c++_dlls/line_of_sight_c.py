@@ -10,20 +10,20 @@ handle.get_line.argtypes = [
     ctypes.py_object, ctypes.c_int]
 
 def get_line(start: tuple, end: tuple, opacity_grid: list, height: int) -> bool:
-    return handle.get_line(
-        start[0], start[1], end[0], end[1],
-        opacity_grid, height)
+    return handle.get_line(start[0], start[1], end[0], end[1], opacity_grid, height)
 
 if __name__ == '__main__':
-    import time
-    grid = [False for _ in range(150)]
+    import random, time
+    grid = [False for _ in range(100)]
+    num_trials = 100000  # 280 +/- 30 ms
+    random_nums = [random.randint(0, 9) for i in range(num_trials * 4)]
     start = time.time_ns() / 1e6
-    for x in range(10000):
-        out1 = bool(get_line((1, 1), (3, 3), grid, 10))
-        out2 = bool(get_line((1, 1), (3, 5), grid, 10))
-        out3 = bool(get_line((2, 1), (3, 5), grid, 10))
-        out4 = bool(get_line((4, 7), (3, 1), grid, 10))
+    for x in range(num_trials):
+        out = bool(get_line(
+            (random_nums[x * 4], random_nums[x * 4 + 1]), 
+            (random_nums[x * 4 + 2], random_nums[x * 4 + 3]),
+            grid, 10))
     end = time.time_ns() / 1e6
     print(end - start)
 
-    print(out1, out2, out3, out4)
+    print(out)

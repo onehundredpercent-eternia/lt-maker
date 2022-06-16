@@ -346,10 +346,12 @@ class LoadUnitDialog(Dialog):
 
         if current:
             self.current = current
+            self.is_new_unit = False
         else:
             assert len(DB.units) > 0 and len(DB.ai) > 0
             nid = DB.units[0].nid
             self.current = UniqueUnit(nid, 'player', DB.ai[0].nid)
+            self.is_new_unit = True
 
         self.unit_box = UnitBox(self, button=True)
         self.unit_box.edit.setValue(self.current.nid)
@@ -428,15 +430,17 @@ class LoadUnitDialog(Dialog):
         old_nid = self.current.nid
         self.current.nid = nid
         self.current.prefab = DB.units.get(nid)
-        # Swap level units
-        self.window.current_level.units.update_nid(self.current, self.current.nid)
-        # Swap level unit groups
-        for unit_group in self.window.current_level.unit_groups:
-            unit_group.swap(old_nid, self.current.nid)
-        # Swap travelers
-        for unit in self.window.current_level.units:
-            if old_nid and unit.starting_traveler == old_nid:
-                unit.starting_traveler = self.current.nid
+        
+        if not self.is_new_unit:
+            # Swap level units
+            self.window.current_level.units.update_nid(self.current, self.current.nid)
+            # Swap level unit groups
+            for unit_group in self.window.current_level.unit_groups:
+                unit_group.swap(old_nid, self.current.nid)
+            # Swap travelers
+            for unit in self.window.current_level.units:
+                if old_nid and unit.starting_traveler == old_nid:
+                    unit.starting_traveler = self.current.nid
 
     # def set_current(self, current):
     #     self.current = current

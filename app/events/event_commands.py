@@ -695,6 +695,15 @@ class LoseGame(EventCommand):
 Ends the current chapter in defeat. The game over screen will be displayed.
         """
 
+class MainMenu(EventCommand):
+    nid = 'main_menu'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Returns the player to the main menu
+        """
+
 class SkipSave(EventCommand):
     nid = 'skip_save'
     tag = Tags.LEVEL_VARS

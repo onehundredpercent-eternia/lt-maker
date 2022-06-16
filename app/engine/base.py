@@ -1081,13 +1081,13 @@ class BaseBEXPSelectState(prep.PrepManageState):
     name = 'base_bexp_select'
 
     def begin(self):
-        super().begin()
         ignore = []
         for unit in self.units:
             auto_promote = (DB.constants.value('auto_promote') or 'AutoPromote' in unit.tags) and \
                 DB.classes.get(unit.klass).turns_into and 'NoAutoPromote' not in unit.tags
             ignore.append(unit.level >= DB.classes.get(unit.klass).max_level and not auto_promote)
         self.menu.set_ignore(ignore)
+        super().begin()
 
     def create_quick_disp(self):
         sprite = SPRITES.get('buttons')
@@ -1283,7 +1283,7 @@ class BaseSoundRoomState(State):
     def begin(self):
         get_sound_thread().fade_clear()
         self.playing = False
-        
+
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()

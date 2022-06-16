@@ -628,7 +628,7 @@ class GameState():
 
     def get_data(self, raw_data_nid):
         if str(raw_data_nid) in DB.raw_data.keys():
-            return DB.raw_data.get(str(raw_data_nid)).value
+            return DB.raw_data.get(str(raw_data_nid))
         return None
 
     def get_unit(self, unit_nid):

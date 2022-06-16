@@ -114,14 +114,16 @@ def simple_check(dest_pos: tuple, team: str, default_range: int) -> bool:
     return False
 
 if __name__ == '__main__':
-    import time
+    import random, time
+    num_trials = 100000  # 400 +/- 30 ms
+    random_nums = [random.randint(0, 9) for i in range(num_trials * 4)]
     start = time.time_ns() / 1e6
-    for x in range(10000):
-        out1 = bool(get_line((1, 1), (3, 3), lambda x: False))
-        out2 = bool(get_line((1, 1), (3, 5), lambda x: False))
-        out3 = bool(get_line((2, 1), (3, 5), lambda x: False))
-        out4 = bool(get_line((4, 7), (3, 1), lambda x: False))
+    for x in range(num_trials):
+        out = bool(get_line(
+            (random_nums[x * 4], random_nums[x * 4 + 1]), 
+            (random_nums[x * 4 + 2], random_nums[x * 4 + 3]),
+            lambda x: False))
     end = time.time_ns() / 1e6
     print(end - start)
 
-    print(out1, out2, out3, out4)
+    print(out)

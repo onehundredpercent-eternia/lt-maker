@@ -79,3 +79,7 @@ Temporary Items
 
 # vscode config
 .vscode
+
+# Cython compilation results
+*.c
+*.pyd

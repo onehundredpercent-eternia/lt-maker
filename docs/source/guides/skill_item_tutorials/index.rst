@@ -11,6 +11,7 @@ These are guides on various useful skills and items.
     Direct-Passives
     Conditional-Passives-I
     Auras
+    Conditional-Passives-II
 
 .. toctree::
     :maxdepth: 2

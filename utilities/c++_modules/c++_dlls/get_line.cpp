@@ -1,10 +1,10 @@
-// To compile: g++ -fPIC -shared -o libGetLine.dll get_line.cpp -lpython3.9
+// To compile: g++ -O2 -Wall -fPIC -shared -o libGetLine.dll get_line.cpp -lpython3.9
 
 #define PY_SSIZE_T_CLEAN
 #include <python3.9/Python.h>
 
 #include <stdbool.h>
-#include <assert.h>
+//#include <assert.h>
 
 bool GetOpacity(int pos_x, int pos_y, PyObject* opacity_grid, int height) {
     // returns true when the tile is opaque
@@ -36,7 +36,7 @@ bool GetLine(int x1, int y1, int x2, int y2, PyObject* opacity_grid, int height)
 
     if (ddx >= ddy) {
         int errorprev = dx, error = dx;
-        for(unsigned int i = 0; i < dx; ++i) {
+        for(int i = 0; i < dx; ++i) {
             x += xstep;
             error += ddy;
             // How far off the straight line to the right are you
@@ -68,7 +68,7 @@ bool GetLine(int x1, int y1, int x2, int y2, PyObject* opacity_grid, int height)
         }
     } else {
         int errorprev = dx, error = dy;
-        for(unsigned int i = 0; i < dy; ++i) {
+        for(int i = 0; i < dy; ++i) {
             y += ystep;
             error += ddx;
             if (error > ddy) {
@@ -98,7 +98,7 @@ bool GetLine(int x1, int y1, int x2, int y2, PyObject* opacity_grid, int height)
             errorprev = error;
         }
     }
-    assert (x == x2 && y == y2);
+    //assert (x == x2 && y == y2);
     return true;
 }
 

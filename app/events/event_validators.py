@@ -571,8 +571,15 @@ class Color3(Validator):
 class Bool(OptionValidator):
     valid = ['t', 'true', '1', 'y', 'yes', 'f', 'false', '0', 'n', 'no']
 
-class ShopFlavor(OptionValidator):
-    valid = ['armory', 'vendor']
+class ShopFlavor(Validator):
+    # Any string will do
+    desc = "defaults to `armory`"
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        valids = []
+        valids.append((None, "vendor"))
+        valids.append((None, "armory"))
+        return valids
 
 class TableEntryType(OptionValidator):
     valid = ['type_skill', 'type_base_item', 'type_game_item', 'type_unit', 'type_class', 'type_icon', 'type_portrait', 'type_chibi']

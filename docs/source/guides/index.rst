@@ -9,10 +9,10 @@ These pages will contain various guides.
 
     Breakable-Walls
     Build-Engine
-    Choices-and-Battle-Saves
     Leadership-Stars
     Overworld
     Unit-Groups
+    Shop-Portraits
     Title-Screen
 
 .. toctree::

@@ -8,6 +8,7 @@ These are guides on various useful applications of events.
     :caption: Contents
 
     A-Simple-Mercenary-Shop
+    Choices-and-Battle-Saves
     Death-Quotes
     Conditional-Personal-Skills
     Arena

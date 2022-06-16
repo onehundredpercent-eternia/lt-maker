@@ -125,6 +125,11 @@ class EventState(State):
             game.memory['next_state'] = 'game_over'
             game.state.change('transition_to')
 
+        elif game.level_vars.get('_main_menu'):
+            self.game_over = True
+            game.memory['next_state'] = 'title_start'
+            game.state.change('transition_to')
+
         elif self.event.battle_save_flag:
             game.state.back()
             game.memory['save_kind'] = 'battle'
