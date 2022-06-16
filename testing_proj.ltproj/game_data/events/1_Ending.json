@@ -1,0 +1,34 @@
+[
+    {
+        "name": "Ending",
+        "trigger": "level_start",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [
+            [
+                "game_var",
+                [
+                    "_supports",
+                    "True"
+                ]
+            ],
+            [
+                "unlock_support_rank",
+                [
+                    "Eirika",
+                    "Seth",
+                    "A"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "Butts"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

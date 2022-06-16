@@ -13,6 +13,41 @@ from app.engine.game_state import game
 from app.engine.sprites import SPRITES
 from app.utilities import utils
 
+class MemoryBar():
+    background = engine.subsurface(SPRITES.get('memorybar'), (0, 0, 136, 24))
+    begin = engine.subsurface(SPRITES.get('memorybar'), (0, 24, 3, 7))
+    middle = engine.subsurface(SPRITES.get('memorybar'), (3, 24, 1, 7))
+    end = engine.subsurface(SPRITES.get('memorybar'), (4, 24, 2, 7))
+    bar_max = 30
+    width = 136 - 50
+    height = 24
+
+    def __init__(self):
+        self.bg_surf = self.create_bg_surf()
+
+    def create_bg_surf(self):
+        surf = engine.create_surface((self.width, self.height), transparent=True)
+        surf.blit(self.background, (0, 0))
+        surf.blit(self.begin, (7, 9))
+        return surf
+
+    def draw(self, surf, pos, num):
+        new_surf = engine.copy_surface(self.bg_surf)
+
+        # Blit correct number of sprites for middle of exp bar
+        idx = int(50 * max(0, num) / self.bar_max)
+        for x in range(idx):
+            new_surf.blit(self.middle, (10 + x, 9))
+
+        # Blit end of exp bar
+        new_surf.blit(self.end, (10 + idx, 9))
+
+        # Blit current amount of memory
+        FONT['number-smallwhite'].blit_right(str(int(num)), new_surf, (self.width - 4, 4))
+        new_surf = image_mods.make_translucent(new_surf, 0.1)
+
+        surf.blit(new_surf, pos)
+        return surf
 
 class UIView():
     legal_states = ('free', 'prep_formation', 'prep_formation_select')
@@ -43,6 +78,8 @@ class UIView():
 
         self.remove_unit_info = True
         self.obj_top = False
+
+        self.memory_bar = MemoryBar()
 
     def remove_unit_display(self):
         self.remove_unit_info = True
@@ -163,7 +200,7 @@ class UIView():
                     self.obj_top = False
                     self.obj_info_offset = self.obj_info_disp.get_width()
                 pos = (WINWIDTH - 4 + self.obj_info_offset - self.obj_info_disp.get_width(),
-                       WINHEIGHT - 4 - self.obj_info_disp.get_height())
+                       WINHEIGHT - 1 - self.obj_info_disp.get_height())
                 surf.blit(self.obj_info_disp, pos) # Should be bottom right
             else:
                 # Place in topright
@@ -260,25 +297,6 @@ class UIView():
     def create_obj_info(self):
         font = FONT['text']
 
-        # Draw memory
-
-        current_mem = game.party.money
-        max_mem = int(DB.raw_data.get('max_memory', 30))
-
-        text = 'Mem: ' + str(current_mem) + '/' + str(max_mem)
-        color = 'white'
-        if current_mem > 30:
-            color = 'green'
-        elif current_mem <= 0:
-            color = 'red'
-        elif current_mem <= 10:
-            color = 'yellow'
-        width = font.width('Mem: -00/30') + 4
-
-        mem_surf = base_surf.create_base_surf(width, 24)
-        mem_surf = image_mods.make_translucent(mem_surf, .1)
-        font.blit_right(text, mem_surf, (mem_surf.get_width() - 2, 4), color=color)
-
         # Draw Objective
         obj = game.level.objective['simple']
         text_parser = TextEvaluator(logging.getLogger(), game)
@@ -291,20 +309,17 @@ class UIView():
             shimmer = SPRITES.get('menu_shimmer1')
         else:
             shimmer = SPRITES.get('menu_shimmer2')
-        bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 4))
-        surf = engine.create_surface((bg_surf.get_width(), bg_surf.get_height() + 3), transparent=True)
-        surf.blit(bg_surf, (0, 3))
-        gem = SPRITES.get('combat_gem_blue')
-        surf.blit(gem, (bg_surf.get_width()//2 - gem.get_width()//2, 0))
-        surf = image_mods.make_translucent(surf, .1)
+        bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 5))
+        surf = image_mods.make_translucent(bg_surf, .1)
 
         for idx, line in enumerate(text_lines):
-            pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 6)
+            pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 4)
             font.blit(line, surf, pos)
 
-        big_surf = engine.create_surface((max(surf.get_width(), mem_surf.get_width()), mem_surf.get_height() + surf.get_height()), transparent=True)
-        big_surf.blit(surf, (bg_surf.get_width() - surf.get_width(), 0))
-        big_surf.blit(mem_surf, (big_surf.get_width() - mem_surf.get_width(), surf.get_height()))
+        big_surf = engine.create_surface((max(surf.get_width(), self.memory_bar.width), self.memory_bar.height + surf.get_height()), transparent=True)
+        # Draw memory
+        self.memory_bar.draw(big_surf, (0, 0), game.party.money)
+        big_surf.blit(surf, (big_surf.get_width() - surf.get_width(), self.memory_bar.height))
         
         return big_surf
 

@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 
 from app.constants import COLORKEY
 from app.data.palettes import enemy_colors, other_colors, enemy2_colors, \
-    player_dark_colors, enemy_dark_colors
+    player_dark_colors, enemy_dark_colors, other_dark_colors
 
 from app.resources.combat_palettes import Palette
 
@@ -15,6 +15,7 @@ other_colors = {QtGui.qRgb(*k): QtGui.qRgb(*v) for k, v in other_colors.items()}
 enemy2_colors = {QtGui.qRgb(*k): QtGui.qRgb(*v) for k, v in enemy2_colors.items()}
 player_dark_colors = {QtGui.qRgb(*k): QtGui.qRgb(*v) for k, v in player_dark_colors.items()}
 enemy_dark_colors = {QtGui.qRgb(*k): QtGui.qRgb(*v) for k, v in enemy_dark_colors.items()}
+other_dark_colors = {QtGui.qRgb(*k): QtGui.qRgb(*v) for k, v in other_dark_colors.items()}
 
 def convert_colorkey_slow(image):
     image.convertTo(QtGui.QImage.Format_ARGB32)

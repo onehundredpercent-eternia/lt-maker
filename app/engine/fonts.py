@@ -43,7 +43,7 @@ info.colors['white'] = ((248, 248, 248, 255), (184, 176, 176, 255))
 convo = FontType('convo', 'black')
 convo.colors['black'] = ((40, 40, 40, 255), (184, 184, 184, 255))
 convo.colors['red'] = ((160, 0, 0, 255), (248, 200, 168, 255))
-convo.colors['white'] = ((248, 248, 248, 255), (112, 104, 96, 255))
+convo.colors['white'] = ((248, 248, 248, 255), (136, 160, 136, 255))
 convo.colors['yellow'] = ((248, 240, 136, 255), (168, 168, 72, 255))
 
 chapter = FontType('chapter', 'yellow')

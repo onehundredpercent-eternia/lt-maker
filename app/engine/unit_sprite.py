@@ -4,7 +4,7 @@ import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, COLORKEY
 from app.data.palettes import gray_colors, enemy_colors, other_colors, enemy2_colors, black_colors, \
-    player_dark_colors, enemy_dark_colors, gray_dark_colors
+    player_dark_colors, enemy_dark_colors, other_dark_colors, gray_dark_colors
 
 from app.resources.resources import RESOURCES
 from app.data.database import DB
@@ -55,7 +55,10 @@ class MapSprite():
         elif self.team == 'enemy2':
             conversion_dict = enemy2_colors
         elif self.team == 'other':
-            conversion_dict = other_colors
+            if DB.constants.value('dark_sprites'):
+                conversion_dict = other_dark_colors
+            else:
+                conversion_dict = other_colors
         elif self.team == 'black':
             conversion_dict = black_colors
 
