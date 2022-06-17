@@ -259,6 +259,35 @@ class EventTileParticle(Particle):
         sprite = image_mods.make_translucent(self.sprite, self.transparency)
         surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
 
+class LightMote2(Particle):
+    sprite = SPRITES.get('particle_dark_mote2')
+
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.transparency = .75
+        self.speed = 0.1 + random.random() * 0.15
+        self.direction = random.random() * math.pi * 2
+        self.change_over_time = random.choice([0.01, 0.015, 0.02])
+        self.transition = True
+
+    def update(self):
+        self.x += self.speed * math.cos(self.direction)
+        self.y += self.speed * math.sin(self.direction)
+
+        if self.transition:
+            self.transparency -= self.change_over_time
+            if self.transparency < 0.05:
+                self.transition = False
+        else:
+            self.transparency += self.change_over_time
+            if self.transparency >= 0.75:
+                self.remove_me_flag = True
+                self.transparency = 1.
+
+    def draw(self, surf, offset_x=0, offset_y=0):
+        sprite = image_mods.make_translucent(self.sprite, self.transparency)
+        surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
+
 def create_system(nid, width, height, position):
     twidth, theight = width * TILEWIDTH, height * TILEHEIGHT
     if nid == 'rain':
@@ -276,6 +305,9 @@ def create_system(nid, width, height, position):
     elif nid == 'light':
         creation_bounds = 0, twidth, 0, theight
         ps = ParticleSystem(nid, LightMote, .02, creation_bounds, (width, height))
+    elif nid == 'light2':
+        creation_bounds = 0, twidth, 0, theight
+        ps = ParticleSystem(nid, LightMote2, .06, creation_bounds, (width, height))
     elif nid == 'dark':
         creation_bounds = 0, twidth, 0, theight
         ps = ParticleSystem(nid, DarkMote, .02, creation_bounds, (width, height))
