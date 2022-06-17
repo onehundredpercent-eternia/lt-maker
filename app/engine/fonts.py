@@ -12,7 +12,7 @@ class FontType():
 NORMAL_FONT_COLORS = ['white', 'blue', 'green', 'red', 'grey', 'yellow', 'brown']
 
 text = FontType('text', 'white')
-text.colors['white'] = ((248, 248, 248, 255), (160, 136, 216, 255), (56, 48, 40, 255))
+text.colors['white'] = ((248, 248, 248, 255), (160, 136, 216, 255), (40, 32, 24, 255))
 text.colors['blue'] = ((192, 248, 248, 255), (80, 112, 248, 255), (24, 24, 88, 255))
 text.colors['green'] = ((72, 232, 32, 255), (112, 160, 72, 255), (24, 88, 24, 255))
 text.colors['red'] = ((224, 96, 80, 255), (160, 88, 72, 255), (88, 24, 24, 255))
@@ -43,7 +43,7 @@ info.colors['white'] = ((248, 248, 248, 255), (184, 176, 176, 255))
 convo = FontType('convo', 'black')
 convo.colors['black'] = ((40, 40, 40, 255), (184, 184, 184, 255))
 convo.colors['red'] = ((160, 0, 0, 255), (248, 200, 168, 255))
-convo.colors['white'] = ((248, 248, 248, 255), (136, 160, 136, 255))
+convo.colors['white'] = ((248, 248, 248, 255), (136, 144, 144, 255))
 convo.colors['yellow'] = ((248, 240, 136, 255), (168, 168, 72, 255))
 
 chapter = FontType('chapter', 'yellow')

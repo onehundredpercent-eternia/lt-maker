@@ -63,6 +63,7 @@ def run(game):
     from app.engine.sound import get_sound_thread
     from app.engine.game_counters import ANIMATION_COUNTERS
     from app.engine.input_manager import get_input_manager
+    from app.shaders import shaders
 
     ANIMATION_COUNTERS.reset()
 
@@ -93,6 +94,8 @@ def run(game):
             draw_fps(surf, fps_records)
 
         get_sound_thread().update(raw_events)
+
+        shaders.bright_pass_filter(surf, 16)
 
         engine.push_display(surf, engine.SCREENSIZE, engine.DISPLAYSURF)
 
