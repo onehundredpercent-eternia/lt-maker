@@ -87,7 +87,8 @@ class PanoramaBackground():
         engine.blit_center(surf, image)
 
     def draw(self, surf):
-        image = self.panorama.images[self.counter]
+        image = self.panorama.images[self.counter].copy()
+        # shaders.bloom(image, 128 + 64)
         if self.fade_state == 'normal':
             if image:
                 self._draw(surf, image)

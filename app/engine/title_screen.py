@@ -1,4 +1,4 @@
-import os
+import os, math
 
 from app import autoupdate
 from app.constants import TILEX, TILEY, FULLTILEX, WINHEIGHT, WINWIDTH
@@ -18,6 +18,7 @@ from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.events.event import Event
 from app.resources.resources import RESOURCES
+from app.shaders import shaders
 
 import logging
 
@@ -70,7 +71,11 @@ class TitleStartState(State):
             self.particles.update()
             self.particles.draw(surf)
         if self.logo:
-            engine.blit(surf, self.logo, (WINWIDTH//2 - self.logo.get_width()//2, WINHEIGHT//2 - self.logo.get_height()//2 - 20))
+            logo_image = self.logo.copy()
+            # Add bloom to logo
+            idx = math.sin(engine.get_time()/2000)
+            shaders.bloom(logo_image, 128 + idx * 127)
+            engine.blit(surf, logo_image, (WINWIDTH//2 - self.logo.get_width()//2, WINHEIGHT//2 - self.logo.get_height()//2 - 20))
         if self.press_start:
             self.press_start.update()
             self.press_start.draw(surf)
