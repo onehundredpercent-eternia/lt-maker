@@ -1,12 +1,13 @@
 # distutils: language=c
 # cython: binding=False, boundscheck=False, wraparound=False, nonecheck=False, cdivision=True
 # cython: optimize.use_switch=True
+# cython: profile=False
 # encoding: utf-8
 
-# import numpy
+# import numpy #
 
 cimport cython
-from cython.parallel cimport prange
+from cython.parallel cimport prange, parallel
 
 from libc.stdlib cimport malloc, free
 from libc.math cimport sin, cos, pow, atan2, floor, ceil, fabs, sqrt
@@ -23,6 +24,7 @@ cdef unsigned char COLORKEY_R = 128
 cdef unsigned char COLORKEY_G = 160
 cdef unsigned char COLORKEY_B = 128
 
+# GENERIC HELPER FUNCTIONS
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
@@ -50,7 +52,7 @@ cdef inline float clampf(float n, float low, float high)nogil:
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.cdivision(True)
-cdef inline float smoothstep(float edge0, float edge1, float x):
+cdef inline float smoothstep(float edge0, float edge1, float x)nogil:
     cdef float t = clampf((x - edge0) / (edge1 - edge0), 0., 1.)
     return t * t * (3. - 2. * t)
 
@@ -58,7 +60,7 @@ cdef inline float smoothstep(float edge0, float edge1, float x):
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.cdivision(True)
-cdef inline float CL(float x, float a, float b):
+cdef inline float CL(float x, float a, float b)nogil:
     return smoothstep(0, 1, (2./3.) * (x - a) / (b - a) + (1./6.)) * (b - a) + a
 
 @cython.boundscheck(False)
@@ -68,11 +70,12 @@ cdef inline float CL(float x, float a, float b):
 cdef inline float mixlerp(float a, float b, float perc)nogil:
     return a * (1 - perc) + b * perc
     
+# ACTUAL SHADERS START HERE
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.cdivision(True)
-cdef inline void shader_invert(unsigned char[:, :, :] rgb_array):
+cdef inline void shader_invert(unsigned char[:, :, ::1] rgb_array):
     """
     Takes a surface (rgb_array) and inverts the color of the pixels
     Expects r, g, b array to be size w x h x 3 or w x h x 4
@@ -86,8 +89,8 @@ cdef inline void shader_invert(unsigned char[:, :, :] rgb_array):
         unsigned char *g
         unsigned char *b
 
-    with nogil:
-        for j in prange(h, schedule="static", num_threads=THREADS):
+    with nogil, parallel():
+        for j in prange(h, schedule="static"):
             for i in range(w):
                 r = &rgb_array[i, j, 0]
                 g = &rgb_array[i, j, 1]
@@ -115,8 +118,8 @@ cdef inline void shader_bright_pass_filter(unsigned char[:, :, :] rgb_array, int
         unsigned char *g
         unsigned char *b
 
-    with nogil:
-        for j in prange(h, schedule="static", num_threads=THREADS):
+    with nogil, parallel():
+        for j in prange(h, schedule="static"):
             for i in range(w):
                 r = &rgb_array[i, j, 0]
                 g = &rgb_array[i, j, 1]
@@ -152,19 +155,20 @@ cdef inline shader_bpf_return(unsigned char[:, :, :] rgb_array, int threshold=12
         # unsigned char [:, :, :] output_array = numpy.zeros((h, w, 3), numpy.uint8)
         int arr_size = h * w * 3 * sizeof(unsigned char*)
         unsigned char *output_array_ = <unsigned char *>malloc(arr_size)
-        unsigned char [:, :, :] output_array = <unsigned char[:h, :w, :3]>output_array_
+        unsigned char [:, :, ::1] output_array = <unsigned char[:h, :w, :3]>output_array_
         unsigned char *r
         unsigned char *g
         unsigned char *b
 
+    # Zero out the output array
     for j in range(h):
         for i in range(w):
             output_array[j, i, 0] = 0
             output_array[j, i, 1] = 0
             output_array[j, i, 2] = 0
 
-    with nogil:
-        for j in prange(h, schedule="static", num_threads=THREADS):
+    with nogil, parallel():
+        for j in prange(h, schedule="static"):
             for i in range(w):
                 r = &rgb_array[i, j, 0]
                 g = &rgb_array[i, j, 1]
@@ -187,7 +191,7 @@ cdef float[5] GAUSS_KERNEL = [1.0/16.0, 4.0/16.0, 6.0/16.0, 4.0/16.0, 1.0/16.0]
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.cdivision(True)
-cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
+cdef inline void shader_blur_5x5(unsigned char[:, :, ::1] rgb_array, int t=1):
     """
     Applies a Gaussian Blur effect to the surface rgb_array
     Expects r, g, b array to be size w x h x 3 or w x h x 4
@@ -198,6 +202,7 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
     w, h = rgb_array.shape[:2]
 
     cdef:
+        int iters = t
         short int kernel_half = 2
         # unsigned char [:, :, :] convolve = numpy.zeros((w, h, 3), numpy.uint8)
         int arr_size = w * h * 3 * sizeof(unsigned char)
@@ -205,7 +210,7 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
     if not convolve_:
         raise MemoryError()
     cdef:
-        unsigned char [:, :, :] convolve = <unsigned char[:w, :h, :3]>convolve_
+        unsigned char [:, :, ::1] convolve = <unsigned char[:w, :h, :3]>convolve_
         Py_ssize_t kernel_length = len(GAUSS_KERNEL)
         int x, y, xx, yy, i
         float r, g, b
@@ -219,16 +224,17 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
         unsigned char *c5
         unsigned char *c6
 
-    for x in range(w):
-        for y in range(h):
+    # Zero out the convolve
+    for y in range(h):
+        for x in range(w):
             convolve[x, y, 0] = 0
             convolve[x, y, 1] = 0
             convolve[x, y, 2] = 0
 
-    for r in range(t):
-        with nogil:
+    for r in range(iters):
+        with nogil, parallel():
             # Horizontal Convolution
-            for y in prange(h, schedule="static", num_threads=THREADS):
+            for y in prange(h, schedule="static"):
                 c1 = &rgb_array[0, y, 0]
                 c2 = &rgb_array[0, y, 1]
                 c3 = &rgb_array[0, y, 2]
@@ -251,8 +257,8 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
                             red = rgb_array[xx, y, 0]
                             green = rgb_array[xx, y, 1]
                             blue = rgb_array[xx, y, 2]
-                            if red + green + blue == 0:
-                                continue
+                            # if red + green + blue == 0:
+                                # continue
 
                         r = r + red * k[0]
                         g = g + green * k[0]
@@ -263,7 +269,7 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
                     convolve[x, y, 2] = <unsigned char>b
 
             # Vertical Convolution
-            for x in prange(w, schedule="static", num_threads=THREADS):
+            for x in prange(w, schedule="static"):
                 c1 = &rgb_array[x, 0, 0]
                 c2 = &rgb_array[x, 0, 1]
                 c3 = &rgb_array[x, 0, 2]
@@ -286,8 +292,8 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
                             red = convolve[x, yy, 0]
                             green = convolve[x, yy, 1]
                             blue = convolve[x, yy, 2]
-                            if red + green + blue == 0:
-                                continue
+                            # if red + green + blue == 0:
+                                # continue
 
                         r = r + red * k[0]
                         g = g + green * k[0]
@@ -354,47 +360,42 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
         return
 
     if fast_:
-        x2, x4, x8 = False, False, False
+        x2 = False
 
     surface_cp = shader_bpf_return(pixels3d(surface_), threshold=threshold_)
 
     # Subsurface downscale x2
     if x2:
-        s2 = scale(surface_cp, (w2, h2))
-        s2_view = s2.get_view('3')
-        s2_array = s2_view
-        # s2_array = numpy.array(s2_view, dtype=numpy.uint8)
-        # unsigned char *s2_array = s2_view
+        s2 = smoothscale(surface_cp, (w2, h2))
+        # s2_array = s2.get_view('3')
+        s2_array = pixels3d(s2).copy(order='C')
         shader_blur_5x5(s2_array)
         b2_blurred = make_surface(s2_array)
         s2 = smoothscale(b2_blurred, (w, h))
         surface_.blit(s2, (0, 0), special_flags=BLEND_RGB_ADD)
 
     if x4:
-        s4 = scale(surface_cp, (w4, h4))
-        s4_view = s4.get_view('3')
-        s4_array = s4_view
-        # s4_array = numpy.array(s4_view, dtype=numpy.uint8)
+        s4 = smoothscale(surface_cp, (w4, h4))
+        # s4_array = s4.get_view('3')
+        s4_array = pixels3d(s4).copy(order='C')
         shader_blur_5x5(s4_array)
         b4_blurred = make_surface(s4_array)
         s4 = smoothscale(b4_blurred, (w, h))
         surface_.blit(s4, (0, 0), special_flags=BLEND_RGB_ADD)
 
     if x8:
-        s8 = scale(surface_cp, (w8, h8))
-        s8_view = s8.get_view('3')
-        s8_array = s8_view
-        # s8_array = numpy.array(s8_view, dtype=numpy.uint8)
+        s8 = smoothscale(surface_cp, (w8, h8))
+        # s8_array = s8.get_view('3')
+        s8_array = pixels3d(s8).copy(order='C')
         shader_blur_5x5(s8_array)
         b8_blurred = make_surface(s8_array)
         s8 = smoothscale(b8_blurred, (w, h))
         surface_.blit(s8, (0, 0), special_flags=BLEND_RGB_ADD)
 
     if x16:
-        s16 = scale(surface_cp, (w16, h16))
-        s16_view = s16.get_view('3')
-        s16_array = s16_view
-        # s16_array = numpy.array(s16_view, dtype=numpy.uint8)
+        s16 = smoothscale(surface_cp, (w16, h16))
+        # s16_array = s16.get_view('3')
+        s16_array = pixels3d(s16).copy(order='C')
         shader_blur_5x5(s16_array)
         b16_blurred = make_surface(s16_array)
         s16 = smoothscale(b16_blurred, (w, h))
@@ -435,8 +436,8 @@ cdef inline void shader_vortex(unsigned char[:, :, :] rgb_array, float time):
     z = pow(500, n) # autozoom
     z = clampf(z, CL(z, 1e-16, 1e-15), CL(z, 1e17, 1e18))
 
-    with nogil:
-        for j in prange(h, schedule="static", num_threads=THREADS):
+    with nogil, parallel():
+        for j in prange(h, schedule="static"):
             for i in range(w):
                 r = &rgb_array[i, j, 0]
                 g = &rgb_array[i, j, 1]
@@ -478,13 +479,13 @@ cdef inline void shader_vortex(unsigned char[:, :, :] rgb_array, float time):
 # End shader_cool_shit
 
 cpdef inline void invert(object surface_):
-    shader_invert(pixels3d(surface_))
+    shader_invert(pixels3d(surface_).copy(order='C'))
 
 cpdef inline void bright_pass_filter(object surface_, int threshold_=128):
     shader_bright_pass_filter(pixels3d(surface_), threshold_)
 
 cpdef inline void blur(object surface_, int t_=1):
-    shader_blur_5x5(pixels3d(surface_), t_)
+    shader_blur_5x5(pixels3d(surface_).copy(order='C'), t_)
 
 cpdef inline void bloom(object surface_, int threshold_, bint fast_=False):
     shader_bloom(surface_, threshold_, fast_)

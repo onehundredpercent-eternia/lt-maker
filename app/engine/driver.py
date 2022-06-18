@@ -95,7 +95,9 @@ def run(game):
 
         get_sound_thread().update(raw_events)
 
+        # Shader pass
         shaders.bright_pass_filter(surf, 16)
+        shaders.bloom(surf, 176, True)
 
         engine.push_display(surf, engine.SCREENSIZE, engine.DISPLAYSURF)
 

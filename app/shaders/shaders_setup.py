@@ -12,6 +12,8 @@ setup(
     ext_modules=cythonize(
         Extension("shaders", ["shaders.pyx"],
                   extra_compile_args=["/fp:fast", "/O2"],
+                  # extra_compile_args=["/openmp", "/fp:fast", "/O2"],
+                  # extra_compile_args=["/openmp", "/Qpar", "/fp:fast", "/O2"],
                   language="c"),
     language_level="3"),
 )
