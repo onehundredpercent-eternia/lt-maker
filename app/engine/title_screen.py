@@ -19,6 +19,7 @@ from app.engine.state import State
 from app.events.event import Event
 from app.resources.resources import RESOURCES
 from app.shaders import shaders
+from app.utilities import utils
 
 import logging
 
@@ -73,8 +74,10 @@ class TitleStartState(State):
         if self.logo:
             logo_image = self.logo.copy()
             # Add bloom to logo
-            idx = math.sin(engine.get_time()/2000)
-            shaders.bloom(logo_image, 128 + idx * 127)
+            idx = (math.sin(engine.get_time()/2000) + 1) / 2
+            intensity = utils.clamp(idx * 255, 0, 255)
+            shaders.bloom(logo_image, intensity)
+            shaders.bloom(logo_image, intensity)  # Yes, twice is done on purpose
             engine.blit(surf, logo_image, (WINWIDTH//2 - self.logo.get_width()//2, WINHEIGHT//2 - self.logo.get_height()//2 - 20))
         if self.press_start:
             self.press_start.update()

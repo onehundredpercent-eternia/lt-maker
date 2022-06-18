@@ -3,10 +3,12 @@
 # cython: optimize.use_switch=True
 # encoding: utf-8
 
-import numpy
+# import numpy
 
 cimport cython
 from cython.parallel cimport prange
+
+from libc.stdlib cimport malloc, free
 
 import pygame
 from pygame import BLEND_RGB_ADD
@@ -99,12 +101,21 @@ cdef inline shader_bpf_return(unsigned char[:, :, :] rgb_array, int threshold=12
     w, h = rgb_array.shape[:2]
 
     cdef:
-        int i=0, j=0
+        int i=0, j=0, idx
         float lum, c
-        unsigned char [:, :, :] output_array = numpy.zeros((h, w, 3), numpy.uint8)
+        # unsigned char [:, :, :] output_array = numpy.zeros((h, w, 3), numpy.uint8)
+        int arr_size = h * w * 3 * sizeof(unsigned char*)
+        unsigned char *output_array_ = <unsigned char *>malloc(arr_size)
+        unsigned char [:, :, :] output_array = <unsigned char[:h, :w, :3]>output_array_
         unsigned char *r
         unsigned char *g
         unsigned char *b
+
+    for j in range(h):
+        for i in range(w):
+            output_array[j, i, 0] = 0
+            output_array[j, i, 1] = 0
+            output_array[j, i, 2] = 0
 
     with nogil:
         for j in prange(h, schedule="static", num_threads=THREADS):
@@ -142,10 +153,16 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
 
     cdef:
         short int kernel_half = 2
-        unsigned char[:, :, ::1] convolve = numpy.empty((w, h, 3), dtype=numpy.uint8)
+        # unsigned char [:, :, :] convolve = numpy.zeros((w, h, 3), numpy.uint8)
+        int arr_size = w * h * 3 * sizeof(unsigned char)
+        unsigned char *convolve_ = <unsigned char *>malloc(arr_size)
+    if not convolve_:
+        raise MemoryError()
+    cdef:
+        unsigned char [:, :, :] convolve = <unsigned char[:w, :h, :3]>convolve_
         Py_ssize_t kernel_length = len(GAUSS_KERNEL)
-        int x, y, xx, yy
-        float r, g, b, s
+        int x, y, xx, yy, i
+        float r, g, b
         char kernel_offset
         unsigned char red, green, blue
         float *k
@@ -155,6 +172,12 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
         unsigned char *c4
         unsigned char *c5
         unsigned char *c6
+
+    for x in range(w):
+        for y in range(h):
+            convolve[x, y, 0] = 0
+            convolve[x, y, 1] = 0
+            convolve[x, y, 2] = 0
 
     for r in range(t):
         with nogil:
@@ -227,6 +250,7 @@ cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
                     rgb_array[x, y, 0] = <unsigned char>r
                     rgb_array[x, y, 1] = <unsigned char>g
                     rgb_array[x, y, 2] = <unsigned char>b
+    free(convolve_)
 # End shader_blur_5x5
 
 @cython.boundscheck(False)
@@ -291,7 +315,10 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
     # Subsurface downscale x2
     if x2:
         s2 = scale(surface_cp, (w2, h2))
-        s2_array = numpy.array(s2.get_view('3'), dtype=numpy.uint8)
+        s2_view = s2.get_view('3')
+        s2_array = s2_view
+        # s2_array = numpy.array(s2_view, dtype=numpy.uint8)
+        # unsigned char *s2_array = s2_view
         shader_blur_5x5(s2_array)
         b2_blurred = make_surface(s2_array)
         s2 = smoothscale(b2_blurred, (w, h))
@@ -299,7 +326,9 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
 
     if x4:
         s4 = scale(surface_cp, (w4, h4))
-        s4_array = numpy.array(s4.get_view('3'), dtype=numpy.uint8)
+        s4_view = s4.get_view('3')
+        s4_array = s4_view
+        # s4_array = numpy.array(s4_view, dtype=numpy.uint8)
         shader_blur_5x5(s4_array)
         b4_blurred = make_surface(s4_array)
         s4 = smoothscale(b4_blurred, (w, h))
@@ -307,7 +336,9 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
 
     if x8:
         s8 = scale(surface_cp, (w8, h8))
-        s8_array = numpy.array(s8.get_view('3'), dtype=numpy.uint8)
+        s8_view = s8.get_view('3')
+        s8_array = s8_view
+        # s8_array = numpy.array(s8_view, dtype=numpy.uint8)
         shader_blur_5x5(s8_array)
         b8_blurred = make_surface(s8_array)
         s8 = smoothscale(b8_blurred, (w, h))
@@ -315,7 +346,9 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
 
     if x16:
         s16 = scale(surface_cp, (w16, h16))
-        s16_array = numpy.array(s16.get_view('3'), dtype=numpy.uint8)
+        s16_view = s16.get_view('3')
+        s16_array = s16_view
+        # s16_array = numpy.array(s16_view, dtype=numpy.uint8)
         shader_blur_5x5(s16_array)
         b16_blurred = make_surface(s16_array)
         s16 = smoothscale(b16_blurred, (w, h))
