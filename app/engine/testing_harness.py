@@ -16,10 +16,10 @@ def main():
     print(img)
     pr.enable()
     for _ in range(num_frames):
-        tmp_surf = surf.copy()
+        tmp_surf = surf.convert()
         tmp_surf.blit(img, (0, 0))
-        shaders.bloom(tmp_surf, 176, True)
-        # shaders.invert(tmp_surf)
+        # shaders.bloom(tmp_surf, 176, True)
+        shaders.invert(tmp_surf)
         pygame.transform.scale(tmp_surf, screen_size, screen)
         pygame.display.update()
     pr.disable()

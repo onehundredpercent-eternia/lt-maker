@@ -386,6 +386,20 @@ class Tag(Validator):
         valids = [(None, tag.nid) for tag in DB.tags.values()]
         return valids
 
+class TagList(Validator):
+    desc = "must be a comma-delimited list of tags (ie, `5,7,12`)"
+
+    def validate(self, text, level):
+        tex = text.split(',')
+        for t in tex:
+            if t not in DB.tags.values():
+                return None                
+        return text
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        valids = [(None, tag.nid) for tag in DB.tags.values()]
+        return valids
+
 class TextPosition(Validator):
     valid_positions = ['center']
 

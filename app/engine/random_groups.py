@@ -516,13 +516,13 @@ def build_group(region):
         # Give the Boss 5 free autolevels
         unit_funcs.auto_level(new_unit, 5, new_unit.level, growth_method='fixed')
 
-def get_recruitable_unit(level_var_nid, position, level, tag, team):
+def get_recruitable_unit(level_var_nid, position, level, tag_list, team):
     possible_unit_prefabs = \
         [unit for unit in DB.units if 
             unit.nid not in [u.nid for u in game.units] and 
-            tag in unit.tags]
+            all(t in unit.tags for t in tag_list)]
     if not possible_unit_prefabs:
-        logging.error("No possible unit to recruit with tag %s", tag)
+        logging.error("No possible unit to recruit with tags %s", tag_list)
         return
     unit = game.get_random_choice(possible_unit_prefabs)
     ai = 'None'

@@ -891,9 +891,9 @@ class GetRecruitableUnit(EventCommand):
         key of the level_var_nid
         """
 
-    keywords = ["LevelVarNid", "Position", "Level", "Tag"]
+    keywords = ["LevelVarNid", "Position", "Level", "TagList"]
     optional_keywords = ["Team"]
-    keyword_types = ["Nid", "Position", "PositiveInteger", "Tag", "Team"]
+    keyword_types = ["Nid", "Position", "PositiveInteger", "TagList", "Team"]
 
 class AddUnit(EventCommand):
     nid = 'add_unit'

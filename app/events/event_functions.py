@@ -773,14 +773,14 @@ def generate_groups(self: Event, flags=None):
     from app.engine import random_groups
     random_groups.build_groups()
 
-def get_recruitable_unit(self: Event, level_var_nid, position, level, tag, team=None, flags=None):
+def get_recruitable_unit(self: Event, level_var_nid, position, level, tag_list, team=None, flags=None):
     flags = flags or set()
 
     from app.engine import random_groups
     position = self._parse_pos(position)
     level = int(level)
     team = team or 'player'
-    random_groups.get_recruitable_unit(level_var_nid, position, level, tag, team)
+    random_groups.get_recruitable_unit(level_var_nid, position, level, tag_list, team)
 
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, flags=None):
     new_unit = self._get_unit(unit)
