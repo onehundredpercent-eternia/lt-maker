@@ -74,6 +74,8 @@ class BaseCombat(SimpleCombat):
             if self.def_item:
                 item_system.end_combat(self.full_playback, self.defender, self.def_item, self.attacker, 'defense')
 
+        skill_system.deactivate_all_combat_arts(self.attacker)
+
         skill_system.post_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
         if self.attacker is not self.defender:
             skill_system.post_combat(self.full_playback, self.defender, self.def_item, self.attacker, 'defense')

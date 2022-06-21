@@ -235,6 +235,8 @@ class SimpleCombat():
         for unit in self.all_splash:
             skill_system.end_combat(self.full_playback, unit, None, self.attacker, 'defense')
 
+        skill_system.deactivate_all_combat_arts(self.attacker)
+
         skill_system.post_combat(self.full_playback, self.attacker, self.main_item, self.defender, 'attack')
         already_pre = [self.attacker]
         for idx, defender in enumerate(self.defenders):

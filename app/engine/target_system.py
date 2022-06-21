@@ -58,9 +58,9 @@ def get_nearest_open_tile(unit, position):
             magn = _abs(x)
             n1 = position[0] + x, position[1] + r - magn
             n2 = position[0] + x, position[1] - r + magn
-            if game.movement.check_traversable(unit, n1) and not game.board.get_unit(n1) and not game.movement.check_if_occupied_in_future(n1):
+            if game.movement.check_weakly_traversable(unit, n1) and not game.board.get_unit(n1) and not game.movement.check_if_occupied_in_future(n1):
                 return n1
-            elif game.movement.check_traversable(unit, n2) and not game.board.get_unit(n2) and not game.movement.check_if_occupied_in_future(n2):
+            elif game.movement.check_weakly_traversable(unit, n2) and not game.board.get_unit(n2) and not game.movement.check_if_occupied_in_future(n2):
                 return n2
         r += 1
     return None

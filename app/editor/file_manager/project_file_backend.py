@@ -6,8 +6,9 @@ from datetime import datetime
 from pathlib import Path
 
 from app.constants import VERSION
-from app.data.database import DB
+from app.data.database import DB, Database
 from app.editor import timer
+from app.editor.lib.csv.csv_exporter import dump_as_csv
 from app.editor.new_game_dialog import NewGameDialog
 from app.editor.settings import MainSettingsController
 from app.resources.resources import RESOURCES
@@ -275,3 +276,15 @@ class ProjectFileBackend():
 
     def clean(self):
         RESOURCES.clean(self.current_proj)
+
+    def dump_csv(self, db: Database):
+        starting_path = self.current_proj or QDir.currentPath()
+        fn = QFileDialog.getExistingDirectory(
+                self.parent, "Choose dump location", starting_path)
+        if fn:
+            csv_direc = fn
+            for ttype, tstr in dump_as_csv(db):
+                with open(os.path.join(csv_direc, ttype + '.csv'), 'w') as f:
+                    f.write(tstr)
+        else:
+            return False

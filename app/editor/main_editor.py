@@ -201,6 +201,9 @@ class MainEditor(QMainWindow):
         self.quit_act = QAction(
             "&Quit", self, shortcut="Ctrl+Q", triggered=self.close)
 
+        self.dump_csv = QAction(
+            "Dump CSV data", self, triggered=lambda: self.project_save_load_handler.dump_csv(DB))
+
         self.preferences_act = QAction(
             "&Preferences...", self, triggered=self.edit_preferences)
         self.about_act = QAction("&About", self, triggered=self.about)
@@ -286,6 +289,7 @@ class MainEditor(QMainWindow):
         file_menu.addSeparator()
         file_menu.addAction(self.save_act)
         file_menu.addAction(self.save_as_act)
+        file_menu.addAction(self.dump_csv)
         file_menu.addSeparator()
         file_menu.addAction(self.quit_act)
 

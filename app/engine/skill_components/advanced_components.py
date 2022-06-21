@@ -71,11 +71,6 @@ class CombatArt(SkillComponent):
             action.do(action.TriggerCharge(unit, self.skill))
         self.skill.data['active'] = False
 
-    def post_combat(self, playback, unit, item, target, mode):
-        if self._action and self._action.skill_obj:
-            action.do(action.RemoveSkill(unit, self._action.skill_obj))
-        self._action = None
-
 class AutomaticCombatArt(SkillComponent):
     nid = 'automatic_combat_art'
     desc = "Unit will be given skill on upkeep and removed on endstep"

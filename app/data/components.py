@@ -33,6 +33,14 @@ class Type(IntEnum):
     MultipleChoice = 103 # item is a string value from a number of choices
     MultipleOptions = 104 # item is a dict of string options with types that can be individually configured
 
+def convert_type_from_string(tstr: str, ttype: Type):
+    if ttype == Type.Int:
+        return int(tstr)
+    if ttype == Type.Float:
+        return float(tstr)
+    else:
+        return tstr
+
 class Component():
     nid: str = None
     desc: str = None

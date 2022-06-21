@@ -59,13 +59,18 @@ class Collection(QWidget):
             self.import_button.clicked.connect(self.window.import_data)
             grid.addWidget(self.import_button, 3, 0, 1, 2)
 
+        if self.window.allow_import_from_csv:
+            self.csv_import = QPushButton("Import from csv data file...")
+            self.csv_import.clicked.connect(self.window.import_csv)
+            grid.addWidget(self.csv_import, 4, 0, 1, 2)
+
         if self.window.allow_copy_and_paste:
             self.copy_button = QPushButton("Copy to clipboard")
             self.copy_button.clicked.connect(self.window.copy_data)
-            grid.addWidget(self.copy_button, 4, 0)
+            grid.addWidget(self.copy_button, 5, 0)
             self.paste_button = QPushButton("Paste from clipboard")
             self.paste_button.clicked.connect(self.window.paste_data)
-            grid.addWidget(self.paste_button, 4, 1)
+            grid.addWidget(self.paste_button, 5, 1)
 
     def on_filter_changed(self, text: str):
         text = text.replace(' ', '')
@@ -136,6 +141,7 @@ class Collection(QWidget):
 
 class DatabaseTab(QWidget):
     allow_import_from_lt = False
+    allow_import_from_csv = False
     allow_copy_and_paste = False
 
     def __init__(self, data, title, right_frame, deletion_criteria, collection_model, parent,

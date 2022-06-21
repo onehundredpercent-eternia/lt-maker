@@ -74,9 +74,9 @@ class SimpleMenuUI():
                 name = processed[1]
             split_data.append((nid, name))
         if self._data_type == 'type_base_item':
-            return [self.parse_item(DB.items.get(item_nid), choice_text) for item_nid, choice_text in split_data]
+            return [self.parse_item(DB.items.get(item_nid), choice_text, item_nid) for item_nid, choice_text in split_data]
         if self._data_type == 'type_game_item':
-            return [self.parse_item(game.item_registry.get(int(item_uid)), choice_text) for item_uid, choice_text in split_data]
+            return [self.parse_item(game.item_registry.get(int(item_uid)), choice_text, item_uid) for item_uid, choice_text in split_data]
         elif self._data_type == 'type_skill':
             return [self.parse_skill(DB.skills.get(skill_nid), choice_text) for skill_nid, choice_text in split_data]
         elif self._data_type == 'type_unit':
@@ -113,9 +113,9 @@ class SimpleMenuUI():
         else:
             return (get_icon(skill), "ERR", "ERR")
 
-    def parse_item(self, item: ItemPrefab | ItemObject, choice_name: str) -> Tuple[engine.Surface, str, str]:
+    def parse_item(self, item: ItemPrefab | ItemObject, choice_name: str, choice_value: str) -> Tuple[engine.Surface, str, str]:
         if item:
-            return (get_icon(item), item.name if not choice_name else choice_name, item.nid)
+            return (get_icon(item), item.name if not choice_name else choice_name, choice_value)
         else:
             return (get_icon(item), "ERR", "ERR")
 
