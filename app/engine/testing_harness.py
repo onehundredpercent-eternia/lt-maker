@@ -4,7 +4,8 @@ import cProfile
 from app.constants import WINWIDTH, WINHEIGHT
 from app.shaders import shaders
 
-num_frames = 360
+WINWIDTH, WINHEIGHT = 1920//2, 1080//2
+num_frames = 100
 
 def main():
     pr = cProfile.Profile()
@@ -18,8 +19,8 @@ def main():
     for _ in range(num_frames):
         tmp_surf = surf.convert()
         tmp_surf.blit(img, (0, 0))
-        # shaders.bloom(tmp_surf, 176, True)
-        shaders.invert(tmp_surf)
+        shaders.bloom(tmp_surf, 176, True)
+        # shaders.invert(tmp_surf)
         pygame.transform.scale(tmp_surf, screen_size, screen)
         pygame.display.update()
     pr.disable()

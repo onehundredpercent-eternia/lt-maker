@@ -4,7 +4,7 @@
 # cython: profile=False
 # encoding: utf-8
 
-# import numpy #
+# import numpy 
 
 cimport cython
 from cython.parallel cimport prange, parallel
@@ -75,7 +75,7 @@ cdef inline float mixlerp(float a, float b, float perc)nogil:
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.cdivision(True)
-cdef inline void shader_invert(unsigned char[:, :, ::1] rgb_array):
+cdef inline void shader_invert(unsigned char[:, :, :] rgb_array):
     """
     Takes a surface (rgb_array) and inverts the color of the pixels
     Expects r, g, b array to be size w x h x 3 or w x h x 4
@@ -191,7 +191,7 @@ cdef float[5] GAUSS_KERNEL = [1.0/16.0, 4.0/16.0, 6.0/16.0, 4.0/16.0, 1.0/16.0]
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.cdivision(True)
-cdef inline void shader_blur_5x5(unsigned char[:, :, ::1] rgb_array, int t=1):
+cdef inline void shader_blur_5x5(unsigned char[:, :, :] rgb_array, int t=1):
     """
     Applies a Gaussian Blur effect to the surface rgb_array
     Expects r, g, b array to be size w x h x 3 or w x h x 4
@@ -368,7 +368,7 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
     if x2:
         s2 = smoothscale(surface_cp, (w2, h2))
         # s2_array = s2.get_view('3')
-        s2_array = pixels3d(s2).copy(order='C')
+        s2_array = pixels3d(s2)
         shader_blur_5x5(s2_array)
         b2_blurred = make_surface(s2_array)
         s2 = smoothscale(b2_blurred, (w, h))
@@ -377,7 +377,7 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
     if x4:
         s4 = smoothscale(surface_cp, (w4, h4))
         # s4_array = s4.get_view('3')
-        s4_array = pixels3d(s4).copy(order='C')
+        s4_array = pixels3d(s4)
         shader_blur_5x5(s4_array)
         b4_blurred = make_surface(s4_array)
         s4 = smoothscale(b4_blurred, (w, h))
@@ -386,7 +386,7 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
     if x8:
         s8 = smoothscale(surface_cp, (w8, h8))
         # s8_array = s8.get_view('3')
-        s8_array = pixels3d(s8).copy(order='C')
+        s8_array = pixels3d(s8)
         shader_blur_5x5(s8_array)
         b8_blurred = make_surface(s8_array)
         s8 = smoothscale(b8_blurred, (w, h))
@@ -395,7 +395,7 @@ cdef inline void shader_bloom(surface_, int threshold_, bint fast_=False):
     if x16:
         s16 = smoothscale(surface_cp, (w16, h16))
         # s16_array = s16.get_view('3')
-        s16_array = pixels3d(s16).copy(order='C')
+        s16_array = pixels3d(s16)
         shader_blur_5x5(s16_array)
         b16_blurred = make_surface(s16_array)
         s16 = smoothscale(b16_blurred, (w, h))
@@ -479,13 +479,13 @@ cdef inline void shader_vortex(unsigned char[:, :, :] rgb_array, float time):
 # End shader_cool_shit
 
 cpdef inline void invert(object surface_):
-    shader_invert(pixels3d(surface_).copy(order='C'))
+    shader_invert(pixels3d(surface_)) ##
 
 cpdef inline void bright_pass_filter(object surface_, int threshold_=128):
     shader_bright_pass_filter(pixels3d(surface_), threshold_)
 
 cpdef inline void blur(object surface_, int t_=1):
-    shader_blur_5x5(pixels3d(surface_).copy(order='C'), t_)
+    shader_blur_5x5(pixels3d(surface_), t_)
 
 cpdef inline void bloom(object surface_, int threshold_, bint fast_=False):
     shader_bloom(surface_, threshold_, fast_)
