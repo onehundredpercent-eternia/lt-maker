@@ -1,15 +1,12 @@
-from app.constants import TILEHEIGHT, TILEWIDTH
-from app.engine import engine, image_mods
-from app.utilities import str_utils, utils
+from app.engine import engine
 
 # Generic Sprite Set Object
 # Used, for instance, for miss and no damage animations
 # And for map effects
 # Basically just an ordered sequence of sprites that can be acted upon by tweens
-# always 32-bit convert alpha images
 
 class SpriteSet():
-    def __init__(self, prefab, position):
+    def __init__(self, prefab):
         self.nid = prefab.nid
         if not prefab.image:
             prefab.image = engine.image_load(prefab.nid)
@@ -19,18 +16,36 @@ class SpriteSet():
             prefab.images = [engine.subsurface(prefab.image, (idx % prefab.frame_x, idx // prefab.frame_x, width, height)) for idx in range(prefab.num_frames)]
         self.images = prefab.images[:]
         self.num_frames = prefab.num_frames
+
         self.enabled = True
+        self.remove_me = False
+
+        self.idx = 0
+        self.offset = (0, 0)
 
         self.tweens = []
 
     def save(self) -> tuple:
-        return {'nid': self.nid}
+        return {'nid': self.nid,
+                'tweens': self.tweens}
 
     def update(self):
         current_time = engine.get_time()
-        if not self.is_ready(current_time):
-            return
+        for tween in self.tweens:
+            tween.update(current_time)
+        
+        return not self.remove_me
 
+    def draw(self, surf, pos=None):
+        image = self.images[self.idx]
+        pos = pos or (0, 0)
+        surf.blit(image, (pos[0] + self.offset[0], pos[1] + self.offset[1]))
+
+
+
+
+
+"""
         done = False
         if str_utils.is_int(self.speed):
             self.counter = int(current_time - self.first_update) // self.speed
@@ -104,3 +119,4 @@ class MapAnimation(Animation):
             return self.position[0] + offset[0] * TILEWIDTH, self.position[1] + offset[1] * TILEHEIGHT
         else:
             return self.position
+"""
