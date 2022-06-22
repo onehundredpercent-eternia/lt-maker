@@ -5,7 +5,7 @@ from app.engine.combat.solver import CombatPhaseSolver
 from app.engine.sound import get_sound_thread
 from app.engine import engine, combat_calcs, gui, action, item_system
 from app.engine.health_bar import MapCombatInfo
-from app.engine.animations import MapAnimation
+from app.engine.sprite_sets import SpriteSet
 from app.engine.game_state import game
 
 from app.engine.combat.simple_combat import SimpleCombat
@@ -127,11 +127,11 @@ class MapCombat(SimpleCombat):
                 game.highlight.remove_highlights()
                 animation_brushes = self.get_from_playback('cast_anim')
                 for brush in animation_brushes:
-                    anim = RESOURCES.animations.get(brush.anim)
+                    anim = RESOURCES.sprite_sets.get(brush.anim)
                     pos = game.cursor.position
                     if anim:
-                        anim = MapAnimation(anim, pos)
-                        self.animations.append(anim)
+                        anim = SpriteSet(anim)
+                        self.animations.append((anim, pos))
                 self.state = 'sound'
 
         elif self.state == 'sound':
@@ -273,11 +273,11 @@ class MapCombat(SimpleCombat):
                 for health_bar in self.health_bars.values():
                     health_bar.shake(shake)
             elif brush.nid == 'hit_anim':
-                anim = RESOURCES.animations.get(brush.anim)
+                anim = RESOURCES.sprite_sets.get(brush.anim)
                 pos = brush.defender.position
                 if anim and pos:
-                    anim = MapAnimation(anim, pos)
-                    self.animations.append(anim)
+                    anim = SpriteSet(anim)
+                    self.animations.append((anim, pos))
             elif brush.nid == 'damage_hit':
                 damage = brush.damage
                 if damage <= 0:
@@ -345,9 +345,11 @@ class MapCombat(SimpleCombat):
 
     def draw(self, surf):
         # Animations
-        self.animations = [anim for anim in self.animations if not anim.update()]
-        for anim in self.animations:
-            anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
+        self.animations = [(anim, pos) for (anim, pos) in self.animations if not anim.update()]
+        camera_offset = (-game.camera.get_x(), -game.camera.get_y())
+        for anim, pos in self.animations:
+            pixel_pos = (pos[0] + camera_offset[0]) * TILEWIDTH, (pos[1] + camera_offset[1]) * TILEHEIGHT
+            anim.draw(surf, pixel_pos)
 
         for hp_bar in self.health_bars.values():
             hp_bar.draw(surf)
