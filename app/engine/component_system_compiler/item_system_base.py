@@ -355,8 +355,7 @@ def on_crit(actions, playback, unit, item, target, target_pos, mode, attack_info
         if not any(brush.nid == 'hit_sound' for brush in playback):
             if find_hp(actions, target) <= 0:
                 playback.append(pb.HitSound('Final Hit'))
-            else:
-                playback.append(pb.HitSound('Critical Hit ' + str(random.randint(1, 2))))
+            playback.append(pb.HitSound('Critical Hit ' + str(random.randint(1, 2))))
         if not any(brush.nid == 'crit_tint' for brush in playback):
             playback.append(pb.CritTint(target, (255, 255, 255)))
 

@@ -40,6 +40,16 @@ class UpkeepAnimation(SkillComponent):
     def on_upkeep(self, actions, playback, unit):
         playback.append(pb.CastAnim(self.value))
 
+class UpkeepSound(SkillComponent):
+    nid = 'upkeep_sound'
+    desc = "Plays sound at beginning of turn"
+    tag = SkillTags.AESTHETIC
+
+    expose = Type.Sound
+
+    def on_upkeep(self, actions, playback, unit):
+        playback.append(pb.HitSound(self.value))
+
 # Get proc skills working before bothering with this one
 class DisplaySkillIconInCombat(SkillComponent):
     nid = 'display_skill_icon_in_combat'

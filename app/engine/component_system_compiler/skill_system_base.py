@@ -1,6 +1,5 @@
 from app.engine.objects.item import ItemObject
 
-
 class Defaults():
     @staticmethod
     def can_select(unit) -> bool:

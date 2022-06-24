@@ -9,6 +9,8 @@ from app.engine.fonts import FONT
 from app.engine.value_noise import ValueNoise
 from app.engine.game_state import game
 
+import time
+
 class MapView():
     def __init__(self):
         self._unit_surf = engine.create_surface((WINWIDTH, WINHEIGHT), transparent=True)
@@ -19,7 +21,7 @@ class MapView():
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
         unit_surf = engine.copy_surface(self._unit_surf)
 
-        # Update all units except the cur unit
+        # Update all units
         update_units = [unit for unit in game.units if (unit.position or unit.sprite.fake_position)]
         for unit in update_units:
             unit.sprite.update()
@@ -36,9 +38,10 @@ class MapView():
 
         topleft = cull_rect[0], cull_rect[1]
 
+        event = 'event' in game.state.state_names()
         for unit in draw_units:
             unit.sprite.draw(unit_surf, topleft)
-            if 'event' not in game.state.state_names():
+            if not event:
                 unit.sprite.draw_hp(unit_surf, topleft)
         for unit in draw_units:
             unit.sprite.draw_markers(unit_surf, topleft)
@@ -50,7 +53,7 @@ class MapView():
         cur_unit = game.cursor.cur_unit
         if cur_unit and (cur_unit.position or cur_unit.sprite.fake_position):
             cur_unit.sprite.draw(unit_surf, topleft)
-            if 'event' not in game.state.state_names():
+            if not event:
                 cur_unit.sprite.draw_hp(unit_surf, topleft)
                 cur_unit.sprite.draw_markers(unit_surf, topleft)
 

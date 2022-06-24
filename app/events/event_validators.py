@@ -932,7 +932,7 @@ class StatList(Validator):
         return text
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(stat.name, stat.nid) for stat in DB.stats.values()]
+        valids = [(None, stat.nid) for stat in DB.stats.values()]
         return valids
 
 class ArgList(Validator):

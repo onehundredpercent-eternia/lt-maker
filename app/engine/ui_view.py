@@ -77,6 +77,7 @@ class UIView():
         self.current_tile_pos = None
 
         self.remove_unit_info = True
+        self.prev_unit_info_top = False
         self.obj_top = False
 
         self.memory_bar = MemoryBar()
@@ -159,10 +160,17 @@ class UIView():
         if self.unit_info_disp:
             # If in top and not in right
             if not DB.constants.value('initiative') or not game.initiative.draw_me:
-                if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
+                if self.remove_unit_info:
+                    if self.prev_unit_info_top:
+                        surf.blit(self.unit_info_disp, (-self.unit_info_offset, 0))
+                    else:
+                        surf.blit(self.unit_info_disp, (-self.unit_info_offset, WINHEIGHT - self.unit_info_disp.get_height()))
+                elif game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
                         not (game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1):
+                    self.prev_unit_info_top = False
                     surf.blit(self.unit_info_disp, (-self.unit_info_offset, WINHEIGHT - self.unit_info_disp.get_height()))
                 else:
+                    self.prev_unit_info_top = True
                     surf.blit(self.unit_info_disp, (-self.unit_info_offset, 0))
             else:
                 pass

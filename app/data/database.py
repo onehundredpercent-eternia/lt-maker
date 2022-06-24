@@ -128,10 +128,10 @@ class Database(object):
         data_dir = os.path.join(proj_dir, 'game_data')
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
-        logging.info("Serializing data in %s..." % data_dir)
+        logging.warning("Serializing data in %s..." % data_dir)
 
         import time
-        start = time.time_ns()/1e6
+        start = time.perf_counter() * 1000
 
         to_save = self.save()
         # This section is what takes so long!
@@ -157,7 +157,7 @@ class Database(object):
                             name = subvalue['name']
                     else:
                         name = str(idx).zfill(6)
-                    name = re.sub(r'[\\/*?:"<>|]',"", name)
+                    name = re.sub(r'[\\/*?:"<>|]', "", name)
                     name = name.replace(' ', '_')
                     fname = name + '.json'
                     orderkeys[fname] = idx
@@ -166,20 +166,27 @@ class Database(object):
                     self.json_save(save_loc, [subvalue])
                 self.json_save(os.path.join(save_dir, '.orderkeys'), orderkeys)
 
-        end = time.time_ns()/1e6
-        logging.info("Total Time Taken for Database: %s ms" % (end - start))
-        logging.info("Done serializing!")
+        end = time.perf_counter() * 1000
+        logging.warning("Total Time Taken for Database: %s ms" % (end - start))
+        logging.warning("Done serializing!")
 
     def load(self, proj_dir):
         data_dir = os.path.join(proj_dir, 'game_data')
-        logging.info("Deserializing data from %s..." % data_dir)
+        logging.warning("Deserializing data from %s..." % data_dir)
+
+        import time
+        start = time.perf_counter() * 1000
 
         save_obj = {}
         for key in self.save_data_types:
             save_obj[key] = self.json_load(data_dir, key)
 
         self.restore(save_obj)
-        logging.info("Done deserializing!")
+
+        end = time.perf_counter() * 1000
+
+        logging.warning("Total Time Taken for Database: %s ms" % (end - start))
+        logging.warning("Done deserializing!")
 
 DB = Database()
 

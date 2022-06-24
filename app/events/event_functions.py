@@ -1624,6 +1624,18 @@ def promote(self: Event, global_unit, klass=None, flags=None):
     if silent and new_klass:
         swap_class = action.Promote(unit, new_klass)
         action.do(swap_class)
+        #check for new class skill
+        unit_klass = DB.classes.get(unit.klass)
+        for level_needed, class_skill_nid in unit_klass.learned_skills:
+            if unit.level == level_needed:
+                if class_skill_nid == 'Feat':
+                    self.game.memory['current_unit'] = unit
+                    self.game.state.change('feat_choice')
+                    self.state = 'paused'
+                else:
+                    if class_skill_nid not in [skill.nid for skill in unit.skills]:
+                        act = action.AddSkill(unit, class_skill_nid)
+                        action.do(act)
         _, new_wexp = swap_class.get_data()
         # check for weapon experience gain
         if new_wexp:
@@ -1669,6 +1681,18 @@ def change_class(self: Event, global_unit, klass=None, flags=None):
     if silent and new_klass:
         swap_class = action.ClassChange(unit, new_klass)
         action.do(swap_class)
+        #check for new class skill
+        unit_klass = DB.classes.get(unit.klass)
+        for level_needed, class_skill_nid in unit_klass.learned_skills:
+            if unit.level == level_needed:
+                if class_skill_nid == 'Feat':
+                    self.game.memory['current_unit'] = unit
+                    self.game.state.change('feat_choice')
+                    self.state = 'paused'
+                else:
+                    if class_skill_nid not in [skill.nid for skill in unit.skills]:
+                        act = action.AddSkill(unit, class_skill_nid)
+                        action.do(act)
         _, new_wexp = swap_class.get_data()
         # check for weapon experience gain
         if new_wexp:

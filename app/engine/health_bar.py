@@ -18,7 +18,6 @@ class HealthBar():
 
         self.displayed_hp = self.unit.get_hp()
         self.old_hp = self.displayed_hp
-        self.total_hp = equations.parser.hitpoints(self.unit)
 
         self.transition_flag = False
         self.time_for_change = self.time_for_change_min
@@ -34,9 +33,6 @@ class HealthBar():
             self.transition_flag = True
             self.time_for_change = max(self.time_for_change_min, abs(self.displayed_hp - self.unit.get_hp()) * self.speed)
             self.last_update = engine.get_time()
-
-        if equations.parser.hitpoints(self.unit) != self.total_hp:
-            self.total_hp = equations.parser.hitpoints(self.unit)
 
         # Check to see if we should update
         if self.transition_flag:
@@ -154,7 +150,7 @@ class MapHealthBar(HealthBar):
     health_bar = SPRITES.get('map_health_bar')
 
     def draw(self, surf, left, top):
-        total = max(1, self.total_hp)
+        total = max(1, self.unit.get_max_hp())
         fraction_hp = utils.clamp(self.displayed_hp / total, 0, 1)
         index_pixel = int(12 * fraction_hp) + 1
 
@@ -170,7 +166,7 @@ class MapCombatHealthBar(HealthBar):
     health_bar = SPRITES.get('health_bar')
 
     def draw(self, surf):
-        total = max(1, self.total_hp)
+        total = max(1, self.unit.get_max_hp())
         fraction_hp = utils.clamp(self.displayed_hp / total, 0, 1)
         index_pixel = int(50 * fraction_hp)
         position = 25, 22

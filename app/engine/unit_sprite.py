@@ -301,7 +301,6 @@ class UnitSprite():
         self.health_bar.update()
 
     def update_state(self):
-        current_time = engine.get_time()
         if self.state == 'normal':
             if self.unit.finished and not self.unit.is_dying:
                 self.image_state = 'gray'
@@ -333,6 +332,7 @@ class UnitSprite():
                 return
             self.net_position = (next_position[0] - self.unit.position[0], next_position[1] - self.unit.position[1])
             last_update = game.movement.get_last_update(self.unit.nid)
+            current_time = engine.get_time()
             dt = current_time - last_update
             self.offset[0] = int(TILEWIDTH * dt / cf.SETTINGS['unit_speed'] * self.net_position[0])
             self.offset[1] = int(TILEHEIGHT * dt / cf.SETTINGS['unit_speed'] * self.net_position[1])
@@ -396,7 +396,7 @@ class UnitSprite():
             self.map_sprite = MapSprite(res, self.unit.team)
         if self.transition_state == 'swoosh_in':
             state = 'down'
-        image = getattr(self.map_sprite, state)
+        image = self.map_sprite.__dict__.get(state)  # This is roughly 2x as fast as getattr, but getattr is safer
         image = self.select_frame(image, state)
         return image
 

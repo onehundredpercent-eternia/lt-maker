@@ -342,16 +342,16 @@ class AnimationCombat(BaseCombat, MockCombat):
             self._set_stats()
 
             # Set up combat effects (legendary)
-            attacker, item, defender, d_item, current_battle_anim = self.get_actors()
+            attacker, item, defender, d_item, self.current_battle_anim = self.get_actors()
             any_effect: bool = False
             if not any(brush.attacker_nid == attacker.nid for brush in self.get_from_full_playback('combat_effect')):
                 if item:
                     effect_nid = item_system.combat_effect(attacker, item, defender, 'attack')
                     if effect_nid:
-                        effect = current_battle_anim.get_effect(effect_nid, pose='Attack')
+                        effect = self.current_battle_anim.get_effect(effect_nid, pose='Attack')
                         any_effect = True
                         self.full_playback.append(pb.CombatEffect(attacker.nid))  # Mark that we've done their combat effect
-                        current_battle_anim.add_effect(effect)
+                        self.current_battle_anim.add_effect(effect)
 
             if any_effect:
                 self.state = 'combat_effect'
