@@ -1,5 +1,6 @@
 
 
+from app.utilities import str_utils
 from app.data.database_validator import DatabaseValidatorEngine
 import logging
 from typing import List
@@ -147,22 +148,8 @@ def update_db_with_unit_csv(db: Database, unit_csv_str):
                 else:
                     curr_unit.wexp_gain[weapon] = WexpGain(False, rank)
 
-
-def validate_type(db: Database, expose_type: Type, value: str):
-    if expose_type == Type.WeaponType:
-        if value in db.weapons.keys():
-            return True
-        else:
-            return False
-    elif expose_type == Type.WeaponRank:
-        if value in db.weapon_ranks.keys():
-            return True
-        else:
-            return False
-    else:
-        return True
-
 def update_db_with_item_csv(db: Database, item_csv_str):
+    db_validator = DatabaseValidatorEngine(db)
     data = csv_str_as_grid(item_csv_str)
     headers = data[0]
     for item_data in data[1:]:
@@ -186,11 +173,11 @@ def update_db_with_item_csv(db: Database, item_csv_str):
             component_name = headers[i].lower()
             if curr_item[component_name]:
                 expose_type = curr_item[component_name].expose
-                converted = convert_type_from_string(item_data[i], expose_type)
-                if validate_type(db, expose_type, converted):
+                if db_validator.validate_type(expose_type, item_data[i]):
+                    converted = convert_type_from_string(item_data[i], expose_type)
                     curr_item[component_name].value = converted
                 else:
-                    logging.error("invalid value type: %s, %s, %s", converted, str(expose_type), item_data)
+                    logging.error("invalid value type: %s, %s, %s", item_data[i], str(expose_type), item_data)
                     continue
             else:
                 new_component = ICA.get_component(component_name)
@@ -199,11 +186,11 @@ def update_db_with_item_csv(db: Database, item_csv_str):
                     continue
                 if not new_component.expose:
                     continue
-                new_component_value = convert_type_from_string(item_data[i], new_component.expose)
-                if validate_type(db, new_component.expose, new_component_value):
+                if db_validator.validate_type(new_component.expose, item_data[i]):
+                    new_component_value = convert_type_from_string(item_data[i], new_component.expose)
                     new_component.value = new_component_value
                 else:
-                    logging.error("invalid value type: %s, %s, %s", converted, str(expose_type), item_data)
+                    logging.error("invalid value type: %s, %s, %s", item_data[i], str(expose_type), item_data)
                     continue
 
                 curr_item.components.append(new_component)

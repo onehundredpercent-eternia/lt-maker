@@ -154,6 +154,26 @@ def remove_all_matched(s: str, opener: str, closer: str):
         s, n = re.subn(rstr, '', s)  # remove non-nested/flat balanced parts
     return s
 
+def is_color3(s: str) -> bool:
+    nums = s.split(',')
+    if len(nums) != 3:
+        return False
+    if any([not is_int(n) for n in nums]):
+        return False
+    if any([not (0 <= int(n) < 256) for n in nums]):
+        return False
+    return True
+
+def is_color4(s: str) -> bool:
+    nums = s.split(',')
+    if len(nums) != 4:
+        return False
+    if any([not is_int(n) for n in nums]):
+        return False
+    if any([not (0 <= int(n) < 256) for n in nums]):
+        return False
+    return True
+
 if __name__ == '__main__':
     # print(camel_to_snake("Direction"))
     # print(camel_to_snake("EntityID"))
@@ -177,5 +197,6 @@ if __name__ == '__main__':
     #     print(res)
     #     parsed = recursive_parse(res)
     #     print(parsed)
-    print(matched_expr('{d:MercenaryHiringList.{v:MercenaryHireChoice}.Class}', '{', '}'))
-    print(remove_all_matched('{d:{eval}.{var}.', '{', '}'))
+    # print(matched_expr('{d:MercenaryHiringList.{v:MercenaryHireChoice}.Class}', '{', '}'))
+    # print(remove_all_matched('{d:{eval}.{var}.', '{', '}'))
+    pass
