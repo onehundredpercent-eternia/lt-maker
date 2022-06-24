@@ -9,6 +9,8 @@ class RegionType(str, Enum):
     TIME = 'time'
     GROUP = 'group'
 
+DROPPABLE_OPTIONS = ["None", "Weapon", "Weapon+", "Spell", "Spell+", "Forge", "Promo", "Exp", "Any"]
+
 class Region(Prefab):
     def __init__(self, nid):
         self.nid = nid

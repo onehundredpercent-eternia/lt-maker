@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QColor, QPixmap
 
 from app.data.database import DB
-from app.events.regions import RegionType
+from app.events.regions import RegionType, DROPPABLE_OPTIONS
 
 from app.utilities import utils, str_utils
 from app.utilities.data import Data
@@ -235,6 +235,11 @@ class ModifyRegionWidget(QWidget):
         self.valid_ai_box.edit.activated.connect(self.valid_ai_changed)
         layout.addWidget(self.valid_ai_box)
 
+        self.droppable_box = PropertyBox("Droppable", ComboBox, self)
+        self.droppable_box.edit.addItems(DROPPABLE_OPTIONS)
+        self.droppable_box.edit.activated.connect(self.droppable_changed)
+        layout.addWidget(self.droppable_box)
+
         self.sub_nid_box.hide()
         self.condition_box.hide()
         self.only_once_box.hide()
@@ -243,6 +248,7 @@ class ModifyRegionWidget(QWidget):
         self.group_class_box.hide()
         self.group_tags_box.hide()
         self.valid_ai_box.hide()
+        self.droppable_box.hide()
 
     def nid_changed(self, text):
         if self.current:
@@ -276,6 +282,7 @@ class ModifyRegionWidget(QWidget):
         self.group_class_box.hide()
         self.group_tags_box.hide()
         self.valid_ai_box.hide()
+        self.droppable_box.hide()
         if self.current.region_type in (RegionType.NORMAL, RegionType.FORMATION):
             pass
         elif self.current.region_type == RegionType.STATUS:
@@ -291,6 +298,7 @@ class ModifyRegionWidget(QWidget):
             self.group_class_box.show()
             self.group_tags_box.show()
             self.valid_ai_box.show()
+            self.droppable_box.show()
 
     def sub_nid_changed(self, text):
         self.current.sub_nid = text
@@ -319,6 +327,9 @@ class ModifyRegionWidget(QWidget):
     def valid_ai_changed(self):
         self.current.group_data['ai'] = self.valid_ai_box.edit.currentText()
 
+    def droppable_changed(self):
+        self.current.group_data['droppable'] = self.droppable_box.edit.currentText()
+
     def set_current(self, current):
         self.current = current
         self.nid_box.edit.setText(current.nid)
@@ -343,8 +354,13 @@ class ModifyRegionWidget(QWidget):
         self.group_tags_box.edit.addItems(DB.tags.keys())
         self.group_tags_box.edit.setCurrentTexts(tags)
 
-        ai = current.group_data.get('ai', 'Attack')
-        self.valid_ai_box.edit.clear()
         valid_ais = list(DB.ai.keys())
+        ai = current.group_data.get('ai', 'Attack' if 'Attack' in valid_ais else valid_ais[0])
+        self.valid_ai_box.edit.clear()
         self.valid_ai_box.edit.addItems(valid_ais)
         self.valid_ai_box.edit.setValue(ai)
+
+        droppable = current.group_data.get('droppable', DROPPABLE_OPTIONS[0])
+        self.droppable_box.edit.clear()
+        self.droppable_box.edit.addItems(DROPPABLE_OPTIONS)
+        self.droppable_box.edit.setValue(droppable)

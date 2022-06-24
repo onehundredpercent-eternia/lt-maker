@@ -174,27 +174,43 @@ def determine_avg_level():
     num_complete = completed_chapters()
     return num_complete * 2
 
-def create_unit(klass, position, level, ai, ai_group, is_elite=False):
+def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=None):
     unit_nid = str_utils.get_next_generic_nid('301', [unit.nid for unit in game.units])
 
     # Give items
     if klass in item_data:
-        starting_items = [item_data[klass]]
+        starting_items = [(item_data[klass], False)]
         if klass in item_data2:
-            starting_items.append(item_data2[klass])
+            starting_items.append((item_data2[klass], False))
     elif klass in anima_users:
         random.seed(ai_group)
         anima_type = random.randchoice(['Fire', 'Wind', 'Thunder'])
         if anima_type == 'Fire':
-            starting_items = ['Grave Fire']
+            starting_items = [('Grave Fire', False)]
         elif anima_type == 'Wind':
-            starting_items = ['Grave Wind']
+            starting_items = [('Grave Wind', False)]
         elif anima_type == 'Thunder':
-            starting_items = ['Grave Thunder']
+            starting_items = [('Grave Thunder', False)]
     else:
         weapon_type = class_data.get(klass).weapon_type
         base_item = weapon_type
-        starting_items = [base_item]
+        starting_items = [(base_item, False)]
+
+    # Handle giving droppable weapon
+    if is_elite and (not droppable or droppable == 'None'):
+        droppable = 'Weapon'
+    if droppable == 'Weapon':
+        starting_items[0] = (starting_items[0][0], True)
+    elif droppable == 'Spell':
+        starting_items.append((get_random_spell(), True))
+    elif droppable == 'Forge':
+        starting_items.append(("Forging Crystal", True))
+    elif droppable == 'Promo':
+        starting_items.append(("Promotion Orb", True))
+    elif droppable == 'Misc':
+        starting_items.append((get_random_misc(), True))
+    elif droppable == 'Any':
+        starting_items.append((get_random_item(), True))
 
     team = 'enemy'
     starting_position = position
@@ -270,6 +286,11 @@ def build_group(region):
 
     logging.debug("Kind: %s", kind)
 
+    # Additional group data
+    droppable = group_data.get('droppable', 'None')
+    ai = group_data.get('ai', 'Attack')
+    ai_group = region.nid
+
     if kind == GroupKind.SINGLE_TYPE:
         class_to_add = game.get_random_choice(all_classes)
         point_cost = class_data.get(class_to_add).points
@@ -283,9 +304,8 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
-            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
+            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite, droppable)
+            droppable = None
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -316,9 +336,8 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
-            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
+            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite, droppable)
+            droppable = None
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -329,8 +348,6 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
             new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
@@ -363,9 +380,8 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
-            new_unit = create_unit(main_class_to_add, position, level, ai, ai_group, is_elite)
+            new_unit = create_unit(main_class_to_add, position, level, ai, ai_group, is_elite, droppable)
+            droppable = None
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -376,8 +392,6 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
             new_unit = create_unit(mage_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
@@ -419,8 +433,6 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
             new_unit = create_unit(main_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
@@ -432,8 +444,6 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
             new_unit = create_unit(second_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
@@ -445,9 +455,8 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
-            new_unit = create_unit(mage_class_to_add, position, level, ai, ai_group, is_elite)
+            new_unit = create_unit(mage_class_to_add, position, level, ai, ai_group, is_elite, droppable)
+            droppable = None
 
             if not positions:
                 logging.error("No more valid positions in region to place units")
@@ -471,9 +480,7 @@ def build_group(region):
         position = game.get_random_choice(positions)
         positions.remove(position)
 
-        ai = group_data.get('ai', 'Attack')
-        ai_group = region.nid
-        new_unit = create_unit(leader_class_to_add, position, level, ai, ai_group, is_elite)
+        new_unit = create_unit(leader_class_to_add, position, level, ai, ai_group, is_elite, droppable)
 
         if not positions:
             logging.error("No more valid positions in region to place units")
@@ -506,7 +513,7 @@ def build_group(region):
         ai = group_data.get('ai', 'Guard')
         ai_group = region.nid
         level += 2  # Boss is two levels above by default
-        new_unit = create_unit(class_to_add, position, level, ai, ai_group)
+        new_unit = create_unit(class_to_add, position, level, ai, ai_group, droppable=droppable)
         new_unit._tags.append('Boss')
         # Give the Boss some bonuses
         stat_changes = {'HP': 5, 'POW': 2, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 2, 'RES': 3}

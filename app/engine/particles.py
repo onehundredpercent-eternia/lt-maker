@@ -259,8 +259,8 @@ class EventTileParticle(Particle):
         sprite = image_mods.make_translucent(self.sprite, self.transparency)
         surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
 
-class LightMote2(Particle):
-    sprite = SPRITES.get('particle_dark_mote2')
+class PurpleMote(Particle):
+    sprite = SPRITES.get('particle_purple_mote')
 
     def __init__(self, pos):
         super().__init__(pos)
@@ -286,7 +286,7 @@ class LightMote2(Particle):
 
     def draw(self, surf, offset_x=0, offset_y=0):
         sprite = image_mods.make_translucent(self.sprite, self.transparency)
-        surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
+        engine.blit(surf, sprite, (self.x - offset_x, self.y - offset_y), None, engine.BLEND_RGB_ADD)
 
 def create_system(nid, width, height, position):
     twidth, theight = width * TILEWIDTH, height * TILEHEIGHT
@@ -305,9 +305,9 @@ def create_system(nid, width, height, position):
     elif nid == 'light':
         creation_bounds = 0, twidth, 0, theight
         ps = ParticleSystem(nid, LightMote, .02, creation_bounds, (width, height))
-    elif nid == 'light2':
+    elif nid == 'purple':
         creation_bounds = 0, twidth, 0, theight
-        ps = ParticleSystem(nid, LightMote2, .06, creation_bounds, (width, height))
+        ps = ParticleSystem(nid, PurpleMote, .06, creation_bounds, (width, height))
     elif nid == 'dark':
         creation_bounds = 0, twidth, 0, theight
         ps = ParticleSystem(nid, DarkMote, .02, creation_bounds, (width, height))
