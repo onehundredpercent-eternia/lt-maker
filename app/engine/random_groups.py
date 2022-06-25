@@ -113,6 +113,7 @@ def get_potential_leaders(klass_nid) -> List[str]:
     base_class = get_unpromoted_class(klass_nid)
     d = {
         'Soldier': ['Armor'],
+        'Brigand': ['Mercenary']
     }
     if base_class in d:
         return d[base_class]
@@ -174,7 +175,65 @@ def determine_avg_level():
     num_complete = completed_chapters()
     return num_complete * 2
 
+def get_random_item(tags=None):
+    tags = tags or []
+    all_items = []
+    all_chances = []
+    for tag in tags:
+        if tag == 'Exp':
+            items = []
+            chance = 5
+            avg_level = determine_avg_level()
+            if avg_level <= 4:
+                items.append('Exp Orb Lvl1')
+            elif avg_level <= 9:
+                items.append('Exp Orb Lvl5')
+            elif avg_level <= 14:
+                items.append('Exp Orb Lvl10')
+            else:
+                items.append('Exp Orb Lvl15')
+        elif tag == 'Forge':
+            chance = 5
+            items = [item for item in DB.items if tag in item.tags]
+        elif tag == 'Promo':
+            chance = 5
+            items = [item for item in DB.items if tag in item.tags]
+        else:
+            chance = 20
+            items = [item for item in DB.items if tag in item.tags]
+        all_items.append(items)
+        all_chances.append(chance)
+    items = game.get_random_weighted_choice(all_items, all_chances)
+    return game.get_random_choice(items)
+
+def get_random_tree_item():
+    chapter_num = completed_chapters()
+    if chapter_num == 0:
+        tags = ['Weapon']
+    elif chapter_num == 1:
+        tags = ['Weapon']
+    elif chapter_num == 2:
+        tags = ['Weapon', 'Spell', 'Exp']
+    elif chapter_num == 3:
+        tags = ['Weapon', 'Spell', 'Exp', 'Forge']
+    elif chapter_num == 4:
+        tags = ['Weapon', 'Spell', 'Exp', 'Forge']
+    elif chapter_num == 5:
+        tags = ['Weapon', 'Spell', 'Exp', 'Forge', 'Promo']
+    elif chapter_num == 6:
+        tags = ['Weapon', 'Spell', 'Exp', 'Forge', 'Promo']
+    elif chapter_num == 7:
+        tags = ['Weapon', 'Weapon+', 'Spell', 'Exp', 'Forge', 'Promo']
+    elif chapter_num == 8:
+        tags = ['Weapon+', 'Spell', 'Spell+', 'Exp', 'Forge', 'Promo']
+    elif chapter_num == 8:
+        tags = ['Weapon+', 'Spell+', 'Exp', 'Promo']
+    elif chapter_num >= 9:
+        tags = ['Weapon+', 'Spell+', 'Exp']
+    return get_random_item(tags)
+
 def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=None):
+    chapter_num = completed_chapters()
     unit_nid = str_utils.get_next_generic_nid('301', [unit.nid for unit in game.units])
 
     # Give items
@@ -201,16 +260,15 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
         droppable = 'Weapon'
     if droppable == 'Weapon':
         starting_items[0] = (starting_items[0][0], True)
-    elif droppable == 'Spell':
-        starting_items.append((get_random_spell(), True))
-    elif droppable == 'Forge':
-        starting_items.append(("Forging Crystal", True))
-    elif droppable == 'Promo':
-        starting_items.append(("Promotion Orb", True))
-    elif droppable == 'Misc':
-        starting_items.append((get_random_misc(), True))
+    elif droppable in ('Weapon', 'Spell', 'Spell+', 'Forge', 'Promo', 'Exp'):
+        starting_items.append((get_random_item([droppable]), True))
     elif droppable == 'Any':
-        starting_items.append((get_random_item(), True))
+        weapon = 'Weapon+' if chapter_num > 5 else 'Weapon'
+        spell = 'Spell+' if chapter_num > 5 else 'Spell'
+        tags = [weapon, spell, 'Forge', 'Exp']
+        if chapter_num > 3:
+            tags.append('Promo')
+        starting_items.append((get_random_item(tags), True))
 
     team = 'enemy'
     starting_position = position

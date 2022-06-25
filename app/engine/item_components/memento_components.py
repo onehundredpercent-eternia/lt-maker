@@ -242,3 +242,10 @@ class MementoFullMoonAvailable(ItemComponent):
 
     def available(self, unit, item) -> bool:
         return game.game_vars.get('full_moon', False)
+
+class MementoUpgradeTo(ItemComponent):
+    nid = 'memento_upgrade_to'
+    desc = "Item can be upgraded to any of the following items"
+    tag = ItemTags.CUSTOM
+
+    expose = (Type.List, Type.Item)
