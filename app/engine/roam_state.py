@@ -4,8 +4,9 @@ from app.events.regions import RegionType
 from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.engine.game_state import game
-from app.engine import engine, info_menu, evaluate, target_system, action
+from app.engine import engine, info_menu, evaluate, target_system, action, ai_controller, skill_system
 from app.engine.input_manager import get_input_manager
+from app.data.database import DB
 
 import logging
 
@@ -21,6 +22,9 @@ class FreeRoamState(MapState):
         self.vspeed = 0.0
         self.hspeed = 0.0
         self.direction = [0, 0]
+
+        # AI manager
+        self.ai_handler = FreeRoamAIHandler()
 
     def begin(self):
         game.cursor.hide()
@@ -61,7 +65,7 @@ class FreeRoamState(MapState):
     def take_input(self, event):
         if not self.roam_unit:
             return
-        
+
         base_speed = 0.008
         base_accel = 0.008
         running_accel = 0.01
@@ -135,7 +139,7 @@ class FreeRoamState(MapState):
                 self.speed -= running_accel
         elif self.speed >= base_speed or self.speed > max_speed:
             self.speed -= running_accel
-        
+
         for region in game.level.regions:
             if region.contains(rounded_position) and region.interrupt_move:
                 current_occupant = game.board.get_unit(rounded_position)
@@ -188,6 +192,7 @@ class FreeRoamState(MapState):
 
     def update(self):
         super().update()
+        self.ai_handler.update()
         if self.last_move and engine.get_time() - self.last_move > 166:
             self.last_move = 0
             self.roam_unit.sprite.change_state('normal')
@@ -281,3 +286,194 @@ class FreeRoamState(MapState):
                 except Exception as e:
                     logging.error("%s: Could not evaluate {%s}" % (e, region.condition))
         return None
+
+class FreeRoamAIHandler():
+    """Handles and selects all valid units with AI in free roam
+    Will:
+        Maintain a list of valid units to check on
+        Reload that list only when asked
+        Iterate through that list to fulfill objective of each unit
+
+    self.targets = Set[Units]
+    """
+
+    def __init__(self):
+        self.targets = self.compose_target_list()
+
+    def reload(self):
+        self.targets = self.compose_target_list()
+
+    def compose_target_list(self):
+        targets = set()
+        for unit in game.get_all_units():
+            if hasattr(DB.ai.get(unit.get_ai()), 'roam_ai') and DB.ai.get(unit.get_ai()).roam_ai:
+                targets.add(FreeRoamUnit(unit, FreeRoamAIController(unit)))
+        return targets
+
+    def update(self):
+        for unit in self.targets:
+            unit.ai.update()
+
+class FreeRoamUnit():
+    """A simple class focused on containing info
+    for AI units in Free Roam"""
+    def __init__(self, unit, ai):
+        self.unit = unit
+        self.ai = ai
+
+class FreeRoamAIController(ai_controller.AIController):
+    def __init__(self, unit):
+        # Controls whether we should be skipping through the AI's turns
+        self.do_skip: bool = False
+        self.max_pause = 1000
+        self.reset()
+        self.unit = unit
+
+    def skip(self):
+        self.do_skip = True
+
+    def end_skip(self):
+        self.do_skip = False
+
+    def reset(self):
+        self.unit = None
+        self.state = "Init"
+
+        self.behaviour_idx = 0
+        self.behaviour = None
+        self.inner_ai = None
+
+        self.did_something = False
+        self.pause = self.max_pause
+
+        self.goal_position = None
+        self.path = None
+
+        self.speed = 0.0
+        self.vspeed = 0.0
+        self.hspeed = 0.0
+        self.direction = [0, 0]
+
+    def clean_up(self):
+        self.goal_position = None
+        self.goal_item = None
+        self.goal_target = None
+
+    def set_next_behaviour(self):
+        behaviours = DB.ai.get(self.unit.get_ai()).behaviours
+        if self.behaviour_idx < len(behaviours):
+            self.behaviour = behaviours[self.behaviour_idx]
+            self.behaviour_idx += 1
+        else:
+            self.behaviour = None
+            self.behaviour_idx = 0
+
+    def load_unit(self, unit):
+        self.reset()
+        self.unit = unit
+
+    def update(self):
+        self.think()
+
+    def get_move_path(self):
+        return target_system.get_path(self.unit, self.goal_position)
+
+    def get_target(self):
+        # VERY TODO
+        all_targets = []
+        if self.behaviour.target == 'Unit':
+            all_targets = [u.position for u in game.units if u.position]
+        elif self.behaviour.target == 'Enemy':
+            all_targets = [u.position for u in game.units if u.position and skill_system.check_enemy(self.unit, u)]
+        elif self.behaviour.target == 'Ally':
+            all_targets = [u.position for u in game.units if u.position and skill_system.check_ally(self.unit, u)]
+        elif self.behaviour.target == 'Event':
+            target_spec = self.behaviour.target_spec
+            all_targets = []
+            for region in game.level.regions:
+                try:
+                    if region.region_type == RegionType.EVENT and region.sub_nid == target_spec and (not region.condition or evaluate.evaluate(region.condition, self.unit, local_args={'region': region})):
+                        all_targets += region.get_all_positions()
+                except:
+                    logging.warning("Region Condition: Could not parse %s" % region.condition)
+            all_targets = list(set(all_targets))  # Remove duplicates
+        elif self.behaviour.target == 'Position':
+            if self.behaviour.target_spec == "Starting":
+                if self.unit.starting_position:
+                    all_targets = [self.unit.starting_position]
+                else:
+                    all_targets = []
+            else:
+                all_targets = [tuple(self.behaviour.target_spec)]
+        if self.behaviour.target in ('Unit', 'Enemy', 'Ally'):
+            all_targets = ai_controller.handle_unit_spec(all_targets, self.behaviour)
+
+        if self.behaviour.target != 'Position':
+            if DB.constants.value('ai_fog_of_war'):
+                all_targets = [pos for pos in all_targets if game.board.in_vision(pos, self.unit.team)]
+        return all_targets
+
+    def prepare_move(self):
+        targets = self.get_target()
+        if targets:
+            self.goal_target = targets[0]
+            self.goal_position = target_system.get_nearest_open_tile(self.unit, self.goal_target.position)
+            self.path = self.get_move_path()
+        else:
+            self.state = "Init"
+            return None
+
+    def move(self):
+        if not self.goal_position:
+            return
+        if self.goal_target and self.goal_target.position != self.goal_position:
+            self.path = self.get_move_path()
+        if self.goal_position != self.unit.position:
+            pass
+
+    def think(self):
+        time = engine.get_time()
+        success = False
+        self.did_something = False
+
+        logging.info("*** AI Thinking... ***")
+
+        while True:
+            # Can spend up to half a frame thinking
+            over_time = engine.get_true_time() - time >= 8
+            logging.info("Current State: %s", self.state)
+
+            if self.state == 'Init':
+                self.start_time = engine.get_time()
+                logging.info("Starting AI with nid: %s, position: %s, class: %s, AI: %s", self.unit.nid, self.unit.position, self.unit.klass, self.unit.get_ai())
+                self.clean_up()
+                # Get next behaviour
+                self.set_next_behaviour()
+                if self.behaviour:
+                    logging.info(self.behaviour.action)
+                    if self.behaviour.action == "None":
+                        pass  # Try again
+                    elif self.behaviour.action == 'Move_to':
+                        self.state = "Moving"
+                        self.inner_ai = self.prepare_move()
+                    elif self.behaviour.action == "Move_away_from":
+                        success = self.smart_retreat()
+                        if success:
+                            self.state = "Moving"
+                        else:
+                            self.state = "Init"  # Try another behaviour
+                else:
+                    self.state = 'Done'
+
+            elif self.state == "Moving":
+                self.move()
+
+            if self.state == 'Done':
+                self.did_something = success
+                self.state = 'Init'
+                return True
+
+            if over_time:
+                break
+
+        return False

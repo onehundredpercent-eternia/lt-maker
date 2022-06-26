@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 import app.data.ai as ai
 from app.data.database import DB
 
-from app.extensions.custom_gui import PropertyBox, ComboBox
+from app.extensions.custom_gui import PropertyBox, ComboBox, PropertyCheckBox
 from app.editor.custom_widgets import ClassBox, UnitBox, FactionBox, PartyBox
 from app.utilities import str_utils
 
@@ -359,6 +359,11 @@ class AIProperties(QWidget):
         self.offense_bias_box.edit.valueChanged.connect(self.offense_bias_changed)
         top_section.addWidget(self.offense_bias_box)
 
+        self.roam_ai_box = PropertyCheckBox("Roam AI", QCheckBox, self)
+        self.roam_ai_box.edit.stateChanged.connect(self.roam_ai)
+        self.roam_ai_box.setToolTip("Is this AI for Free Roam or normal gameplay?")
+        top_section.addWidget(self.roam_ai_box)
+
         self.add_button = QPushButton("Add Behaviour", self)
         self.add_button.clicked.connect(self.add_behaviour)
         top_section.addWidget(self.add_button)
@@ -419,6 +424,9 @@ class AIProperties(QWidget):
         if self.current and set_current:
             self.current.pop_behaviour()
 
+    def roam_ai(self, state):
+        self.current.roam_ai = bool(state)
+
     def add_behaviour(self, checked=False, set_current=True):
         item = QListWidgetItem(self.behaviour_list)
         self.behaviour_list.addItem(item)
@@ -441,6 +449,7 @@ class AIProperties(QWidget):
         self.nid_box.edit.setText(current.nid)
         self.priority_box.edit.setValue(current.priority)
         self.offense_bias_box.edit.setValue(current.offense_bias)
+        self.roam_ai_box.edit.setChecked(bool(current.roam_ai))
         num_behaviours = len(current.behaviours)
         # Remove all after num behaviours
         while len(self.behaviour_boxes) > num_behaviours:
