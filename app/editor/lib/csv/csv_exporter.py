@@ -1,5 +1,6 @@
 
 
+from app.data.database_validator import DatabaseValidatorEngine
 import logging
 from typing import List
 from app.data.components import Type, convert_type_from_string
@@ -96,12 +97,23 @@ def klass_db_to_csv(klass_db: ClassCatalog):
     return ss
 
 def dump_as_csv(db: Database):
+    db_validator = DatabaseValidatorEngine(db)
+    db_validator.repair()
     # csv dump functions
-    return [
-            ('units', unit_db_to_csv(db.units)),
-            ('classes', klass_db_to_csv(db.classes)),
-            ('items', item_db_to_csv(db.items)),
-            ]
+    dump = []
+    try:
+        dump.append(('units', unit_db_to_csv(db.units)))
+    except Exception as e:
+        logging.error("failed to dump units", e)
+    try:
+        dump.append(('classes', klass_db_to_csv(db.classes)))
+    except Exception as e:
+        logging.error("failed to dump class", e)
+    try:
+        dump.append(('items', item_db_to_csv(db.items)))
+    except Exception as e:
+        logging.error("failed to dump items", e)
+    return dump
 
 def update_db_with_unit_csv(db: Database, unit_csv_str):
     data = csv_str_as_grid(unit_csv_str)

@@ -677,6 +677,17 @@ Increments a level variable by one, or by a Python expression provided using the
     optional_keywords = ["Expression"]
     keyword_types = ["GeneralVar", "Expression"]
 
+class SetNextChapter(EventCommand):
+    nid = 'set_next_chapter'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Sets the next chapter the player will go to
+        """
+
+    keywords = ["Chapter"]
+
 class WinGame(EventCommand):
     nid = 'win_game'
     tag = Tags.LEVEL_VARS
@@ -1216,6 +1227,22 @@ Also, if the item is removed from the convoy, there will not be a banner.
 
     keywords = ["GlobalUnitOrConvoy", "Item"]
     _flags = ['no_banner']
+
+class SetItemUses(EventCommand):
+    nid = 'set_item_uses'
+    tag = Tags.MODIFY_ITEM_PROPERTIES
+
+    desc = \
+        """
+Sets the uses of an *Item* to *Uses* in the inventory of *GlobalUnitOrConvoy*.
+
+*  the *additive* flag adds the given uses instead
+        """
+
+    keywords = ["GlobalUnitOrConvoy", "Item", "Uses"]
+    keyword_types = ["GlobalUnitOrConvoy", "Item", "Integer"]
+
+    _flags = ["additive"]
 
 class ChangeItemName(EventCommand):
     nid = 'change_item_name'

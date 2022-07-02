@@ -16,6 +16,8 @@ constants = {'current_time': 0,
              'standalone': True,
              'running': True}
 
+fast_quit = False
+
 # === engine functions ===
 def init():
     pygame.mixer.pre_init(44100, -16, 2, 128 * 2**cf.SETTINGS['sound_buffer_size'])
@@ -33,7 +35,7 @@ def set_title(text):
     pygame.display.set_caption(text)
 
 def build_display(size):
-    return pygame.display.set_mode(size)
+    return pygame.display.set_mode(size, pygame.FULLSCREEN if cf.SETTINGS['fullscreen'] else 0)
 
 def push_display(surf, size, new_surf):
     pygame.transform.scale(surf, size, new_surf)
@@ -208,6 +210,9 @@ events = []
 def get_events():
     global events
     events.clear()
+    if fast_quit:
+        terminate()
+        return pygame.QUIT
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             terminate()

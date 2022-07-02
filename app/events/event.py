@@ -21,15 +21,15 @@ from app.utilities import str_utils, utils
 from app.utilities.typing import NID
 
 class Event():
-    _transition_speed = 250
-    _transition_color = (0, 0, 0)
-
     true_vals = ('t', 'true', '1', 'y', 'yes')
 
     skippable = {"speak", "wait", "bop_portrait",
                  "sound", "location_card", "credits", "ending"}
 
     def __init__(self, nid, commands, unit=None, unit2=None, position=None, local_args: Dict = None, game: GameState = None):
+        self._transition_speed = 250
+        self._transition_color = (0, 0, 0)
+
         self.nid = nid
         self.commands: List[event_commands.EventCommand] = commands.copy()
         self.command_idx = 0

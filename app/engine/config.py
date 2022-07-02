@@ -8,6 +8,7 @@ def read_config_file():
     lines = OrderedDict([('debug', 1),
                          ('random_seed', -1),
                          ('screen_size', 2),
+                         ('fullscreen', 0),
                          ('sound_buffer_size', 4),
                          ('animation', 'Always'),
                          ('display_fps', 0),

@@ -182,30 +182,17 @@ class SimpleOption(ConfigOption):
             width = font.width(text)
             running_width += width
 
-class ScreenSizeOption(SimpleOption):
+class ScreenSizeOption(SliderOption):
     def get_value(self):
         return int(cf.SETTINGS[self.name])
-
-    def draw(self, surf, x, y, active=False):
-        surf.blit(self.icon, (x + 16, y))
-        name_font = FONT['text']
-        name_font.blit(self.display_name, surf, (x + 32, y))
-        value = int(cf.SETTINGS[self.name])
-
-        running_width = 0
-        for choice in self.values:
-            if choice == value:
-                font = FONT['text-blue']
-            else:
-                font = FONT['text-grey']
-            text = str(choice) + '    '
-            font.blit(text, surf, (x + 112 + running_width, y))
-            width = font.width(text)
-            running_width += width
 
     def update_screen_size(self):
         n = self.get_value()
         engine.SCREENSIZE = (WINWIDTH * n, WINHEIGHT * n)
+        if n == self.values[-1]:
+            cf.SETTINGS['fullscreen'] = 1
+        else:
+            cf.SETTINGS['fullscreen'] = 0
         engine.DISPLAYSURF = engine.build_display(engine.SCREENSIZE)
 
     def move_left(self):

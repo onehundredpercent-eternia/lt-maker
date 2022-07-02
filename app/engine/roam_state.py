@@ -55,13 +55,17 @@ class FreeRoamState(MapState):
             game.state.back()
             return 'repeat'
 
-        rounded_pos = int(self.roam_unit.position[0]), int(self.roam_unit.position[1])
+        rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
         game.cursor.set_pos(rounded_pos)
 
     def take_input(self, event):
+        if not self.roam_unit:
+            return
+        
         base_speed = 0.008
         base_accel = 0.008
         running_accel = 0.01
+        rounded_position = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
 
         if get_input_manager().is_pressed('BACK'):
             max_speed = 0.15
@@ -117,18 +121,12 @@ class FreeRoamState(MapState):
             self.move(self.hspeed, self.vspeed)
             self.roam_unit.sprite.change_state('moving')
             self.roam_unit.sprite.handle_net_position((self.hspeed, self.vspeed))
+            rounded_position = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
 
         game.camera.force_center(*self.roam_unit.position)
 
         if any((get_input_manager().just_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))) \
                 or any((get_input_manager().is_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))):
-            for region in game.level.regions:
-                if region.fuzzy_contains(self.roam_unit.position) and region.interrupt_move:
-                    new_pos = (int(round(self.roam_unit.position[0])), int(round(self.roam_unit.position[1])))
-                    current_occupant = game.board.get_unit(new_pos)
-                    if current_occupant:
-                        new_pos = target_system.get_nearest_open_tile(current_occupant, new_pos)
-                    self.roam_unit.position = new_pos
             if self.speed < max_speed and get_input_manager().is_pressed('BACK'):
                 self.speed += running_accel
             elif self.speed < max_speed:
@@ -137,6 +135,18 @@ class FreeRoamState(MapState):
                 self.speed -= running_accel
         elif self.speed >= base_speed or self.speed > max_speed:
             self.speed -= running_accel
+        
+        for region in game.level.regions:
+            if region.contains(rounded_position) and region.interrupt_move:
+                current_occupant = game.board.get_unit(rounded_position)
+                if current_occupant:
+                    rounded_position = target_system.get_nearest_open_tile(current_occupant, rounded_position)
+                    self.roam_unit.position = rounded_position
+                did_trigger = game.events.trigger('roaming_interrupt', self.roam_unit, position=self.roam_unit.position, local_args={'region': region})
+                if did_trigger:
+                    self.rationalize()
+                if region.only_once and did_trigger:
+                    action.do(action.RemoveRegion(region))
 
         if event == 'SELECT':
             other_unit = self.can_talk()
@@ -161,7 +171,20 @@ class FreeRoamState(MapState):
             game.state.change('option_menu')
 
         elif event == 'INFO':
-            info_menu.handle_info()
+            other_unit = self.can_talk()
+            did_trigger = game.events.trigger('roam_press_info', self.roam_unit, other_unit)
+            if did_trigger:
+                self.rationalize()
+            else:
+                info_menu.handle_info()
+
+        elif event == 'START':
+            did_trigger = game.events.trigger('roam_press_start', self.roam_unit)
+            if did_trigger:
+                get_sound_thread().play_sfx('Select 2')
+                self.rationalize()
+            else:
+                get_sound_thread().play_sfx('Error')
 
     def update(self):
         super().update()
@@ -175,7 +198,7 @@ class FreeRoamState(MapState):
         x, y = self.roam_unit.position
         self.roam_unit.position = x + dx, y + dy
         self.roam_unit.sound.play()
-        rounded_pos = int(self.roam_unit.position[0]), int(self.roam_unit.position[1])
+        rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
         game.cursor.set_pos(rounded_pos)
 
     def can_move(self, direc: str) -> bool:
@@ -224,6 +247,9 @@ class FreeRoamState(MapState):
         game.arrive(self.roam_unit)
         self.roam_unit.sprite.change_state('normal')
         self.roam_unit.sound.stop()
+        self.speed = 0
+        self.vspeed = 0
+        self.hspeed = 0
         self.roam_unit = None
         self.last_move = 0
 

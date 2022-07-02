@@ -24,6 +24,10 @@
         "text": "Pass the turn."
     },
     {
+        "nid": "Quit_Game_desc",
+        "text": "Close the game."
+    },
+    {
         "nid": "Turnwheel_desc",
         "text": "Can undo previous actions."
     },

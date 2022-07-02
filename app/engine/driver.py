@@ -82,6 +82,7 @@ def run(game):
         # print(engine.get_delta())
 
         raw_events = engine.get_events()
+
         if raw_events == engine.QUIT:
             break
         event = get_input_manager().process_input(raw_events)

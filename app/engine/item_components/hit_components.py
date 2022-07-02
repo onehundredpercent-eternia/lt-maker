@@ -121,6 +121,23 @@ class StatusOnHit(ItemComponent):
         # Do I add a new status to the target
         return ai_status_priority(unit, target, item, move, self.value)
 
+
+class SelfStatusOnHit(ItemComponent):
+    nid = 'self_status_on_hit'
+    desc = "User gains the specified status on hit. Applies instantly, potentially causing values to change mid-combat."
+    tag = ItemTags.SPECIAL
+
+    expose = Type.Skill  # Nid
+
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        act = action.AddSkill(unit, self.value, unit)
+        actions.append(act)
+        playback.append(pb.StatusHit(unit, item, unit, self.value))
+
+    def ai_priority(self, unit, item, target, move):
+        # Do I add a new status to the target
+        return ai_status_priority(unit, unit, item, move, self.value)
+
 class StatusesOnHit(ItemComponent):
     nid = 'statuses_on_hit'
     desc = "Item gives statuses to target when it hits"

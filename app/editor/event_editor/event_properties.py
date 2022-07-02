@@ -178,7 +178,7 @@ class Highlighter(QSyntaxHighlighter):
                     validator = command.get_validator_from_keyword(keyword)
                     level_nid = self.window.current.level_nid
                     level = DB.levels.get(level_nid)
-                    text = event_validators.validate(validator, value, level)
+                    text = event_validators.validate(validator, value, level, DB, RESOURCES)
                     if text is None:
                         broken_args.append(command.get_index_from_keyword(keyword) + 1)
                 return broken_args
@@ -396,7 +396,7 @@ class CodeEditor(QPlainTextEdit):
 
         # determine what dictionary to use for completion
         validator, flags = event_autocompleter.detect_type_under_cursor(line, cursor_pos, arg_under_cursor)
-        autofill_dict = event_autocompleter.generate_wordlist_from_validator_type(validator, self.window.current.level_nid, arg_under_cursor)
+        autofill_dict = event_autocompleter.generate_wordlist_from_validator_type(validator, self.window.current.level_nid, arg_under_cursor, DB, RESOURCES)
         if flags:
             autofill_dict = autofill_dict + event_autocompleter.generate_flags_wordlist(flags)
         if len(autofill_dict) == 0:
@@ -1208,7 +1208,7 @@ class ShowCommandsDialog(QDialog):
                         already.append(keyword)
                     validator = event_validators.get(keyword)
                     if validator and validator.desc:
-                        text += '_%s_ %s\n\n' % (keyword, validator().desc)
+                        text += '_%s_ %s\n\n' % (keyword, validator.desc)
                     else:
                         text += '_%s_ %s\n\n' % (keyword, "")
                 if command.desc:

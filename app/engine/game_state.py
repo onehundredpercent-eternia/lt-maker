@@ -314,15 +314,15 @@ class GameState():
                      'mode': self.current_mode.nid,
                      }
         if self.current_level:
-            meta_dict['level_title'] = self.current_level.name
             meta_dict['level_nid'] = self.current_level.nid
-        elif self.game_vars.get('_next_level_nid'):
+            meta_dict['level_title'] = self.current_level.name
+        elif self.game_vars.get('_next_level_nid') is not None:
             fake_level = DB.levels.get(self.game_vars.get('_next_level_nid'))
-            meta_dict['level_title'] = fake_level.name
             meta_dict['level_nid'] = fake_level.nid
+            meta_dict['level_title'] = fake_level.name
         else:
-            meta_dict['level_title'] = 'Overworld'
             meta_dict['level_nid'] = None
+            meta_dict['level_title'] = 'Overworld'
 
         self.action_log.record = True
         return s_dict, meta_dict

@@ -35,7 +35,10 @@ all_triggers = Data([
     Trigger('on_turnwheel'),
     Trigger('on_title_screen'),
     Trigger('time_region_complete', False, False, False, {'region'}),
-    Trigger('on_overworld_node_select', False, False, False, {'entity_nid', 'node_nid'}) # unit1 is entity nid, region is node nid
+    Trigger('on_overworld_node_select', False, False, False, {'entity_nid', 'node_nid'}), # unit1 is entity nid, region is node nid
+    Trigger('roam_press_start', True, False, False),
+    Trigger('roam_press_info', True, True, False),
+    Trigger('roaming_interrupt', True, False, True, {'region'})
 ])
 
 class EventPrefab(Prefab):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections import OrderedDict
+from typing import Union
 
 from app.data.level_units import GenericUnit, UniqueUnit, UnitGroup
 from app.events.regions import Region
@@ -24,7 +25,7 @@ class LevelPrefab(Prefab):
 
         self.go_to_overworld: bool = False
 
-        self.units = Data[UniqueUnit]()
+        self.units = Data[Union[UniqueUnit, GenericUnit]]()
         self.regions = Data()
         self.unit_groups = Data()
 

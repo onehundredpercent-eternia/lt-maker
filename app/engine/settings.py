@@ -22,7 +22,7 @@ controls = {'key_SELECT': engine.subsurface(SPRITES.get('buttons'), (0, 66, 14, 
 control_order = ('key_SELECT', 'key_BACK', 'key_INFO', 'key_AUX', 'key_LEFT', 'key_RIGHT', 'key_UP', 'key_DOWN', 'key_START')
 
 config = [('animation', ['Always', 'Your Turn', 'Combat Only', 'Never'], 0),
-          ('screen_size', [1, 2, 3, 4, 5], 18),
+          ('screen_size', [1, 2, 3, 4, 5, 6], 18),
           ('display_fps', bool, 2),
           ('battle_bg', bool, 17),
           ('unit_speed', list(reversed(range(15, 180, 15))), 1),

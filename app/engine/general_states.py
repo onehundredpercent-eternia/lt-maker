@@ -301,6 +301,10 @@ class OptionMenuState(MapState):
             options.append('Save')
             info_desc.append('Save_desc')
             ignore.append(False)
+        if cf.SETTINGS['fullscreen']:
+            options.append('Quit Game')
+            info_desc.append('Quit_Game_desc')
+            ignore.append(False)
         if not game.level or not game.level.roam:
             options.append('End')
             info_desc.append('End_desc')
@@ -365,6 +369,10 @@ class OptionMenuState(MapState):
             elif selection == 'Unit':
                 game.memory['next_state'] = 'unit_menu'
                 game.state.change('transition_to')
+            elif selection == 'Quit Game':
+                game.memory['option_owner'] = selection
+                game.memory['option_menu'] = self.menu
+                game.state.change('option_child')
             elif selection == 'Objective':
                 game.memory['next_state'] = 'objective_menu'
                 game.state.change('transition_to')
@@ -439,6 +447,8 @@ class OptionChildState(State):
                 elif self.menu.owner == 'Suspend':
                     game.state.back()
                     suspend()
+                elif self.menu.owner == "Quit Game":
+                    engine.fast_quit = True
                 elif self.menu.owner == 'Save':
                     game.state.back()
                     battle_save()

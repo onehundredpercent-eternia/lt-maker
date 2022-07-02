@@ -2345,6 +2345,19 @@ class RemoveRegion(Action):
             for act in self.subactions:
                 act.reverse()
 
+def _leave(layer):
+    # Force all affected units to leave
+    layer_positions = layer.terrain.keys()
+    for unit in game.units:
+        if unit.position in layer_positions:
+            game.leave(unit)
+
+def _arrive(layer):
+    # Force all affected units to arrive
+    layer_positions = layer.terrain.keys()
+    for unit in game.units:
+        if unit.position in layer_positions:
+            game.arrive(unit)
 
 class ShowLayer(Action):
     def __init__(self, layer_nid, transition):
@@ -2353,25 +2366,32 @@ class ShowLayer(Action):
 
     def do(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
+        _leave(layer)
+        # Actually change the layer
         if self.transition == 'immediate':
             layer.quick_show()
             game.level.tilemap.reset()
         else:
             layer.show()
+        _arrive(layer)
         game.board.reset_grid(game.level.tilemap)
         game.boundary.reset()
 
     def execute(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
+        _leave(layer)
         layer.quick_show()
         game.level.tilemap.reset()
+        _arrive(layer)
         game.board.reset_grid(game.level.tilemap)
         game.boundary.reset()
 
     def reverse(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
+        _leave(layer)
         layer.quick_hide()
         game.level.tilemap.reset()
+        _arrive(layer)
         game.board.reset_grid(game.level.tilemap)
         game.boundary.reset()
 
@@ -2383,25 +2403,31 @@ class HideLayer(Action):
 
     def do(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
+        _leave(layer)
         if self.transition == 'immediate':
             layer.quick_hide()
             game.level.tilemap.reset()
         else:
             layer.hide()
+        _arrive(layer)
         game.board.reset_grid(game.level.tilemap)
         game.boundary.reset()
 
     def execute(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
+        _leave(layer)
         layer.quick_hide()
         game.level.tilemap.reset()
+        _arrive(layer)
         game.board.reset_grid(game.level.tilemap)
         game.boundary.reset()
 
     def reverse(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
+        _leave(layer)
         layer.quick_show()
         game.level.tilemap.reset()
+        _arrive(layer)
         game.board.reset_grid(game.level.tilemap)
         game.boundary.reset()
 

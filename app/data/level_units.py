@@ -1,3 +1,4 @@
+from app.utilities.typing import NID
 from dataclasses import dataclass
 
 from app.utilities.data import Prefab
@@ -19,7 +20,7 @@ class GenericUnit(Prefab):
     ai_group: str = None
 
     starting_position: list = None  # 2-tuple
-    starting_traveler: list = None  # unit nid
+    starting_traveler: NID = None  # unit nid
 
     generic: bool = True
 
@@ -63,7 +64,7 @@ class UniqueUnit(Prefab):
     faction: str = None  # Always None
 
     starting_position: list = None  # 2-tuple
-    starting_traveler: list = None  # Unit nid
+    starting_traveler: NID = None  # Unit nid
 
     generic: bool = False
 
