@@ -12,7 +12,7 @@ from app.utilities.data import Data
 from app.extensions.custom_gui import PropertyBox, PropertyCheckBox, ComboBox, RightClickListView
 from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.editor.base_database_gui import DragDropCollectionModel
-from app.editor.custom_widgets import SkillBox
+from app.editor.custom_widgets import SkillBox, ItemBox
 from app.events import regions
 
 from app.editor import timer
@@ -211,10 +211,12 @@ class ModifyRegionWidget(QWidget):
         layout.addWidget(self.interrupt_move_box)
 
         self.status_box = SkillBox(self)
-        # if self.current.sub_nid and self.current.region_type == 'Status':
-        #     self.status_box.edit.setText(self.current.sub_nid)
         self.status_box.edit.currentIndexChanged.connect(self.status_changed)
         layout.addWidget(self.status_box)
+
+        self.item_box = ItemBox(self)
+        self.item_box.edit.currentIndexChanged.connect(self.item_changed)
+        layout.addWidget(self.item_box)
 
         # For group region
         self.group_class_box = PropertyBox("Classes", MultiSelectComboBox, self)
@@ -245,6 +247,7 @@ class ModifyRegionWidget(QWidget):
         self.only_once_box.hide()
         self.interrupt_move_box.hide()
         self.status_box.hide()
+        self.item_box.hide()
         self.group_class_box.hide()
         self.group_tags_box.hide()
         self.valid_ai_box.hide()
@@ -279,6 +282,7 @@ class ModifyRegionWidget(QWidget):
         self.only_once_box.hide()
         self.interrupt_move_box.hide()
         self.status_box.hide()
+        self.item_box.hide()
         self.group_class_box.hide()
         self.group_tags_box.hide()
         self.valid_ai_box.hide()
@@ -299,6 +303,8 @@ class ModifyRegionWidget(QWidget):
             self.group_tags_box.show()
             self.valid_ai_box.show()
             self.droppable_box.show()
+        elif self.current.region_type == RegionType.GRAVE:
+            self.item_box.show()
 
     def sub_nid_changed(self, text):
         self.current.sub_nid = text
@@ -316,6 +322,10 @@ class ModifyRegionWidget(QWidget):
 
     def status_changed(self, index):
         self.current.sub_nid = self.status_box.edit.currentText()
+        self.window.update_list()
+
+    def item_changed(self, index):
+        self.current.sub_nid = self.item_box.edit.currentText()
         self.window.update_list()
 
     def group_class_changed(self):
@@ -339,6 +349,8 @@ class ModifyRegionWidget(QWidget):
         self.interrupt_move_box.edit.setChecked(bool(current.interrupt_move))
         if current.region_type == RegionType.STATUS:
             self.status_box.edit.setValue(current.sub_nid)
+        elif current.region_type == RegionType.GRAVE:
+            self.item_box.edit.setValue(current.sub_nid)
         elif current.region_type == RegionType.EVENT:
             self.sub_nid_box.edit.setText(current.sub_nid)
         else:

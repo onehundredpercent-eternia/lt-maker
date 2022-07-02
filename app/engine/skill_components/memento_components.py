@@ -130,17 +130,16 @@ class MementoInitiateFullMoon(SkillComponent):
     def init(self, skill):
         self.skill.data['_last_turn_with_kill'] = -1
 
-    def _activate_full_moon(self):
-        action.do(action.SetGameVar('full_moon', True))
+    def _activate_full_moon(self, unit):
+        action.do(action.ChangeField(unit, 'full_moon', True))
         # A E S T H E T I C
-        # TODO Global change
 
     def keep_full_moon(self) -> bool:
         # You've gone two turns without killing anybody
         return self.skill.data['_last_turn_with_kill'] > game.turncount - 2
 
     def unit_sprite_flicker_tint(self, unit, skill):
-        if game.game_vars.get('full_moon', False):
+        if unit.get_field('full_moon', False):
             return ((255, 255, 255), 900, 300)
         return None
 
@@ -148,11 +147,11 @@ class MementoInitiateFullMoon(SkillComponent):
         if target and target.get_hp() <= 0:
             if self.skill.data['_last_turn_with_kill'] == game.turncount - 1:
                 # You've done it twice in a row, so FULL MOON ACTIVATE
-                self._activate_full_moon()
+                self._activate_full_moon(unit)
             action.do(action.SetObjData(self.skill, '_last_turn_with_kill', game.turncount))
 
     def modify_damage(self, unit, item):
-        return 3 if game.game_vars.get('full_moon', False) else 0
+        return 3 if unit.get_field('full_moon', False) else 0
 
     def modify_accuracy(self, unit, item):
-        return 30 if game.game_vars.get('full_moon', False) else 0
+        return 30 if unit.get_field('full_moon', False) else 0

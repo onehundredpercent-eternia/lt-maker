@@ -8,6 +8,7 @@ class RegionType(str, Enum):
     FORMATION = 'formation'
     TIME = 'time'
     GROUP = 'group'
+    GRAVE = 'grave'
 
 DROPPABLE_OPTIONS = ["None", "Weapon", "Weapon+", "Spell", "Spell+", "Forge", "Promo", "Exp", "GraveWeapon", "Any"]
 

@@ -228,6 +228,8 @@ class MementoAnimaAvailable(ItemComponent):
     expose = Type.Item
 
     def available(self, unit, item) -> bool:
+        if unit.team != 'player':
+            return True
         for item in unit.items:
             if item.multi_item:
                 first_subitem = item.subitems[0]
