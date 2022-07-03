@@ -731,7 +731,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
     new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
 
     if 'copy_stats' in flags:
-        new_unit.stats = unit.stats[:]
+        new_unit.stats = unit.stats.copy()
 
     position = self._check_placement(new_unit, position, placement)
     if not position:
