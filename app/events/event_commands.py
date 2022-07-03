@@ -688,6 +688,19 @@ Sets the next chapter the player will go to
 
     keywords = ["Chapter"]
 
+class SetFogOfWar(EventCommand):
+    nid = 'set_fog_of_war'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Sets the fog of war state for the current level.
+        """
+
+    keywords = ["FogOfWarType", "Radius"]
+    optional_keywords = ["AIRadius", "OtherRadius"]
+    keyword_types = ["FogOfWarType", "PositiveInteger", "PositiveInteger", "PositiveInteger"]
+
 class WinGame(EventCommand):
     nid = 'win_game'
     tag = Tags.LEVEL_VARS

@@ -123,9 +123,18 @@ class ProjectFileBackend():
         # Save metadata
         self.save_metadata(self.current_proj)
         self.save_progress.setValue(87)
-
         if not new and self.settings.get_should_make_backup_save():
-            # we have fully saved the current project; replace the files in the original backup folder and rename it back
+            # we have fully saved the current project.
+            # first, delete the .json files that don't appear in the new project
+            for old_dir, dirs, files in os.walk(self.tmp_proj):
+                new_dir = old_dir.replace(self.tmp_proj, self.current_proj)
+                for f in files:
+                    if f.endswith('.json'):
+                        old_file = os.path.join(old_dir, f)
+                        new_file = os.path.join(new_dir, f)
+                        if not os.path.exists(new_file):
+                            os.remove(old_file)
+            # then replace the files in the original backup folder and rename it back
             for src_dir, dirs, files in os.walk(self.current_proj):
                 dst_dir = src_dir.replace(self.current_proj, self.tmp_proj)
                 for f in files:
