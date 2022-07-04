@@ -268,11 +268,13 @@ class PurpleMote(Particle):
         self.speed = 0.1 + random.random() * 0.15
         self.direction = random.random() * math.pi * 2
         self.change_over_time = random.choice([0.01, 0.015, 0.02])
+        self.x_change = self.speed * math.cos(self.direction)
+        self.y_change = self.speed * math.sin(self.direction)
         self.transition = True
 
     def update(self):
-        self.x += self.speed * math.cos(self.direction)
-        self.y += self.speed * math.sin(self.direction)
+        self.x += self.x_change
+        self.y += self.y_change
 
         if self.transition:
             self.transparency -= self.change_over_time

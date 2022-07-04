@@ -728,6 +728,16 @@ class MainMenu(EventCommand):
 Returns the player to the main menu
         """
 
+class ForceChapterCleanup(EventCommand):
+    nid = 'force_chapter_cleanup'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Does cleanup of the current chapter.
+Runs on_end_chapter item and skill hooks, puts all units HP back to full etc.
+        """
+
 class SkipSave(EventCommand):
     nid = 'skip_save'
     tag = Tags.LEVEL_VARS
@@ -1755,6 +1765,17 @@ class RemoveRegion(EventCommand):
     desc = \
         """
 Removes the region specified by *Nid*.
+        """
+
+    keywords = ["Nid"]
+
+class RemoveGenericsFromRegion(EventCommand):
+    nid = 'remove_generics_from_region'
+    tag = Tags.REGION
+
+    desc = \
+        """
+Removes all generics in the given region.
         """
 
     keywords = ["Nid"]

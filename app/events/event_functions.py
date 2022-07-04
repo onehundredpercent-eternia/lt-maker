@@ -8,7 +8,7 @@ from app.data.database import DB
 from app.data.level_units import GenericUnit, UniqueUnit
 from app.engine import (action, background, banner, dialog, engine, evaluate,
                         icons, image_mods, item_funcs, item_system, memento_dialog,
-                        skill_system, target_system, unit_funcs)
+                        skill_system, target_system, unit_funcs, supports, turnwheel)
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
 from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper import \
@@ -567,6 +567,58 @@ def lose_game(self: Event, flags=None):
 
 def main_menu(self: Event, flags=None):
     self.game.level_vars['_main_menu'] = True
+
+def force_chapter_cleanup(self: Event, flags=None):
+    supports.increment_end_chapter_supports()
+    self.game_vars['_turnwheel_uses'] = 0
+    self.game_vars['_current_turnwheel_uses'] = \
+        self.game_vars.get('_max_turnwheel_uses', -1)
+
+    for unit in self.get_player_units():
+        self.leave(unit)
+    for unit in self.get_player_units():
+        # Unit cleanup
+        unit.is_dying = False
+        if unit.traveler:
+            unit.traveler = None
+            action.execute(action.RemoveSkill(unit, 'Rescue'))
+        unit.set_hp(1000)  # Set to full health
+        unit.set_guard_gauge(0) # Remove all guard gauge
+        if DB.constants.value('reset_mana'):
+            unit.set_mana(1000)  # Set to full mana
+        unit.position = None
+        unit.sprite.change_state('normal')
+        unit.reset()
+
+    for item in self.item_registry.values():
+        unit = None
+        if item.owner_nid:
+            unit = self.get_unit(item.owner_nid)
+        item_system.on_end_chapter(unit, item)
+
+    for skill in self.skill_registry.values():
+        unit = None
+        if skill.owner_nid:
+            unit = self.get_unit(skill.owner_nid)
+            if unit:
+                skill_system.on_end_chapter(unit, skill)
+            else:
+                self.logger.error("Unable to find owner %s in unit_registry", skill.owner_nid)
+
+    # Handle player death
+    for unit in self.get_player_units():
+        if unit.dead:
+            action.do(action.ChangeFatigue(unit, -unit.get_fatigue()))  # Reset fatigue
+            if not self.game.current_mode.permadeath:
+                unit.dead = False  # Resurrect unit
+            elif DB.constants.value('convoy_on_death'):
+                for item in item_funcs.get_all_tradeable_items(unit):
+                    unit.remove_item(item)
+                    # Put the item in the unit's party's convoy
+                    self.parties[unit.party].convoy.append(item)
+
+    self.game.turncount = 0
+    self.game.action_log = turnwheel.ActionLog()
 
 def skip_save(self: Event, true_or_false: str, flags=None):
     state = true_or_false.lower() in self.true_vals
@@ -1924,6 +1976,16 @@ def remove_region(self: Event, nid, flags=None):
         action.do(action.RemoveRegion(region))
     else:
         self.logger.error("remove_region: Couldn't find Region %s" % nid)
+
+def remove_generics_from_region(self: Event, nid, flags=None):
+    if nid in self.game.level.regions.keys():
+        region = self.game.level.regions.get(nid)
+        for position in region.get_all_positions():
+            unit = self.game.get_unit(position)
+            if unit and unit.generic:
+                action.LeaveMap(unit).execute()
+    else:
+        self.logger.error("remove_generics_from_region: Couldn't find Region %s" % nid)
 
 def show_layer(self: Event, layer, layer_transition=None, flags=None):
     if layer not in self.game.level.tilemap.layers.keys():

@@ -701,11 +701,11 @@ class InfoMenuState(State):
             if not self.class_skill_surf:
                 self.class_skill_surf = self.create_class_skill_surf()
             self.draw_class_skill_surf(main_surf)
-            # if DB.constants.value('fatigue') and self.unit.team == 'player' and \
-            #         game.game_vars.get('_fatigue'):
-            #     if not self.fatigue_surf:
-            #         self.fatigue_surf = self.create_fatigue_surf()
-            #     self.draw_fatigue_surf(main_surf)
+            if DB.constants.value('fatigue') and self.unit.team == 'player' and \
+                    game.game_vars.get('_fatigue'):
+                if not self.fatigue_surf:
+                    self.fatigue_surf = self.create_fatigue_surf()
+                self.draw_fatigue_surf(main_surf)
             if not self.equipment_surf:
                 self.equipment_surf = self.create_equipment_surf()
             self.draw_equipment_surf(main_surf)
