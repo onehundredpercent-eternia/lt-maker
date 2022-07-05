@@ -271,9 +271,11 @@ class GameState():
         for skill in unit.skills:
             self.register_skill(skill)
 
-    def set_up_game_board(self, tilemap):
+    def set_up_game_board(self, tilemap, bounds=None):
         from app.engine import boundary, game_board
         self.board = game_board.GameBoard(tilemap)
+        if bounds:
+            self.board.set_bounds(*bounds)
         self.boundary = boundary.BoundaryInterface(tilemap.width, tilemap.height)
 
     def save(self):
@@ -306,6 +308,7 @@ class GameState():
                   'talk_options': self.talk_options,
                   'base_convos': self.base_convos,
                   'current_random_state': static_random.get_combat_random_state(),
+                  'bounds': self.board.bounds,
                   }
         meta_dict = {'playtime': self.playtime,
                      'realtime': time.time(),
@@ -414,7 +417,7 @@ class GameState():
         if s_dict['level']:
             logging.info("Loading Level...")
             self.current_level = LevelObject.restore(s_dict['level'], self)
-            self.set_up_game_board(self.current_level.tilemap)
+            self.set_up_game_board(self.current_level.tilemap, s_dict.get('bounds'))
 
             self.generic()
             from app.engine.level_cursor import LevelCursor

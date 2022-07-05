@@ -42,6 +42,8 @@ constants = ConstantCatalog([
     Constant('turnwheel', "Turnwheel", bool, False, 'features'),
     Constant('initiative', "Per Unit Initiative Order", bool, False, 'features'),
     Constant('fatigue', "Fatigue", bool, False, 'features'),
+    Constant('reset_fatigue', "Automatically reset fatigue to 0 for benched units", bool, False, 'features'),
+    Constant('minimap', "Enable Minimap", bool, True, 'features'),
     Constant('pairup', "Pair Up", bool, False, 'features'),
     Constant('limit_attack_stance', "Limit Attack Stance to first attack only", bool, False, 'features'),
     Constant('attack_stance_only', "Only attack stance allowed", bool, False, 'features'),

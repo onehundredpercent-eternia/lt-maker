@@ -140,10 +140,11 @@ class MapView():
         bottom = (bounds[3] + 1) * TILEHEIGHT - cull_rect[1]
 
         opacity = cf.SETTINGS['grid_opacity']  # Higher numbers show more grid
-        if opacity == 255:
+        if opacity == 0:
             return surf
         outside_opacity = min(255, opacity + 56)
 
+        if opacity > 30:
         # Draw vertical lines
         for x in range(left, right, TILEWIDTH):
             engine.draw_line(line_surf, (0, 0, 0, opacity), (x - 1, top), (x - 1, bottom))

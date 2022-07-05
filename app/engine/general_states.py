@@ -142,7 +142,7 @@ class PhaseChangeState(MapState):
         # units reset, etc.
         phase.fade_out_phase_music()
         action.do(action.LockTurnwheel(game.phase.get_current() != 'player'))
-        if DB.constants.value('fatigue') and game.turncount == 1 and game.phase.get_current() == 'player':
+        if DB.constants.value('fatigue') and DB.constants.value('reset_fatigue') and game.turncount == 1 and game.phase.get_current() == 'player':
             self.refresh_fatigue()
         action.do(action.ResetAll([unit for unit in game.units if not unit.dead]))
         game.cursor.hide()
@@ -232,11 +232,14 @@ class FreeState(MapState):
             pass
 
         elif event == 'START':
-            get_sound_thread().play_sfx('Select 5')
             if DB.constants.value('initiative'):
+                get_sound_thread().play_sfx('Select 5')
                 game.initiative.toggle_draw()
-            else:
+            elif DB.constants.value('minimap'):
+                get_sound_thread().play_sfx('Select 5')
                 game.state.change('minimap')
+            else:
+                get_sound_thread().play_sfx('Error')
 
     def update(self):
         super().update()

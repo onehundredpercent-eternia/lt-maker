@@ -264,9 +264,11 @@ class HitSound(PlaybackBrush):
     Aesthetic brush for playing a specific sound on a hit
     For instance, No Damage sound when the attack does no damage
     Also processed by StatusUpkeep
+    set map_only to true if it should only be played in a map combat
     """
     nid: ClassVar[str] = 'hit_sound'
     sound: str
+    map_only: bool = False
 
 @dataclass
 class CastSound(PlaybackBrush):
