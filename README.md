@@ -1,3 +1,17 @@
+# NOTES:
+
+Exactly the same as the LT-maker engine as of 2022-07-05, except:
+1. all threading is turned off (web does not support it)
+2. colorsys and filecmp are not imported
+3. mouse cannot check for focus (always set to True instead)
+4. pygame pixel array color modification is replaced with the slower x by y color modification
+
+To run in your browser, use Python 3.8.10 and Pygame 2.1+. Then pip install pygbag, `run pygbag main.py` from this directory, and then finally navigate to `http://localhost:8000` in Chrome.
+
+Music seems to be glitchy and messed up, and the engine generally runs slower, as you might expect.
+
+# AS YOU WERE
+
 **Lex Talionis** is a game engine and editor for creating your own custom Fire Emblem fangame. If you've wanted to make your own Fire Emblem fangame but were fed up with the hackery that's required to master ROM-hacking, or you just want to work with total control over the code itself, **Lex Talionis** is for you.
 
 ![TitleScreen](/utilities/readme/title_screen.png)

@@ -1,6 +1,6 @@
 import os, shutil, glob, re
 from datetime import datetime
-import threading
+# import threading
 
 try:
     import cPickle as pickle
@@ -136,9 +136,10 @@ def suspend_game(game_state, kind, slot=None, name=None):
     else:
         force_loc = None
 
-    global SAVE_THREAD
-    SAVE_THREAD = threading.Thread(target=save_io, args=(s_dict, meta_dict, current_save_slot, slot, force_loc, name))
-    SAVE_THREAD.start()
+    # global SAVE_THREAD
+    # SAVE_THREAD = threading.Thread(target=save_io, args=(s_dict, meta_dict, current_save_slot, slot, force_loc, name))
+    # SAVE_THREAD.start()
+    save_io(*(s_dict, meta_dict, current_save_slot, slot, force_loc, name))
 
 def load_game(game_state, save_slot):
     """

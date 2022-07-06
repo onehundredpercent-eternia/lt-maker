@@ -1,4 +1,4 @@
-import colorsys
+# import colorsys
 import hashlib
 import math
 from collections import Counter
@@ -118,23 +118,23 @@ def strhash(s: str) -> int:
     h = int(h.hexdigest(), base=16)
     return h
 
-def hash_to_color(h: int) -> tuple:
-    hue = h % 359
-    saturation_array = lightness_array = [0.35, 0.5, 0.65]
-    saturation = saturation_array[h // 360 % len(saturation_array)]
-    idx = int(h * saturation // 360 % len(lightness_array))
-    lightness = lightness_array[idx]
-    color = colorsys.hls_to_rgb(hue / 360., lightness, saturation)
-    return tuple([int(_ * 255) for _ in color])
+# def hash_to_color(h: int) -> tuple:
+#     hue = h % 359
+#     saturation_array = lightness_array = [0.35, 0.5, 0.65]
+#     saturation = saturation_array[h // 360 % len(saturation_array)]
+#     idx = int(h * saturation // 360 % len(lightness_array))
+#     lightness = lightness_array[idx]
+#     color = colorsys.hls_to_rgb(hue / 360., lightness, saturation)
+#     return tuple([int(_ * 255) for _ in color])
 
-def color_to_hex(c: tuple) -> str:
-    return '#%02x%02x%02x' % (c[0], c[1], c[2])
+# def color_to_hex(c: tuple) -> str:
+#     return '#%02x%02x%02x' % (c[0], c[1], c[2])
 
-def hsv2rgb(h: float, s: float, v: float) -> tuple:
-    return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h, s, v))
+# def hsv2rgb(h: float, s: float, v: float) -> tuple:
+#     return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h, s, v))
 
-def rgb2hsv(r: int, g: int, b: int) -> tuple:
-    return tuple(colorsys.rgb_to_hsv(r, g, b))
+# def rgb2hsv(r: int, g: int, b: int) -> tuple:
+#     return tuple(colorsys.rgb_to_hsv(r, g, b))
 
 def average_pos(pos_list: list) -> tuple:
     avg_x, avg_y = 0, 0

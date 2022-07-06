@@ -1,6 +1,5 @@
 import os
 
-from app import autoupdate
 from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database import DB
 from app.data.difficulty_modes import GrowthOption, PermadeathOption
@@ -46,8 +45,8 @@ class TitleStartState(State):
         game.memory['transition_speed'] = 0.5
 
         # Wait until saving thread has finished
-        if save.SAVE_THREAD:
-            save.SAVE_THREAD.join()
+        # if save.SAVE_THREAD:
+        #     save.SAVE_THREAD.join()
 
         get_sound_thread().clear()
         if DB.constants.value('music_main'):
@@ -93,9 +92,6 @@ class TitleMainState(State):
             options.insert(0, 'Load Game')
         if os.path.exists(save.SUSPEND_LOC):
             options.insert(0, 'Continue')
-        # Only check for updates in frozen version
-        # if hasattr(sys, 'frozen') and autoupdate.check_for_update():
-        #    options.append('Update')
 
         self.fluid = FluidScroll(128)
         self.bg = game.memory['title_bg']
@@ -152,12 +148,6 @@ class TitleMainState(State):
                     game.state.change('alert')
                     self.state = 'alert'
                     self.banner_flag = True
-                elif self.selection == 'Update':
-                    updating = autoupdate.update()
-                    if updating:
-                        engine.terminate()
-                    else:
-                        print("Failed to update?")
                 else:
                     self.state = 'transition_out'
 
@@ -591,7 +581,7 @@ class TitleNewState(TitleLoadState):
             else:
                 get_sound_thread().play_sfx('Save')
                 build_new_game(selection)
-                save.SAVE_THREAD.join()
+                # save.SAVE_THREAD.join()
                 save.check_save_slots()
                 options, color = save.get_save_title(save.SAVE_SLOTS)
                 self.menu.set_colors(color)
@@ -634,7 +624,7 @@ class TitleNewChildState(State):
             if selection == 'Overwrite':
                 get_sound_thread().play_sfx('Save')
                 build_new_game(self.menu.owner)  # game.memory['option_owner']
-                save.SAVE_THREAD.join()
+                # save.SAVE_THREAD.join()
                 save.check_save_slots()
                 options, color = save.get_save_title(save.SAVE_SLOTS)
                 game.memory['title_menu'].set_colors(color)

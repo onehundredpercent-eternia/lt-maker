@@ -1,33 +1,23 @@
-from app.constants import COLORKEY
 from app.utilities import utils
 from app.engine import engine
 
 def color_convert(image, conversion_dict):
-    image = image.convert()
-    px_array = engine.make_pixel_array(image)
-    for old_color, new_color in conversion_dict.items():
-        px_array.replace(old_color, new_color)
-    px_array.close()
+    for row in range(image.get_width()):
+        for col in range(image.get_height()):
+            color = image.get_at((row, col))
+            c = (color[0], color[1], color[2], color[3])
+            if conversion_dict.get(c):
+                image.set_at((row, col), conversion_dict.get(c))
     return image
 
 def color_convert_alpha(image, conversion_dict):
-    px_array = engine.make_pixel_array(image)
-    for old_color, new_color in conversion_dict.items():
-        px_array.replace(old_color, new_color)
-    px_array.close()
+    for row in range(image.get_width()):
+        for col in range(image.get_height()):
+            color = image.get_at((row, col))
+            c = (color[0], color[1], color[2], color[3])
+            if conversion_dict.get(c):
+                image.set_at((row, col), conversion_dict.get(c))
     return image
-
-def invert_surface(image):
-    # Using px_array is about 2x as fast as native
-    # Using Cython invert is about >200x faster than native
-    px_array = engine.make_pixel_array(image)
-    colorkey = image.map_rgb(COLORKEY)
-    for x in range(image.get_width()):
-        for y in range(image.get_height()):
-            if px_array[x, y] != colorkey:
-                color = image.unmap_rgb(px_array[x, y])
-                px_array[x, y] = (255 - color[0], 255 - color[1], 255 - color[2])
-    px_array.close()
 
 def make_gray(image):
     for row in range(image.get_width()):

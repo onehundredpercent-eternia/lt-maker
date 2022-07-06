@@ -573,10 +573,10 @@ class SoundController():
         # WARNING: I have no thread locks at all on the music dictionary
         # It *might* be possible for both threads to try to touch the music dictionary
         # at the same time and break everything
-        import threading
-        logging.debug('Starting up preload thread')
-        self.PRELOADTHREAD = threading.Thread(target=MUSIC.full_preload)
-        self.PRELOADTHREAD.start()
+        # import threading
+        # logging.debug('Starting up preload thread')
+        # self.PRELOADTHREAD = threading.Thread(target=MUSIC.full_preload)
+        # self.PRELOADTHREAD.start()
         SFX.clear()
         self.__init__()
 

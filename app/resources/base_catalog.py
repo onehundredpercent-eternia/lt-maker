@@ -1,6 +1,6 @@
 import os
 import shutil
-import filecmp
+# import filecmp
 import json
 from typing import TypeVar
 
@@ -54,14 +54,14 @@ class ManifestCatalog(Data[M]):
                 datum.set_full_path(new_full_path)
         self.dump(loc)
 
-    def make_copy(self, old_full_path, new_full_path):
-        if os.path.exists(old_full_path):
-            if os.path.exists(new_full_path) and filecmp.cmp(old_full_path, new_full_path, shallow=False):
-                pass  # Identical files
-            else:
-                shutil.copy(old_full_path, new_full_path)
-        else:
-            print("%s does not exist" % old_full_path)
+    # def make_copy(self, old_full_path, new_full_path):
+    #     if os.path.exists(old_full_path):
+    #         if os.path.exists(new_full_path) and filecmp.cmp(old_full_path, new_full_path, shallow=False):
+    #             pass  # Identical files
+    #         else:
+    #             shutil.copy(old_full_path, new_full_path)
+    #     else:
+    #         print("%s does not exist" % old_full_path)
 
     def valid_files(self) -> set:
         return {datum.nid + self.filetype for datum in self}
