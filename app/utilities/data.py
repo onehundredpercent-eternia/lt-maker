@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from ctypes import Union
 from typing import Dict, Generic, List, Tuple, TypeVar
 
 from app.utilities.typing import NID

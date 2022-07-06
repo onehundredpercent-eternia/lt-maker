@@ -1,4 +1,4 @@
-import os
+import os, asyncio
 import collections
 from datetime import datetime
 
@@ -59,7 +59,7 @@ def draw_fps(surf, fps_records):
     FONT['small-white'].blit(str(fps), surf, (surf.get_width() - 20, 0))
     FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
 
-def run(game):
+async def run(game):
     from app.engine.sound import get_sound_thread
     from app.engine.game_counters import ANIMATION_COUNTERS
     from app.engine.input_manager import get_input_manager
@@ -110,6 +110,7 @@ def run(game):
         save_screenshot(raw_events, surf)
 
         engine.update_display()
+        await asyncio.sleep(0)
         # end = time.time_ns()
         # milliseconds_elapsed = (end - start)/1e6
         # if milliseconds_elapsed > 10:

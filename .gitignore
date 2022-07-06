@@ -23,6 +23,7 @@ dist/
 *.exe
 venv/
 venv_editor/
+venv_web/
 
 # Windows image file caches
 Thumbs.db

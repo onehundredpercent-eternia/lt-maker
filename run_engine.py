@@ -1,3 +1,4 @@
+import asyncio
 import os, sys
 
 from app.constants import VERSION
@@ -9,13 +10,15 @@ from app.engine import driver
 from app.engine import game_state
 from app.engine.component_system_compiler import source_generator
 
-def main(name: str):
+async def main(name: str = 'testing_proj'):
+    if not os.path.exists(name + '.ltproj'):
+        raise ValueError("Could not locate LT project %s" % (name + '.ltproj'))
     RESOURCES.load(name + '.ltproj')
     DB.load(name + '.ltproj')
     title = DB.constants.value('title')
     driver.start(title)
     game = game_state.start_game()
-    driver.run(game)
+    await driver.run(game)
 
 def test_play(name: str):
     RESOURCES.load(name + '.ltproj')
@@ -53,7 +56,8 @@ if __name__ == '__main__':
         source_generator.generate_component_system_source()
 
     try:
-        find_and_run_project()
+        asyncio.run(main('testing_proj')) 
+        # find_and_run_project()
         # main('lion_throne')
         # test_play('lion_throne')
         # test_play('sacred_stones')
