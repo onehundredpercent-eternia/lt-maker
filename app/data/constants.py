@@ -1,3 +1,4 @@
+from app.engine.exp_calculator import ExpCalcType
 from app.data.difficulty_modes import GrowthOption
 from app.utilities.data import Data
 
@@ -41,6 +42,8 @@ constants = ConstantCatalog([
     Constant('turnwheel', "Turnwheel", bool, False, 'features'),
     Constant('initiative', "Per Unit Initiative Order", bool, False, 'features'),
     Constant('fatigue', "Fatigue", bool, False, 'features'),
+    Constant('reset_fatigue', "Automatically reset fatigue to 0 for benched units", bool, False, 'features'),
+    Constant('minimap', "Enable Minimap", bool, True, 'features'),
     Constant('pairup', "Pair Up", bool, False, 'features'),
     Constant('limit_attack_stance', "Limit Attack Stance to first attack only", bool, False, 'features'),
     Constant('attack_stance_only', "Only attack stance allowed", bool, False, 'features'),
@@ -97,6 +100,11 @@ constants = ConstantCatalog([
     Constant('exp_curve', "How linear the exp curve is; Higher = less linear", float, 0.035, 'exp'),
     Constant('exp_magnitude', "How much base exp is received for each interaction", float, 10, 'exp'),
     Constant('exp_offset', "Tries to keep player character this many levels above enemies", int, 0, 'exp'),
+    Constant('gexp_max', "Maximum exp that can be earned from a hit", float, 30, 'exp'),
+    Constant('gexp_min', "Minimum exp that can be earned from a hit", float, 1, 'exp'),
+    Constant('gexp_slope', "How sharply exp drops off", float, 0.25, 'exp'),
+    Constant('gexp_intercept', "Exp earned by two equal-level units fighting", float, 10, 'exp'),
+    Constant('exp_formula', "Which exp formula to use", (calcType.value for calcType in ExpCalcType), ExpCalcType.STANDARD.value, 'exp'),
     Constant('kill_multiplier', "Exp multiplier on kill", float, 3, 'exp'),
     Constant('boss_bonus', "Extra exp for killing a boss", int, 40, 'exp'),
     Constant('min_exp', "Min exp gained in combat", int, 1, 'exp'),

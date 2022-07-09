@@ -289,7 +289,7 @@ class MiniMap(object):
 
     def build_units(self, units):
         for unit in units:
-            if unit.position and game.board.in_vision(unit.position):
+            if unit.position and 'Tile' not in unit.tags and game.board.in_vision(unit.position):
                 pos = unit.position[0] * self.scale_factor, unit.position[1] * self.scale_factor
                 if unit.team == 'player':
                     self.pin_surf.blit(engine.subsurface(self.minimap_units, (0, 0, self.scale_factor, self.scale_factor)), pos)

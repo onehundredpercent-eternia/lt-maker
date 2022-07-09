@@ -142,7 +142,7 @@ class PhaseChangeState(MapState):
         # units reset, etc.
         phase.fade_out_phase_music()
         action.do(action.LockTurnwheel(game.phase.get_current() != 'player'))
-        if DB.constants.value('fatigue') and game.turncount == 1 and game.phase.get_current() == 'player':
+        if DB.constants.value('fatigue') and DB.constants.value('reset_fatigue') and game.turncount == 1 and game.phase.get_current() == 'player':
             self.refresh_fatigue()
         action.do(action.ResetAll([unit for unit in game.units if not unit.dead]))
         game.cursor.hide()
@@ -232,11 +232,14 @@ class FreeState(MapState):
             pass
 
         elif event == 'START':
-            get_sound_thread().play_sfx('Select 5')
             if DB.constants.value('initiative'):
+                get_sound_thread().play_sfx('Select 5')
                 game.initiative.toggle_draw()
-            else:
+            elif DB.constants.value('minimap'):
+                get_sound_thread().play_sfx('Select 5')
                 game.state.change('minimap')
+            else:
+                get_sound_thread().play_sfx('Error')
 
     def update(self):
         super().update()
@@ -931,22 +934,25 @@ class SubItemChildState(MapState):
     name = 'subitem_child'
     transparent = True
 
-    def _get_options(self, parent_item):
-        subitems = [subitem for subitem in parent_item.subitems]
+    def _get_options(self, parent_item, unit):
+        if parent_item.multi_item_hides_unavailable and unit:
+            subitems = [subitem for subitem in parent_item.subitems if item_funcs.available(unit, subitem)]
+        else:
+            subitems = [subitems for subitems in parent_item.subitems]
         return subitems
 
     def start(self):
         self.cur_unit = game.cursor.cur_unit
         parent_menu: menus.Choice = game.memory['parent_menu']
         self.parent_item: ItemObject = game.memory['selected_item']
-        options = self._get_options(self.parent_item)
+        options = self._get_options(self.parent_item, self.cur_unit)
         if not options:
             options = ["Nothing"]
         self.menu = menus.Choice(self.parent_item, options, parent_menu)
 
     def begin(self):
         game.cursor.hide()
-        options = self._get_options(self.parent_item)
+        options = self._get_options(self.parent_item, self.cur_unit)
         self.menu.update_options(options)
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
 

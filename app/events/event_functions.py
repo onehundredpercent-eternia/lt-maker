@@ -510,6 +510,34 @@ def inc_level_var(self: Event, nid, expression=None, flags=None):
     else:
         action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + 1))
 
+def set_next_chapter(self: Event, chapter, flags=None):
+    if chapter not in DB.levels.keys():
+        self.logger.error("set_next_chapter: %s is not a valid chapter nid" % chapter)
+        return
+    action.do(action.SetGameVar("_goto_level", chapter))
+
+def enable_supports(self: Event, activated: str, flags=None):
+    state = activated.lower() in self.true_vals
+    action.do(action.SetGameVar("_supports", activated))
+
+def set_fog_of_war(self: Event, fog_of_war_type, radius, ai_radius=None, other_radius=None, flags=None):
+    fowt = fog_of_war_type.lower()
+    if fowt == 'gba':
+        fowt = 1
+    elif fowt == 'thracia':
+        fowt = 2
+    else:
+        fowt = 0
+    action.do(action.SetLevelVar('_fog_of_war', fowt))
+    radius = int(radius)
+    action.do(action.SetLevelVar('_fog_of_war_radius', radius))
+    if ai_radius is not None:
+        ai_radius = int(ai_radius)
+        action.do(action.SetLevelVar('_ai_fog_of_war_radius', ai_radius))
+    if other_radius is not None:
+        other_radius = int(ai_radius)
+        action.do(action.SetLevelVar('_ai_fog_of_war_radius', other_radius))
+
 def win_game(self: Event, flags=None):
     self.game.level_vars['_win_game'] = True
 
@@ -680,9 +708,7 @@ def make_generic(self: Event, nid, klass, level, team, ai=None, faction=None, an
     self.game.full_register(new_unit)
 
     if assign_unit:
-        self.unit2 = new_unit
         self.created_unit = new_unit
-        self.text_evaluator.unit2 = new_unit
         self.text_evaluator.created_unit = new_unit
 
 def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_type=None, placement=None, flags=None):
@@ -725,7 +751,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
     new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
 
     if 'copy_stats' in flags:
-        new_unit.stats = unit.stats[:]
+        new_unit.stats = unit.stats.copy()
 
     position = self._check_placement(new_unit, position, placement)
     if not position:
@@ -734,9 +760,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
     new_unit.party = self.game.current_party
     self.game.full_register(new_unit)
     if assign_unit:
-        self.unit2 = new_unit
         self.created_unit = new_unit
-        self.text_evaluator.unit2 = new_unit
         self.text_evaluator.created_unit = new_unit
     if DB.constants.value('initiative'):
         action.do(action.InsertInitiative(unit))
@@ -2052,6 +2076,11 @@ def prep(self: Event, pick_units_enabled: str = None, music: str = None, other_o
             self.logger.error("prep: too many events in option event list: ", other_options_on_select)
             return
         action.do(action.SetGameVar('_prep_additional_options', options_list))
+    else:
+        action.do(action.SetGameVar('_prep_options_enabled', []))
+        action.do(action.SetGameVar('_prep_options_events', []))
+        action.do(action.SetGameVar('_prep_additional_options', []))
+
     self.game.state.change('prep_main')
     self.state = 'paused'  # So that the message will leave the update loop
 
@@ -2089,6 +2118,11 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
             self.logger.error("base: too many events in option event list: ", other_options_on_select)
             return
         action.do(action.SetGameVar('_base_additional_options', options_list))
+    else:
+        action.do(action.SetGameVar('_base_options_enabled', []))
+        action.do(action.SetGameVar('_base_options_events', []))
+        action.do(action.SetGameVar('_base_additional_options', []))
+
 
     if 'show_map' in flags:
         action.do(action.SetGameVar('_base_transparent', True))

@@ -58,7 +58,7 @@ class EventState(State):
         should_go_to_overworld = DB.levels.get(game.level.nid).go_to_overworld and DB.constants.value('overworld')
         game.memory['_skip_save'] = game.level_vars.get('_skip_save', False)
         game.clean_up()
-        if current_level_index < len(DB.levels) - 1 or game.game_vars.get('_goto_level'):
+        if current_level_index < len(DB.levels) - 1 or game.game_vars.get('_goto_level') is not None:
             game.game_vars['_should_go_to_overworld'] = should_go_to_overworld
             if should_go_to_overworld:
                 if game.game_vars['_go_to_overworld_nid']:
@@ -75,7 +75,7 @@ class EventState(State):
                         game.game_vars['_next_overworld_nid'] = DB.overworlds.values()[0].nid
 
             # select the next level
-            if game.game_vars.get('_goto_level'):
+            if game.game_vars.get('_goto_level') is not None:
                 if game.game_vars['_goto_level'] == '_force_quit':
                     game.state.clear()
                     game.state.change('title_start')

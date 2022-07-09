@@ -634,7 +634,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.last_update = engine.get_time()
                 self.state = 'hp_change'
                 self.handle_damage_numbers(brush)
-            elif brush.nid == 'hit_sound' and sound:
+            elif brush.nid == 'hit_sound' and sound and not brush.map_only:
                 play_sound = brush.sound
                 if sound == 'Attack Miss 2':
                     play_sound = 'Miss'  # Replace with miss sound

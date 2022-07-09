@@ -74,6 +74,7 @@ def run(game):
     # import time
     clock = engine.Clock()
     fps_records = collections.deque(maxlen=FPS)
+    inp = get_input_manager()
     while True:
         # start = time.time_ns()
         engine.update_time()
@@ -84,7 +85,16 @@ def run(game):
 
         if raw_events == engine.QUIT:
             break
-        event = get_input_manager().process_input(raw_events)
+
+        event = inp.process_input(raw_events)
+
+        # Handle soft reset
+        if game.state.current() != 'title_start' and \
+                inp.is_pressed('SELECT') and inp.is_pressed('BACK') and \
+                inp.is_pressed('START'):
+            game.state.change('title_start')
+            game.state.update([], surf)
+            continue
 
         surf, repeat = game.state.update(event, surf)
         while repeat:  # Let's the game traverse through state chains

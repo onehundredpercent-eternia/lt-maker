@@ -41,7 +41,7 @@ class Heal(ItemComponent):
         # For animation
         if true_heal > 0:
             playback.append(pb.HealHit(unit, item, target, heal, true_heal))
-            playback.append(pb.HitSound('MapHeal'))
+            playback.append(pb.HitSound('MapHeal', map_only=True))
             if heal >= 30:
                 name = 'MapBigHealTrans'
             elif heal >= 15:

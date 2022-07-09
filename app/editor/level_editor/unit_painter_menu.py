@@ -224,9 +224,12 @@ class AllUnitModel(DragDropCollectionModel):
         super().delete(idx)
 
     def new(self, idx):
-        unit = self._data[idx]
-        if unit.generic:
-            ok = self.window.create_generic(unit)
+        if len(self._data):
+            unit = self._data[idx]
+            if unit.generic:
+                ok = self.window.create_generic(unit)
+            else:
+                ok = self.window.load_unit()
         else:
             ok = self.window.load_unit()
         if ok:

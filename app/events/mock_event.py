@@ -33,6 +33,9 @@ class MockEvent(Event):
     loop_commands = {'for', 'endf'}
 
     def __init__(self, nid, commands, command_idx=0, if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE):
+        self._transition_speed = 250
+        self._transition_color = (0, 0, 0)
+        
         self.nid = nid
         self.commands: List[event_commands.EventCommand] = commands.copy()
         self.command_idx = command_idx

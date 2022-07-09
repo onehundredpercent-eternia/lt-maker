@@ -1,3 +1,5 @@
+from app.resources.resources import Resources
+from app.data.database import Database
 from typing import List, Tuple, Type
 
 from app.editor.settings import MainSettingsController
@@ -46,10 +48,11 @@ class Completer(QCompleter):
                 self.popup().hide()
         return False
 
-def generate_wordlist_from_validator_type(validator: Type[event_validators.Validator], level: NID = None, arg: str = None) -> List[str]:
+def generate_wordlist_from_validator_type(validator: Type[event_validators.Validator], level: NID = None, arg: str = None,
+                                          db: Database = None, resources: Resources = None) -> List[str]:
     if not validator:
         return []
-    valid_entries = validator().valid_entries(level, arg)
+    valid_entries = validator(db, resources).valid_entries(level, arg)
     autofill_dict = []
     for entry in valid_entries:
         if entry[0] is None:

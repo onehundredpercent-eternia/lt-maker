@@ -99,7 +99,7 @@ class UnitModel(DragDropCollectionModel):
             for unit_group in level.unit_groups:
                 unit_group.swap(old_nid, new_nid)
             for unit in level.units:
-                if unit.starting_traveler == old_nid:
+                if old_nid and unit.starting_traveler == old_nid:
                     unit.starting_traveler = new_nid
         for party in DB.parties:
             if party.leader == old_nid:

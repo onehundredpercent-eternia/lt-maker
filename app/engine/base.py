@@ -42,7 +42,14 @@ class BaseMainState(State):
             ignore[1] = False
         if game.game_vars.get('_supports') and DB.support_constants.value('base_convos'):
             options.insert(2, 'Supports')
-            ignore.insert(2, False)
+            # make sure we have supports to begin with
+            player_units = game.get_units_in_party()
+            units = [unit for unit in player_units if
+                        any(prefab.unit1 == unit.nid or prefab.unit2 == unit.nid for prefab in DB.support_pairs)]
+            if units:
+                ignore.insert(2, False)
+            else:
+                ignore.insert(2, True)
         if DB.constants.value('bexp'):
             options.insert(2, 'Bonus EXP')
             ignore.insert(2, False)
@@ -418,7 +425,7 @@ class SupportDisplay():
             choices = other_unit_nids[start_index:end_index]
 
             for idx, other_unit_nid in enumerate(choices):
-                if game.get_unit(other_unit_nid):
+                if game.get_unit(other_unit_nid) and game.get_unit(other_unit_nid).party == game.get_unit(self.unit_nid).party:
                     other_unit = game.get_unit(other_unit_nid)
                     if other_unit.dead:
                         map_sprite = other_unit.sprite.create_image('gray')

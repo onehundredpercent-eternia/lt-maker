@@ -1,3 +1,4 @@
+from app.engine.exp_calculator import ExpCalcType, ExpCalculator
 import math
 
 from app.data.database import DB
@@ -37,9 +38,19 @@ class LevelExp(ItemComponent):
         if skill_system.check_enemy(unit, target) and \
                 not self._check_for_no_damage(playback, unit, item, target):
             level_diff = target.get_internal_level() - unit.get_internal_level()
-            level_diff += DB.constants.value('exp_offset')
-            exp_gained = math.exp(level_diff * DB.constants.value('exp_curve'))
-            exp_gained *= DB.constants.value('exp_magnitude')
+            if DB.constants.value('exp_formula') == ExpCalcType.STANDARD.value:
+                return ExpCalculator.classical_curve_calculator(level_diff,
+                                                                DB.constants.value('exp_offset'),
+                                                                DB.constants.value('exp_curve'),
+                                                                DB.constants.value('exp_magnitude'))
+            elif DB.constants.value('exp_formula') == ExpCalcType.GOMPERTZ.value:
+                return ExpCalculator.gompertz_curve_calculator(level_diff,
+                                                               DB.constants.value('gexp_max'),
+                                                               DB.constants.value('gexp_min'),
+                                                               DB.constants.value('gexp_slope'),
+                                                               DB.constants.value('gexp_intercept'))
+            else:
+                return 0
         else:
             exp_gained = 0
         return exp_gained

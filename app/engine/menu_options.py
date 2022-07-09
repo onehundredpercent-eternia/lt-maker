@@ -268,6 +268,7 @@ class ItemOption(BasicOption):
         main_font = self.font
         if FONT[main_font].width(self.item.name) > 60:
             main_font = 'narrow'
+        uses_font = 'text'
         FONT[main_font].blit(self.item.name, surf, (x + 20, y), main_color)
         uses_string = '--'
         if self.item.uses:
@@ -279,7 +280,7 @@ class ItemOption(BasicOption):
         elif self.item.cooldown:
             uses_string = str(self.item.data['cooldown'])
         left = x + 99
-        FONT[self.font].blit_right(uses_string, surf, (left, y), uses_color)
+        FONT[uses_font].blit_right(uses_string, surf, (left, y), uses_color)
 
 class ConvoyItemOption(ItemOption):
     def __init__(self, idx, item, owner):
@@ -315,6 +316,7 @@ class FullItemOption(ItemOption):
         width = FONT[main_font].width(self.item.name)
         if width > 60:
             main_font = 'narrow'
+        uses_font = 'text'
         FONT[main_font].blit(self.item.name, surf, (x + 20, y), main_color)
 
         uses_string_a = '--'
@@ -331,9 +333,9 @@ class FullItemOption(ItemOption):
         elif self.item.data.get('cooldown') is not None:
             uses_string_a = str(self.item.data['cooldown'])
             uses_string_b = str(self.item.data['starting_cooldown'])
-        FONT[main_font].blit_right(uses_string_a, surf, (x + 96, y), uses_color)
-        FONT['text'].blit("/", surf, (x + 98, y))
-        FONT[main_font].blit_right(uses_string_b, surf, (x + 120, y), uses_color)
+        FONT[uses_font].blit_right(uses_string_a, surf, (x + 96, y), uses_color)
+        FONT[uses_font].blit("/", surf, (x + 98, y))
+        FONT[uses_font].blit_right(uses_string_b, surf, (x + 120, y), uses_color)
 
 class ValueItemOption(ItemOption):
     def __init__(self, idx, item, disp_value):
@@ -352,6 +354,7 @@ class ValueItemOption(ItemOption):
         width = FONT[main_font].width(self.item.name)
         if width > 60:
             main_font = 'narrow'
+        uses_font = 'text'
         FONT[main_font].blit(self.item.name, surf, (x + 20, y), main_color)
 
         uses_string = '--'
@@ -383,7 +386,7 @@ class ValueItemOption(ItemOption):
                 value_color = 'blue'
             else:
                 value_string = '--'
-        FONT[main_font].blit_right(value_string, surf, (x + self.width() - 6, y), value_color)
+        FONT[uses_font].blit_right(value_string, surf, (x + self.width() - 6, y), value_color)
 
 class RepairValueItemOption(ValueItemOption):
     def draw(self, surf, x, y):
@@ -395,6 +398,7 @@ class RepairValueItemOption(ValueItemOption):
         width = FONT[main_font].width(self.item.name)
         if width > 60:
             main_font = 'narrow'
+        uses_font = 'text'
         FONT[main_font].blit(self.item.name, surf, (x + 20, y), main_color)
 
         uses_string = '--'
@@ -410,7 +414,7 @@ class RepairValueItemOption(ValueItemOption):
             value_string = str(value)
             if value < game.get_money():
                 value_color = 'blue'
-        FONT[main_font].blit_right(value_string, surf, (x + self.width() - 10, y), value_color)
+        FONT[uses_font].blit_right(value_string, surf, (x + self.width() - 10, y), value_color)
 
 class StockValueItemOption(ValueItemOption):
     def __init__(self, idx, item, disp_value, stock):

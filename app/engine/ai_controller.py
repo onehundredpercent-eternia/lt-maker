@@ -368,7 +368,7 @@ class PrimaryAI():
                    (not DB.constants.value('ai_fog_of_war') or game.board.in_vision(pos, self.unit.team)):
                     filtered_targets.add(pos)
                     break
-
+            
         return list(filtered_targets)
 
     def get_all_valid_targets(self):
@@ -446,24 +446,26 @@ class PrimaryAI():
         # Not done yet
         return (False, self.best_target, self.best_position, self.best_item)
 
-    def determine_utility(self, move, target, item):
+    def determine_utility(self, move, target_pos, item):
         tp = 0
-        main_target_pos, splash = item_system.splash(self.unit, item, target)
+        main_target_pos, splash = item_system.splash(self.unit, item, target_pos)
         if item_system.target_restrict(self.unit, item, main_target_pos, splash):
             tp = self.compute_priority(main_target_pos, splash, move, item)
 
-        unit = game.board.get_unit(target)
+        target = game.board.get_unit(target_pos)
         # Don't target self if I've already moved and I'm not targeting my new position
-        if unit is self.unit and target != self.unit.position:
+        if target is self.unit and target_pos != self.unit.position:
             return
-        if unit:
-            name = unit.nid
-        else:
-            name = '--'
 
-        logging.info("Choice %.5f - Weapon: %s, Position: %s, Target: %s, Target Position: %s", tp, item, move, name, target)
+        # Don't bother using Primary AI if we're not able to attack
+        # Will just fall through to Secondary AI
+        if item_system.no_attack_after_move(self.unit, item) or skill_system.no_attack_after_move(self.unit):
+            if move != self.orig_pos:
+                return
+
+        logging.info("Choice %.5f - Weapon: %s, Position: %s, Target: %s, Target Position: %s", tp, item, move, target.nid if target else '--', target_pos)
         if tp > self.max_tp:
-            self.best_target = target
+            self.best_target = target_pos
             self.best_position = move
             self.best_item = item
             self.max_tp = tp
