@@ -1,11 +1,10 @@
-from app.editor.settings.main_settings_controller import MainSettingsController
 from functools import lru_cache
 from app.utilities.data import Data
 from app.data.components import Type
 from app.data.item_components import ItemComponent, ItemTags
 
 @lru_cache(1)
-def get_cached_item_components(proj_name: str):
+def get_cached_item_components():
     # Necessary for get_item_components to find all the
     # item components defined in item_components folder
     from app.engine import item_components
@@ -24,8 +23,7 @@ def get_cached_item_components(proj_name: str):
     return Data(subclasses)
 
 def get_item_components():
-    settings = MainSettingsController()
-    return get_cached_item_components(settings.get_current_project())
+    return get_cached_item_components()
 
 def get_item_tags():
     return list(ItemTags)

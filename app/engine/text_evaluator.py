@@ -14,9 +14,16 @@ class TextEvaluator():
         self.game: GameState = game
         self.unit = unit
         self.unit2 = unit2
-        self.created_unit = None
         self.position = position
         self.local_args = local_args or {}
+
+    @property
+    def created_unit(self):
+        return self.local_args.get('created_unit', None)
+
+    @created_unit.setter
+    def created_unit(self, created):
+        self.local_args['created_unit'] = created
 
     def _object_to_str(self, obj) -> str:
         if hasattr(obj, 'uid'):

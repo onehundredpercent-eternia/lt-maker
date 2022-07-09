@@ -7,7 +7,7 @@ If you want to be able to distribute an executable to others for release and pla
 
 If you are working with an executable version of the editor, follow this process. 
 
-You can download the current version of the standalone engine from here: https://www.dropbox.com/s/lil6j8mf6dclz6f/lt_engine.zip?dl=1. 
+You can download the current version of the standalone engine from here: https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/release/download?job=build_engine (Download will start automatically!)
 
 ![GenericEngineProject](images/GenericEngineProject.png)
 

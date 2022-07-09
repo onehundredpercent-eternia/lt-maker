@@ -6,7 +6,8 @@
 
 stages:
     - test
-    - generate
+    - generate_engine
+    - generate_editor
     - release
 
 run_tests:
@@ -23,8 +24,45 @@ run_tests:
         - python -m app.engine.component_system_compiler.source_generator
         - python -m unittest discover -s app/tests -p 'test*.py'
 
-build_app:
-    stage: generate
+build_engine:
+    stage: generate_engine
+    image: "python:3.7.9"
+    extends:
+    - .shared_windows_runners
+    except: # If this double builds consider changing to only: pushes
+        refs:
+            - merge_requests
+    only:
+        - release
+    before_script:
+        - choco install -y python --version=3.7.9
+        - "C:\\Python37\\python.exe -m pip install -r requirements_engine.txt"
+        - "C:\\Python37\\python.exe -m pip install pywin32"
+        - "C:\\Python37\\python.exe -m pip install setuptools --upgrade"
+        - echo "Prereqs successfully installed"
+    script:
+        - echo "Generating component files"
+        - "C:\\Python37\\python.exe -m app.engine.component_system_compiler.source_generator"
+        - start powershell
+        - echo "Building generic engine..."
+        - cp ./utilities/build_tools/generic_engine.spec .
+        - "C:\\Python37\\Scripts\\pyinstaller.exe -y generic_engine.spec"
+        - rm generic_engine.spec -fo
+        - mkdir lt_engine
+        - mv dist/lt_engine ./lt_engine/lt_engine
+        - cp utilities/install/double_click_to_play.bat ./lt_engine
+        - echo "Copying generated files"
+        - cp app/engine/item_system.py ./lt_engine/lt_engine/app/engine
+        - cp app/engine/skill_system.py ./lt_engine/lt_engine/app/engine
+        - echo $CI_COMMIT_SHORT_SHA > ./lt_engine/lt_engine/version.txt
+        - echo "Done!"
+    artifacts:
+        name: "LT Engine"
+        paths:
+            - lt_engine/
+
+build_editor:
+    stage: generate_editor
     image: "python:3.7.9"
     extends:
     - .shared_windows_runners
@@ -65,7 +103,7 @@ build_app:
         - echo $CI_COMMIT_SHORT_SHA > ./lt_editor/lt_editor/version.txt
         - echo "Done!"
     artifacts:
-        name: "Built Editor"
+        name: "LT Editor"
         paths:
             - lt_editor/
 
@@ -73,8 +111,9 @@ release:
     stage: release
     image: registry.gitlab.com/gitlab-org/release-cli:latest
     needs:
-    - job: build_app
+    - job: build_editor
       artifacts: true
+    - job: build_engine
     except:
         refs:
             - merge_requests
@@ -91,5 +130,9 @@ release:
             links: # IF SOMETHING IS BROKEN, IT'S PROBABLY THESE URLS FAULT
                 - name: 'Lex_Talionis_Maker'
                   filepath: /lex_talionis_maker
-                  url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/release/download?job=build_app"
+                  url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/release/download?job=build_editor"
+                  link_type: package
+                - name: 'Lex_Talionis_Engine'
+                  filepath: /lex_talionis_engine
+                  url: "https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/release/download?job=build_engine"
                   link_type: package

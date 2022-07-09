@@ -938,22 +938,25 @@ class SubItemChildState(MapState):
     name = 'subitem_child'
     transparent = True
 
-    def _get_options(self, parent_item):
-        subitems = [subitem for subitem in parent_item.subitems]
+    def _get_options(self, parent_item, unit):
+        if parent_item.multi_item_hides_unavailable and unit:
+            subitems = [subitem for subitem in parent_item.subitems if item_funcs.available(unit, subitem)]
+        else:
+            subitems = [subitems for subitems in parent_item.subitems]
         return subitems
 
     def start(self):
         self.cur_unit = game.cursor.cur_unit
         parent_menu: menus.Choice = game.memory['parent_menu']
         self.parent_item: ItemObject = game.memory['selected_item']
-        options = self._get_options(self.parent_item)
+        options = self._get_options(self.parent_item, self.cur_unit)
         if not options:
             options = ["Nothing"]
         self.menu = menus.Choice(self.parent_item, options, parent_menu)
 
     def begin(self):
         game.cursor.hide()
-        options = self._get_options(self.parent_item)
+        options = self._get_options(self.parent_item, self.cur_unit)
         self.menu.update_options(options)
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
 

@@ -42,7 +42,7 @@ def compile_skill_system():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     compiled_skill_system = open(os.path.join(dir_path, '..', 'skill_system.py'), 'w')
     skill_system_base = open(os.path.join(dir_path, 'skill_system_base.py'), 'r')
-    warning_msg = open(os.path.join(dir_path, 'warning_msg'), 'r')
+    warning_msg = open(os.path.join(dir_path, 'warning_msg.txt'), 'r')
 
     # write warning msg
     for line in warning_msg.readlines():

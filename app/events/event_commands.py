@@ -701,6 +701,18 @@ Sets the fog of war state for the current level.
     optional_keywords = ["AIRadius", "OtherRadius"]
     keyword_types = ["FogOfWarType", "PositiveInteger", "PositiveInteger", "PositiveInteger"]
 
+class EnableSupports(EventCommand):
+    nid = 'enable_supports'
+    tag = Tags.GAME_VARS
+
+    desc = \
+    """
+Activates or deactivates supports.
+    """
+
+    keywords = ["Activated"]
+    keyword_types = ['Bool']
+
 class WinGame(EventCommand):
     nid = 'win_game'
     tag = Tags.LEVEL_VARS

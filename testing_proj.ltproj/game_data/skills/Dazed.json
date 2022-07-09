@@ -1,0 +1,18 @@
+[
+    {
+        "nid": "Dazed",
+        "name": "Dazed",
+        "desc": "",
+        "icon_nid": "",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "no_attack_after_move",
+                null
+            ]
+        ]
+    }
+]

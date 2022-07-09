@@ -12,6 +12,11 @@ class MultiItem(ItemComponent):
 
     expose = (Type.List, Type.Item)
 
+class MultiItemHidesUnusableChildren(ItemComponent):
+    nid = 'multi_item_hides_unavailable'
+    desc = 'Multi Item will automatically hide subitems that are not usable'
+    tag = ItemTags.ADVANCED
+
 class SequenceItem(ItemComponent):
     nid = 'sequence_item'
     desc = "Item requires various sub-items to be work properly. Useful for complex items like Warp or Rescue. Items are used from list's top to bottom."

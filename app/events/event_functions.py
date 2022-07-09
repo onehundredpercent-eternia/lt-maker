@@ -541,6 +541,10 @@ def set_next_chapter(self: Event, chapter, flags=None):
         return
     action.do(action.SetGameVar("_goto_level", chapter))
 
+def enable_supports(self: Event, activated: str, flags=None):
+    state = activated.lower() in self.true_vals
+    action.do(action.SetGameVar("_supports", activated))
+
 def set_fog_of_war(self: Event, fog_of_war_type, radius, ai_radius=None, other_radius=None, flags=None):
     fowt = fog_of_war_type.lower()
     if fowt == 'gba':
@@ -781,9 +785,7 @@ def make_generic(self: Event, nid, klass, level, team, ai=None, faction=None, an
     self.game.full_register(new_unit)
 
     if assign_unit:
-        self.unit2 = new_unit
         self.created_unit = new_unit
-        self.text_evaluator.unit2 = new_unit
         self.text_evaluator.created_unit = new_unit
 
 def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_type=None, placement=None, flags=None):
@@ -835,9 +837,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
     new_unit.party = self.game.current_party
     self.game.full_register(new_unit)
     if assign_unit:
-        self.unit2 = new_unit
         self.created_unit = new_unit
-        self.text_evaluator.unit2 = new_unit
         self.text_evaluator.created_unit = new_unit
     if DB.constants.value('initiative'):
         action.do(action.InsertInitiative(unit))

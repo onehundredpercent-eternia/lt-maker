@@ -807,7 +807,11 @@ class PrepItemsState(State):
                 item = self.menu.get_current()
                 if current == 'Take':
                     action.do(action.HasTraded(self.unit))
-                    convoy_funcs.take_item(item, self.unit)
+                    if item.owner_nid:
+                        unit = game.get_unit(item.owner_nid)
+                        convoy_funcs.give_item(item, unit, self.unit)
+                    else:
+                        convoy_funcs.take_item(item, self.unit)
                     self.state = 'free'
                 elif current == 'Trade':
                     self.state = 'trade_inventory'
