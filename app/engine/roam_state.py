@@ -348,6 +348,7 @@ class FreeRoamAIController(ai_controller.AIController):
 
         self.goal_position = None
         self.path = None
+        self.last_move = 0
 
         self.speed = 0.0
         self.vspeed = 0.0
@@ -376,18 +377,18 @@ class FreeRoamAIController(ai_controller.AIController):
         self.think()
 
     def get_move_path(self):
-        return target_system.get_path(self.unit, self.goal_position)
+        return target_system.get_path(self.unit, self.goal_position, rationalize=True)[:-1]
 
     def get_target(self):
         # VERY TODO
         all_targets = []
         if self.behaviour.target == 'Unit':
-            all_targets = [u.position for u in game.units if u.position]
+            all_targets = [u for u in game.units if u.position]
         elif self.behaviour.target == 'Enemy':
-            all_targets = [u.position for u in game.units if u.position and skill_system.check_enemy(self.unit, u)]
+            all_targets = [u for u in game.units if u.position and skill_system.check_enemy(self.unit, u)]
         elif self.behaviour.target == 'Ally':
-            all_targets = [u.position for u in game.units if u.position and skill_system.check_ally(self.unit, u)]
-        elif self.behaviour.target == 'Event':
+            all_targets = [u for u in game.units if u.position and skill_system.check_ally(self.unit, u)]
+        elif self.behaviour.target == 'Event': # TODO
             target_spec = self.behaviour.target_spec
             all_targets = []
             for region in game.level.regions:
@@ -397,7 +398,7 @@ class FreeRoamAIController(ai_controller.AIController):
                 except:
                     logging.warning("Region Condition: Could not parse %s" % region.condition)
             all_targets = list(set(all_targets))  # Remove duplicates
-        elif self.behaviour.target == 'Position':
+        elif self.behaviour.target == 'Position': # TODO
             if self.behaviour.target_spec == "Starting":
                 if self.unit.starting_position:
                     all_targets = [self.unit.starting_position]
@@ -406,7 +407,7 @@ class FreeRoamAIController(ai_controller.AIController):
             else:
                 all_targets = [tuple(self.behaviour.target_spec)]
         if self.behaviour.target in ('Unit', 'Enemy', 'Ally'):
-            all_targets = ai_controller.handle_unit_spec(all_targets, self.behaviour)
+            all_targets = ai_controller.handle_roam_unit_spec(all_targets, self.behaviour) # Just change function call?
 
         if self.behaviour.target != 'Position':
             if DB.constants.value('ai_fog_of_war'):
@@ -417,19 +418,71 @@ class FreeRoamAIController(ai_controller.AIController):
         targets = self.get_target()
         if targets:
             self.goal_target = targets[0]
-            self.goal_position = target_system.get_nearest_open_tile(self.unit, self.goal_target.position)
-            self.path = self.get_move_path()
+            self.set_path()
         else:
             self.state = "Init"
             return None
 
+    def set_path(self):
+        self.goal_position = target_system.get_nearest_open_tile(self.unit, game.board.rationalize_pos(self.goal_target.position))
+        self.path = self.get_move_path()
+
     def move(self):
+        ai_speed = 15 # Move this somewhere later
         if not self.goal_position:
             return
-        if self.goal_target and self.goal_target.position != self.goal_position:
-            self.path = self.get_move_path()
-        if self.goal_position != self.unit.position:
-            pass
+        if self.goal_target and game.board.rationalize_pos(self.goal_target.position) != self.goal_position:
+            self.set_path()
+        if self.goal_position != game.board.rationalize_pos(self.unit.position):
+            # Immediate TODO
+            current_time = engine.get_time()
+            if current_time - self.last_move > ai_speed:
+                self.last_move = current_time
+                self.handle_direction(self.unit.position, self.path[-1])
+
+    def handle_direction(self, pos, next_pos):
+
+        base_speed = 0.008
+        base_accel = 0.008
+        running_accel = 0.01
+        max_speed = 0.15
+
+        pos = game.board.rationalize_pos(pos)
+
+        if next_pos[0] > pos[0]: # Going right
+            self.hspeed = self.speed
+        elif next_pos[0] < pos[0]: # Going left
+            self.hspeed = -self.speed
+        else:
+            self.hspeed = 0
+
+        if next_pos[1] > pos[1]: # Going up
+            self.vspeed = self.speed
+        elif next_pos[1] < pos[1]: # Going down
+            self.vspeed = -self.speed
+        else:
+            self.vspeed = 0
+
+        if self.speed < max_speed:
+            self.speed += base_accel
+        elif self.speed > max_speed:
+            self.speed -= running_accel
+
+        # Actually move the unit
+        if abs(self.hspeed) > base_speed or abs(self.vspeed) > base_speed:
+            self.make_move(self.hspeed, self.vspeed)
+            self.unit.sprite.change_state('moving')
+            self.unit.sprite.handle_net_position((self.hspeed, self.vspeed))
+        #    rounded_position = (round(self.unit.position[0]), round(self.unit.position[1]))
+
+        rounded_pos = round(self.unit.position[0]), round(self.unit.position[1])
+        if self.path[-1] == rounded_pos:
+            self.path.pop()
+
+    def make_move(self, dx, dy):
+        x, y = self.unit.position
+        self.unit.position = x + dx, y + dy
+        self.unit.sound.play()
 
     def think(self):
         time = engine.get_time()

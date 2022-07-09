@@ -368,7 +368,7 @@ class PrimaryAI():
                    (not DB.constants.value('ai_fog_of_war') or game.board.in_vision(pos, self.unit.team)):
                     filtered_targets.add(pos)
                     break
-            
+
         return list(filtered_targets)
 
     def get_all_valid_targets(self):
@@ -609,6 +609,28 @@ def handle_unit_spec(all_targets, behaviour):
         all_targets = [pos for pos in all_targets if bool(game.board.get_unit(pos).nid == target_spec[1]) ^ invert]
     elif target_spec[0] == 'Team':
         all_targets = [pos for pos in all_targets if bool(game.board.get_unit(pos).team == target_spec[1]) ^ invert]
+    return all_targets
+
+def handle_roam_unit_spec(all_targets, behaviour):
+    target_spec = behaviour.target_spec
+    if not target_spec:
+        return all_targets
+    invert = bool(behaviour.invert_targeting)
+    # Uses ^ (which is XOR) to handle inverting the targeting
+    if target_spec[0] == "Tag":
+        all_targets = [unit for unit in all_targets if bool(target_spec[1] in unit.tags) ^ invert]
+    elif target_spec[0] == "Class":
+        all_targets = [unit for unit in all_targets if bool(unit.klass == target_spec[1]) ^ invert]
+    elif target_spec[0] == "Name":
+        all_targets = [unit for unit in all_targets if bool(unit.name == target_spec[1]) ^ invert]
+    elif target_spec[0] == 'Faction':
+        all_targets = [unit for unit in all_targets if bool(unit.faction == target_spec[1]) ^ invert]
+    elif target_spec[0] == 'Party':
+        all_targets = [unit for unit in all_targets if bool(unit.party == target_spec[1]) ^ invert]
+    elif target_spec[0] == 'ID':
+        all_targets = [unit for unit in all_targets if bool(unit.nid == target_spec[1]) ^ invert]
+    elif target_spec[0] == 'Team':
+        all_targets = [unit for unit in all_targets if bool(unit.team == target_spec[1]) ^ invert]
     return all_targets
 
 def get_targets(unit, behaviour):

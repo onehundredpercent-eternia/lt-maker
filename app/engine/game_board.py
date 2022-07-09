@@ -118,10 +118,18 @@ class GameBoard(object):
     def get_unit(self, pos):
         if not pos:
             return None
+        if not isinstance(pos[0], int) or not isinstance(pos[1], int):
+            pos = self.rationalize_pos(pos)
+            # We need to actually find the unit's pos
         idx = pos[0] * self.height + pos[1]
         if self.unit_grid[idx]:
             return self.unit_grid[idx][0]
         return None
+
+    def rationalize_pos(self, pos: tuple):
+        """Similar to in roam_state, except
+        does not force the unit into a particular position"""
+        return (int(round(pos[0])), int(round(pos[1])))
 
     def get_team(self, pos):
         if not pos:
