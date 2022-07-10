@@ -409,11 +409,33 @@ class FreeRoamAIController(ai_controller.AIController):
             else:
                 all_targets = [tuple(self.behaviour.target_spec)]
         if self.behaviour.target in ('Unit', 'Enemy', 'Ally'):
-            all_targets = ai_controller.handle_roam_unit_spec(all_targets, self.behaviour) # Just change function call?
+            all_targets = self.handle_roam_unit_spec(all_targets, self.behaviour)
 
         if self.behaviour.target != 'Position':
             if DB.constants.value('ai_fog_of_war'):
                 all_targets = [pos for pos in all_targets if game.board.in_vision(pos, self.unit.team)]
+        return all_targets
+
+    def handle_roam_unit_spec(self, all_targets, behaviour):
+        target_spec = behaviour.target_spec
+        if not target_spec:
+            return all_targets
+        invert = bool(behaviour.invert_targeting)
+        # Uses ^ (which is XOR) to handle inverting the targeting
+        if target_spec[0] == "Tag":
+            all_targets = [unit for unit in all_targets if bool(target_spec[1] in unit.tags) ^ invert]
+        elif target_spec[0] == "Class":
+            all_targets = [unit for unit in all_targets if bool(unit.klass == target_spec[1]) ^ invert]
+        elif target_spec[0] == "Name":
+            all_targets = [unit for unit in all_targets if bool(unit.name == target_spec[1]) ^ invert]
+        elif target_spec[0] == 'Faction':
+            all_targets = [unit for unit in all_targets if bool(unit.faction == target_spec[1]) ^ invert]
+        elif target_spec[0] == 'Party':
+            all_targets = [unit for unit in all_targets if bool(unit.party == target_spec[1]) ^ invert]
+        elif target_spec[0] == 'ID':
+            all_targets = [unit for unit in all_targets if bool(unit.nid == target_spec[1]) ^ invert]
+        elif target_spec[0] == 'Team':
+            all_targets = [unit for unit in all_targets if bool(unit.team == target_spec[1]) ^ invert]
         return all_targets
 
     def prepare_move(self):
