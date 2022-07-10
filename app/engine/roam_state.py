@@ -324,6 +324,7 @@ class FreeRoamUnit():
 class FreeRoamAIController(ai_controller.AIController):
     def __init__(self, unit):
         # Controls whether we should be skipping through the AI's turns
+        self.ai_speed = 20 # Move this somewhere later
         self.do_skip: bool = False
         self.max_pause = 1000
         self.reset()
@@ -354,6 +355,9 @@ class FreeRoamAIController(ai_controller.AIController):
         self.vspeed = 0.0
         self.hspeed = 0.0
         self.direction = [0, 0]
+
+        self.sprite_dir_time = self.ai_speed * 9 # Used to reduce unit sprite flickering
+        self.cur_sprite_time = self.sprite_dir_time
 
     def clean_up(self):
         self.goal_position = None
@@ -428,17 +432,17 @@ class FreeRoamAIController(ai_controller.AIController):
         self.path = self.get_move_path()
 
     def move(self):
-        ai_speed = 15 # Move this somewhere later
         if not self.goal_position:
             return
         if self.goal_target and game.board.rationalize_pos(self.goal_target.position) != self.goal_position:
             self.set_path()
         if self.goal_position != game.board.rationalize_pos(self.unit.position):
-            # Immediate TODO
             current_time = engine.get_time()
-            if current_time - self.last_move > ai_speed:
+            if current_time - self.last_move > self.ai_speed:
                 self.last_move = current_time
                 self.handle_direction(self.unit.position, self.path[-1])
+        else:
+            self.unit.sprite.change_state('normal')
 
     def handle_direction(self, pos, next_pos):
 
@@ -471,9 +475,11 @@ class FreeRoamAIController(ai_controller.AIController):
         # Actually move the unit
         if abs(self.hspeed) > base_speed or abs(self.vspeed) > base_speed:
             self.make_move(self.hspeed, self.vspeed)
-            self.unit.sprite.change_state('moving')
-            self.unit.sprite.handle_net_position((self.hspeed, self.vspeed))
-        #    rounded_position = (round(self.unit.position[0]), round(self.unit.position[1]))
+            self.cur_sprite_time -= self.ai_speed
+            if self.cur_sprite_time <= 0 or self.unit.sprite.state == "normal":
+                self.cur_sprite_time = self.sprite_dir_time
+                self.unit.sprite.change_state('moving')
+                self.unit.sprite.handle_net_position((self.hspeed, self.vspeed))
 
         rounded_pos = round(self.unit.position[0]), round(self.unit.position[1])
         if self.path[-1] == rounded_pos:

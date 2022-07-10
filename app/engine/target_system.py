@@ -192,7 +192,7 @@ def get_path(unit, position, ally_block=False, use_limit=False, rationalize=Fals
     height = game.board.height
     pass_through = skill_system.pass_through(unit)
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
-    pathfinder = pathfinding.AStar(start_pos, position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
+    pathfinder = pathfinding.AStar(start_pos, position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war, rationalize)
 
     limit = unit.movement_left if use_limit else None
     path = pathfinder.process(game.board, ally_block=ally_block, limit=limit)
