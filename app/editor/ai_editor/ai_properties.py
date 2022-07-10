@@ -371,6 +371,13 @@ class AIProperties(QWidget):
         self.speed_box.edit.valueChanged.connect(self.roam_speed)
         top_section.addWidget(self.speed_box)
 
+        self.proximity_box = PropertyBox("Desired Proximity", QSpinBox, self)
+        self.proximity_box.setToolTip("When within this distance of a target, move to the next behaviour.\nFree roam only. Set to -1 to never change.")
+        self.proximity_box.edit.setRange(-1, 255)
+        self.proximity_box.edit.setAlignment(Qt.AlignRight)
+        self.proximity_box.edit.valueChanged.connect(self.desired_proximity)
+        top_section.addWidget(self.proximity_box)
+
         self.add_button = QPushButton("Add Behaviour", self)
         self.add_button.clicked.connect(self.add_behaviour)
         top_section.addWidget(self.add_button)
@@ -436,6 +443,9 @@ class AIProperties(QWidget):
 
     def roam_speed(self, val):
         self.current.roam_speed = int(val)
+
+    def desired_proximity(self, val):
+        self.current.desired_proximity = int(val)
 
     def add_behaviour(self, checked=False, set_current=True):
         item = QListWidgetItem(self.behaviour_list)
