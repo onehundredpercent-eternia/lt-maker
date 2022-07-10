@@ -330,6 +330,7 @@ class FreeRoamAIController(ai_controller.AIController):
         self.reset()
         self.unit = unit
         self.movement_manager = RoamMovementHandler(self.unit)
+        self.ai = DB.ai.get(self.unit.get_ai())
 
     def skip(self):
         self.do_skip = True
@@ -357,13 +358,15 @@ class FreeRoamAIController(ai_controller.AIController):
         self.goal_target = None
 
     def set_next_behaviour(self):
-        behaviours = DB.ai.get(self.unit.get_ai()).behaviours
+        behaviours = self.ai.behaviours
+        if not behaviours:
+            return
         if self.behaviour_idx < len(behaviours):
             self.behaviour = behaviours[self.behaviour_idx]
             self.behaviour_idx += 1
         else:
-            self.behaviour = None
             self.behaviour_idx = 0
+            self.behaviour = behaviours[self.behaviour_idx]
 
     def load_unit(self, unit):
         self.reset()
@@ -387,6 +390,9 @@ class FreeRoamAIController(ai_controller.AIController):
         if self.behaviour.action == "Move_away_from":
             self.smart_retreat()
         self.movement_manager.move()
+        if utils.calculate_distance(game.board.rationalize_pos(self.unit.position), self.goal_position) <= self.ai.desired_proximity:
+            self.path = None
+            self.state = "Done"
 
     def get_targets(self):
         all_targets = []

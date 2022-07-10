@@ -7,12 +7,13 @@ unit_spec = ['All', 'Class', 'Tag', 'Name', 'Team', 'Faction', 'Party', 'ID']
 # (Don't look | Movement*2 + Maximum Item Range | Entire Map | Custom Range (Integer))
 
 class AIPrefab(Prefab):
-    def __init__(self, nid, priority, offense_bias=2, speed=20):
+    def __init__(self, nid, priority, offense_bias=2, speed=20, desired_proximity=0):
         self.nid = nid
         self.behaviours = [AIBehaviour.DoNothing(), AIBehaviour.DoNothing(), AIBehaviour.DoNothing()]
         self.priority: int = priority
         self.offense_bias: float = offense_bias
         self.roam_speed = speed
+        self.desired_proximity = desired_proximity
         self.roam_ai = False
 
     def add_behaviour(self, behaviour):
