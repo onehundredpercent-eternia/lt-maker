@@ -118,9 +118,6 @@ class GameBoard(object):
     def get_unit(self, pos):
         if not pos:
             return None
-        if not isinstance(pos[0], int) or not isinstance(pos[1], int):
-            pos = self.rationalize_pos(pos)
-            # We need to actually find the unit's pos
         idx = pos[0] * self.height + pos[1]
         if self.unit_grid[idx]:
             return self.unit_grid[idx][0]

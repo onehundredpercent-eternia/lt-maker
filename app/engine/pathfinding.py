@@ -94,13 +94,13 @@ class Djikstra():
 class AStar():
     def __init__(self, start_pos: tuple, goal_pos: tuple, grid: list,
                  bounds: Tuple[int, int, int, int], height: int, unit_team: str,
-                 pass_through: bool = False, ai_fog_of_war: bool = False, roaming: bool = False):
+                 pass_through: bool = False, ai_fog_of_war: bool = False, diagonal: bool = False):
         self.cells = grid
         self.bounds = bounds
         self.height = height
         self.start_pos = start_pos
         self.goal_pos = goal_pos
-        self.roaming = roaming
+        self.diagonal = diagonal
 
         self.start_cell = self.get_cell(start_pos[0], start_pos[1])
         self.end_cell = self.get_cell(goal_pos[0], goal_pos[1]) if goal_pos else None
@@ -157,6 +157,11 @@ class AStar():
         return self.cells[x * self.height + y]
 
     def get_adjacent_cells(self, cell) -> list:
+        if self.diagonal:
+            return self.get_diagonal_cells(cell)
+        return self.get_manhatten_adjacent(cell)
+
+    def get_manhatten_adjacent(self, cell):
         cells = []
         if cell.y < self.bounds[3]:
             cells.append(self.get_cell(cell.x, cell.y + 1))
@@ -166,18 +171,18 @@ class AStar():
             cells.append(self.get_cell(cell.x - 1, cell.y))
         if cell.y > self.bounds[1]:
             cells.append(self.get_cell(cell.x, cell.y - 1))
-        if self.roaming:
-            cells.extend(self.add_diagonal_cells(cell))
         return cells
 
-    def add_diagonal_cells(self, cell):
+    def get_diagonal_cells(self, cell):
         cells = []
         if cell.x > self.bounds[0]:
+            cells.append(self.get_cell(cell.x - 1, cell.y))
             if cell.y > self.bounds[1]:
                 cells.append(self.get_cell(cell.x - 1, cell.y - 1))
             if cell.y < self.bounds[3]:
                 cells.append(self.get_cell(cell.x - 1, cell.y + 1))
         if cell.x < self.bounds[2]:
+            cells.append(self.get_cell(cell.x + 1, cell.y))
             if cell.y > self.bounds[1]:
                 cells.append(self.get_cell(cell.x + 1, cell.y - 1))
             if cell.y < self.bounds[3]:
