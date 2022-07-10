@@ -4,7 +4,7 @@ from app.events.regions import RegionType
 from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.engine.game_state import game
-from app.engine import engine, info_menu, evaluate, target_system, action, ai_controller, skill_system
+from app.engine import engine, info_menu, evaluate, target_system, action, ai_controller, skill_system, equations
 from app.engine.input_manager import get_input_manager
 from app.data.database import DB
 
@@ -308,6 +308,7 @@ class FreeRoamAIHandler():
         for unit in game.get_all_units():
             if hasattr(DB.ai.get(unit.get_ai()), 'roam_ai') and DB.ai.get(unit.get_ai()).roam_ai:
                 targets.add(FreeRoamUnit(unit, FreeRoamAIController(unit)))
+                game.leave(unit)
         return targets
 
     def update(self):
@@ -381,12 +382,13 @@ class FreeRoamAIController(ai_controller.AIController):
         Checks if the path should be recalculated"""
         if not self.goal_position:
             return
-        if self.goal_target and game.board.rationalize_pos(self.get_goal_position()) != self.goal_position:
+        if self.goal_target and game.board.rationalize_pos(self.get_goal_position(self.goal_target)) != self.goal_position:
             self.set_path()
+        if self.behaviour.action == "Move_away_from":
+            self.smart_retreat()
         self.movement_manager.move()
 
-    def get_target(self):
-        # VERY TODO
+    def get_targets(self):
         all_targets = []
         if self.behaviour.target == 'Unit':
             all_targets = [u for u in game.units if u.position]
@@ -447,7 +449,7 @@ class FreeRoamAIController(ai_controller.AIController):
 
     def prepare_move(self):
         """Happens when we first decide we'd like to move"""
-        targets = self.get_target()
+        targets = self.get_targets()
         if targets:
             self.goal_target = targets[0]
             self.set_path()
@@ -457,17 +459,46 @@ class FreeRoamAIController(ai_controller.AIController):
 
     def set_path(self):
         """Sets our goal and updates movement manager information"""
-        self.goal_position = target_system.get_nearest_open_tile(self.unit, game.board.rationalize_pos(self.get_goal_position()))
+        self.goal_position = target_system.get_nearest_open_tile(self.unit, game.board.rationalize_pos(self.get_goal_position(self.goal_target)))
         self.path = self.get_move_path()
         self.movement_manager.update_path(self.path)
         self.movement_manager.update_goal_pos(self.goal_position)
 
-    def get_goal_position(self):
+    def get_goal_position(self, target):
         """Since we don't just have tuples as goals, this
         returns the position of the target"""
-        if hasattr(self.goal_target, 'position'):
-            return self.goal_target.position
-        return self.goal_target
+        if hasattr(target, 'position'):
+            return target.position
+        return target
+
+    def smart_retreat(self) -> bool:
+        valid_positions = self.get_true_valid_moves()
+
+        target_positions = self.get_targets()
+
+        zero_move = max(target_system.find_potential_range(self.unit, True, True), default=0)
+        single_move = zero_move + equations.parser.movement(self.unit)
+        double_move = single_move + equations.parser.movement(self.unit)
+
+        target_positions = {(self.get_goal_position(pos), utils.calculate_distance(self.unit.position, self.get_goal_position(pos))) for pos in target_positions}
+
+        if self.behaviour.view_range == -4:
+            pass
+        elif self.behaviour.view_range == -3:
+            target_positions = {(pos, mag) for pos, mag in target_positions if mag < double_move}
+        elif self.behaviour.view_range == -2:
+            target_positions = {(pos, mag) for pos, mag in target_positions if mag < single_move}
+        elif self.behaviour.view_range == -1:
+            target_positions = {(pos, mag) for pos, mag in target_positions if mag < zero_move}
+        else:
+            target_positions = {(pos, mag) for pos, mag in target_positions if mag < self.view_range}
+
+        if target_positions and len(valid_positions) > 1:
+            self.goal_target = utils.smart_farthest_away_pos(self.unit.position, valid_positions, target_positions)
+            self.set_path()
+            return True
+        else:
+            return False
 
     def think(self):
         time = engine.get_time()

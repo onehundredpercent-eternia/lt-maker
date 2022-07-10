@@ -170,7 +170,7 @@ def get_valid_moves(unit, force=False) -> set:
     height = game.board.height
     pass_through = skill_system.pass_through(unit)
     ai_fog_of_war = DB.constants.value('ai_fog_of_war')
-    pathfinder = pathfinding.Djikstra(unit.position, grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
+    pathfinder = pathfinding.Djikstra(game.board.rationalize_pos(unit.position), grid, bounds, height, unit.team, pass_through, ai_fog_of_war)
     movement_left = equations.parser.movement(unit) if force else unit.movement_left
 
     valid_moves = pathfinder.process(game.board, movement_left)
