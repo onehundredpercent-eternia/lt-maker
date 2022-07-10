@@ -5,15 +5,16 @@ from app.utilities import utils
 
 class Djikstra():
     __slots__ = ['open', 'closed', 'cells', 'bounds', 'height', 'start_pos',
-                 'start_cell', 'unit_team', 'pass_through', 'ai_fog_of_war']
+                 'start_cell', 'unit_team', 'pass_through', 'ai_fog_of_war', 'diagonal']
 
     def __init__(self, start_pos: tuple, grid: list, bounds: Tuple[int, int, int, int],
-                 height: int, unit_team: str, pass_through: bool, ai_fog_of_war: bool):
+                 height: int, unit_team: str, pass_through: bool, ai_fog_of_war: bool, diagonal: bool = False):
         self.open = []
         heapq.heapify(self.open)
         self.closed = set()
         self.cells = grid # Must keep order
         self.bounds: Tuple[int, int, int, int] = bounds
+        self.diagonal = diagonal
         self.height = height
         self.reset_grid()
         self.start_pos = start_pos
@@ -29,10 +30,12 @@ class Djikstra():
     def get_cell(self, x, y):
         return self.cells[x * self.height + y]
 
-    def get_adjacent_cells(self, cell):
-        """
-        Returns adjacent cells to a cell.
-        """
+    def get_adjacent_cells(self, cell) -> list:
+        if self.diagonal:
+            return self.get_diagonal_cells(cell)
+        return self.get_manhatten_adjacent(cell)
+
+    def get_manhatten_adjacent(self, cell):
         cells = []
         if cell.y < self.bounds[3]:
             cells.append(self.get_cell(cell.x, cell.y + 1))
@@ -42,6 +45,22 @@ class Djikstra():
             cells.append(self.get_cell(cell.x - 1, cell.y))
         if cell.y > self.bounds[1]:
             cells.append(self.get_cell(cell.x, cell.y - 1))
+        return cells
+
+    def get_diagonal_cells(self, cell):
+        cells = []
+        if cell.x > self.bounds[0]:
+            cells.append(self.get_cell(cell.x - 1, cell.y))
+            if cell.y > self.bounds[1]:
+                cells.append(self.get_cell(cell.x - 1, cell.y - 1))
+            if cell.y < self.bounds[3]:
+                cells.append(self.get_cell(cell.x - 1, cell.y + 1))
+        if cell.x < self.bounds[2]:
+            cells.append(self.get_cell(cell.x + 1, cell.y))
+            if cell.y > self.bounds[1]:
+                cells.append(self.get_cell(cell.x + 1, cell.y - 1))
+            if cell.y < self.bounds[3]:
+                cells.append(self.get_cell(cell.x + 1, cell.y + 1))
         return cells
 
     def update_cell(self, adj, cell):
