@@ -364,6 +364,13 @@ class AIProperties(QWidget):
         self.roam_ai_box.setToolTip("Is this AI for Free Roam or normal gameplay?")
         top_section.addWidget(self.roam_ai_box)
 
+        self.speed_box = PropertyBox("Roam Speed", QSpinBox, self)
+        self.speed_box.setToolTip("How fast the unit moves in Free Roam. Lower is faster")
+        self.speed_box.edit.setRange(0, 255)
+        self.speed_box.edit.setAlignment(Qt.AlignRight)
+        self.speed_box.edit.valueChanged.connect(self.roam_speed)
+        top_section.addWidget(self.speed_box)
+
         self.add_button = QPushButton("Add Behaviour", self)
         self.add_button.clicked.connect(self.add_behaviour)
         top_section.addWidget(self.add_button)
@@ -427,6 +434,9 @@ class AIProperties(QWidget):
     def roam_ai(self, state):
         self.current.roam_ai = bool(state)
 
+    def roam_speed(self, val):
+        self.current.roam_speed = int(val)
+
     def add_behaviour(self, checked=False, set_current=True):
         item = QListWidgetItem(self.behaviour_list)
         self.behaviour_list.addItem(item)
@@ -450,6 +460,7 @@ class AIProperties(QWidget):
         self.priority_box.edit.setValue(current.priority)
         self.offense_bias_box.edit.setValue(current.offense_bias)
         self.roam_ai_box.edit.setChecked(bool(current.roam_ai))
+        self.speed_box.edit.setValue(current.roam_speed)
         num_behaviours = len(current.behaviours)
         # Remove all after num behaviours
         while len(self.behaviour_boxes) > num_behaviours:

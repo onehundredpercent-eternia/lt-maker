@@ -550,7 +550,7 @@ class FreeRoamAIController(ai_controller.AIController):
 class RoamMovementHandler():
     def __init__(self, unit):
         # Controls the actual movement for roam units
-        self.ai_speed = 20 # Move this somewhere later
+        self.ai_speed = DB.ai.get(unit.get_ai()).roam_speed
         self.unit = unit
         self.last_move = 0
         self.path = []
