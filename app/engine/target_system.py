@@ -1,5 +1,4 @@
 from __future__ import annotations
-from tracemalloc import start
 from typing import FrozenSet, TYPE_CHECKING, Tuple
 from functools import lru_cache
 

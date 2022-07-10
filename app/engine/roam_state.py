@@ -324,11 +324,11 @@ class FreeRoamUnit():
 class FreeRoamAIController(ai_controller.AIController):
     def __init__(self, unit):
         # Controls whether we should be skipping through the AI's turns
-        self.ai_speed = 20 # Move this somewhere later
         self.do_skip: bool = False
         self.max_pause = 1000
         self.reset()
         self.unit = unit
+        self.movement_manager = RoamMovementHandler(self.unit)
 
     def skip(self):
         self.do_skip = True
@@ -349,15 +349,6 @@ class FreeRoamAIController(ai_controller.AIController):
 
         self.goal_position = None
         self.path = None
-        self.last_move = 0
-
-        self.speed = 0.0
-        self.vspeed = 0.0
-        self.hspeed = 0.0
-        self.direction = [0, 0]
-
-        self.sprite_dir_time = self.ai_speed * 9 # Used to reduce unit sprite flickering
-        self.cur_sprite_time = self.sprite_dir_time
 
     def clean_up(self):
         self.goal_position = None
@@ -382,6 +373,13 @@ class FreeRoamAIController(ai_controller.AIController):
 
     def get_move_path(self):
         return target_system.get_path(self.unit, self.goal_position, rationalize=True)[:-1]
+
+    def move(self):
+        if not self.goal_position:
+            return
+        if self.goal_target and game.board.rationalize_pos(self.goal_target.position) != self.goal_position:
+            self.set_path()
+        self.movement_manager.move()
 
     def get_target(self):
         # VERY TODO
@@ -430,12 +428,80 @@ class FreeRoamAIController(ai_controller.AIController):
     def set_path(self):
         self.goal_position = target_system.get_nearest_open_tile(self.unit, game.board.rationalize_pos(self.goal_target.position))
         self.path = self.get_move_path()
+        self.movement_manager.update_path(self.path)
+        self.movement_manager.update_goal_pos(self.goal_position)
+
+    def think(self):
+        time = engine.get_time()
+        success = False
+        self.did_something = False
+
+        logging.info("*** AI Thinking... ***")
+
+        while True:
+            # Can spend up to half a frame thinking
+            over_time = engine.get_true_time() - time >= 8
+            logging.info("Current State: %s", self.state)
+
+            if self.state == 'Init':
+                self.start_time = engine.get_time()
+                logging.info("Starting AI with nid: %s, position: %s, class: %s, AI: %s", self.unit.nid, self.unit.position, self.unit.klass, self.unit.get_ai())
+                self.clean_up()
+                # Get next behaviour
+                self.set_next_behaviour()
+                if self.behaviour:
+                    logging.info(self.behaviour.action)
+                    if self.behaviour.action == "None":
+                        pass  # Try again
+                    elif self.behaviour.action == 'Move_to':
+                        self.state = "Moving"
+                        self.inner_ai = self.prepare_move()
+                    elif self.behaviour.action == "Move_away_from":
+                        success = self.smart_retreat()
+                        if success:
+                            self.state = "Moving"
+                        else:
+                            self.state = "Init"  # Try another behaviour
+                else:
+                    self.state = 'Done'
+
+            elif self.state == "Moving":
+                self.move()
+
+            if self.state == 'Done':
+                self.did_something = success
+                self.state = 'Init'
+                return True
+
+            if over_time:
+                break
+
+        return False
+
+class RoamMovementHandler():
+    def __init__(self, unit):
+        # Controls whether we should be skipping through the AI's turns
+        self.ai_speed = 20 # Move this somewhere later
+        self.unit = unit
+        self.last_move = 0
+        self.path = []
+        self.goal_position = None
+
+        self.speed = 0.0
+        self.vspeed = 0.0
+        self.hspeed = 0.0
+        self.direction = [0, 0]
+
+        self.sprite_dir_time = self.ai_speed * 9 # Used to reduce unit sprite flickering
+        self.cur_sprite_time = self.sprite_dir_time
+
+    def update_path(self, path):
+        self.path = path
+
+    def update_goal_pos(self, pos):
+        self.goal_position = pos
 
     def move(self):
-        if not self.goal_position:
-            return
-        if self.goal_target and game.board.rationalize_pos(self.goal_target.position) != self.goal_position:
-            self.set_path()
         if self.goal_position != game.board.rationalize_pos(self.unit.position):
             current_time = engine.get_time()
             if current_time - self.last_move > self.ai_speed:
@@ -489,50 +555,3 @@ class FreeRoamAIController(ai_controller.AIController):
         x, y = self.unit.position
         self.unit.position = x + dx, y + dy
         self.unit.sound.play()
-
-    def think(self):
-        time = engine.get_time()
-        success = False
-        self.did_something = False
-
-        logging.info("*** AI Thinking... ***")
-
-        while True:
-            # Can spend up to half a frame thinking
-            over_time = engine.get_true_time() - time >= 8
-            logging.info("Current State: %s", self.state)
-
-            if self.state == 'Init':
-                self.start_time = engine.get_time()
-                logging.info("Starting AI with nid: %s, position: %s, class: %s, AI: %s", self.unit.nid, self.unit.position, self.unit.klass, self.unit.get_ai())
-                self.clean_up()
-                # Get next behaviour
-                self.set_next_behaviour()
-                if self.behaviour:
-                    logging.info(self.behaviour.action)
-                    if self.behaviour.action == "None":
-                        pass  # Try again
-                    elif self.behaviour.action == 'Move_to':
-                        self.state = "Moving"
-                        self.inner_ai = self.prepare_move()
-                    elif self.behaviour.action == "Move_away_from":
-                        success = self.smart_retreat()
-                        if success:
-                            self.state = "Moving"
-                        else:
-                            self.state = "Init"  # Try another behaviour
-                else:
-                    self.state = 'Done'
-
-            elif self.state == "Moving":
-                self.move()
-
-            if self.state == 'Done':
-                self.did_something = success
-                self.state = 'Init'
-                return True
-
-            if over_time:
-                break
-
-        return False

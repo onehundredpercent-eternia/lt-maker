@@ -157,6 +157,11 @@ class AStar():
         return self.cells[x * self.height + y]
 
     def get_adjacent_cells(self, cell) -> list:
+        if self.diagonal:
+            return self.get_diagonal_cells(cell)
+        return self.get_manhatten_adjacent(cell)
+
+    def get_manhatten_adjacent(self, cell):
         cells = []
         if cell.y < self.bounds[3]:
             cells.append(self.get_cell(cell.x, cell.y + 1))
@@ -166,18 +171,18 @@ class AStar():
             cells.append(self.get_cell(cell.x - 1, cell.y))
         if cell.y > self.bounds[1]:
             cells.append(self.get_cell(cell.x, cell.y - 1))
-        if self.diagonal:
-            cells.extend(self.add_diagonal_cells(cell))
         return cells
 
-    def add_diagonal_cells(self, cell):
+    def get_diagonal_cells(self, cell):
         cells = []
         if cell.x > self.bounds[0]:
+            cells.append(self.get_cell(cell.x - 1, cell.y))
             if cell.y > self.bounds[1]:
                 cells.append(self.get_cell(cell.x - 1, cell.y - 1))
             if cell.y < self.bounds[3]:
                 cells.append(self.get_cell(cell.x - 1, cell.y + 1))
         if cell.x < self.bounds[2]:
+            cells.append(self.get_cell(cell.x + 1, cell.y))
             if cell.y > self.bounds[1]:
                 cells.append(self.get_cell(cell.x + 1, cell.y - 1))
             if cell.y < self.bounds[3]:
