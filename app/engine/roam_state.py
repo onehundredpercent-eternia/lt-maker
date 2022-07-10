@@ -372,12 +372,16 @@ class FreeRoamAIController(ai_controller.AIController):
         self.think()
 
     def get_move_path(self):
+        """Finds the path from the unit's position to the target
+        Ideally called rarely"""
         return target_system.get_path(self.unit, self.goal_position, rationalize=True)[:-1]
 
     def move(self):
+        """Called every update. Calls the movement manager to actually implement the move
+        Checks if the path should be recalculated"""
         if not self.goal_position:
             return
-        if self.goal_target and game.board.rationalize_pos(self.goal_target.position) != self.goal_position:
+        if self.goal_target and game.board.rationalize_pos(self.get_goal_position()) != self.goal_position:
             self.set_path()
         self.movement_manager.move()
 
@@ -390,7 +394,7 @@ class FreeRoamAIController(ai_controller.AIController):
             all_targets = [u for u in game.units if u.position and skill_system.check_enemy(self.unit, u)]
         elif self.behaviour.target == 'Ally':
             all_targets = [u for u in game.units if u.position and skill_system.check_ally(self.unit, u)]
-        elif self.behaviour.target == 'Event': # TODO
+        elif self.behaviour.target == 'Event':
             target_spec = self.behaviour.target_spec
             all_targets = []
             for region in game.level.regions:
@@ -400,7 +404,7 @@ class FreeRoamAIController(ai_controller.AIController):
                 except:
                     logging.warning("Region Condition: Could not parse %s" % region.condition)
             all_targets = list(set(all_targets))  # Remove duplicates
-        elif self.behaviour.target == 'Position': # TODO
+        elif self.behaviour.target == 'Position':
             if self.behaviour.target_spec == "Starting":
                 if self.unit.starting_position:
                     all_targets = [self.unit.starting_position]
@@ -417,6 +421,9 @@ class FreeRoamAIController(ai_controller.AIController):
         return all_targets
 
     def handle_roam_unit_spec(self, all_targets, behaviour):
+        """A modified version of an AIController function
+        Uses the unit instead of the unit's position
+        This way we don't have to find the unit (which can't be done)"""
         target_spec = behaviour.target_spec
         if not target_spec:
             return all_targets
@@ -439,6 +446,7 @@ class FreeRoamAIController(ai_controller.AIController):
         return all_targets
 
     def prepare_move(self):
+        """Happens when we first decide we'd like to move"""
         targets = self.get_target()
         if targets:
             self.goal_target = targets[0]
@@ -448,10 +456,18 @@ class FreeRoamAIController(ai_controller.AIController):
             return None
 
     def set_path(self):
-        self.goal_position = target_system.get_nearest_open_tile(self.unit, game.board.rationalize_pos(self.goal_target.position))
+        """Sets our goal and updates movement manager information"""
+        self.goal_position = target_system.get_nearest_open_tile(self.unit, game.board.rationalize_pos(self.get_goal_position()))
         self.path = self.get_move_path()
         self.movement_manager.update_path(self.path)
         self.movement_manager.update_goal_pos(self.goal_position)
+
+    def get_goal_position(self):
+        """Since we don't just have tuples as goals, this
+        returns the position of the target"""
+        if hasattr(self.goal_target, 'position'):
+            return self.goal_target.position
+        return self.goal_target
 
     def think(self):
         time = engine.get_time()
@@ -502,7 +518,7 @@ class FreeRoamAIController(ai_controller.AIController):
 
 class RoamMovementHandler():
     def __init__(self, unit):
-        # Controls whether we should be skipping through the AI's turns
+        # Controls the actual movement for roam units
         self.ai_speed = 20 # Move this somewhere later
         self.unit = unit
         self.last_move = 0
@@ -518,12 +534,15 @@ class RoamMovementHandler():
         self.cur_sprite_time = self.sprite_dir_time
 
     def update_path(self, path):
+        """Setter for self.path"""
         self.path = path
 
     def update_goal_pos(self, pos):
+        """Setter for self.goal_position"""
         self.goal_position = pos
 
     def move(self):
+        """Times to see if we should move. Changes sprite if we've reached goal"""
         if self.goal_position != game.board.rationalize_pos(self.unit.position):
             current_time = engine.get_time()
             if current_time - self.last_move > self.ai_speed:
@@ -533,7 +552,7 @@ class RoamMovementHandler():
             self.unit.sprite.change_state('normal')
 
     def handle_direction(self, pos, next_pos):
-
+        """Handles the movement itself"""
         base_speed = 0.008
         base_accel = 0.008
         running_accel = 0.01
