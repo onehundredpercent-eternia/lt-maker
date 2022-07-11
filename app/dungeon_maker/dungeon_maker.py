@@ -1,5 +1,6 @@
 import math
 import random
+import itertools
 from enum import Enum
 from dataclasses import dataclass
 
@@ -17,9 +18,9 @@ tilemap_grid = [TileType.FLOOR for _ in range(width * height)]
 def set_grid(x: int, y: int, tiletype: TileType):
     tilemap_grid[y * width + x] = tiletype
 
-def reset_grid():
+def reset_grid(tiletype=TileType.FLOOR):
     for idx, _ in enumerate(tilemap_grid):
-        tilemap_grid[idx] = TileType.FLOOR
+        tilemap_grid[idx] = tiletype
 
 def get_from_grid(x: int, y: int) -> TileType:
     return tilemap_grid[y * width + x]
@@ -99,7 +100,6 @@ def separation_steering(rooms: list) -> list:
     counter = 0
     while overlap and counter < 10000:
         counter += 1
-        print(counter)
         overlap = False
         velocities = {room: [0, 0] for room in rooms}
         for room in rooms:
@@ -180,10 +180,10 @@ def find_new_rooms(room_tiles: set) -> list:
                 room_tiles.remove(tile)
     return rooms
 
-def place_rooms_on_grid(rooms: list):
+def place_rooms_on_grid(rooms: list, tiletype=TileType.FLOOR):
     for room in rooms:
         for tile in room:
-            set_grid(*tile, TileType.PILLAR)
+            set_grid(*tile, tiletype)
 
 def get_character(x, y):
     e = get_from_grid(x, y)
@@ -203,22 +203,80 @@ def print_grid():
             print(cell_char, end="")
         print("\n", end="")
 
-def place_walls(room_tiles):
-    # Now add walls
-    for i in range(width):
-        for j in range(height):
-            if (i, j) in room_tiles:
-                for adj in [(i - 1, j - 1), (i, j - 1), (i + 1, j - 1),
-                            (i - 1, j), (i + 1, j),
-                            (i - 1, j + 1), (i, j + 1), (i + 1, j + 1)]:
-                    if adj not in room_tiles and check_bounds(*adj):
-                        set_grid(*adj, TileType.WALL)
+def combine_rooms(rooms, all_room_tiles):
+    # Find walls between rooms
+    new_floors = set()
+    all_checked_walls = set()
+    for room_tiles, other_room_tiles in itertools.combinations(rooms, 2):
+        for tile in room_tiles:
+            for direction in [(0, -1), (-1, 0), (1, 0), (0, 1)]:
+                next_tile = tile[0] + direction[0], tile[1] + direction[1]
+                next2_tile = tile[0] + direction[0] * 2, tile[1] + direction[1] * 2
+                if check_bounds(*next_tile) and check_bounds(*next2_tile) and \
+                        next_tile not in all_room_tiles and next2_tile in other_room_tiles and \
+                        next_tile not in all_checked_walls:
+                    wall = [next_tile]
+                    # Find rest of wall
+                    if abs(direction[0]) == 1:
+                        # Go up 
+                        while True:
+                            next_tile = next_tile[0], next_tile[1] - 1
+                            left_tile = next_tile[0] - 1, next_tile[1]
+                            right_tile = next_tile[0] + 1, next_tile[1]
+                            if next_tile not in all_room_tiles and left_tile in all_room_tiles and right_tile in all_room_tiles:
+                                wall.append(next_tile)
+                            else:
+                                break                                    
+                        # Go down
+                        while True:
+                            next_tile = next_tile[0], next_tile[1] + 1
+                            left_tile = next_tile[0] - 1, next_tile[1]
+                            right_tile = next_tile[0] + 1, next_tile[1]
+                            if next_tile not in all_room_tiles and left_tile in all_room_tiles and right_tile in all_room_tiles:
+                                wall.append(next_tile)
+                            else:
+                                break
+                    else:
+                        # Go left 
+                        while True:
+                            next_tile = next_tile[0] - 1, next_tile[1]
+                            up_tile = next_tile[0], next_tile[1] - 1
+                            down_tile = next_tile[0], next_tile[1] + 1
+                            if next_tile not in all_room_tiles and up_tile in all_room_tiles and down_tile in all_room_tiles:
+                                wall.append(next_tile)
+                            else:
+                                break                                    
+                        # Go right
+                        while True:
+                            next_tile = next_tile[0] + 1, next_tile[1]
+                            up_tile = next_tile[0], next_tile[1] - 1
+                            down_tile = next_tile[0], next_tile[1] + 1
+                            if next_tile not in all_room_tiles and up_tile in all_room_tiles and down_tile in all_room_tiles:
+                                wall.append(next_tile)
+                            else:
+                                break                                    
+                    # Cut opening in middle of wall
+                    wall = sorted(list(set(wall)))
+                    if len(wall) % 2:  # Odd
+                        # If wall is odd, place opening between them
+                        cut = wall[len(wall)//2]
+                        new_floors.add(cut)
+                    else:  # Even
+                        # If wall is even, place two-opening between them
+                        cut1 = wall[len(wall)//2 - 1]
+                        cut2 = wall[len(wall)//2]
+                        new_floors.add(cut1)
+                        new_floors.add(cut2)
+                    all_checked_walls |= set(wall)
+    return new_floors
 
-# place_rooms()
-reset_grid()
+reset_grid(TileType.WALL)
 rooms = get_rooms()
 rooms = separation_steering(rooms)
 room_tiles = get_room_tiles(rooms)
-new_rooms = find_new_rooms(list(room_tiles))
+new_rooms = find_new_rooms(room_tiles.copy())
+print(len(new_rooms))
+connections = combine_rooms(new_rooms, room_tiles)
 place_rooms_on_grid(new_rooms)
+place_rooms_on_grid([connections], TileType.STAIR)
 print_grid()
