@@ -588,7 +588,7 @@ def generate_map(theme=None, enemy_type=None):
     theme = theme or 'default'
     enemy_type = enemy_type or ['Soldier']
     # Generate map prefab (called dungeon)
-    dungeon, rooms = dungeon_maker.generate_dungeon(theme)
+    dungeon, rooms = dungeon_maker.generate_dungeon(theme, completed_chapters())
 
     # Need to create an image for the base layer
     im_width, im_height = dungeon.width * TILEWIDTH, dungeon.height * TILEHEIGHT
@@ -617,6 +617,9 @@ def generate_map(theme=None, enemy_type=None):
     # Now we have the surface to use as a real tilemap
     tilemap = TileMapObject.build(dungeon, surf)
     # Now we have a complete tilemap
+    # Lets build a level
+    level_nid = str(completed_chapters())
+    game.build_level_from_scratch(level_nid, tilemap)
 
     # Choose a starting room and an ending/boss room
     biggest_south_room = rooms[0]
@@ -667,6 +670,20 @@ def generate_map(theme=None, enemy_type=None):
             build_group('%d' % idx, group_data, room.tiles)
 
     # Generate grave tree regions
+    num_grave_trees = int(lerp(3, 6, completed_chapters() / LAST_CHAPTER))
+    valid_positions = [pos for pos in tilemap.positions if game.movement.check_simple_traversable(pos)]
+    # Choose X random positions
+    counter = num_grave_trees
+    while counter > 0:
+        counter -= 1
+        pos = game.get_random_choice(valid_positions)
+        valid_positions.remove(pos)
+        distance = utils.calculate_distance(start_pos, pos)
+        grave_region = regions.Region('Grave%d' % counter)
+        grave_region.region_type = regions.RegionType.TIME
+        grave_region.position = pos
+        grave_region.size = (1, 1)
+        grave_region.sub_nid = int(distance / 5) + 1
+        game.register_region(new_region)
+        action.do(action.AddRegion(new_region))
 
-
-    
