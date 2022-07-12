@@ -3,48 +3,33 @@ import random
 import itertools
 from enum import Enum
 from dataclasses import dataclass
+from typing import List, Set, Dict, Tuple
 
-class TileType(Enum):
-    FLOOR = 'Floor'
-    WALL = 'Wall'
-    PILLAR = 'Pillar'
-    STAIR = 'Stair'
+from app.utilities import utils
 
-map_size = 20, 20
-width, height = map_size
-tilemap_grid = [TileType.FLOOR for _ in range(width * height)]
-# tilemap_grid = [random.choice([TileType.FLOOR, TileType.WALL]) for _ in range(width * height)]
+class DungeonTileMap:
+    def __init__(self, width: int, height: int):
+        self.width = width
+        self.height = height
+        self.terrain_grid = {}
+        self.tile_grid = {}
 
-def set_grid(x: int, y: int, tiletype: TileType):
-    tilemap_grid[y * width + x] = tiletype
+    def get_terrain(self, pos):
+        return self.terrain_grid.get(pos, None)
 
-def reset_grid(tiletype=TileType.FLOOR):
-    for idx, _ in enumerate(tilemap_grid):
-        tilemap_grid[idx] = tiletype
+    def set_grid(x: int, y: int, terrain: str):
+        self.terrain_grid[(x, y)] = terrain
 
-def get_from_grid(x: int, y: int) -> TileType:
-    return tilemap_grid[y * width + x]
+    def reset_grid(terrain: str):
+        for x in range(self.width):
+            for y in range(self.height):
+                self.terrain_grid[(x, y)] = terrain
 
-def check_bounds(x: int, y: int) -> bool:
-    return 0 <= x < width and 0 <= y < height
-
-def place_rooms():
-    room_percentage = 0.33
-    avg_size = 4.5
-    num_rooms = int(room_percentage * width * height / (avg_size * avg_size))
-    rooms = []
-    for _ in range(num_rooms):
-        # Random size
-        rwidth = random.normalvariate(mu=avg_size, sigma=1)
-        # Generally square
-        rheight = random.normalvariate(mu=rwidth, sigma=0.5)
-        # choose a random point to place the room
-        x = random.randint(0, width - 1)
-        y = random.randint(0, height - 1)
-        rooms.append((x, y, int(rwidth), int(rheight)))
+    def check_bounds(self, x: int, y: int) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height
 
 @dataclass(eq=False)
-class Room:
+class RoomPrefab:
     x: float = 0
     y: float = 0
     width: int = 0  # Width of Floor
@@ -56,9 +41,7 @@ def random_point_in_circle(radius: float) -> tuple:
     r = 2 - u if u > 1 else u
     return radius * r * math.cos(t), radius * r * math.sin(t)
 
-def get_rooms() -> list:
-    avg_size = 4.5
-    num_rooms = 20
+def get_rooms(avg_size=4.5, num_rooms=20) -> list:
     radius = 1
     rooms = []
     for _ in range(num_rooms):
@@ -70,11 +53,10 @@ def get_rooms() -> list:
             continue
         # choose a random point to place the room
         x, y = random_point_in_circle(radius)
-        rooms.append(Room(x + width//2, y + height//2, round(rwidth), round(rheight)))
-    print(rooms)
+        rooms.append(RoomPrefabx + width//2, y + height//2, round(rwidth), round(rheight)))
     return rooms
 
-def room_overlaps(a: Room, b: Room) -> bool:
+def room_overlaps(a: RoomPrefab, b: RoomPrefab) -> bool:
     dx = a.x - b.x
     px = (a.width/2 + b.width/2) - abs(dx)
     if px <= 0:
@@ -86,16 +68,7 @@ def room_overlaps(a: Room, b: Room) -> bool:
         return False
     return True
 
-def magnitude(vec) -> float:
-    return math.sqrt(vec[0] * vec[0] + vec[1] * vec[1])
-
-def normalize(vec):
-    if vec[0] != 0 or vec[1] != 0:
-        mag = magnitude(vec)
-        return vec[0] / mag, vec[1] / mag
-    return vec[0], vec[1]
-
-def separation_steering(rooms: list) -> list:
+def separation_steering(rooms: List[RoomPrefab]) -> List[RoomPrefab]:
     overlap = True
     counter = 0
     while overlap and counter < 10000:
@@ -120,12 +93,12 @@ def separation_steering(rooms: list) -> list:
                 overlap = True
         # Actually move
         for room in rooms:
-            x_vel, y_vel = normalize(velocities[room])
+            x_vel, y_vel = utils.normalize(velocities[room])
             room.x += x_vel * 0.25
             room.y += y_vel * 0.25
     return rooms
 
-def get_room_tiles(rooms: list) -> set:
+def get_room_tiles(tilemap: DungeonTileMap, rooms: List[RoomPrefab]) -> Set[tuple]:
     # Now put rooms on grid
     room_tiles = set()
     for room in rooms:
@@ -136,10 +109,10 @@ def get_room_tiles(rooms: list) -> set:
         for i in range(int(room.x) - left_width, int(room.x) + right_width):
             for j in range(int(room.y) - top_height, int(room.y) + bottom_height):
                 room_tiles.add((i, j))
-    room_tiles = {tile for tile in room_tiles if check_bounds(*tile)}
+    room_tiles = {tile for tile in room_tiles if tilemap.check_bounds(*tile)}
     return room_tiles
 
-def flood_fill(room_tiles: set, pos: tuple) -> set:
+def flood_fill(tilemap: DungeonTileMap, room_tiles: set, pos: tuple) -> set:
     blob_positions = set()
     unexplored_stack = []
 
@@ -152,7 +125,7 @@ def flood_fill(room_tiles: set, pos: tuple) -> set:
 
             if current_pos in blob_positions:
                 continue
-            if not check_bounds(*current_pos):
+            if not tilemap.check_bounds(*current_pos):
                 continue
             if current_pos not in room_tiles:
                 continue
@@ -169,21 +142,36 @@ def flood_fill(room_tiles: set, pos: tuple) -> set:
     find_similar(pos)
     return blob_positions
 
-def find_new_rooms(room_tiles: set) -> list:
+@dataclass
+class Room:
+    tiles: Set[tuple] = None
+
+    @property
+    def x(self) -> float:
+        # returns the center of the room in the x direction
+        return sum(tile[0] for tile in self.tiles) / len(self.tiles)
+
+    @property
+    def y(self) -> float:
+        # returns the center of the room in the y direction
+        return sum(tile[1] for tile in self.tiles) / len(self.tiles)
+
+def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room]:
     rooms = []
     while room_tiles:
         tile = next(iter(room_tiles))
-        room = flood_fill(room_tiles, tile)
-        if room:
+        extant_tiles = flood_fill(tilemap, room_tiles, tile)
+        if extant_tiles:
+            room = Room(extant_tiles)
             rooms.append(room)
-            for tile in room:
+            for tile in extant_tiles:
                 room_tiles.remove(tile)
     return rooms
 
-def place_rooms_on_grid(rooms: list, tiletype=TileType.FLOOR):
+def place_rooms_on_grid(tilemap: DungeonTileMap, rooms: List[Room], terrain='Floor'):
     for room in rooms:
-        for tile in room:
-            set_grid(*tile, tiletype)
+        for tile in room.tiles:
+            tilemap.terrain_grid[tile] = terrain
 
 def get_character(x, y):
     e = get_from_grid(x, y)
@@ -203,17 +191,17 @@ def print_grid():
             print(cell_char, end="")
         print("\n", end="")
 
-def combine_rooms(rooms, all_room_tiles):
+def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[tuple]) -> Set[tuple]:
     # Find walls between rooms
     new_floors = set()
     all_checked_walls = set()
-    for room_tiles, other_room_tiles in itertools.combinations(rooms, 2):
-        for tile in room_tiles:
+    for room, other_room in itertools.combinations(rooms, 2):
+        for tile in room.tiles:
             for direction in [(0, -1), (-1, 0), (1, 0), (0, 1)]:
                 next_tile = tile[0] + direction[0], tile[1] + direction[1]
                 next2_tile = tile[0] + direction[0] * 2, tile[1] + direction[1] * 2
-                if check_bounds(*next_tile) and check_bounds(*next2_tile) and \
-                        next_tile not in all_room_tiles and next2_tile in other_room_tiles and \
+                if tilemap.check_bounds(*next_tile) and tilemap.check_bounds(*next2_tile) and \
+                        next_tile not in all_room_tiles and next2_tile in other_room.tiles and \
                         next_tile not in all_checked_walls:
                     wall = [next_tile]
                     # Find rest of wall
@@ -270,13 +258,19 @@ def combine_rooms(rooms, all_room_tiles):
                     all_checked_walls |= set(wall)
     return new_floors
 
-reset_grid(TileType.WALL)
-rooms = get_rooms()
-rooms = separation_steering(rooms)
-room_tiles = get_room_tiles(rooms)
-new_rooms = find_new_rooms(room_tiles.copy())
-print(len(new_rooms))
-connections = combine_rooms(new_rooms, room_tiles)
-place_rooms_on_grid(new_rooms)
-place_rooms_on_grid([connections], TileType.STAIR)
-print_grid()
+def generate_dungeon(theme: str, chapter_num: int):
+    width = int(20 + chapter_num)
+    height = int(20 + chapter_num)
+    tilemap = DungeonTileMap(width, height)
+    tilemap.reset_grid('Wall')
+    rooms: List[RoomPrefab] = get_rooms()
+    rooms: List[RoomPrefab] = separation_steering(rooms)
+    room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
+    new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
+    print(len(new_rooms))
+    connections = combine_rooms(tilemap, new_rooms, room_tiles)
+
+    place_rooms_on_grid(tilemap, new_rooms)
+    place_rooms_on_grid(tilemap, Room(connections), 'Floor')
+
+    return tilemap, new_rooms
