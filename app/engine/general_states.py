@@ -1129,6 +1129,8 @@ class ItemDiscardState(MapState):
         self.cur_unit = game.cursor.cur_unit
         options = self.cur_unit.items
         self.menu = menus.Choice(self.cur_unit, options)
+        ignore = [bool(item_system.locked(self.cur_unit, item)) for item in options]
+        self.menu.set_ignore(ignore)
 
         if game.game_vars.get('_convoy'):
             self.pennant = banner.Pennant('Choose item to send to storage')
@@ -1137,6 +1139,8 @@ class ItemDiscardState(MapState):
 
     def begin(self):
         self.menu.update_options(self.cur_unit.items)
+        ignore = [bool(item_system.locked(self.cur_unit, item)) for item in self.cur_unit.items]
+        self.menu.set_ignore(ignore)
         # Don't need to do this if we are under items
         if not item_funcs.too_much_in_inventory(self.cur_unit):
             game.state.back()

@@ -576,7 +576,10 @@ class PrepManageSelectState(State):
                 for item in tradeable_items:
                     convoy_funcs.store_item(item, self.unit)
             elif choice == 'Items':
-                game.memory['next_state'] = 'prep_items'
+                if self.name.startswith('base'):
+                    game.memory['next_state'] = 'base_items'
+                else:
+                    game.memory['next_state'] = 'prep_items'
                 game.state.change('transition_to')
             elif choice == 'Restock':
                 game.state.change('prep_restock')
@@ -695,6 +698,10 @@ class PrepItemsState(State):
 
     def begin(self):
         self.menu.update_options()
+        if self.name.startswith('base'):
+            base_music = game.game_vars.get('_base_music')
+            if base_music:
+                get_sound_thread().fade_in(base_music)
 
     def take_input(self, event):
         first_push = self.fluid.update()

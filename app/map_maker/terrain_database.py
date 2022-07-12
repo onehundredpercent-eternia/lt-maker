@@ -5,7 +5,8 @@ from app.map_maker.wang_terrain import WangCorner2Terrain, WangEdge2Terrain, Wan
 from app.map_maker.building_terrain import CastleTerrain, HouseTerrain, RuinsTerrain
 from app.map_maker.cliff_terrain import CliffTerrain
 from app.map_maker.sea_terrain import SeaTerrain
-from app.map_maker.grass_terrain import GrassTerrain
+from app.map_maker.grass_terrain import GrassTerrain, LightGrassTerrain
+from app.map_maker.floor_terrain import FloorTerrain, WallTerrain, PillarTerrain
 from app.map_maker.advanced_mountain_terrain import MountainTerrain
 
 class RandomTerrain(Terrain):
@@ -290,7 +291,8 @@ class RiverTerrain(WangEdge2Terrain):
                 
 original_palette = 'app/map_maker/palettes/westmarch'
 
-Plains = GrassTerrain('Plains', 'Plains', original_palette, 'grass.png')
+Grass = GrassTerrain('Grass', 'Grass', original_palette, 'grass.png')
+LightGrass = LightGrassTerrain('Light Grass', 'Light Grass', original_palette, 'grass.png')
 
 Road = WangEdge2Terrain('Road', 'Road', original_palette, 'road.png')
 Road.terrain_like = ('Sand', 'Road', 'BridgeH', 'BridgeV')
@@ -326,5 +328,9 @@ Castle = CastleTerrain('Castle', 'Castle', original_palette, 'main.png', (4, 27)
 House = HouseTerrain('House', 'House', original_palette, 'main.png', (4, 25))
 Ruins = RuinsTerrain('Ruins', 'Ruins', original_palette, 'main.png', (3, 28))
 
-d = [Plains, Sand, Road, Forest, Thicket, Cliff, Hill, Mountain, River, Sea, BridgeH, BridgeV, House, Castle, Ruins]
+Floor = FloorTerrain('Floor', 'Floor', original_palette, 'floor.png', (0, 0))
+Wall = WallTerrain('Wall', 'Wall', original_palette, 'wall.png', (0, 0))
+Pillar = PillarTerrain('Pillar', 'Pillar', original_palette, 'pillar.png', (0, 0))
+
+d = [Grass, LightGrass, Sand, Road, Forest, Thicket, Cliff, Hill, Mountain, River, Sea, BridgeH, BridgeV, House, Castle, Ruins, Floor, Wall, Pillar]
 DB_terrain = TerrainCatalog(d)

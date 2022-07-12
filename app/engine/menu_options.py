@@ -277,6 +277,8 @@ class ItemOption(BasicOption):
             uses_string = str(self.item.parent_item.data['uses'])
         elif self.item.c_uses:
             uses_string = str(self.item.data['c_uses'])
+        elif self.item.parent_item and self.item.parent_item.c_uses and self.item.parent_item.data['c_uses']:
+            uses_string = str(self.item.parent_item.data['c_uses'])
         elif self.item.cooldown:
             uses_string = str(self.item.data['cooldown'])
         left = x + 99
@@ -412,6 +414,9 @@ class FullItemOption(ItemOption):
         elif self.item.parent_item and self.item.parent_item.data.get('uses') is not None:
             uses_string_a = str(self.item.parent_item.data['uses'])
             uses_string_b = str(self.item.parent_item.data['starting_uses'])
+        elif self.item.parent_item and self.item.parent_item.data.get('c_uses') is not None:
+            uses_string_a = str(self.item.parent_item.data['c_uses'])
+            uses_string_b = str(self.item.parent_item.data['starting_c_uses'])
         elif self.item.data.get('cooldown') is not None:
             uses_string_a = str(self.item.data['cooldown'])
             uses_string_b = str(self.item.data['starting_cooldown'])
@@ -443,10 +448,12 @@ class ValueItemOption(ItemOption):
         uses_string = '--'
         if self.item.data.get('uses') is not None:
             uses_string = str(self.item.data['uses'])
-        if self.item.parent_item and self.item.parent_item.data.get('uses') is not None:
+        elif self.item.parent_item and self.item.parent_item.data.get('uses') is not None:
             uses_string = str(self.item.parent_item.data['uses'])
         elif self.item.c_uses is not None:
             uses_string = str(self.item.data['c_uses'])
+        elif self.item.parent_item and self.item.parent_item.data.get('c_uses') is not None:
+            uses_string = str(self.item.parent_item.data['c_uses'])
         elif self.item.cooldown is not None:
             uses_string = str(self.item.data['cooldown'])
         FONT[main_font].blit_right(uses_string, surf, (x + 100, y), main_color)

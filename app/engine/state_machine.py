@@ -127,6 +127,7 @@ class StateMachine():
              'prep_trade_select': prep.PrepTradeSelectState,
              'prep_trade': trade.PrepTradeState,
              'prep_items': prep.PrepItemsState,
+             'base_items': prep.PrepItemsState,
              'supply_items': prep.PrepItemsState,
              'prep_restock': prep.PrepRestockState,
              'prep_market': prep.PrepMarketState,
