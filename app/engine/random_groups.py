@@ -18,16 +18,16 @@ from app.utilities import utils, str_utils
 import logging
 
 # Memento Chapter = Lion Throne Chapter
-# 1 = 2
-# 2-3 = 3-4  # Interesting gimmicks start here, some unique weapon usage, some magic
-# 4-5 = 5-6  # Promoted Boss starts here, enemy AoE and Long-Range magics
-# 6 = 6  # Promoted leaders start here
-# 7-8 = 7  # Unique weapons for most units by this point
-# 9-10 = 8  # All Promoted Leaders and half promoted scrubs
-# 11 = 9  # Fully Promoted
-# 12 = 10
+# 0 = 2
+# 1-2 = 3-4  # some unique weapon usage, some magic
+# 3-4 = 5-6  # Promoted Boss starts here, enemy AoE and Long-Range magics
+# 5 = 6  # Promoted leaders start here
+# 6 = 7  # Unique weapons for most units by this point
+# 7 = 8 # All Promoted Leaders and half promoted scrubs
+# 8 = 9 # Fully Promoted  
+# 9 = 10  # Boss Fight
 
-ELITE_CHANCE = 0.15
+LAST_CHAPTER = 9
 
 @dataclass
 class ClassData:
@@ -35,34 +35,34 @@ class ClassData:
     points: float
     weapon_type: str
     chapter_min: int
-    chapter_max: int = 12
+    chapter_max: int = LAST_CHAPTER
 
 class_data = Data([
-    ClassData('Myrmidon', 3, 'Sword', 3),
+    ClassData('Myrmidon', 3, 'Sword', 2),
     ClassData('Errant', 2, 'Sword', 1),
-    ClassData('Mercenary', 2, 'Sword', 2),
-    ClassData('Thief', 2, 'Sword', 4),
+    ClassData('Mercenary', 2, 'Sword', 1),
+    ClassData('Thief', 2, 'Sword', 3),
     ClassData('Armor', 3, 'Lance', 2),
     ClassData('Cavalier', 2, 'Lance', 2),
-    ClassData('Falcoknight', 4, 'Lance', 5),
+    ClassData('Falcoknight', 4, 'Lance', 4),
     ClassData('Skirmisher', 2, 'Lance', 1),
-    ClassData('Dracoknight', 5, 'Axe', 5),
+    ClassData('Dracoknight', 5, 'Axe', 4),
     ClassData('Fighter', 2, 'Axe', 1),
-    ClassData('Vanguard', 3, 'Axe', 3),
+    ClassData('Vanguard', 3, 'Axe', 2),
     ClassData('Raider', 2, 'Axe', 2),
     ClassData('Archer', 2.5, 'Bow', 1),
-    ClassData('Hunter', 2, 'Bow', 2),
-    ClassData('Soldier', 1.5, 'Lance', 1, 9),
-    ClassData('Brigand', 1.5, 'Axe', 1, 9),
+    ClassData('Nomad', 3, 'Bow', 3),
+    ClassData('Soldier', 1.5, 'Lance', 1, 7),
+    ClassData('Brigand', 1.5, 'Axe', 1, 7),
     ClassData('Seeress', 4, 'Light', 4),
     ClassData('Cleric', 3, 'Light', 3),
     ClassData('Mage', 2.5, 'Anima', 2),
-    ClassData('Shaman', 3.5, 'Anima', 3),
+    ClassData('Maligknight', 5, 'Anima', 6),
     ClassData('Acolyte', 2.5, 'Dark', 2),
     ClassData('Sorceror', 3, 'Dark', 2),
 ])
 
-anima_users = ('Mage', 'Sage', 'Shaman', 'Druid')
+anima_users = ('Mage', 'Sage', 'Maligknight', 'Maliglord')
 
 item_data = {
     'Myrmidon': 'Crit Sword',
@@ -146,7 +146,7 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
         starting_promotion_chapter = 3  # Chapter 4
     elif is_elite or is_leader:
         starting_promotion_chapter = 5  # Chapter 6
-    base_val = (max(0, chapter_num - starting_promotion_chapter) / 5) ** 2
+    base_val = (max(0, chapter_num - starting_promotion_chapter) / 4) ** 2
     return base_val
 
 def get_num_points(chapter_num: int):
@@ -171,35 +171,26 @@ def get_unpromoted_class(klass_nid: str) -> str:
 def completed_chapters() -> int:
     return game.game_vars.get('completed_chapters', 0)
 
-def determine_avg_level():
+def determine_avg_level() -> int:
     num_complete = completed_chapters()
     return num_complete * 2
+
+def get_elite_chance() -> float
+    return lerp(0.1, 0.25, completed_chapters() / LAST_CHAPTER)
 
 def get_random_item(tags=None):
     tags = tags or []
     all_items = []
     all_chances = []
     for tag in tags:
-        if tag == 'Exp':
-            items = []
-            chance = 5
-            avg_level = determine_avg_level()
-            if avg_level <= 4:
-                items.append('Exp Orb Lvl1')
-            elif avg_level <= 9:
-                items.append('Exp Orb Lvl5')
-            elif avg_level <= 14:
-                items.append('Exp Orb Lvl10')
-            else:
-                items.append('Exp Orb Lvl15')
-        elif tag == 'Forge':
+        if tag == 'Forge':
             chance = 5
             items = [item for item in DB.items if tag in item.tags]
         elif tag == 'Promo':
             chance = 5
             items = [item for item in DB.items if tag in item.tags]
         else:
-            chance = 20
+            chance = 30
             items = [item for item in DB.items if tag in item.tags]
         all_items.append(items)
         all_chances.append(chance)
@@ -211,25 +202,21 @@ def get_random_tree_item():
     if chapter_num == 0:
         tags = ['Weapon']
     elif chapter_num == 1:
-        tags = ['Weapon']
+        tags = ['Weapon', 'Spell']
     elif chapter_num == 2:
-        tags = ['Weapon', 'Spell', 'Exp']
+        tags = ['Weapon', 'Spell', 'Forge']
     elif chapter_num == 3:
-        tags = ['Weapon', 'Spell', 'Exp', 'Forge']
+        tags = ['Weapon', 'Spell', 'Forge']
     elif chapter_num == 4:
-        tags = ['Weapon', 'Spell', 'Exp', 'Forge']
+        tags = ['Weapon', 'Spell', 'Forge', 'Promo']
     elif chapter_num == 5:
-        tags = ['Weapon', 'Spell', 'Exp', 'Forge', 'Promo']
+        tags = ['Weapon', 'Weapon+', 'Spell', 'Forge', 'Promo']
     elif chapter_num == 6:
-        tags = ['Weapon', 'Spell', 'Exp', 'Forge', 'Promo']
+        tags = ['Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo']
     elif chapter_num == 7:
-        tags = ['Weapon', 'Weapon+', 'Spell', 'Exp', 'Forge', 'Promo']
-    elif chapter_num == 8:
-        tags = ['Weapon+', 'Spell', 'Spell+', 'Exp', 'Forge', 'Promo']
-    elif chapter_num == 8:
-        tags = ['Weapon+', 'Spell+', 'Exp', 'Promo']
-    elif chapter_num >= 9:
-        tags = ['Weapon+', 'Spell+', 'Exp']
+        tags = ['Weapon+', 'Spell+', 'Promo']
+    elif chapter_num >= 8:
+        tags = ['Weapon+', 'Spell+']
     return get_random_item(tags)
 
 def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=None):
@@ -286,11 +273,10 @@ def build_groups():
     # Sort so the smallest regions are decided first
     regions = sorted(regions, key=lambda region: len(region.get_all_positions()))
     for region in regions:
-        build_group(region)
+        build_group(region.nid, region.group_data, region.get_all_positions())
 
-def build_group(region):
-    logging.debug("Build Group %s", region.nid)
-    group_data: Dict = region.group_data
+def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
+    logging.debug("Build Group %s", group_nid)
 
     # Determine which classes we can put here
     all_classes = set(class_data.keys())
@@ -312,7 +298,6 @@ def build_group(region):
     logging.debug(all_classes)
 
     # Determine how many and which specific classes will belong here
-    positions: List[Tuple] = region.get_all_positions()
     num_points = get_num_points(completed_chapters())
     # Don't overlap other units
     positions = [pos for pos in positions if not game.board.get_unit(pos)]
@@ -325,7 +310,7 @@ def build_group(region):
     logging.debug("#Positions: %s", len(positions))
     logging.debug("#Points: %s", num_points)
 
-    is_elite = game.get_random_float() < ELITE_CHANCE and completed_chapters() > 0
+    is_elite = game.get_random_float() < get_elite_chance() and completed_chapters() > 0
     logging.debug("Elite: %s", is_elite)
 
     # Determine level
@@ -347,7 +332,7 @@ def build_group(region):
     # Additional group data
     droppable = group_data.get('droppable', 'None')
     ai = group_data.get('ai', 'Attack')
-    ai_group = region.nid
+    ai_group = group_nid
 
     if kind == GroupKind.SINGLE_TYPE:
         class_to_add = game.get_random_choice(all_classes)
@@ -366,7 +351,7 @@ def build_group(region):
             droppable = None
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
     elif kind == GroupKind.DOUBLE_TYPE:
@@ -398,7 +383,7 @@ def build_group(region):
             droppable = None
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
         while second_points > 0:
@@ -409,7 +394,7 @@ def build_group(region):
             new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
     elif kind == GroupKind.SINGLE_TYPE_WITH_MAGE_SUPPORT:
@@ -442,7 +427,7 @@ def build_group(region):
             droppable = None
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
         while mage_points > 0:
@@ -453,7 +438,7 @@ def build_group(region):
             new_unit = create_unit(mage_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
     elif kind == GroupKind.DOUBLE_TYPE_WITH_MAGE_SUPPORT:
@@ -494,7 +479,7 @@ def build_group(region):
             new_unit = create_unit(main_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
         while second_points > 0:
@@ -505,7 +490,7 @@ def build_group(region):
             new_unit = create_unit(second_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
         while mage_points > 0:
@@ -517,7 +502,7 @@ def build_group(region):
             droppable = None
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
     elif kind == GroupKind.LEADER:
@@ -541,7 +526,7 @@ def build_group(region):
         new_unit = create_unit(leader_class_to_add, position, level, ai, ai_group, is_elite, droppable)
 
         if not positions:
-            logging.error("No more valid positions in region to place units")
+            logging.error("No more valid positions to place units")
             return
 
         while num_points > 0:
@@ -550,12 +535,10 @@ def build_group(region):
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            ai = group_data.get('ai', 'Attack')
-            ai_group = region.nid
             new_unit = create_unit(regular_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
-                logging.error("No more valid positions in region to place units")
+                logging.error("No more valid positions to place units")
                 return
 
     elif kind == GroupKind.BOSS:
@@ -569,7 +552,6 @@ def build_group(region):
             class_to_add = get_promoted_class(class_to_add)
 
         ai = group_data.get('ai', 'Guard')
-        ai_group = region.nid
         level += 2  # Boss is two levels above by default
         new_unit = create_unit(class_to_add, position, level, ai, ai_group, droppable=droppable)
         new_unit._tags.append('Boss')
@@ -601,3 +583,90 @@ def get_recruitable_unit(level_var_nid, position, level, tag_list, team):
     if new_unit.position:
         action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit
+
+def generate_map(theme=None, enemy_type=None):
+    theme = theme or 'default'
+    enemy_type = enemy_type or ['Soldier']
+    # Generate map prefab (called dungeon)
+    dungeon, rooms = dungeon_maker.generate_dungeon(theme)
+
+    # Need to create an image for the base layer
+    im_width, im_height = dungeon.width * TILEWIDTH, dungeon.height * TILEHEIGHT
+    surf = engine.create_surface((im_width, im_height))
+    surf.fill((0, 0, 0))
+
+    processed_nids = set()
+    for pos in dungeon.terrain_grid:
+        terrain_nid = dungeon.get_terrain(pos)
+        terrain = DB_terrain.get(terrain_nid)
+        if terrain_nid not in processed_nids:
+            terrain.single_process(dungeon)
+            processed_nids.add(terrain_nid)
+        determine_sprite(pos, terrain, dungeon)
+
+    # Draw the tile grid
+    for pos, tile_coord in dungeon.tile_grid.items():
+        terrain_pos = (pos[0] // 2, pos[1] // 2)
+        terrain_nid = dungeon.get_terrain(terrain_pos)
+        if not terrain_nid:
+            continue
+        terrain = DB_terrain.get(terrain_nid)
+        pix = terrain.get_image(tile_coord)
+        surf.blit(pix, (pos[0] * TILEWIDTH//2, pos[1] * TILEHEIGHT//2))
+
+    # Now we have the surface to use as a real tilemap
+    tilemap = TileMapObject.build(dungeon, surf)
+    # Now we have a complete tilemap
+
+    # Choose a starting room and an ending/boss room
+    biggest_south_room = rooms[0]
+    biggest_north_room = rooms[0]
+    for room in rooms[1:]:
+        if room.center[1] >= dungeon.height * 0.75:
+            if room.size > biggest_south_room:
+                biggest_south_room = room
+        if room.center[1] <= dungeon.height * 0.25:
+            if room.size >= biggest_north_room:
+                biggest_north_room = room
+
+    starting_room = biggest_south_room
+    ending_room = biggest_north_room
+
+    # Create formations
+    num_formations = int(lerp(6, 12, completed_chapters() / LAST_CHAPTER))
+    # Starting from southwest corner of room
+    tiles = sorted(room.tiles, key=lambda x: (x[0], -x[1]))
+    formation_tiles = tiles[:num_formations]
+    for idx, tile in formation_tiles:
+        formation_region = regions.Region('Formation%02d' % idx)
+        formation_region.region_type = regions.RegionType.FORMATION
+        formation_region.position = tile
+        formation_region.size = (1, 1)
+        game.register_region(new_region)
+        action.do(action.AddRegion(new_region))
+
+    # Figure out basic starting position
+    start_pos_x = sum(form[0] for form in formation_tiles) / len(formation_tiles)
+    start_pos_y = sum(form[1] for form in formation_tiles) / len(formation_tiles)
+    start_pos = (start_pos_x, start_pos_y)
+
+    # Figure out boss position
+    # Find northeast most position
+    boss_pos = sorted(room.tiles, key=lambda x: (-x[0], x[1]))[0]
+
+    # Populate rooms with enemies
+    group_data = {'valid_tags': enemy_type}
+    for idx, room in enumerate(rooms):
+        if room is starting_room:
+            valid_tiles = [tile for tile in room.tiles if all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles]
+            build_group('%d' % idx, group_data, valid_tiles)
+        elif room is ending_room:
+            build_group('Boss', group_data, [boss_pos])
+            build_group('%d' % idx, group_data, room.tiles)
+        else:
+            build_group('%d' % idx, group_data, room.tiles)
+
+    # Generate grave tree regions
+
+
+    
