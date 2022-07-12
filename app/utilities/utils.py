@@ -99,7 +99,9 @@ def magnitude(a: tuple) -> float:
 
 def normalize(a: tuple) -> tuple:
     mag = magnitude(a)
-    return (a[0] / mag, a[1] / mag)
+    if mag != 0:
+        return (a[0] / mag, a[1] / mag)
+    return a
 
 def tmult(a: tuple, b: float) -> tuple:
     return tuple([a_i * b for a_i in a])
