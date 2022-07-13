@@ -941,6 +941,18 @@ class GetRecruitableUnit(EventCommand):
     optional_keywords = ["Team"]
     keyword_types = ["Nid", "Position", "PositiveInteger", "TagList", "Team"]
 
+class GenerateMap(EventCommand):
+    nid = 'generate_map'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = \
+        """
+        Creates a randomly generated map and populates the map with enemies and grave trees
+        """
+
+    keywords = ["Theme", "EnemyType", "Size"]
+    keyword_types = ["Theme", "TagList", "Size"]
+
 class AddUnit(EventCommand):
     nid = 'add_unit'
     nickname = 'add'
