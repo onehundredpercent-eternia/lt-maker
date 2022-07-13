@@ -859,6 +859,12 @@ def get_recruitable_unit(self: Event, level_var_nid, position, level, tag_list, 
     team = team or 'player'
     random_groups.get_recruitable_unit(level_var_nid, position, level, tag_list, team)
 
+def generate_dungeon(self: Event, theme, enemy_type, size, flags=None):
+    flags = flags or set()
+
+    from app.engine import random_groups
+    random_groups.generate_map(theme, enemy_type, size)
+
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
