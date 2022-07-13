@@ -28,6 +28,20 @@ class DungeonTileMap:
     def check_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
+    def get_cardinal_terrain(self, pos: tuple) -> tuple:
+        north = self.get_terrain((pos[0], pos[1] - 1))
+        east = self.get_terrain((pos[0] + 1, pos[1]))
+        south = self.get_terrain((pos[0], pos[1] + 1))
+        west = self.get_terrain((pos[0] - 1, pos[1]))
+        return north, east, south, west
+
+    def get_diagonal_terrain(self, pos: tuple) -> tuple:
+        northeast = self.get_terrain((pos[0] + 1, pos[1] - 1))
+        southeast = self.get_terrain((pos[0] + 1, pos[1] + 1))
+        southwest = self.get_terrain((pos[0] - 1, pos[1] + 1))
+        northwest = self.get_terrain((pos[0] - 1, pos[1] - 1))
+        return northeast, southeast, southwest, northwest
+
 @dataclass(eq=False)
 class RoomPrefab:
     x: float = 0
