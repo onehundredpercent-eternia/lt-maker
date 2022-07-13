@@ -884,6 +884,9 @@ class VAlign(OptionValidator):
 class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
 
+class Theme(OptionValidator):
+    valid = ["default"]
+
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
     desc = "specifies the order and type of actions in combat. Valid actions: (`hit1`, `hit2`, `crit1`, `crit2`, `miss1`, `miss2`, `--`, `end`)."
