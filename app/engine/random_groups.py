@@ -4,16 +4,22 @@ import random
 from enum import Enum
 from typing import Dict, List, Tuple
 
+from app.constants import TILEWIDTH, TILEHEIGHT
+
 from app.utilities.data import Data
 from app.data.database import DB
 from app.data.level_units import GenericUnit, UniqueUnit
 
+from app.dungeon_maker import dungeon_maker, terrain_maker
+from app.map_maker.utilties import random_choice
+
 from app.engine.objects.unit import UnitObject
 
-from app.engine import action, unit_funcs
+from app.engine import action, unit_funcs, engine
 from app.engine.game_state import game
 
 from app.utilities import utils, str_utils
+from app.utilities.algorithms.interpolation import lerp
 
 import logging
 
@@ -247,12 +253,12 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
         droppable = 'Weapon'
     if droppable == 'Weapon':
         starting_items[0] = (starting_items[0][0], True)
-    elif droppable in ('Weapon', 'Spell', 'Spell+', 'Forge', 'Promo', 'Exp'):
+    elif droppable in ('Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo'):
         starting_items.append((get_random_item([droppable]), True))
     elif droppable == 'Any':
-        weapon = 'Weapon+' if chapter_num > 5 else 'Weapon'
-        spell = 'Spell+' if chapter_num > 5 else 'Spell'
-        tags = [weapon, spell, 'Forge', 'Exp']
+        weapon = 'Weapon+' if chapter_num >= 5 else 'Weapon'
+        spell = 'Spell+' if chapter_num >= 6 else 'Spell'
+        tags = [weapon, spell, 'Forge']
         if chapter_num > 3:
             tags.append('Promo')
         starting_items.append((get_random_item(tags), True))
@@ -584,16 +590,35 @@ def get_recruitable_unit(level_var_nid, position, level, tag_list, team):
         action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit
 
-def generate_map(theme=None, enemy_type=None):
+def determine_sprite(pos: tuple, terrain, tilemap):
+    def _push_to_tilemap(pos: tuple, new_coords: tuple):
+        """
+        pos is in tile space (8x8)
+        """
+
+        new_coord = random_choice(new_coords, pos)
+        tilemap.tile_grid[pos] = new_coord
+
+    new_coords1, new_coords2, new_coords3, new_coords4 = \
+        terrain.determine_sprite_coords(tilemap, pos)
+
+    _push_to_tilemap((pos[0] * 2, pos[1] * 2), new_coords1)
+    _push_to_tilemap((pos[0] * 2 + 1, pos[1] * 2), new_coords2)
+    _push_to_tilemap((pos[0] * 2 + 1, pos[1] * 2 + 1), new_coords3)
+    _push_to_tilemap((pos[0] * 2, pos[1] * 2 + 1), new_coords4)
+
+def generate_map(theme=None, enemy_type=None, size=None) -> None:
     theme = theme or 'default'
     enemy_type = enemy_type or ['Soldier']
+    size = size or (20, 20)
     # Generate map prefab (called dungeon)
-    dungeon, rooms = dungeon_maker.generate_dungeon(theme, completed_chapters())
+    dungeon, rooms = dungeon_maker.generate_dungeon(theme, size)
+    DB_terrain = terrain_maker.get_terrain(theme)  ## TODO, create engine terrains
 
     # Need to create an image for the base layer
     im_width, im_height = dungeon.width * TILEWIDTH, dungeon.height * TILEHEIGHT
     surf = engine.create_surface((im_width, im_height))
-    surf.fill((0, 0, 0))
+    engine.fill_surface(surf, (0, 0, 0))
 
     processed_nids = set()
     for pos in dungeon.terrain_grid:
@@ -615,20 +640,20 @@ def generate_map(theme=None, enemy_type=None):
         surf.blit(pix, (pos[0] * TILEWIDTH//2, pos[1] * TILEHEIGHT//2))
 
     # Now we have the surface to use as a real tilemap
-    tilemap = TileMapObject.build(dungeon, surf)
+    tilemap = TileMapObject.build(dungeon, surf)  ### TODO
     # Now we have a complete tilemap
     # Lets build a level
     level_nid = str(completed_chapters())
-    game.build_level_from_scratch(level_nid, tilemap)
+    game.build_level_from_scratch(level_nid, tilemap)  ### TODO
 
     # Choose a starting room and an ending/boss room
     biggest_south_room = rooms[0]
     biggest_north_room = rooms[0]
     for room in rooms[1:]:
-        if room.center[1] >= dungeon.height * 0.75:
+        if room.y >= dungeon.height * 0.75:
             if room.size > biggest_south_room:
                 biggest_south_room = room
-        if room.center[1] <= dungeon.height * 0.25:
+        if room.y <= dungeon.height * 0.25:
             if room.size >= biggest_north_room:
                 biggest_north_room = room
 
