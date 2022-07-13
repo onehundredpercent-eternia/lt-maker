@@ -258,9 +258,8 @@ def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Se
                     all_checked_walls |= set(wall)
     return new_floors
 
-def generate_dungeon(theme: str, chapter_num: int):
-    width = int(20 + chapter_num)
-    height = int(20 + chapter_num)
+def generate_dungeon(theme: str, size: Tuple[int, int]):
+    width, height = size
     tilemap = DungeonTileMap(width, height)
     tilemap.reset_grid('Wall')
     rooms: List[RoomPrefab] = get_rooms()
