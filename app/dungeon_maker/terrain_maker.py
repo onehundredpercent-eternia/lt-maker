@@ -1,0 +1,121 @@
+from app.constants import TILEWIDTH, TILEHEIGHT
+from app.engine import engine
+
+class Terrain():
+    base_coord = (0, 0)
+
+    def __init__(self, tileset_image_fn):
+        self.tileset_image = engine.image_load(tileset_image_fn)
+
+    def _find_limit(self, idx: int, width: int = TILEWIDTH, height: int = TILEHEIGHT) -> int:
+        bg_color = (0, 0, 0)
+        x = idx * width
+        for y in range(0, self.tileset_image.get_height(), height):
+            current_color = self.tileset_image.get_at((x, y))
+            if current_color[:3] == bg_color[:3]:
+                return y // TILEHEIGHT
+        return self.tileset_image.get_height() // TILEHEIGHT
+
+    def single_process(self):
+        pass
+
+    def determine_sprite_coords(tilemap, pos):
+        new_coords1 = [(self.base_coord[0]*2, self.base_coord[1]*2)]
+        new_coords2 = [(self.base_coord[0]*2 + 1, self.base_coord[1]*2)]
+        new_coords3 = [(self.base_coord[0]*2 + 1, self.base_coord[1]*2 + 1)]
+        new_coords4 = [(self.base_coord[0]*2, self.base_coord[1]*2 + 1)]
+        return new_coords1, new_coords2, new_coords3, new_coords4
+
+    def get_image(tile_coord) -> engine.Surface:
+        im = self.tileset_image.copy(
+            tile_coord[0] * TILEWIDTH//2,
+            tile_coord[1] * TILEHEIGHT//2,
+            TILEWIDTH//2, TILEHEIGHT//2)
+        return im
+
+class WangEdge2Terrain16(Terrain):
+    def __init__(self, tileset_image_fn):
+        self.tileset_image = engine.image_load(tileset_image_fn)
+        self.limits = {k: self._find_limit(k) for k in range(16)}
+
+    def _determine_index(self, tilemap, pos: tuple) -> tuple:
+        north, east, south, west = tilemap.get_cardinal_terrain(pos)
+        north_edge = bool(not north or north in self.terrain_like)
+        south_edge = bool(not south or south in self.terrain_like)
+        east_edge = bool(not east or east in self.terrain_like)
+        west_edge = bool(not west or west in self.terrain_like)
+        index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
+        return index
+
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+        index = self._determine_index(tilemap, pos)
+        coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
+        new_coords1 = [(coord[0]*2, coord[1]*2)]
+        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
+        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+        return new_coords1, new_coords2, new_coords3, new_coords4
+
+class FloorTerrain(Terrain):
+    def __init__(self, tileset_image_fn):
+        self.tileset_image = engine.image_load(tileset_image_fn)
+        self.limits = {k: self._find_limit(k) for k in range(6)}
+
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+        north, _, _, west = tilemap.get_cardinal_terrain(pos)
+        _, _, _, northwest = tilemap.get_diagonal_terrain(pos)
+        top, left, corner = False, False, False
+
+        if north == 'Wall':
+            top = True
+        if west == 'Wall':
+            left = True
+        if northwest == 'Pillar':
+            corner = True
+
+        if top and left:
+            coord = (4, 0)
+        elif top and corner:
+            coord = (5, 0)
+        elif left:
+            coord = (1, 0)
+        elif corner:
+            coord = (3, 0)
+        elif top:
+            coord = random_choice([(2, k) for k in range(self.limits[2])], pos)
+        else:
+            coord = random_choice([(0, k) for k in range(self.limits[0])], pos)
+
+        new_coords1 = [(coord[0]*2, coord[1]*2)]
+        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
+        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+
+        if north == 'Pillar':
+            coord = (0, 3)
+            new_coords1 = [(coord[0]*2, coord[1]*2)]
+            new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+
+        return new_coords1, new_coords2, new_coords3, new_coords4
+
+class WallTerrain(WangEdge2Terrain16):
+    def _determine_index(self, tilemap, pos: tuple) -> tuple:
+        north, east, south, west = tilemap.get_cardinal_terrain(pos)
+        # Edge is true when we have an adjacent walllike
+        north_edge = bool(north in self.terrain_like)
+        south_edge = bool(south in self.terrain_like)
+        east_edge = bool(east in self.terrain_like)
+        west_edge = bool(west in self.terrain_like)
+        index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
+        return index
+
+class PillarTerrain(Terrain):
+    pass
+
+def get_terrain(theme: str):
+    # Right now, there is only one theme
+    theme_dir = 'app/map_maker/palettes/westmarch/'
+    return {'Floor': FloorTerrain(os.path.join(theme_dir, 'floor.png'))
+            'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png'))
+            'Pillar': PillarTerrain(os.path.join(theme_dir, 'pillar.png'))
+            }
