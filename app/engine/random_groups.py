@@ -613,7 +613,7 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
     dungeon, rooms = dungeon_maker.generate_dungeon(theme, size)
-    DB_terrain = terrain_maker.get_terrain(theme)  ## TODO, create engine terrains
+    DB_terrain = terrain_maker.get_terrain(theme)
 
     # Need to create an image for the base layer
     im_width, im_height = dungeon.width * TILEWIDTH, dungeon.height * TILEHEIGHT
