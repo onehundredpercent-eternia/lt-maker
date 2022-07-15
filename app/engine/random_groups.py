@@ -208,21 +208,21 @@ def get_random_tree_item():
     if chapter_num == 0:
         tags = ['Weapon']
     elif chapter_num == 1:
-        tags = ['Weapon', 'Spell']
+        tags = ['Weapon', 'Spell', 'Accessory']
     elif chapter_num == 2:
-        tags = ['Weapon', 'Spell', 'Forge']
+        tags = ['Weapon', 'Spell', 'Forge', 'Accessory']
     elif chapter_num == 3:
-        tags = ['Weapon', 'Spell', 'Forge']
+        tags = ['Weapon', 'Spell', 'Forge', 'Accessory']
     elif chapter_num == 4:
-        tags = ['Weapon', 'Spell', 'Forge', 'Promo']
+        tags = ['Weapon', 'Spell', 'Forge', 'Promo', 'Accessory']
     elif chapter_num == 5:
-        tags = ['Weapon', 'Weapon+', 'Spell', 'Forge', 'Promo']
+        tags = ['Weapon', 'Weapon+', 'Spell', 'Forge', 'Promo', 'Accessory', 'Accessory+']
     elif chapter_num == 6:
-        tags = ['Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo']
+        tags = ['Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo', 'Accessory', 'Accessory+']
     elif chapter_num == 7:
-        tags = ['Weapon+', 'Spell+', 'Promo']
+        tags = ['Weapon+', 'Spell+', 'Promo', 'Accessory+']
     elif chapter_num >= 8:
-        tags = ['Weapon+', 'Spell+']
+        tags = ['Weapon+', 'Spell+', 'Accessory+']
     return get_random_item(tags)
 
 def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=None):
@@ -230,10 +230,8 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     unit_nid = str_utils.get_next_generic_nid('301', [unit.nid for unit in game.units])
 
     # Give items
-    if klass in item_data:
+    if klass in item_data and level >= 5:
         starting_items = [(item_data[klass], False)]
-        if klass in item_data2:
-            starting_items.append((item_data2[klass], False))
     elif klass in anima_users:
         random.seed(ai_group)
         anima_type = random.randchoice(['Fire', 'Wind', 'Thunder'])
@@ -246,19 +244,23 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     else:
         weapon_type = class_data.get(klass).weapon_type
         base_item = weapon_type
-        starting_items = [(base_item, False)]
+        starting_items = [('Grave %s' % base_item, False)]
+
+    if klass in item_data2:
+        starting_items.append((item_data2[klass], False))
 
     # Handle giving droppable weapon
     if is_elite and (not droppable or droppable == 'None'):
         droppable = 'Weapon'
     if droppable == 'Weapon':
         starting_items[0] = (starting_items[0][0], True)
-    elif droppable in ('Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo'):
+    elif droppable in ('Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo', 'Accessory', 'Accessory+'):
         starting_items.append((get_random_item([droppable]), True))
     elif droppable == 'Any':
         weapon = 'Weapon+' if chapter_num >= 5 else 'Weapon'
         spell = 'Spell+' if chapter_num >= 6 else 'Spell'
-        tags = [weapon, spell, 'Forge']
+        accessory = 'Accessory+' if chapter_num >= 5 else 'Accessory'
+        tags = [weapon, spell, accessory, 'Forge']
         if chapter_num > 3:
             tags.append('Promo')
         starting_items.append((get_random_item(tags), True))
@@ -640,10 +642,10 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
         surf.blit(pix, (pos[0] * TILEWIDTH//2, pos[1] * TILEHEIGHT//2))
 
     # Now we have the surface to use as a real tilemap
-    tilemap = TileMapObject.build(dungeon, surf)  ### TODO
+    level_nid = str(completed_chapters())
+    tilemap = TileMapObject.build(level_nid, dungeon, surf)  ### TODO
     # Now we have a complete tilemap
     # Lets build a level
-    level_nid = str(completed_chapters())
     game.build_level_from_scratch(level_nid, tilemap)  ### TODO
 
     # Choose a starting room and an ending/boss room
@@ -711,4 +713,6 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
         grave_region.sub_nid = int(distance / 5) + 1
         game.register_region(new_region)
         action.do(action.AddRegion(new_region))
+
+    print("Done!")
 
