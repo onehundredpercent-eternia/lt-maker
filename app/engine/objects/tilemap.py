@@ -122,6 +122,19 @@ class TileMapObject(Prefab):
         self.nid: NID = None
 
     @classmethod
+    def build(cls, nid, dungeon, surf):
+        self = cls()
+        self.nid = nid
+        self.width = dungeon.width
+        self.height = dungeon.height
+        self.autotile_fps = 0
+        self.layers = Data()
+
+        # Build a layer
+        base_layer = LayerObject('base', self)
+        
+
+    @classmethod
     def from_prefab(cls, prefab):
         self = cls()
         self.nid = prefab.nid
