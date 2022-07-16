@@ -155,3 +155,45 @@ class MementoInitiateFullMoon(SkillComponent):
 
     def modify_accuracy(self, unit, item):
         return 30 if unit.get_field('full_moon', False) else 0
+
+class MementoImmortal(SkillComponent):
+    nid = 'memento_immortal'
+    desc = "Unit ignores first damage taken each phase"
+    tag = SkillTags.CUSTOM
+
+    expose = Type.Int
+    value = 1
+
+    def init(self, skill):
+        self.skill.data['charge'] = self.value
+        self.skill.data['total_charge'] = self.value
+
+    def after_take_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        if self.skill.data['charge'] > 0:
+            # Remove any acts that reduce my HP!
+            did_something = False
+            for act in reversed(actions):
+                if isinstance(act, action.ChangeHP) and act.num < 0:
+                    actions.remove(act)
+                    did_something = True
+
+            if did_something:
+                actions.append(action.TriggerCharge(unit, self.skill))
+
+    def on_end_chapter(self, unit, skill):
+        self.skill.data['charge'] = self.skill.data['total_charge']
+
+    def trigger_charge(self, unit, skill):
+        new_value = self.skill.data['charge'] - 1
+        action.do(action.SetObjData(self.skill, 'charge', new_value))
+
+    def on_upkeep(self, actions, playback, unit):
+        if self.skill.data['charge'] < self.skill.data['total_charge']:
+            new_value = self.skill.data['total_charge']
+            actions.append(action.SetObjData(self.skill, 'charge', new_value))
+
+    def on_endstep(self, actions, playback, unit):
+        if self.skill.data['charge'] < self.skill.data['total_charge']:
+            new_value = self.skill.data['total_charge']
+            actions.append(action.SetObjData(self.skill, 'charge', new_value))
+
