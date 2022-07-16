@@ -397,12 +397,12 @@ class TagList(Validator):
     def validate(self, text, level):
         tex = text.split(',')
         for t in tex:
-            if t not in DB.tags.values():
+            if t not in self._db.tags.keys():
                 return None                
         return text
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
-        valids = [(None, tag.nid) for tag in DB.tags.values()]
+        valids = [(None, tag.nid) for tag in self._db.tags.values()]
         return valids
 
 class TextPosition(Validator):

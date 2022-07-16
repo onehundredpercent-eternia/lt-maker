@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from app.engine import (ai_controller, death,
         game_board, highlight, map_view, movement, phase,
         promotion, ui_view, banner, boundary, camera, cursor,
-        initiative, records, save, supports, turnwheel, unit_sprite)
+        initiative, records, supports, turnwheel, unit_sprite)
     from app.engine.combat.simple_combat import SimpleCombat
     from app.engine.overworld.overworld_movement_manager import \
         OverworldMovementManager
@@ -216,30 +216,8 @@ class GameState():
         # Build registries
         self.map_sprite_registry = {}
 
-    def start_level(self, level_nid, with_party=None):
-        """
-        Done at the beginning of a new level to start the level up
-        """
-        self.boundary = None
-        self.generic()
-        logging.debug("Starting Level %s", level_nid)
-
+    def level_setup(self):
         from app.engine.initiative import InitiativeTracker
-        from app.engine.level_cursor import LevelCursor
-        from app.engine.objects.level import LevelObject
-        from app.engine.objects.tilemap import TileMapObject
-
-        level_nid = str(level_nid)
-        level_prefab = DB.levels.get(level_nid)
-        tilemap_nid = level_prefab.tilemap
-        tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
-        tilemap = TileMapObject.from_prefab(tilemap_prefab)
-        self.cursor = LevelCursor(self)
-        self.current_level = LevelObject.from_prefab(level_prefab, tilemap, self.unit_registry, self.current_mode)
-        if with_party:
-            self.current_party = with_party
-        else:
-            self.current_party = self.current_level.party
 
         # Build party object for new parties
         if self.current_party not in self.parties:
@@ -263,6 +241,50 @@ class GameState():
         if DB.constants.value('initiative'):
             self.initiative = InitiativeTracker()
             self.initiative.start(self.get_all_units())
+
+    def start_level(self, level_nid, with_party=None):
+        """
+        Done at the beginning of a new level to start the level up
+        """
+        self.boundary = None
+        self.generic()
+        logging.debug("Starting Level %s", level_nid)
+
+        from app.engine.level_cursor import LevelCursor
+        from app.engine.objects.level import LevelObject
+        from app.engine.objects.tilemap import TileMapObject
+
+        level_nid = str(level_nid)
+        level_prefab = DB.levels.get(level_nid)
+        tilemap_nid = level_prefab.tilemap
+        tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
+        tilemap = TileMapObject.from_prefab(tilemap_prefab)
+        self.cursor = LevelCursor(self)
+        self.current_level = LevelObject.from_prefab(level_prefab, tilemap, self.unit_registry, self.current_mode)
+        if with_party:
+            self.current_party = with_party
+        else:
+            self.current_party = self.current_level.party
+
+        self.level_setup()
+
+    def build_level_from_scratch(self, level_nid, tilemap):
+        """
+        Using the tilemap: TileMapObject to build a level
+        """
+        self.boundary = None
+        self.generic()
+        logging.debug("Building Level %s", level_nid)
+
+        from app.engine.level_cursor import LevelCursor
+        from app.engine.objects.level import LevelObject
+
+        self.cursor = LevelCursor(self)
+        party = DB.parties.keys()[0]
+        self.current_level = LevelObject.from_scratch(level_nid, tilemap, party, self.unit_registry, self.current_mode)
+        self.current_party = self.current_level.party
+
+        self.level_setup()
 
     def full_register(self, unit):
         self.register_unit(unit)

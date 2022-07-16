@@ -1,7 +1,6 @@
 import math
 import random
 import itertools
-from enum import Enum
 from dataclasses import dataclass
 from typing import List, Set, Dict, Tuple
 
@@ -17,10 +16,10 @@ class DungeonTileMap:
     def get_terrain(self, pos):
         return self.terrain_grid.get(pos, None)
 
-    def set_grid(x: int, y: int, terrain: str):
+    def set_grid(self, x: int, y: int, terrain: str):
         self.terrain_grid[(x, y)] = terrain
 
-    def reset_grid(terrain: str):
+    def reset_grid(self, terrain: str):
         for x in range(self.width):
             for y in range(self.height):
                 self.terrain_grid[(x, y)] = terrain
@@ -67,7 +66,7 @@ def get_rooms(avg_size=4.5, num_rooms=20) -> list:
             continue
         # choose a random point to place the room
         x, y = random_point_in_circle(radius)
-        rooms.append(RoomPrefabx + width//2, y + height//2, round(rwidth), round(rheight)))
+        rooms.append(RoomPrefab(x + rwidth//2, y + rheight//2, round(rwidth), round(rheight)))
     return rooms
 
 def room_overlaps(a: RoomPrefab, b: RoomPrefab) -> bool:
@@ -186,24 +185,6 @@ def place_rooms_on_grid(tilemap: DungeonTileMap, rooms: List[Room], terrain='Flo
     for room in rooms:
         for tile in room.tiles:
             tilemap.terrain_grid[tile] = terrain
-
-def get_character(x, y):
-    e = get_from_grid(x, y)
-    if e == TileType.FLOOR:
-        return '_'
-    elif e == TileType.WALL:
-        return '#'
-    elif e == TileType.PILLAR:
-        return '$'
-    elif e == TileType.STAIR:
-        return 'S'
-
-def print_grid():
-    for y in range(height):
-        for x in range(width):
-            cell_char = get_character(x, y)
-            print(cell_char, end="")
-        print("\n", end="")
 
 def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[tuple]) -> Set[tuple]:
     # Find walls between rooms

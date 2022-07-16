@@ -852,16 +852,15 @@ def generate_groups(self: Event, flags=None):
     from app.engine import random_groups
     random_groups.build_groups()
 
-def get_recruitable_unit(self: Event, level_var_nid, position, level, tag_list, team=None, flags=None):
+def get_recruitable_unit(self: Event, level_var_nid, level, tag_list, team=None, flags=None):
     flags = flags or set()
 
     from app.engine import random_groups
-    position = self._parse_pos(position)
     level = int(level)
     team = team or 'player'
-    random_groups.get_recruitable_unit(level_var_nid, position, level, tag_list, team)
+    random_groups.get_recruitable_unit(level_var_nid, level, tag_list, team)
 
-def generate_dungeon(self: Event, theme, enemy_type, size, flags=None):
+def generate_map(self: Event, theme, enemy_type, size, flags=None):
     flags = flags or set()
 
     from app.engine import random_groups

@@ -14,8 +14,9 @@ from app.dungeon_maker import dungeon_maker, terrain_maker
 from app.map_maker.utilties import random_choice
 
 from app.engine.objects.unit import UnitObject
+from app.engine.objects.tilemap import TileMapObject
 
-from app.engine import action, unit_funcs, engine
+from app.engine import action, unit_funcs, engine, regions
 from app.engine.game_state import game
 
 from app.utilities import utils, str_utils
@@ -181,7 +182,7 @@ def determine_avg_level() -> int:
     num_complete = completed_chapters()
     return num_complete * 2
 
-def get_elite_chance() -> float
+def get_elite_chance() -> float:
     return lerp(0.1, 0.25, completed_chapters() / LAST_CHAPTER)
 
 def get_random_item(tags=None):
@@ -571,7 +572,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         # Give the Boss 5 free autolevels
         unit_funcs.auto_level(new_unit, 5, new_unit.level, growth_method='fixed')
 
-def get_recruitable_unit(level_var_nid, position, level, tag_list, team):
+def get_recruitable_unit(level_var_nid, level, tag_list, team):
     possible_unit_prefabs = \
         [unit for unit in DB.units if 
             unit.nid not in [u.nid for u in game.units] and 
@@ -581,15 +582,13 @@ def get_recruitable_unit(level_var_nid, position, level, tag_list, team):
         return
     unit = game.get_random_choice(possible_unit_prefabs)
     ai = 'None'
-    level_unit_prefab = UniqueUnit(unit.nid, team, ai, None, None, position)
+    level_unit_prefab = UniqueUnit(unit.nid, team, ai, None, None, None)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     new_unit.party = game.current_party
     unit_funcs.auto_level(new_unit, level - new_unit.level, new_unit.level, growth_method='fixed')
     new_unit.level = level
     game.full_register(new_unit)
     action.do(action.SetLevelVar(level_var_nid, unit.nid))
-    if new_unit.position:
-        action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit
 
 def determine_sprite(pos: tuple, terrain, tilemap):
@@ -643,10 +642,10 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
 
     # Now we have the surface to use as a real tilemap
     level_nid = str(completed_chapters())
-    tilemap = TileMapObject.build(level_nid, dungeon, surf)  ### TODO
+    tilemap = TileMapObject.build_from_scratch(level_nid, dungeon, surf)
     # Now we have a complete tilemap
     # Lets build a level
-    game.build_level_from_scratch(level_nid, tilemap)  ### TODO
+    game.build_level_from_scratch(level_nid, tilemap)
 
     # Choose a starting room and an ending/boss room
     biggest_south_room = rooms[0]
@@ -663,7 +662,7 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     ending_room = biggest_north_room
 
     # Create formations
-    num_formations = int(lerp(6, 12, completed_chapters() / LAST_CHAPTER))
+    num_formations = int(lerp(8, 14, completed_chapters() / LAST_CHAPTER))
     # Starting from southwest corner of room
     tiles = sorted(room.tiles, key=lambda x: (x[0], -x[1]))
     formation_tiles = tiles[:num_formations]
@@ -672,8 +671,8 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
         formation_region.region_type = regions.RegionType.FORMATION
         formation_region.position = tile
         formation_region.size = (1, 1)
-        game.register_region(new_region)
-        action.do(action.AddRegion(new_region))
+        game.register_region(formation_region)
+        action.do(action.AddRegion(formation_region))
 
     # Figure out basic starting position
     start_pos_x = sum(form[0] for form in formation_tiles) / len(formation_tiles)
@@ -688,7 +687,8 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     group_data = {'valid_tags': enemy_type}
     for idx, room in enumerate(rooms):
         if room is starting_room:
-            valid_tiles = [tile for tile in room.tiles if all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles]
+            valid_tiles = [tile for tile in room.tiles if 
+                           all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)]
             build_group('%d' % idx, group_data, valid_tiles)
         elif room is ending_room:
             build_group('Boss', group_data, [boss_pos])
@@ -711,8 +711,7 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
         grave_region.position = pos
         grave_region.size = (1, 1)
         grave_region.sub_nid = int(distance / 5) + 1
-        game.register_region(new_region)
-        action.do(action.AddRegion(new_region))
+        game.register_region(grave_region)
+        action.do(action.AddRegion(grave_region))
 
     print("Done!")
-

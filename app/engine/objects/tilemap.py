@@ -122,7 +122,7 @@ class TileMapObject(Prefab):
         self.nid: NID = None
 
     @classmethod
-    def build(cls, nid, dungeon, surf):
+    def build_from_scratch(cls, nid, dungeon, surf):
         self = cls()
         self.nid = nid
         self.width = dungeon.width
@@ -133,6 +133,24 @@ class TileMapObject(Prefab):
         # Build a layer
         base_layer = LayerObject('base', self)
         
+        for coord, terrain_nid in dungeon.terrain_grid.items():
+            base_layer.terrain[coord] = terrain_nid
+
+        image = engine.create_surface((self.width * TILEWIDTH, self.height * TILEHEIGHT))
+        engine.fill(image, COLORKEY)
+        engine.set_colorkey(image, COLORKEY, rleaccel=True)
+        image.blit(surf, (0, 0))
+
+        right_bound = (max(coord[0] for coord in dungeon.terrain_grid) + 1) * TILEWIDTH
+        bottom_bound = (max(coord[1] for coord in dungeon.terrain_grid) + 1) * TILEHEIGHT
+        base_layer.pixel_bounds = [0, 0, right_bound, bottom_bound]
+
+        base_layer.image = image
+        base_layer.visible = True
+
+        self.layers.append(base_layer)
+
+        return self
 
     @classmethod
     def from_prefab(cls, prefab):

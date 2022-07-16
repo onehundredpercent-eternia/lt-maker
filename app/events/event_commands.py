@@ -937,9 +937,9 @@ class GetRecruitableUnit(EventCommand):
         key of the level_var_nid
         """
 
-    keywords = ["LevelVarNid", "Position", "Level", "TagList"]
+    keywords = ["LevelVarNid", "Level", "TagList"]
     optional_keywords = ["Team"]
-    keyword_types = ["Nid", "Position", "PositiveInteger", "TagList", "Team"]
+    keyword_types = ["Nid", "PositiveInteger", "TagList", "Team"]
 
 class GenerateMap(EventCommand):
     nid = 'generate_map'

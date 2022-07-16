@@ -56,6 +56,28 @@ class LevelObject():
 
         return level
 
+    @classmethod
+    def from_scratch(cls, nid, tilemap, party, unit_registry, current_mode: DifficultyModeObject):
+        level = cls()
+        level.nid = nid
+        level.name = nid
+        level.tilemap = tilemap
+        level.party = party
+        level.roam = False
+        level.roam_unit = None
+
+        level.music = {}
+        level.objective = {
+            'simple': "Rout.",
+            'win': "Rout all enemies",
+            'loss': "Memory falls below 0"}
+
+        level.units = Data()
+        level.regions = Data()
+        level.unit_groups = Data()
+
+        return level
+
     def save(self):
         s_dict = {'nid': self.nid,
                   'name': self.name,
