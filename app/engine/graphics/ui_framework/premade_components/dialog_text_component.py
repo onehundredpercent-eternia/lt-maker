@@ -37,7 +37,7 @@ class DialogTextComponent(PlainTextComponent):
         paragraphs = text.split('{br}')
         line_broken_text = []
         for paragraph in paragraphs:
-            line_broken_text += text_funcs.line_wrap(self.props.font, paragraph, self.iwidth, True)
+            line_broken_text += text_funcs.line_wrap(self.props.font_name, paragraph, self.iwidth, True)
         return line_broken_text
 
     def generate_indexes_of_wait_points(self, unprocessed_text: str) -> List[int]:

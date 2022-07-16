@@ -188,7 +188,8 @@ class ScreenSizeOption(SliderOption):
 
     def update_screen_size(self):
         n = self.get_value()
-        engine.SCREENSIZE = (WINWIDTH * n, WINHEIGHT * n)
+        true_n = min(n, 5)
+        engine.SCREENSIZE = (WINWIDTH * true_n, WINHEIGHT * true_n)
         if n == self.values[-1]:
             cf.SETTINGS['fullscreen'] = 1
         else:

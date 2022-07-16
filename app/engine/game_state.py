@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from app.events.event_manager import EventManager
     from app.events import speak_style
     from app.events.regions import Region
-    from app.utilities.typing import NID
+    from app.utilities.typing import NID, UID
 
 from app.constants import VERSION
 from app.data.database import DB
@@ -53,12 +53,12 @@ class GameState():
         self.game_vars: Counter = None
         self.level_vars: Counter = None
         self.playtime: int = 0
-        self.current_save_slot: save.SaveSlot = None
+        self.current_save_slot: int = None
 
         # global registries
         self.unit_registry: Dict[NID, UnitObject] = {}
-        self.item_registry: Dict[NID, ItemObject] = {}
-        self.skill_registry: Dict[NID, SkillObject] = {}
+        self.item_registry: Dict[UID, ItemObject] = {}
+        self.skill_registry: Dict[UID, SkillObject] = {}
         self.terrain_status_registry: Dict[NID, NID] = {}
         self.region_registry: Dict[NID, Region] = {}
         self.overworld_registry: Dict[NID, OverworldObject] = {}
@@ -607,6 +607,10 @@ class GameState():
         logging.debug("Registering unit %s as %s", unit, unit.nid)
         self.unit_registry[unit.nid] = unit
 
+    def unregister_unit(self, unit):
+        logging.debug("Unregistering unit %s as %s", unit, unit.nid)
+        del self.unit_registry[unit.nid]
+
     def register_item(self, item):
         logging.debug("Registering item %s as %s", item, item.uid)
         self.item_registry[item.uid] = item
@@ -614,12 +618,26 @@ class GameState():
         for subitem in item.subitems:
             self.register_item(subitem)
 
+    def unregister_item(self, item):
+        logging.debug("Unregistering item %s as %s", item, item.uid)
+        del self.item_registry[item.uid]
+        # For multi-items
+        for subitem in item.subitems:
+            self.unregister_item(subitem)
+
     def register_skill(self, skill):
         logging.debug("Registering skill %s as %s", skill, skill.uid)
         self.skill_registry[skill.uid] = skill
         # For aura skills
         if skill.subskill:
             self.skill_registry[skill.subskill.uid] = skill.subskill
+
+    def unregister_skill(self, skill):
+        logging.debug("Unregistering skill %s as %s", skill, skill.uid)
+        del self.skill_registry[skill.uid]
+        # For aura skills
+        if skill.subskill:
+            del self.skill_registry[skill.subskill.uid]
 
     def register_terrain_status(self, key, skill_uid):
         logging.debug("Registering terrain status %s", skill_uid)

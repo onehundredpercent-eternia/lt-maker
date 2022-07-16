@@ -192,6 +192,10 @@ class AIController():
             return False
 
     def get_true_valid_moves(self) -> set:
+        # Guard AI
+        if self.behaviour.view_range == -1 and not self.unit.ai_group_active:
+            return {self.unit.position}
+        else:
         valid_moves = target_system.get_valid_moves(self.unit)
         other_unit_positions = {unit.position for unit in game.units if unit.position and unit is not self.unit}
         valid_moves -= other_unit_positions
@@ -291,12 +295,7 @@ class AIController():
                     action.do(action.AIGroupPing(unit))
 
     def build_primary(self):
-        # Guard AI
-        if self.behaviour.view_range == -1 and not self.unit.ai_group_active:
-            valid_moves = {self.unit.position}
-        else:
             valid_moves = self.get_true_valid_moves()
-
         return PrimaryAI(self.unit, valid_moves, self.behaviour)
 
     def build_secondary(self):

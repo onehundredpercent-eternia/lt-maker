@@ -248,9 +248,8 @@ class GainManaAfterCombat(ItemComponent):
     def end_combat(self, playback, unit, item, target, mode):
         from app.engine import evaluate
         try:
-            if target:
-                mana_gain = int(evaluate.evaluate(self.value, unit, target, position=unit.position))
-                action.do(action.ChangeMana(unit, mana_gain))
+            mana_gain = int(evaluate.evaluate(self.value, unit, target, position=unit.position))
+            action.do(action.ChangeMana(unit, mana_gain))
         except Exception as e:
             print("Could not evaluate %s (%s)" % (self.value, e))
             return True

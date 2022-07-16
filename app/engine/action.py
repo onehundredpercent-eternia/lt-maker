@@ -385,6 +385,20 @@ class RemoveFromMap(Action):
         if self.unit.position:
             self.unit.previous_position = self.unit.position
 
+class RegisterUnit(Action):
+    def __init__(self, unit):
+        self.unit = unit
+
+    def do(self):
+        game.full_register(self.unit)
+
+    def reverse(self):
+        logging.debug("Unregistering unit %s and it's items and skills", self.unit.nid)
+        for skill in reversed(self.unit.skills):
+            game.unregister_skill(skill)
+        for item in reversed(self.unit.items):
+            game.unregister_item(item)
+        game.unregister_unit(self.unit)
 
 class IncrementTurn(Action):
     def do(self):
@@ -782,6 +796,9 @@ class PairUp(Action):
         game.leave(self.unit)
         self.unit.position = None
 
+        self.unit.lead_unit = False
+        self.target.lead_unit = True
+
         logging.info(self.unit.nid + " was at " + str(self.old_pos) + " but paired up with " + self.target.nid + " at " + str(self.target.position))
 
         self.target.set_guard_gauge(self.unit_gauge + self.target_gauge)
@@ -810,6 +827,9 @@ class PairUp(Action):
         game.arrive(self.unit)
         self.target.traveler = None
         skill_system.on_separate(self.unit, self.target)
+
+        self.unit.lead_unit = False
+        self.target.lead_unit = False
 
         logging.info("The pair up between " + self.unit.nid + " and " + self.target.nid + " was reversed")
 
@@ -892,6 +912,9 @@ class Separate(Action):
         self.droppee.set_guard_gauge(self.old_gauge//2)
         self.unit.set_guard_gauge(self.old_gauge//2)
 
+        self.unit.lead_unit = False
+        self.droppee.lead_unit = False
+
         skill_system.on_separate(self.droppee, self.unit)
 
         if self.unit.position and self.pos and utils.calculate_distance(self.unit.position, self.pos) == 1 and not self.unit.is_dying:
@@ -920,6 +943,9 @@ class Separate(Action):
         game.leave(self.droppee)
         self.droppee.position = None
         self.unit.has_dropped = False
+
+        self.unit.lead_unit = True
+        self.droppee.lead_unit = False
 
         skill_system.on_pairup(self.droppee, self.unit)
 
@@ -2715,10 +2741,11 @@ class AddSkill(Action):
 
 
 class RemoveSkill(Action):
-    def __init__(self, unit, skill):
+    def __init__(self, unit, skill, count = -1):
         self.unit = unit
         self.skill = skill  # Skill obj or skill nid str
         self.removed_skills = []
+        self.count = count
         self.old_owner_nid = None
         self.reset_action = ResetUnitVars(self.unit)
 
@@ -2733,11 +2760,16 @@ class RemoveSkill(Action):
 
     def _remove(self, true_remove=True):
         self.removed_skills.clear()
+        to_remove = self.count
         if isinstance(self.skill, str):
+            new_skills = []
             for skill in self.unit.skills:
-                if skill.nid == self.skill:
+                if skill.nid == self.skill and to_remove != 0:
                     self._remove_skill(skill, true_remove)
-            self.unit.skills = [skill for skill in self.unit.skills if skill.nid != self.skill]
+                    to_remove -= 1
+                else:
+                    new_skills.append(skill)
+            self.unit.skills = new_skills
         else:
             if self.skill in self.unit.skills:
                 self.unit.skills.remove(self.skill)

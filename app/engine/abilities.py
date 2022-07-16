@@ -204,6 +204,7 @@ class PairUpAbility(Ability):
     def do(unit):
         target = game.board.get_unit(game.cursor.position)
         action.do(action.PairUp(unit, target))
+        game.state.clear()
         game.state.change('free')
         game.cursor.set_pos(target.position)
 
@@ -244,6 +245,7 @@ class SwapAbility(Ability):
         u = game.get_unit(unit.traveler)
         action.do(action.SwapPaired(unit, u))
         game.cursor.cur_unit = u
+        game.state.clear()
         game.state.change('menu')
 
 class TransferAbility(Ability):
@@ -262,6 +264,7 @@ class TransferAbility(Ability):
         u = game.board.get_unit(game.cursor.position)
         action.do(action.HasTraded(unit))
         action.do(action.Transfer(unit, u))
+        game.state.clear()
         game.state.change('menu')
 
 class ItemAbility(Ability):

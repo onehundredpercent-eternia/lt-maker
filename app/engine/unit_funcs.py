@@ -35,7 +35,7 @@ def get_next_level_up(unit, custom_method=None) -> dict:
                 if growth > 0:
                     stat_changes[nid] = (unit.growth_points[nid] + growth) // 100
                     unit.growth_points[nid] = (unit.growth_points[nid] + growth) % 100
-                elif growth < 0:
+                elif growth < 0 and DB.constants.value('negative_growths'):
                     stat_changes[nid] = (-unit.growth_points[nid] + growth) // 100
                     unit.growth_points[nid] = (unit.growth_points[nid] - growth) % 100
 
@@ -54,7 +54,7 @@ def _random_levelup(rng, unit, level, growth_rate):
         while growth_rate > 0:
             counter += 1 if rng.randint(0, 99) < growth_rate else 0
             growth_rate -= 100
-    elif growth_rate < 0:
+    elif growth_rate < 0 and DB.constants.value('negative_growths'):
         growth_rate = -growth_rate
         while growth_rate > 0:
             counter -= 1 if rng.randint(0, 99) < growth_rate else 0
@@ -77,7 +77,7 @@ def _dynamic_levelup(rng, unit, level, stats, growth_points, growth_nid, growth_
                 growth_points[growth_nid] -= (100 - new_growth) / variance
             else:
                 growth_points[growth_nid] += new_growth/variance
-    elif growth_rate < 0:
+    elif growth_rate < 0 and DB.constants.value('negative_growths'):
         growth_rate = -growth_rate
         start_growth = growth_rate + growth_points[growth_nid]
         if start_growth <= 0:
@@ -134,6 +134,8 @@ def auto_level(unit, num_levels, starting_level=1, difficulty_growths=False, gro
                 growth_sum = difficulty_growth_bonus.get(growth_nid, 0) * num_levels
             else:
                 growth_sum = (growth_value + unit.growth_bonus(growth_nid) + difficulty_growth_bonus.get(growth_nid, 0)) * num_levels
+            if not DB.constants.value('negative_growths'):
+                growth_value = max(growth_value, 0)
             if growth_value < 0:
                 unit.stats[growth_nid] += (growth_sum - unit.growth_points[growth_nid]) // 100
                 unit.growth_points[growth_nid] = -(growth_sum - unit.growth_points[growth_nid]) % 100
@@ -182,7 +184,7 @@ def apply_stat_changes(unit, stat_changes: dict, increase_current_stats: bool = 
 
     current_max_hp = unit.get_max_hp()
     current_max_mana = unit.get_max_mana()
-    
+
     if increase_current_stats:
         if current_max_hp > old_max_hp:
             unit.set_hp(current_max_hp - old_max_hp + unit.get_hp())

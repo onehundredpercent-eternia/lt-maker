@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QIcon
 
 from app.utilities import str_utils
-from app.resources.icons import Icon
+from app.resources.icons import Icon, IconSheet
 from app.resources.map_icons import MapIcon, MapIconCatalog
 from app.resources.resources import RESOURCES
 from app.utilities.data import Data
@@ -34,7 +34,7 @@ class IconModel(ResourceCollectionModel):
     def data(self, index, role):
         if not index.isValid():
             return None
-        if role == Qt.DisplayRole:
+        if role == Qt.DisplayRole or role == Qt.EditRole:
             item = self.sub_data[index.row()]
             text = item.nid
             return text
@@ -48,11 +48,15 @@ class IconModel(ResourceCollectionModel):
     def setData(self, index, value, role):
         if not index.isValid():
             return False
+        if role == Qt.EditRole:
+            item: Icon = self.sub_data[index.row()]
+            item.nid = value
+            self._data.get(item.parent_nid).set_alias(item.nid, item.icon_index)
         return True
 
     def flags(self, index):
         if index.isValid():
-            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
         else:
             return Qt.NoItemFlags
 
@@ -104,7 +108,7 @@ class Icon16Model(IconModel):
                     pix = QPixmap(fn)
                     if pix.width() % self.width == 0 and pix.height() % self.height == 0:
                         nid = str_utils.get_next_name(nid, [d.nid for d in self.database])
-                        icon = Icon(nid, fn)
+                        icon = IconSheet(nid, fn)
                         icon.pixmap = pix
                         self._data.append(icon)
                         new_icons = icon_view.icon_slice(icon, self.width, self.height)

@@ -1439,6 +1439,8 @@ class RemoveSkill(EventCommand):
         """
 
     keywords = ["GlobalUnit", "Skill"]
+    optional_keywords = ['Count']
+    keyword_types = ['GlobalUnit', 'Skill', 'Integer']
     _flags = ['no_banner']
 
 class ChangeAI(EventCommand):
@@ -2214,11 +2216,11 @@ class Alert(EventCommand):
         """
 Displays the text given in *String* in an alert box. This is used for events such as "The switch was pulled!".
 
-Optionally, takes in an item icon from *Item* to display, or a skill icon from *Skill* to display.
+Optionally, takes in an item icon from *Item* to display, a skill icon from *Skill* to display, or a named icon *Icon*.
         """
 
     keywords = ["String"]
-    optional_keywords = ["Item", "Skill"]
+    optional_keywords = ["Item", "Skill", "Icon"]
 
 class VictoryScreen(EventCommand):
     nid = 'victory_screen'

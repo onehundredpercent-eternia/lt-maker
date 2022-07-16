@@ -23,6 +23,8 @@ class Database(object):
     save_as_chunks = ("events", 'items', 'skills', 'units', 'classes', 'levels')
 
     def __init__(self):
+        self.current_proj_dir = None
+
         self.constants = constants.constants
         self.teams = ["player", "enemy", "enemy2", "other"]  # Order determine phase order
         self.stats = stats.StatCatalog()
@@ -171,6 +173,7 @@ class Database(object):
         logging.warning("Done serializing!")
 
     def load(self, proj_dir):
+        self.current_proj_dir = proj_dir
         data_dir = os.path.join(proj_dir, 'game_data')
         logging.warning("Deserializing data from %s..." % data_dir)
 

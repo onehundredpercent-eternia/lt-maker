@@ -1,5 +1,7 @@
+import logging
 import random, re
 from typing import Dict
+from app.engine.query_engine import GameQueryEngine
 
 from app.utilities import utils
 from app.data.database import DB
@@ -13,10 +15,23 @@ Essentially just a repository that imports a lot of different things so that man
 will be accepted
 """
 
+_QUERY_ENGINE = None
+QUERY_ENGINE_FUNC_DICT = None
+
+def init_query_engine(game):
+    global _QUERY_ENGINE
+    global QUERY_ENGINE_FUNC_DICT
+    if not _QUERY_ENGINE:
+        _QUERY_ENGINE = GameQueryEngine(logging.Logger("query_engine"), game)
+    query_funcs = [funcname for funcname in dir(_QUERY_ENGINE) if not funcname.startswith('_')]
+    QUERY_ENGINE_FUNC_DICT = {funcname: getattr(_QUERY_ENGINE, funcname) for funcname in query_funcs}
+
 def evaluate(string: str, unit1=None, unit2=None, position=None,
              local_args: Dict = None, game=None) -> bool:
     if not game:
         from app.engine.game_state import game
+    if not QUERY_ENGINE_FUNC_DICT:
+        init_query_engine(game)
 
     def check_pair(s1: str, s2: str) -> bool:
         """
@@ -51,6 +66,7 @@ def evaluate(string: str, unit1=None, unit2=None, position=None,
         'check_default': check_default,
         'game': game
     })
+    temp_globals.update(QUERY_ENGINE_FUNC_DICT)
     if local_args:
         temp_globals.update(local_args)
     return eval(string, temp_globals)

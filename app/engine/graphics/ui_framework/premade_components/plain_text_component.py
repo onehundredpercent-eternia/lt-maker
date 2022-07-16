@@ -153,9 +153,9 @@ class PlainTextComponent(UIComponent):
             self.add_child(line1)
         else:
             all_text = self.text
-            all_split = text_funcs.line_wrap(self.props.font, all_text, self.iwidth, True)
+            all_split = text_funcs.line_wrap(self.props.font_name, all_text, self.iwidth, True)
             visible_text = self.text[:self.num_visible_chars]
-            visible_split = text_funcs.line_wrap(self.props.font, visible_text, self.iwidth, True)
+            visible_split = text_funcs.line_wrap(self.props.font_name, visible_text, self.iwidth, True)
             if len(self.children) != len(all_split): # our text itself changed, we should full reset
                 self.children.clear()
                 for i in range(0, len(all_split)):

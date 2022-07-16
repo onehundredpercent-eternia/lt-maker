@@ -941,7 +941,7 @@ class ItemDescriptionPanel():
                 desc = self.item.desc
             else:
                 desc = "Cannot wield."
-            lines = text_funcs.line_wrap(FONT['text'], desc, width - 8)
+            lines = text_funcs.line_wrap('text', desc, width - 8)
             for idx, line in enumerate(lines):
                 FONT['text'].blit(line, bg_surf, (4 + 2, 8 + idx * 16))
 

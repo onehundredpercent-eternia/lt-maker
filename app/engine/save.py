@@ -116,7 +116,7 @@ def save_io(s_dict, meta_dict, old_slot, slot, force_loc=None, name=None):
         shutil.copy(save_loc, preload_save)
         shutil.copy(meta_loc, preload_save_meta)
 
-def suspend_game(game_state, kind, slot=None, name=None):
+def suspend_game(game_state, kind, slot: int = None, name=None):
     """
     Saves game state to file
     """
@@ -126,10 +126,9 @@ def suspend_game(game_state, kind, slot=None, name=None):
     logging.debug("Suspend temp state: %s", game_state.state.temp_state)
     meta_dict['kind'] = kind
     meta_dict['time'] = datetime.now()
-    if game_state.current_save_slot:
-        current_save_slot = game_state.current_save_slot.idx
-    else:
-        current_save_slot = None
+    old_save_slot = game_state.current_save_slot
+    if slot is not None:
+        game_state.current_save_slot = slot  # Where we are saving it to, so we can get it back later
 
     if kind == 'suspend':
         force_loc = 'suspend'
@@ -137,10 +136,10 @@ def suspend_game(game_state, kind, slot=None, name=None):
         force_loc = None
 
     global SAVE_THREAD
-    SAVE_THREAD = threading.Thread(target=save_io, args=(s_dict, meta_dict, current_save_slot, slot, force_loc, name))
+    SAVE_THREAD = threading.Thread(target=save_io, args=(s_dict, meta_dict, old_save_slot, slot, force_loc, name))
     SAVE_THREAD.start()
 
-def load_game(game_state, save_slot):
+def load_game(game_state, save_slot: SaveSlot):
     """
     Load game state from file
     """
@@ -150,7 +149,7 @@ def load_game(game_state, save_slot):
         s_dict = pickle.load(fp)
     game_state.build_new()
     game_state.load(s_dict)
-    game_state.current_save_slot = save_slot
+    game_state.current_save_slot = save_slot.idx
 
     set_next_uids(game_state)
 

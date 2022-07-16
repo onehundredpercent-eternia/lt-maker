@@ -870,7 +870,7 @@ class RegionType(OptionValidator):
     valid = ['normal', 'event', 'status', 'formation', 'time']
 
 class Weather(OptionValidator):
-    valid = ["rain", "sand", "snow", "fire", "light", "purple", "dark", "smoke", "fog", "event_tile"]
+    valid = ["rain", "sand", "snow", "fire", "light", "purple", "dark", "smoke", "night", "fog", "event_tile"]
 
 class Align(OptionValidator):
     valid = [align.value for align in Alignments]
@@ -977,6 +977,19 @@ class Skill(Validator):
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         svalids = [(skill.name, skill.nid) for skill in self._db.skills.values()]
         return svalids
+
+class Icon(Validator):
+    def get_all_icons(self):
+        all_icons = set()
+        for sheet in self._resources.icons16:
+            all_icons |= set(sheet._subicon_dict.keys())
+        return all_icons
+
+    def validate(self, text, level):
+        return text in self.get_all_icons()
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        return [(None, alias) for alias in self.get_all_icons()]
 
 class Party(Validator):
     desc = "accepts the nid of an existing Party"

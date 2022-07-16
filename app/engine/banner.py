@@ -187,6 +187,8 @@ class CustomIcon(Banner):
                 icons.draw_skill(surf, self.item, (2, 7), simple=True)
             elif isinstance(self.item, items.ItemPrefab):
                 icons.draw_item(surf, self.item, (2,7), cooldown=False)
+            elif isinstance(self.item, str):
+                icons.draw_icon_by_alias(surf, self.item, (2, 7))
 
     def draw(self, surf):
         if not self.surf:

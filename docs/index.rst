@@ -43,6 +43,7 @@ Welcome to lt-maker's documentation!
    :maxdepth: 4
    :caption: appendix:
 
+   source/appendix/Useful_Functions
    source/appendix/Difficulty-Mode-Options
    source/appendix/Item-Component-Reference
    source/appendix/Skill-Component-Reference

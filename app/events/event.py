@@ -308,7 +308,7 @@ class Event():
             cond = command.parameters['Expression']
             cond = self._evaluate_all(cond)
             try:
-                arg_list = evaluate.evaluate(cond, self.unit, self.unit2, self.position, self.local_args)
+                arg_list = self.text_evaluator.direct_eval(cond)
                 arg_list = [self._object_to_str(arg) for arg in arg_list]
             except Exception as e:
                 self.logger.error("%s: Could not evaluate {%s}" % (e, command.parameters['Expression']))
@@ -355,7 +355,7 @@ class Event():
         try:
             cond = command.parameters['Expression']
             cond = self._evaluate_all(cond)
-            truth = bool(evaluate.evaluate(cond, self.unit, self.unit2, self.position, self.local_args))
+            truth = bool(self.text_evaluator.direct_eval(cond))
         except Exception as e:
             self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
             truth = False

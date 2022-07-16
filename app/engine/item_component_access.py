@@ -4,7 +4,7 @@ from app.data.components import Type
 from app.data.item_components import ItemComponent, ItemTags
 
 @lru_cache(1)
-def get_cached_item_components():
+def get_cached_item_components(proj_dir: str):
     # Necessary for get_item_components to find all the
     # item components defined in item_components folder
     from app.engine import item_components
@@ -23,7 +23,8 @@ def get_cached_item_components():
     return Data(subclasses)
 
 def get_item_components():
-    return get_cached_item_components()
+    from app.data.database import DB
+    return get_cached_item_components(DB.current_proj_dir)
 
 def get_item_tags():
     return list(ItemTags)

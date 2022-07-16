@@ -502,7 +502,7 @@ def flicker_cursor(self: Event, position, flags=None):
 
 def game_var(self: Event, nid, expression, flags=None):
     try:
-        val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
+        val = self.text_evaluator.direct_eval(expression)
         action.do(action.SetGameVar(nid, val))
     except Exception as e:
         self.logger.error("game_var: Could not evaluate %s (%s)" % (expression, e))
@@ -510,7 +510,7 @@ def game_var(self: Event, nid, expression, flags=None):
 def inc_game_var(self: Event, nid, expression=None, flags=None):
     if expression:
         try:
-            val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
+            val = self.text_evaluator.direct_eval(expression)
             action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
         except Exception as e:
             self.logger.error("inc_game_var: Could not evaluate %s (%s)" % (expression, e))
@@ -519,7 +519,7 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
 
 def level_var(self: Event, nid, expression, flags=None):
     try:
-        val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
+        val = self.text_evaluator.direct_eval(expression)
         action.do(action.SetLevelVar(nid, val))
     except Exception as e:
         self.logger.error("level_var: Could not evaluate %s (%s)" % (expression, e))
@@ -528,7 +528,7 @@ def level_var(self: Event, nid, expression, flags=None):
 def inc_level_var(self: Event, nid, expression=None, flags=None):
     if expression:
         try:
-            val = evaluate.evaluate(expression, self.unit, self.unit2, self.position, self.local_args)
+            val = self.text_evaluator.direct_eval(expression)
             action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
         except Exception as e:
             self.logger.error("inc_level_var: Could not evaluate %s (%s)" % (expression, e))
@@ -782,7 +782,8 @@ def make_generic(self: Event, nid, klass, level, team, ai=None, faction=None, an
     level_unit_prefab = GenericUnit(unit_nid, animation_variant, level, klass, faction, starting_items, team, ai)
     new_unit = UnitObject.from_prefab(level_unit_prefab)
     new_unit.party = self.game.current_party
-    self.game.full_register(new_unit)
+    #self.game.full_register(new_unit)
+    action.do(action.RegisterUnit(new_unit))
 
     if assign_unit:
         self.created_unit = new_unit
@@ -835,12 +836,13 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
         self.logger.error("create_unit: Couldn't get a good position %s %s %s" % (position, entry_type, placement))
         return None
     new_unit.party = self.game.current_party
-    self.game.full_register(new_unit)
+    # self.game.full_register(new_unit)
+    action.do(action.RegisterUnit(new_unit))
     if assign_unit:
         self.created_unit = new_unit
         self.text_evaluator.created_unit = new_unit
     if DB.constants.value('initiative'):
-        action.do(action.InsertInitiative(unit))
+        action.do(action.InsertInitiative(new_unit))
 
     self._place_unit(new_unit, position, entry_type)
 
@@ -1103,7 +1105,7 @@ def set_unit_field(self: Event, unit, key, value, flags=None):
         self.logger.error("set_unit_field: Couldn't find unit %s" % unit)
         return
     try:
-        value = evaluate.evaluate(value, self.unit, self.unit2, self.position, self.local_args)
+        value = self.text_evaluator.direct_eval(value)
     except:
         self.logger.error("set_unit_field: Could not evaluate {%s}" % value)
         return
@@ -1517,6 +1519,7 @@ def give_wexp(self: Event, global_unit, weapon_type, positive_integer, flags=Non
         action.execute(action.AddWexp(unit, weapon_type, wexp))
     else:
         action.do(action.AddWexp(unit, weapon_type, wexp))
+        self.state = 'paused'
 
 def give_skill(self: Event, global_unit, skill, initiator=None, flags=None):
     flags = flags or set()
@@ -1543,8 +1546,9 @@ def give_skill(self: Event, global_unit, skill, initiator=None, flags=None):
         self.game.state.change('alert')
         self.state = 'paused'
 
-def remove_skill(self: Event, global_unit, skill, flags=None):
+def remove_skill(self: Event, global_unit, skill, count = '-1', flags=None):
     flags = flags or set()
+    count = int(count)
 
     unit = self._get_unit(global_unit)
     if not unit:
@@ -1556,7 +1560,7 @@ def remove_skill(self: Event, global_unit, skill, flags=None):
         return
     banner_flag = 'no_banner' not in flags
 
-    action.do(action.RemoveSkill(unit, skill_nid))
+    action.do(action.RemoveSkill(unit, skill_nid, count))
     if banner_flag:
         skill = DB.skills.get(skill_nid)
         b = banner.TakeSkill(unit, skill)
@@ -2305,7 +2309,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
             ast.parse(choices)
             def tryexcept(callback_expr):
                 try:
-                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.position, self.local_args, game=self.game)
+                    val = self.text_evaluator.direct_eval(self.text_evaluator._evaluate_all(callback_expr))
                     if isinstance(val, list):
                         return val
                     else:
@@ -2410,7 +2414,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
             ast.parse(table_data)
             def tryexcept(callback_expr):
                 try:
-                    val = evaluate.evaluate(self.text_evaluator._evaluate_all(callback_expr), self.unit, self.unit2, self.position, self.local_args, game=self.game)
+                    val = self.text_evaluator.direct_eval(self.text_evaluator._evaluate_all(callback_expr))
                     if isinstance(val, list):
                         return val
                     else:
@@ -2533,13 +2537,15 @@ def remove_overlay_sprite(self: Event, nid, flags=None):
                 self.wait_time = engine.get_time() + 750
                 self.state = 'waiting'
 
-def alert(self: Event, string, item=None, skill=None, flags=None):
+def alert(self: Event, string, item=None, skill=None, icon=None, flags=None):
     if item and item in DB.items.keys():
         custom_item = DB.items.get(item)
         self.game.alerts.append(banner.CustomIcon(string, custom_item))
     elif skill and skill in DB.skills.keys():
         custom_skill = DB.skills.get(skill)
         self.game.alerts.append(banner.CustomIcon(string, custom_skill))
+    elif icon and any([sheet.get_index(icon) for sheet in RESOURCES.icons16]):
+        self.game.alerts.append(banner.CustomIcon(string, icon))
     else:
         self.game.alerts.append(banner.Custom(string))
     self.game.state.change('alert')
@@ -2703,7 +2709,7 @@ def trigger_script_with_args(self: Event, event: str, arg_list: str = None, flag
 def loop_units(self: Event, expression, event, flags=None):
     unit_list_str = expression
     try:
-        unit_list = evaluate.evaluate(unit_list_str, self.unit, self.unit2, self.position, self.local_args)
+        unit_list = self.text_evaluator.direct_eval(unit_list_str)
     except Exception as e:
         self.logger.error("loop_units: %s: Could not evalute {%s}" % (e, unit_list_str))
         return

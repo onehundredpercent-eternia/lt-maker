@@ -9,6 +9,22 @@ from app.engine.fonts import FONT
 from app.engine import engine, skill_system, image_mods
 from app.engine.game_state import game
 
+def get_icon_by_name(name) -> engine.Surface:
+    image, index = None, None
+    for icon_sheet in RESOURCES.icons16:
+        if icon_sheet.get_index(name):
+            image = icon_sheet
+            index = icon_sheet.get_index(name)
+    if not image or not index:
+        return None
+    if not image.image:
+        image.image = engine.image_load(image.full_path)
+    x, y = index
+    image = engine.subsurface(image.image, (x * 16, y * 16, 16, 16))
+    image = image.convert()
+    engine.set_colorkey(image, COLORKEY, rleaccel=True)
+    return image
+
 def get_icon_by_nid(nid, x, y) -> engine.Surface:
     image = RESOURCES.icons16.get(nid)
     if not image:
@@ -65,6 +81,13 @@ def draw_skill(surf, skill, topleft, compact=True, simple=False):
         if text is not None:
             FONT['text-blue'].blit(text, surf, (topleft[0] + 16, topleft[1]))
 
+    return surf
+
+def draw_icon_by_alias(surf, icon_alias, topleft):
+    image = get_icon_by_name(icon_alias)
+    if not image:
+        return None
+    surf.blit(image, topleft)
     return surf
 
 def draw_weapon(surf, weapon_type, topleft, gray=False):

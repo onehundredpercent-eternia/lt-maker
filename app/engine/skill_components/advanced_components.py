@@ -19,15 +19,14 @@ class Ability(SkillComponent):
     expose = Type.Item
 
     def extra_ability(self, unit):
-        # Find if any item already exists with the name we need
-        for item in game.item_registry.values():
-            if item.nid == self.value and item.owner_nid == unit.nid:
-                new_item = item
-                break
+        item_uid = self.skill.data.get('ability_item_uid', None)
+        if item_uid and game.item_registry.get(item_uid, None):
+            return game.item_registry[item_uid]
         else:
             new_item = item_funcs.create_item(unit, self.value)
+            self.skill.data['ability_item_uid'] = new_item.uid
             game.register_item(new_item)
-        return new_item
+            return new_item
 
     def end_combat(self, playback, unit, item, target, mode):
         if item and item.nid == self.value:
