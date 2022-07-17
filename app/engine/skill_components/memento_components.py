@@ -197,3 +197,19 @@ class MementoImmortal(SkillComponent):
             new_value = self.skill.data['total_charge']
             actions.append(action.SetObjData(self.skill, 'charge', new_value))
 
+class MementoRage(SkillComponent):
+    nid = 'memento_rage'
+    desc = "After killing an enemy, if under 50% hp, unit refreshes, heals to full, and gains skill."
+    tag = SkillTags.CUSTOM
+
+    expose = Type.Skill
+    value = None
+
+    def end_combat(self, playback, unit, item, target, mode):
+        if target and target.get_hp() <= 0 and \
+                unit.get_hp() < unit.get_max_hp() / 2. and \
+                self.value not in [skill.nid for skill in unit.skills]:
+            action.do(action.Reset(unit))
+            action.do(action.SetHP(unit, unit.get_max_hp()))
+            action.do(action.AddSkill(unit, self.value))
+            action.do(action.TriggerCharge(unit, self.skill))

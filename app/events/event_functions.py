@@ -2150,6 +2150,8 @@ def arrange_formation(self: Event, flags=None):
     unstuck_units = [unit for unit in unstuck_units if 'Blacklist' not in unit.tags]
     if DB.constants.value('fatigue') and self.game.game_vars.get('_fatigue') == 1:
         unstuck_units = [unit for unit in unstuck_units if unit.get_fatigue() < unit.get_max_fatigue()]
+    # Place required units first
+    unstuck_units = list(sorted(unstuck_units, key=lambda u: 'Required' in u.tags, reverse=True))
     num_slots = self.game.level_vars.get('_prep_slots')
     all_formation_spots = self.game.get_open_formation_spots()
     if num_slots is None:
