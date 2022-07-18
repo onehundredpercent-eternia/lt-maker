@@ -783,13 +783,13 @@ class MenuState(MapState):
                     act.do()
                     self.cur_unit = u
                     game.cursor.cur_unit = u
-                    if self.cur_unit.current_move:
+                if self.cur_unit.current_move:
                     logging.info("Reversing " + self.cur_unit.nid + "'s move")
                     game.leave(self.cur_unit)
-                        action.reverse(self.cur_unit.current_move)
-                        self.cur_unit.current_move = None
-                    game.state.change('move')
-                    game.cursor.construct_arrows(game.cursor.path[::-1])
+                    action.reverse(self.cur_unit.current_move)
+                    self.cur_unit.current_move = None
+                game.state.change('move')
+                game.cursor.construct_arrows(game.cursor.path[::-1])
 
         elif event == 'INFO':
             info_menu.handle_info()
@@ -841,13 +841,15 @@ class MenuState(MapState):
                 # Handle abilities that are multi-items, you sick fuck
                 if item.multi_item:
                     if item.multi_item_hides_unavailable:
-                        game.memory['valid_weapons'] = [subitem for subitem in item.subitems if item_funcs.available(self.cur_unit, subitem) and
-                                                                                                item_funcs.is_weapon_recursive(self.cur_unit, subitem)]
+                        game.memory['valid_weapons'] = [
+                            subitem for subitem in item.subitems if
+                            item_funcs.available(self.cur_unit, subitem) and
+                            item_funcs.is_weapon_recursive(self.cur_unit, subitem)]
                     else:
                         game.memory['valid_weapons'] = [subitem for subitem in item.subitems if item_funcs.is_weapon_recursive(self.cur_unit, subitem)]
                     game.state.change('weapon_choice')
                 else:
-                game.state.change('combat_targeting')
+                    game.state.change('combat_targeting')
             # A combat art
             elif selection in self.combat_arts:
                 skill = self.combat_arts[selection][0]

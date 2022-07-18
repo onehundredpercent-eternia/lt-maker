@@ -238,12 +238,11 @@ class ScrollBar():
             surf.blit(bottom_arrow, (x - 1, y + height + 4))
 
 class Logo():
-    speed = 64
-
-    def __init__(self, texture, center, num_frames=8):
+    def __init__(self, texture, center, num_frames=8, speed=64):
         self.texture = texture
         self.center = center
         self.num_frames = num_frames
+        self.speed = speed
 
         self.height = self.texture.get_height()//self.num_frames
         self.width = self.texture.get_width()

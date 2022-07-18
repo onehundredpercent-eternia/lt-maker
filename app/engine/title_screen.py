@@ -18,7 +18,7 @@ from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.events.event import Event
 from app.resources.resources import RESOURCES
-from app.shaders import shaders
+# from app.shaders import shaders
 from app.utilities import utils
 
 import logging
@@ -29,7 +29,7 @@ class TitleStartState(State):
     show_map = False
 
     def start(self):
-        self.logo = SPRITES.get('logo')
+        logo = SPRITES.get('logo')
         imgs = RESOURCES.panoramas.get('title_background')
         self.bg = PanoramaBackground(imgs) if imgs else None
         game.memory['title_bg'] = self.bg
@@ -38,6 +38,12 @@ class TitleStartState(State):
             self.press_start = gui.Logo(press_start_sprite, (WINWIDTH//2, 4*WINHEIGHT//5))
         else:
             self.press_start = None
+        if logo:
+            num_frames = 16
+            speed = 64
+            self.logo = gui.Logo(logo, (WINWIDTH//2, WINHEIGHT//2 - 20), num_frames, speed)
+        else:
+            self.logo = None
 
         self.particles = None
         if DB.constants.value('title_particles'):
@@ -72,13 +78,15 @@ class TitleStartState(State):
             self.particles.update()
             self.particles.draw(surf)
         if self.logo:
-            logo_image = self.logo.copy()
+            self.logo.update()
+            self.logo.draw(surf)
+            # logo_image = self.logo.copy()
             # Add bloom to logo
-            idx = (math.sin(engine.get_time()/2000) + 1) / 2
-            intensity = utils.clamp(idx * 255, 0, 255)
-            shaders.bloom(logo_image, intensity)
-            shaders.bloom(logo_image, intensity)  # Yes, twice is done on purpose
-            engine.blit(surf, logo_image, (WINWIDTH//2 - self.logo.get_width()//2, WINHEIGHT//2 - self.logo.get_height()//2 - 20))
+            # idx = (math.sin(engine.get_time()/2000) + 1) / 2
+            # intensity = utils.clamp(idx * 255, 0, 255)
+            # shaders.bloom(logo_image, intensity)
+            # shaders.bloom(logo_image, intensity)  # Yes, twice is done on purpose
+            # engine.blit(surf, logo_image, (WINWIDTH//2 - self.logo.get_width()//2, WINHEIGHT//2 - self.logo.get_height()//2 - 20))
         if self.press_start:
             self.press_start.update()
             self.press_start.draw(surf)
