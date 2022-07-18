@@ -101,19 +101,18 @@ item_data = {
     'Hunter': 'Crit Bow',
     'Ranger': 'Mageslayer Bow',
     'Soldier': 'Soldier Lance',
-    'Brigand': 'Attack Axe', 
-    'Cleric': 'Grave Light',
-    'Saint': 'Grave Light',
-    'Seer': 'Grave Light',
-    'Valkyrie': 'Grave Light',
-    'Sorceror': 'Grave Dark',
-    'Warlock': 'Grave Dark',
-    'Acolyte': 'Grave Dark',
-    'Wizard': 'Grave Dark'
+    'Brigand': 'Attack Axe',
+    'Saint': 'Charisma',
+    'Seeress': 'Glimmer',
+    'Valkyrie': 'Miracle',
+    'Warlock': 'Luna',
 }
 
 item_data2 = {
-    'Cleric': 'Heal'
+    'Cleric': 'Heal',
+    'Saint': 'Physic',
+    'Seeress': 'Fortune',
+    'Valkyrie': 'Sunbeam',
 }
 
 def get_potential_leaders(klass_nid) -> List[str]:
@@ -589,6 +588,16 @@ def get_recruitable_unit(level_var_nid, level, tag_list, team):
     new_unit.level = level
     game.full_register(new_unit)
     action.do(action.SetLevelVar(level_var_nid, unit.nid))
+    if new_unit.klass in item_data and new_unit.level >= 5:
+        item_id = item_data[new_unit.klass]
+        item = item_funcs.create_item(None, item_id)
+        game.register_item(item)
+        action.do(action.GiveItem(unit, item))
+    if new_unit.klass in item_data2:
+        item_id = item_data2[new_unit.klass]
+        item = item_funcs.create_item(None, item_id)
+        game.register_item(item)
+        action.do(action.GiveItem(unit, item))
     return new_unit
 
 def determine_sprite(pos: tuple, terrain, tilemap):

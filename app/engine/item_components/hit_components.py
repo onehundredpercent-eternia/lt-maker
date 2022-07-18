@@ -507,3 +507,16 @@ class EventAfterCombatOnHit(ItemComponent):
                 local_args = {'target_pos': self.target_pos, 'item': item, 'mode': mode}
                 game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
         self._did_hit = False
+
+class EventAfterCombatEvenMiss(ItemComponent):
+    nid = 'event_after_combat_even_miss'
+    desc = "The selected event plays at the end of combat."
+    tag = ItemTags.SPECIAL
+
+    expose = Type.Event
+
+    def end_combat(self, playback, unit, item, target, mode):
+        event_prefab = DB.events.get_from_nid(self.value)
+        if event_prefab:
+            local_args = {'item': item, 'mode': mode}
+            game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)

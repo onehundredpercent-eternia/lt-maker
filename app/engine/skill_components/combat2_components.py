@@ -26,7 +26,7 @@ class IgnoreDamage(SkillComponent):
         # Remove any acts that reduce my HP!
         did_something = False
         for act in reversed(actions):
-            if isinstance(act, action.ChangeHP) and act.num < 0:
+            if isinstance(act, action.ChangeHP) and act.num < 0 and act.unit == unit:
                 actions.remove(act)
                 did_something = True
 

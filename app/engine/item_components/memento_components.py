@@ -225,17 +225,12 @@ class MementoAnimaAvailable(ItemComponent):
     desc = "Item can only be used when in the correct mode"
     tag = ItemTags.CUSTOM
 
-    expose = Type.Item
+    expose = Type.Skill
 
     def available(self, unit, item) -> bool:
         if unit.team != 'player':
             return True
-        for item in unit.items:
-            if item.multi_item:
-                first_subitem = item.subitems[0]
-                if first_subitem.nid == self.value:
-                    return True
-        return False
+        return any(skill.nid == self.value for skill in unit.skills)
 
 class MementoFullMoonAvailable(ItemComponent):
     nid = 'memento_full_moon_available'

@@ -173,7 +173,7 @@ class MementoImmortal(SkillComponent):
             # Remove any acts that reduce my HP!
             did_something = False
             for act in reversed(actions):
-                if isinstance(act, action.ChangeHP) and act.num < 0:
+                if isinstance(act, action.ChangeHP) and act.num < 0 and act.unit == unit:
                     actions.remove(act)
                     did_something = True
 
@@ -213,3 +213,19 @@ class MementoRage(SkillComponent):
             action.do(action.SetHP(unit, unit.get_max_hp()))
             action.do(action.AddSkill(unit, self.value))
             action.do(action.TriggerCharge(unit, self.skill))
+
+class MementoWitchTeleport(SkillComponent):
+    nid = 'memento_witch_teleport'
+    desc = "After taking damage, unit teleports away."
+    tag = SkillTags.CUSTOM
+
+    def after_take_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        # Check if we took damage
+        damage = [p for p in playback if p.nid == 'damage_hit' and p.defender == unit and p.true_damage > 0]
+        if damage and unit.position:
+            valid_positions = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
+            valid_positions = [pos for pos in valid_positions if not game.get_unit(pos) and utils.calculate_distance(pos, unit.position) and game.movement.check_weakly_traversable(unit, pos)]
+            if valid_positions:
+                pos = game.get_random_choice(valid_positions)
+                actions.append(action.TriggerCharge(unit, self.skill))
+                actions.append(action.Warp(unit, pos))
