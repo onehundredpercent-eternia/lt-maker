@@ -145,12 +145,12 @@ class MapView():
         outside_opacity = min(255, opacity + 56)
 
         if opacity > 30:
-        # Draw vertical lines
-        for x in range(left, right, TILEWIDTH):
-            engine.draw_line(line_surf, (0, 0, 0, opacity), (x - 1, top), (x - 1, bottom))
-        # Draw horizontal lines            
-        for y in range(top, bottom, TILEHEIGHT):
-            engine.draw_line(line_surf, (0, 0, 0, opacity), (left, y), (right, y))
+            # Draw vertical lines
+            for x in range(left, right, TILEWIDTH):
+                engine.draw_line(line_surf, (0, 0, 0, opacity), (x - 1, top), (x - 1, bottom))
+            # Draw horizontal lines            
+            for y in range(top, bottom, TILEHEIGHT):
+                engine.draw_line(line_surf, (0, 0, 0, opacity), (left, y), (right, y))
         # Draw big lines
         engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, top - 1), (right + 1, top - 1), width=3)
         engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 1, top - 1), (left - 1, bottom), width=3)

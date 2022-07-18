@@ -146,7 +146,7 @@ class SimpleMapView(QGraphicsView):
         pos = int(scene_pos.x() / TILEWIDTH), int(scene_pos.y() / TILEHEIGHT)
 
         if self.current_map and self.current_map.check_bounds(pos):
-            if(event.buttons() == Qt.RightButton):
+            if event.buttons() == Qt.RightButton:
                 self.position_double_right_clicked.emit(*pos)
             else:
                 self.position_double_clicked.emit(*pos)

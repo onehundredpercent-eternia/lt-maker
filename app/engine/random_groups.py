@@ -11,12 +11,12 @@ from app.data.database import DB
 from app.data.level_units import GenericUnit, UniqueUnit
 
 from app.dungeon_maker import dungeon_maker, terrain_maker
-from app.map_maker.utilties import random_choice
 
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.tilemap import TileMapObject
 
-from app.engine import action, unit_funcs, engine, regions
+from app.engine import action, unit_funcs, engine, item_funcs
+from app.events import regions
 from app.engine.game_state import game
 
 from app.utilities import utils, str_utils
@@ -606,7 +606,7 @@ def determine_sprite(pos: tuple, terrain, tilemap):
         pos is in tile space (8x8)
         """
 
-        new_coord = random_choice(new_coords, pos)
+        new_coord = terrain_maker.random_choice(new_coords, pos)
         tilemap.tile_grid[pos] = new_coord
 
     new_coords1, new_coords2, new_coords3, new_coords4 = \

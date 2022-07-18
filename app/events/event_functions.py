@@ -862,6 +862,7 @@ def get_recruitable_unit(self: Event, level_var_nid, level, tag_list, team=None,
 
 def generate_map(self: Event, theme, enemy_type, size, flags=None):
     flags = flags or set()
+    size = self._parse_pos(size)
 
     from app.engine import random_groups
     random_groups.generate_map(theme, enemy_type, size)

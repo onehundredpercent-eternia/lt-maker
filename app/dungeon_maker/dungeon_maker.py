@@ -24,6 +24,19 @@ class DungeonTileMap:
             for y in range(self.height):
                 self.terrain_grid[(x, y)] = terrain
 
+    def print_grid(self):
+        for y in range(self.height):
+            print("%02d " % y, end='')
+            for x in range(self.width):
+                terrain = self.get_terrain((x, y))
+                if terrain == 'Floor':
+                    print("_", end='')
+                elif terrain == 'Wall':
+                    print("#", end='')
+                else:
+                    print("S", end='')
+            print("\n", end='')
+
     def check_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
@@ -54,7 +67,8 @@ def random_point_in_circle(radius: float) -> tuple:
     r = 2 - u if u > 1 else u
     return radius * r * math.cos(t), radius * r * math.sin(t)
 
-def get_rooms(avg_size=4.5, num_rooms=20) -> list:
+def get_rooms(avg_size=4.5, num_rooms=20, offset=None) -> list:
+    offset = offset or (10, 10)
     radius = 1
     rooms = []
     for _ in range(num_rooms):
@@ -66,7 +80,7 @@ def get_rooms(avg_size=4.5, num_rooms=20) -> list:
             continue
         # choose a random point to place the room
         x, y = random_point_in_circle(radius)
-        rooms.append(RoomPrefab(x + rwidth//2, y + rheight//2, round(rwidth), round(rheight)))
+        rooms.append(RoomPrefab(x + rwidth//2 + offset[0], y + rheight//2 + offset[1], round(rwidth), round(rheight)))
     return rooms
 
 def room_overlaps(a: RoomPrefab, b: RoomPrefab) -> bool:
@@ -255,16 +269,30 @@ def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Se
 
 def generate_dungeon(theme: str, size: Tuple[int, int]):
     width, height = size
-    tilemap = DungeonTileMap(width, height)
-    tilemap.reset_grid('Wall')
-    rooms: List[RoomPrefab] = get_rooms()
-    rooms: List[RoomPrefab] = separation_steering(rooms)
-    room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
-    new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
-    print(len(new_rooms))
-    connections = combine_rooms(tilemap, new_rooms, room_tiles)
+    while True:
+        tilemap = DungeonTileMap(width, height)
+        tilemap.reset_grid('Wall')
+        rooms: List[RoomPrefab] = get_rooms(offset=(width/2, height/2))
+        rooms: List[RoomPrefab] = separation_steering(rooms)
+        room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
+        new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
+        print(len(new_rooms))
+        connections = combine_rooms(tilemap, new_rooms, room_tiles)
 
-    place_rooms_on_grid(tilemap, new_rooms)
-    place_rooms_on_grid(tilemap, Room(connections), 'Floor')
+        place_rooms_on_grid(tilemap, new_rooms)
+        place_rooms_on_grid(tilemap, [Room(connections)], 'Floor')
+
+        # Check number of rooms
+        floor_tiles = {pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == 'Floor'}
+        rooms: List[Room] = find_new_rooms(tilemap, floor_tiles)
+        print(len(rooms))
+        if len(rooms) == 1:
+            break
 
     return tilemap, new_rooms
+
+# to test
+# python -m app.dungeon_maker.dungeon_maker
+if __name__ == '__main__':
+    tilemap, rooms = generate_dungeon('Soldier', (20, 20))
+    tilemap.print_grid()

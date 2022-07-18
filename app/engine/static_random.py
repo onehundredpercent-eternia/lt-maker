@@ -46,6 +46,9 @@ r = StaticRandom()
 def set_seed(seed):
     r.set_seed(seed)
 
+def get_seed() -> int:
+    return r.seed
+
 def get_combat():
     return r.combat_random.randint(0, 99)
 

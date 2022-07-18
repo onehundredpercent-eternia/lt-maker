@@ -63,9 +63,9 @@ if __name__ == '__main__':
     try:
         # find_and_run_project()
         # main('lion_throne')
-        main('../west_march/west_march')
+        # main('../west_march/west_march')
         # test_play('lion_throne')
-        # test_play('../west_march/west_march')
+        test_play('../west_march/west_march')
     except Exception as e:
         logging.exception(e)
         inform_error()

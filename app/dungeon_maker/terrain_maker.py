@@ -1,5 +1,14 @@
+import os
+import random
+
 from app.constants import TILEWIDTH, TILEHEIGHT
-from app.engine import engine
+from app.engine import engine, static_random
+
+def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
+    if seed is None:
+        seed = static_random.get_seed()
+    random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
+    return random.choice(choices)
 
 class Terrain():
     base_coord = (0, 0)
@@ -16,17 +25,17 @@ class Terrain():
                 return y // TILEHEIGHT
         return self.tileset_image.get_height() // TILEHEIGHT
 
-    def single_process(self):
+    def single_process(self) -> None:
         pass
 
-    def determine_sprite_coords(tilemap, pos):
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
         new_coords1 = [(self.base_coord[0]*2, self.base_coord[1]*2)]
         new_coords2 = [(self.base_coord[0]*2 + 1, self.base_coord[1]*2)]
         new_coords3 = [(self.base_coord[0]*2 + 1, self.base_coord[1]*2 + 1)]
         new_coords4 = [(self.base_coord[0]*2, self.base_coord[1]*2 + 1)]
         return new_coords1, new_coords2, new_coords3, new_coords4
 
-    def get_image(tile_coord) -> engine.Surface:
+    def get_image(self, tile_coord) -> engine.Surface:
         im = self.tileset_image.copy(
             tile_coord[0] * TILEWIDTH//2,
             tile_coord[1] * TILEHEIGHT//2,
@@ -115,7 +124,7 @@ class PillarTerrain(Terrain):
 def get_terrain(theme: str):
     # Right now, there is only one theme
     theme_dir = 'app/map_maker/palettes/westmarch/'
-    return {'Floor': FloorTerrain(os.path.join(theme_dir, 'floor.png'))
-            'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png'))
-            'Pillar': PillarTerrain(os.path.join(theme_dir, 'pillar.png'))
+    return {'Floor': FloorTerrain(os.path.join(theme_dir, 'floor.png')),
+            'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png')),
+            'Pillar': PillarTerrain(os.path.join(theme_dir, 'pillar.png')),
             }
