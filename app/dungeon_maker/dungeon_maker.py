@@ -183,6 +183,10 @@ class Room:
         # returns the center of the room in the y direction
         return sum(tile[1] for tile in self.tiles) / len(self.tiles)
 
+    @property
+    def size(self):
+        return len(self.tiles)
+    
 def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room]:
     rooms = []
     while room_tiles:
@@ -267,7 +271,8 @@ def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Se
                     all_checked_walls |= set(wall)
     return new_floors
 
-def generate_dungeon(theme: str, size: Tuple[int, int]):
+def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
+    random.seed(seed)
     width, height = size
     while True:
         tilemap = DungeonTileMap(width, height)

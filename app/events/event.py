@@ -644,6 +644,8 @@ class Event():
             position = self._get_unit(text).position
         elif self.game.is_displaying_overworld() and self._get_overworld_location_of_object(text):
             position = self._get_overworld_location_of_object(text).position
+        elif text in self.game.level.regions.keys():
+            return self.game.level.regions.get(text).position
         else:
             valid_regions = \
                 [tuple(region.position) for region in self.game.level.regions

@@ -25,7 +25,7 @@ class Terrain():
                 return y // TILEHEIGHT
         return self.tileset_image.get_height() // TILEHEIGHT
 
-    def single_process(self) -> None:
+    def single_process(self, tilemap) -> None:
         pass
 
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
@@ -36,10 +36,10 @@ class Terrain():
         return new_coords1, new_coords2, new_coords3, new_coords4
 
     def get_image(self, tile_coord) -> engine.Surface:
-        im = self.tileset_image.copy(
+        im = engine.subsurface(self.tileset_image, (
             tile_coord[0] * TILEWIDTH//2,
             tile_coord[1] * TILEHEIGHT//2,
-            TILEWIDTH//2, TILEHEIGHT//2)
+            TILEWIDTH//2, TILEHEIGHT//2))
         return im
 
 class WangEdge2Terrain16(Terrain):
@@ -66,6 +66,8 @@ class WangEdge2Terrain16(Terrain):
         return new_coords1, new_coords2, new_coords3, new_coords4
 
 class FloorTerrain(Terrain):
+    terrain_like = ('Floor', )
+
     def __init__(self, tileset_image_fn):
         self.tileset_image = engine.image_load(tileset_image_fn)
         self.limits = {k: self._find_limit(k) for k in range(6)}
@@ -108,6 +110,8 @@ class FloorTerrain(Terrain):
         return new_coords1, new_coords2, new_coords3, new_coords4
 
 class WallTerrain(WangEdge2Terrain16):
+    terrain_like = ('Wall', )
+
     def _determine_index(self, tilemap, pos: tuple) -> tuple:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
         # Edge is true when we have an adjacent walllike
@@ -119,7 +123,7 @@ class WallTerrain(WangEdge2Terrain16):
         return index
 
 class PillarTerrain(Terrain):
-    pass
+    terrain_like = ('Pillar', )
 
 def get_terrain(theme: str):
     # Right now, there is only one theme

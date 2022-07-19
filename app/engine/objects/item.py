@@ -3,6 +3,8 @@ from app.utilities.data import Data
 from app.data.database import DB
 import app.engine.item_component_access as ICA
 
+import logging
+
 class ItemObject():
     next_uid = 100
 
@@ -57,6 +59,9 @@ class ItemObject():
             if component.nid == 'item_prefab':
                 item_prefab_nid = component.value
                 item_prefab = DB.items.get(item_prefab_nid)
+                if not item_prefab:
+                    logging.error("Couldn't find %s for %s", item_prefab_nid, prefab.nid)
+                    break
                 for component in item_prefab.components:
                     new_component = ICA.restore_component((component.nid, component.value))
                     components.append(new_component)

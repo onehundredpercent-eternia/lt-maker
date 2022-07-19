@@ -64,7 +64,7 @@ if __name__ == '__main__':
         # find_and_run_project()
         # main('lion_throne')
         # main('../west_march/west_march')
-        # test_play('lion_throne')
+        # test_play('lion_throne'{pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == 'Floor'})
         test_play('../west_march/west_march')
     except Exception as e:
         logging.exception(e)

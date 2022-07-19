@@ -957,7 +957,7 @@ class GameState():
         """
         from app.engine import action
         old = static_random.get_other_random_state()
-        result = static_random.r.other_random.random()
+        result = static_random.get_random_float()
         new = static_random.get_other_random_state()
         action.do(action.RecordOtherRandomState(old, new))
         return result

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import random
 
 from enum import Enum
 from typing import Dict, List, Tuple
@@ -49,7 +48,7 @@ class_data = Data([
     ClassData('Errant', 2, 'Sword', 1),
     ClassData('Mercenary', 2, 'Sword', 1),
     ClassData('Thief', 2, 'Sword', 3),
-    ClassData('Armor', 3, 'Lance', 2),
+    ClassData('Sentinel', 3, 'Lance', 2),
     ClassData('Cavalier', 2, 'Lance', 2),
     ClassData('Falcoknight', 4, 'Lance', 4),
     ClassData('Skirmisher', 2, 'Lance', 1),
@@ -80,7 +79,7 @@ item_data = {
     'Veteran': 'Attack+ Sword',
     'Thief': 'Slim Sword',
     'Assassin': 'Thief Sword',
-    'Armor': 'Shield Lance',
+    'Sentinel': 'Shield Lance',
     'Immortal': 'Shield+ Lance',
     'Cavalier': 'Soldier Lance',
     'Paladin': 'Aura Lance',
@@ -118,7 +117,7 @@ item_data2 = {
 def get_potential_leaders(klass_nid) -> List[str]:
     base_class = get_unpromoted_class(klass_nid)
     d = {
-        'Soldier': ['Armor'],
+        'Soldier': ['Sentinel'],
         'Brigand': ['Mercenary']
     }
     if base_class in d:
@@ -233,8 +232,7 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     if klass in item_data and level >= 5:
         starting_items = [(item_data[klass], False)]
     elif klass in anima_users:
-        random.seed(ai_group)
-        anima_type = random.randchoice(['Fire', 'Wind', 'Thunder'])
+        anima_type = game.get_random_choice(['Fire', 'Wind', 'Thunder'])
         if anima_type == 'Fire':
             starting_items = [('Grave Fire', False)]
         elif anima_type == 'Wind':
@@ -265,9 +263,12 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
             tags.append('Promo')
         starting_items.append((get_random_item(tags), True))
 
+    logging.debug('Starting Items: %s', starting_items)
+    assert all(item[0] in DB.items.keys() for item in starting_items)
     team = 'enemy'
     starting_position = position
     level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, ai_group, starting_position)
+    logging.debug(level_unit_prefab.starting_items)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     if is_elite:
         new_unit._tags.append('Elite')
@@ -288,22 +289,26 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
 
     # Determine which classes we can put here
     all_classes = set(class_data.keys())
+    assert all(klass in DB.classes.keys() for klass in all_classes)
     valid_classes: List[str] = group_data.get('valid_classes', [])
     if valid_classes:
         all_classes &= set(valid_classes)
     valid_tags: List[str] = group_data.get('valid_tags', [])
     if valid_tags:
+        logging.debug("Valid Tags: %s", valid_tags)
         valid_classes = \
             [klass for klass in all_classes \
              if any(tag in DB.classes.get(klass).tags for tag in valid_tags)]
         all_classes &= set(valid_classes)
     all_classes = list(all_classes)
-    logging.debug(all_classes)
+    logging.debug("Valid Classes: %s", all_classes)
     logging.debug("Completed Chapters: %s", completed_chapters())
+    assert len(all_classes) > 0
     
     all_classes = [klass for klass in all_classes if class_data.get(klass).chapter_min <= completed_chapters() + 1 and class_data.get(klass).chapter_max >= completed_chapters() + 1]
     # So now we have the complete list of classes we can use
-    logging.debug(all_classes)
+    logging.debug("Valid Classes: %s", all_classes)
+    assert len(all_classes) > 0
 
     # Determine how many and which specific classes will belong here
     num_points = get_num_points(completed_chapters())
@@ -559,7 +564,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         if game.get_random_float() < promotion_chance:
             class_to_add = get_promoted_class(class_to_add)
 
-        ai = group_data.get('ai', 'Guard')
+        ai = group_data.get('ai', 'Attack')
         level += 2  # Boss is two levels above by default
         new_unit = create_unit(class_to_add, position, level, ai, ai_group, droppable=droppable)
         new_unit._tags.append('Boss')
@@ -592,12 +597,12 @@ def get_recruitable_unit(level_var_nid, level, tag_list, team):
         item_id = item_data[new_unit.klass]
         item = item_funcs.create_item(None, item_id)
         game.register_item(item)
-        action.do(action.GiveItem(unit, item))
+        action.do(action.GiveItem(new_unit, item))
     if new_unit.klass in item_data2:
         item_id = item_data2[new_unit.klass]
         item = item_funcs.create_item(None, item_id)
         game.register_item(item)
-        action.do(action.GiveItem(unit, item))
+        action.do(action.GiveItem(new_unit, item))
     return new_unit
 
 def determine_sprite(pos: tuple, terrain, tilemap):
@@ -619,16 +624,17 @@ def determine_sprite(pos: tuple, terrain, tilemap):
 
 def generate_map(theme=None, enemy_type=None, size=None) -> None:
     theme = theme or 'default'
-    enemy_type = enemy_type or ['Soldier']
+    enemy_type = [enemy_type] or ['Soldier']
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
-    dungeon, rooms = dungeon_maker.generate_dungeon(theme, size)
+    seed = game.game_vars.get('_random_seed', -1)
+    dungeon, rooms = dungeon_maker.generate_dungeon(theme, size, seed)
     DB_terrain = terrain_maker.get_terrain(theme)
 
     # Need to create an image for the base layer
     im_width, im_height = dungeon.width * TILEWIDTH, dungeon.height * TILEHEIGHT
     surf = engine.create_surface((im_width, im_height))
-    engine.fill_surface(surf, (0, 0, 0))
+    engine.fill(surf, (0, 0, 0))
 
     processed_nids = set()
     for pos in dungeon.terrain_grid:
@@ -661,21 +667,21 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     biggest_north_room = rooms[0]
     for room in rooms[1:]:
         if room.y >= dungeon.height * 0.75:
-            if room.size > biggest_south_room:
+            if room.size > biggest_south_room.size:
                 biggest_south_room = room
         if room.y <= dungeon.height * 0.25:
-            if room.size >= biggest_north_room:
+            if room.size >= biggest_north_room.size:
                 biggest_north_room = room
 
     starting_room = biggest_south_room
     ending_room = biggest_north_room
 
     # Create formations
-    num_formations = int(lerp(8, 14, completed_chapters() / LAST_CHAPTER))
+    num_formations = int(lerp(6, 12, completed_chapters() / LAST_CHAPTER))
     # Starting from southwest corner of room
-    tiles = sorted(room.tiles, key=lambda x: (x[0], -x[1]))
+    tiles = sorted(starting_room.tiles, key=lambda x: (x[0], -x[1]))
     formation_tiles = tiles[:num_formations]
-    for idx, tile in formation_tiles:
+    for idx, tile in enumerate(formation_tiles):
         formation_region = regions.Region('Formation%02d' % idx)
         formation_region.region_type = regions.RegionType.FORMATION
         formation_region.position = tile
@@ -707,10 +713,12 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
 
     # Generate grave tree regions
     num_grave_trees = int(lerp(3, 6, completed_chapters() / LAST_CHAPTER))
-    valid_positions = [pos for pos in tilemap.positions if game.movement.check_simple_traversable(pos)]
+    valid_positions = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
+    valid_positions = [pos for pos in valid_positions if all(utils.calculate_distance(pos, form_tile) > 8 for form_tile in formation_tiles)]
+    valid_positions = sorted([pos for pos in valid_positions if game.movement.check_simple_traversable(pos)])
     # Choose X random positions
     counter = num_grave_trees
-    while counter > 0:
+    while counter > 0 and valid_positions:
         counter -= 1
         pos = game.get_random_choice(valid_positions)
         valid_positions.remove(pos)

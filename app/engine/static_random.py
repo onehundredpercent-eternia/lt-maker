@@ -83,6 +83,13 @@ def get_other_random_state():
 def set_other_random_state(state):
     r.other_random.state = state
 
+def get_random_float() -> float:
+    return r.other_random.random()
+
+def get_random_choice(choices):
+    idx = get_other(0, len(choices) - 1)
+    return list(choices)[idx]
+
 # === Returns the index of a weighted list
 def weighted_choice(choices, generator=None) -> int:
     if generator:
