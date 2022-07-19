@@ -294,6 +294,13 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         if len(rooms) == 1:
             break
 
+        # Change walls surrounded on all sides by other walls to voids
+        for pos in tilemap.terrain_grid.keys():
+            if tilemap.get_terrain(pos) == 'Wall':
+                adjacent_terrain = tilemap.get_cardinal_terrain(pos) + tilemap.get_diagonal_terrain(pos)
+                if all(adj == 'Wall' or adj is None for adj in adjacent_terrain):
+                    tilemap.set_grid(*adj, 'Void')
+
     return tilemap, new_rooms
 
 # to test
