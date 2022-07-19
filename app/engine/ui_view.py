@@ -303,31 +303,34 @@ class UIView():
         return bg_surf
 
     def create_obj_info(self):
-        font = FONT['text']
+        # font = FONT['text']
 
         # Draw Objective
-        obj = game.level.objective['simple']
-        text_parser = TextEvaluator(logging.getLogger(), game)
-        text_lines = text_parser._evaluate_all(obj).split(',')
-        text_lines = [line.replace('{comma}', ',') for line in text_lines]
-        longest_surf_width = text_funcs.get_max_width(font, text_lines)
-        bg_surf = base_surf.create_base_surf(longest_surf_width + 16, 16 * len(text_lines) + 8)
+        # obj = game.level.objective['simple']
+        # text_parser = TextEvaluator(logging.getLogger(), game)
+        # text_lines = text_parser._evaluate_all(obj).split(',')
+        # text_lines = [line.replace('{comma}', ',') for line in text_lines]
+        # longest_surf_width = text_funcs.get_max_width(font, text_lines)
+        # bg_surf = base_surf.create_base_surf(longest_surf_width + 16, 16 * len(text_lines) + 8)
 
-        if len(text_lines) == 1:
-            shimmer = SPRITES.get('menu_shimmer1')
-        else:
-            shimmer = SPRITES.get('menu_shimmer2')
-        bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 5))
-        surf = image_mods.make_translucent(bg_surf, .1)
+        # if len(text_lines) == 1:
+        #     shimmer = SPRITES.get('menu_shimmer1')
+        # else:
+        #     shimmer = SPRITES.get('menu_shimmer2')
+        # bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 5))
+        # surf = image_mods.make_translucent(bg_surf, .1)
 
-        for idx, line in enumerate(text_lines):
-            pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 4)
-            font.blit(line, surf, pos)
+        # for idx, line in enumerate(text_lines):
+        #     pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 4)
+        #     font.blit(line, surf, pos)
 
-        big_surf = engine.create_surface((max(surf.get_width(), self.memory_bar.width), self.memory_bar.height + surf.get_height()), transparent=True)
+        # big_surf = engine.create_surface((max(surf.get_width(), self.memory_bar.width), self.memory_bar.height + surf.get_height()), transparent=True)
         # Draw memory
+        # self.memory_bar.draw(big_surf, (0, 0), game.party.money)
+        # big_surf.blit(surf, (big_surf.get_width() - surf.get_width(), self.memory_bar.height))
+
+        big_surf = engine.create_surface((self.memory_bar.width, self.memory_bar.height), transparent=True)
         self.memory_bar.draw(big_surf, (0, 0), game.party.money)
-        big_surf.blit(surf, (big_surf.get_width() - surf.get_width(), self.memory_bar.height))
         
         return big_surf
 
