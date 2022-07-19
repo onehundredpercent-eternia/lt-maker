@@ -125,10 +125,14 @@ class WallTerrain(WangEdge2Terrain16):
 class PillarTerrain(Terrain):
     terrain_like = ('Pillar', )
 
+class VoidTerrain(Terrain):
+    terrain_like = ('Void', )
+
 def get_terrain(theme: str):
     # Right now, there is only one theme
-    theme_dir = 'app/map_maker/palettes/westmarch/'
+    theme_dir = 'app/dungeon_maker/palettes/dungeon/'
     return {'Floor': FloorTerrain(os.path.join(theme_dir, 'floor.png')),
             'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png')),
             'Pillar': PillarTerrain(os.path.join(theme_dir, 'pillar.png')),
+            'Void': VoidTerrain(os.path.join(theme_dir, 'void.png')),
             }
