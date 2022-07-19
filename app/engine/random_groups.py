@@ -284,7 +284,7 @@ def build_groups():
     for region in regions:
         build_group(region.nid, region.group_data, region.get_all_positions())
 
-def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
+def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: bool = False):
     logging.debug("Build Group %s", group_nid)
 
     # Determine which classes we can put here
@@ -311,7 +311,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     assert len(all_classes) > 0
 
     # Determine how many and which specific classes will belong here
-    num_points = get_num_points(completed_chapters())
+    base_num_points = get_num_points(completed_chapters())
     # Don't overlap other units
     positions = [pos for pos in positions if not game.board.get_unit(pos)]
 
@@ -321,6 +321,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     else:  # Only select traversable positions
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
     logging.debug("#Positions: %s", len(positions))
+
+    num_points = int(base_num_points * max(1, len(positions) / 10))
     logging.debug("#Points: %s", num_points)
 
     is_elite = game.get_random_float() < get_elite_chance() and completed_chapters() > 0
@@ -335,7 +337,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
 
     logging.debug("Avg Level: %s", level)
 
-    if len(positions) == 1:
+    if boss:
         kind = GroupKind.BOSS
     else:
         kind = game.get_random_weighted_choice(list(group_kind_incidence.keys()), list(group_kind_incidence.values()))
@@ -568,6 +570,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         level += 2  # Boss is two levels above by default
         new_unit = create_unit(class_to_add, position, level, ai, ai_group, droppable=droppable)
         new_unit._tags.append('Boss')
+        print(new_unit.tags)
         # Give the Boss some bonuses
         stat_changes = {'HP': 5, 'POW': 2, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 2, 'RES': 3}
         # Make sure we don't go over max
@@ -680,6 +683,8 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     num_formations = int(lerp(6, 12, completed_chapters() / LAST_CHAPTER))
     # Starting from southwest corner of room
     tiles = sorted(starting_room.tiles, key=lambda x: (x[0], -x[1]))
+    starting_tile = tiles[0]
+    tiles = sorted(starting_room.tiles, key=lambda x: utils.calculate_distance(x, starting_tile))
     formation_tiles = tiles[:num_formations]
     for idx, tile in enumerate(formation_tiles):
         formation_region = regions.Region('Formation%02d' % idx)
@@ -706,7 +711,7 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
                            all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)]
             build_group('%d' % idx, group_data, valid_tiles)
         elif room is ending_room:
-            build_group('Boss', group_data, [boss_pos])
+            build_group('Boss', group_data, [boss_pos], boss=True)
             build_group('%d' % idx, group_data, room.tiles)
         else:
             build_group('%d' % idx, group_data, room.tiles)
