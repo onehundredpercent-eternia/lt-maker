@@ -33,6 +33,8 @@ class DungeonTileMap:
                     print("_", end='')
                 elif terrain == 'Wall':
                     print("#", end='')
+                elif terrain == 'Void':
+                    print(" ", end='')
                 else:
                     print("S", end='')
             print("\n", end='')
@@ -139,7 +141,7 @@ def get_room_tiles(tilemap: DungeonTileMap, rooms: List[RoomPrefab]) -> Set[tupl
     room_tiles = {tile for tile in room_tiles if tilemap.check_bounds(*tile)}
     return room_tiles
 
-def flood_fill(tilemap: DungeonTileMap, room_tiles: set, pos: tuple) -> set:
+def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
     blob_positions = set()
     unexplored_stack = []
 
@@ -152,7 +154,7 @@ def flood_fill(tilemap: DungeonTileMap, room_tiles: set, pos: tuple) -> set:
 
             if current_pos in blob_positions:
                 continue
-            if not tilemap.check_bounds(*current_pos):
+            if not check_bounds(*current_pos):
                 continue
             if current_pos not in room_tiles:
                 continue
@@ -191,7 +193,7 @@ def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room
     rooms = []
     while room_tiles:
         tile = next(iter(room_tiles))
-        extant_tiles = flood_fill(tilemap, room_tiles, tile)
+        extant_tiles = flood_fill(tilemap.check_bounds, room_tiles, tile)
         if extant_tiles:
             room = Room(extant_tiles)
             rooms.append(room)
@@ -281,7 +283,6 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         rooms: List[RoomPrefab] = separation_steering(rooms)
         room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
         new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
-        print(len(new_rooms))
         connections = combine_rooms(tilemap, new_rooms, room_tiles)
 
         place_rooms_on_grid(tilemap, new_rooms)
@@ -291,20 +292,21 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         floor_tiles = {pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == 'Floor'}
         rooms: List[Room] = find_new_rooms(tilemap, floor_tiles)
         print(len(rooms))
-        if len(rooms) == 1:
-            break
+        if len(rooms) != 1:
+            continue
 
         # Change walls surrounded on all sides by other walls to voids
         for pos in tilemap.terrain_grid.keys():
             if tilemap.get_terrain(pos) == 'Wall':
                 adjacent_terrain = tilemap.get_cardinal_terrain(pos) + tilemap.get_diagonal_terrain(pos)
-                if all(adj == 'Wall' or adj is None for adj in adjacent_terrain):
-                    tilemap.set_grid(*adj, 'Void')
+                if all(adj in ('Wall', 'Void') or adj is None for adj in adjacent_terrain):
+                    tilemap.set_grid(*pos, 'Void')
+        break
 
-    return tilemap, new_rooms
+    return tilemap
 
 # to test
 # python -m app.dungeon_maker.dungeon_maker
 if __name__ == '__main__':
-    tilemap, rooms = generate_dungeon('Soldier', (20, 20))
+    tilemap = generate_dungeon('Soldier', (20, 20), 0)
     tilemap.print_grid()

@@ -268,7 +268,6 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     team = 'enemy'
     starting_position = position
     level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, ai_group, starting_position)
-    logging.debug(level_unit_prefab.starting_items)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     if is_elite:
         new_unit._tags.append('Elite')
@@ -284,7 +283,7 @@ def build_groups():
     for region in regions:
         build_group(region.nid, region.group_data, region.get_all_positions())
 
-def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: bool = False):
+def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     logging.debug("Build Group %s", group_nid)
 
     # Determine which classes we can put here
@@ -305,7 +304,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
     logging.debug("Completed Chapters: %s", completed_chapters())
     assert len(all_classes) > 0
     
-    all_classes = [klass for klass in all_classes if class_data.get(klass).chapter_min <= completed_chapters() + 1 and class_data.get(klass).chapter_max >= completed_chapters() + 1]
+    all_classes = sorted([klass for klass in all_classes if class_data.get(klass).chapter_min <= completed_chapters() + 1 and class_data.get(klass).chapter_max >= completed_chapters() + 1])
     # So now we have the complete list of classes we can use
     logging.debug("Valid Classes: %s", all_classes)
     assert len(all_classes) > 0
@@ -322,7 +321,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
     logging.debug("#Positions: %s", len(positions))
 
-    num_points = int(base_num_points * max(1, len(positions) / 10))
+    num_points = base_num_points * len(positions) / 25
     logging.debug("#Points: %s", num_points)
 
     is_elite = game.get_random_float() < get_elite_chance() and completed_chapters() > 0
@@ -337,7 +336,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
 
     logging.debug("Avg Level: %s", level)
 
-    if boss:
+    if len(positions) == 1:
         kind = GroupKind.BOSS
     else:
         kind = game.get_random_weighted_choice(list(group_kind_incidence.keys()), list(group_kind_incidence.values()))
@@ -382,6 +381,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
         second_points = 0.5 * num_points
         main_cost = class_data.get(class_to_add).points
         second_cost = class_data.get(second_class_to_add).points
+        logging.debug("Main Cost: %s", main_cost)
+        logging.debug("Second Cost: %s", second_cost)
 
         promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
         if game.get_random_float() < promotion_chance:
@@ -406,7 +407,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
             position = game.get_random_choice(positions)
             positions.remove(position)
 
-            new_unit = create_unit(class_to_add, position, level, ai, ai_group, is_elite)
+            new_unit = create_unit(second_class_to_add, position, level, ai, ai_group, is_elite)
 
             if not positions:
                 logging.error("No more valid positions to place units")
@@ -421,11 +422,16 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
             mage_class_to_add = game.get_random_choice(all_mage_classes)
         else:
             mage_class_to_add = main_class_to_add
+        logging.debug("Class To Add: %s", main_class_to_add)
+        logging.debug("Mage Class To Add: %s", mage_class_to_add)
+
         main_cost = class_data.get(main_class_to_add).points
         mage_cost = class_data.get(mage_class_to_add).points
         # Split 3 to 1  # TODO is this actually a good split?
         main_points = num_points * 0.75
         mage_points = num_points * 0.25
+        logging.debug("Main Cost: %s", main_cost)
+        logging.debug("Mage Cost: %s", mage_cost)
 
         promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
         if game.get_random_float() < promotion_chance:
@@ -470,9 +476,15 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
             mage_class_to_add = game.get_random_choice(all_mage_classes)
         else:
             mage_class_to_add = main_class_to_add
+        logging.debug("Class To Add: %s", main_class_to_add)
+        logging.debug("Second Class To Add: %s", second_class_to_add)
+        logging.debug("Mage Class To Add: %s", mage_class_to_add)
         main_cost = class_data.get(main_class_to_add).points
         second_cost = class_data.get(second_class_to_add).points
         mage_cost = class_data.get(mage_class_to_add).points
+        logging.debug("Main Cost: %s", main_cost)
+        logging.debug("Second Cost: %s", second_cost)
+        logging.debug("Mage Cost: %s", mage_cost)
         # Split 1.5 to 1.5 to 1  # TODO is this actually a good split?
         main_points = num_points * 0.375
         second_points = num_points * 0.375
@@ -524,6 +536,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
         regular_class_to_add = game.get_random_choice(all_classes)
         leader_classes = get_potential_leaders(regular_class_to_add)
         leader_class_to_add = game.get_random_choice(leader_classes)
+        logging.debug("Main Class to Add: %s", regular_class_to_add)
+        logging.debug("Leader Class to Add: %s", leader_class_to_add)
 
         promotion_chance = get_promotion_chance(completed_chapters(), is_elite)
         if game.get_random_float() < promotion_chance:
@@ -533,19 +547,22 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
             leader_class_to_add = get_promoted_class(leader_class_to_add)
 
         leader_cost = class_data.get(leader_class_to_add).points
+        point_cost = class_data.get(regular_class_to_add).points
+        logging.debug("Main Cost: %s", point_cost)
+        logging.debug("Leader Cost: %s", leader_cost)
 
         num_points -= leader_cost
         position = game.get_random_choice(positions)
         positions.remove(position)
 
-        new_unit = create_unit(leader_class_to_add, position, level, ai, ai_group, is_elite, droppable)
+        new_unit = create_unit(leader_class_to_add, position, level + 1, ai, ai_group, is_elite, droppable)
 
         if not positions:
             logging.error("No more valid positions to place units")
             return
 
         while num_points > 0:
-            point_cost = class_data.get(regular_class_to_add).points
+            
             num_points -= point_cost
             position = game.get_random_choice(positions)
             positions.remove(position)
@@ -559,6 +576,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], boss: 
     elif kind == GroupKind.BOSS:
         boss_classes = [c for c in all_classes if c != 'Soldier']
         class_to_add = game.get_random_choice(boss_classes)
+        logging.debug("Boss Class to Add: %s", class_to_add)
         position = game.get_random_choice(positions)
         positions.remove(position)
 
@@ -625,13 +643,135 @@ def determine_sprite(pos: tuple, terrain, tilemap):
     _push_to_tilemap((pos[0] * 2 + 1, pos[1] * 2 + 1), new_coords3)
     _push_to_tilemap((pos[0] * 2, pos[1] * 2 + 1), new_coords4)
 
+def get_floor_positions():
+    valid_positions = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
+    return sorted([pos for pos in valid_positions if game.movement.check_simple_traversable(pos)])
+
+def find_all_rooms(positions: List[Tuple]) -> List[List[Tuple]]:
+    rooms = []
+    floors = set(positions)
+
+    @dataclass
+    class Shape:
+        shape: Dict = None
+        remove: List = None
+
+        def rotate(self, how_much=0):
+            if how_much == 0:
+                return Shape(self.shape, self.remove)
+            elif how_much == 1:  # 90 degrees
+                return Shape({(-y, x): floor for (x, y), floor in self.shape.items()},
+                             [(-y, x) for (x, y) in self.remove])
+            elif how_much == 2:  # 180 degrees
+                return Shape({(-x, -y): floor for (x, y), floor in self.shape.items()},
+                             [(-x, -y) for (x, y) in self.remove])
+            elif how_much == 3:  # 270 degrees
+                return Shape({(y, -x): floor for (x, y), floor in self.shape.items()},
+                             [(y, -x) for (x, y) in self.remove])
+
+        def flip_vert(self):
+            return Shape({(x, -y): floor for (x, y), floor in self.shape.items()},
+                         [(x, -y) for (x, y) in self.remove])
+
+        def flip_horiz(self):
+            return Shape({(-x, y): floor for (x, y), floor in self.shape.items()},
+                         [(-x, y) for (x, y) in self.remove])
+
+        def match(self, main_pos: Tuple, positions: List[Tuple]) -> bool:
+            for pos, floor in self.shape.items():
+                cpos = utils.tuple_add(pos, main_pos)
+                if floor and cpos not in positions:
+                    return False
+                elif not floor and cpos in positions:
+                    return False
+            return True
+
+    single_hallway = Shape(
+        {(0, 0): 1, (-1, 0): 1, (1, 0): 1, (0, -1): 0, (0, 1): 0},
+        [(0, 0)],
+    )
+    double_hallway = Shape(
+        {(0, 0): 1, (1, 0): 1, (0, -1): 1, (0, 1): 1, (-1, 0): 0, (2, 0): 0},
+        [(0, 0), (1, 0)],
+    )
+    merged_single = Shape(
+        {(0, 0): 1, (1, 0): 1, (1, 1): 0, (0, -1): 0, (0, 1): 1, (1, -1): 1},
+        [(0, 0), (1, 0)])
+    merged_double = Shape(
+        {(0, 0): 1, (1, 0): 1, (0, 1): 1, (1, 1): 1, (-1, 0): 0, (2, 1): 0},
+        [(0, 0), (1, 1)])
+
+    bad_shapes = [
+        single_hallway, single_hallway.rotate(1),
+        double_hallway, double_hallway.rotate(1),
+        double_hallway.rotate(2), double_hallway.rotate(3),
+        merged_single, merged_single.rotate(1),
+        merged_single.flip_horiz(), merged_single.flip_horiz().rotate(1),
+        merged_double, merged_double.rotate(1),
+        merged_double.flip_horiz(), merged_double.flip_horiz().rotate(1),
+    ]
+
+    # Basically, find areas where you never have to pass through 
+    # a 2 or 1 tile wide hallway to reach the rest of the area
+    for pos in floors:
+        for shape in bad_shapes:
+            if shape.match(pos, floors):
+                for remove_me in shape.remove:
+                    actual_pos = utils.tuple_add(pos, remove_me)
+                    if actual_pos in positions:
+                        positions.remove(actual_pos)
+
+    # Flood fill
+    room_positions = positions.copy()
+    while positions:
+        pos = positions.pop()
+        room = sorted(list(dungeon_maker.flood_fill(lambda x, y: True, room_positions, pos)))
+        if len(room) > 2:
+            rooms.append(room)
+            for pos in room:
+                if pos in positions:
+                    positions.remove(pos)
+
+    # Print rooms
+    all_positions = {}
+    for idx, room in enumerate(rooms):
+        all_positions.update({pos: idx for pos in room})
+    width = max(pos[0] for pos in all_positions.keys()) + 1
+    height = max(pos[1] for pos in all_positions.keys()) + 1
+    for y in range(width):
+        print("%02d " % y, end='')
+        for x in range(height):
+            if (x, y) in all_positions:
+                print("%d" % all_positions[(x, y)], end='')
+            else:
+                print(" ", end='')
+        print("\n", end='')
+
+    return rooms
+
+def find_room_with(rooms: List[List[Tuple]], position: Tuple) -> List[Tuple]:
+    for room in rooms:
+        if position in room:
+            return room
+    # We couldn't find this position in any of the rooms, try and find closest position
+    counter = 1
+    while counter < 4:
+        for room in rooms:
+            for pos in room:
+                if utils.calculate_distance(pos, position) <= counter:
+                    return room
+        counter += 1
+
+    logging.error("Could not find room close to position %s", position)
+    return None
+
 def generate_map(theme=None, enemy_type=None, size=None) -> None:
     theme = theme or 'default'
     enemy_type = [enemy_type] or ['Soldier']
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
     seed = game.game_vars.get('_random_seed', -1)
-    dungeon, rooms = dungeon_maker.generate_dungeon(theme, size, seed)
+    dungeon = dungeon_maker.generate_dungeon(theme, size, seed)
     DB_terrain = terrain_maker.get_terrain(theme)
 
     # Need to create an image for the base layer
@@ -666,25 +806,17 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     game.build_level_from_scratch(level_nid, tilemap)
 
     # Choose a starting room and an ending/boss room
-    biggest_south_room = rooms[0]
-    biggest_north_room = rooms[0]
-    for room in rooms[1:]:
-        if room.y >= dungeon.height * 0.75:
-            if room.size > biggest_south_room.size:
-                biggest_south_room = room
-        if room.y <= dungeon.height * 0.25:
-            if room.size >= biggest_north_room.size:
-                biggest_north_room = room
-
-    starting_room = biggest_south_room
-    ending_room = biggest_north_room
+    valid_positions = get_floor_positions()
+    southwest_corner = sorted(valid_positions, key=lambda x: x[0] + -x[1])[0]
+    northeast_corner = sorted(valid_positions, key=lambda x: -x[0] + x[1])[0]
+    rooms: List[List[Tuple]] = find_all_rooms(valid_positions)
+    starting_room_tiles: List[Tuple] = find_room_with(rooms, southwest_corner)
+    ending_room_tiles: List[Tuple] = find_room_with(rooms, northeast_corner)
 
     # Create formations
-    num_formations = int(lerp(6, 12, completed_chapters() / LAST_CHAPTER))
+    num_formations = int(utils.clamp(lerp(6, 12, completed_chapters() / (LAST_CHAPTER - 1)), 6, 12))
     # Starting from southwest corner of room
-    tiles = sorted(starting_room.tiles, key=lambda x: (x[0], -x[1]))
-    starting_tile = tiles[0]
-    tiles = sorted(starting_room.tiles, key=lambda x: utils.calculate_distance(x, starting_tile))
+    tiles = sorted(starting_room_tiles, key=lambda x: x[0] + -x[1])
     formation_tiles = tiles[:num_formations]
     for idx, tile in enumerate(formation_tiles):
         formation_region = regions.Region('Formation%02d' % idx)
@@ -701,26 +833,39 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
 
     # Figure out boss position
     # Find northeast most position
-    boss_pos = sorted(room.tiles, key=lambda x: (-x[0], x[1]))[0]
+    boss_pos = sorted(ending_room_tiles, key=lambda x: (-x[0] + x[1]))[0]
 
     # Populate rooms with enemies
     group_data = {'valid_tags': enemy_type}
+    from app.engine import static_random
+    logging.debug(static_random.get_other_random_state())
     for idx, room in enumerate(rooms):
-        if room is starting_room:
-            valid_tiles = [tile for tile in room.tiles if 
+        if room is starting_room_tiles:
+            logging.debug("Starting")
+            valid_tiles = [tile for tile in room if 
                            all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)]
             build_group('%d' % idx, group_data, valid_tiles)
-        elif room is ending_room:
-            build_group('Boss', group_data, [boss_pos], boss=True)
-            build_group('%d' % idx, group_data, room.tiles)
+            logging.debug(static_random.get_other_random_state())
+
+        elif room is ending_room_tiles:
+            logging.debug("Ending")
+            build_group('Boss', group_data, [boss_pos])
+            logging.debug(static_random.get_other_random_state())
+            build_group('%d' % idx, group_data, room)
+            logging.debug(static_random.get_other_random_state())
+
         else:
-            build_group('%d' % idx, group_data, room.tiles)
+            logging.debug("Regular")
+            build_group('%d' % idx, group_data, room)
+            logging.debug(static_random.get_other_random_state())
+
+    logging.debug(static_random.get_other_random_state())
 
     # Generate grave tree regions
+    ### TODO: Figure out a good way to place these.
     num_grave_trees = int(lerp(3, 6, completed_chapters() / LAST_CHAPTER))
-    valid_positions = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
+    valid_positions = get_floor_positions()
     valid_positions = [pos for pos in valid_positions if all(utils.calculate_distance(pos, form_tile) > 8 for form_tile in formation_tiles)]
-    valid_positions = sorted([pos for pos in valid_positions if game.movement.check_simple_traversable(pos)])
     # Choose X random positions
     counter = num_grave_trees
     while counter > 0 and valid_positions:
@@ -735,5 +880,6 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
         grave_region.sub_nid = int(distance / 5) + 1
         game.register_region(grave_region)
         action.do(action.AddRegion(grave_region))
+    logging.debug(static_random.get_other_random_state())
 
     print("Done!")

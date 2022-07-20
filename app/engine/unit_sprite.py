@@ -596,11 +596,11 @@ class UnitSprite():
                 return True
         return False
 
-    def draw_hp(self, surf, cull_rect):
+    def draw_hp(self, surf, cull_rect, event=False):
         current_time = engine.get_time()
         left, top = self.get_topleft(cull_rect)
 
-        if self.check_draw_hp():
+        if not event and self.check_draw_hp():
             self.health_bar.draw(surf, left, top)
 
         if self.transition_state == 'normal' and not self.unit.is_dying and \
