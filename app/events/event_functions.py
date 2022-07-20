@@ -865,8 +865,8 @@ def generate_map(self: Event, theme, enemy_type, size, flags=None):
     flags = flags or set()
     size = self._parse_pos(size)
 
-    from app.engine import random_groups
-    random_groups.generate_map(theme, enemy_type, size)
+    from app.engine import map_generator
+    map_generator.generate_map(theme, enemy_type, size)
 
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, flags=None):
     new_unit = self._get_unit(unit)
