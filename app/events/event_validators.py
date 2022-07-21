@@ -939,6 +939,20 @@ class ItemList(Validator):
         valids = [(None, item.nid) for item in self._db.items.values()]
         return valids
 
+class ItemComponent(Validator):
+    desc = "accepts an item component."
+
+    def validate(self, text, level):
+        from app.engine import item_component_access as ICA
+        if text in ICA.get_components().keys():
+            return text
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        from app.engine import item_component_access as ICA
+        valids = [(None, component.nid) for component in ICA.get_components()]
+        return valids
+
 class StatList(Validator):
     desc = "accepts a comma-delimited list of pairs of stat nids and stat changes. For example, `STR,2,SPD,-3`."
 
