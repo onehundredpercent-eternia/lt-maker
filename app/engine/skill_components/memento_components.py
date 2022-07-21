@@ -134,27 +134,37 @@ class MementoInitiateFullMoon(SkillComponent):
         action.do(action.ChangeField(unit, 'full_moon', True))
         # A E S T H E T I C
 
-    def keep_full_moon(self) -> bool:
-        # You've gone two turns without killing anybody
-        return self.skill.data['_last_turn_with_kill'] > game.turncount - 2
+    def _deactivate_full_moon(self, unit):
+        action.do(action.ChangeField(unit, 'full_moon', False))
+        # A E S T H E T I C
 
+    def keep_full_moon(self) -> bool:
+        # You've gone a turn without killing anybody
+        return self.skill.data['_last_turn_with_kill'] >= game.turncount - 2
+
+    def on_upkeep(self, actions, playback, unit):
+        if keep_full_moon():
+            pass
+        else:
+            self._deactivate_full_moon(unit)
+            
     def unit_sprite_flicker_tint(self, unit, skill):
         if unit.get_field('full_moon', False):
             return ((255, 255, 255), 900, 300)
         return None
 
     def end_combat(self, playback, unit, item, target, mode):
-        if target and target.get_hp() <= 0:
-            if self.skill.data['_last_turn_with_kill'] == game.turncount - 1:
-                # You've done it twice in a row, so FULL MOON ACTIVATE
-                self._activate_full_moon(unit)
+        playbacks = [p for p in playback if p.nid in ('damage_hit', 'damage_crit') and p.attacker == unit and \
+                     (p.defender.is_dying or p.defender.dead)]
+        if playbacks:
+            self._activate_full_moon(unit)
             action.do(action.SetObjData(self.skill, '_last_turn_with_kill', game.turncount))
 
     def modify_damage(self, unit, item):
-        return 3 if unit.get_field('full_moon', False) else 0
+        return 2 if unit.get_field('full_moon', False) else 0
 
     def modify_accuracy(self, unit, item):
-        return 30 if unit.get_field('full_moon', False) else 0
+        return 20 if unit.get_field('full_moon', False) else 0
 
 class MementoImmortal(SkillComponent):
     nid = 'memento_immortal'
