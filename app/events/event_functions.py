@@ -1449,6 +1449,41 @@ def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, c
         action.do(action.UnequipItem(unit, subitem))
         action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
 
+def add_item_component(self: Event, global_unit_or_convoy, item, component_nid, component_value=None, flags=None):
+    flags = flags or set()
+    global_unit = global_unit_or_convoy
+
+    unit, item = self._get_item_in_inventory(global_unit, item)
+    if not unit or not item:
+        self.logger.error("add_item_component: Either unit or item was invalid, see above")
+        return
+    
+    import app.engine.item_component_access as ICA
+    new_component = ICA.restore_component((component_nid, component_value))
+    if not new_component:
+        self.logger.error("add_item_component: Couldn't find item component with nid %s", component_nid)
+        return
+
+    item.components.append(new_component)
+    item.__dict__[component_nid] = new_component
+    # Assign parent to component
+    new_component.item = item
+
+def remove_item_component(self: Event, global_unit_or_convoy, item, component_nid, flags=None):
+    flags = flags or set()
+    global_unit = global_unit_or_convoy
+
+    unit, item = self._get_item_in_inventory(global_unit, item)
+    if not unit or not item:
+        self.logger.error("remove_item_component: Either unit or item was invalid, see above")
+        return
+
+    if component_nid in item.components.keys():
+        item.components.remove_key(component_nid)
+        del item.__dict__[component_nid]
+    else:
+        self.logger.warning("remove_item_component: component with nid %s not found for item %s", component_nid, item)
+
 def give_money(self: Event, money, party=None, flags=None):
     flags = flags or set()
 
