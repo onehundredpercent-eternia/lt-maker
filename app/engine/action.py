@@ -1938,6 +1938,11 @@ class Die(Action):
         self.unit.is_dying = False
 
     def reverse(self):
+        # Remember who was resurrected briefly
+        if not 'resurrect' in game.memory:
+            game.memory['resurrect'] = set()
+        game.memory['resurrect'].add(self.unit.nid)
+
         self.unit.dead = False
         self.unit.sprite.set_transition('normal')
         self.unit.sprite.change_state('normal')
