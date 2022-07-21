@@ -1449,14 +1449,24 @@ def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, c
         action.do(action.UnequipItem(unit, subitem))
         action.do(action.RemoveItemFromMultiItem(owner_nid, item, subitem))
 
-def add_item_component(self: Event, global_unit_or_convoy, item, component_nid, component_value=None, flags=None):
+def add_item_component(self: Event, global_unit_or_convoy, item, item_component, expression=None, flags=None):
     flags = flags or set()
     global_unit = global_unit_or_convoy
+    component_nid = item_component
 
     unit, item = self._get_item_in_inventory(global_unit, item)
     if not unit or not item:
         self.logger.error("add_item_component: Either unit or item was invalid, see above")
         return
+
+    if expression is not None:
+        try:
+            component_value = self.text_evaluator.direct_eval(expression)
+        except Exception as e:
+            self.logger.error("add_item_component: %s: Could not evalute {%s}" % (e, expression))
+            return
+    else:
+        component_value = None
     
     import app.engine.item_component_access as ICA
     new_component = ICA.restore_component((component_nid, component_value))
@@ -1469,9 +1479,10 @@ def add_item_component(self: Event, global_unit_or_convoy, item, component_nid, 
     # Assign parent to component
     new_component.item = item
 
-def remove_item_component(self: Event, global_unit_or_convoy, item, component_nid, flags=None):
+def remove_item_component(self: Event, global_unit_or_convoy, item, item_component, flags=None):
     flags = flags or set()
     global_unit = global_unit_or_convoy
+    component_nid = item_component
 
     unit, item = self._get_item_in_inventory(global_unit, item)
     if not unit or not item:
