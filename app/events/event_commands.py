@@ -1350,10 +1350,10 @@ class AddItemComponent(EventCommand):
 
     desc = \
         """
-Adds a *Component* with optional value of *Expression* to *Item* in the inventory of *GlobalUnitOrConvoy*.
+Adds an *ItemComponent* with optional value of *Expression* to *Item* in the inventory of *GlobalUnitOrConvoy*.
         """
 
-    keywords = ["GlobalUnitOrConvoy", "Item", "Component"]
+    keywords = ["GlobalUnitOrConvoy", "Item", "ItemComponent"]
     optional_keywords = ["Expression"]
 
 class RemoveItemComponent(EventCommand):
@@ -1362,10 +1362,10 @@ class RemoveItemComponent(EventCommand):
 
     desc = \
         """
-Removes *Component* from *Item* in the inventory of *GlobalUnitOrConvoy*.
+Removes *ItemComponent* from *Item* in the inventory of *GlobalUnitOrConvoy*.
         """
 
-    keywords = ["GlobalUnitOrConvoy", "Item", "Component"]
+    keywords = ["GlobalUnitOrConvoy", "Item", "ItemComponent"]
 
 class GiveMoney(EventCommand):
     nid = 'give_money'
