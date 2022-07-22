@@ -127,16 +127,9 @@ class MementoInitiateFullMoon(SkillComponent):
     desc = "Unit can initiate and partake of full moon bonuses"
     tag = SkillTags.CUSTOM
 
-    def init(self, skill):
-        self.skill.data['_last_turn_with_kill'] = -1
-
     def _activate_full_moon(self, unit):
         action.do(action.ChangeField(unit, 'full_moon', True))
         # A E S T H E T I C
-
-    def keep_full_moon(self) -> bool:
-        # You've gone two turns without killing anybody
-        return self.skill.data['_last_turn_with_kill'] > game.turncount - 2
 
     def unit_sprite_flicker_tint(self, unit, skill):
         if unit.get_field('full_moon', False):
@@ -145,16 +138,13 @@ class MementoInitiateFullMoon(SkillComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         if target and target.get_hp() <= 0:
-            if self.skill.data['_last_turn_with_kill'] == game.turncount - 1:
-                # You've done it twice in a row, so FULL MOON ACTIVATE
-                self._activate_full_moon(unit)
-            action.do(action.SetObjData(self.skill, '_last_turn_with_kill', game.turncount))
+            self._activate_full_moon(unit)
 
     def modify_damage(self, unit, item):
-        return 3 if unit.get_field('full_moon', False) else 0
+        return 2 if unit.get_field('full_moon', False) else 0
 
     def modify_accuracy(self, unit, item):
-        return 30 if unit.get_field('full_moon', False) else 0
+        return 20 if unit.get_field('full_moon', False) else 0
 
 class MementoImmortal(SkillComponent):
     nid = 'memento_immortal'
