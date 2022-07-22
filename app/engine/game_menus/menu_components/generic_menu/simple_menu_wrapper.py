@@ -14,7 +14,8 @@ from app.engine.game_menus.menu_components.generic_menu.simple_menu import \
     SimpleIconTable
 from app.engine.game_state import game
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
-from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment, convert_align
+from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment
+from app.engine.graphics.ui_framework.utils import convert_align
 from app.engine.icons import draw_chibi, get_icon, get_icon_by_nid
 from app.engine.objects.unit import UnitObject
 from app.resources.resources import RESOURCES

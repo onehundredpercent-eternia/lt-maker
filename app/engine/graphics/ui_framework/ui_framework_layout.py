@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.utilities.enums import Alignments
+from app.utilities.enums import Alignments, HAlignment, VAlignment
 from app.utilities.typing import Point
 from functools import lru_cache
 import logging
@@ -10,38 +10,6 @@ if TYPE_CHECKING:
     from .ui_framework import UIComponent
 
 from enum import Enum
-
-def convert_align(align: Alignments) -> Tuple[HAlignment, VAlignment]:
-    if align == Alignments.TOP_LEFT:
-        return (HAlignment.LEFT, VAlignment.TOP)
-    if align == Alignments.TOP:
-        return (HAlignment.CENTER, VAlignment.TOP)
-    if align == Alignments.TOP_RIGHT:
-        return (HAlignment.RIGHT, VAlignment.TOP)
-    if align == Alignments.LEFT:
-        return (HAlignment.LEFT, VAlignment.CENTER)
-    if align == Alignments.CENTER:
-        return (HAlignment.CENTER, VAlignment.CENTER)
-    if align == Alignments.RIGHT:
-        return (HAlignment.RIGHT, VAlignment.CENTER)
-    if align == Alignments.BOT_LEFT:
-        return (HAlignment.LEFT, VAlignment.BOTTOM)
-    if align == Alignments.BOT:
-        return (HAlignment.CENTER, VAlignment.BOTTOM)
-    if align == Alignments.BOT_RIGHT:
-        return (HAlignment.RIGHT, VAlignment.BOTTOM)
-
-class HAlignment(Enum):
-    LEFT = 'left'
-    CENTER = 'center'
-    RIGHT = 'right'
-    NONE = 'none'
-
-class VAlignment(Enum):
-    TOP = 'top'
-    CENTER = 'center'
-    BOTTOM = 'bottom'
-    NONE = 'none'
 
 class UILayoutType(Enum):
     """Enum for distinguishing the types of layouts for a component.

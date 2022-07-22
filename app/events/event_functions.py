@@ -13,6 +13,7 @@ from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
 from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper import \
     SimpleMenuUI
+from app.engine.graphics.text.textbox import TextBox
 from app.engine.graphics.ui_framework.premade_animations.animation_templates import \
     fade_anim, translate_anim
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
@@ -2331,6 +2332,31 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
+
+def textbox(self: Event, nid: NID, data: str, num_lines: str = None,
+            width: str = None, alignment: str = None, bg: str = None, text_align: str = None,
+            font: str = None, flags = None):
+
+    num_lines = num_lines or '1'
+    num_lines = int(num_lines)
+    width = width or '0'
+    width = int(width)
+    if alignment:
+        try:
+            alignment = Alignments(alignment)
+        except:
+            alignment = self._parse_pos(alignment)
+    else:
+        alignment = Alignments.TOP_LEFT
+
+    bg = bg or "menu_bg_base"
+    talign = HAlignment.LEFT
+    if text_align:
+        talign = HAlignment(text_align)
+    font = font or 'text'
+
+    text_box = TextBox(nid, data, num_lines, width, bg, font, alignment)
+    self.other_boxes.append((nid, text_box))
 
 def text_entry(self: Event, nid, string, positive_integer=None, illegal_character_list=None, flags=None):
     flags = flags or set()

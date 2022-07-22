@@ -61,7 +61,7 @@ def rendered_text_width(fonts: List[NID], texts: List[str]) -> int:
             total_width += 16
     return total_width
 
-def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str], colors: List[NID], topleft: Tuple[int, int], align: Alignments=Alignments.LEFT) -> engine.Surface:
+def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str], colors: List[NID] = None, topleft: Tuple[int, int] = (0, 0), align: Alignments=Alignments.LEFT) -> engine.Surface:
     """An enhanced text render layer wrapper around BmpFont.
     Supports multiple fonts and multiple text sections, as well as
     embedded icons.

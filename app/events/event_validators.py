@@ -6,8 +6,7 @@ import re
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type
 
 from app.data.database import Database
-from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
-                                                                  VAlignment)
+from app.engine.graphics.ui_framework.utils import VAlignment, HAlignment
 from app.events import event_commands
 from app.events.screen_positions import horizontal_screen_positions, vertical_screen_positions
 from app.resources.resources import Resources

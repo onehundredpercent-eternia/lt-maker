@@ -2076,6 +2076,32 @@ class RemoveTable(EventCommand):
 
     keywords = ['Nid']
 
+class TextBox(EventCommand):
+    nid = 'textbox'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+    """Displays a box on screen containing some text.This is distinct from dialogue and choice in that it is non-interactable,
+existing only to be looked at.
+
+* *Nid* is the name of this box.
+* *Data* is a string or an expression that evaluates to a string (if the expression flag is used).
+
+* *NumLines* allows you to specify the number of lines in the box. Defaults to 1. Use 0 to autofit.
+* *Width* allows you to specify the specific width of each row. Defaults to 0 (i.e. autofit).
+* The *Alignment* keyword specifies where on the screen the text box will be displayed.
+* The *BG* keyword specifies what base image to use as background. menu_bg images will be tiled, while other sprites will not.
+* The *TextAlign* keyword specifies the alignment of the text in the texbox.
+
+* The *expression* flag indicates that the provided string should be be continually parsed as a python expression and updated.
+"""
+
+    keywords = ['Nid', 'Data']
+    optional_keywords = ['NumLines', 'Width', 'Alignment', 'BG', 'TextAlign']
+    keyword_types = ['Nid', 'String', 'Integer', 'Width', 'Align', 'Sprite', 'HAlign']
+    _flags = ['expression', 'no_bg']
+
+
 class TextEntry(EventCommand):
     nid = 'text_entry'
     tag = Tags.MISCELLANEOUS
