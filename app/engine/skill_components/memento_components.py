@@ -127,18 +127,38 @@ class MementoInitiateFullMoon(SkillComponent):
     desc = "Unit can initiate and partake of full moon bonuses"
     tag = SkillTags.CUSTOM
 
+    def init(self, skill):
+        self.skill.data['_last_turn_with_kill'] = -1
+
     def _activate_full_moon(self, unit):
         action.do(action.ChangeField(unit, 'full_moon', True))
         # A E S T H E T I C
 
+    def _deactivate_full_moon(self, unit):
+        action.do(action.ChangeField(unit, 'full_moon', False))
+        # A E S T H E T I C
+
+    def keep_full_moon(self) -> bool:
+        # You've gone a turn without killing anybody
+        return self.skill.data['_last_turn_with_kill'] >= game.turncount - 2
+
+    def on_upkeep(self, actions, playback, unit):
+        if self.keep_full_moon():
+            pass
+        else:
+            self._deactivate_full_moon(unit)
+            
     def unit_sprite_flicker_tint(self, unit, skill):
         if unit.get_field('full_moon', False):
             return ((255, 255, 255), 900, 300)
         return None
 
     def end_combat(self, playback, unit, item, target, mode):
-        if target and target.get_hp() <= 0:
+        playbacks = [p for p in playback if p.nid in ('damage_hit', 'damage_crit') and p.attacker == unit and \
+                     (p.defender.is_dying or p.defender.dead)]
+        if playbacks:
             self._activate_full_moon(unit)
+            action.do(action.SetObjData(self.skill, '_last_turn_with_kill', game.turncount))
 
     def modify_damage(self, unit, item):
         return 2 if unit.get_field('full_moon', False) else 0
