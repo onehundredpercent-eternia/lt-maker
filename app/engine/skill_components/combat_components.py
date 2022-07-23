@@ -3,6 +3,8 @@ from app.data.skill_components import SkillComponent, SkillTags
 from app.data.components import Type
 from app.engine import equations
 
+import logging
+
 class StatChange(SkillComponent):
     nid = 'stat_change'
     desc = "Gives stat bonuses"
@@ -20,6 +22,22 @@ class StatChange(SkillComponent):
             if stat_nid == 'DEF':
                 total_value += stat_value
         return total_value
+
+class StatChangeExpression(SkillComponent):
+    nid = 'stat_change_expression'
+    desc = "Gives stat bonuses based on expression"
+    tag = SkillTags.COMBAT
+
+    expose = (Type.StringDict, Type.Stat)
+    value = []
+
+    def stat_change(self, unit=None):
+        from app.engine import evaluate
+        try:
+            return {stat[0]: int(evaluate.evaluate(stat[1], unit)) for stat in self.value}
+        except Exception as e:
+            logging.error("Couldn't evaluate conditional %s", e)
+        return {stat[0]: 0 for stat in self.value}
 
 class StatMultiplier(SkillComponent):
     nid = 'stat_multiplier'
@@ -76,8 +94,8 @@ class EvalDamage(SkillComponent):
         from app.engine import evaluate
         try:
             return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
-        except:
-            print("Couldn't evaluate %s conditional" % self.value)
+        except Exception as e:
+            logging.error("Couldn't evaluate %s conditional (%s)", self.value, e)
         return 0
 
 class Resist(SkillComponent):
@@ -101,6 +119,21 @@ class Hit(SkillComponent):
 
     def modify_accuracy(self, unit, item):
         return self.value
+
+class EvalHit(SkillComponent):
+    nid = 'eval_hit'
+    desc = "Gives +X damage solved using evaluate"
+    tag = SkillTags.COMBAT
+
+    expose = Type.String
+
+    def modify_accuracy(self, unit, item):
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
+        except Exception as e:
+            logging.error("Couldn't evaluate %s conditional (%s)", self.value, e)
+        return 0
 
 class Avoid(SkillComponent):
     nid = 'avoid'
@@ -126,6 +159,21 @@ class Crit(SkillComponent):
 
     def modify_crit_accuracy(self, unit, item):
         return self.value
+
+class EvalCrit(SkillComponent):
+    nid = 'eval_crit'
+    desc = "Gives +X crit solved using evaluate"
+    tag = SkillTags.COMBAT
+
+    expose = Type.String
+
+    def modify_crit_accuracy(self, unit, item):
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
+        except Exception as e:
+            logging.error("Couldn't evaluate %s conditional (%s)", self.value, e)
+        return 0
 
 class CritAvoid(SkillComponent):
     nid = 'crit_avoid'

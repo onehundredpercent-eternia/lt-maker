@@ -32,6 +32,7 @@ class Type(IntEnum):
     FloatDict = 102  # Item followed by floating
     MultipleChoice = 103 # item is a string value from a number of choices
     MultipleOptions = 104 # item is a dict of string options with types that can be individually configured
+    StringDict = 105  # Item followed by string
 
 def convert_type_from_string(tstr: str, ttype: Type):
     if ttype == Type.Int:

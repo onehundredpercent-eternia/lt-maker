@@ -44,7 +44,7 @@ def restore_component(dat):
                 # Need to make a copy
                 # so we don't keep the reference around
                 copy = base_class(value.copy())
-            elif base_class.expose[0] in (Type.Dict, Type.FloatDict):
+            elif base_class.expose[0] in (Type.Dict, Type.FloatDict, Type.StringDict):
                 val = [v.copy() for v in value]
                 copy = base_class(val)
         else:

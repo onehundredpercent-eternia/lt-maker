@@ -5,6 +5,7 @@ from app.data.components import Type
 from app.data.item_components import ItemComponent, ItemTags
 from app.engine.game_state import game
 
+import logging
 
 class EvalTargetRestrict(ItemComponent):
     nid = 'eval_target_restrict'
@@ -25,7 +26,7 @@ class EvalTargetRestrict(ItemComponent):
                 if evaluate.evaluate(self.value, target, position=s_pos):
                     return True
         except Exception as e:
-            print("Could not evaluate %s (%s)" % (self.value, e))
+            logging.error("Could not evaluate %s (%s)", self.value, e)
             return True
         return False
 

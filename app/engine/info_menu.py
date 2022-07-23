@@ -62,7 +62,7 @@ class BoundingBox():
     state: str = None
     first: bool = False
 
-info_states = ('combat', 'extra')
+info_states = ('combat',)
 
 class InfoGraph():
     draw_all_bbs: bool = False
@@ -379,32 +379,30 @@ class InfoMenuState(State):
                 self.move_up()
 
     def move_left(self):
-        if self.unit.generic:
-            return  # Not for generics
-        get_sound_thread().play_sfx('Status_Page_Change')
-        index = info_states.index(self.state)
-        new_index = (index - 1) % len(info_states)
-        self.next_state = info_states[new_index]
-        # if self.next_state == 'notes' and not (DB.constants.value('unit_notes') and self.unit.notes):
-        #     new_index = (new_index - 1) % len(info_states)
-        #     self.next_state = info_states[new_index]
-        self.transition = 'LEFT'
-        self.left_arrow.pulse()
-        self.switch_logo(self.next_state)
+        if len(info_states) > 1:
+            get_sound_thread().play_sfx('Status_Page_Change')
+            index = info_states.index(self.state)
+            new_index = (index - 1) % len(info_states)
+            self.next_state = info_states[new_index]
+            # if self.next_state == 'notes' and not (DB.constants.value('unit_notes') and self.unit.notes):
+            #     new_index = (new_index - 1) % len(info_states)
+            #     self.next_state = info_states[new_index]
+            self.transition = 'LEFT'
+            self.left_arrow.pulse()
+            self.switch_logo(self.next_state)
 
     def move_right(self):
-        if self.unit.generic:
-            return  # Not for generics
-        get_sound_thread().play_sfx('Status_Page_Change')
-        index = info_states.index(self.state)
-        new_index = (index + 1) % len(info_states)
-        self.next_state = info_states[new_index]
-        # if self.next_state == 'notes' and not (DB.constants.value('unit_notes') and self.unit.notes):
-        #     new_index = (new_index + 1) % len(info_states)
-        #     self.next_state = info_states[new_index]
-        self.transition = 'RIGHT'
-        self.right_arrow.pulse()
-        self.switch_logo(self.next_state)
+        if len(info_states) > 1:
+            get_sound_thread().play_sfx('Status_Page_Change')
+            index = info_states.index(self.state)
+            new_index = (index + 1) % len(info_states)
+            self.next_state = info_states[new_index]
+            # if self.next_state == 'notes' and not (DB.constants.value('unit_notes') and self.unit.notes):
+            #     new_index = (new_index + 1) % len(info_states)
+            #     self.next_state = info_states[new_index]
+            self.transition = 'RIGHT'
+            self.right_arrow.pulse()
+            self.switch_logo(self.next_state)
 
     def move_down(self):
         get_sound_thread().play_sfx('Status_Character')
@@ -688,7 +686,8 @@ class InfoMenuState(State):
         # page = str(info_states.index(self.state) + 1) + '/' + str(len(info_states))
         # render_text(top_surf, ['small'], [page], [], (WINWIDTH - 5, self.portrait_section_height + 4), Alignments.RIGHT)
 
-        self.draw_top_arrows(top_surf)
+        if len(info_states) > 1:
+            self.draw_top_arrows(top_surf)
 
         if self.state == 'combat':
             if self.growth_flag:

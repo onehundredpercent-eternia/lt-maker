@@ -6,6 +6,8 @@ from app.engine import equations, action, item_funcs, static_random, skill_syste
 from app.engine.combat import playback as pb
 from app.engine.game_state import game
 
+import logging
+
 class MementoHitBonus(SkillComponent):
     nid = 'memento_hit_bonus'
     desc = "Gives out bonus to hit when another character can attack the same unit"
@@ -112,6 +114,27 @@ class WitchWarp(SkillComponent):
                 continue
             if partner_pos:
                 positions += target_system.get_adjacent_positions(partner_pos)
+        return positions
+
+class WitchWarpExpression(SkillComponent):
+    nid = 'witch_warp_expression'
+    desc = "Allows unit to witch warp to the units that satisfy the expression"
+    tag = SkillTags.CUSTOM
+
+    expose = Type.String
+    value = 'True'
+
+    def witch_warp(self, unit) -> list:
+        from app.engien import evaluate
+        positions = []
+        for target in game.units:
+            if target.position:
+                try:
+                    if evaluate.evaluate(self.value, target, position=target.position):
+                        positions += target_system.get_adjacent_positions(target.position)
+                except Exception as e:
+                    logging.error("Could not evaluate %s (%s)", self.value, e)
+                    return positions
         return positions
 
 class MementoAttackStanceDouble(SkillComponent):

@@ -177,8 +177,9 @@ def determine_avg_level() -> int:
 def get_elite_chance() -> float:
     return lerp(0.1, 0.25, completed_chapters() / LAST_CHAPTER)
 
-def get_random_item(tags=None):
+def get_random_item(tags=None, exclude=None):
     tags = tags or []
+    exclude = exclude or []
     all_items = []
     all_chances = []
     for tag in tags:
@@ -191,6 +192,7 @@ def get_random_item(tags=None):
         else:
             chance = 30
             items = [item for item in DB.items if tag in item.tags]
+        items = [item for item in items if item.nid not in exclude]
         all_items.append(items)
         all_chances.append(chance)
     items = game.get_random_weighted_choice(all_items, all_chances)

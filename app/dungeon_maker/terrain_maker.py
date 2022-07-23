@@ -83,6 +83,8 @@ class FloorTerrain(Terrain):
             left = True
         if northwest == 'Pillar':
             corner = True
+        if west == 'Pillar':
+            left = True
 
         if top and left:
             coord = (4, 0)

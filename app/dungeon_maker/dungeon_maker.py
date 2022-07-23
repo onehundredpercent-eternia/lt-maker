@@ -35,6 +35,8 @@ class DungeonTileMap:
                     print("#", end='')
                 elif terrain == 'Void':
                     print(" ", end='')
+                elif terrain == 'Pillar':
+                    print("%", end='')
                 else:
                     print("S", end='')
             print("\n", end='')
@@ -188,6 +190,14 @@ class Room:
     @property
     def size(self):
         return len(self.tiles)
+
+    @property
+    def width(self):
+        return max(tile[0] for tile in self.tiles) - min(tile[0] for tile in self.tiles) + 1
+
+    @property
+    def height(self):
+        return max(tile[1] for tile in self.tiles) - min(tile[1] for tile in self.tiles) + 1
     
 def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room]:
     rooms = []
@@ -273,6 +283,124 @@ def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Se
                     all_checked_walls |= set(wall)
     return new_floors
 
+def get_floor_positions(tilemap: DungeonTileMap) -> List[Tuple]:
+    valid_positions = [(x, y) for x in range(tilemap.width) for y in range(tilemap.height)]
+    return sorted([pos for pos in valid_positions if tilemap.get_terrain(pos) in ('Floor', 'Pillar', 'Stairs')])
+
+def find_all_rooms(positions: List[Tuple]) -> List[Room]:
+    rooms = []
+    floors = set(positions)
+
+    @dataclass
+    class Shape:
+        shape: Dict = None
+        remove: List = None
+
+        def rotate(self, how_much=0):
+            if how_much == 0:
+                return Shape(self.shape, self.remove)
+            elif how_much == 1:  # 90 degrees
+                return Shape({(-y, x): floor for (x, y), floor in self.shape.items()},
+                             [(-y, x) for (x, y) in self.remove])
+            elif how_much == 2:  # 180 degrees
+                return Shape({(-x, -y): floor for (x, y), floor in self.shape.items()},
+                             [(-x, -y) for (x, y) in self.remove])
+            elif how_much == 3:  # 270 degrees
+                return Shape({(y, -x): floor for (x, y), floor in self.shape.items()},
+                             [(y, -x) for (x, y) in self.remove])
+
+        def flip_vert(self):
+            return Shape({(x, -y): floor for (x, y), floor in self.shape.items()},
+                         [(x, -y) for (x, y) in self.remove])
+
+        def flip_horiz(self):
+            return Shape({(-x, y): floor for (x, y), floor in self.shape.items()},
+                         [(-x, y) for (x, y) in self.remove])
+
+        def match(self, main_pos: Tuple, positions: List[Tuple]) -> bool:
+            for pos, floor in self.shape.items():
+                cpos = utils.tuple_add(pos, main_pos)
+                if floor and cpos not in positions:
+                    return False
+                elif not floor and cpos in positions:
+                    return False
+            return True
+
+    single_hallway = Shape(
+        {(0, 0): 1, (-1, 0): 1, (1, 0): 1, (0, -1): 0, (0, 1): 0},
+        [(0, 0)],
+    )
+    double_hallway = Shape(
+        {(0, 0): 1, (1, 0): 1, (0, -1): 1, (0, 1): 1, (-1, 0): 0, (2, 0): 0},
+        [(0, 0), (1, 0)],
+    )
+    merged_single = Shape(
+        {(0, 0): 1, (1, 0): 1, (1, 1): 0, (0, -1): 0, (0, 1): 1, (1, -1): 1},
+        [(0, 0), (1, 0)])
+    merged_double = Shape(
+        {(0, 0): 1, (1, 0): 1, (0, 1): 1, (1, 1): 1, (-1, 0): 0, (2, 1): 0},
+        [(0, 0), (1, 1)])
+
+    bad_shapes = [
+        single_hallway, single_hallway.rotate(1),
+        double_hallway, double_hallway.rotate(1),
+        double_hallway.rotate(2), double_hallway.rotate(3),
+        merged_single, merged_single.rotate(1),
+        merged_single.flip_horiz(), merged_single.flip_horiz().rotate(1),
+        merged_double, merged_double.rotate(1),
+        merged_double.flip_horiz(), merged_double.flip_horiz().rotate(1),
+    ]
+
+    # Basically, find areas where you never have to pass through 
+    # a 2 or 1 tile wide hallway to reach the rest of the area
+    for pos in floors:
+        for shape in bad_shapes:
+            if shape.match(pos, floors):
+                for remove_me in shape.remove:
+                    actual_pos = utils.tuple_add(pos, remove_me)
+                    if actual_pos in positions:
+                        positions.remove(actual_pos)
+
+    # Flood fill
+    room_positions = positions.copy()
+    while positions:
+        pos = positions.pop()
+        room = sorted(list(flood_fill(lambda x, y: True, room_positions, pos)))
+        if len(room) > 2:
+            rooms.append(room)
+            for pos in room:
+                if pos in positions:
+                    positions.remove(pos)
+
+    return [Room(tiles) for tiles in rooms]
+
+def print_rooms(rooms: List[Room]):
+    # Print rooms
+    all_positions = {}
+    for idx, room in enumerate(rooms):
+        all_positions.update({pos: idx for pos in room.tiles})
+    width = max(pos[0] for pos in all_positions.keys()) + 1
+    height = max(pos[1] for pos in all_positions.keys()) + 1
+    for y in range(width):
+        print("%02d " % y, end='')
+        for x in range(height):
+            if (x, y) in all_positions:
+                print("%d" % all_positions[(x, y)], end='')
+            else:
+                print(" ", end='')
+        print("\n", end='')
+
+def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reverse_x: bool = False, reverse_y: bool = False) -> None:
+    min_x = min(tile[0] for tile in room.tiles)
+    max_x = max(tile[0] for tile in room.tiles)
+    min_y = min(tile[1] for tile in room.tiles)
+    max_y = max(tile[1] for tile in room.tiles)
+    offset_x = max_x - pos[0] if reverse_x else min_x + pos[0]
+    offset_y = max_y - pos[1] if reverse_y else min_y + pos[1]
+    terrain = tilemap.get_terrain((offset_x, offset_y))
+    if terrain == 'Floor':
+        tilemap.set_grid(offset_x, offset_y, 'Pillar')
+
 def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     random.seed(seed)
     width, height = size
@@ -283,14 +411,15 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         rooms: List[RoomPrefab] = separation_steering(rooms)
         room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
         new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
+        print_rooms(new_rooms)
         connections = combine_rooms(tilemap, new_rooms, room_tiles)
 
         place_rooms_on_grid(tilemap, new_rooms)
         place_rooms_on_grid(tilemap, [Room(connections)], 'Floor')
 
         # Check number of rooms
-        floor_tiles = {pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == 'Floor'}
-        rooms: List[Room] = find_new_rooms(tilemap, floor_tiles)
+        floor_tiles = get_floor_positions(tilemap)
+        rooms: List[Room] = find_new_rooms(tilemap, floor_tiles.copy())
         print(len(rooms))
         if len(rooms) != 1:
             continue
@@ -301,12 +430,44 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                 adjacent_terrain = tilemap.get_cardinal_terrain(pos) + tilemap.get_diagonal_terrain(pos)
                 if all(adj in ('Wall', 'Void') or adj is None for adj in adjacent_terrain):
                     tilemap.set_grid(*pos, 'Void')
+
+        final_rooms: List[Room] = find_all_rooms(floor_tiles)
+        print_rooms(final_rooms)
+
+        # Add Pillars where appropriate
+        for room in final_rooms:
+            # Wider
+            if room.width > room.height:
+                if room.height == 3 or room.height == 5:
+                    for x in range(1, room.width//2, 3):
+                        place_pillar(tilemap, room, (x, room.height//2))
+                        place_pillar(tilemap, room, (x, room.height//2), reverse_x=True)
+                elif room.height >= 6:
+                    for x in range(1, room.width//2, 3):
+                        place_pillar(tilemap, room, (x, 1))
+                        place_pillar(tilemap, room, (x, 1), reverse_x=True)
+                    for x in range(1, room.width//2, 3):
+                        place_pillar(tilemap, room, (x, 1), reverse_y=True)
+                        place_pillar(tilemap, room, (x, 1), reverse_x=True, reverse_y=True)
+            # Taller 
+            elif room.height >= room.width:
+                if room.width == 3 or room.width == 5:
+                    for y in range(1, room.height//2, 3):
+                        place_pillar(tilemap, room, (room.width//2, y))
+                        place_pillar(tilemap, room, (room.width//2, y), reverse_y=True)
+                elif room.width >= 6:
+                    for y in range(1, room.height//2, 3):
+                        place_pillar(tilemap, room, (1, y))
+                        place_pillar(tilemap, room, (1, y), reverse_y=True)
+                    for y in range(1, room.height//2, 3):
+                        place_pillar(tilemap, room, (1, y), reverse_x=True)
+                        place_pillar(tilemap, room, (1, y), reverse_x=True, reverse_y=True)
         break
 
-    return tilemap
+    return tilemap, final_rooms
 
 # to test
 # python -m app.dungeon_maker.dungeon_maker
 if __name__ == '__main__':
-    tilemap = generate_dungeon('Soldier', (20, 20), 0)
+    tilemap, rooms = generate_dungeon('Soldier', (20, 20), 0)
     tilemap.print_grid()
