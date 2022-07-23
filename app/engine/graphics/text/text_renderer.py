@@ -111,7 +111,7 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str], colors
             tag_start, tag_end = any_tags.span()
             tag_font = any_tags.group().strip("<>")
             if tag_font == '/':
-                tag_font, tag_color = font_history_stack.pop() if font_history_stack else base_font
+                tag_font, tag_color = font_history_stack.pop() if font_history_stack else (base_font, None)
             else:
                 if tag_font in FONT or tag_font == 'icon':
                     tag_color = curr_color

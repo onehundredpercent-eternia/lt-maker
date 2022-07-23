@@ -10,11 +10,16 @@ def get_weapon_rank_bonus(unit, item):
         return None
     rank_bonus = DB.weapons.get(weapon_type).rank_bonus
     wexp = unit.wexp[weapon_type]
+    best_combat_bonus = None
+    highest_requirement = -1
     for combat_bonus in rank_bonus:
-        if combat_bonus.weapon_rank == 'All' or \
-                DB.weapon_ranks.get(combat_bonus.weapon_rank).requirement >= wexp:
+        if combat_bonus.weapon_rank == 'All':
             return combat_bonus
-    return None
+        req = DB.weapon_ranks.get(combat_bonus.weapon_rank).requirement
+        if wexp >= req and req > highest_requirement:
+            highest_requirement = req
+            best_combat_bonus = combat_bonus
+    return best_combat_bonus
 
 def get_support_rank_bonus(unit, target=None):
     from app.engine import target_system

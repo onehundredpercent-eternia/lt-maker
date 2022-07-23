@@ -18,7 +18,7 @@ class SkillOption(menu_options.BasicOption):
         self.skill = skill
         self.help_box = None
         self.font = 'text'
-        self.color = None
+        self.color = 'white'
         self.ignore = False
 
     def get(self):
@@ -31,15 +31,13 @@ class SkillOption(menu_options.BasicOption):
         self.skill = skill
 
     def width(self):
-        return FONT[self.color].width(self.skill.name) + 24
+        return FONT[self.font].width(self.skill.name) + 24
 
     def height(self):
         return 16
 
     def get_color(self):
         main_color = 'grey'
-        if self.ignore:
-            pass
         if not self.ignore and self.color:
             main_color = self.color
         return main_color

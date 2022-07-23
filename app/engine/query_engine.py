@@ -208,9 +208,9 @@ Example usage:
         """returns all units matching the criteria in the given region
 
 Example usage:
-* `unit_in_region('NorthReinforcements', team='player')` will return all player units in the region
-* `unit_in_region('NorthReinforcements', nid='Eirika')` will return Eirika if Eirika is in the region
-* `unit_in_region('NorthReinforcements')` will return all units in the region
+* `get_units_in_region('NorthReinforcements', team='player')` will return all player units in the region
+* `get_units_in_region('NorthReinforcements', nid='Eirika')` will return Eirika if Eirika is in the region
+* `get_units_in_region('NorthReinforcements')` will return all units in the region
 
         Args:
             region: region in question
@@ -239,9 +239,9 @@ Example usage:
         """checks if any unit matching the criteria is in the region
 
 Example usage:
-* `unit_in_region('NorthReinforcements', team='player')` will check if any player unit is in the region
-* `unit_in_region('NorthReinforcements', nid='Eirika')` will check if Eirika is in the region
-* `unit_in_region('NorthReinforcements')` will check if ANY unit is in the region
+* `any_unit_in_region('NorthReinforcements', team='player')` will check if any player unit is in the region
+* `any_unit_in_region('NorthReinforcements', nid='Eirika')` will check if Eirika is in the region
+* `any_unit_in_region('NorthReinforcements')` will check if ANY unit is in the region
 
         Args:
             region: region in question

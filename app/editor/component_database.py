@@ -15,7 +15,7 @@ from app.extensions.widget_list import WidgetList
 from app.resources.resources import RESOURCES
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import (QComboBox, QDoubleSpinBox, QHBoxLayout,
+from PyQt5.QtWidgets import (QDoubleSpinBox, QHBoxLayout,
                              QItemDelegate, QLabel, QLineEdit, QListWidgetItem,
                              QSpinBox, QToolButton, QWidget)
 
@@ -137,7 +137,7 @@ class DropDownItemComponent(BoolItemComponent):
         super().__init__(data, parent)
 
     def create_editor(self, hbox):
-        self.editor = QComboBox(self)
+        self.editor = ComboBox(self)
         self.editor.setMaximumWidth(320)
         self.editor.addItems(self.options)
         if not self._data.value:
