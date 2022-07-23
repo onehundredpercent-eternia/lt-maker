@@ -311,6 +311,12 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
 
     if not speaker and speak_style:
         speaker = speak_style.speaker
+    if speaker in ('{unit}', '{unit1}'):
+        speaker = self.unit.nid
+    elif speaker == '{unit2}':
+        speaker = self.unit2.nid
+    elif speaker == '{created_unit}':
+        speaker = self.created_unit.nid
     portrait = self.portraits.get(speaker)
 
     if text_position:
