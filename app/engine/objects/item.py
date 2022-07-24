@@ -50,10 +50,18 @@ class ItemObject():
             item.owner_nid = nid
 
     @classmethod
-    def from_prefab(cls, prefab):
+    def from_prefab(cls, prefab, component_data=None):
         # Components NEED To be copies! Since they store individualized information
         components = Data()
+        component_data = component_data or []
 
+        if component_data:
+            # Regular components
+            for component_nid, component_value in component_data:
+                new_component = ICA.restore_component((component_nid, component_value))
+                components.append(new_component, overwrite=True)
+
+        else:
         # Check if there is a prefab
         for component in prefab.components:
             if component.nid == 'item_prefab':
@@ -67,6 +75,7 @@ class ItemObject():
                     components.append(new_component)
                 break
 
+            # Regular components
         for component in prefab.components:
             new_component = ICA.restore_component((component.nid, component.value))
             components.append(new_component, overwrite=True)
@@ -95,13 +104,16 @@ class ItemObject():
         serial_dict['droppable'] = self.droppable
         serial_dict['data'] = self.data
         serial_dict['subitems'] = self.subitem_uids
+        components = [(component.nid, component.value) for component in self.components]
+        serial_dict['components'] = components
         return serial_dict
 
     @classmethod
     def restore(cls, dat):
         prefab = DB.items.get(dat['nid'])
         if prefab:
-            self = cls.from_prefab(prefab)
+            components = dat.get('components', [])
+            self = cls.from_prefab(prefab, components)
             self.name = dat.get('name', prefab.name)
             self.desc = dat.get('desc', prefab.desc)
         else:

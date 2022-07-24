@@ -1351,6 +1351,7 @@ class AddItemComponent(EventCommand):
     desc = \
         """
 Adds an *ItemComponent* with optional value of *Expression* to *Item* in the inventory of *GlobalUnitOrConvoy*.
+Can be used to modify a specific item within your game, such as for forging.
         """
 
     keywords = ["GlobalUnitOrConvoy", "Item", "ItemComponent"]

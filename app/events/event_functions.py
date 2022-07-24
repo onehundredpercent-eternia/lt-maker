@@ -197,6 +197,9 @@ def move_portrait(self: Event, portrait, screen_position, flags=None):
     flags = flags or set()
 
     name = portrait
+    unit = self._get_unit(name)
+    if unit:
+        name = unit.nid
     portrait = self.portraits.get(name)
     if not portrait:
         return False
@@ -1486,16 +1489,7 @@ def add_item_component(self: Event, global_unit_or_convoy, item, item_component,
     else:
         component_value = None
     
-    import app.engine.item_component_access as ICA
-    new_component = ICA.restore_component((component_nid, component_value))
-    if not new_component:
-        self.logger.error("add_item_component: Couldn't find item component with nid %s", component_nid)
-        return
-
-    item.components.append(new_component)
-    item.__dict__[component_nid] = new_component
-    # Assign parent to component
-    new_component.item = item
+    action.do(action.AddItemComponent(item, component_nid, component_value))
 
 def remove_item_component(self: Event, global_unit_or_convoy, item, item_component, flags=None):
     flags = flags or set()
@@ -1507,11 +1501,7 @@ def remove_item_component(self: Event, global_unit_or_convoy, item, item_compone
         self.logger.error("remove_item_component: Either unit or item was invalid, see above")
         return
 
-    if component_nid in item.components.keys():
-        item.components.remove_key(component_nid)
-        del item.__dict__[component_nid]
-    else:
-        self.logger.warning("remove_item_component: component with nid %s not found for item %s", component_nid, item)
+    action.do(action.RemoveItemComponent(item, component_nid))
 
 def give_money(self: Event, money, party=None, flags=None):
     flags = flags or set()
@@ -1611,7 +1601,7 @@ def give_skill(self: Event, global_unit, skill, initiator=None, flags=None):
         self.game.state.change('alert')
         self.state = 'paused'
 
-def remove_skill(self: Event, global_unit, skill, count = '-1', flags=None):
+def remove_skill(self: Event, global_unit, skill, count='-1', flags=None):
     flags = flags or set()
     count = int(count)
 

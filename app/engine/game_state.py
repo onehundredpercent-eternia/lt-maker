@@ -1,5 +1,4 @@
 from __future__ import annotations
-from app.data import raw_data
 
 import random
 import time
@@ -623,7 +622,7 @@ class GameState():
 
     @property
     def regions(self):
-        return list(self.region_registry.values())
+        return list(self.level.regions.values())
 
     def register_unit(self, unit):
         logging.debug("Registering unit %s as %s", unit, unit.nid)

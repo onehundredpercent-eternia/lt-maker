@@ -1411,6 +1411,58 @@ class RemoveItemFromMultiItem(Action):
         if unit and unit.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(unit)
 
+class AddItemComponent(Action):
+    def __init__(self, item, component_nid, component_value):
+        self.item = item
+        self.component_nid = component_nid
+        self.component_value = component_value
+        self.component = None
+        self._did_add = False
+
+    def do(self):
+        import app.engine.item_component_access as ICA
+        self._did_add = False
+        self.component = ICA.restore_component((self.component_nid, self.component_value))
+        if not self.component:
+            logging.error("AddItemComponent: Couldn't find item component with nid %s", self.component_nid)
+            return
+        self.item.components.append(self.component)
+        self.item.__dict__[self.component_nid] = self.component
+        # Assign parent to component
+        self.component.item = self.item
+        self._did_add = True
+
+    def reverse(self):
+        if self._did_add:
+            self.item.components.remove_key(self.component_nid)
+            del self.item.__dict__[self.component_nid]
+            self._did_add = False
+
+class RemoveItemComponent(Action):
+    def __init__(self, item, component_nid):
+        self.item = item
+        self.component_nid = component_nid
+        self.component = None
+        self._did_remove = False
+
+    def do(self):
+        self._did_remove = False
+        if self.component_nid in self.item.components.keys():
+            self.component = self.item.components.get(self.component_nid)
+            self.item.components.remove_key(self.component_nid)
+            del self.item.__dict__[self.component_nid]
+            self._did_remove = True
+        else:
+            logging.warning("remove_item_component: component with nid %s not found for item %s", self.component_nid, self.item)
+
+    def reverse(self):
+        if self._did_remove:
+            self.item.components.append(self.component)
+            self.item.__dict__[self.component_nid] = self.component
+            # Assign parent to component
+            self.component.item = self.item
+            self._did_remove = False
+
 class SetObjData(Action):
     def __init__(self, obj, keyword, value):
         self.obj = obj
@@ -1939,9 +1991,9 @@ class Die(Action):
 
     def reverse(self):
         # Remember who was resurrected briefly
-        if not 'resurrect' in game.memory:
-            game.memory['resurrect'] = set()
-        game.memory['resurrect'].add(self.unit.nid)
+        if '_resurrect' not in game.memory:
+            game.memory['_resurrect'] = set()
+        game.memory['_resurrect'].add(self.unit.nid)
 
         self.unit.dead = False
         self.unit.sprite.set_transition('normal')

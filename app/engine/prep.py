@@ -742,7 +742,8 @@ class PrepItemsState(State):
                         if not item_system.locked(self.unit, current):
                             options.append('Store')
                             options.append('Trade')
-                        if item_system.can_use(self.unit, current) and \
+                        if self.name != 'supply_items' and \
+                                item_system.can_use(self.unit, current) and \
                                 item_funcs.available(self.unit, current) and \
                                 item_system.can_use_in_base(self.unit, current) and \
                                 item_system.simple_target_restrict(self.unit, current):
@@ -759,7 +760,8 @@ class PrepItemsState(State):
                         self.menu.move_to_convoy()
                 elif context == 'convoy':
                     if current:
-                        if item_system.can_use(self.unit, current) and \
+                        if self.name != 'supply_items' and \
+                                item_system.can_use(self.unit, current) and \
                                 item_funcs.available(self.unit, current) and \
                                 item_system.can_use_in_base(self.unit, current) and \
                                 item_system.simple_target_restrict(self.unit, current):

@@ -20,6 +20,14 @@
         false
     ],
     [
+        "reset_fatigue",
+        false
+    ],
+    [
+        "minimap",
+        true
+    ],
+    [
         "pairup",
         false
     ],
@@ -80,6 +88,10 @@
         true
     ],
     [
+        "traveler_time_decrement",
+        false
+    ],
+    [
         "line_of_sight",
         false
     ],
@@ -118,6 +130,10 @@
     [
         "class_change_level_reset",
         false
+    ],
+    [
+        "negative_growths",
+        true
     ],
     [
         "class_change_same_tier",
@@ -242,6 +258,26 @@
     [
         "exp_offset",
         0
+    ],
+    [
+        "gexp_max",
+        30
+    ],
+    [
+        "gexp_min",
+        1
+    ],
+    [
+        "gexp_slope",
+        0.25
+    ],
+    [
+        "gexp_intercept",
+        10
+    ],
+    [
+        "exp_formula",
+        "standard"
     ],
     [
         "kill_multiplier",

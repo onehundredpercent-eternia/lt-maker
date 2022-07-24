@@ -392,7 +392,7 @@ class Tag(Validator):
         return valids
 
 class TagList(Validator):
-    desc = "must be a comma-delimited list of tags (ie, `5,7,12`)"
+    desc = "must be a comma-delimited list of tags (ie, `Armor,Dragon,Boss`)"
 
     def validate(self, text, level):
         tex = text.split(',')
