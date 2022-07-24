@@ -89,7 +89,8 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
 
     name = portrait
     unit = self._get_unit(name)
-    name = unit.nid
+    if unit:
+        name = unit.nid
     if unit and unit.portrait_nid:
         portrait = RESOURCES.portraits.get(unit.portrait_nid)
     elif name in DB.units.keys():
@@ -159,6 +160,9 @@ def remove_portrait(self: Event, portrait, flags=None):
     flags = flags or set()
 
     name = portrait
+    unit = self._get_unit(name)
+    if unit:
+        name = unit.nid
     if name not in self.portraits:
         return False
 
@@ -214,6 +218,9 @@ def mirror_portrait(self: Event, portrait, flags=None):
     flags = flags or set()
 
     name = portrait
+    unit = self._get_unit(name)
+    if unit:
+        name = unit.nid
     portrait = self.portraits.get(name)
     if not portrait:
         return False
@@ -238,7 +245,11 @@ def mirror_portrait(self: Event, portrait, flags=None):
 def bop_portrait(self: Event, portrait, flags=None):
     flags = flags or set()
 
-    _portrait = self.portraits.get(portrait)
+    name = portrait
+    unit = self._get_unit(name)
+    if unit:
+        name = unit.nid
+    _portrait = self.portraits.get(name)
     if not _portrait:
         return False
     _portrait.bop()
@@ -249,7 +260,11 @@ def bop_portrait(self: Event, portrait, flags=None):
         self.state = 'waiting'
 
 def expression(self: Event, portrait, expression_list, flags=None):
-    _portrait = self.portraits.get(portrait)
+    name = portrait
+    unit = self._get_unit(name)
+    if unit:
+        name = unit.nid
+    _portrait = self.portraits.get(name)
     if not _portrait:
         return False
     expression_list = expression_list.split(',')
@@ -311,12 +326,9 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
 
     if not speaker and speak_style:
         speaker = speak_style.speaker
-    if speaker in ('{unit}', '{unit1}'):
-        speaker = self.unit.nid
-    elif speaker == '{unit2}':
-        speaker = self.unit2.nid
-    elif speaker == '{created_unit}':
-        speaker = self.created_unit.nid
+    unit = self._get_unit(speaker)
+    if unit:
+        speaker = unit.nid
     portrait = self.portraits.get(speaker)
 
     if text_position:

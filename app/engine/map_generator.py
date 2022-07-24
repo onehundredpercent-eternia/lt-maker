@@ -156,6 +156,7 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     valid_positions = [pos for pos in valid_positions if 
                        pos[1] > 0 and 
                        all(utils.calculate_distance(pos, form_tile) > 8 for form_tile in formation_tiles)]
+    valid_positions = sorted(valid_positions)
     # Choose X random positions
     counter = num_grave_trees
     while counter > 0 and valid_positions:
@@ -170,7 +171,7 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
         grave_region.region_type = regions.RegionType.TIME
         grave_region.position = pos
         grave_region.size = (1, 1)
-        grave_region.sub_nid = int(distance / 5) + 1
+        grave_region.sub_nid = int(distance / 4) + 1
         game.register_region(grave_region)
         action.do(action.AddRegion(grave_region))
     logging.debug(static_random.get_other_random_state())

@@ -8,7 +8,7 @@ if MEMENTO_MODE:
                                    'CenterLeft': 72,
                                    'CenterRight': WINWIDTH - 128 - 72,
                                    'MidRight': WINWIDTH - 128 - 72,
-                                   'LevelUpRight': 216,
+                                   'LevelUpRight': WINWIDTH - 128 - 40,
                                    'Right': WINWIDTH - 128 - 36,
                                    'FarRight': WINWIDTH - 128,
                                    'OffscreenRight': WINWIDTH}
@@ -20,7 +20,7 @@ else:
                                    'CenterLeft': 24,
                                    'CenterRight': WINWIDTH - 120,
                                    'MidRight': WINWIDTH - 120,
-                                   'LevelUpRight': 140,
+                                   'LevelUpRight': WINWIDTH - 100,
                                    'Right': WINWIDTH - 96,
                                    'FarRight': WINWIDTH - 72,
                                    'OffscreenRight': WINWIDTH}

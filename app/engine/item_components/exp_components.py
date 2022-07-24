@@ -37,7 +37,10 @@ class LevelExp(ItemComponent):
     def exp(self, playback, unit, item, target) -> int:
         if skill_system.check_enemy(unit, target) and \
                 not self._check_for_no_damage(playback, unit, item, target):
-            level_diff = target.get_internal_level() - unit.get_internal_level()
+            if DB.constants.value('promote_level_reset'):
+                level_diff = target.get_internal_level() - unit.get_internal_level()
+            else:
+                level_diff = target.level - unit.level
             if DB.constants.value('exp_formula') == ExpCalcType.STANDARD.value:
                 return ExpCalculator.classical_curve_calculator(level_diff,
                                                                 DB.constants.value('exp_offset'),
@@ -67,7 +70,10 @@ class HealExp(ItemComponent):
                 healing_done += brush.true_damage
         if healing_done <= 0:
             return 0
-        heal_diff = healing_done - unit.get_internal_level()
+        if DB.constants.value('promote_level_reset'):
+            heal_diff = healing_done - unit.get_internal_level()
+        else:
+            heal_diff = healing_done - unit.level
         heal_diff += DB.constants.get('heal_offset').value
         exp_gained = DB.constants.get('heal_curve').value * heal_diff
         exp_gained += DB.constants.get('heal_magnitude').value

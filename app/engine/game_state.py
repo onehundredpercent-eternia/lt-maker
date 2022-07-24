@@ -708,12 +708,12 @@ class GameState():
         return skill_uid
 
     def get_region(self, region_nid):
-        region = self.region_registry.get(region_nid)
+        region = self.level.regions.get(region_nid)
         return region
 
     def get_region_under_pos(self, pos: Tuple[int, int]) -> Region:
         if pos:
-            for region in self.region_registry.values():
+            for region in self.level.regions.values():
                 if region.contains(pos):
                     return region
 

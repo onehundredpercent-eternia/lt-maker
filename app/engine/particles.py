@@ -269,7 +269,7 @@ class PurpleMote(Particle):
 
     def __init__(self, pos):
         super().__init__(pos)
-        self.transparency = .75
+        self.transparency = .95
         self.speed = 0.1 + random.random() * 0.15
         self.direction = random.random() * math.pi * 2
         self.change_over_time = random.choice([0.01, 0.015, 0.02])
@@ -287,7 +287,7 @@ class PurpleMote(Particle):
                 self.transition = False
         else:
             self.transparency += self.change_over_time
-            if self.transparency >= 0.75:
+            if self.transparency >= 0.95:
                 self.remove_me_flag = True
                 self.transparency = 1.
 

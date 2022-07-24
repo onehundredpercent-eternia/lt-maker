@@ -39,11 +39,11 @@ class ClassData:
 
 class_data = Data([
     ClassData('Myrmidon', 3, 'Sword', 2),
-    ClassData('Errant', 2, 'Sword', 1),
-    ClassData('Mercenary', 2, 'Sword', 1),
-    ClassData('Thief', 2, 'Sword', 3),
+    ClassData('Errant', 2.5, 'Sword', 1),
+    ClassData('Mercenary', 2.5, 'Sword', 1),
+    ClassData('Thief', 2.5, 'Sword', 3),
     ClassData('Sentinel', 3, 'Lance', 2),
-    ClassData('Cavalier', 2, 'Lance', 2),
+    ClassData('Cavalier', 2.5, 'Lance', 2),
     ClassData('Falcoknight', 4, 'Lance', 4),
     ClassData('Skirmisher', 2, 'Lance', 1),
     ClassData('Dracoknight', 5, 'Axe', 4),

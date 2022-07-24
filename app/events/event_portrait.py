@@ -80,7 +80,7 @@ class EventPortrait():
         self.saturation_state = 0
 
     def get_width(self):
-        return 96
+        return 128
 
     def get_height(self):
         return 80

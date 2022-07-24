@@ -133,20 +133,20 @@ class Dialog():
 
     def determine_desired_center(self, portrait):
         x = self.portrait.position[0] + self.portrait.get_width()//2
-        if x < 48:  # FarLeft
+        if x < 96:  # FarLeft
             return 8
-        elif x < 72:  # Left
-            return 80
-        elif x < 104:  # MidLeft
+        elif x < 136:  # Left
             return 104
-        elif x > 192:  # FarRight
-            return 232
-        elif x > 168:  # Right
-            return 152
-        elif x > 144:  # MidRight
-            return 128
+        elif x < 144:  # MidLeft
+            return 144
+        elif x > WINWIDTH - 96:  # FarRight
+            return WINWIDTH - 8
+        elif x > WINWIDTH - 136:  # Right
+            return WINWIDTH - 104
+        elif x > WINWIDTH - 144:  # MidRight
+            return WINWIDTH - 144
         else:
-            return 120
+            return WINWIDTH//2
 
     def determine_width(self):
         width = 0

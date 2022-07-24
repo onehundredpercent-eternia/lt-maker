@@ -2296,7 +2296,7 @@ class AddRegion(Action):
     def do(self):
         self.subactions.clear()
         if self.region.nid in game.level.regions:
-            pass
+            logging.warning("AddRegion Action: Region with nid %s already in level", self.region.nid)
         else:
             game.level.regions.append(self.region)
             self.did_add = True
@@ -2337,17 +2337,6 @@ class DecrementTimeRegion(Action):
     def reverse(self):
         self.region.sub_nid = int(self.region.sub_nid) + 1
 
-class DecrementTimeRegion(Action):
-    def __init__(self, region):
-        self.region = region
-
-    def do(self):
-        self.region.sub_nid = int(self.region.sub_nid) - 1
-
-    def reverse(self):
-        self.region.sub_nid = int(self.region.sub_nid) + 1
-
-
 class RemoveRegion(Action):
     def __init__(self, region):
         self.region = region
@@ -2368,6 +2357,8 @@ class RemoveRegion(Action):
 
             game.level.regions.delete(self.region)
             self.did_remove = True
+        else:
+            logging.error("RemoveRegion Action: Could not find region with nid %s", self.region.nid)
 
     def reverse(self):
         if self.did_remove:
