@@ -62,23 +62,23 @@ class ItemObject():
                 components.append(new_component, overwrite=True)
 
         else:
-        # Check if there is a prefab
-        for component in prefab.components:
-            if component.nid == 'item_prefab':
-                item_prefab_nid = component.value
-                item_prefab = DB.items.get(item_prefab_nid)
-                if not item_prefab:
-                    logging.error("Couldn't find %s for %s", item_prefab_nid, prefab.nid)
+            # Check if there is a prefab
+            for component in prefab.components:
+                if component.nid == 'item_prefab':
+                    item_prefab_nid = component.value
+                    item_prefab = DB.items.get(item_prefab_nid)
+                    if not item_prefab:
+                        logging.error("Couldn't find %s for %s", item_prefab_nid, prefab.nid)
+                        break
+                    for component in item_prefab.components:
+                        new_component = ICA.restore_component((component.nid, component.value))
+                        components.append(new_component)
                     break
-                for component in item_prefab.components:
-                    new_component = ICA.restore_component((component.nid, component.value))
-                    components.append(new_component)
-                break
 
-            # Regular components
-        for component in prefab.components:
-            new_component = ICA.restore_component((component.nid, component.value))
-            components.append(new_component, overwrite=True)
+                # Regular components
+            for component in prefab.components:
+                new_component = ICA.restore_component((component.nid, component.value))
+                components.append(new_component, overwrite=True)
 
         return cls(prefab.nid, prefab.name, prefab.desc, prefab.icon_nid, prefab.icon_index, components)
 

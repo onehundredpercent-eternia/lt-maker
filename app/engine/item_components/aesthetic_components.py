@@ -3,6 +3,7 @@ from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
 from app.engine.combat import playback as pb
+from app.engine import engine, image_mods
 
 class MapHitAddBlend(ItemComponent):
     nid = 'map_hit_add_blend'
@@ -119,7 +120,7 @@ class EvalWarning(ItemComponent):
     expose = Type.String
     value = 'True'
 
-    def warning(self, unit, item, target) -> bool:
+    def danger(self, unit, item, target) -> bool:
         from app.engine import evaluate
         try:
             val = evaluate.evaluate(self.value, unit, target, unit.position, {'item': item})
@@ -127,6 +128,25 @@ class EvalWarning(ItemComponent):
         except Exception as e:
             print("Could not evaluate %s (%s)" % (self.value, e))
             return False
+
+class ItemIconFlash(ItemComponent):
+    nid = 'item_icon_flash'
+    desc = "During combat preview, item will flash is target's item meets condition"
+    tag = ItemTags.AESTHETIC
+
+    expose = Type.String
+    value = 'True'
+
+    def item_icon_mod(self, unit, item, target, sprite):
+        from app.engine import evaluate
+        try:
+            val = evaluate.evaluate(self.value, unit, target, unit.position, {'item': item})
+        except Exception as e:
+            print("Could not evaluate %s (%s)" % (self.value, e))
+            return sprite
+        if val:
+            sprite = image_mods.make_white(sprite.convert_alpha(), abs(250 - engine.get_time()%500)/250)
+        return sprite
 
 class TextColor(ItemComponent):
     nid = 'text_color'

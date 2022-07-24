@@ -84,7 +84,7 @@ class TurnChangeState(MapState):
                         action.do(action.DecrementTimeRegion(region))
                         if region.sub_nid <= 0:
                             action.do(action.RemoveRegion(region))
-                            game.events.trigger('time_region_complete', local_args={'region': region, 'position': region.position})
+                            game.events.trigger('time_region_complete', position=region.position, local_args={'region': region})
                 game.events.trigger('turn_change')
                 if game.turncount - 1 <= 0:  # Beginning of the level
                     for unit in game.get_all_units_in_party():

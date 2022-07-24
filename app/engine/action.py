@@ -2562,12 +2562,14 @@ class RemoveMapAnim(Action):
         self.nid = nid
         self.pos = pos
         self.speed_mult = 1
+        self.blend = False
         self.did_remove = False
 
     def do(self):
         for anim in game.tilemap.animations[:]:
             if anim.nid == self.nid and anim.xy_pos == self.pos:
                 self.speed_mult = anim.speed_adj
+                self.blend = anim.tint
                 game.tilemap.animations.remove(anim)
                 self.did_remove = True
 
@@ -2575,6 +2577,7 @@ class RemoveMapAnim(Action):
         if self.did_remove:
             anim = RESOURCES.animations.get(self.nid)
             anim = animations.MapAnimation(anim, self.pos, loop=True, speed_adj=self.speed_mult)
+            anim.set_tint(self.blend)
             game.tilemap.animations.append(anim)
 
 class AddAnimToUnit(Action):

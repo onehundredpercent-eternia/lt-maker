@@ -288,11 +288,14 @@ class UIView():
             tile_def, tile_avoid = 0, 0
             if terrain.status:
                 status_prefab = DB.skills.get(terrain.status)
-                for component in status_prefab.components:
-                    if component.defines('tile_def'):
-                        tile_def += component.tile_def()
-                    if component.defines('tile_avoid'):
-                        tile_avoid += component.tile_avoid()
+                if status_prefab:
+                    for component in status_prefab.components:
+                        if component.defines('tile_def'):
+                            tile_def += component.tile_def()
+                        if component.defines('tile_avoid'):
+                            tile_avoid += component.tile_avoid()
+                else:
+                    logging.error("Could not find status %s for terrain %s", terrain.status, terrain.nid)
             FONT['small'].blit_right(str(tile_def), bg_surf, (bg_surf.get_width() - 4, 17))
             FONT['small'].blit_right(str(tile_avoid), bg_surf, (bg_surf.get_width() - 4, 25))
 
