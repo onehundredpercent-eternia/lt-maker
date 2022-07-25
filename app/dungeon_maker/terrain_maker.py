@@ -124,6 +124,61 @@ class WallTerrain(WangEdge2Terrain16):
         index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
         return index
 
+class StairsUpDownTerrain(Terrain):
+    terrain_like = ('StairsUpDown', )
+
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+        north, _, south, _ = tilemap.get_cardinal_terrain(pos)
+        top, bottom = False, False
+        if north not in terrain_like:
+            top = True
+        if south not in terrain_like:
+            bottom = True
+
+        if top and bottom:
+            coord = 0, 0
+        elif top:
+            coord = 1, 0
+        elif bottom:
+            coord = 2, 0
+        else:
+            coord = 3, 0 
+
+        new_coords1 = [(coord[0]*2, coord[1]*2)]
+        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
+        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+        return new_coords1, new_coords2, new_coords3, new_coords4
+
+class StairsLeftTerrain(Terrain):
+    terrain_like = ('StairsLeft', )
+
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+        _, east, _, west = tilemap.get_cardinal_terrain(pos)
+        left, right = False, False
+        if east not in terrain_like:
+            right = True
+        if west not in terrain_like:
+            left = True
+
+        if left and right:
+            coord = 0, 0
+        elif left:
+            coord = 1, 0
+        elif right:
+            coord = 2, 0
+        else:
+            coord = 3, 0 
+
+        new_coords1 = [(coord[0]*2, coord[1]*2)]
+        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
+        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+        return new_coords1, new_coords2, new_coords3, new_coords4
+
+class StairsRightTerrain(StairsLeftTerrain):
+    terrain_like = ('StairsRight', )
+
 class PillarTerrain(Terrain):
     terrain_like = ('Pillar', )
 
@@ -137,4 +192,7 @@ def get_terrain(theme: str):
             'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png')),
             'Pillar': PillarTerrain(os.path.join(theme_dir, 'pillar.png')),
             'Void': VoidTerrain(os.path.join(theme_dir, 'void.png')),
+            'StairsUpDown': StairsUpDownTerrain(os.path.join(theme_dir, 'stairs_updown.png')),
+            'StairsLeft': StairsLeftTerrain(os.path.join(theme_dir, 'stairs_left.png')),
+            'StairsRight': StairsRightTerrain(os.path.join(theme_dir, 'stairs_right.png')),
             }
