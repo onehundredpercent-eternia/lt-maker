@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QMessageBox, QWidget, QHBoxLayout, QSpinBox, \
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QPixmap, QPainter, QIcon, QPen
 
-from app.constants import MEMENTO_MODE
 from app.extensions.spinbox_xy import SpinBoxXY
 from app.extensions.custom_gui import PropertyBox
 from app.editor import timer
@@ -16,10 +15,7 @@ from app.editor.portrait_editor import portrait_model
 import app.editor.utilities as editor_utilities
 
 class PortraitProperties(QWidget):
-    if MEMENTO_MODE:
-        width, height = 128 + 32, 80
-    else:
-        width, height = 128, 112
+    width, height = 128, 112
 
     halfblink = (96, 48, 32, 16)
     fullblink = (96, 64, 32, 16)
@@ -56,10 +52,7 @@ class PortraitProperties(QWidget):
         left_section = QGridLayout()
 
         self.portrait_view = IconView(self)
-        if MEMENTO_MODE:
-            self.portrait_view.setMinimumHeight(88 + 2)
-        else:
-            self.portrait_view.setMinimumHeight(80 + 2)
+        self.portrait_view.setMinimumHeight(80 + 2)
         left_section.addWidget(self.portrait_view, 0, 0, 1, 3)
 
         self.smile_button = QPushButton(self)
@@ -185,10 +178,7 @@ class PortraitProperties(QWidget):
         self.update_talk()
         if not self.current:
             return
-        if MEMENTO_MODE:
-            main_portrait = self.current.pixmap.copy(0, 0, self.current.pixmap.width() - 32, 88)
-        else:
-            main_portrait = self.current.pixmap.copy(0, 0, 96, 80)
+        main_portrait = self.current.pixmap.copy(0, 0, 96, 80)
         main_portrait = main_portrait.toImage()
         # For smile image
         if self.smile_on:
@@ -218,11 +208,10 @@ class PortraitProperties(QWidget):
         # Draw image
         painter = QPainter()
         painter.begin(main_portrait)
-        if not MEMENTO_MODE:
-            if blink_image:
-                blink_image = blink_image.toImage()
-                painter.drawImage(self.current.blinking_offset[0], self.current.blinking_offset[1], blink_image)
-            painter.drawImage(self.current.smiling_offset[0], self.current.smiling_offset[1], mouth_image)
+        if blink_image:
+            blink_image = blink_image.toImage()
+            painter.drawImage(self.current.blinking_offset[0], self.current.blinking_offset[1], blink_image)
+        painter.drawImage(self.current.smiling_offset[0], self.current.smiling_offset[1], mouth_image)
         painter.setPen(QPen(Qt.black, 1, Qt.DashLine))
         painter.setOpacity(0.75)
         painter.drawRect(0, self.current.info_offset, 96, 72)

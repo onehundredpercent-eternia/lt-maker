@@ -9,8 +9,8 @@ from app.constants import COLORKEY
 from app.engine import engine, image_mods
 
 class EventPortrait():
-    width, height = 160, 112
-    main_portrait_coords = (0, 0, 128, 80)
+    width, height = 128, 112
+    main_portrait_coords = (0, 0, 96, 80)
     chibi_coords = (width - 32, 16, 32, 32)
 
     halfblink = (width - 32, 48, 32, 16)
@@ -80,7 +80,7 @@ class EventPortrait():
         self.saturation_state = 0
 
     def get_width(self):
-        return 128
+        return 96
 
     def get_height(self):
         return 80
@@ -291,15 +291,6 @@ class EventPortrait():
         self.transition_update = engine.get_time()
 
 class MementoEventPortrait(EventPortrait):
-    width, height = 128 + 32, 80
-    main_portrait_coords = 0, 0, 128, 80
-
-    def get_width(self):
-        return 112
-
-    def get_height(self):
-        return 88
-
     def create_image(self):
         main_image = self.main_portrait.copy()
         return main_image

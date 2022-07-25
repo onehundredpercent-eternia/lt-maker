@@ -597,7 +597,7 @@ def get_recruitable_unit(level_var_nid, level, tag_list, team):
     possible_unit_prefabs = \
         [unit for unit in DB.units if 
             unit.nid not in [u.nid for u in game.units] and 
-            any(t in unit.tags for t in tag_list)]
+            all(t in unit.tags for t in tag_list)]
     if not possible_unit_prefabs:
         logging.error("No possible unit to recruit with tags %s", tag_list)
         return
