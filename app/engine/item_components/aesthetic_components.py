@@ -131,7 +131,7 @@ class EvalWarning(ItemComponent):
 
 class ItemIconFlash(ItemComponent):
     nid = 'item_icon_flash'
-    desc = "During combat preview, item will flash is target's item meets condition"
+    desc = "During combat preview, item will flash if target's item meets condition"
     tag = ItemTags.AESTHETIC
 
     expose = Type.String

@@ -1163,6 +1163,17 @@ Sets the unit's state as having already traded this turn. The unit can still att
 
     keywords = ['Unit']
 
+class HasFinished(EventCommand):
+    nid = 'has_finished'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+    
+    desc = \
+        """
+Sets the unit's state as already having completed all of its actions this turn. The unit will be grayed out.
+        """
+    
+    keywords = ['Unit']
+
 class RecruitGeneric(EventCommand):
     nid = 'recruit_generic'
     tag = Tags.MODIFY_UNIT_PROPERTIES
@@ -1260,6 +1271,19 @@ The *droppable* flag determines whether the item is set as a "droppable" item (g
 
     keywords = ["GlobalUnitOrConvoy", "Item"]
     _flags = ['no_banner', 'no_choice', 'droppable']
+
+class EquipItem(EventCommand):
+    nid = 'equip_item'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+    desc = \
+        """
+Forces *GlobalUnit* to equip *Item*.
+
+The event will produce no effect if the item does not exist in the unit's inventory yet.
+It will also produce no effect if the item cannot be equipped by that unit.
+        """
+        
+    keywords = ["GlobalUnit", "Item"]
 
 class RemoveItem(EventCommand):
     nid = 'remove_item'

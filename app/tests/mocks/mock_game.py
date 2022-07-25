@@ -10,4 +10,5 @@ def get_mock_game() -> GameState:
     
     game.get_item = MagicMock()
     game.get_skill = MagicMock()
+    game.get_unit = lambda x: None
     return game

@@ -1167,6 +1167,13 @@ def has_traded(self: Event, unit, flags=None):
         return
     action.do(action.HasTraded(actor))
 
+def has_finished(self: Event, unit, flags=None):
+    actor = self._get_unit(unit)
+    if not actor:
+        self.logger.error("has_finished: Couldn't find unit %s" % unit)
+        return
+    action.do(action.Wait(actor))
+
 def add_group(self: Event, group, starting_group=None, entry_type=None, placement=None, flags=None):
     flags = flags or set()
 
@@ -1350,6 +1357,29 @@ def give_item(self: Event, global_unit_or_convoy, item, flags=None):
             self.game.alerts.append(banner.SentToConvoy(item))
             self.game.state.change('alert')
             self.state = 'paused'
+
+def equip_item(self: Event, global_unit, item, flags=None):
+    flags = flags or set()
+    item_input = item
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("equip_item: Couldn't find unit with nid %s" % global_unit)
+        return
+    unit, item = self._get_item_in_inventory(global_unit, item)
+    if not unit or not item:
+        self.logger.error("equip_item: Either unit %s or item %s was invalid, see above" % (global_unit, item_input))
+        return
+    
+    if not item_system.equippable(unit, item):
+        self.logger.error("equip_item: %s is not an item that can be equipped" % item.nid)
+        return
+    if not item_system.available(unit, item):
+        self.logger.error("equip_item: %s is unable to equip %s" % (unit.nid, item.nid))
+        return
+    
+    equip_action = action.EquipItem(unit, item)
+    action.do(equip_action)
+    
 
 def remove_item(self: Event, global_unit_or_convoy, item, flags=None):
     flags = flags or set()
