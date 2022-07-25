@@ -114,15 +114,49 @@ class FloorTerrain(Terrain):
 class WallTerrain(WangEdge2Terrain16):
     terrain_like = ('Wall', )
 
-    def _determine_index(self, tilemap, pos: tuple) -> tuple:
+    def _determine_index(self, tilemap, pos: tuple, ignore_south: bool = False) -> tuple:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
         # Edge is true when we have an adjacent walllike
         north_edge = bool(north in self.terrain_like)
-        south_edge = bool(south in self.terrain_like)
+        south_edge = bool(south in self.terrain_like) and not ignore_south
         east_edge = bool(east in self.terrain_like)
         west_edge = bool(west in self.terrain_like)
         index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
         return index
+
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+        north, east, south, west = tilemap.get_cardinal_terrain(pos)
+        northeast, southeast, southwest, northwest = tilemap.get_diagonal_terrain(pos)
+
+        # Check if we are in a layer 1 room and need to display the lower portion of the wall
+        if north in terrain_like and tilemap.get_height(pos) == 1 and south not in terrain_like:
+            left, right, shadow = True, True, False
+            if west in terrain_like and southwest not in terrain_like:
+                left = False
+            if east in terrain_like and southeast not in terrain_like:
+                right = False
+            if southwest in terrain_like or southwest == 'Pillar':
+                shadow = True
+
+            if left and right:
+                coord = (0, 4)
+            elif left:
+                coord = (1, 4)
+            elif right:
+                coord = (2, 4)
+            else:
+                coord = (3, 4)
+
+        else: # Display the normal upper portion of the wall
+            ignore_south = south in terrain_like and tilemap.get_height(pos[0], pos[1] + 1) != 1
+            index = self._determine_index(tilemap, pos, ignore_south)
+            coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
+
+        new_coords1 = [(coord[0]*2, coord[1]*2)]
+        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
+        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+        return new_coords1, new_coords2, new_coords3, new_coords4
 
 class StairsUpDownTerrain(Terrain):
     terrain_like = ('StairsUpDown', )
