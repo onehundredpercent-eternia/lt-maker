@@ -10,19 +10,28 @@ class DungeonTileMap:
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
-        self.terrain_grid = {}
+        self.terrain_grid: Dict[Tuple[int, int], str] = {}
         self.tile_grid = {}
+        self.layer_grid: Dict[Tuple[int, int], int] = {}
 
-    def get_terrain(self, pos):
+    def get_terrain(self, pos: Tuple[int, int]) -> str:
         return self.terrain_grid.get(pos, None)
 
     def set_grid(self, x: int, y: int, terrain: str):
         self.terrain_grid[(x, y)] = terrain
 
+    def get_layer(self, pos: Tuple[int, int]) -> int:
+        return self.layer_grid.get(pos, None)
+    
+    def set_layer(self, x: int, y: int, layer: int):
+        self.layer_grid[(x, y)] = layer
+
     def reset_grid(self, terrain: str):
+        self.layer_grid.clear()
         for x in range(self.width):
             for y in range(self.height):
                 self.terrain_grid[(x, y)] = terrain
+                
 
     def print_grid(self):
         for y in range(self.height):
@@ -37,6 +46,8 @@ class DungeonTileMap:
                     print(" ", end='')
                 elif terrain == 'Pillar':
                     print("%", end='')
+                elif terrain == 'Stairs':
+                    print("/", end='')
                 else:
                     print("S", end='')
             print("\n", end='')
@@ -57,6 +68,13 @@ class DungeonTileMap:
         southwest = self.get_terrain((pos[0] - 1, pos[1] + 1))
         northwest = self.get_terrain((pos[0] - 1, pos[1] - 1))
         return northeast, southeast, southwest, northwest
+
+    def get_cardinal_layers(self, pos: tuple) -> tuple:
+        north = self.get_layer((pos[0], pos[1] - 1))
+        east = self.get_layer((pos[0] + 1, pos[1]))
+        south = self.get_layer((pos[0], pos[1] + 1))
+        west = self.get_layer((pos[0] - 1, pos[1]))
+        return north, east, south, west
 
 @dataclass(eq=False)
 class RoomPrefab:
@@ -216,7 +234,7 @@ def place_rooms_on_grid(tilemap: DungeonTileMap, rooms: List[Room], terrain='Flo
         for tile in room.tiles:
             tilemap.terrain_grid[tile] = terrain
 
-def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[tuple]) -> Set[tuple]:
+def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
     # Find walls between rooms
     new_floors = set()
     all_checked_walls = set()
@@ -412,10 +430,34 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
         new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
         print_rooms(new_rooms)
-        connections = combine_rooms(tilemap, new_rooms, room_tiles)
 
-        place_rooms_on_grid(tilemap, new_rooms)
-        place_rooms_on_grid(tilemap, [Room(connections)], 'Floor')
+        # Assign each room a random layer (1 or 2)
+        for room in new_rooms:
+            layer = random.randint(1, 2)
+            for tile in room.tiles:
+                tilemap.set_layer(*tile, layer)
+
+        # Combine Rooms
+        connections: Set[Tuple[int, int]] = combine_rooms(tilemap, new_rooms, room_tiles)
+
+        # Place rooms onto grid
+        for room in new_rooms:
+            for tile in room.tiles:
+                tilemap.terrain_grid[tile] = 'Floor'
+
+        # Place connections onto grid
+        for connection in connections:
+            # Check layers of nearby positions
+            north, east, south, west = tilemap.get_cardinal_layers(connection)
+            layers = {north, east, south, west}
+            layers.discard(None)
+            print(len(layers))
+            if len(layers) == 1:
+                tilemap.terrain_grid[connection] = 'Floor'
+            elif len(layers) == 2:
+                tilemap.terrain_grid[connection] = 'Stairs'
+            else:
+                print("No nearby floor tiles? %s" % connection)
 
         # Check number of rooms
         floor_tiles = get_floor_positions(tilemap)
