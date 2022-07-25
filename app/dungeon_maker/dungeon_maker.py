@@ -46,8 +46,12 @@ class DungeonTileMap:
                     print(" ", end='')
                 elif terrain == 'Pillar':
                     print("%", end='')
-                elif terrain == 'Stairs':
-                    print("/", end='')
+                elif terrain == 'StairsUpDown':
+                    print("^", end='')
+                elif terrain == 'StairsLeft':
+                    print("<", end='')
+                elif terrain == 'StairsRight':
+                    print(">", end='')
                 else:
                     print("S", end='')
             print("\n", end='')
@@ -229,11 +233,6 @@ def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room
                 room_tiles.remove(tile)
     return rooms
 
-def place_rooms_on_grid(tilemap: DungeonTileMap, rooms: List[Room], terrain='Floor'):
-    for room in rooms:
-        for tile in room.tiles:
-            tilemap.terrain_grid[tile] = terrain
-
 def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
     # Find walls between rooms
     new_floors = set()
@@ -303,7 +302,7 @@ def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Se
 
 def get_floor_positions(tilemap: DungeonTileMap) -> List[Tuple]:
     valid_positions = [(x, y) for x in range(tilemap.width) for y in range(tilemap.height)]
-    return sorted([pos for pos in valid_positions if tilemap.get_terrain(pos) in ('Floor', 'Pillar', 'Stairs')])
+    return sorted([pos for pos in valid_positions if tilemap.get_terrain(pos) in ('Floor', 'Pillar', 'StairsUpDown', 'StairsLeft', 'StairsRight')])
 
 def find_all_rooms(positions: List[Tuple]) -> List[Room]:
     rooms = []
@@ -432,11 +431,32 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         print_rooms(new_rooms)
 
         # Assign each room a random layer (1 or 2)
+        room_to_layer = {}
         for room in new_rooms:
             layer = random.randint(1, 2)
+            room_to_layer[room] = layer
             for tile in room.tiles:
                 tilemap.set_layer(*tile, layer)
 
+        # Make sure there's room for 2-tile tall walls in layer 1 rooms
+        for room, layer in room_to_layer.items():
+            if layer == 1:
+                # Remove the top tiles of the room
+                min_x = min(tile[0] for tile in room.tiles)
+                max_x = max(tile[0] for tile in room.tiles)
+                to_remove = set()
+                for x in range(min_x, max_x + 1):
+                    min_y = min(tile[1] for tile in room.tiles if tile[0] == x)
+                    to_remove.add((x, min_y))
+                # Make sure we actually need to remove these tiles
+                if any((tile[0], tile[1] - 2) in room_tiles for tile in to_remove):
+                    for r in to_remove:
+                        room.tiles.remove(r)
+                else:  # No need to remove this since the wall will have enough space
+                    pass
+
+        # Need to recalculate what tiles actually belong in the room after making room for 2-tall walls
+        room_tiles = {tile for tile in room.tiles for room in new_rooms}
         # Combine Rooms
         connections: Set[Tuple[int, int]] = combine_rooms(tilemap, new_rooms, room_tiles)
 
@@ -452,10 +472,21 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             layers = {north, east, south, west}
             layers.discard(None)
             print(len(layers))
+            # Place regular floors
             if len(layers) == 1:
                 tilemap.terrain_grid[connection] = 'Floor'
+            # Place stairs
             elif len(layers) == 2:
-                tilemap.terrain_grid[connection] = 'Stairs'
+                # Determine direction
+                if north != south:
+                    tilemap.terrain_grid[connection] = 'StairsUpDown'
+                elif east != west:
+                    if west > east:
+                        tilemap.terrain_grid[connection] = 'StairsLeft'
+                    elif east < west:
+                        tilemap.terrain_grid[connection] = 'StairsRight'
+                else:
+                    print("Could not determine which direction the stairs should face %s" % connection)
             else:
                 print("No nearby floor tiles? %s" % connection)
 
