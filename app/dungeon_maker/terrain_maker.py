@@ -129,13 +129,13 @@ class WallTerrain(WangEdge2Terrain16):
         northeast, southeast, southwest, northwest = tilemap.get_diagonal_terrain(pos)
 
         # Check if we are in a layer 1 room and need to display the lower portion of the wall
-        if north in terrain_like and tilemap.get_height(pos) == 1 and south not in terrain_like:
+        if north in self.terrain_like and tilemap.get_layer(pos) == 1 and south not in self.terrain_like:
             left, right, shadow = True, True, False
-            if west in terrain_like and southwest not in terrain_like:
+            if west in self.terrain_like and southwest not in self.terrain_like:
                 left = False
-            if east in terrain_like and southeast not in terrain_like:
+            if east in self.terrain_like and southeast not in self.terrain_like:
                 right = False
-            if southwest in terrain_like or southwest == 'Pillar':
+            if southwest in self.terrain_like or southwest == 'Pillar':
                 shadow = True
 
             if left and right:
@@ -148,7 +148,7 @@ class WallTerrain(WangEdge2Terrain16):
                 coord = (3, 4)
 
         else: # Display the normal upper portion of the wall
-            ignore_south = south in terrain_like and tilemap.get_height(pos[0], pos[1] + 1) != 1
+            ignore_south = south in self.terrain_like and tilemap.get_layer(pos[0], pos[1] + 1) != 1
             index = self._determine_index(tilemap, pos, ignore_south)
             coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
 
@@ -164,9 +164,9 @@ class StairsUpDownTerrain(Terrain):
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
         north, _, south, _ = tilemap.get_cardinal_terrain(pos)
         top, bottom = False, False
-        if north not in terrain_like:
+        if north not in self.terrain_like:
             top = True
-        if south not in terrain_like:
+        if south not in self.terrain_like:
             bottom = True
 
         if top and bottom:
@@ -190,9 +190,9 @@ class StairsLeftTerrain(Terrain):
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
         _, east, _, west = tilemap.get_cardinal_terrain(pos)
         left, right = False, False
-        if east not in terrain_like:
+        if east not in self.terrain_like:
             right = True
-        if west not in terrain_like:
+        if west not in self.terrain_like:
             left = True
 
         if left and right:
