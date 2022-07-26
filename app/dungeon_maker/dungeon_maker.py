@@ -17,7 +17,7 @@ class DungeonTileMap:
     def get_terrain(self, pos: Tuple[int, int]) -> str:
         return self.terrain_grid.get(pos, None)
 
-    def set_grid(self, x: int, y: int, terrain: str):
+    def set_terrain(self, x: int, y: int, terrain: str):
         self.terrain_grid[(x, y)] = terrain
 
     def get_layer(self, pos: Tuple[int, int]) -> int:
@@ -37,7 +37,7 @@ class DungeonTileMap:
             print("%02d " % y, end='')
             for x in range(self.width):
                 terrain = self.get_terrain((x, y))
-                if terrain == 'Floor':
+                if terrain == 'Floor' or terrain == 'Floor2':
                     print("_", end='')
                 elif terrain == 'Wall':
                     print("#", end='')
@@ -441,7 +441,7 @@ def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reve
     offset_y = max_y - pos[1] if reverse_y else min_y + pos[1]
     terrain = tilemap.get_terrain((offset_x, offset_y))
     if terrain == 'Floor':
-        tilemap.set_grid(offset_x, offset_y, 'Pillar')
+        tilemap.set_terrain(offset_x, offset_y, 'Pillar')
 
 def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     random.seed(seed)
@@ -487,7 +487,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                 north = tilemap.get_terrain((pos[0], pos[1] - 1))
                 north2 = tilemap.get_terrain((pos[0], pos[1] - 2))
                 if north == 'Wall' and north2 != 'Wall':
-                    tilemap.set_grid(*pos, 'Wall')
+                    tilemap.set_terrain(*pos, 'Wall')
 
         # Check number of rooms
         floor_tiles = get_floor_positions(tilemap)
@@ -502,7 +502,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             if tilemap.get_terrain(pos) == 'Wall':
                 adjacent_terrain = tilemap.get_cardinal_terrain(pos) + tilemap.get_diagonal_terrain(pos)
                 if all(adj in ('Wall', 'Void') or adj is None for adj in adjacent_terrain):
-                    tilemap.set_grid(*pos, 'Void')
+                    tilemap.set_terrain(*pos, 'Void')
 
         final_rooms: List[Room] = find_all_rooms(floor_tiles)
         print_rooms(final_rooms)
@@ -535,6 +535,14 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                     for y in range(1, room.height//2, 3):
                         place_pillar(tilemap, room, (1, y), reverse_x=True)
                         place_pillar(tilemap, room, (1, y), reverse_x=True, reverse_y=True)
+
+        # Convert any floors on layer 2 to floor2
+        for pos in tilemap.terrain_grid.keys():
+            if tilemap.get_terrain(pos) == 'Floor' and tilemap.get_layer(pos) == 2:
+                tilemap.set_terrain(*pos, 'Floor2')
+
+
+        # Done!
         break
 
     return tilemap, final_rooms
