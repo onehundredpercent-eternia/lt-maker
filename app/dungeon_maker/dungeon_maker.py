@@ -406,6 +406,32 @@ def print_rooms(rooms: List[Room]):
                 print(" ", end='')
         print("\n", end='')
 
+def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[int, int]]):
+    for connection in connections:
+        # Check layers of nearby positions
+        north, east, south, west = tilemap.get_cardinal_layers(connection)
+        layers = {north, east, south, west}
+        layers.discard(None)
+        print(connection, north, east, south, west, len(layers))
+        # Place regular floors
+        if len(layers) == 1:
+            tilemap.terrain_grid[connection] = 'Floor'
+        # Place stairs
+        elif len(layers) == 2:
+            # Determine direction
+            if north != south:
+                tilemap.terrain_grid[connection] = 'StairsUpDown'
+            elif east != west:
+                print(east, west)
+                if west > east:
+                    tilemap.terrain_grid[connection] = 'StairsLeft'
+                elif east > west:
+                    tilemap.terrain_grid[connection] = 'StairsRight'
+            else:
+                print("Could not determine which direction the stairs should face %s" % connection)
+        else:
+            print("No nearby floor tiles? %s" % connection)
+
 def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reverse_x: bool = False, reverse_y: bool = False) -> None:
     min_x = min(tile[0] for tile in room.tiles)
     max_x = max(tile[0] for tile in room.tiles)
@@ -432,72 +458,42 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
 
         # Assign each room a random layer (1 or 2)
         room_to_layer = {}
-        for room in new_rooms:
-            layer = random.randint(1, 2)
+        for idx, room in enumerate(new_rooms):
+            layer = idx % 2 + 1
+            # layer = 1
             print("Layer", layer)
             room_to_layer[room] = layer
             for tile in room.tiles:
                 tilemap.set_layer(*tile, layer)
 
-        # Make sure there's room for 2-tile tall walls in layer 1 rooms
-        # for room, layer in room_to_layer.items():
-        #     if layer == 1:
-        #         # Remove the top tiles of the room
-        #         min_x = min(tile[0] for tile in room.tiles)
-        #         max_x = max(tile[0] for tile in room.tiles)
-        #         to_remove = set()
-        #         for x in range(min_x, max_x + 1):
-        #             min_y = min(tile[1] for tile in room.tiles if tile[0] == x)
-        #             to_remove.add((x, min_y))
-        #         # Make sure we actually need to remove these tiles
-        #         if any((tile[0], tile[1] - 2) in room_tiles for tile in to_remove):
-        #             for r in to_remove:
-        #                 room.tiles.remove(r)
-        #         else:  # No need to remove this since the wall will have enough space
-        #             pass
-
         # Need to recalculate what tiles actually belong in the room after making room for 2-tall walls
-        room_tiles = {tile for tile in room.tiles for room in new_rooms}
         # Combine Rooms
-        connections: Set[Tuple[int, int]] = combine_rooms(tilemap, new_rooms, room_tiles)
+        connections: Set[Tuple[int, int]] = combine_rooms(tilemap, new_rooms, room_tiles)        
 
         # Place rooms onto grid
         for room in new_rooms:
             for tile in room.tiles:
                 tilemap.terrain_grid[tile] = 'Floor'
 
-        for connection in connections:
-            tilemap.terrain_grid[connection] = 'Floor'
-
         # Place connections onto grid
-        # for connection in connections:
-        #     # Check layers of nearby positions
-        #     north, east, south, west = tilemap.get_cardinal_layers(connection)
-        #     layers = {north, east, south, west}
-        #     layers.discard(None)
-        #     print(north, east, south, west, len(layers))
-        #     # Place regular floors
-        #     if len(layers) == 1:
-        #         tilemap.terrain_grid[connection] = 'Floor'
-        #     # Place stairs
-        #     elif len(layers) == 2:
-        #         # Determine direction
-        #         if north != south:
-        #             tilemap.terrain_grid[connection] = 'StairsUpDown'
-        #         elif east != west:
-        #             if west > east:
-        #                 tilemap.terrain_grid[connection] = 'StairsLeft'
-        #             elif east < west:
-        #                 tilemap.terrain_grid[connection] = 'StairsRight'
-        #         else:
-        #             print("Could not determine which direction the stairs should face %s" % connection)
-        #     else:
-        #         print("No nearby floor tiles? %s" % connection)
+        place_connections_onto_grid(tilemap, connections)
+        tilemap.print_grid()
+
+        # Make sure there's room for 2-tile tall walls in layer 1 rooms
+        for pos in tilemap.terrain_grid.keys():
+            layer = tilemap.get_layer(pos)
+            if layer == 1:
+                # Remove the top tiles of the room
+                north = tilemap.get_terrain((pos[0], pos[1] - 1))
+                north2 = tilemap.get_terrain((pos[0], pos[1] - 2))
+                if north == 'Wall' and north2 != 'Wall':
+                    tilemap.set_grid(*pos, 'Wall')
 
         # Check number of rooms
         floor_tiles = get_floor_positions(tilemap)
+        print(len(floor_tiles))
         rooms: List[Room] = find_new_rooms(tilemap, floor_tiles.copy())
-        print(len(rooms))
+        print("Number of Rooms", len(rooms))
         if len(rooms) != 1:
             continue
 

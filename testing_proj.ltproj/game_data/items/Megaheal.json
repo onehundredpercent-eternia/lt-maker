@@ -1,0 +1,25 @@
+[
+    {
+        "nid": "Megaheal",
+        "name": "Megaheal",
+        "desc": "It's Mega",
+        "icon_nid": "Staff",
+        "icon_index": [
+            0,
+            1
+        ],
+        "components": [
+            [
+                "multi_item",
+                [
+                    "Heal",
+                    "Mend"
+                ]
+            ],
+            [
+                "weapon_type",
+                "Staff"
+            ]
+        ]
+    }
+]

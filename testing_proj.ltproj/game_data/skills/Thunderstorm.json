@@ -1,0 +1,34 @@
+[
+    {
+        "nid": "Thunderstorm",
+        "name": "Thunderstorm",
+        "desc": "If weapon weight greater than enemy\nW. Weight, +2 dmg, +15% hit, +5% crit.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            6
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "hit",
+                15
+            ],
+            [
+                "damage",
+                2
+            ],
+            [
+                "crit",
+                5
+            ],
+            [
+                "combat_condition",
+                "unit.get_weapon().weight.value > unit2.get_weapon().weight.value"
+            ]
+        ]
+    }
+]
