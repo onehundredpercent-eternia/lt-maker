@@ -54,7 +54,7 @@ class_data = Data([
     ClassData('Nomad', 3, 'Bow', 3),
     ClassData('Soldier', 1.5, 'Lance', 1, 7),
     ClassData('Brigand', 1.5, 'Axe', 1, 7),
-    ClassData('Seeress', 4, 'Light', 4),
+    ClassData('Troubadour', 4, 'Light', 4),
     ClassData('Cleric', 3, 'Light', 3),
     ClassData('Mage', 2.5, 'Anima', 2),
     ClassData('Maligknight', 5, 'Anima', 6),
@@ -96,7 +96,7 @@ item_data = {
     'Soldier': 'Soldier Lance',
     'Brigand': 'Attack Axe',
     'Saint': 'Charisma',
-    'Seeress': 'Glimmer',
+    'Troubadour': 'Glimmer',
     'Valkyrie': 'Miracle',
     'Warlock': 'Luna',
 }

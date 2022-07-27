@@ -133,7 +133,7 @@ class TileMapObject(Prefab):
         # Build a layer
         base_layer = LayerObject('base', self)
         
-        for coord, terrain_nid in dungeon.terrain_grid.items():
+        for coord, terrain_nid in dungeon.get_true_terrain_grid().items():
             base_layer.terrain[coord] = terrain_nid
 
         image = engine.create_surface((self.width * TILEWIDTH, self.height * TILEHEIGHT))

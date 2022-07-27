@@ -160,5 +160,7 @@
     "Refresh.json": 158,
     "Summon.json": 159,
     "Summon_Soldier.json": 160,
-    "Sear.json": 161
+    "Sear.json": 161,
+    "HealPhysic.json": 162,
+    "Megaheal.json": 163
 }

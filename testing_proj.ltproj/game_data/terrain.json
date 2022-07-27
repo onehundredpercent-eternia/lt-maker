@@ -5,8 +5,7 @@
         "color": [
             192,
             224,
-            48,
-            255
+            48
         ],
         "minimap": "Grass",
         "platform": "Plains",
@@ -85,8 +84,7 @@
         "color": [
             84,
             24,
-            84,
-            255
+            84
         ],
         "minimap": "Floor",
         "platform": "Floor",
@@ -101,8 +99,7 @@
         "color": [
             84,
             84,
-            84,
-            255
+            84
         ],
         "minimap": "Floor",
         "platform": "Floor",

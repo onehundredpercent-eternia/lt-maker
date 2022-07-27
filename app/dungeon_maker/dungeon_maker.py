@@ -17,6 +17,15 @@ class DungeonTileMap:
     def get_terrain(self, pos: Tuple[int, int]) -> str:
         return self.terrain_grid.get(pos, None)
 
+    def get_true_terrain_grid(self) -> Dict[Tuple[int, int], str]:
+        conversion_dict = \
+            {'Floor2': 'Floor',
+             'StairsUpDown': 'Stairs',
+             'StairsLeft': 'Stairs',
+             'StairsRight': 'Stairs',
+             }
+        return {pos: conversion_dict.get(terrain, terrain) for pos, terrain in self.terrain_grid.items()}
+
     def set_terrain(self, x: int, y: int, terrain: str):
         self.terrain_grid[(x, y)] = terrain
 
@@ -540,7 +549,6 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         for pos in tilemap.terrain_grid.keys():
             if tilemap.get_terrain(pos) == 'Floor' and tilemap.get_layer(pos) == 2:
                 tilemap.set_terrain(*pos, 'Floor2')
-
 
         # Done!
         break

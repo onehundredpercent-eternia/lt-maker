@@ -114,11 +114,11 @@ class FloorTerrain(Terrain):
 class WallTerrain(WangEdge2Terrain16):
     terrain_like = ('Wall', )
 
-    def _determine_index(self, tilemap, pos: tuple, ignore_south: bool = False) -> tuple:
+    def _determine_index(self, tilemap, pos: tuple) -> tuple:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
         # Edge is true when we have an adjacent walllike
         north_edge = bool(north in self.terrain_like)
-        south_edge = bool(south in self.terrain_like) and not ignore_south
+        south_edge = bool(south in self.terrain_like)
         east_edge = bool(east in self.terrain_like)
         west_edge = bool(west in self.terrain_like)
         index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
@@ -139,17 +139,19 @@ class WallTerrain(WangEdge2Terrain16):
                 shadow = True
 
             if left and right:
-                coord = (0, 4)
+                coord = (0, 5)
             elif left:
-                coord = (1, 4)
+                if shadow:
+                    coord = (4, 5)
+                else:
+                    coord = (1, 5)
             elif right:
-                coord = (2, 4)
+                coord = (2, 5)
             else:
-                coord = (3, 4)
+                coord = (3, 5)
 
         else: # Display the normal upper portion of the wall
-            ignore_south = south in self.terrain_like and tilemap.get_layer(pos[0], pos[1] + 1) != 1
-            index = self._determine_index(tilemap, pos, ignore_south)
+            index = self._determine_index(tilemap, pos)
             coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
 
         new_coords1 = [(coord[0]*2, coord[1]*2)]
@@ -160,32 +162,6 @@ class WallTerrain(WangEdge2Terrain16):
 
 class StairsUpDownTerrain(Terrain):
     terrain_like = ('StairsUpDown', )
-
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
-        north, _, south, _ = tilemap.get_cardinal_terrain(pos)
-        top, bottom = False, False
-        if north not in self.terrain_like:
-            top = True
-        if south not in self.terrain_like:
-            bottom = True
-
-        if top and bottom:
-            coord = 0, 0
-        elif top:
-            coord = 1, 0
-        elif bottom:
-            coord = 2, 0
-        else:
-            coord = 3, 0 
-
-        new_coords1 = [(coord[0]*2, coord[1]*2)]
-        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
-        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
-        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
-        return new_coords1, new_coords2, new_coords3, new_coords4
-
-class StairsLeftTerrain(Terrain):
-    terrain_like = ('StairsLeft', )
 
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
         _, east, _, west = tilemap.get_cardinal_terrain(pos)
@@ -203,6 +179,26 @@ class StairsLeftTerrain(Terrain):
             coord = 2, 0
         else:
             coord = 3, 0 
+
+        new_coords1 = [(coord[0]*2, coord[1]*2)]
+        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
+        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+        return new_coords1, new_coords2, new_coords3, new_coords4
+
+class StairsLeftTerrain(Terrain):
+    terrain_like = ('StairsLeft', )
+
+    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+        north, _, south, _ = tilemap.get_cardinal_terrain(pos)
+        top = False
+        if north not in self.terrain_like:
+            top = True
+
+        if top:
+            coord = 0, 0
+        else:
+            coord = 1, 0
 
         new_coords1 = [(coord[0]*2, coord[1]*2)]
         new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
