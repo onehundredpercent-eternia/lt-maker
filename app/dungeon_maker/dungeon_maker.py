@@ -507,10 +507,12 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             continue
 
         # Change walls surrounded on all sides by other walls to voids
+        # Also don't change walls that are two above a layer 1 room (needs two tile walls)
         for pos in tilemap.terrain_grid.keys():
             if tilemap.get_terrain(pos) == 'Wall':
                 adjacent_terrain = tilemap.get_cardinal_terrain(pos) + tilemap.get_diagonal_terrain(pos)
-                if all(adj in ('Wall', 'Void') or adj is None for adj in adjacent_terrain):
+                if all(adj in ('Wall', 'Void') or adj is None for adj in adjacent_terrain) and \
+                        tilemap.get_layer((pos[0], pos[1] + 2)) != 1:
                     tilemap.set_terrain(*pos, 'Void')
 
         final_rooms: List[Room] = find_all_rooms(floor_tiles)
