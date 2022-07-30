@@ -63,7 +63,7 @@ class OverworldMapView():
         full_size = self.overworld.tilemap.width * TILEWIDTH, self.overworld.tilemap.height * TILEHEIGHT
 
         # cut out our base
-        map_image = self.overworld.tilemap.get_full_image(cull_rect)
+        map_image = self.overworld.tilemap.get_base_image(cull_rect)
         surf = engine.copy_surface(map_image)
         surf = surf.convert_alpha()
 

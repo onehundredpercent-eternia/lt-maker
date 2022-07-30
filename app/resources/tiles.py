@@ -16,7 +16,7 @@ class TileMapPrefab(Prefab):
         self.nid = nid
         self.width, self.height = int(TILEX), int(TILEY)
         self.autotile_fps = 29
-        self.layers = Data()
+        self.layers = Data[LayerGrid]()
         self.layers.append(LayerGrid('base', self))
 
         self.pixmap = None
@@ -173,6 +173,7 @@ class LayerGrid(Prefab):
         self.visible: bool = True
         self.terrain_grid = {}
         self.sprite_grid = {}
+        self.z_level = 0
 
     def set(self, coord, tile, tile_sprite):
         self.terrain_grid[coord] = tile
@@ -201,6 +202,7 @@ class LayerGrid(Prefab):
         s_dict['nid'] = self.nid
         s_dict['visible'] = self.visible
         s_dict['terrain_grid'] = {}
+        s_dict['z-level'] = self.z_level
         for coord, terrain_nid in self.terrain_grid.items():
             str_coord = "%d,%d" % (coord[0], coord[1])
             s_dict['terrain_grid'][str_coord] = terrain_nid
@@ -214,6 +216,7 @@ class LayerGrid(Prefab):
     def restore(cls, s_dict, parent):
         self = cls(s_dict['nid'], parent)
         self.visible = s_dict['visible']
+        self.z_level = s_dict.get('z-level', 0)
         for str_coord, terrain_nid in s_dict['terrain_grid'].items():
             coord = tuple(int(_) for _ in str_coord.split(','))
             self.terrain_grid[coord] = terrain_nid

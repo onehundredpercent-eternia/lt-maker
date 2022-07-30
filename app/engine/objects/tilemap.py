@@ -1,3 +1,5 @@
+from __future__ import annotations
+from app.resources.tiles import TileMapPrefab
 from app.utilities.typing import NID
 from typing import List
 from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES, COLORKEY
@@ -18,6 +20,8 @@ class LayerObject():
         self.image = None
         self.autotile_images = []
         self.pixel_bounds = None
+
+        self.z_level = 0
 
         # For fade in
         self.state = None
@@ -120,15 +124,22 @@ class TileMapObject(Prefab):
         self.width: int = 0
         self.height: int = 0
         self.nid: NID = None
+        self.autotile_fps = 0
+
+        self.layers: Data[LayerObject] = None
+        self.superlayers: Data[LayerObject] = None
 
     @classmethod
-    def from_prefab(cls, prefab):
+    def from_prefab(cls, prefab: TileMapPrefab):
         self = cls()
         self.nid = prefab.nid
         self.width = prefab.width
         self.height = prefab.height
         self.autotile_fps = prefab.autotile_fps
-        self.layers = Data()
+        # base layers with z <= 0. forms the floor of the map
+        self.layers = Data[LayerObject]()
+        # layers with z > 0. will be drawn above units
+        self.superlayers = Data[LayerObject]()
 
         # Stitch together image layers
         for layer in prefab.layers:
@@ -181,8 +192,13 @@ class TileMapObject(Prefab):
             new_layer.image = image
             if has_autotiles:
                 new_layer.autotile_images = autotile_images
-            self.layers.append(new_layer)
-
+            new_layer.z_level = layer.z_level
+            if new_layer.z_level <= 0:
+                self.layers.append(new_layer)
+            else:
+                self.superlayers.append(new_layer)
+        self.layers.sort(lambda layer: layer.z_level)
+        self.superlayers.sort(lambda layer: layer.z_level)
         # Base layer should be visible, rest invisible
         for layer in self.layers:
             layer.visible = False
@@ -211,11 +227,24 @@ class TileMapObject(Prefab):
                 return layer.nid
         return None
 
-    def get_full_image(self, cull_rect):
+    def get_base_image(self, cull_rect):
         image = engine.create_surface((cull_rect[2], cull_rect[3]))
         engine.fill(image, COLORKEY)
         engine.set_colorkey(image, COLORKEY)
         for layer in self.layers:
+            if (layer.visible or layer.state == 'fade_out') and \
+                    layer.should_draw(cull_rect):
+                main_image = layer.get_image(cull_rect)
+                image.blit(main_image, (0, 0))
+                autotile_image = layer.get_autotile_image(cull_rect)
+                if autotile_image:
+                    image.blit(autotile_image, (0, 0))
+        return image
+
+    def get_super_image(self, cull_rect):
+        image = engine.create_surface((cull_rect[2], cull_rect[3]))
+        engine.set_colorkey(image, COLORKEY)
+        for layer in self.superlayers:
             if (layer.visible or layer.state == 'fade_out') and \
                     layer.should_draw(cull_rect):
                 main_image = layer.get_image(cull_rect)

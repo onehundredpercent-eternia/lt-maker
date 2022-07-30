@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Generic, List, Tuple, TypeVar
+from typing import Any, Callable, Dict, Generic, List, Tuple, TypeVar
 
 from app.utilities.typing import NID
 
@@ -108,6 +108,9 @@ class Data(Generic[T]):
             return
         obj = self._list.pop(old_index)
         self._list.insert(new_index, obj)
+
+    def sort(self, sort_func: Callable[[T], Any]):
+        self._list = sorted(self._list, key=sort_func)
 
     # def begin_insert_row(self, index):
     #     self.drop_to = index
