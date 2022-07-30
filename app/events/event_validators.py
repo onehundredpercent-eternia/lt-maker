@@ -885,7 +885,7 @@ class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
 
 class Theme(OptionValidator):
-    valid = ["default"]
+    valid = ["dungeon", "monastery"]
 
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']

@@ -130,10 +130,7 @@ def get_portrait(unit) -> tuple:
         offset = image.info_offset
         if not image.image:
             image.image = engine.image_load(image.full_path)
-        if MEMENTO_MODE:
-            image = engine.subsurface(image.image, (0, 0, 128, 128))
-        else:
-            image = engine.subsurface(image.image, (0, 0, 112, 88))
+        image = engine.subsurface(image.image, (0, 0, 96, 80))
     else:  # Generic class portrait
         klass = DB.classes.get(unit.klass)
         image = RESOURCES.icons80.get(klass.icon_nid)

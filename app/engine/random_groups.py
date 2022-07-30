@@ -38,27 +38,27 @@ class ClassData:
     chapter_max: int = LAST_CHAPTER
 
 class_data = Data([
-    ClassData('Myrmidon', 3, 'Sword', 2),
+    ClassData('Myrmidon', 3.5, 'Sword', 2),
     ClassData('Errant', 2.5, 'Sword', 1),
-    ClassData('Mercenary', 2.5, 'Sword', 1),
+    ClassData('Mercenary', 3, 'Sword', 1),
     ClassData('Thief', 2.5, 'Sword', 3),
-    ClassData('Sentinel', 3, 'Lance', 2),
-    ClassData('Cavalier', 2.5, 'Lance', 2),
+    ClassData('Sentinel', 3.5, 'Lance', 2),
+    ClassData('Cavalier', 3, 'Lance', 2),
     ClassData('Falcoknight', 4, 'Lance', 4),
-    ClassData('Skirmisher', 2, 'Lance', 1),
+    ClassData('Skirmisher', 2.5, 'Lance', 1),
     ClassData('Dracoknight', 5, 'Axe', 4),
     ClassData('Fighter', 2, 'Axe', 1),
-    ClassData('Vanguard', 3, 'Axe', 2),
-    ClassData('Raider', 2, 'Axe', 2),
-    ClassData('Archer', 2.5, 'Bow', 1),
-    ClassData('Nomad', 3, 'Bow', 3),
+    ClassData('Vanguard', 3.5, 'Axe', 2),
+    ClassData('Raider', 3, 'Axe', 2),
+    ClassData('Archer', 3, 'Bow', 1),
+    ClassData('Nomad', 3.5, 'Bow', 3),
     ClassData('Soldier', 1.5, 'Lance', 1, 7),
     ClassData('Brigand', 1.5, 'Axe', 1, 7),
     ClassData('Troubadour', 4, 'Light', 4),
     ClassData('Cleric', 3, 'Light', 3),
-    ClassData('Mage', 2.5, 'Anima', 2),
+    ClassData('Mage', 3, 'Anima', 2),
     ClassData('Maligknight', 5, 'Anima', 6),
-    ClassData('Acolyte', 2.5, 'Dark', 2),
+    ClassData('Acolyte', 3, 'Dark', 2),
     ClassData('Sorceror', 3, 'Dark', 2),
 ])
 
@@ -317,7 +317,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
     logging.debug("#Positions: %s", len(positions))
 
-    num_points = base_num_points * len(positions) / 25
+    num_points = base_num_points * len(positions) / 30
     logging.debug("#Points: %s", num_points)
 
     is_elite = game.get_random_float() < get_elite_chance() and completed_chapters() > 0

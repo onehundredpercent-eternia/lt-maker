@@ -94,6 +94,8 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
     # Lets build a level
     game.build_level_from_scratch(level_nid, tilemap)
 
+    game.tilemap.save_screenshot()
+
     # Choose a starting room and an ending/boss room
     valid_positions = get_floor_positions()
     southwest_corner = sorted(valid_positions, key=lambda x: x[0] + -x[1])[0]

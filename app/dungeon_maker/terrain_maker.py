@@ -3,6 +3,7 @@ import random
 
 from app.constants import TILEWIDTH, TILEHEIGHT
 from app.engine import engine, static_random
+from app.utilities import utils
 
 def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
     if seed is None:
@@ -124,7 +125,7 @@ class WallTerrain(WangEdge2Terrain16):
         for pos in all_walls.copy():
             north, east, south, west = tilemap.get_cardinal_terrain(pos)
             if east != 'Wall' and west != 'Wall' and south != 'Wall':
-                if tilemap.calc_layer(pos) == 1:
+                if tilemap.calc_layer(pos) == 1 and north == 'Wall':
                     self.wall_grid[pos] = 'Bottom'
                 else:
                     self.wall_grid[pos] = 'Top'
@@ -152,33 +153,17 @@ class WallTerrain(WangEdge2Terrain16):
         for pos in self.wall_grid.keys():
             if all(kind == 'Top' or not tilemap.check_bounds(*adj) for kind, adj in 
                    zip(self.get_cardinal_wallgrid(pos) + self.get_diagonal_wallgrid(pos),
-                       self.get_cardinal_positions(pos) + self.get_diagonal_positions(pos))):
+                       utils.get_cardinal_positions(pos) + utils.get_diagonal_positions(pos))):
                 convert_to_void.add(pos)
 
         for pos in convert_to_void:
             self.wall_grid[pos] = 'Void'
 
-    def get_cardinal_positions(self, pos: tuple) -> tuple:
-        return (
-            (pos[0], pos[1] - 1),
-            (pos[0] + 1, pos[1]),
-            (pos[0], pos[1] + 1),
-            (pos[0] - 1, pos[1]),
-        )
-
-    def get_diagonal_positions(self, pos: tuple) -> tuple:
-        return (
-            (pos[0] + 1, pos[1] - 1),
-            (pos[0] + 1, pos[1] + 1),
-            (pos[0] - 1, pos[1] + 1),
-            (pos[0] - 1, pos[1] - 1),
-        )
-
     def get_cardinal_wallgrid(self, pos: tuple) -> tuple:
-        return list(self.wall_grid.get(adj, None) for adj in self.get_cardinal_positions(pos))
+        return list(self.wall_grid.get(adj, None) for adj in utils.get_cardinal_positions(pos))
 
     def get_diagonal_wallgrid(self, pos: tuple) -> tuple:
-        return list(self.wall_grid.get(adj, None) for adj in self.get_diagonal_positions(pos))
+        return list(self.wall_grid.get(adj, None) for adj in utils.get_diagonal_positions(pos))
 
     def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
@@ -289,8 +274,11 @@ class PillarTerrain(Terrain):
     terrain_like = ('Pillar', )
 
 def get_terrain(theme: str):
-    # Right now, there is only one theme
-    theme_dir = 'app/dungeon_maker/palettes/dungeon/'
+    palette_dir = 'app/dungeon_maker/palettes/'
+    if os.path.isdir(palette_dir + theme):
+        theme_dir = palette_dir + theme
+    else:
+        theme_dir = palette_dir + 'dungeon'
     return {'Floor': FloorTerrain(os.path.join(theme_dir, 'floor.png')),
             'Floor2': FloorTerrain(os.path.join(theme_dir, 'floor2.png')),
             'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png')),

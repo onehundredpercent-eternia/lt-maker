@@ -78,25 +78,13 @@ class DungeonTileMap:
         return 0 <= x < self.width and 0 <= y < self.height
 
     def get_cardinal_terrain(self, pos: tuple) -> tuple:
-        north = self.get_terrain((pos[0], pos[1] - 1))
-        east = self.get_terrain((pos[0] + 1, pos[1]))
-        south = self.get_terrain((pos[0], pos[1] + 1))
-        west = self.get_terrain((pos[0] - 1, pos[1]))
-        return north, east, south, west
+        return tuple([self.get_terrain(adj) for adj in utils.get_cardinal_positions(pos)])
 
     def get_diagonal_terrain(self, pos: tuple) -> tuple:
-        northeast = self.get_terrain((pos[0] + 1, pos[1] - 1))
-        southeast = self.get_terrain((pos[0] + 1, pos[1] + 1))
-        southwest = self.get_terrain((pos[0] - 1, pos[1] + 1))
-        northwest = self.get_terrain((pos[0] - 1, pos[1] - 1))
-        return northeast, southeast, southwest, northwest
+        return tuple([self.get_terrain(adj) for adj in utils.get_diagonal_positions(pos)])
 
     def get_cardinal_layers(self, pos: tuple) -> tuple:
-        north = self.get_layer((pos[0], pos[1] - 1))
-        east = self.get_layer((pos[0] + 1, pos[1]))
-        south = self.get_layer((pos[0], pos[1] + 1))
-        west = self.get_layer((pos[0] - 1, pos[1]))
-        return north, east, south, west
+        return tuple([self.get_layer(adj) for adj in utils.get_cardinal_positions(pos)])
 
 @dataclass(eq=False)
 class RoomPrefab:
@@ -238,6 +226,13 @@ class Room:
     @property
     def height(self):
         return max(tile[1] for tile in self.tiles) - min(tile[1] for tile in self.tiles) + 1
+
+    def get_center_tiles(self) -> List[tuple]:
+        center_tiles = []
+        for tile in self.tiles:
+            if all(adj in self.tiles for adj in utils.get_cardinal_positions(tile)):
+                center_tiles.append(tile)
+        return center_tiles
     
 def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room]:
     rooms = []
@@ -420,7 +415,7 @@ def print_rooms(rooms: List[Room]):
         print("%02d " % y, end='')
         for x in range(height):
             if (x, y) in all_positions:
-                print("%d" % all_positions[(x, y)], end='')
+                print("%d" % (all_positions[(x, y)] % 10), end='')
             else:
                 print(" ", end='')
         print("\n", end='')
@@ -461,20 +456,42 @@ def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reve
     offset_x = max_x - pos[0] if reverse_x else min_x + pos[0]
     offset_y = max_y - pos[1] if reverse_y else min_y + pos[1]
     terrain = tilemap.get_terrain((offset_x, offset_y))
-    if terrain == 'Floor':
+    south_terrain = tilemap.get_terrain((offset_x, offset_y + 1))
+    if terrain == 'Floor' and south_terrain in ('Floor', None):
         tilemap.set_terrain(offset_x, offset_y, 'Pillar')
 
 def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
+    print("Theme: %s" % theme)
     random.seed(seed)
     width, height = size
     while True:
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
         tilemap.reset_grid('Wall')
-        rooms: List[RoomPrefab] = get_rooms(offset=(width/2, height/2))
+        num_rooms = int(width * height / 20)
+        rooms: List[RoomPrefab] = get_rooms(num_rooms=num_rooms, offset=(width/2, height/2))
         rooms: List[RoomPrefab] = separation_steering(rooms)
-        room_tiles: Set[Tuple] = get_room_tiles(tilemap, rooms)
+        room_tiles: Set[Tuple[int, int]] = get_room_tiles(tilemap, rooms)
         new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
+        print("Initial Rooms")
+        print_rooms(new_rooms)
+
+        # Big areas of blankness get filled
+        tilemap_tiles = {(x, y) for x in range(tilemap.width) for y in range(tilemap.height)}
+        empty_tiles: Set[Tuple] = tilemap_tiles - room_tiles
+        thin_empty_tiles = {tile for tile in empty_tiles if sum(adj in empty_tiles for adj in utils.get_cardinal_positions(tile)) <= 2}
+        empty_tiles -= thin_empty_tiles
+        empty_rooms: List[Room] = find_new_rooms(tilemap, empty_tiles.copy())
+        print("Empty Rooms")
+        print_rooms(empty_rooms)
+        for room in empty_rooms:
+            if room.size >= 11:
+                center_tiles: List[Tuple[int, int]] = room.get_center_tiles()
+                new_room = Room(center_tiles)
+                new_rooms.append(new_room)
+                for tile in new_room.tiles:
+                    room_tiles.add(tile)
+        print("Final Rooms")
         print_rooms(new_rooms)
 
         # Assign each room a random layer (1 or 2)
@@ -498,6 +515,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
 
         # Place connections onto grid
         place_connections_onto_grid(tilemap, connections)
+        print("Tilemap Grid")
         tilemap.print_grid()
 
         # Make sure there's room for 2-tile tall walls in layer 1 rooms
@@ -523,6 +541,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         print("Number of Rooms", len(rooms))
         if len(rooms) != 1:
             continue
+        print_rooms(rooms)
 
         final_rooms: List[Room] = find_all_rooms(floor_tiles)
         print_rooms(final_rooms)
@@ -560,6 +579,8 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         for pos in tilemap.terrain_grid.keys():
             if tilemap.get_terrain(pos) == 'Floor' and tilemap.get_layer(pos) == 2:
                 tilemap.set_terrain(*pos, 'Floor2')
+
+        tilemap.print_grid()
 
         # Done!
         break
