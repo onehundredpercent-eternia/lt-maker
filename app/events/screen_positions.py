@@ -6,11 +6,11 @@ if MEMENTO_MODE:
                                    'Left': 36,
                                    'MidLeft': 72,
                                    'CenterLeft': 72,
-                                   'CenterRight': WINWIDTH - 128 - 72,
-                                   'MidRight': WINWIDTH - 128 - 72,
-                                   'LevelUpRight': WINWIDTH - 128 - 40,
-                                   'Right': WINWIDTH - 128 - 36,
-                                   'FarRight': WINWIDTH - 128,
+                                   'CenterRight': WINWIDTH - 96 - 72,
+                                   'MidRight': WINWIDTH - 96 - 72,
+                                   'LevelUpRight': WINWIDTH - 96 - 40,
+                                   'Right': WINWIDTH - 96 - 36,
+                                   'FarRight': WINWIDTH - 96,
                                    'OffscreenRight': WINWIDTH}
 else:
     horizontal_screen_positions = {'OffscreenLeft': -96,

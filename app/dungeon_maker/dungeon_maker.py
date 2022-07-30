@@ -31,6 +31,16 @@ class DungeonTileMap:
 
     def get_layer(self, pos: Tuple[int, int]) -> int:
         return self.layer_grid.get(pos, None)
+
+    def calc_layer(self, pos: Tuple[int, int]) -> int:
+        def south(pos: Tuple):
+            return pos[0], pos[1] + 1
+
+        while pos[1] < self.height:
+            if self.get_layer(pos):
+                return self.get_layer(pos)
+            pos = south(pos)
+        return None
     
     def set_layer(self, x: int, y: int, layer: int):
         self.layer_grid[(x, y)] = layer
@@ -425,6 +435,8 @@ def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[
         # Place regular floors
         if len(layers) == 1:
             tilemap.terrain_grid[connection] = 'Floor'
+            # Set the layer of this one
+            tilemap.layer_grid[connection] = list(layers)[0]
         # Place stairs
         elif len(layers) == 2:
             # Determine direction
@@ -498,6 +510,12 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                 if north == 'Wall' and north2 != 'Wall':
                     tilemap.set_terrain(*pos, 'Wall')
 
+        # Fill in alcoves
+        for pos in tilemap.terrain_grid.keys():
+            north, east, south, west = tilemap.get_cardinal_terrain(pos)
+            if sum([north == 'Wall', east == 'Wall', south == 'Wall', west == 'Wall']) >= 3:
+                tilemap.set_terrain(*pos, 'Wall')
+
         # Check number of rooms
         floor_tiles = get_floor_positions(tilemap)
         print(len(floor_tiles))
@@ -505,15 +523,6 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         print("Number of Rooms", len(rooms))
         if len(rooms) != 1:
             continue
-
-        # Change walls surrounded on all sides by other walls to voids
-        # Also don't change walls that are two above a layer 1 room (needs two tile walls)
-        for pos in tilemap.terrain_grid.keys():
-            if tilemap.get_terrain(pos) == 'Wall':
-                adjacent_terrain = tilemap.get_cardinal_terrain(pos) + tilemap.get_diagonal_terrain(pos)
-                if all(adj in ('Wall', 'Void') or adj is None for adj in adjacent_terrain) and \
-                        tilemap.get_layer((pos[0], pos[1] + 2)) != 1:
-                    tilemap.set_terrain(*pos, 'Void')
 
         final_rooms: List[Room] = find_all_rooms(floor_tiles)
         print_rooms(final_rooms)
