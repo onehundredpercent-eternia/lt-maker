@@ -69,8 +69,29 @@ class MapView():
         cull_rect = camera_cull
         full_size = game.tilemap.width * TILEWIDTH, game.tilemap.height * TILEHEIGHT
 
-        map_image = game.tilemap.get_full_image(cull_rect)
+        if game.bg_tilemap:
+            # cull calculations
+            bg_size = game.bg_tilemap.width * TILEWIDTH, game.bg_tilemap.height * TILEHEIGHT
+            x, y = cull_rect[:2]
+            if x:
+                x_proportion = float(x) / (full_size[0] - WINWIDTH)
+                bg_x = x_proportion * (bg_size[0] - WINWIDTH)
+            else:
+                bg_x = 0
+            if y:
+                y_proportion = float(y) / (full_size[1] - WINHEIGHT)
+                bg_y = y_proportion * (bg_size[1] - WINHEIGHT)
+            else:
+                bg_y = 0
 
+            parallax_cull = (bg_x, bg_y, cull_rect[2], cull_rect[3])
+            base_image = game.bg_tilemap.get_full_image(parallax_cull)
+            map_image = game.tilemap.get_full_image(cull_rect)
+            surf = engine.copy_surface(base_image)
+            surf = surf.convert_alpha()
+            surf.blit(map_image, (0, 0))
+        else:
+            map_image = game.tilemap.get_full_image(cull_rect)
         surf = engine.copy_surface(map_image)
         surf = surf.convert_alpha()
 

@@ -1,6 +1,7 @@
+from app.events.event_commands import EventCommand
 from app.utilities.typing import NID
 import re
-from typing import Set
+from typing import Dict, Set, Tuple
 from app.events.event_prefab import EventCatalog
 
 class EventInspectorEngine():
@@ -24,3 +25,12 @@ class EventInspectorEngine():
                 if event.nid in occurrence_dict:
                     break
         return occurrence_dict
+
+    def find_all_calls_of_command(self, qcommand: EventCommand, level_nid='all') -> Dict[Tuple[str, int], EventCommand]:
+        all_commands = {}
+        for event in self.event_db:
+            if level_nid == 'all' or event.level_nid == level_nid:
+                for idx, command in enumerate(event.commands):
+                    if command.nid == qcommand.nid:
+                        all_commands[(event.level_nid, idx)] = command
+        return all_commands

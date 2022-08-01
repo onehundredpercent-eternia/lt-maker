@@ -11,6 +11,11 @@ class HiddenIfInactive(SkillComponent):
     desc = 'Skill will not show up on info menu if condition is not fulfilled'
     tag = SkillTags.ATTRIBUTE
 
+class GreyIfInactive(SkillComponent):
+    nid = 'grey_if_inactive'
+    desc = 'If skill is not active, it will be drawn grey'
+    tag = SkillTags.ATTRIBUTE
+
 class TerrainSkill(SkillComponent):
     nid = 'is_terrain'
     desc = 'Skill is hidden and will not affect fliers'
@@ -30,6 +35,10 @@ class Stack(SkillComponent):
     nid = 'stack'
     desc = "Skill can be applied to a unit multiple times"
     tag = SkillTags.ATTRIBUTE
+
+    expose = Type.Int
+
+    value = 999
 
 class Feat(SkillComponent):
     nid = 'feat'

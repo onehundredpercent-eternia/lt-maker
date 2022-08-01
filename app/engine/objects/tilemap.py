@@ -244,6 +244,7 @@ class TileMapObject(Prefab):
 
     def get_full_image(self, cull_rect):
         image = engine.create_surface((cull_rect[2], cull_rect[3]))
+        engine.fill(image, COLORKEY)
         engine.set_colorkey(image, COLORKEY)
         for layer in self.layers:
             if (layer.visible or layer.state == 'fade_out') and \

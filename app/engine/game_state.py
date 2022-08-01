@@ -258,8 +258,9 @@ class GameState():
         tilemap_nid = level_prefab.tilemap
         tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
         tilemap = TileMapObject.from_prefab(tilemap_prefab)
+        bg_tilemap = TileMapObject.from_prefab(RESOURCES.tilemaps.get(level_prefab.bg_tilemap)) if level_prefab.bg_tilemap else None
         self.cursor = LevelCursor(self)
-        self.current_level = LevelObject.from_prefab(level_prefab, tilemap, self.unit_registry, self.current_mode)
+        self.current_level = LevelObject.from_prefab(level_prefab, tilemap, bg_tilemap, self.unit_registry, self.current_mode)
         if with_party:
             self.current_party = with_party
         else:
@@ -280,7 +281,7 @@ class GameState():
 
         self.cursor = LevelCursor(self)
         party = DB.parties.keys()[0]
-        self.current_level = LevelObject.from_scratch(level_nid, tilemap, party, self.unit_registry, self.current_mode)
+        self.current_level = LevelObject.from_scratch(level_nid, tilemap, None, party, self.unit_registry, self.current_mode)
         self.current_party = self.current_level.party
 
         self.level_setup()
@@ -579,6 +580,12 @@ class GameState():
             return self.current_level.tilemap
         else:
             return None
+
+    @property
+    def bg_tilemap(self):
+        if self.current_level and self.current_level.bg_tilemap:
+            return self.current_level.bg_tilemap
+        return None
 
     @property
     def mode(self):
