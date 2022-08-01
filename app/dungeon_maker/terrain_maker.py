@@ -273,17 +273,17 @@ class StairsRightTerrain(StairsLeftTerrain):
 class PillarTerrain(Terrain):
     terrain_like = ('Pillar', )
 
-def get_terrain(theme: str):
+def get_terrain(palette: str):
     palette_dir = 'app/dungeon_maker/palettes/'
-    if os.path.isdir(palette_dir + theme):
-        theme_dir = palette_dir + theme
+    if os.path.isdir(palette_dir + palette):
+        palette_dir = palette_dir + palette
     else:
-        theme_dir = palette_dir + 'dungeon'
-    return {'Floor': FloorTerrain(os.path.join(theme_dir, 'floor.png')),
-            'Floor2': FloorTerrain(os.path.join(theme_dir, 'floor2.png')),
-            'Wall': WallTerrain(os.path.join(theme_dir, 'wall.png')),
-            'Pillar': PillarTerrain(os.path.join(theme_dir, 'pillar.png')),
-            'StairsUpDown': StairsUpDownTerrain(os.path.join(theme_dir, 'stairs_updown.png')),
-            'StairsLeft': StairsLeftTerrain(os.path.join(theme_dir, 'stairs_left.png')),
-            'StairsRight': StairsRightTerrain(os.path.join(theme_dir, 'stairs_right.png')),
+        palette_dir = palette_dir + 'dungeon'
+    return {'Floor': FloorTerrain(os.path.join(palette_dir, 'floor.png')),
+            'Floor2': FloorTerrain(os.path.join(palette_dir, 'floor2.png')),
+            'Wall': WallTerrain(os.path.join(palette_dir, 'wall.png')),
+            'Pillar': PillarTerrain(os.path.join(palette_dir, 'pillar.png')),
+            'StairsUpDown': StairsUpDownTerrain(os.path.join(palette_dir, 'stairs_updown.png')),
+            'StairsLeft': StairsLeftTerrain(os.path.join(palette_dir, 'stairs_left.png')),
+            'StairsRight': StairsRightTerrain(os.path.join(palette_dir, 'stairs_right.png')),
             }

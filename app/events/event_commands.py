@@ -950,8 +950,8 @@ class GenerateMap(EventCommand):
         Creates a randomly generated map and populates the map with enemies and grave trees
         """
 
-    keywords = ["Theme", "EnemyType", "Size"]
-    keyword_types = ["Theme", "TagList", "Size"]
+    keywords = ["Theme", "MapPalette", "EnemyType", "Size"]
+    keyword_types = ["Theme", "MapPalette", "TagList", "Size"]
 
 class AddUnit(EventCommand):
     nid = 'add_unit'

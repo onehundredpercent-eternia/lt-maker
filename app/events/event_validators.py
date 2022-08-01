@@ -885,6 +885,9 @@ class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
 
 class Theme(OptionValidator):
+    valid = ["default"]
+
+class MapPalette(OptionValidator):
     valid = ["dungeon", "monastery"]
 
 class CombatScript(Validator):

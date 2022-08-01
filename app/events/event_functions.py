@@ -882,12 +882,12 @@ def get_recruitable_unit(self: Event, level_var_nid, level, tag_list, team=None,
     tag_list = tag_list.split(',') if tag_list else ['Soldier']
     random_groups.get_recruitable_unit(level_var_nid, level, tag_list, team)
 
-def generate_map(self: Event, theme, enemy_type, size, flags=None):
+def generate_map(self: Event, theme, map_palette, enemy_type, size, flags=None):
     flags = flags or set()
     size = self._parse_pos(size)
 
     from app.engine import map_generator
-    map_generator.generate_map(theme, enemy_type, size)
+    map_generator.generate_map(theme, map_palette, enemy_type, size)
 
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, flags=None):
     new_unit = self._get_unit(unit)

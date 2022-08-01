@@ -54,14 +54,15 @@ def find_room_with(rooms: List[dungeon_maker.Room], position: Tuple) -> dungeon_
     logging.error("Could not find room close to position %s", position)
     return None
 
-def generate_map(theme=None, enemy_type=None, size=None) -> None:
+def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> None:
     theme = theme or 'default'
+    map_palette = map_palette or 'dungeon'
     enemy_type = [enemy_type] or ['Soldier']
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
     seed = game.game_vars.get('_random_seed', -1)
     dungeon, rooms = dungeon_maker.generate_dungeon(theme, size, seed)
-    DB_terrain = terrain_maker.get_terrain(theme)
+    DB_terrain = terrain_maker.get_terrain(map_palette)
 
     # Need to create an image for the base layer
     im_width, im_height = dungeon.width * TILEWIDTH, dungeon.height * TILEHEIGHT
