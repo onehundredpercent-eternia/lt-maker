@@ -203,6 +203,9 @@ class MockCombat():
     def get_damage(self):
         return self.damage
 
+    def get_from_playback(self, s):
+        return []
+
     def get_glancing_hit(self):
         glancing_hit_marks = self.get_from_playback('mark_glancing_hit')
         return glancing_hit_marks

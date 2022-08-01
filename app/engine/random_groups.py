@@ -177,26 +177,36 @@ def determine_avg_level() -> int:
 def get_elite_chance() -> float:
     return lerp(0.1, 0.25, completed_chapters() / LAST_CHAPTER)
 
-def get_random_item(tags=None, exclude=None):
+def get_random_item(tags=None, exclude=None) -> str:
     tags = tags or []
     exclude = exclude or []
+    logging.debug("Get random item with tags %s and exclude %s", tags, exclude)
     all_items = []
     all_chances = []
     for tag in tags:
         if tag == 'Forge':
             chance = 5
-            items = [item for item in DB.items if tag in item.tags]
+            items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
         elif tag == 'Promo':
             chance = 5
-            items = [item for item in DB.items if tag in item.tags]
+            items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
         else:
             chance = 30
-            items = [item for item in DB.items if tag in item.tags]
+            items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
         items = [item for item in items if item.nid not in exclude]
+        assert len(items) >= 1
         all_items.append(items)
         all_chances.append(chance)
+    assert len(all_items) >= 1
+    assert len(all_chances) >= 1
+    logging.debug(all_items)
+    logging.debug(all_chances)
     items = game.get_random_weighted_choice(all_items, all_chances)
-    return game.get_random_choice(items)
+    assert len(items) >= 1
+    logging.debug(items)
+    item = game.get_random_choice(items)
+    logging.debug(item.nid)
+    return item.nid
 
 def get_random_tree_item():
     chapter_num = completed_chapters()

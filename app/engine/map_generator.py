@@ -44,7 +44,7 @@ def find_room_with(rooms: List[dungeon_maker.Room], position: Tuple) -> dungeon_
             return room
     # We couldn't find this position in any of the rooms, try and find closest position
     counter = 1
-    while counter < 4:
+    while counter < 10:
         for room in rooms:
             for pos in room.tiles:
                 if utils.calculate_distance(pos, position) <= counter:
@@ -139,9 +139,10 @@ def generate_map(theme=None, enemy_type=None, size=None) -> None:
 
         elif room is ending_room:
             logging.debug("Ending")
-            random_groups.build_group('Boss', group_data, [boss_pos])
+            boss_data = {**group_data, **{'ai': 'Defend'}}
+            random_groups.build_group('Boss', boss_data, [boss_pos])
             logging.debug(static_random.get_other_random_state())
-            random_groups.build_group('%d' % idx, group_data, room.tiles)
+            random_groups.build_group('%d' % idx, boss_data, room.tiles)
             logging.debug(static_random.get_other_random_state())
 
         else:

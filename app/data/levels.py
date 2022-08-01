@@ -6,6 +6,9 @@ from app.data.level_units import GenericUnit, UniqueUnit, UnitGroup
 from app.events.regions import Region
 from app.utilities.data import Data, Prefab
 
+music_keys = ['player_phase', 'enemy_phase', 'other_phase', 'enemy2_phase',
+              'player_battle', 'enemy_battle', 'other_battle', 'enemy2_battle']
+
 class LevelPrefab(Prefab):
     def __init__(self, nid, name):
         self.nid = nid
@@ -13,8 +16,6 @@ class LevelPrefab(Prefab):
         self.tilemap = None  # Tilemap Nid
         self.party = None  # Party Prefab Nid
         self.music = OrderedDict()
-        music_keys = ['player_phase', 'enemy_phase', 'other_phase', 'enemy2_phase',
-                      'player_battle', 'enemy_battle', 'other_battle', 'enemy2_battle']
         for key in music_keys:
             self.music[key] = None
         self.objective = {'simple': '',

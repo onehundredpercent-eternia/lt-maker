@@ -7,7 +7,7 @@ from app.utilities import utils
 from app.data.database import DB
 
 import app.engine.config as cf
-from app.engine import engine, item_funcs, item_system, skill_system, combat_calcs, unit_funcs, target_system
+from app.engine import engine, item_funcs, item_system, skill_system, combat_calcs, unit_funcs, target_system, random_groups
 from app.engine import static_random
 
 """
