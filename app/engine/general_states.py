@@ -739,9 +739,9 @@ class MenuState(MapState):
                 options.insert(start_index, 'Combat Arts')
                 info_descs.insert(start_index, 'Combat Arts_desc')
             else:
-        for ability_name in self.combat_arts:
-            options.insert(start_index, ability_name)
-            info_descs.insert(start_index, self.combat_arts[ability_name][0].desc)
+                for ability_name in self.combat_arts:
+                    options.insert(start_index, ability_name)
+                    info_descs.insert(start_index, self.combat_arts[ability_name][0].desc)
 
         # Draw highlights
         for ability in ABILITIES:
@@ -776,7 +776,7 @@ class MenuState(MapState):
                 get_sound_thread().play_sfx('Info Out')
                 self.menu.info_flag = False
             else:
-            get_sound_thread().play_sfx('Select 4')
+                get_sound_thread().play_sfx('Select 4')
             if self.cur_unit.has_traded:
                 if skill_system.has_canto(self.cur_unit, self.cur_unit):
                     game.cursor.set_pos(self.cur_unit.position)

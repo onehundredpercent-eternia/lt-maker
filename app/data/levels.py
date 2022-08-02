@@ -17,10 +17,6 @@ class LevelPrefab(Prefab):
         self.bg_tilemap = None # bg tilemap nid
         self.party = None  # Party Prefab Nid
         self.music = OrderedDict()
-<<<<<<< HEAD
-=======
-        
->>>>>>> master
         for key in music_keys:
             self.music[key] = None
         self.objective = {'simple': '',

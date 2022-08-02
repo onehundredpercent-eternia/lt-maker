@@ -1588,9 +1588,9 @@ def give_exp(self: Event, global_unit, experience, flags=None):
         if old_exp + exp >= 100:
             autolevel_to(self, global_unit, unit.level + 1)
     else:
-    self.game.exp_instance.append((unit, exp, None, 'init'))
-    self.game.state.change('exp')
-    self.state = 'paused'
+        self.game.exp_instance.append((unit, exp, None, 'init'))
+        self.game.state.change('exp')
+        self.state = 'paused'
 
 def set_exp(self: Event, global_unit, experience, flags=None):
     unit = self._get_unit(global_unit)
