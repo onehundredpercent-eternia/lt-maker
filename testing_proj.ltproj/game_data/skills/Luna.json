@@ -1,0 +1,22 @@
+[
+    {
+        "nid": "Luna",
+        "name": "<icon>Luna</>Luna",
+        "desc": "Ignores enemy defense and resistance",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            3
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "combat_art",
+                "Luna_proc"
+            ]
+        ]
+    }
+]

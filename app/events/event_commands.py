@@ -1438,6 +1438,8 @@ Gives *Experience* to *GlobalUnit*.
     keywords = ["GlobalUnit", "Experience"]
     keyword_types = ["GlobalUnit", "PositiveInteger"]
 
+    _flags = ['silent']
+
 class SetExp(EventCommand):
     nid = 'set_exp'
     tag = Tags.MODIFY_UNIT_PROPERTIES

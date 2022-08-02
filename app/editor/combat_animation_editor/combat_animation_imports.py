@@ -415,7 +415,7 @@ def import_from_gba(current, fn):
         if (0, 0, 0) in all_palette_colors:
             idx = all_palette_colors.index((0, 0, 0))
             all_palette_colors[idx] = (40, 40, 40)
-        print(all_palette_colors)
+
         my_palette.assign_colors(all_palette_colors)
 
     # Now do a simple crop to get rid of palette extras

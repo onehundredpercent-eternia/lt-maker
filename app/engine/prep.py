@@ -74,9 +74,7 @@ class PrepMainState(MapState):
         self.fade_out = False
         self.last_update = 0
 
-        # game.state.change('transition_in')
-        # return 'repeat'
-        # game.events.trigger('prep_start')
+        game.events.trigger('on_prep_start')
 
     def create_background(self):
         img = SPRITES.get('focus_fade').convert_alpha()
@@ -417,7 +415,10 @@ class PrepManageState(State):
         units = game.get_units_in_party()
         self.units = sorted(units, key=lambda unit: bool(unit.position), reverse=True)
         self.menu = menus.Table(None, self.units, (4, 3), (6, 0))
-        self.menu.set_mode('unit')
+        if self.name.startswith('base'):
+            self.menu.set_mode('unit')
+        else:
+            self.menu.set_mode('prep_manage')  # Gray out undeployed units in prep
 
         # Display
         self.quick_disp = self.create_quick_disp()

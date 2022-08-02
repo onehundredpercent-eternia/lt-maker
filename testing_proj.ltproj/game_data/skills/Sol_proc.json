@@ -1,0 +1,18 @@
+[
+    {
+        "nid": "Sol_proc",
+        "name": "Sol_proc",
+        "desc": "Heal damage dealt",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            2
+        ],
+        "components": [
+            [
+                "lifelink",
+                1.0
+            ]
+        ]
+    }
+]

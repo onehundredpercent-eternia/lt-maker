@@ -1,0 +1,36 @@
+[
+    {
+        "name": "Start",
+        "trigger": "level_start",
+        "level_nid": "1",
+        "condition": "False",
+        "commands": [
+            [
+                "wait",
+                [
+                    "500"
+                ]
+            ],
+            [
+                "base",
+                [
+                    "Arena"
+                ]
+            ],
+            [
+                "wait",
+                [
+                    "500"
+                ]
+            ],
+            [
+                "prep",
+                [
+                    "t"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

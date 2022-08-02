@@ -1575,11 +1575,19 @@ def give_bexp(self: Event, bexp, party=None, string=None, flags=None):
         self.state = 'paused'
 
 def give_exp(self: Event, global_unit, experience, flags=None):
+    flags = flags or set()
+
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("give_exp: Couldn't find unit with nid %s" % global_unit)
         return
     exp = utils.clamp(int(experience), 0, 100)
+    if 'silent' in flags:
+        old_exp = unit.exp
+        action.do(action.GainExp(unit, exp))
+        if old_exp + exp >= 100:
+            autolevel_to(self, global_unit, unit.level + 1)
+    else:
     self.game.exp_instance.append((unit, exp, None, 'init'))
     self.game.state.change('exp')
     self.state = 'paused'

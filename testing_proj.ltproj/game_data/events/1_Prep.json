@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Prep",
+        "trigger": "on_prep_start",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [
+            [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "Left"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "Prep!"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

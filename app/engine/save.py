@@ -51,7 +51,7 @@ class SaveSlot():
         if self.kind == 'turn_change':
             turn = int(re.findall(r'\d+', self.meta_loc)[-1])
             return self.name + (' - Turn %d' % turn)
-        elif self.kind:
+        elif self.kind and cf.SETTINGS['debug']:
             return self.name + ' - ' + self.kind
         else:
             return self.name

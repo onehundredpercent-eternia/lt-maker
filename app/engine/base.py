@@ -104,6 +104,8 @@ class BaseMainState(State):
         self.menu = menus.Choice(None, options, topleft=topleft)
         self.menu.set_ignore(ignore)
 
+        game.events.trigger('on_base_start')
+
         game.state.change('transition_in')
         return 'repeat'
 
