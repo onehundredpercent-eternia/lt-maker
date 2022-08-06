@@ -411,9 +411,9 @@ def print_rooms(rooms: List[Room]):
         all_positions.update({pos: idx for pos in room.tiles})
     width = max(pos[0] for pos in all_positions.keys()) + 1
     height = max(pos[1] for pos in all_positions.keys()) + 1
-    for y in range(width):
+    for y in range(height):
         print("%02d " % y, end='')
-        for x in range(height):
+        for x in range(width):
             if (x, y) in all_positions:
                 print("%d" % (all_positions[(x, y)] % 10), end='')
             else:
@@ -482,8 +482,6 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         thin_empty_tiles = {tile for tile in empty_tiles if sum(adj in empty_tiles for adj in utils.get_cardinal_positions(tile)) <= 2}
         empty_tiles -= thin_empty_tiles
         empty_rooms: List[Room] = find_new_rooms(tilemap, empty_tiles.copy())
-        print("Empty Rooms")
-        print_rooms(empty_rooms)
         for room in empty_rooms:
             if room.size >= 11:
                 center_tiles: List[Tuple[int, int]] = room.get_center_tiles()
@@ -499,7 +497,6 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         for idx, room in enumerate(new_rooms):
             layer = idx % 2 + 1
             # layer = 1
-            print("Layer", layer)
             room_to_layer[room] = layer
             for tile in room.tiles:
                 tilemap.set_layer(*tile, layer)

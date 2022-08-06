@@ -39,9 +39,9 @@ class TitleStartState(State):
         else:
             self.press_start = None
         if logo:
-            num_frames = 16
+            num_frames = 1
             speed = 64
-            self.logo = gui.Logo(logo, (WINWIDTH//2, WINHEIGHT//2 - 20), num_frames, speed)
+            self.logo = gui.Logo(logo, (WINWIDTH//2, WINHEIGHT//2 - 40), num_frames, speed)
         else:
             self.logo = None
 
