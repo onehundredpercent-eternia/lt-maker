@@ -88,13 +88,13 @@ class FloorTerrain(Terrain):
             left = True
 
         if top and left:
-            coord = (4, 0)
+            coord = random_choice([(4, k) for k in range(self.limits[4])], pos)
         elif top and corner:
-            coord = (5, 0)
+            coord = random_choice([(5, k) for k in range(self.limits[5])], pos)
         elif left:
-            coord = (1, 0)
+            coord = random_choice([(1, k) for k in range(self.limits[1])], pos)
         elif corner:
-            coord = (3, 0)
+            coord = random_choice([(3, k) for k in range(self.limits[3])], pos)
         elif top:
             coord = random_choice([(2, k) for k in range(self.limits[2])], pos)
         else:
@@ -106,7 +106,7 @@ class FloorTerrain(Terrain):
         new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
 
         if north == 'Pillar':
-            coord = (0, 3)
+            coord = (0, 5)
             new_coords1 = [(coord[0]*2, coord[1]*2)]
             new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
 
@@ -203,9 +203,9 @@ class WallTerrain(WangEdge2Terrain16):
             coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
 
             if index in (12, 13) and swwall == 'Top':
-                coord = (15, 4)
+                coord = (15, 5)
             elif index in (6, 7) and sewall == 'Top':
-                coord = (14, 4)
+                coord = (15, 4)
             elif index in (14, 15) and sewall == 'Top' and swwall == 'Top':
                 coord = (15, 3) 
 
