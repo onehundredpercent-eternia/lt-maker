@@ -91,8 +91,9 @@ class MapView():
             surf = surf.convert_alpha()
             surf.blit(map_image, (0, 0))
         else:
+            surf = engine.create_surface(cull_rect[2:])
             map_image = game.tilemap.get_full_image(cull_rect)
-        surf = engine.copy_surface(map_image)
+            surf.blit(map_image, (0, 0))
         surf = surf.convert_alpha()
 
         surf = game.boundary.draw(surf, full_size, cull_rect)

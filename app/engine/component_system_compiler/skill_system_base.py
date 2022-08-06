@@ -76,10 +76,6 @@ class Defaults():
         return unit.ai
 
     @staticmethod
-    def steal_icon(unit1, unit2) -> bool:
-        return False
-
-    @staticmethod
     def has_canto(unit1, unit2) -> bool:
         return False
 
@@ -150,6 +146,18 @@ class Defaults():
     @staticmethod
     def defense_speed_formula(unit) -> str:
         return 'DEFENSE_SPEED'
+
+    @staticmethod
+    def critical_multiplier_formula(unit) -> str:
+        return 'CRIT_MULT'
+
+    @staticmethod
+    def critical_addition_formula(unit) -> str:
+        return 'CRIT_ADD'
+
+    @staticmethod
+    def thracia_critical_multiplier_formula(unit) -> str:
+        return 'THRACIA_CRIT'
 
 def condition(skill, unit) -> bool:
     for component in skill.components:
@@ -249,6 +257,17 @@ def can_unlock(unit, region) -> bool:
                     if component.can_unlock(unit, region):
                         return True
     return False
+
+def target_icon(cur_unit, displaying_unit) -> list:
+    markers = []
+    for skill in cur_unit.skills:
+        for component in skill.components:
+            if component.defines('target_icon'):
+                if component.ignore_conditional or condition(skill, cur_unit):
+                    marker = component.target_icon(cur_unit, displaying_unit)
+                    if marker:
+                        markers.append(marker)
+    return markers
 
 def before_crit(actions, playback, attacker, item, defender, mode, attack_info) -> bool:
     for skill in attacker.skills:

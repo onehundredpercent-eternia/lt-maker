@@ -1,0 +1,23 @@
+[
+    {
+        "nid": "Luck_proc",
+        "name": "Luck_proc",
+        "desc": "",
+        "icon_nid": "Affinity",
+        "icon_index": [
+            0,
+            5
+        ],
+        "components": [
+            [
+                "stat_change",
+                [
+                    [
+                        "LCK",
+                        20
+                    ]
+                ]
+            ]
+        ]
+    }
+]

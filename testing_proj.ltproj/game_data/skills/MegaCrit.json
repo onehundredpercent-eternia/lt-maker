@@ -1,0 +1,22 @@
+[
+    {
+        "nid": "MegaCrit",
+        "name": "MegaCrit",
+        "desc": "",
+        "icon_nid": "Skills",
+        "icon_index": [
+            1,
+            6
+        ],
+        "components": [
+            [
+                "class_skill",
+                null
+            ],
+            [
+                "crit",
+                100
+            ]
+        ]
+    }
+]

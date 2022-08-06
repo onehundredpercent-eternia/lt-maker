@@ -326,7 +326,8 @@ class MapEditorView(DraggableTileImageView):
                 current_layer.terrain_grid[coord] = current_nid
 
     def flood_fill_tile(self, tile_pos):
-        if not self.tilemap.check_bounds(tile_pos):
+        tileset, coords = self.window.get_tileset_coords()
+        if not self.tilemap.check_bounds(tile_pos) or not coords or not tileset:
             return
 
         current_layer = self.get_current_layer()
@@ -377,7 +378,6 @@ class MapEditorView(DraggableTileImageView):
                 tileset_nid = tile_sprite.tileset_nid
                 tileset = RESOURCES.tilesets.get(tileset_nid)
             else:
-                tileset, coords = self.window.get_tileset_coords()
                 tileset_nid = tileset.nid
 
             if not coords:

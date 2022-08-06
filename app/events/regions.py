@@ -62,15 +62,6 @@ class Region(Prefab):
         else:
             return False
 
-    def fuzzy_contains(self, pos: tuple) -> bool:
-        x, y = pos
-        fuzz = 0.4
-        if self.position:
-            return self.position[0] - fuzz <= x < self.position[0] + self.size[0] + fuzz and \
-                self.position[1] - fuzz <= y < self.position[1] + self.size[1] + fuzz
-        else:
-            return False
-
     def get_all_positions(self):
         if self.position:
             positions = []

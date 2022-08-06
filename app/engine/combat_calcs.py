@@ -455,11 +455,21 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
     might = int(max(DB.constants.value('min_damage'), might))
 
     if crit or skill_system.crit_anyway(unit):
-        might *= equations.parser.crit_mult(unit)
-        if equations.parser.crit_add(unit):
-            might += equations.parser.crit_add(unit)
-        if equations.parser.get('THRACIA_CRIT', unit):
-            might += total_might * equations.parser.thracia_crit(unit)
+        # Multiply Damage
+        equation = skill_system.critical_multiplier_formula(unit)
+        crit_mult = equations.parser.get(equation, unit)
+        might *= crit_mult
+
+        # Add damage
+        equation = skill_system.critical_addition_formula(unit)
+        crit_add = equations.parser.get(equation, unit)
+        might += crit_add
+
+        # Thracia Crit
+        equation = skill_system.thracia_critical_multiplier_formula(unit)
+        thracia_crit = equations.parser.get(equation, unit)
+        if thracia_crit:
+            might += total_might * thracia_crit
 
     might *= skill_system.damage_multiplier(unit, item, target, mode, attack_info, might)
     might *= skill_system.resist_multiplier(target, item, unit, mode, attack_info, might)

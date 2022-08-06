@@ -476,6 +476,18 @@ class Choice(Simple):
             self._bg_surf = None  # Unstore bg
         return did_move
 
+    def get_menu_width(self):
+        if self.horizontal:
+            return sum(option.width() + 8 for option in self.options) + 16
+        else:
+            return super().get_menu_width()
+
+    def get_menu_height(self):
+        if self.horizontal:
+            return 24
+        else:
+            return super().get_menu_height()
+
     def show_face(self):
         return self.is_convoy or self.disp_value == 'sell'
 
@@ -489,7 +501,7 @@ class Choice(Simple):
             return self._bg_surf
 
         if self.horizontal:
-            width = sum(option.width() + 8 for option in self.options) + 16
+            width = self.get_menu_width()
             if self._bg_surf and self._bg_surf.get_width() == width:
                 pass
             else:

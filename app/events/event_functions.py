@@ -737,6 +737,18 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     # Can't use turnwheel to go any further back
     self.game.action_log.set_first_free_action()
 
+def change_bg_tilemap(self: Event, tilemap=None, flags=None):
+    flags = flags or set()
+
+    tilemap_nid = tilemap
+    tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
+    if not tilemap_prefab:
+        self.game.level.bg_tilemap = None
+        return
+
+    tilemap = TileMapObject.from_prefab(tilemap_prefab)
+    action.do(action.ChangeBGTileMap(tilemap))
+
 def set_game_board_bounds(self: Event, min_x, min_y, max_x, max_y, flags=None):
     min_x = int(min_x)
     max_x = int(max_x)
@@ -889,7 +901,7 @@ def generate_map(self: Event, theme, map_palette, enemy_type, size, flags=None):
     from app.engine import map_generator
     map_generator.generate_map(theme, map_palette, enemy_type, size)
 
-def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, flags=None):
+def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, animation_type=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("add_unit: Couldn't find unit %s" % unit)
@@ -912,13 +924,19 @@ def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, 
         entry_type = 'fade'
     if not placement:
         placement = 'giveup'
+
+    if not animation_type or animation_type == 'fade':
+        fade_direction = None
+    else:
+        fade_direction = animation_type
+
     position = self._check_placement(unit, position, placement)
     if not position:
         self.logger.error("add_unit: Couldn't get a good position %s %s %s" % (position, entry_type, placement))
         return None
     if DB.constants.value('initiative'):
         action.do(action.InsertInitiative(unit))
-    self._place_unit(unit, position, entry_type)
+    self._place_unit(unit, position, entry_type, fade_direction)
 
 def move_unit(self: Event, unit, position=None, movement_type=None, placement=None, flags=None):
     flags = flags or set()
@@ -969,7 +987,7 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
         self.state = 'paused'
         self.game.state.change('movement')
 
-def remove_unit(self: Event, unit, remove_type=None, flags=None):
+def remove_unit(self: Event, unit, remove_type=None, animation_type=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("remove_unit: Couldn't find unit %s" % unit)
@@ -980,6 +998,10 @@ def remove_unit(self: Event, unit, remove_type=None, flags=None):
         return
     if not remove_type:
         remove_type = 'fade'
+    if not animation_type or animation_type == 'fade':
+        fade_direction = None
+    else:
+        fade_direction = animation_type
     if DB.constants.value('initiative'):
         action.do(action.RemoveInitiative(unit))
     if self.do_skip:
@@ -989,7 +1011,7 @@ def remove_unit(self: Event, unit, remove_type=None, flags=None):
     elif remove_type == 'swoosh':
         action.do(action.SwooshOut(unit))
     elif remove_type == 'fade':
-        action.do(action.FadeOut(unit))
+        action.do(action.FadeOut(unit, fade_direction))
     else:  # immediate
         action.do(action.LeaveMap(unit))
 
@@ -2089,11 +2111,11 @@ def remove_market_item(self: Event, item, stock=None, flags=None):
 def clear_market_items(self: Event, flags=None):
     self.game.market_items.clear()
 
-def add_region(self: Event, nid, position, size, region_type, string=None, flags=None):
+def add_region(self: Event, region, position, size, region_type, string=None, flags=None):
     flags = flags or set()
 
-    if nid in self.game.level.regions.keys():
-        self.logger.error("add_region: Region nid %s already present!" % nid)
+    if region in self.game.level.regions.keys():
+        self.logger.error("add_region: Region nid %s already present!" % region)
         return
     position = self._parse_pos(position)
     size = self._parse_pos(size)
@@ -2102,7 +2124,7 @@ def add_region(self: Event, nid, position, size, region_type, string=None, flags
     region_type = region_type.lower()
     sub_region_type = string
 
-    new_region = regions.Region(nid)
+    new_region = regions.Region(region)
     new_region.region_type = regions.RegionType(region_type)
     new_region.position = position
     new_region.size = size
@@ -2116,19 +2138,19 @@ def add_region(self: Event, nid, position, size, region_type, string=None, flags
     self.game.register_region(new_region)
     action.do(action.AddRegion(new_region))
 
-def region_condition(self: Event, nid, expression, flags=None):
-    if nid in self.game.level.regions.keys():
-        region = self.game.level.regions.get(nid)
+def region_condition(self: Event, region, expression, flags=None):
+    if region in self.game.level.regions.keys():
+        region = self.game.level.regions.get(region)
         action.do(action.ChangeRegionCondition(region, expression))
     else:
-        self.logger.error("region_condition: Couldn't find Region %s" % nid)
+        self.logger.error("region_condition: Couldn't find Region %s" % region)
 
-def remove_region(self: Event, nid, flags=None):
-    if nid in self.game.level.regions.keys():
-        region = self.game.level.regions.get(nid)
+def remove_region(self: Event, region, flags=None):
+    if region in self.game.level.regions.keys():
+        region = self.game.level.regions.get(region)
         action.do(action.RemoveRegion(region))
     else:
-        self.logger.error("remove_region: Couldn't find Region %s" % nid)
+        self.logger.error("remove_region: Couldn't find Region %s" % region)
 
 def remove_generics_from_region(self: Event, nid, flags=None):
     if nid in self.game.level.regions.keys():

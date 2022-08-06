@@ -826,6 +826,15 @@ they cannot turn time back past the point when this command was executed.
     keyword_types = ["Tilemap", "PositionOffset", "Tilemap"]
     _flags = ["reload"]  # Should place units in previously recorded positions
 
+class ChangeBgTilemap(EventCommand):
+    nid = 'change_bg_tilemap'
+    tags = Tags.TILEMAP
+
+    desc = "Changes the bg tilemap for this level. Call without arguments to remove the bg tilemap. Can be turnwheeled, unlike `change_tilemap`."
+
+    optional_keywords = ['Tilemap']
+    keyword_types = ['Tilemap']
+
 class SetGameBoardBounds(EventCommand):
     nid = 'set_game_board_bounds'
     tag = Tags.TILEMAP
@@ -965,10 +974,11 @@ Places *Unit* on the map. The unit must be in the chapter's data or otherwise ha
 The optional keywords define how the unit is placed. *Position* indicates the map coordinates that the unit will be placed at.
 *EntryType* defines which placement animation is used. *Placement* defines the behavior that occurs if the chosen map position is already occupied.
 If no placement information is provided, the unit will attempt to be placed at its starting location from the chapter data (if any).
+*AnimationType* defines from which direction the unit enters, if using the *fade* entrytype.
         """
 
     keywords = ["Unit"]
-    optional_keywords = ["Position", "EntryType", "Placement"]
+    optional_keywords = ["Position", "EntryType", "Placement", "AnimationType"]
 
 class MoveUnit(EventCommand):
     nid = 'move_unit'
@@ -999,10 +1009,12 @@ class RemoveUnit(EventCommand):
     desc = \
         """
 Removes *Unit* from the map. The optional *RemoveType* keyword specifies the method of removal.
+If the `fade` RemoveType is chosen, the unit will use `AnimationType` to determine which direction
+(if any) to fade into.
         """
 
     keywords = ["Unit"]
-    optional_keywords = ["RemoveType"]
+    optional_keywords = ["RemoveType", 'AnimationType']
 
 class KillUnit(EventCommand):
     nid = 'kill_unit'
@@ -1842,7 +1854,7 @@ The optional *String* keyword can be used to specify the sub-region type.
 When set, the *only_once* flag prevents multiples of the same region from being created. The *interrupt_move* flag halts a unit's movement once they move into the region.
         """
 
-    keywords = ["Nid", "Position", "Size", "RegionType"]
+    keywords = ["Region", "Position", "Size", "RegionType"]
     optional_keywords = ["String"]
     _flags = ["only_once", "interrupt_move"]
 
@@ -1852,10 +1864,10 @@ class RegionCondition(EventCommand):
 
     desc = \
         """
-Modifies the trigger *Expression* for the event-type region specified by *Nid*.
+Modifies the trigger *Expression* for the event-type region specified by *Region*.
         """
 
-    keywords = ["Nid", "Expression"]
+    keywords = ["Region", "Expression"]
 
 class RemoveRegion(EventCommand):
     nid = 'remove_region'
@@ -1863,10 +1875,10 @@ class RemoveRegion(EventCommand):
 
     desc = \
         """
-Removes the region specified by *Nid*.
+Removes the region specified by *Region*.
         """
 
-    keywords = ["Nid"]
+    keywords = ["Region"]
 
 class RemoveGenericsFromRegion(EventCommand):
     nid = 'remove_generics_from_region'

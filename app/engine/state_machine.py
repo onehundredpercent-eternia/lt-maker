@@ -123,6 +123,7 @@ class StateMachine():
              'prep_formation_select': prep.PrepFormationSelectState,
              'prep_manage': prep.PrepManageState,
              'prep_manage_select': prep.PrepManageSelectState,
+             'optimize_all_choice': prep.OptimizeAllChoiceState,
              'base_manage': prep.PrepManageState,
              'base_manage_select': prep.PrepManageSelectState,
              'prep_trade_select': prep.PrepTradeSelectState,
