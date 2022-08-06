@@ -9,7 +9,7 @@ from app.data.level_units import GenericUnit, UniqueUnit
 
 from app.engine.objects.unit import UnitObject
 
-from app.engine import action, unit_funcs, item_funcs
+from app.engine import action, unit_funcs, item_funcs, static_random
 from app.engine.game_state import game
 
 from app.utilities import utils, str_utils
@@ -177,7 +177,7 @@ def determine_avg_level() -> int:
 def get_elite_chance() -> float:
     return lerp(0.1, 0.25, completed_chapters() / LAST_CHAPTER)
 
-def get_random_item(tags=None, exclude=None) -> str:
+def get_random_item(tags=None, exclude=None, pos=(0, 0)) -> str:
     tags = tags or []
     exclude = exclude or []
     logging.debug("Get random item with tags %s and exclude %s", tags, exclude)
@@ -201,14 +201,17 @@ def get_random_item(tags=None, exclude=None) -> str:
     assert len(all_chances) >= 1
     logging.debug(all_items)
     logging.debug(all_chances)
-    items = game.get_random_weighted_choice(all_items, all_chances)
+    generator: static_random.LCG = \
+        static_random.get_pos(pos, completed_chapters())
+    idx = static_random.weighted_choice(all_chances, generator)
+    items = all_items[idx]
     assert len(items) >= 1
     logging.debug(items)
-    item = game.get_random_choice(items)
+    item = generator.choice(items)
     logging.debug(item.nid)
     return item.nid
 
-def get_random_tree_item():
+def get_random_tree_item(pos: tuple = (0, 0)):
     chapter_num = completed_chapters()
     if chapter_num == 0:
         tags = ['Weapon']
@@ -228,7 +231,7 @@ def get_random_tree_item():
         tags = ['Weapon+', 'Spell+', 'Promo', 'Accessory+']
     elif chapter_num >= 8:
         tags = ['Weapon+', 'Spell+', 'Accessory+']
-    return get_random_item(tags)
+    return get_random_item(tags, pos=pos)
 
 def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=None):
     chapter_num = completed_chapters()

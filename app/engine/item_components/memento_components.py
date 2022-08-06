@@ -3,11 +3,15 @@ from app.resources.resources import RESOURCES
 from app.data.item_components import ItemComponent, ItemTags
 from app.data.components import Type
 
+from app.data.database import DB
+
 from app.utilities import utils
 from app.engine import target_system, skill_system, action, equations
 from app.engine.combat import playback as pb
 from app.engine.animations import MapAnimation
 from app.engine.game_state import game 
+
+import logging
 
 class MementoEnemyCleaveAOE(ItemComponent):
     nid = 'memento_enemy_cleave_aoe'
@@ -246,3 +250,64 @@ class MementoUpgradeTo(ItemComponent):
     tag = ItemTags.CUSTOM
 
     expose = (Type.List, Type.Item)
+
+class MementoForge(ItemComponent):
+    nid = 'memento_forge'
+    desc = "Forges a selected item in the target's inventory."
+    tag = ItemTags.CUSTOM
+
+    expose = Type.Event
+
+    _did_hit = False
+
+    def init(self, item):
+        item.data['target_item'] = None
+
+    def _target_restrict(self, defender):
+        # Unit has item that can be repaired
+        for item in defender.items:
+            if item.memento_upgrade_to:
+                return True
+        return False
+
+    def target_restrict(self, unit, item, def_pos, splash) -> bool:
+        # Unit has item that can be repaired
+        defender = game.board.get_unit(def_pos)
+        return self._target_restrict(defender)
+
+    def simple_target_restrict(self, unit, item):
+        return self._target_restrict(unit)
+
+    def targets_items(self, unit, item) -> bool:
+        return True
+
+    def item_restrict(self, unit, item, defender, def_item) -> bool:
+        if def_item.memento_upgrade_to:
+            return True
+        return False
+
+    def on_hit(self, actions, playback, unit, item, target, target_pos, mode, attack_info):
+        self._did_hit = True
+
+    def end_combat(self, playback, unit, item, target, mode):
+        target_item = item.data.get('target_item')
+        event_prefab = DB.events.get_from_nid(self.value)
+        if target_item and event_prefab:
+            local_args = {'item': item, 'target_item': target_item}
+            game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
+        else:
+            logging.error("Memento Forge: Could not find target_item or event_prefab")
+        item.data['target_item'] = None
+        self._did_hit = False
+
+class MementoRemoveOnEndChapter(ItemComponent):
+    nid = 'memento_remove_on_end_chapter'
+    desc = "Item is removed and replaced with regular grave item at end of chapter"
+    tag = ItemTags.CUSTOM
+
+    def on_end_chapter(self, unit, item):
+        # Don't need to use action here because it will be end of chapter
+        replace_with_uid = item.data.get('replace')
+        new_item = game.get_item(replace_with_uid)
+        unit.remove_item(item)
+        unit.add_item(new_item)

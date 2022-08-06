@@ -1992,9 +1992,9 @@ class Die(Action):
 
     def reverse(self):
         # Remember who was resurrected briefly
-        if '_resurrect' not in game.memory:
-            game.memory['_resurrect'] = set()
-        game.memory['_resurrect'].add(self.unit.nid)
+        if '_resurrect' not in game.level_vars:
+            game.level_vars['_resurrect'] = set()
+        game.level_vars['_resurrect'].add(self.unit.nid)
 
         self.unit.dead = False
         self.unit.sprite.set_transition('normal')

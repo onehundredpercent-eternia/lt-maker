@@ -597,7 +597,7 @@ class InfoMenuState(State):
             x_pos = max(0, 0)
             rect = (x_pos, offset//2, 96, 76)
             portrait_surf = engine.subsurface(im, rect)
-            surf.blit(portrait_surf, (103, 4))
+            surf.blit(portrait_surf, (100, 4))
 
         x_offset = 4
         render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), Alignments.CENTER)

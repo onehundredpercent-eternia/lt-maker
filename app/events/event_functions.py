@@ -1424,6 +1424,56 @@ def set_item_uses(self: Event, global_unit_or_convoy, item, uses, flags=None):
     else:
         self.logger.error("set_item_uses: Item %s does not have uses!" % item.nid)
 
+def set_item_data(self: Event, global_unit_or_convoy, item, nid, expression, flags=None):
+    flags = flags or set()
+    global_unit = global_unit_or_convoy
+
+    unit, item = self._get_item_in_inventory(global_unit, item)
+    if not unit or not item:
+        self.logger.error("set_item_data: Either unit or item was invalid, see above")
+        return
+
+    try:
+        data_value = self.text_evaluator.direct_eval(expression)
+    except Exception as e:
+        self.logger.error("set_item_data: %s: Could not evaluate {%s}" % (e, expression))
+        return
+
+    action.do(action.SetObjData(item, nid, data_value))
+
+def give_grave_item(self: Event, global_unit, item, flags=None):
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("give_grave_item: Could not find unit %s", global_unit)
+        return
+
+    # Get grave item
+    items = [item for item in unit.items if item.nid.startswith('Grave') or item.memento_remove_on_end_chapter]
+    if not items:
+        self.logger.error("give_grave_item: Major error, unit %s does not have any grave items", global_unit)
+    grave_item = items[0]
+
+    # Create new item to give
+    item_id = item
+    if item_id in DB.items.keys():
+        new_item = item_funcs.create_item(None, item_id)
+        self.game.register_item(new_item)
+    elif str_utils.is_int(item_id) and int(item_id) in self.game.item_registry:
+        new_item = self.game.item_registry[int(item_id)]
+    else:
+        self.logger.error("give_grave_item: Couldn't find item with nid %s" % item_id)
+        return
+
+    action.do(action.RemoveItem(unit, grave_item))
+    action.do(action.GiveItem(unit, new_item))
+    action.do(action.SetObjData(new_item, 'replace', grave_item.uid))
+    action.do(action.AddItemComponent(new_item, 'locked', None))
+    action.do(action.AddItemComponent(new_item, 'memento_remove_on_end_chapter', None))
+
+    self.game.alerts.append(banner.AcquiredItem(unit, new_item))
+    self.game.state.change('alert')
+    self.state = 'paused'
+
 def change_item_name(self: Event, global_unit_or_convoy, item, string, flags=None):
     unit, item = self._get_item_in_inventory(global_unit_or_convoy, item)
     if not unit or not item:

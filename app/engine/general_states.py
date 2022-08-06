@@ -1075,8 +1075,15 @@ class ItemChildState(MapState):
 
     def start(self):
         self.parent_menu = game.memory['parent_menu']
+        self._proceed_with_targets_item = False
 
     def begin(self):
+        if self._proceed_with_targets_item:
+            self._proceed_with_targets_item = False
+            if game.memory.get('item') and game.memory.get('item').data.get('target_item'):
+                interaction.start_combat(self.cur_unit, self.cur_unit.position, game.memory.get('item'))
+                return 'repeat'
+
         self.item = self.parent_menu.get_current()
         item = self.item
         self.cur_unit = game.cursor.cur_unit
@@ -1134,7 +1141,13 @@ class ItemChildState(MapState):
             selection = self.menu.get_current()
             item = self.menu.owner
             if selection == 'Use':
-                interaction.start_combat(self.cur_unit, self.cur_unit.position, item)
+                if item_system.targets_items(self.cur_unit, item):
+                    game.memory['target'] = self.cur_unit
+                    game.memory['item'] = item
+                    self._proceed_with_targets_item = True
+                    game.state.change('item_targeting')
+                else:
+                    interaction.start_combat(self.cur_unit, self.cur_unit.position, item)
             elif selection == 'Equip':
                 action.do(action.EquipItem(self.cur_unit, item))
                 if not game.memory['is_subitem_child_menu']:
@@ -1330,7 +1343,6 @@ class WeaponChoiceState(MapState):
                 equip_action = action.EquipItem(self.cur_unit, selection)
                 # game.memory['equip_action'] = equip_action
                 action.do(equip_action)
-
 
             # If the item is in our inventory, bring it to the top
             if selection in self.cur_unit.items:
@@ -1925,10 +1937,9 @@ class ItemTargetingState(MapState):
             self.parent_item = None
 
         # Build menu
-        options = self.target.items
-        ignore = [not item_system.item_restrict(self.cur_unit, self.item, self.target, item) for item in self.target.items]
+        options = [item for item in self.target.items if item_system.item_restrict(self.cur_unit, self.item, self.target, item)]
         self.menu = menus.Choice(self.target, options)
-        self.menu.set_ignore(ignore)
+        # self.menu.set_ignore(ignore)
 
     def begin(self):
         game.cursor.hide()

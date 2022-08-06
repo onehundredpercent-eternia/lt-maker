@@ -947,7 +947,7 @@ class ItemComponent(Validator):
 
     def validate(self, text, level):
         from app.engine import item_component_access as ICA
-        if text in ICA.get_components().keys():
+        if text in ICA.get_item_components().keys():
             return text
         return None
 
