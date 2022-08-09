@@ -125,7 +125,7 @@ class WitchWarpExpression(SkillComponent):
     value = 'True'
 
     def witch_warp(self, unit) -> list:
-        from app.engien import evaluate
+        from app.engine import evaluate
         positions = []
         for target in game.units:
             if target.position:
@@ -262,3 +262,54 @@ class MementoWitchTeleport(SkillComponent):
                 pos = game.get_random_choice(valid_positions)
                 actions.append(action.TriggerCharge(unit, self.skill))
                 actions.append(action.Warp(unit, pos))
+
+class MementoUndamagedCondition(SkillComponent):
+    nid = 'memento_undamaged_condition'
+    desc = "Skill is active while unit has not taken damage this chapter"
+    tag = SkillTags.CUSTOM
+
+    ignore_conditional = True
+
+    _took_damage_this_combat = False
+
+    def init(self, skill):
+        self.skill.data['_has_taken_damage'] = False
+
+    def condition(self, unit):
+        return not self.skill.data['_has_taken_damage']
+
+    def after_take_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        # Remove any acts that reduce my HP!
+        for act in reversed(actions):
+            if isinstance(act, action.ChangeHP) and act.num < 0 and act.unit == unit:
+                self._took_damage_this_combat = True
+                break
+
+    def end_combat(self, playback, unit, item, target, mode):
+        if self._took_damage_this_combat:
+            action.do(action.SetObjData(self.skill, '_has_taken_damage', True))
+        self._took_damage_this_combat = False
+
+    def on_end_chapter(self, unit, skill):
+        self.skill.data['_has_taken_damage'] = False
+        self._took_damage_this_combat = False
+
+class MementoStatusOnCrit(SkillComponent):
+    nid = 'memento_status_on_crit'
+    desc = "Gain skill during criticals"
+    tag = SkillTags.CUSTOM
+
+    expose = Type.Skill
+    value = None
+
+    _did_action = False
+
+    def before_crit(self, actions, playback, attacker, item, defender, mode, attack_info):
+        act = action.AddSkill(attacker, self.value)
+        action.do(act)
+        playback.append(pb.AttackProc(attacker, act.skill_obj))
+        self._did_action = True
+
+    def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
+        if self._did_action:
+            action.do(action.RemoveSkill(unit, self.value))

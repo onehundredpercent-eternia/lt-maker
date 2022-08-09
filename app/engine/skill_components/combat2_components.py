@@ -343,6 +343,17 @@ class GainSkillAfterActiveKill(SkillComponent):
             action.do(action.AddSkill(unit, self.value))
             action.do(action.TriggerCharge(unit, self.skill))
 
+class GainSkillAfterTakeMiss(SkillComponent):
+    nid = 'gain_skill_after_take_miss'
+    desc = "Gain a skill immediately after an enemy misses you"
+    tag = SkillTags.COMBAT2
+
+    expose = Type.Skill
+
+    def after_take_miss(self, actions, playback, unit, item, target, mode, attack_info):
+        actions.append(action.AddSkill(unit, self.value, unit))
+        actions.append(action.TriggerCharge(unit, self.skill))
+
 class DelayInitiativeOrder(SkillComponent):
     nid = 'delay_initiative_order'
     desc = "Delays the target's next turn by X after hit. Cannot activate when unit is defending."
