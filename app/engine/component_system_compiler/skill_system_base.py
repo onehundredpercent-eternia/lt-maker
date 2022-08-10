@@ -232,6 +232,16 @@ def unit_sprite_flicker_tint(unit) -> list:
                     flicker.append(d)
     return flicker
 
+def should_draw_anim(unit) -> list:
+    avail = []
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('should_draw_anim'):
+                if component.ignore_conditional or condition(skill, unit):
+                    d = component.should_draw_anim(unit, skill)
+                    avail.append(d)
+    return avail
+
 def additional_tags(unit) -> set:
     new_tags = set()
     for skill in unit.skills:

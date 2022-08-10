@@ -12,13 +12,16 @@ class UnitAnim(SkillComponent):
     expose = Type.MapAnimation
 
     def on_add(self, unit, skill):
-        unit.sprite.add_animation(self.value)
+        unit.sprite.add_animation(self.value, contingent=True)
 
     def re_add(self, unit, skill):
-        unit.sprite.add_animation(self.value)
+        unit.sprite.add_animation(self.value, contingent=True)
 
     def on_remove(self, unit, skill):
         unit.sprite.remove_animation(self.value)
+
+    def should_draw_anim(self, unit, skill):
+        return self.value
 
 class UnitFlickeringTint(SkillComponent):
     nid = 'unit_flickering_tint'

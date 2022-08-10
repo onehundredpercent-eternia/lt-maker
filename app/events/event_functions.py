@@ -1653,12 +1653,21 @@ def give_exp(self: Event, global_unit, experience, flags=None):
     if not unit:
         self.logger.error("give_exp: Couldn't find unit with nid %s" % global_unit)
         return
-    exp = utils.clamp(int(experience), 0, 100)
+    exp = utils.clamp(int(experience), -100, 100)
     if 'silent' in flags:
         old_exp = unit.exp
-        action.do(action.GainExp(unit, exp))
         if old_exp + exp >= 100:
-            autolevel_to(self, global_unit, unit.level + 1)
+            if unit.level < DB.classes.get(unit.klass).max_level:
+                action.do(action.GainExp(unit, exp))
+                autolevel_to(self, global_unit, unit.level + 1)
+            else:
+                action.do(action.SetExp(unit, 99))
+        elif old_exp + exp < 0:
+            if unit.level > 1:
+                action.do(action.SetExp(unit, 100 + old_exp - exp))
+                autolevel_to(self, global_unit, unit.level - 1)
+            else:
+                action.do(action.SetExp(unit, 0))
     else:
         self.game.exp_instance.append((unit, exp, None, 'init'))
         self.game.state.change('exp')
@@ -1854,8 +1863,8 @@ def autolevel_to(self: Event, global_unit, level, growth_method=None, flags=None
         return
     final_level = int(level)
     current_level = unit.level
-    diff = max(0, final_level - current_level)
-    if diff <= 0:
+    diff = final_level - current_level
+    if diff == 0:
         self.logger.warning("autolevel_to: Unit %s is already that level!" % global_unit)
         return
 
@@ -1863,7 +1872,7 @@ def autolevel_to(self: Event, global_unit, level, growth_method=None, flags=None
     if 'hidden' in flags:
         pass
     else:
-        action.do(action.SetLevel(unit, final_level))
+        action.do(action.SetLevel(unit, max(1, final_level)))
     if not unit.generic and DB.units.get(unit.nid):
         unit_prefab = DB.units.get(unit.nid)
         personal_skills = unit_funcs.get_personal_skills(unit, unit_prefab)
@@ -1878,9 +1887,15 @@ def set_mode_autolevels(self: Event, level, flags=None):
 
     autolevel = int(level)
     if 'hidden' in flags:
-        self.game.current_mode.enemy_autolevels = autolevel
+        if 'boss' in flags:
+            self.game.current_mode.boss_autolevels = autolevel
+        else:
+            self.game.current_mode.enemy_autolevels = autolevel
     else:
-        self.game.current_mode.enemy_truelevels = autolevel
+        if 'boss' in flags:
+            self.game.current_mode.boss_truelevels = autolevel
+        else:
+            self.game.current_mode.enemy_truelevels = autolevel
 
 def promote(self: Event, global_unit, klass=None, flags=None):
     flags = flags or set()

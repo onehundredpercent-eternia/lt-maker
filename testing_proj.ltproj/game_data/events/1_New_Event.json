@@ -1,0 +1,42 @@
+[
+    {
+        "name": "New Event",
+        "trigger": "level_start",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [
+            [
+                "set_fog_of_war",
+                [
+                    "gba",
+                    "5"
+                ]
+            ],
+            [
+                "set_mode_autolevels",
+                [
+                    "4",
+                    "boss"
+                ]
+            ],
+            [
+                "load_unit",
+                [
+                    "Bazba",
+                    "enemy"
+                ]
+            ],
+            [
+                "add_unit",
+                [
+                    "Bazba",
+                    "0,0",
+                    "immediate",
+                    "closest"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

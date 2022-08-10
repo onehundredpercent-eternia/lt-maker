@@ -244,18 +244,24 @@ class UnitObject(Prefab):
             elif DB.constants.value('backpropagate_difficulty_growths'):
                 difficulty_growth_bonus = mode.get_growth_bonus(self)
                 if difficulty_growth_bonus:
-                    unit_funcs.auto_level(self, num_levels, difficulty_growths=True)
+                    unit_funcs.difficulty_auto_level(self, num_levels)
 
             difficulty_autolevels = mode.get_difficulty_autolevels(self)
-            if self.team.startswith('enemy'):
                 # Handle the ones that you can change in events
+            if self.team.startswith('enemy'):
                 difficulty_autolevels += current_mode.enemy_autolevels
                 difficulty_autolevels += current_mode.enemy_truelevels
+            if 'Boss' in self.tags:
+                difficulty_autolevels += current_mode.boss_autolevels
+                difficulty_autolevels += current_mode.boss_truelevels
+
             if difficulty_autolevels > 0:
-                unit_funcs.auto_level(self, difficulty_autolevels, num_levels + 1)
+                unit_funcs.auto_level(self, difficulty_autolevels)
+
             if self.team.startswith('enemy'):
-                difficulty_truelevels = current_mode.enemy_truelevels
-                self.level += difficulty_truelevels
+                self.level += current_mode.enemy_truelevels
+            if 'Boss' in self.tags:
+                self.level += current_mode.boss_truelevels
 
         # equip items and skill after initialization
         for skill in self.skills:

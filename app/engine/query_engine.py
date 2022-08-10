@@ -101,7 +101,7 @@ Example usage:
                 convoy = self.game.get_convoy_inventory()
             elif party:
                 convoy = self.game.get_convoy_inventory(self.game.get_party(party))
-        if convoy and any([citem.nid == item or citem.uid == item.uid for citem in convoy]):
+        if convoy and any([citem.nid == item or citem.uid == item for citem in convoy]):
             return True
         for unit in all_units:
             if nid and not nid == unit.nid:

@@ -201,6 +201,13 @@ class FreeRoamState(MapState):
         rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
         game.cursor.set_pos(rounded_pos)
 
+        # update fog of war, need to inject the rounded position for this action
+        if game.board.fow_vantage_point.get(self.roam_unit.nid) != rounded_pos:
+            true_pos = self.roam_unit.position
+            self.roam_unit.position = rounded_pos
+            action.UpdateFogOfWar(self.roam_unit).do()
+            self.roam_unit.position = true_pos  # Remember to reset the position to what we want
+
     def can_move(self, direc: str) -> bool:
         if direc == 'LEFT':
             check_x = int(round(self.roam_unit.position[0] - 0.4))

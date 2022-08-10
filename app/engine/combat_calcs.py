@@ -238,23 +238,23 @@ def damage(unit, item=None):
 
     return might
 
-def defense(unit, item, item_to_avoid=None):
+def defense(atk_unit, def_unit, item, item_to_avoid=None):
     if not item_to_avoid:
-        equation = skill_system.resist_formula(unit)
+        equation = skill_system.resist_formula(def_unit)
     else:
-        equation = item_system.resist_formula(unit, item_to_avoid)
+        equation = item_system.resist_formula(atk_unit, item_to_avoid)
         if equation == 'DEFENSE':
-            equation = skill_system.resist_formula(unit)
-    res = equations.parser.get(equation, unit)
+            equation = skill_system.resist_formula(def_unit)
+    res = equations.parser.get(equation, def_unit)
 
-    support_rank_bonuses, support_allies = get_support_rank_bonus(unit)
+    support_rank_bonuses, support_allies = get_support_rank_bonus(def_unit)
     for bonus in support_rank_bonuses:
         res += float(bonus.resist)
     res = int(res)
 
     if item:
-        res += item_system.modify_resist(unit, item)
-    res += skill_system.modify_resist(unit, item_to_avoid)
+        res += item_system.modify_resist(def_unit, item)
+    res += skill_system.modify_resist(def_unit, item_to_avoid)
     return res
 
 def attack_speed(unit, item=None):
@@ -445,7 +445,7 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
 
     total_might = might
 
-    might -= defense(target, def_item, item)
+    might -= defense(unit, target, def_item, item)
     might -= skill_system.dynamic_resist(target, item, unit, mode, attack_info, might)
 
     if assist:
