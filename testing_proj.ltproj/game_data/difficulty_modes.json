@@ -79,7 +79,8 @@
             "MOV": 0
         },
         "player_autolevels": 0,
-        "enemy_autolevels": 6,
-        "boss_autolevels": 0
+        "enemy_autolevels": 0,
+        "boss_autolevels": 0,
+        "promoted_autolevels_fraction": 1.0
     }
 ]

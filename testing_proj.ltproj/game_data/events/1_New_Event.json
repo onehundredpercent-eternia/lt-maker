@@ -6,33 +6,35 @@
         "condition": "True",
         "commands": [
             [
-                "set_fog_of_war",
+                "add_portrait",
                 [
-                    "gba",
-                    "5"
+                    "Eirika",
+                    "Left"
                 ]
             ],
             [
-                "set_mode_autolevels",
+                "wait",
                 [
-                    "4",
-                    "boss"
+                    "500"
                 ]
             ],
             [
-                "load_unit",
+                "center_cursor",
                 [
-                    "Bazba",
-                    "enemy"
+                    "27,21",
+                    "1000"
                 ]
             ],
             [
-                "add_unit",
+                "wait",
                 [
-                    "Bazba",
-                    "0,0",
-                    "immediate",
-                    "closest"
+                    "500"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika"
                 ]
             ]
         ],

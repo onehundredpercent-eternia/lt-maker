@@ -76,6 +76,10 @@ class Defaults():
         return unit.ai
 
     @staticmethod
+    def change_roam_ai(unit) -> str:
+        return unit.roam_ai
+
+    @staticmethod
     def has_canto(unit1, unit2) -> bool:
         return False
 
