@@ -2047,7 +2047,7 @@ class CombatState(MapState):
         else:
             surf = super().draw(surf)
         if self.combat:
-        self.combat.draw(surf)
+            self.combat.draw(surf)
         return surf
 
 class DyingState(MapState):
