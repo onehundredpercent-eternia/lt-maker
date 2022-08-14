@@ -439,6 +439,12 @@ class UnitObject(Prefab):
     def can_unlock(self, region) -> bool:
         return unit_funcs.can_unlock(self, region)
 
+    def get_skill(self, nid: NID):
+        skills = [skill for skill in self.skills if skill.nid == nid]
+        if skills:
+            return skills[0]
+        return None
+
     def get_weapon(self):
         _weapon = None
         if self.equipped_weapon:

@@ -145,6 +145,7 @@ class MapAnimation(Animation):
     def __init__(self, anim, position, delay=0, loop=False, hold=False, reverse=False, speed_adj: float = 1, contingent=False):
         super().__init__(anim, position, delay, loop, hold, reverse, speed_adj=speed_adj, contingent=contingent)
         self.position = STATWIDTH + self.position[0] * TILEWIDTH, self.position[1] * TILEHEIGHT
+        self.use_center()
 
     def use_center(self):
         self.position = self.position[0] + TILEWIDTH//2 - self.width//2, self.position[1] + TILEHEIGHT//2 - self.height//2

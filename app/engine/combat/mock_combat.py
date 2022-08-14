@@ -216,15 +216,19 @@ class MockCombat():
     def right_team(self):
         return 'player'
 
+    def hit_modifiers(self):
+        if self.get_damage() > 0 and self.get_glancing_hit():
+            self.glancing_hit()
+
     def hit_spark(self):
         if self.get_damage() > 0:
             if self.get_glancing_hit():
                 self.glancing_hit()
             else:
                 if self.current_battle_anim is self.right_battle_anim:
-                    position = (-110, -30)
+                    position = (-110 + 120 - WINWIDTH//2, -30)
                 else:
-                    position = (-40, -30)
+                    position = (-40 + 120 - WINWIDTH//2, -30)
                 anim_nid = 'HitSpark'
                 animation = RESOURCES.animations.get(anim_nid)
                 if animation:
@@ -239,7 +243,7 @@ class MockCombat():
             anim_nid = 'CritSpark'
             animation = RESOURCES.animations.get(anim_nid)
             if animation:
-                position = (-40, -30)
+                position = (-40 + 120 - WINWIDTH//2, -30)
                 anim = Animation(animation, position)
                 if self.current_battle_anim is self.right_battle_anim:
                     pass
@@ -255,7 +259,7 @@ class MockCombat():
             position = (52, 21)
             team = self.right_team()
         else:
-            position = (110, 21)
+            position = (WINWIDTH//2, 21)
             team = self.left_team()
         color = utils.get_team_color(team)
         anim_nid = 'NoDamage%s' % color.capitalize()
@@ -268,10 +272,10 @@ class MockCombat():
 
     def glancing_hit(self):
         if self.current_battle_anim is self.right_battle_anim or self.current_battle_anim is self.rp_battle_anim:
-            position = (48, 6)
+            position = (64, 21)
             team = self.right_team()
         else:
-            position = (106, 6)
+            position = (WINWIDTH//2, 21)
             team = self.left_team()
         color = utils.get_team_color(team)
         anim_nid = 'GlancingHit%s' % color.capitalize()
@@ -415,7 +419,7 @@ class MockCombat():
                 x_pos = WINWIDTH//2 - 26 + left_range_offset - total_shake_x + self.pan_offset
             else:
                 x_pos = WINWIDTH//2 + 26 + right_range_offset - total_shake_x + self.pan_offset
-            damage_num.draw(surf, (x_pos, 40))
+            damage_num.draw(surf, (x_pos, WINHEIGHT - 120))
         self.damage_numbers = [d for d in self.damage_numbers if not d.done]
 
     def draw(self, surf):

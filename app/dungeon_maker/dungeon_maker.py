@@ -426,7 +426,6 @@ def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[
         north, east, south, west = tilemap.get_cardinal_layers(connection)
         layers = {north, east, south, west}
         layers.discard(None)
-        print(connection, north, east, south, west, len(layers))
         # Place regular floors
         if len(layers) == 1:
             tilemap.terrain_grid[connection] = 'Floor'

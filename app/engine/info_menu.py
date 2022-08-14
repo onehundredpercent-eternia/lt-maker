@@ -594,10 +594,9 @@ class InfoMenuState(State):
 
         im, offset = icons.get_portrait(self.unit)
         if im:
-            x_pos = max(0, 0)
-            rect = (x_pos, offset//2, 96, 76)
+            rect = (0, offset//2, im.get_width(), 76)
             portrait_surf = engine.subsurface(im, rect)
-            surf.blit(portrait_surf, (100, 4))
+            surf.blit(portrait_surf, (100 + max((96 - im.get_width())//2, 0), 4))
 
         x_offset = 4
         render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), Alignments.CENTER)
@@ -618,8 +617,8 @@ class InfoMenuState(State):
         # Blit affinity
         affinity = DB.affinities.get(self.unit.affinity)
         if affinity:
-            icons.draw_item(surf, affinity, (x_offset + 78, 5))
-            self.info_graph.register((x_offset + 76, 4, 16, 16), affinity.desc, 'all')
+            icons.draw_item(surf, affinity, (x_offset + 78, 0))
+            self.info_graph.register((x_offset + 76, 0, 16, 16), affinity.desc, 'all')
 
         # Battle stats
         battle_surf = SPRITES.get('battle_info')

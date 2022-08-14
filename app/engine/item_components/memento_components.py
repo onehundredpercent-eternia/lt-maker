@@ -214,7 +214,7 @@ class MementoRallyHeals(ItemComponent):
                 other.sprite.begin_flicker(200, (96, 144, 232))
                 str_damage = str(heal)
                 for idx, num in enumerate(str_damage):
-                    d = gui.DamageNumber(int(num, idx, len(str_damage), other.position, 'small_cyan'))
+                    d = gui.DamageNumber(int(num), idx, len(str_damage), other.position, 'small_cyan')
                     other.sprite.damage_numbers.append(d)
 
         # Display Rally Sprite

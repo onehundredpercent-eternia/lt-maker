@@ -70,7 +70,7 @@ item_data = {
     'Errant': 'Shield Sword',
     'Knight': 'Lifelink Sword',
     'Mercenary': 'Attack Sword',
-    'Veteran': 'Attack+ Sword',
+    'Veteran': 'Attack Sword+',
     'Thief': 'Slim Sword',
     'Assassin': 'Thief Sword',
     'Sentinel': 'Shield Lance',
@@ -78,24 +78,24 @@ item_data = {
     'Cavalier': 'Soldier Lance',
     'Paladin': 'Aura Lance',
     'Falcoknight': 'Slim Lance',
-    'Falcolord': 'Slim+ Lance',
+    'Falcolord': 'Brave Lance',
     'Skirmisher': 'Lunge Lance',
     'Halberdier': 'Pierce Lance',
     'Fighter': 'Shield Axe',
     'Warrior': 'Cleave Axe',
     'Raider': 'Slim Axe',
-    'Berserker': 'Crit+ Axe',
+    'Berserker': 'Crit Axe+',
     'Dracoknight': 'Attack Axe',
     'Dracolord': 'Immortal Axe',
     'Vanguard': 'Shield Axe',
     'Champion': 'Provoke Axe',
     'Archer': 'Soldier Bow',
-    'Marksman': 'Soldier+ Bow',
+    'Marksman': 'Soldier Bow+',
     'Hunter': 'Crit Bow',
     'Ranger': 'Mageslayer Bow',
     'Soldier': 'Soldier Lance',
     'Brigand': 'Attack Axe',
-    'Saint': 'Charisma',
+    'Saint': 'Saint',
     'Troubadour': 'Glimmer',
     'Valkyrie': 'Miracle',
     'Warlock': 'Luna',
@@ -149,7 +149,7 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
     return base_val
 
 def get_num_points(chapter_num: int):
-    return 4 + chapter_num//2
+    return 2 + chapter_num//2
 
 def get_promoted_class(klass_nid: str) -> str:
     klass = DB.classes.get(klass_nid)
@@ -245,9 +245,9 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
         if anima_type == 'Fire':
             starting_items = [('Grave Fire', False)]
         elif anima_type == 'Wind':
-            starting_items = [('Grave Wind', False)]
+            starting_items = [('Wind', False)]
         elif anima_type == 'Thunder':
-            starting_items = [('Grave Thunder', False)]
+            starting_items = [('Thunder', False)]
     else:
         weapon_type = class_data.get(klass).weapon_type
         base_item = weapon_type
@@ -276,7 +276,7 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     assert all(item[0] in DB.items.keys() for item in starting_items)
     team = 'enemy'
     starting_position = position
-    level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, ai_group, starting_position)
+    level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, None, ai_group, starting_position)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     if is_elite:
         new_unit._tags.append('Elite')
@@ -354,7 +354,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
 
     # Additional group data
     droppable = group_data.get('droppable', 'None')
-    ai = group_data.get('ai', 'Attack')
+    ai = group_data.get('ai', 'Defend')
     ai_group = group_nid
 
     if kind == GroupKind.SINGLE_TYPE:
@@ -597,14 +597,14 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         level += 2  # Boss is two levels above by default
         new_unit = create_unit(class_to_add, position, level, ai, ai_group, droppable=droppable)
         new_unit._tags.append('Boss')
-        print(new_unit.tags)
         # Give the Boss some bonuses
-        stat_changes = {'HP': 5, 'POW': 2, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 2, 'RES': 3}
+        stat_changes = {'HP': 5, 'POW': 3, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 0, 'RES': 0}
         # Make sure we don't go over max
         stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).max_stats.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
         unit_funcs.apply_stat_changes(new_unit, stat_changes)
-        # Give the Boss 5 free autolevels
-        unit_funcs.auto_level(new_unit, 5, new_unit.level, growth_method='fixed')
+        # Give the Boss free autolevels
+        num_autolevels = int(get_num_points(completed_chapters()))
+        unit_funcs.auto_level(new_unit, num_autolevels, custom_method='fixed')
 
 def get_recruitable_unit(level_var_nid, level, tag_list, team):
     possible_unit_prefabs = \
@@ -619,7 +619,7 @@ def get_recruitable_unit(level_var_nid, level, tag_list, team):
     level_unit_prefab = UniqueUnit(unit.nid, team, ai, None, None, None)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     new_unit.party = game.current_party
-    unit_funcs.auto_level(new_unit, level - new_unit.level, new_unit.level, growth_method='fixed')
+    unit_funcs.auto_level(new_unit, level - new_unit.level, custom_method='fixed')
     new_unit.level = level
     game.full_register(new_unit)
     action.do(action.SetLevelVar(level_var_nid, unit.nid))
