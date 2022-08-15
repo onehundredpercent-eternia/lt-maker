@@ -330,7 +330,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
     logging.debug("#Positions: %s", len(positions))
 
-    num_points = base_num_points * len(positions) / 30
+    num_points = base_num_points * len(positions) / 15
     logging.debug("#Points: %s", num_points)
 
     is_elite = game.get_random_float() < get_elite_chance() and completed_chapters() > 0
@@ -358,7 +358,10 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     ai_group = group_nid
 
     if kind == GroupKind.SINGLE_TYPE:
-        class_to_add = game.get_random_choice(all_classes)
+        class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+        logging.debug("%s, %s", all_classes, class_weights)
+
+        class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
         point_cost = class_data.get(class_to_add).points
         logging.debug("Class To Add: %s", class_to_add)
         logging.debug("Point Cost: %s", point_cost)
@@ -378,10 +381,13 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
                 return
 
     elif kind == GroupKind.DOUBLE_TYPE:
-        class_to_add = game.get_random_choice(all_classes)
+        class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+        logging.debug("%s, %s", all_classes, class_weights)
+
+        class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
         all_classes.remove(class_to_add)
         if all_classes:
-            second_class_to_add = game.get_random_choice(all_classes)
+            second_class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
         else:
             second_class_to_add = class_to_add
         logging.debug("Class To Add: %s", class_to_add)
@@ -426,9 +432,14 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         all_mage_classes = [klass for klass in all_classes if 'Mage' in DB.classes.get(klass).tags]
         all_non_mage_classes = [klass for klass in all_classes if 'Mage' not in DB.classes.get(klass).tags]
 
-        main_class_to_add = game.get_random_choice(all_non_mage_classes)
+        mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_mage_classes]
+        non_mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_non_mage_classes]
+        logging.debug("%s, %s", all_mage_classes, mage_class_weights)
+        logging.debug("%s, %s", all_non_mage_classes, non_mage_class_weights)
+
+        main_class_to_add = game.get_random_weighted_choice(all_non_mage_classes, non_mage_class_weights)
         if all_mage_classes:
-            mage_class_to_add = game.get_random_choice(all_mage_classes)
+            mage_class_to_add = game.get_random_weighted_choice(all_mage_classes, mage_class_weights)
         else:
             mage_class_to_add = main_class_to_add
         logging.debug("Class To Add: %s", main_class_to_add)
@@ -475,14 +486,19 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         all_mage_classes = [klass for klass in all_classes if 'Mage' in DB.classes.get(klass).tags]
         all_non_mage_classes = [klass for klass in all_classes if 'Mage' not in DB.classes.get(klass).tags]
 
-        main_class_to_add = game.get_random_choice(all_non_mage_classes)
+        mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_mage_classes]
+        non_mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_non_mage_classes]
+        logging.debug("%s, %s", all_mage_classes, mage_class_weights)
+        logging.debug("%s, %s", all_non_mage_classes, non_mage_class_weights)
+
+        main_class_to_add = game.get_random_weighted_choice(all_non_mage_classes, non_mage_class_weights)
         all_non_mage_classes.remove(main_class_to_add)
         if all_non_mage_classes:
-            second_class_to_add = game.get_random_choice(all_non_mage_classes)
+            second_class_to_add = game.get_random_weighted_choice(all_non_mage_classes, non_mage_class_weights)
         else:
             second_class_to_add = main_class_to_add
         if all_mage_classes:
-            mage_class_to_add = game.get_random_choice(all_mage_classes)
+            mage_class_to_add = game.get_random_weighted_choice(all_mage_classes, mage_class_weights)
         else:
             mage_class_to_add = main_class_to_add
         logging.debug("Class To Add: %s", main_class_to_add)
@@ -542,7 +558,10 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
                 return
 
     elif kind == GroupKind.LEADER:
-        regular_class_to_add = game.get_random_choice(all_classes)
+        class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+        logging.debug("%s, %s", all_classes, class_weights)
+
+        regular_class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
         leader_classes = get_potential_leaders(regular_class_to_add)
         leader_class_to_add = game.get_random_choice(leader_classes)
         logging.debug("Main Class to Add: %s", regular_class_to_add)

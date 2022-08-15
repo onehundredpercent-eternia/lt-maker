@@ -463,14 +463,31 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     print("Theme: %s" % theme)
     random.seed(seed)
     width, height = size
+
+    num_rooms = int(width * height / 20)
+
+    if theme == 'default':
+        vert_symmetrical = False
+    else:
+        vert_symmetrical = False
+
     while True:
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
         tilemap.reset_grid('Wall')
-        num_rooms = int(width * height / 20)
+        
         rooms: List[RoomPrefab] = get_rooms(num_rooms=num_rooms, offset=(width/2, height/2))
         rooms: List[RoomPrefab] = separation_steering(rooms)
         room_tiles: Set[Tuple[int, int]] = get_room_tiles(tilemap, rooms)
+
+        if vert_symmetrical:
+            new_room_tiles = set()
+            for pos in room_tiles:
+                if pos[0] < width / 2:
+                    new_room_tiles.add(pos)
+                    new_room_tiles.add((width - pos[0] - 1, pos[1]))
+            room_tiles = new_room_tiles
+
         new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
         print("Initial Rooms")
         print_rooms(new_rooms)
@@ -481,6 +498,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         thin_empty_tiles = {tile for tile in empty_tiles if sum(adj in empty_tiles for adj in utils.get_cardinal_positions(tile)) <= 2}
         empty_tiles -= thin_empty_tiles
         empty_rooms: List[Room] = find_new_rooms(tilemap, empty_tiles.copy())
+        num_starting_rooms = len(new_rooms)
         for room in empty_rooms:
             if room.size >= 11:
                 center_tiles: List[Tuple[int, int]] = room.get_center_tiles()
@@ -494,7 +512,10 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         # Assign each room a random layer (1 or 2)
         room_to_layer = {}
         for idx, room in enumerate(new_rooms):
-            layer = idx % 2 + 1
+            if vert_symmetrical and idx >= num_starting_rooms:
+                layer = 2
+            else:
+                layer = idx % 2 + 1
             # layer = 1
             room_to_layer[room] = layer
             for tile in room.tiles:
