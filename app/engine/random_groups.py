@@ -598,10 +598,10 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         new_unit = create_unit(class_to_add, position, level, ai, ai_group, droppable=droppable)
         new_unit._tags.append('Boss')
         # Give the Boss some bonuses
-        stat_changes = {'HP': 5, 'POW': 3, 'SKL': 2, 'SPD': 2, 'LCK': 5, 'DEF': 0, 'RES': 0}
+        # stat_changes = {'HP': 5, 'POW': 2, 'SKL': 1, 'SPD': 1, 'LCK': 5, 'DEF': 0, 'RES': 0}
         # Make sure we don't go over max
-        stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).max_stats.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
-        unit_funcs.apply_stat_changes(new_unit, stat_changes)
+        # stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).max_stats.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
+        # unit_funcs.apply_stat_changes(new_unit, stat_changes)
         # Give the Boss free autolevels
         num_autolevels = int(get_num_points(completed_chapters()))
         unit_funcs.auto_level(new_unit, num_autolevels, custom_method='fixed')
