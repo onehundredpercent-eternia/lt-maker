@@ -130,28 +130,17 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
     group_data = {'valid_tags': enemy_type}
     from app.engine import static_random
     logging.debug(static_random.get_other_random_state())
-    for idx, room in enumerate(rooms):
-        if room is starting_room:
-            logging.debug("Starting")
-            valid_tiles = [tile for tile in room.tiles if 
-                           all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)]
-            random_groups.build_group('%d' % idx, group_data, valid_tiles)
-            logging.debug(static_random.get_other_random_state())
 
-        elif room is ending_room:
-            logging.debug("Ending")
-            boss_data = {**group_data, **{'ai': 'Defend'}}
-            random_groups.build_group('Boss', boss_data, [boss_pos])
-            logging.debug(static_random.get_other_random_state())
-            random_groups.build_group('%d' % idx, boss_data, room.tiles)
-            logging.debug(static_random.get_other_random_state())
+    # Handle boss
+    logging.debug("Place Boss")
+    boss_data = {**group_data, **{'ai': 'Defend'}}
+    random_groups.build_group('Boss', boss_data, [boss_pos])
 
-        else:
-            logging.debug("Regular")
-            random_groups.build_group('%d' % idx, group_data, room.tiles)
-            logging.debug(static_random.get_other_random_state())
-
-    logging.debug(static_random.get_other_random_state())
+    # Now place the rest of the units
+    logging.debug("Place all enemy units")
+    valid_tiles = {tile for tile in valid_positions if 
+                   all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)}
+    random_groups.build_groups(group_data, valid_tiles)
 
     # Generate grave tree regions
     num_grave_trees = int(lerp(3, 6, random_groups.completed_chapters() / random_groups.LAST_CHAPTER))
