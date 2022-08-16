@@ -57,12 +57,12 @@ class_data = Data([
     ClassData('Troubadour', 4, 'Light', 4),
     ClassData('Cleric', 3, 'Light', 3),
     ClassData('Mage', 3, 'Anima', 2),
-    ClassData('Maligknight', 5, 'Anima', 6),
-    ClassData('Acolyte', 3, 'Dark', 2),
+    ClassData('Maligknight', 5, 'Dark', 6),
+    ClassData('Acolyte', 3, 'Anima', 2),
     ClassData('Sorceror', 3, 'Dark', 2),
 ])
 
-anima_users = ('Mage', 'Sage', 'Maligknight', 'Maliglord')
+anima_users = ('Mage', 'Sage', 'Acolyte', 'Wizard')
 
 item_data = {
     'Myrmidon': 'Crit Sword',
@@ -148,7 +148,7 @@ def get_promotion_chance(chapter_num: int, is_elite: bool = False, is_leader: bo
     base_val = (max(0, chapter_num - starting_promotion_chapter) / 4) ** 2
     return base_val
 
-def get_num_points(chapter_num: int):
+def get_num_autolevels(chapter_num: int):
     return 2 + chapter_num//2
 
 def get_promoted_class(klass_nid: str) -> str:
@@ -176,6 +176,13 @@ def determine_avg_level() -> int:
 
 def get_elite_chance() -> float:
     return lerp(0.1, 0.25, completed_chapters() / LAST_CHAPTER)
+
+def get_num_points() -> float:
+    """
+    Returns the total point value of units that should 
+    show up in this chapter/floor
+    """
+    return lerp(30, 60, completed_chapter() / LAST_CHAPTER)
 
 def get_random_item(tags=None, exclude=None, pos=(0, 0)) -> str:
     tags = tags or []
@@ -285,16 +292,7 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     action.do(action.ArriveOnMap(new_unit, new_unit.position))
     return new_unit
 
-def build_groups():
-    regions = [region for region in game.regions if region.region_type == 'group']
-    # Sort so the smallest regions are decided first
-    regions = sorted(regions, key=lambda region: len(region.get_all_positions()))
-    for region in regions:
-        build_group(region.nid, region.group_data, region.get_all_positions())
-
-def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
-    logging.debug("Build Group %s", group_nid)
-
+def determine_classes(group_data: Dict) -> List[str]:
     # Determine which classes we can put here
     all_classes = set(class_data.keys())
     assert all(klass in DB.classes.keys() for klass in all_classes)
@@ -317,9 +315,52 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     # So now we have the complete list of classes we can use
     logging.debug("Valid Classes: %s", all_classes)
     assert len(all_classes) > 0
+    return all_classes
 
-    # Determine how many and which specific classes will belong here
-    base_num_points = get_num_points(completed_chapters())
+def voronoi_partition(positions: Set[Tuple]) -> List[List[Tuple]]:
+    # Divide the space of legal positions into *num_groups* contigous regions, attempt to be equal sized
+    # Voronoi partition
+    # Naive algorithm that is O(n^2)
+    random_starting_points = []
+    valid_positions = list(positions)
+    while len(random_starting_points) < num_groups:
+        pos = game.get_random_choice(valid_positions)
+        valid_positions.remove(pos)
+        random_starting_points.append(pos)
+    
+    sections = [[] for _ in range(num_groups)]
+    for pos in positions:
+        closest_idx = -1
+        closest_distance = 1000
+        for idx, starting_point in enumerate(random_starting_points):
+            distance = utils.calculate_distance(pos, starting_point)
+            if distance < closest_distance:
+                closest_idx = idx
+                closest_distance = distance
+        sections[closest_idx].append(pos)
+    return sections
+
+def build_groups(group_data: Dict, positions: Set[Tuple]):
+    total_num_points = get_num_points()
+    num_groups = 5
+    points_per_group = total_num_points / num_groups
+    sections = voronoi_partition(positions)
+    while any(len(section) < 4 for section in sections):
+        logging.warning("Had to rerun voronoi partition since one of the sections was too small")
+        sections = voronoi_partition(positions)
+
+    for idx in range(num_groups):
+        group_positions = sections[idx]
+        build_group('%d' % idx, group_data, group_positions, points_per_group)
+
+def get_class_weights(all_classes: List[str]) -> List[float]:
+    return [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+
+def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_points: float):
+    logging.debug("Build Group %s", group_nid)
+
+    # Determine which specific classes will belong here
+    all_classes = determine_classes(group_data)
     # Don't overlap other units
     positions = [pos for pos in positions if not game.board.get_unit(pos)]
 
@@ -329,9 +370,6 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     else:  # Only select traversable positions
         positions = [pos for pos in positions if game.movement.check_simple_traversable(pos)]
     logging.debug("#Positions: %s", len(positions))
-
-    num_points = base_num_points * len(positions) / 15
-    logging.debug("#Points: %s", num_points)
 
     is_elite = game.get_random_float() < get_elite_chance() and completed_chapters() > 0
     logging.debug("Elite: %s", is_elite)
@@ -358,7 +396,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
     ai_group = group_nid
 
     if kind == GroupKind.SINGLE_TYPE:
-        class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+        class_weights = get_class_weights(all_classes)
         logging.debug("%s, %s", all_classes, class_weights)
 
         class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
@@ -381,7 +419,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
                 return
 
     elif kind == GroupKind.DOUBLE_TYPE:
-        class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+        class_weights = get_class_weights(all_classes)
         logging.debug("%s, %s", all_classes, class_weights)
 
         class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
@@ -432,8 +470,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         all_mage_classes = [klass for klass in all_classes if 'Mage' in DB.classes.get(klass).tags]
         all_non_mage_classes = [klass for klass in all_classes if 'Mage' not in DB.classes.get(klass).tags]
 
-        mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_mage_classes]
-        non_mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_non_mage_classes]
+        mage_class_weights = get_class_weights(all_mage_classes)
+        non_mage_class_weights = get_class_weights(all_non_mage_classes)
         logging.debug("%s, %s", all_mage_classes, mage_class_weights)
         logging.debug("%s, %s", all_non_mage_classes, non_mage_class_weights)
 
@@ -486,8 +524,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
         all_mage_classes = [klass for klass in all_classes if 'Mage' in DB.classes.get(klass).tags]
         all_non_mage_classes = [klass for klass in all_classes if 'Mage' not in DB.classes.get(klass).tags]
 
-        mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_mage_classes]
-        non_mage_class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_non_mage_classes]
+        mage_class_weights = get_class_weights(all_mage_classes)
+        non_mage_class_weights = get_class_weights(all_non_mage_classes)
         logging.debug("%s, %s", all_mage_classes, mage_class_weights)
         logging.debug("%s, %s", all_non_mage_classes, non_mage_class_weights)
 
@@ -558,7 +596,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple]):
                 return
 
     elif kind == GroupKind.LEADER:
-        class_weights = [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
+        class_weights = get_class_weights(all_classes)
         logging.debug("%s, %s", all_classes, class_weights)
 
         regular_class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
