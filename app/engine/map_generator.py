@@ -138,8 +138,9 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
 
     # Now place the rest of the units
     logging.debug("Place all enemy units")
-    valid_tiles = {tile for tile in valid_positions if 
-                   all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)}
+    valid_tiles = [tile for tile in valid_positions if 
+                   all(utils.calculate_distance(tile, form_tile) > 3 for form_tile in formation_tiles)]
+    valid_tiles = list(sorted(valid_tiles))
     random_groups.build_groups(group_data, valid_tiles)
 
     # Generate grave tree regions
