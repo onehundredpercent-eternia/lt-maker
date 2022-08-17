@@ -317,13 +317,13 @@ def determine_classes(group_data: Dict) -> List[str]:
     assert len(all_classes) > 0
     return all_classes
 
-def voronoi_partition(positions: Set[Tuple]) -> List[List[Tuple]]:
+def voronoi_partition(positions: List[Tuple], num_partitions: int) -> List[List[Tuple]]:
     # Divide the space of legal positions into *num_groups* contigous regions, attempt to be equal sized
     # Voronoi partition
     # Naive algorithm that is O(n^2)
     random_starting_points = []
     valid_positions = list(positions)
-    while len(random_starting_points) < num_groups:
+    while len(random_starting_points) < num_partitions:
         pos = game.get_random_choice(valid_positions)
         valid_positions.remove(pos)
         random_starting_points.append(pos)
@@ -340,23 +340,48 @@ def voronoi_partition(positions: Set[Tuple]) -> List[List[Tuple]]:
         sections[closest_idx].append(pos)
     return sections
 
-def build_groups(group_data: Dict, positions: Set[Tuple]):
+def print_sections(rooms: List[Room]):
+    # TODO
+    # Print rooms
+    all_positions = {}
+    for idx, room in enumerate(rooms):
+        all_positions.update({pos: idx for pos in room.tiles})
+    width = max(pos[0] for pos in all_positions.keys()) + 1
+    height = max(pos[1] for pos in all_positions.keys()) + 1
+    for y in range(height):
+        print("%02d " % y, end='')
+        for x in range(width):
+            if (x, y) in all_positions:
+                print("%d" % (all_positions[(x, y)] % 10), end='')
+            else:
+                print(" ", end='')
+        print("\n", end='')
+
+
+def build_groups(group_data: Dict, positions: List[Tuple]):
     total_num_points = get_num_points()
     num_groups = 5
-    points_per_group = total_num_points / num_groups
-    sections = voronoi_partition(positions)
+    sections = voronoi_partition(positions, num_groups)
     while any(len(section) < 4 for section in sections):
         logging.warning("Had to rerun voronoi partition since one of the sections was too small")
-        sections = voronoi_partition(positions)
+        sections = voronoi_partition(positions, num_groups)
 
-    for idx in range(num_groups):
-        group_positions = sections[idx]
-        build_group('%d' % idx, group_data, group_positions, points_per_group)
+    print_sections(sections)
+
+    for idx, section in enumerate(sections):
+        points_per_group = total_num_points / num_groups
+        logging.debug("Assign %s points to section %s", points_per_group, idx)
+        num_points_used = build_group('%d' % idx, group_data, section, points_per_group)
+        logging.debug("Section %s used up %s points", idx, num_points_used)
+        total_num_points -= num_points_used
 
 def get_class_weights(all_classes: List[str]) -> List[float]:
     return [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
 
-def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_points: float):
+def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_points: float) -> float:
+    # Returns number of points used
+    original_points = num_points
+
     logging.debug("Build Group %s", group_nid)
 
     # Determine which specific classes will belong here
@@ -416,7 +441,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - num_points
+        return original_points - num_points
 
     elif kind == GroupKind.DOUBLE_TYPE:
         class_weights = get_class_weights(all_classes)
@@ -453,7 +479,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points
 
         while second_points > 0:
             second_points -= second_cost
@@ -464,7 +490,9 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points - second_points
+        
+        return original_points - main_points - second_points
 
     elif kind == GroupKind.SINGLE_TYPE_WITH_MAGE_SUPPORT:
         all_mage_classes = [klass for klass in all_classes if 'Mage' in DB.classes.get(klass).tags]
@@ -507,7 +535,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points
 
         while mage_points > 0:
             mage_points -= mage_cost
@@ -518,7 +546,9 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points - mage_points
+        
+        return original_points - main_points - mage_points
 
     elif kind == GroupKind.DOUBLE_TYPE_WITH_MAGE_SUPPORT:
         all_mage_classes = [klass for klass in all_classes if 'Mage' in DB.classes.get(klass).tags]
@@ -570,7 +600,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points
 
         while second_points > 0:
             second_points -= second_cost
@@ -581,7 +611,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points - second_points
 
         while mage_points > 0:
             mage_points -= mage_cost
@@ -593,7 +623,9 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - main_points - second_points - mage_points
+
+        return original_points - main_points - second_points - mage_points
 
     elif kind == GroupKind.LEADER:
         class_weights = get_class_weights(all_classes)
@@ -625,7 +657,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
         if not positions:
             logging.error("No more valid positions to place units")
-            return
+            return original_points - num_points
 
         while num_points > 0:
             
@@ -637,7 +669,9 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
 
             if not positions:
                 logging.error("No more valid positions to place units")
-                return
+                return original_points - num_points
+
+        return original_points - num_points
 
     elif kind == GroupKind.BOSS:
         boss_classes = [c for c in all_classes if c != 'Soldier']
@@ -662,6 +696,8 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
         # Give the Boss free autolevels
         num_autolevels = int(get_num_points(completed_chapters()))
         unit_funcs.auto_level(new_unit, num_autolevels, custom_method='fixed')
+
+        return original_points
 
 def get_recruitable_unit(level_var_nid, level, tag_list, team):
     possible_unit_prefabs = \
