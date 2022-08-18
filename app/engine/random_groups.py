@@ -319,7 +319,7 @@ def determine_classes(group_data: Dict) -> List[str]:
 
 def voronoi_partition(positions: List[Tuple], num_partitions: int) -> List[List[Tuple]]:
     # Divide the space of legal positions into *num_groups* contigous regions, attempt to be equal sized
-    # Voronoi partition
+    # using Lloyd's algorithm
     # Naive algorithm that is O(n^2)
     random_starting_points = []
     valid_positions = list(positions)
@@ -328,24 +328,69 @@ def voronoi_partition(positions: List[Tuple], num_partitions: int) -> List[List[
         valid_positions.remove(pos)
         random_starting_points.append(pos)
     
-    sections = [[] for _ in range(num_groups)]
-    for pos in positions:
-        closest_idx = -1
-        closest_distance = 1000
-        for idx, starting_point in enumerate(random_starting_points):
-            distance = utils.calculate_distance(pos, starting_point)
-            if distance < closest_distance:
-                closest_idx = idx
-                closest_distance = distance
-        sections[closest_idx].append(pos)
+    def _assign(starting_points: List[Tuple]) -> List[List[Tuple]]:
+        sections = [[] for _ in range(starting_points))]
+        for pos in positions:
+            closest_idx = -1
+            closest_distance = 1000
+            for idx, starting_point in enumerate(starting_points):
+                distance = utils.calculate_distance(pos, starting_point)
+                if distance < closest_distance:
+                    closest_idx = idx
+                    closest_distance = distance
+            sections[closest_idx].append(pos)
+        return sections
+
+    def _find_centroids(sections: List[List[Tuple]]) -> List[Tuple]:
+        """
+        Doesn't actually find the centroid,
+        It actually finds the point that minimizes the squared distance
+        """
+        new_starting_points = []
+        for section in sections:
+            minimal_pos = None
+            minimal_score = int(1e9)
+            for pos in section:
+                total_distance = 0
+                for other_pos in section:
+                    total_distance += utils.calculate_distance(pos, other_pos) ** 2
+                if total_distance < minimal_score:
+                    minimal_score = total_distance
+                    minimal_pos = pos
+            new_starting_points.append(minimal_pos)
+        return new_starting_points
+
+    starting_points = random_starting_points
+    while True:  # Keep making more equal sized until centroids remain steady
+        sections = _assign(starting_points)
+        new_starting_points = _find_centroids(sections)
+        if starting_points == new_starting_points:
+            break
+        starting_points = new_starting_points
+
     return sections
 
-def print_sections(rooms: List[Room]):
-    # TODO
-    # Print rooms
+def remove_section_borders(sections: List[List[Tuple]]) -> List[List[Tuple]]:
+    """
+    Removes from all sections any position that is adjacent to another section
+    """
+    set_sections = [set(section) for section in sections]
+    new_sections = []
+    for idx, section in enumerate(sections):
+        new_section = []
+        other_sections = set_sections.copy().pop(idx)
+        flat_set = {pos for section in other_sections for pos in section}
+        for pos in section:
+            adj_pos = ((pos[0] - 1, pos[1]), (pos[0] + 1, pos[1]), (pos[0], pos[1] - 1), (pos[0], pos[1] + 1))
+            if not any(pos in flat_set for pos in adj_pos):
+                new_sections.append(pos)
+        new_sections.append(new_section)
+    return new_sections
+
+def print_sections(sections: List[List[Tuple]]):
     all_positions = {}
-    for idx, room in enumerate(rooms):
-        all_positions.update({pos: idx for pos in room.tiles})
+    for idx, section in enumerate(sections):
+        all_positions.update({pos: idx for pos in section})
     width = max(pos[0] for pos in all_positions.keys()) + 1
     height = max(pos[1] for pos in all_positions.keys()) + 1
     for y in range(height):
@@ -357,15 +402,12 @@ def print_sections(rooms: List[Room]):
                 print(" ", end='')
         print("\n", end='')
 
-
 def build_groups(group_data: Dict, positions: List[Tuple]):
     total_num_points = get_num_points()
     num_groups = 5
     sections = voronoi_partition(positions, num_groups)
-    while any(len(section) < 4 for section in sections):
-        logging.warning("Had to rerun voronoi partition since one of the sections was too small")
-        sections = voronoi_partition(positions, num_groups)
-
+    print_sections(sections)
+    remove_section_borders(sections)
     print_sections(sections)
 
     for idx, section in enumerate(sections):
