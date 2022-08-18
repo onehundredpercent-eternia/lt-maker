@@ -44,7 +44,7 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
     enemy_type = [enemy_type] or ['Soldier']
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
-    seed = game.game_vars.get('_random_seed', -1)
+    seed = int(game.game_vars.get('_random_seed', -1) + (random_groups.completed_chapters() * 1024))
     dungeon = dungeon_maker.generate_dungeon(theme, size, seed)
     DB_terrain = terrain_maker.get_terrain(map_palette)
 
@@ -108,6 +108,7 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
     # Populate rooms with enemies
     group_data = {'valid_tags': enemy_type}
     from app.engine import static_random
+    static_random.set_other_random_state(seed)
     logging.debug(static_random.get_other_random_state())
 
     # Handle boss
