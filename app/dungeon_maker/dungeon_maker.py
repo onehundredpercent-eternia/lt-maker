@@ -465,6 +465,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     width, height = size
 
     num_rooms = int(width * height / 20)
+    fill_size_threshold = 11
 
     if theme == 'default':
         vert_symmetrical = False
@@ -500,7 +501,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         empty_rooms: List[Room] = find_new_rooms(tilemap, empty_tiles.copy())
         num_starting_rooms = len(new_rooms)
         for room in empty_rooms:
-            if room.size >= 11:
+            if room.size >= fill_size_threshold:
                 center_tiles: List[Tuple[int, int]] = room.get_center_tiles()
                 new_room = Room(center_tiles)
                 new_rooms.append(new_room)
@@ -602,7 +603,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         # Done!
         break
 
-    return tilemap, final_rooms
+    return tilemap
 
 # to test
 # python -m app.dungeon_maker.dungeon_maker
