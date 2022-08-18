@@ -38,22 +38,6 @@ def get_floor_positions():
     valid_positions = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
     return sorted([pos for pos in valid_positions if game.movement.check_simple_traversable(pos)])
 
-def find_room_with(rooms: List[dungeon_maker.Room], position: Tuple) -> dungeon_maker.Room:
-    for room in rooms:
-        if position in room.tiles:
-            return room
-    # We couldn't find this position in any of the rooms, try and find closest position
-    counter = 1
-    while counter < 10:
-        for room in rooms:
-            for pos in room.tiles:
-                if utils.calculate_distance(pos, position) <= counter:
-                    return room
-        counter += 1
-
-    logging.error("Could not find room close to position %s", position)
-    return None
-
 def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> None:
     theme = theme or 'default'
     map_palette = map_palette or 'dungeon'
@@ -61,7 +45,7 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
     seed = game.game_vars.get('_random_seed', -1)
-    dungeon, rooms = dungeon_maker.generate_dungeon(theme, size, seed)
+    dungeon = dungeon_maker.generate_dungeon(theme, size, seed)
     DB_terrain = terrain_maker.get_terrain(map_palette)
 
     # Need to create an image for the base layer
@@ -97,17 +81,12 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
 
     game.tilemap.save_screenshot()
 
-    # Choose a starting room and an ending/boss room
+    # Find floor positions
     valid_positions = get_floor_positions()
-    southwest_corner = sorted(valid_positions, key=lambda x: x[0] + -x[1])[0]
-    northeast_corner = sorted(valid_positions, key=lambda x: -x[0] + x[1])[0]
-    starting_room: dungeon_maker.Room = find_room_with(rooms, southwest_corner)
-    ending_room: dungeon_maker.Room = find_room_with(rooms, northeast_corner)
-
     # Create formations
     num_formations = int(utils.clamp(lerp(6, 12, random_groups.completed_chapters() / (random_groups.LAST_CHAPTER - 1)), 6, 12))
     # Starting from southwest corner of room
-    tiles = sorted(starting_room.tiles, key=lambda x: x[0] + -x[1])
+    tiles = sorted(valid_positions, key=lambda x: x[0] + -x[1])
     formation_tiles = tiles[:num_formations]
     for idx, tile in enumerate(formation_tiles):
         formation_region = regions.Region('Formation%02d' % idx)
@@ -124,7 +103,7 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
 
     # Figure out boss position
     # Find northeast most position
-    boss_pos = sorted(ending_room.tiles, key=lambda x: (-x[0] + x[1]))[0]
+    boss_pos = sorted(valid_positions, key=lambda x: (-x[0] + x[1]))[0]
 
     # Populate rooms with enemies
     group_data = {'valid_tags': enemy_type}
