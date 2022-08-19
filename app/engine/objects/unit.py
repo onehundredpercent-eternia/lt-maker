@@ -440,7 +440,7 @@ class UnitObject(Prefab):
         return unit_funcs.can_unlock(self, region)
 
     def get_skill(self, nid: NID):
-        skills = [skill for skill in self.skills if skill.nid == nid]
+        skills = [skill for skill in self.skills if skill.nid == nid or skill.uid == nid]
         if skills:
             return skills[0]
         return None

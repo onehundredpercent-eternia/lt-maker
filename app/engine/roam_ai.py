@@ -18,19 +18,7 @@ class FreeRoamAIHandler():
     """
 
     def __init__(self):
-        self.targets = self.compose_target_list()
-
-    def reload(self):
-        self.targets = self.compose_target_list()
-
-    def compose_target_list(self):
-        targets = set()
-        for unit in game.get_all_units():
-            if unit.get_roam_ai() and DB.ai.get(unit.get_roam_ai()).roam_ai:
-                targets.add(FreeRoamUnit(unit, FreeRoamAIController(unit)))
-                if game.board.rationalize_pos(unit.position) == unit.position:
-                    game.leave(unit)
-        return targets
+        pass
 
     def update(self):
         for unit in self.targets:

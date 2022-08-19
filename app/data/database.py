@@ -104,7 +104,11 @@ class Database(object):
             if os.path.exists(save_loc):
                 logging.info("Deserializing %s from %s" % (key, save_loc))
                 with open(save_loc) as load_file:
+                    try:
                     return json.load(load_file)
+                    except Exception as e:
+                        logging.error("failed file load at %s" % load_file)
+                        raise e
             else:
                 logging.warning("%s does not exist!" % save_loc)
                 return []

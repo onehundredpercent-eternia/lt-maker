@@ -182,7 +182,7 @@ def get_num_points() -> float:
     Returns the total point value of units that should 
     show up in this chapter/floor
     """
-    return lerp(30, 60, completed_chapter() / LAST_CHAPTER)
+    return lerp(30, 60, completed_chapters() / LAST_CHAPTER)
 
 def get_random_item(tags=None, exclude=None, pos=(0, 0)) -> str:
     tags = tags or []
@@ -303,7 +303,7 @@ def determine_classes(group_data: Dict) -> List[str]:
     if valid_tags:
         logging.debug("Valid Tags: %s", valid_tags)
         valid_classes = \
-            [klass for klass in all_classes \
+            [klass for klass in all_classes
              if any(tag in DB.classes.get(klass).tags for tag in valid_tags)]
         all_classes &= set(valid_classes)
     all_classes = list(all_classes)
@@ -329,7 +329,7 @@ def voronoi_partition(positions: List[Tuple], num_partitions: int) -> List[List[
         random_starting_points.append(pos)
     
     def _assign(starting_points: List[Tuple]) -> List[List[Tuple]]:
-        sections = [[] for _ in range(starting_points))]
+        sections = [[] for _ in range(starting_points)]
         for pos in positions:
             closest_idx = -1
             closest_distance = 1000

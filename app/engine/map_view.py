@@ -1,6 +1,7 @@
 import math
 
-from app.constants import TILEWIDTH, TILEHEIGHT, STATWIDTH, WINWIDTH, WINHEIGHT, MAPWIDTH
+from app.constants import TILEWIDTH, TILEHEIGHT, STATWIDTH, TILEX, TILEY, WINWIDTH, WINHEIGHT
+
 from app.events.regions import RegionType
 
 from app.engine import config as cf
@@ -11,6 +12,8 @@ from app.engine.game_state import game
 
 import time
 
+from app.utilities.utils import magnitude, tmult, tuple_add, tuple_sub
+
 class MapView():
     def __init__(self):
         self._unit_surf = engine.create_surface((WINWIDTH, WINHEIGHT), transparent=True)
@@ -20,12 +23,21 @@ class MapView():
 
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
         unit_surf = engine.copy_surface(self._unit_surf)
+        cull_rect_in_tiles = cull_rect[0] / TILEWIDTH, cull_rect[1] / TILEHEIGHT, cull_rect[2] / TILEWIDTH, cull_rect[3] / TILEHEIGHT
+        cull_rect_center_in_tiles = tuple_add(cull_rect_in_tiles[:2], tmult(cull_rect_in_tiles[2:], 0.5))
 
         # Update all units
         update_units = [unit for unit in game.units if (unit.position or unit.sprite.fake_position)]
         for unit in update_units:
+            if game.level and game.level.roam:
+                if unit.position:
+                    norm_dist_from_center = max(1.0 - magnitude(tuple_sub(unit.position, cull_rect_center_in_tiles)) / ((TILEX + TILEY) / 2), 0)
+                else:
+                    norm_dist_from_center = 0.0
+            else:
+                norm_dist_from_center = 1.0
             unit.sprite.update()
-            unit.sound.update()
+            unit.sound.update(volume=norm_dist_from_center)
 
         pos_units = [unit for unit in update_units if unit is not game.cursor.cur_unit and (unit.position or unit.sprite.fake_position)]
         # Only draw units within 2 tiles of cull_rect

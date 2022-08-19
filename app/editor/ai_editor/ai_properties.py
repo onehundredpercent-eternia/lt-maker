@@ -313,7 +313,6 @@ class BehaviourBox(QGroupBox):
         self.setLayout(self.layout)
 
     def show_range(self):
-        # self.target.value() != 'Time'
         if isinstance(self.target_spec.currentWidget(), WaitSpecification):
             self.within_label.setParent(None)
             self.view_range.setParent(None)
@@ -333,7 +332,7 @@ class BehaviourBox(QGroupBox):
         self.current.desired_proximity = int(val)
 
     def construct_roam_info(self, enable: bool):
-        if enable and self.current and self.current.action != "Wait":
+        if enable and self.target_spec and not isinstance(self.target_spec.currentWidget(), WaitSpecification):
             self.speed_box.show()
             self.proximity_box.show()
             self.layout.addWidget(self.speed_box)
@@ -380,6 +379,7 @@ class BehaviourBox(QGroupBox):
             target_spec = self.target_spec.currentWidget()
             target_spec.set_current(self.current.target_spec)
 
+        self.construct_roam_info(True)
         self.show_range()
 
     def target_changed(self, index):
@@ -534,6 +534,8 @@ class AIProperties(QWidget):
         if self.current and set_current:
             self.current.add_default()
             behaviour_box.set_current(self.current.behaviours[-1])
+
+        self.construct_roam_info()
 
     def set_current(self, current):
         self.current = current

@@ -1,4 +1,5 @@
 from app.engine.objects.item import ItemObject
+from app.engine import action
 
 class Defaults():
     @staticmethod
@@ -408,7 +409,12 @@ def get_combat_arts(unit):
                 elif combat_art_modify_max_range:
                     max_range = max(item_funcs.get_range(unit, weapon))
                     weapon._force_max_range = max(0, max_range + combat_art_modify_max_range)
+                # activate_combat_art(unit, skill)
+                act = action.AddSkill(unit, skill.combat_art.value)
+                act.do()
                 targets = target_system.get_valid_targets(unit, weapon)
+                act.reverse()
+                # deactivate_combat_art(unit, skill)
                 weapon._force_max_range = None
                 if targets:
                     good_weapons.append(weapon)
@@ -423,11 +429,14 @@ def activate_combat_art(unit, skill):
         if component.defines('on_activation'):
             component.on_activation(unit)
 
+def deactivate_combat_art(unit, skill):
+    for component in skill.components:
+        if component.defines('on_deactivation'):
+            component.on_deactivation(unit)
+
 def deactivate_all_combat_arts(unit):
     for skill in unit.skills:
-        for component in skill.components:
-            if component.defines('on_deactivation'):
-                component.on_deactivation(unit)
+        deactivate_combat_art(unit, skill)
 
 def on_pairup(unit, leader):
     for skill in unit.skills:
