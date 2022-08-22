@@ -102,6 +102,7 @@ class UnitObject(Prefab):
     @classmethod
     def from_prefab(cls, prefab: UniqueUnit | GenericUnit | UnitPrefab, current_mode: DifficultyModeObject = None):
         self = cls(prefab.nid)
+        print("this is a test")
         is_level_unit = not isinstance(prefab, UnitPrefab)
         self.nid = prefab.nid
         if not is_level_unit: # initing a non-level unit
