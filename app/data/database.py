@@ -105,7 +105,7 @@ class Database(object):
                 logging.info("Deserializing %s from %s" % (key, save_loc))
                 with open(save_loc) as load_file:
                     try:
-                    return json.load(load_file)
+                        return json.load(load_file)
                     except Exception as e:
                         logging.error("failed file load at %s" % load_file)
                         raise e

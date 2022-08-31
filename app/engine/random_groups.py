@@ -329,7 +329,7 @@ def voronoi_partition(positions: List[Tuple], num_partitions: int) -> List[List[
         random_starting_points.append(pos)
     
     def _assign(starting_points: List[Tuple]) -> List[List[Tuple]]:
-        sections = [[] for _ in range(starting_points)]
+        sections = [[] for _ in range(len(starting_points))]
         for pos in positions:
             closest_idx = -1
             closest_distance = 1000
@@ -378,12 +378,13 @@ def remove_section_borders(sections: List[List[Tuple]]) -> List[List[Tuple]]:
     new_sections = []
     for idx, section in enumerate(sections):
         new_section = []
-        other_sections = set_sections.copy().pop(idx)
+        other_sections = set_sections.copy()
+        other_sections.pop(idx)
         flat_set = {pos for section in other_sections for pos in section}
         for pos in section:
             adj_pos = ((pos[0] - 1, pos[1]), (pos[0] + 1, pos[1]), (pos[0], pos[1] - 1), (pos[0], pos[1] + 1))
             if not any(pos in flat_set for pos in adj_pos):
-                new_sections.append(pos)
+                new_section.append(pos)
         new_sections.append(new_section)
     return new_sections
 
@@ -406,9 +407,12 @@ def build_groups(group_data: Dict, positions: List[Tuple]):
     total_num_points = get_num_points()
     num_groups = 5
     sections = voronoi_partition(positions, num_groups)
+    print("Voronoi Sections")
     print_sections(sections)
-    remove_section_borders(sections)
-    print_sections(sections)
+    # not necessary right now
+    # sections = remove_section_borders(sections)
+    # print("Voronoi Sections v2")
+    # print_sections(sections)
 
     for idx, section in enumerate(sections):
         points_per_group = total_num_points / num_groups
@@ -420,7 +424,7 @@ def build_groups(group_data: Dict, positions: List[Tuple]):
 def get_class_weights(all_classes: List[str]) -> List[float]:
     return [1 / (max(1, len([unit for unit in game.units if unit.team == 'enemy' and unit.klass == klass]))) for klass in all_classes]
 
-def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_points: float) -> float:
+def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_points: float = 0) -> float:
     # Returns number of points used
     original_points = num_points
 
@@ -491,7 +495,9 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
         logging.debug("%s, %s", all_classes, class_weights)
 
         class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
-        all_classes.remove(class_to_add)
+        ridx = all_classes.index(class_to_add)
+        all_classes.pop(ridx)
+        class_weights.pop(ridx)
         if all_classes:
             second_class_to_add = game.get_random_weighted_choice(all_classes, class_weights)
         else:
@@ -602,7 +608,9 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
         logging.debug("%s, %s", all_non_mage_classes, non_mage_class_weights)
 
         main_class_to_add = game.get_random_weighted_choice(all_non_mage_classes, non_mage_class_weights)
-        all_non_mage_classes.remove(main_class_to_add)
+        ridx = all_non_mage_classes.index(main_class_to_add)
+        all_non_mage_classes.pop(ridx)
+        non_mage_class_weights.pop(ridx)
         if all_non_mage_classes:
             second_class_to_add = game.get_random_weighted_choice(all_non_mage_classes, non_mage_class_weights)
         else:
@@ -736,7 +744,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
         # stat_changes = {k: utils.clamp(v, 0, DB.classes.get(class_to_add).max_stats.get(k, 30) - new_unit.stats[k]) for k, v in stat_changes.items()}
         # unit_funcs.apply_stat_changes(new_unit, stat_changes)
         # Give the Boss free autolevels
-        num_autolevels = int(get_num_points(completed_chapters()))
+        num_autolevels = int(get_num_points())
         unit_funcs.auto_level(new_unit, num_autolevels, custom_method='fixed')
 
         return original_points
