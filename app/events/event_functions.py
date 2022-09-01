@@ -23,7 +23,7 @@ from app.engine.objects.item import ItemObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
-from app.events import event_commands, regions
+from app.events import event_commands, regions, triggers
 from app.events.event_portrait import EventPortrait, MementoEventPortrait
 from app.events.speak_style import SpeakStyle
 from app.events.screen_positions import parse_screen_position
@@ -1035,7 +1035,7 @@ def kill_unit(self: Event, unit, flags=None):
     else:
         self.game.death.should_die(unit)
         self.game.state.change('dying')
-    self.game.events.trigger('unit_death', unit, position=unit.position)
+    self.game.events.trigger(triggers.UnitDeath(unit, None, unit.position))
     skill_system.on_death(unit)
     self.state = 'paused'
 
@@ -1533,12 +1533,11 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
         component.item = item
     item_system.init(subitem)
     self.game.register_item(subitem)
-    if global_unit_or_convoy.lower() == 'convoy':
-        owner_nid = None
-    else:
+    owner_nid = None
+    if unit:
         owner_nid = unit.nid
     action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
-    if 'equip' in flags:
+    if 'equip' in flags and owner_nid:
         action.do(action.EquipItem(unit, subitem))
 
 def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item=None, flags=None):
@@ -1668,6 +1667,8 @@ def give_exp(self: Event, global_unit, experience, flags=None):
                 autolevel_to(self, global_unit, unit.level - 1)
             else:
                 action.do(action.SetExp(unit, 0))
+        else:
+            action.do(action.SetExp(unit, old_exp + exp))
     else:
         self.game.exp_instance.append((unit, exp, None, 'init'))
         self.game.state.change('exp')
@@ -2404,7 +2405,7 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
             for idx, is_enabled in enumerate(enabled_strs):
                 if is_enabled in self.true_vals:
                     options_enabled[idx] = True
-            action.do(action.SetGameVar('_base_options_enabled', options_enabled))
+            action.do(action.SetGameVar('_base_options_disabled', [not enabled for enabled in options_enabled]))
         else:
             self.logger.error("base: too many bools in option enabled list: ", other_options_enabled)
             return
@@ -2419,7 +2420,7 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
             return
         action.do(action.SetGameVar('_base_additional_options', options_list))
     else:
-        action.do(action.SetGameVar('_base_options_enabled', []))
+        action.do(action.SetGameVar('_base_options_disabled', []))
         action.do(action.SetGameVar('_base_options_events', []))
         action.do(action.SetGameVar('_base_additional_options', []))
 

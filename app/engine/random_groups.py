@@ -745,7 +745,7 @@ def build_group(group_nid: str, group_data: Dict, positions: List[Tuple], num_po
         # unit_funcs.apply_stat_changes(new_unit, stat_changes)
         # Give the Boss free autolevels
         num_autolevels = int(get_num_points())
-        unit_funcs.auto_level(new_unit, num_autolevels, custom_method='fixed')
+        unit_funcs.auto_level(new_unit, level, num_autolevels, custom_method='fixed')
 
         return original_points
 
@@ -762,7 +762,7 @@ def get_recruitable_unit(level_var_nid, level, tag_list, team):
     level_unit_prefab = UniqueUnit(unit.nid, team, ai, None, None, None)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     new_unit.party = game.current_party
-    unit_funcs.auto_level(new_unit, level - new_unit.level, custom_method='fixed')
+    unit_funcs.auto_level(new_unit, new_unit.level, level - new_unit.level, custom_method='fixed')
     new_unit.level = level
     game.full_register(new_unit)
     action.do(action.SetLevelVar(level_var_nid, unit.nid))

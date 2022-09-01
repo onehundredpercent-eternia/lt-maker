@@ -108,6 +108,7 @@ class MapView():
             surf.blit(map_image, (0, 0))
         surf = surf.convert_alpha()
 
+        surf = game.boundary.draw_auras(surf, full_size, cull_rect)
         surf = game.boundary.draw(surf, full_size, cull_rect)
         surf = game.boundary.draw_fog_of_war(surf, full_size, cull_rect)
         surf = game.highlight.draw(surf, cull_rect)

@@ -7,6 +7,7 @@ import sys
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.data.database import DB
 from app.events.regions import RegionType
+from app.events import triggers
 from app.resources.resources import RESOURCES
 from app.engine import (aura_funcs, banner, equations, item_funcs, item_system,
                         particles, skill_system, static_random, unit_funcs, animations)
@@ -517,7 +518,7 @@ class Wait(Action):
         for region in game.level.regions:
             if self.unit.position and region.contains(self.unit.position) and region.interrupt_move:
                 if region.region_type == RegionType.EVENT:
-                    did_trigger = game.events.trigger(region.sub_nid, self.unit, position=self.unit.position, local_args={'region': region})
+                    did_trigger = game.events.trigger(triggers.RegionTrigger(region.sub_nid, self.unit, self.unit.position, region))
                 if (region.region_type != RegionType.EVENT or did_trigger) and region.only_once:
                     regions_to_remove.append(RemoveRegion(region))
         return regions_to_remove
@@ -1585,7 +1586,7 @@ class AutoLevel(Action):
         self.growth_method = growth_method
 
     def do(self):
-        unit_funcs.auto_level(self.unit, self.diff, self.growth_method)
+        unit_funcs.auto_level(self.unit, self.unit.get_internal_level(), self.diff, self.growth_method)
 
     def reverse(self):
         self.unit.stats = self.old_stats
@@ -2801,6 +2802,7 @@ class AddSkill(Action):
 
         if self.skill_obj.aura and self.unit.position and game.board and game.tilemap:
             aura_funcs.propagate_aura(self.unit, self.skill_obj, game)
+            game.boundary.register_unit_auras(self.unit)
 
         # Handle affects movement
         self.reset_action.execute()
@@ -2810,6 +2812,7 @@ class AddSkill(Action):
         self.reset_action.reverse()
         if not self.skill_obj:
             return
+        game.boundary.unregister_unit_auras(self.unit)
         if self.skill_obj in self.unit.skills:
             self.unit.skills.remove(self.skill_obj)
             skill_system.on_remove(self.unit, self.skill_obj)

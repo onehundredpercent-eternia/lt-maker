@@ -1,5 +1,4 @@
 from app.engine.objects.item import ItemObject
-from app.engine import action
 
 class Defaults():
     @staticmethod
@@ -26,7 +25,11 @@ class Defaults():
 
     @staticmethod
     def can_trade(unit1, unit2) -> bool:
-        return unit2.position and unit1.team == unit2.team and check_ally(unit1, unit2)
+        return unit1.team == unit2.team and check_ally(unit1, unit2) and not no_trade(unit1) and not no_trade(unit2)
+        
+    @staticmethod
+    def no_trade(unit) -> bool:
+        return False
 
     @staticmethod
     def num_items_offset(unit) -> int:
@@ -379,7 +382,7 @@ def get_extra_abilities(unit):
     return abilities
 
 def get_combat_arts(unit):
-    from app.engine import item_funcs, target_system
+    from app.engine import item_funcs, target_system, action
     combat_arts = {}
     for skill in unit.skills:
         if not condition(skill, unit):
