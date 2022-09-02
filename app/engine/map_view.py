@@ -21,6 +21,28 @@ class MapView():
         self._line_surf.fill((0, 0, 0, 0))
         # self._value_noise = ValueNoise()
 
+    def save_screenshot(self):
+        import os
+        from datetime import datetime
+
+        if not os.path.isdir('screenshots'):
+            os.mkdir('screenshots')
+        current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
+
+        cull_rect = (0, 0, game.tilemap.width * TILEWIDTH, game.tilemap.height * TILEWIDTH)
+        surf = engine.create_surface(cull_rect[2:])
+        map_image = game.tilemap.get_full_image(cull_rect)
+        surf.blit(map_image, (0, 0))
+        surf = surf.convert_alpha()
+
+        # Draw units
+        draw_units = [unit for unit in game.units if (unit.position or unit.sprite.fake_position)]
+        draw_units = sorted(draw_units, key=lambda unit: unit.position[1] if unit.position else unit.sprite.fake_position[1])
+        for unit in draw_units:
+            unit.sprite.draw(surf, (0, 0))
+
+        engine.save_surface(surf, 'screenshots/LT_map_view_%s.png' % current_time)
+
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
         unit_surf = engine.copy_surface(self._unit_surf)
         cull_rect_in_tiles = cull_rect[0] / TILEWIDTH, cull_rect[1] / TILEHEIGHT, cull_rect[2] / TILEWIDTH, cull_rect[3] / TILEHEIGHT

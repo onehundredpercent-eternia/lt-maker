@@ -150,4 +150,6 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
         action.do(action.AddRegion(grave_region))
     logging.debug(static_random.get_other_random_state())
 
+    game.map_view.save_screenshot()
+
     print("Done!")

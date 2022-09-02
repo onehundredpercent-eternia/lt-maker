@@ -265,7 +265,7 @@ class TileMapObject(Prefab):
         current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
 
         image = self.get_full_image((0, 0, self.width * TILEWIDTH, self.height * TILEHEIGHT))
-        engine.save_surface(image, 'screenshots/LT_%s.png' % current_time)
+        engine.save_surface(image, 'screenshots/LT_tilemap_%s.png' % current_time)
 
     def update(self):
         for layer in self.layers:
