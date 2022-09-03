@@ -17,34 +17,11 @@ from app.utilities.algorithms.interpolation import lerp
 
 import logging
 
-def determine_sprite(pos: tuple, terrain, tilemap):
-    def _push_to_tilemap(pos: tuple, new_coords: tuple):
-        """
-        pos is in tile space (8x8)
-        """
-
-        new_coord = terrain_maker.random_choice(new_coords, pos)
-        tilemap.tile_grid[pos] = new_coord
-
-    new_coords1, new_coords2, new_coords3, new_coords4 = \
-        terrain.determine_sprite_coords(tilemap, pos)
-
-    _push_to_tilemap((pos[0] * 2, pos[1] * 2), new_coords1)
-    _push_to_tilemap((pos[0] * 2 + 1, pos[1] * 2), new_coords2)
-    _push_to_tilemap((pos[0] * 2 + 1, pos[1] * 2 + 1), new_coords3)
-    _push_to_tilemap((pos[0] * 2, pos[1] * 2 + 1), new_coords4)
-
 def get_floor_positions():
     valid_positions = [(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)]
     return sorted([pos for pos in valid_positions if game.movement.check_simple_traversable(pos)])
 
-def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> None:
-    theme = theme or 'default'
-    map_palette = map_palette or 'dungeon'
-    enemy_type = [enemy_type] or ['Soldier']
-    size = size or (20, 20)
-    # Generate map prefab (called dungeon)
-    seed = int(game.game_vars.get('_random_seed', -1) + (random_groups.completed_chapters() * 1024))
+def build_tilemap(theme, map_palette, size, seed, level_nid):
     dungeon = dungeon_maker.generate_dungeon(theme, size, seed)
     DB_terrain = terrain_maker.get_terrain(map_palette)
 
@@ -60,21 +37,35 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
         if terrain_nid not in processed_nids:
             terrain.single_process(dungeon)
             processed_nids.add(terrain_nid)
-        determine_sprite(pos, terrain, dungeon)
+        sprite = terrain.determine_sprite(dungeon, pos)
+        dungeon.tile_grid[pos] = sprite
 
     # Draw the tile grid
-    for pos, tile_coord in dungeon.tile_grid.items():
-        terrain_pos = (pos[0] // 2, pos[1] // 2)
-        terrain_nid = dungeon.get_terrain(terrain_pos)
-        if not terrain_nid:
-            continue
-        terrain = DB_terrain.get(terrain_nid)
-        pix = terrain.get_image(tile_coord)
-        surf.blit(pix, (pos[0] * TILEWIDTH//2, pos[1] * TILEHEIGHT//2))
+    for pos, pix in dungeon.tile_grid.items():
+        surf.blit(pix, (pos[0] * TILEWIDTH, pos[1] * TILEHEIGHT))
 
     # Now we have the surface to use as a real tilemap
+    scratch_data = {
+        'size': size,
+        'theme': theme,
+        'seed': seed,
+        'map_palette': map_palette,
+        'level_nid': level_nid,
+    }
+    tilemap = TileMapObject.build_from_scratch(level_nid, dungeon, surf, scratch_data)
+    return tilemap
+
+def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> None:
+    theme = theme or 'default'
+    map_palette = map_palette or 'dungeon'
+    enemy_type = [enemy_type] or ['Soldier']
+    size = size or (20, 20)
+    # Generate map prefab (called dungeon)
+    seed = int(game.game_vars.get('_random_seed', -1) + (random_groups.completed_chapters() * 1024))
+
     level_nid = str(random_groups.completed_chapters())
-    tilemap = TileMapObject.build_from_scratch(level_nid, dungeon, surf)
+    tilemap = build_tilemap(theme, map_palette, size, seed, level_nid)
+    
     # Now we have a complete tilemap
     # Lets build a level
     game.build_level_from_scratch(level_nid, tilemap)

@@ -120,15 +120,17 @@ class TileMapObject(Prefab):
         self.width: int = 0
         self.height: int = 0
         self.nid: NID = None
+        self.scratch_data: dict = None   # Contains data to recreate this tilemapobject from scratch
 
     @classmethod
-    def build_from_scratch(cls, nid, dungeon, surf):
+    def build_from_scratch(cls, nid, dungeon, surf, scratch_data):
         self = cls()
         self.nid = nid
         self.width = dungeon.width
         self.height = dungeon.height
         self.autotile_fps = 0
         self.layers = Data()
+        self.scratch_data = scratch_data
 
         # Build a layer
         base_layer = LayerObject('base', self)
@@ -282,12 +284,17 @@ class TileMapObject(Prefab):
         s_dict['layers'] = [layer.save() for layer in self.layers]
         s_dict['weather'] = [weather.save() for weather in self.weather]
         s_dict['animations'] = [anim.save() for anim in self.animations]
+        s_dict['scratch_data'] = self.scratch_data
         return s_dict
 
     @classmethod
     def restore(cls, s_dict):
-        prefab = RESOURCES.tilemaps.get(s_dict['nid'])
-        self = cls.from_prefab(prefab)
+        if s_dict.get('scratch_data'):
+            from app.engine import map_generator
+            self = map_generator.build_tilemap(**s_dict['scratch_data'])
+        else:
+            prefab = RESOURCES.tilemaps.get(s_dict['nid'])
+            self = cls.from_prefab(prefab)
         self.restore_layers(s_dict['layers'])
         weather = s_dict.get('weather', [])
         for save_w in weather:

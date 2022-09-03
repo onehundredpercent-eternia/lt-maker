@@ -29,19 +29,22 @@ class Terrain():
     def single_process(self, tilemap) -> None:
         pass
 
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
-        new_coords1 = [(self.base_coord[0]*2, self.base_coord[1]*2)]
-        new_coords2 = [(self.base_coord[0]*2 + 1, self.base_coord[1]*2)]
-        new_coords3 = [(self.base_coord[0]*2 + 1, self.base_coord[1]*2 + 1)]
-        new_coords4 = [(self.base_coord[0]*2, self.base_coord[1]*2 + 1)]
-        return new_coords1, new_coords2, new_coords3, new_coords4
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
+        return self.get_image16(self.tileset_image, self.base_coord)
 
-    def get_image(self, tile_coord) -> engine.Surface:
-        im = engine.subsurface(self.tileset_image, (
+    def get_image8(self, base_image, tile_coord) -> engine.Surface:
+        im = engine.subsurface(base_image, (
             tile_coord[0] * TILEWIDTH//2,
             tile_coord[1] * TILEHEIGHT//2,
             TILEWIDTH//2, TILEHEIGHT//2))
-        return im
+        return im.copy()
+
+    def get_image16(self, base_image, tile_coord) -> engine.Surface:
+        im = engine.subsurface(base_image, (
+            tile_coord[0] * TILEWIDTH,
+            tile_coord[1] * TILEHEIGHT,
+            TILEWIDTH, TILEHEIGHT))
+        return im.copy()
 
 class WangEdge2Terrain16(Terrain):
     def __init__(self, tileset_image_fn):
@@ -57,23 +60,23 @@ class WangEdge2Terrain16(Terrain):
         index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
         return index
 
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
         index = self._determine_index(tilemap, pos)
         coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
-        new_coords1 = [(coord[0]*2, coord[1]*2)]
-        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
-        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
-        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
-        return new_coords1, new_coords2, new_coords3, new_coords4
+        return self.get_image16(self.tileset_image, coord)
 
 class FloorTerrain(Terrain):
+    """
+    # Implements default 16x16 Floor
+    """
     terrain_like = ('Floor', )
 
-    def __init__(self, tileset_image_fn):
+    def __init__(self, tileset_image_fn, shading_image_fn):
         self.tileset_image = engine.image_load(tileset_image_fn)
-        self.limits = {k: self._find_limit(k) for k in range(6)}
+        self.shading_image = engine.image_load(shading_image_fn)
+        self.limits = {k: self._find_limit(k) for k in range(1)}
 
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
         north, _, _, west = tilemap.get_cardinal_terrain(pos)
         _, _, _, northwest = tilemap.get_diagonal_terrain(pos)
         top, left, corner = False, False, False
@@ -87,35 +90,40 @@ class FloorTerrain(Terrain):
         if west == 'Pillar':
             left = True
 
+        coord = random_choice([(0, k) for k in range(self.limits[0])], pos)
+
+        shading_coord = None
         if top and left:
-            coord = random_choice([(4, k) for k in range(self.limits[4])], pos)
+            shading_coord = (3, 0)
         elif top and corner:
-            coord = random_choice([(5, k) for k in range(self.limits[5])], pos)
+            shading_coord = (4, 0)
         elif left:
-            coord = random_choice([(1, k) for k in range(self.limits[1])], pos)
+            shading_coord = (0, 0)
         elif corner:
-            coord = random_choice([(3, k) for k in range(self.limits[3])], pos)
+            shading_coord = (2, 0)
         elif top:
-            coord = random_choice([(2, k) for k in range(self.limits[2])], pos)
-        else:
-            coord = random_choice([(0, k) for k in range(self.limits[0])], pos)
+            shading_coord = (1, 0)
 
-        new_coords1 = [(coord[0]*2, coord[1]*2)]
-        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
-        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
-        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
+        base_image = self.get_image16(self.tileset_image, coord)
+        shading_image = None
+        if shading_coord is not None:
+            shading_image = self.get_image16(self.shading_image, shading_coord)
 
+        extra_image = None
         if north == 'Pillar':
-            coord = (0, 5)
-            new_coords1 = [(coord[0]*2, coord[1]*2)]
-            new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
+            extra_image = self.get_image16(self.shading_image, (5, 0))
 
-        return new_coords1, new_coords2, new_coords3, new_coords4
+        if shading_image:
+            base_image.blit(shading_image, (0, 0))
+        if extra_image:
+            base_image.blit(extra_image, (0, 0))
+
+        return base_image
 
 class WallTerrain(WangEdge2Terrain16):
     terrain_like = ('Wall', )
 
-    def __init__(self,tileset_image_fn):
+    def __init__(self, tileset_image_fn):
         super().__init__(tileset_image_fn)
         self.wall_grid = {}
 
@@ -165,7 +173,7 @@ class WallTerrain(WangEdge2Terrain16):
     def get_diagonal_wallgrid(self, pos: tuple) -> tuple:
         return list(self.wall_grid.get(adj, None) for adj in utils.get_diagonal_positions(pos))
 
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
         northeast, southeast, southwest, northwest = tilemap.get_diagonal_terrain(pos)
 
@@ -215,16 +223,12 @@ class WallTerrain(WangEdge2Terrain16):
         else:
             print("Wall was not correctly processed: ", pos)
 
-        new_coords1 = [(coord[0]*2, coord[1]*2)]
-        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
-        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
-        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
-        return new_coords1, new_coords2, new_coords3, new_coords4
+        return self.get_image16(self.tileset_image, coord)
 
 class StairsUpDownTerrain(Terrain):
     terrain_like = ('StairsUpDown', )
 
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
         _, east, _, west = tilemap.get_cardinal_terrain(pos)
         left, right = False, False
         if east not in self.terrain_like:
@@ -241,16 +245,12 @@ class StairsUpDownTerrain(Terrain):
         else:
             coord = 3, 0 
 
-        new_coords1 = [(coord[0]*2, coord[1]*2)]
-        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
-        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
-        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
-        return new_coords1, new_coords2, new_coords3, new_coords4
+        return self.get_image16(self.tileset_image, coord)
 
 class StairsLeftTerrain(Terrain):
     terrain_like = ('StairsLeft', )
 
-    def determine_sprite_coords(self, tilemap, pos: tuple) -> tuple:
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
         north, _, south, _ = tilemap.get_cardinal_terrain(pos)
         top = False
         if north not in self.terrain_like:
@@ -261,11 +261,7 @@ class StairsLeftTerrain(Terrain):
         else:
             coord = 1, 0
 
-        new_coords1 = [(coord[0]*2, coord[1]*2)]
-        new_coords2 = [(coord[0]*2 + 1, coord[1]*2)]
-        new_coords3 = [(coord[0]*2 + 1, coord[1]*2 + 1)]
-        new_coords4 = [(coord[0]*2, coord[1]*2 + 1)]
-        return new_coords1, new_coords2, new_coords3, new_coords4
+        return self.get_image16(self.tileset_image, coord)
 
 class StairsRightTerrain(StairsLeftTerrain):
     terrain_like = ('StairsRight', )
@@ -279,8 +275,8 @@ def get_terrain(palette: str):
         palette_dir = palette_dir + palette
     else:
         palette_dir = palette_dir + 'dungeon'
-    return {'Floor': FloorTerrain(os.path.join(palette_dir, 'floor.png')),
-            'Floor2': FloorTerrain(os.path.join(palette_dir, 'floor2.png')),
+    return {'Floor': FloorTerrain(os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
+            'Floor2': FloorTerrain(os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
             'Wall': WallTerrain(os.path.join(palette_dir, 'wall.png')),
             'Pillar': PillarTerrain(os.path.join(palette_dir, 'pillar.png')),
             'StairsUpDown': StairsUpDownTerrain(os.path.join(palette_dir, 'stairs_updown.png')),

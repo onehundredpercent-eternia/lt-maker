@@ -11,7 +11,7 @@ class DungeonTileMap:
         self.width = width
         self.height = height
         self.terrain_grid: Dict[Tuple[int, int], str] = {}
-        self.tile_grid = {}
+        self.tile_grid = {}  # pos -> engine.Surface
         self.layer_grid: Dict[Tuple[int, int], int] = {}
 
     def get_terrain(self, pos: Tuple[int, int]) -> str:
