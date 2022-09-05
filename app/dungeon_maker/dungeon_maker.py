@@ -23,6 +23,7 @@ class DungeonTileMap:
              'StairsUpDown': 'Stairs',
              'StairsLeft': 'Stairs',
              'StairsRight': 'Stairs',
+             'Pillar2': 'Pillar',
              }
         return {pos: conversion_dict.get(terrain, terrain) for pos, terrain in self.terrain_grid.items()}
 

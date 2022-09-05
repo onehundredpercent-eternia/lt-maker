@@ -140,7 +140,7 @@ class FloorTerrain(Terrain):
 
         extra_image = None
         north, _, _, _ = tilemap.get_cardinal_terrain(pos)
-        if north.startswith('Pillar'):
+        if north and north.startswith('Pillar'):
             extra_image = self.get_image16(self.shading_image, (5, 0))
 
         if shading_image:
@@ -167,7 +167,7 @@ class FloorRuinsTerrain(FloorTerrain):
         # Generate a noise map and use that to fill the noise_vertices with True or False
         # depending on threshold
         seed = static_random.get_seed()
-        noise_map: dict = simplex_noise.gen_noise_map((tilemap.width * 2, tilemap.height * 2), seed)
+        noise_map: dict = simplex_noise.gen_noise_map((tilemap.width * 2 + 1, tilemap.height * 2 + 1), seed)
         self.noise_vertices = {pos: value > self.noise_threshold for pos, value in noise_map.items()}
 
     def _determine_index(self, tilemap, pos):
@@ -205,7 +205,7 @@ class FloorRuinsTerrain(FloorTerrain):
 
         extra_image = None
         north, _, _, _ = tilemap.get_cardinal_terrain(pos)
-        if north.startswith('Pillar'):
+        if north and north.startswith('Pillar'):
             extra_image = self.get_image16(self.shading_image, (5, 0))
 
         if shading_image:
@@ -282,7 +282,7 @@ class FloorGrassTerrain(FloorRuinsTerrain):
 
         extra_image = None
         north, _, _, _ = tilemap.get_cardinal_terrain(pos)
-        if north.startswith('Pillar'):
+        if north and north.startswith('Pillar'):
             extra_image = self.get_image16(self.shading_image, (5, 0))
 
         if shading_image:
