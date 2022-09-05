@@ -1,8 +1,10 @@
+import json
 import os
 import random
 
 from app.constants import TILEWIDTH, TILEHEIGHT
 from app.engine import engine, static_random
+from app.map_maker import simplex_noise
 from app.utilities import utils
 
 def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
@@ -23,8 +25,8 @@ class Terrain():
         for y in range(0, self.tileset_image.get_height(), height):
             current_color = self.tileset_image.get_at((x, y))
             if current_color[:3] == bg_color[:3]:
-                return y // TILEHEIGHT
-        return self.tileset_image.get_height() // TILEHEIGHT
+                return y // height
+        return self.tileset_image.get_height() // height
 
     def single_process(self, tilemap) -> None:
         pass
@@ -74,18 +76,32 @@ class WangEdge2Terrain16(Terrain):
         coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
         return self.get_image16(self.tileset_image, coord)
 
+class WangCorner2Terrain16(WangEdge2Terrain16):
+    def _determine_index(self, tilemap, pos: tuple) -> tuple:
+        northeast, southeast, southwest, northwest = tilemap.get_diagonal_terrain(pos)
+        northeast_edge = bool(not northeast or northeast in self.terrain_like)
+        southeast_edge = bool(not southeast or southeast in self.terrain_like)
+        northwest_edge = bool(not northwest or northwest in self.terrain_like)
+        southwest_edge = bool(not southwest or southwest in self.terrain_like)
+        index = 1 * northeast_edge + \
+            2 * southeast_edge + \
+            4 * southwest_edge + \
+            8 * northwest_edge
+        return index
+
 class FloorTerrain(Terrain):
     """
     # Implements default 16x16 Floor
     """
     terrain_like = ('Floor', )
 
-    def __init__(self, tileset_image_fn, shading_image_fn):
+    def __init__(self, tileset_image_fn, shading_image_fn, offset=0):
         self.tileset_image = engine.image_load(tileset_image_fn)
         self.shading_image = engine.image_load(shading_image_fn)
         self.limits = {k: self._find_limit(k) for k in range(1)}
+        self.offset = offset
 
-    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
+    def _get_floor_shading(self, tilemap, pos) -> tuple:
         north, _, _, west = tilemap.get_cardinal_terrain(pos)
         _, _, _, northwest = tilemap.get_diagonal_terrain(pos)
         top, left, corner = False, False, False
@@ -99,8 +115,6 @@ class FloorTerrain(Terrain):
         if west == 'Pillar':
             left = True
 
-        coord = random_choice([(0, k) for k in range(self.limits[0])], pos)
-
         shading_coord = None
         if top and left:
             shading_coord = (3, 0)
@@ -113,13 +127,162 @@ class FloorTerrain(Terrain):
         elif top:
             shading_coord = (1, 0)
 
+        return shading_coord
+
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
+        coord = random_choice([(0, k) for k in range(self.limits[0])], pos)
+        shading_coord = self._get_floor_shading(tilemap, pos)
+
         base_image = self.get_image16(self.tileset_image, coord)
         shading_image = None
         if shading_coord is not None:
             shading_image = self.get_image16(self.shading_image, shading_coord)
 
         extra_image = None
-        if north == 'Pillar':
+        north, _, _, _ = tilemap.get_cardinal_terrain(pos)
+        if north.startswith('Pillar'):
+            extra_image = self.get_image16(self.shading_image, (5, 0))
+
+        if shading_image:
+            base_image.blit(shading_image, (0, 0))
+        if extra_image:
+            base_image.blit(extra_image, (0, 0))
+
+        return base_image
+
+class FloorRuinsTerrain(FloorTerrain):
+    """
+    # Implements 16x16 Floor with Ruins
+    """
+    noise_vertices: dict = {}
+    noise_threshold: float = 0.5
+
+    def __init__(self, tileset_image_fn, shading_image_fn, offset=0):
+        self.tileset_image = engine.image_load(tileset_image_fn)
+        self.shading_image = engine.image_load(shading_image_fn)
+        self.limits = {k: self._find_limit(k) for k in range(16)}
+        self.offset = offset
+
+    def single_process(self, tilemap):
+        # Generate a noise map and use that to fill the noise_vertices with True or False
+        # depending on threshold
+        seed = static_random.get_seed()
+        noise_map: dict = simplex_noise.gen_noise_map((tilemap.width * 2, tilemap.height * 2), seed)
+        self.noise_vertices = {pos: value > self.noise_threshold for pos, value in noise_map.items()}
+
+    def _determine_index(self, tilemap, pos):
+        center = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 1), False) 
+        north = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2), False)
+        east = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 1), False)
+        south = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 2), False)
+        west = self.noise_vertices.get((pos[0]*2, pos[1]*2 + 1), False)
+        northwest = self.noise_vertices.get((pos[0]*2, pos[1]*2), False)
+        northeast = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2), False)
+        southwest = self.noise_vertices.get((pos[0]*2, pos[1]*2 + 2), False)
+        southeast = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 2), False)
+
+        topleft = sum(center + north + west + northwest) >= 3
+        topright = sum(center + north + east + northeast) >= 3
+        bottomleft = sum(center + south + west + southwest) >= 3
+        bottomright = sum(center + south + east + southeast) >= 3
+
+        index = 1 * topright + \
+            2 * bottomright + \
+            4 * bottomleft + \
+            8 * topleft
+        return index
+
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
+        index = self._determine_index(tilemap, pos)
+        coord = random_choice([(index, k) for k in range(self.limits[index])], pos)
+        
+        shading_coord = self._get_floor_shading(tilemap, pos)
+
+        base_image = self.get_image16(self.tileset_image, coord)
+        shading_image = None
+        if shading_coord is not None:
+            shading_image = self.get_image16(self.shading_image, shading_coord)
+
+        extra_image = None
+        north, _, _, _ = tilemap.get_cardinal_terrain(pos)
+        if north.startswith('Pillar'):
+            extra_image = self.get_image16(self.shading_image, (5, 0))
+
+        if shading_image:
+            base_image.blit(shading_image, (0, 0))
+        if extra_image:
+            base_image.blit(extra_image, (0, 0))
+
+        return base_image
+
+class FloorGrassTerrain(FloorRuinsTerrain):
+    """
+    # Implements 8x8 Floor with Grass
+    """
+    noise_vertices: dict = {}
+    noise_threshold: float = 0.5
+
+    def __init__(self, tileset_image_fn, shading_image_fn, offset=0):
+        self.tileset_image = engine.image_load(tileset_image_fn)
+        self.shading_image = engine.image_load(shading_image_fn)
+        self.limits = {k: self._find_limit(k, 8, 8) for k in range(16)}
+        self.offset = offset
+
+    def _determine_index(self, tilemap, pos):
+        center = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 1), False) 
+        north = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2), False)
+        east = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 1), False)
+        south = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 2), False)
+        west = self.noise_vertices.get((pos[0]*2, pos[1]*2 + 1), False)
+        northwest = self.noise_vertices.get((pos[0]*2, pos[1]*2), False)
+        northeast = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2), False)
+        southwest = self.noise_vertices.get((pos[0]*2, pos[1]*2 + 2), False)
+        southeast = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 2), False)
+
+        # Topleft
+        index1 = 1 * north + \
+            2 * center + \
+            4 * west + \
+            8 * northwest
+        # Topright
+        index2 = 1 * northeast + \
+            2 * east + \
+            4 * center + \
+            8 * north
+        # Bottomright
+        index3 = 1 * east + \
+            2 * southeast + \
+            4 * south + \
+            8 * center
+        # Bottomleft
+        index4 = 1 * center + \
+            2 * south + \
+            4 * southwest + \
+            8 * west
+        return index1, index2, index3, index4
+
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
+        index1, index2, index3, index4 = self._determine_index(tilemap, pos)
+        coord1 = random_choice([(index1, k) for k in range(self.limits[index1])], pos)
+        coord2 = random_choice([(index2, k) for k in range(self.limits[index2])], pos)
+        coord3 = random_choice([(index3, k) for k in range(self.limits[index3])], pos)
+        coord4 = random_choice([(index4, k) for k in range(self.limits[index4])], pos)
+        
+        shading_coord = self._get_floor_shading(tilemap, pos)
+
+        base_image = engine.create_surface((16, 16))
+        base_image.blit(self.get_image8(self.tileset_image, coord1), (0, 0))
+        base_image.blit(self.get_image8(self.tileset_image, coord2), (8, 0))
+        base_image.blit(self.get_image8(self.tileset_image, coord3), (8, 8))
+        base_image.blit(self.get_image8(self.tileset_image, coord4), (0, 8))
+
+        shading_image = None
+        if shading_coord is not None:
+            shading_image = self.get_image16(self.shading_image, shading_coord)
+
+        extra_image = None
+        north, _, _, _ = tilemap.get_cardinal_terrain(pos)
+        if north.startswith('Pillar'):
             extra_image = self.get_image16(self.shading_image, (5, 0))
 
         if shading_image:
@@ -284,10 +447,34 @@ def get_terrain(palette: str):
         palette_dir = palette_dir + palette
     else:
         palette_dir = palette_dir + 'dungeon'
-    return {'Floor': FloorTerrain(os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-            'Floor2': FloorTerrain(os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
+    # Interrogate palette data
+    data = {}
+    with open(os.path.join(palette_dir, 'metadata.json')) as load_file:
+        data = json.load(load_file)
+
+    floor1 = data.get('floor1', 'default')
+    floor2 = data.get('floor2', 'default')
+    water = data.get('water', False)
+
+    if floor1 == 'ruins':
+        floor1_terrain = FloorRuinsTerrain(os.path.join(palette_dir, 'floor1_ruins.png'), os.path.join(palette_dir, 'floor1_shading.png'))
+    elif floor1 == 'grass':
+        floor1_terrain = FloorGrassTerrain(os.path.join(palette_dir, 'floor1_grass.png'), os.path.join(palette_dir, 'floor1_shading.png'))
+    else:
+        floor1_terrain = FloorTerrain(os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png'))
+
+    if floor2 == 'ruins':
+        floor2_terrain = FloorRuinsTerrain(os.path.join(palette_dir, 'floor2_ruins.png'), os.path.join(palette_dir, 'floor2_shading.png'), 1)
+    elif floor2 == 'grass':
+        floor2_terrain = FloorGrassTerrain(os.path.join(palette_dir, 'floor2_grass.png'), os.path.join(palette_dir, 'floor2_shading.png'), 1)
+    else:
+        floor2_terrain = FloorTerrain(os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png'), 1)
+
+    return {'Floor': floor1_terrain,
+            'Floor2': floor2_terrain,
             'Wall': WallTerrain(os.path.join(palette_dir, 'wall.png')),
-            'Pillar': PillarTerrain(os.path.join(palette_dir, 'pillar.png')),
+            'Pillar': PillarTerrain(os.path.join(palette_dir, 'pillar1.png')),
+            'Pillar2': PillarTerrain(os.path.join(palette_dir, 'pillar2.png')),
             'StairsUpDown': StairsUpDownTerrain(os.path.join(palette_dir, 'stairs_updown.png')),
             'StairsLeft': StairsLeftTerrain(os.path.join(palette_dir, 'stairs_left.png')),
             'StairsRight': StairsRightTerrain(os.path.join(palette_dir, 'stairs_right.png')),

@@ -62,7 +62,7 @@ class DungeonTileMap:
                     print("#", end='')
                 elif terrain == 'Void':
                     print(" ", end='')
-                elif terrain == 'Pillar':
+                elif terrain == 'Pillar' or terrain == 'Pillar2':
                     print("%", end='')
                 elif terrain == 'StairsUpDown':
                     print("^", end='')
@@ -593,10 +593,13 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                         place_pillar(tilemap, room, (1, y), reverse_x=True)
                         place_pillar(tilemap, room, (1, y), reverse_x=True, reverse_y=True)
 
-        # Convert any floors on layer 2 to floor2
+        # Convert any floors/pillars on layer 2 to floor2/pillar2
         for pos in tilemap.terrain_grid.keys():
-            if tilemap.get_terrain(pos) == 'Floor' and tilemap.get_layer(pos) == 2:
-                tilemap.set_terrain(*pos, 'Floor2')
+            if tilemap.get_layer(pos) == 2:
+                if tilemap.get_terrain(pos) == 'Floor':
+                    tilemap.set_terrain(*pos, 'Floor2')
+                if tilemap.get_terrain(pos) == 'Pillar':
+                    tilemap.set_terrain(*pos, 'Pillar2')
 
         tilemap.print_grid()
 

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from math import floor
 from ctypes import c_int64
 
@@ -15,6 +16,7 @@ GRADIENTS2 = [5, 2, 2, 5,
 def _overflow(x):
     return c_int64(x).value
 
+@lru_cache(64)
 def _init(seed):
     # Have to zero fill so we can properly loop over it later
     perm = [0] * 256
@@ -142,6 +144,37 @@ def get(x, y, seed):
     val = _noise2(x, y, perm)
     new_val = (val - -0.865) / (.865 - -0.865)
     return new_val
+
+def get_full_noise(x, y, seed,
+                   starting_frequency=1.0, starting_amplitude=0.5,
+                   octaves=4, lacunarity=2.0, gain=0.5):
+    total = 0
+    freq = starting_frequency
+    amp = starting_amplitude
+    denominator = 0
+    for _ in range(octaves):
+        val = get(x * freq, y * freq, seed)
+        total += val * amp
+        denominator += amp
+        freq *= lacunarity
+        amp *= gain
+    total /= denominator
+    return total
+
+def gen_noise_map(size: tuple, seed,
+                  starting_frequency=1.0, starting_amplitude=0.5,
+                  octaves=4, lacunarity=2.0, gain=0.5) -> dict:
+    width, height = size
+    noise_map = {}
+    for x in range(width):
+        for y in range(height):
+            val = \
+                get_full_noise(
+                    x, y, seed, 
+                    starting_frequency, starting_amplitude, 
+                    octaves, lacunarity, gain)
+            noise_map[(x, y)] = val
+    return noise_map
 
 if __name__ == '__main__':
     perm = _init(47)
