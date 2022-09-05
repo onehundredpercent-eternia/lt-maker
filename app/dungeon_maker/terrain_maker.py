@@ -46,6 +46,15 @@ class Terrain():
             TILEWIDTH, TILEHEIGHT))
         return im.copy()
 
+class SimpleTerrain(Terrain):
+    def __init__(self, tileset_image_fn):
+        self.tileset_image = engine.image_load(tileset_image_fn)
+        self.limits = {k: self._find_limit(k) for k in range(1)}
+
+    def determine_sprite(self, tilemap, pos: tuple) -> engine.Surface:
+        coord = random_choice([(0, k) for k in range(self.limits[0])], pos)
+        return self.get_image16(self.tileset_image, coord)
+
 class WangEdge2Terrain16(Terrain):
     def __init__(self, tileset_image_fn):
         self.tileset_image = engine.image_load(tileset_image_fn)
@@ -266,7 +275,7 @@ class StairsLeftTerrain(Terrain):
 class StairsRightTerrain(StairsLeftTerrain):
     terrain_like = ('StairsRight', )
 
-class PillarTerrain(Terrain):
+class PillarTerrain(SimpleTerrain):
     terrain_like = ('Pillar', )
 
 def get_terrain(palette: str):
