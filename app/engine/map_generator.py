@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from enum import Enum
 from typing import Dict, List, Tuple
 
 from app.constants import TILEWIDTH, TILEHEIGHT
@@ -80,16 +80,72 @@ def generate_map(theme=None, map_palette=None, size=None) -> None:
 
     game.tilemap.save_screenshot()
 
+class SpawnPosition(str, Enum):
+    CENTER = 'center'
+    NORTH = 'north'
+    EAST = 'east'
+    SOUTH = 'south'
+    WEST = 'west'
+    NORTHEAST = 'northeast'
+    SOUTHEAST = 'southeast'
+    SOUTHWEST = 'southwest'
+    NORTHWEST = 'northwest'
+
+    @staticmethod
+    def opposite(direction):
+        if direction == SpawnPosition.NORTH:
+            return SpawnPosition.SOUTH
+        elif direction == SpawnPosition.SOUTH:
+            return SpawnPosition.NORTH
+        elif direction == SpawnPosition.EAST:
+            return SpawnPosition.WEST
+        elif direction == SpawnPosition.WEST:
+            return SpawnPosition.EAST
+        elif direction == SpawnPosition.NORTHEAST:
+            return SpawnPosition.SOUTHWEST
+        elif direction == SpawnPosition.SOUTHEAST:
+            return SpawnPosition.NORTHWEST
+        elif direction == SpawnPosition.SOUTHWEST:
+            return SpawnPosition.NORTHEAST
+        elif direction == SpawnPosition.NORTHWEST:
+            return SpawnPosition.SOUTHEAST
+        return None
+
+    @staticmethod
+    def sorting_key(direction, size):
+        width, height = size
+        if direction == SpawnPosition.CENTER:
+            return lambda x: abs(x[0] - width/2.) + abs(x[1] - height/2.)
+        elif direction == SpawnPosition.NORTH:
+            return lambda x: abs(x[0] - width/2.) + x[1]
+        elif direction == SpawnPosition.SOUTH:
+            return lambda x: abs(x[0] - width/2.) + -x[1]
+        elif direction == SpawnPosition.EAST:
+            return lambda x: -x[0] + abs(x[1] - height/2.)
+        elif direction == SpawnPosition.WEST:
+            return lambda x: x[0] + abs(x[1] - height/2.)
+        elif direction == SpawnPosition.SOUTHWEST:
+            return lambda x: x[0] + -x[1]
+        elif direction == SpawnPosition.NORTHEAST:
+            return lambda x: -x[0] + x[1]
+        elif direction == SpawnPosition.NORTHWEST:
+            return lambda x: x[0] + x[1]
+        elif direction == SpawnPosition.SOUTHEAST:
+            return lambda x: -x[0] + -x[1]
+        else:
+            raise ValueError("%s is not a valid SpawnPosition" % direction)
+
 def generate_enemies(enemy_type=None) -> None:
     enemy_type = [enemy_type] or ['Soldier']
     seed = get_seed()
 
+    size = game.tilemap.width, game.tilemap.height
+    starting_pos = SpawnPosition.SOUTHWEST
     # Find floor positions
     valid_positions = get_floor_positions()
     # Create formations
     num_formations = int(utils.clamp(lerp(6, 12, random_groups.completed_chapters() / (random_groups.LAST_CHAPTER - 1)), 6, 12))
-    # Starting from southwest corner of room
-    tiles = sorted(valid_positions, key=lambda x: x[0] + -x[1])
+    tiles = sorted(valid_positions, key=SpawnPosition.sorting_key(starting_pos, size))
     formation_tiles = tiles[:num_formations]
     for idx, tile in enumerate(formation_tiles):
         formation_region = regions.Region('Formation%02d' % idx)
@@ -106,7 +162,9 @@ def generate_enemies(enemy_type=None) -> None:
 
     # Figure out boss position
     # Find northeast most position
-    boss_pos = sorted(valid_positions, key=lambda x: (-x[0] + x[1]))[0]
+    boss_starting_pos = SpawnPosition.opposite(starting_pos)
+    all_boss_pos = sorted(valid_positions, key=SpawnPosition.sorting_key(boss_starting_pos, size))
+    boss_pos = all_boss_pos[0]
 
     # Populate rooms with enemies
     group_data = {'valid_tags': enemy_type}

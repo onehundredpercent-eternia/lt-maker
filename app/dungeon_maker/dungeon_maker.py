@@ -617,5 +617,5 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
 # to test
 # python -m app.dungeon_maker.dungeon_maker
 if __name__ == '__main__':
-    tilemap, rooms = generate_dungeon('Soldier', (20, 20), 0)
+    tilemap = generate_dungeon('Soldier', (20, 20), 0)
     tilemap.print_grid()
