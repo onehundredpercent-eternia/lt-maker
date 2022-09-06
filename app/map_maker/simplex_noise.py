@@ -177,22 +177,43 @@ def gen_noise_map(size: tuple, seed,
     return noise_map
 
 if __name__ == '__main__':
-    perm = _init(47)
-    val = _noise2(0, 0, perm)
-    print(val)
+    # perm = _init(47)
+    # val = _noise2(0, 0, perm)
+    # print(val)
 
-    width, height = 100, 100
-    total = 0
-    minimum, maximum = 0, 0
-    for y in range(width):
-        for x in range(height):
-            val = _noise2(x, y, perm)
-            if val < minimum:
-                minimum = val
-            if val > maximum:
-                maximum = val
-            total += val
-            # print("%.2f " % val, end='')
-        print("")
-    print(total / (width * height))
-    print(minimum, maximum)
+    # width, height = 100, 100
+    # total = 0
+    # minimum, maximum = 0, 0
+    # for y in range(width):
+    #     for x in range(height):
+    #         val = _noise2(x, y, perm)
+    #         if val < minimum:
+    #             minimum = val
+    #         if val > maximum:
+    #             maximum = val
+    #         total += val
+    #         # print("%.2f " % val, end='')
+    #     print("")
+    # print(total / (width * height))
+    # print(minimum, maximum)
+
+    from PIL import Image
+
+    width, height = 20*2 + 1, 15*2 + 1
+    noise_map = gen_noise_map((width, height), 0,
+                              starting_frequency=0.125)
+
+    im = Image.new('RGB', (width, height))
+    for px in range(width):
+        for py in range(height):
+            noise_value = int(255 * noise_map.get((px, py), 0))
+            im.putpixel((px, py), (noise_value, noise_value, noise_value))
+    im.save("im.png")
+
+    threshold = 0.55
+    im = Image.new('RGB', (width, height))
+    for px in range(width):
+        for py in range(height):
+            noise_value = int(255 * (noise_map.get((px, py), 0) > threshold))
+            im.putpixel((px, py), (noise_value, noise_value, noise_value))
+    im.save("im_threshold.png")

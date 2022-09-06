@@ -30,6 +30,7 @@ def build_tilemap(theme, map_palette, size, seed, level_nid):
     surf = engine.create_surface((im_width, im_height))
     engine.fill(surf, (0, 0, 0))
 
+    # Single process
     processed_nids = set()
     for pos in dungeon.terrain_grid:
         terrain_nid = dungeon.get_terrain(pos)
@@ -37,7 +38,12 @@ def build_tilemap(theme, map_palette, size, seed, level_nid):
         if terrain_nid not in processed_nids:
             terrain.single_process(dungeon)
             processed_nids.add(terrain_nid)
-        sprite = terrain.determine_sprite(dungeon, pos)
+
+    # Determine sprite
+    for pos in dungeon.terrain_grid:
+        terrain_nid = dungeon.get_terrain(pos)
+        terrain = DB_terrain.get(terrain_nid)
+        sprite = terrain.determine_sprite(dungeon, pos, DB_terrain)
         dungeon.tile_grid[pos] = sprite
 
     # Draw the tile grid
