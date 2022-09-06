@@ -23,6 +23,7 @@ from app.engine.objects.item import ItemObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
+from app.engine import map_generator
 from app.events import event_commands, regions, triggers
 from app.events.event_portrait import EventPortrait, MementoEventPortrait
 from app.events.speak_style import SpeakStyle
@@ -894,12 +895,15 @@ def get_recruitable_unit(self: Event, level_var_nid, level, tag_list, team=None,
     tag_list = tag_list.split(',') if tag_list else ['Soldier']
     random_groups.get_recruitable_unit(level_var_nid, level, tag_list, team)
 
-def generate_map(self: Event, theme, map_palette, enemy_type, size, flags=None):
+def generate_map(self: Event, theme, map_palette, size, flags=None):
     flags = flags or set()
     size = self._parse_pos(size)
 
-    from app.engine import map_generator
-    map_generator.generate_map(theme, map_palette, enemy_type, size)
+    map_generator.generate_map(theme, map_palette, size)
+
+def generate_enemies(self: Event, enemy_type, flags=None):
+    flags = flags or set()
+    map_generator.generate_enemies(enemy_type)
 
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, animation_type=None, flags=None):
     new_unit = self._get_unit(unit)

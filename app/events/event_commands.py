@@ -956,11 +956,23 @@ class GenerateMap(EventCommand):
 
     desc = \
         """
-        Creates a randomly generated map and populates the map with enemies and grave trees
+        Creates a randomly generated map according to the *Theme* and with the chosen *MapPalette*.
         """
 
-    keywords = ["Theme", "MapPalette", "EnemyType", "Size"]
-    keyword_types = ["Theme", "MapPalette", "TagList", "Size"]
+    keywords = ["Theme", "MapPalette", "Size"]
+    keyword_types = ["Theme", "MapPalette", "Size"]
+
+class GenerateEnemies(EventCommand):
+    nid = 'generate_enemies'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = \
+        """
+          Populates the map randomly with enemies and grave trees
+        """
+
+    keywords = ["EnemyType"]
+    keyword_types = ["TagList"]
 
 class AddUnit(EventCommand):
     nid = 'add_unit'

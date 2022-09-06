@@ -460,11 +460,41 @@ def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reve
     if terrain == 'Floor' and south_terrain in ('Floor', None):
         tilemap.set_terrain(offset_x, offset_y, 'Pillar')
 
+def add_pillars(tilemap: DungeonTileMap, final_rooms: List[Room]):
+    for room in final_rooms:
+        # Wider
+        if room.width > room.height:
+            if room.height == 3 or room.height == 5:
+                for x in range(1, room.width//2, 3):
+                    place_pillar(tilemap, room, (x, room.height//2))
+                    place_pillar(tilemap, room, (x, room.height//2), reverse_x=True)
+            elif room.height >= 6:
+                for x in range(1, room.width//2, 3):
+                    place_pillar(tilemap, room, (x, 1))
+                    place_pillar(tilemap, room, (x, 1), reverse_x=True)
+                for x in range(1, room.width//2, 3):
+                    place_pillar(tilemap, room, (x, 1), reverse_y=True)
+                    place_pillar(tilemap, room, (x, 1), reverse_x=True, reverse_y=True)
+        # Taller 
+        elif room.height >= room.width:
+            if room.width == 3 or room.width == 5:
+                for y in range(1, room.height//2, 3):
+                    place_pillar(tilemap, room, (room.width//2, y))
+                    place_pillar(tilemap, room, (room.width//2, y), reverse_y=True)
+            elif room.width >= 6:
+                for y in range(1, room.height//2, 3):
+                    place_pillar(tilemap, room, (1, y))
+                    place_pillar(tilemap, room, (1, y), reverse_y=True)
+                for y in range(1, room.height//2, 3):
+                    place_pillar(tilemap, room, (1, y), reverse_x=True)
+                    place_pillar(tilemap, room, (1, y), reverse_x=True, reverse_y=True)
+
 def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     print("Theme: %s" % theme)
     random.seed(seed)
     width, height = size
 
+    # Set up magic numbers
     num_rooms = int(width * height / 20)
     fill_size_threshold = 11
 
@@ -473,6 +503,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     else:
         vert_symmetrical = False
 
+    # Keep trying until we get a good one
     while True:
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
@@ -547,7 +578,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                 if north == 'Wall' and north2 != 'Wall':
                     tilemap.set_terrain(*pos, 'Wall')
 
-        # Fill in alcoves
+        # Fill in one-way alcoves
         for pos in tilemap.terrain_grid.keys():
             north, east, south, west = tilemap.get_cardinal_terrain(pos)
             if sum([north == 'Wall', east == 'Wall', south == 'Wall', west == 'Wall']) >= 3:
@@ -566,33 +597,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         print_rooms(final_rooms)
 
         # Add Pillars where appropriate
-        for room in final_rooms:
-            # Wider
-            if room.width > room.height:
-                if room.height == 3 or room.height == 5:
-                    for x in range(1, room.width//2, 3):
-                        place_pillar(tilemap, room, (x, room.height//2))
-                        place_pillar(tilemap, room, (x, room.height//2), reverse_x=True)
-                elif room.height >= 6:
-                    for x in range(1, room.width//2, 3):
-                        place_pillar(tilemap, room, (x, 1))
-                        place_pillar(tilemap, room, (x, 1), reverse_x=True)
-                    for x in range(1, room.width//2, 3):
-                        place_pillar(tilemap, room, (x, 1), reverse_y=True)
-                        place_pillar(tilemap, room, (x, 1), reverse_x=True, reverse_y=True)
-            # Taller 
-            elif room.height >= room.width:
-                if room.width == 3 or room.width == 5:
-                    for y in range(1, room.height//2, 3):
-                        place_pillar(tilemap, room, (room.width//2, y))
-                        place_pillar(tilemap, room, (room.width//2, y), reverse_y=True)
-                elif room.width >= 6:
-                    for y in range(1, room.height//2, 3):
-                        place_pillar(tilemap, room, (1, y))
-                        place_pillar(tilemap, room, (1, y), reverse_y=True)
-                    for y in range(1, room.height//2, 3):
-                        place_pillar(tilemap, room, (1, y), reverse_x=True)
-                        place_pillar(tilemap, room, (1, y), reverse_x=True, reverse_y=True)
+        add_pillars(tilemap, final_rooms)
 
         # Convert any floors/pillars on layer 2 to floor2/pillar2
         for pos in tilemap.terrain_grid.keys():

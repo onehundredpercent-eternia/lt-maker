@@ -61,13 +61,15 @@ def build_tilemap(theme, map_palette, size, seed, level_nid):
     tilemap = TileMapObject.build_from_scratch(level_nid, dungeon, surf, scratch_data)
     return tilemap
 
-def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> None:
+def get_seed():
+    return int(game.game_vars.get('_random_seed', -1) + (random_groups.completed_chapters() * 1024))
+
+def generate_map(theme=None, map_palette=None, size=None) -> None:
     theme = theme or 'default'
     map_palette = map_palette or 'dungeon'
-    enemy_type = [enemy_type] or ['Soldier']
     size = size or (20, 20)
     # Generate map prefab (called dungeon)
-    seed = int(game.game_vars.get('_random_seed', -1) + (random_groups.completed_chapters() * 1024))
+    seed = get_seed()
 
     level_nid = str(random_groups.completed_chapters())
     tilemap = build_tilemap(theme, map_palette, size, seed, level_nid)
@@ -77,6 +79,10 @@ def generate_map(theme=None, map_palette=None, enemy_type=None, size=None) -> No
     game.build_level_from_scratch(level_nid, tilemap)
 
     game.tilemap.save_screenshot()
+
+def generate_enemies(enemy_type=None) -> None:
+    enemy_type = [enemy_type] or ['Soldier']
+    seed = get_seed()
 
     # Find floor positions
     valid_positions = get_floor_positions()
