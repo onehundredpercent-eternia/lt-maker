@@ -421,6 +421,21 @@ def print_rooms(rooms: List[Room]):
                 print(" ", end='')
         print("\n", end='')
 
+def print_room_prefabs(rooms, width, height):
+    for y in range(height):
+        print("%02d " % y, end='')
+        for x in range(width):
+            for idx, room in enumerate(rooms[:10]):
+                if (int(room.x - room.width/2) == x and room.y - room.height/2 <= y <= room.y + room.height/2) or \
+                   (int(room.x + room.width/2) == x and room.y - room.height/2 <= y <= room.y + room.height/2) or \
+                   (int(room.y - room.height/2) == y and room.x - room.width/2 <= x <= room.x + room.width/2) or \
+                   (int(room.y + room.height/2) == y and room.x - room.width/2 <= x <= room.x + room.width/2):
+                    print("%1d" % idx, end='')
+                    break
+            else:
+                print(" ", end='')
+        print("\n", end='')
+
 def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[int, int]]):
     for connection in connections:
         # Check layers of nearby positions
@@ -511,6 +526,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         
         rooms: List[RoomPrefab] = get_rooms(num_rooms=num_rooms, offset=(width/2, height/2))
         rooms: List[RoomPrefab] = separation_steering(rooms)
+        print_room_prefabs(rooms, width, height)
         room_tiles: Set[Tuple[int, int]] = get_room_tiles(tilemap, rooms)
 
         if vert_symmetrical:
