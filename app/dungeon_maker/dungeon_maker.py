@@ -266,7 +266,7 @@ def create_room(avg_size: float, map_width: int, map_height: int):
             continue
         # choose a random point to place the room
         center = random.randrange(0, map_width * map_height)
-        x, y = center % map_width, center // map_height
+        x, y = center % map_width, center // map_width
         x -= rwidth//2
         y -= rheight//2
         new_room = RoomPrefab(x, y, rwidth, rheight)
@@ -277,24 +277,35 @@ def find_adjacency_connections(tilemap: DungeonTileMap, rooms: List[Room], all_r
     # Find walls between rooms
     new_floors = set()
     all_checked_walls = set()
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
     for room in rooms:
         print(room)
-        for wall in room.get_walls(tilemap):
+        for idx, wall in enumerate(room.get_walls(tilemap)):
             # Remove any walls that have already been processed
             wall = sorted(tile for tile in wall if tile not in all_checked_walls)
-            
+            direction = directions[idx]
             if len(wall) == 0:
                 # No wall, just skip
                 pass
             elif len(wall) % 2:  # odd
                 # Remove center of wall
                 idx = len(wall) // 2
-                new_floors.add(wall[idx])
+                cut = wall[idx]
+                new_floors.add(cut)
+                next_cut = (cut[0] + direction[0], cut[1] + direction[1])
+                if tilemap.get_terrain(next_cut) == 'Wall':
+                    new_floors.add(next_cut)
             else:  # even
                 # Remove center of wall
                 idx = len(wall) // 2
-                new_floors.add(wall[idx - 1])
-                new_floors.add(wall[idx])
+                cut1 = wall[idx - 1]
+                cut2 = wall[idx]
+                new_floors.add(cut1)
+                new_floors.add(cut2)
+                for cut in [cut1, cut2]:
+                    next_cut = (cut[0] + direction[0], cut[1] + direction[1])
+                    if tilemap.get_terrain(next_cut) == 'Wall':
+                        new_floors.add(next_cut)
             all_checked_walls |= set(wall)
     return new_floors
 
@@ -302,6 +313,7 @@ def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[
     for connection in connections:
         # Check layers of nearby positions
         north, east, south, west = tilemap.get_cardinal_layers(connection)
+        nt, et, st, wt = tilemap.get_cardinal_terrain(connection)
         layers = {north, east, south, west}
         layers.discard(None)
         # Place regular floors
@@ -312,9 +324,9 @@ def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[
         # Place stairs
         elif len(layers) == 2:
             # Determine direction
-            if north != south:
+            if north != south and north and south and nt != 'Wall' and st != 'Wall':
                 tilemap.terrain_grid[connection] = 'StairsUpDown'
-            elif east != west and east and west:
+            elif east != west and east and west and et != 'Wall' and wt != 'Wall':
                 print(east, west)
                 if west > east:
                     tilemap.terrain_grid[connection] = 'StairsLeft'
@@ -489,7 +501,8 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     width, height = size
 
     # Set up magic numbers
-    avg_size = 4.5
+    avg_size = 3.5
+    num_rooms = 6
 
     # Keep trying until we get a good one
     while True:
@@ -502,7 +515,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         # A room needs to have walls and a floor
         room_prefabs: List[RoomPrefab] = []
         rooms: List[Room] = []
-        while len(rooms) < 4:
+        while len(rooms) < num_rooms:
             new_room_prefab: RoomPrefab = create_room(avg_size, width, height)
             if not any(room_prefab.overlaps(new_room_prefab) for room_prefab in room_prefabs):
                 room_prefabs.append(new_room_prefab)
@@ -547,6 +560,14 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                 north2 = tilemap.get_terrain((pos[0], pos[1] - 2))
                 if north == 'Wall' and north2 != 'Wall':
                     tilemap.set_terrain(*pos, 'Wall')
+                    # Also fix anything that is now blocked
+                    left = (pos[0] - 1, pos[1])
+                    right = (pos[0] + 1, pos[1])
+                    if tilemap.get_terrain(left) in ('StairsLeft', 'StairsRight'):
+                        tilemap.set_terrain(*left, 'Floor')
+                    elif tilemap.get_terrain(right) in ('StairsLeft', 'StairsRight'):
+                        tilemap.set_terrain(*right, 'Floor')
+
 
         tilemap.print_grid()
         print("remove 1 way alcoves")
