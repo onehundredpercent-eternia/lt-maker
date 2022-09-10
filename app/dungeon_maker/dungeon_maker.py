@@ -1,10 +1,40 @@
-import math
 import random
 import itertools
 from dataclasses import dataclass
 from typing import List, Set, Dict, Tuple
 
 from app.utilities import utils
+
+
+def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
+    blob_positions = set()
+    unexplored_stack = []
+
+    def find_similar(starting_pos: tuple):
+        unexplored_stack.append(starting_pos)
+
+        counter = 0
+        while unexplored_stack and counter < 99999:
+            current_pos = unexplored_stack.pop()
+
+            if current_pos in blob_positions:
+                continue
+            if not check_bounds(*current_pos):
+                continue
+            if current_pos not in room_tiles:
+                continue
+            blob_positions.add(current_pos)
+            unexplored_stack.append((current_pos[0] + 1, current_pos[1]))
+            unexplored_stack.append((current_pos[0] - 1, current_pos[1]))
+            unexplored_stack.append((current_pos[0], current_pos[1] + 1))
+            unexplored_stack.append((current_pos[0], current_pos[1] - 1))
+            counter += 1
+        if counter >= 99999:
+            raise RuntimeError("Unexpected infinite loop in generic flood_fill")
+
+    # Determine which coords should be flood-filled
+    find_similar(pos)
+    return blob_positions
 
 class DungeonTileMap:
     def __init__(self, width: int, height: int):
@@ -50,7 +80,8 @@ class DungeonTileMap:
         self.layer_grid.clear()
         for x in range(self.width):
             for y in range(self.height):
-                self.terrain_grid[(x, y)] = terrain      
+                self.terrain_grid[(x, y)] = terrain
+                self.layer_grid[(x, y)] = 1      
 
     def print_grid(self):
         for y in range(self.height):
@@ -75,6 +106,14 @@ class DungeonTileMap:
                     print("S", end='')
             print("\n", end='')
 
+    def print_layer_grid(self):
+        for y in range(self.height):
+            print("%02d " % y, end='')
+            for x in range(self.width):
+                layer = self.get_layer((x, y))
+                print("%d" % layer, end='')
+            print("\n", end='')
+
     def check_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
@@ -89,121 +128,79 @@ class DungeonTileMap:
 
 @dataclass(eq=False)
 class RoomPrefab:
-    x: float = 0
-    y: float = 0
+    x: int = 0  # Topleft of Floor
+    y: int = 0  # Topright of Floor
     width: int = 0  # Width of Floor
     height: int = 0  # Height of Floor
 
-def random_point_in_circle(radius: float) -> tuple:
-    t = 2 * math.pi * random.random()
-    u = random.random() + random.random()
-    r = 2 - u if u > 1 else u
-    return radius * r * math.cos(t), radius * r * math.sin(t)
-
-def get_rooms(avg_size=4.5, num_rooms=20, offset=None) -> list:
-    offset = offset or (10, 10)
-    radius = 1
-    rooms = []
-    for _ in range(num_rooms):
-        # Random size
-        rwidth = random.normalvariate(mu=avg_size, sigma=1)
-        # Generally square
-        rheight = random.normalvariate(mu=rwidth, sigma=0.75)
-        if rwidth <= 0 or rheight <= 0:
-            continue
-        # choose a random point to place the room
-        x, y = random_point_in_circle(radius)
-        rooms.append(RoomPrefab(x + rwidth//2 + offset[0], y + rheight//2 + offset[1], round(rwidth), round(rheight)))
-    return rooms
-
-def room_overlaps(a: RoomPrefab, b: RoomPrefab) -> bool:
-    dx = a.x - b.x
-    px = (a.width/2 + b.width/2) - abs(dx)
-    if px <= 0:
-        return False
-
-    dy = a.y - b.y
-    py = (a.height/2 + b.height/2) - abs(dy)
-    if py <= 0:
-        return False
-    return True
-
-def separation_steering(rooms: List[RoomPrefab]) -> List[RoomPrefab]:
-    overlap = True
-    counter = 0
-    while overlap and counter < 10000:
-        counter += 1
-        overlap = False
-        velocities = {room: [0, 0] for room in rooms}
-        for room in rooms:
-            neighbor_count = 0
-            # Find overlapping rooms
-            for other_room in rooms:
-                if room is other_room:
-                    continue
-                if room_overlaps(room, other_room):
-                    velocities[room][0] += other_room.x - room.x
-                    velocities[room][1] += other_room.y - room.y
-                    neighbor_count += 1
-            if neighbor_count > 0:
-                # Negate to move away
-                velocities[room][0] *= -1
-                velocities[room][1] *= -1
-                # Mark that we are still overlapping
-                overlap = True
-        # Actually move
-        for room in rooms:
-            x_vel, y_vel = utils.normalize(velocities[room])
-            room.x += x_vel * 0.25
-            room.y += y_vel * 0.25
-    return rooms
-
-def get_room_tiles(tilemap: DungeonTileMap, rooms: List[RoomPrefab]) -> Set[tuple]:
-    # Now put rooms on grid
-    room_tiles = set()
-    for room in rooms:
-        left_width = room.width//2
-        right_width = room.width - left_width
-        top_height = room.height//2
-        bottom_height = room.height - top_height
-        for i in range(int(room.x) - left_width, int(room.x) + right_width):
-            for j in range(int(room.y) - top_height, int(room.y) + bottom_height):
-                room_tiles.add((i, j))
-    room_tiles = {tile for tile in room_tiles if tilemap.check_bounds(*tile)}
-    return room_tiles
-
-def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
-    blob_positions = set()
-    unexplored_stack = []
-
-    def find_similar(starting_pos: tuple):
-        unexplored_stack.append(starting_pos)
-
-        counter = 0
-        while unexplored_stack and counter < 99999:
-            current_pos = unexplored_stack.pop()
-
-            if current_pos in blob_positions:
-                continue
-            if not check_bounds(*current_pos):
-                continue
-            if current_pos not in room_tiles:
-                continue
-            blob_positions.add(current_pos)
-            unexplored_stack.append((current_pos[0] + 1, current_pos[1]))
-            unexplored_stack.append((current_pos[0] - 1, current_pos[1]))
-            unexplored_stack.append((current_pos[0], current_pos[1] + 1))
-            unexplored_stack.append((current_pos[0], current_pos[1] - 1))
-            counter += 1
-        if counter >= 99999:
-            raise RuntimeError("Unexpected infinite loop in generic flood_fill")
-
-    # Determine which coords should be flood-filled
-    find_similar(pos)
-    return blob_positions
+    def overlaps(self, other) -> bool:
+        if self.x - 1 < other.x + other.width and \
+                self.x + self.width + 1 > other.x and \
+                self.y - 1 < other.y + other.height and \
+                self.y + self.height + 1 > other.y:
+            return True
+        else:
+            return False
 
 @dataclass(eq=False)
 class Room:
+    tiles: Set[tuple] = None
+    wall_tiles: Set[tuple] = None
+    prefab: RoomPrefab = None
+
+    @classmethod
+    def from_prefab(cls, prefab, tilemap):
+        new_room = Room(set(), set(), prefab)
+        for x in range(prefab.x, prefab.x + prefab.width):
+            for y in range(prefab.y, prefab.y + prefab.height):
+                if tilemap.check_bounds(x, y):
+                    new_room.tiles.add((x, y))
+        new_room.wall_tiles = new_room.get_wall_tiles(tilemap)
+        return new_room
+
+    def get_wall_tiles(self, tilemap) -> Set[tuple]:
+        wall_tiles = set()
+        # Left wall
+        for y in range(-1, self.prefab.height + 1):
+            wall_tiles.add((self.prefab.x - 1, self.prefab.y + y))
+        # Right wall
+        for y in range(-1, self.prefab.height + 1):
+            wall_tiles.add((self.prefab.x + self.prefab.width, self.prefab.y + y))
+        # Top wall
+        for x in range(-1, self.prefab.width + 1):
+            wall_tiles.add((self.prefab.x + x, self.prefab.y - 1))
+        # Bottom wall
+        for x in range(-1, self.prefab.width + 1):
+            wall_tiles.add((self.prefab.x + x, self.prefab.y + self.prefab.height))
+        return {tile for tile in wall_tiles if tilemap.check_bounds(*tile)}
+
+    def get_walls(self, tilemap) -> List[List[Tuple[int, int]]]:
+        # Returns a list of the walls North, East, South, West
+        # North wall
+        north_wall = [(self.prefab.x + x, self.prefab.y - 1) for x in range(0, self.prefab.width)]
+        north_wall = [tile for tile in north_wall if tilemap.check_bounds(*tile)]
+        # East wall
+        east_wall = [(self.prefab.x + self.prefab.width, self.prefab.y + y) for y in range(0, self.prefab.height)]
+        east_wall = [tile for tile in east_wall if tilemap.check_bounds(*tile)]
+        # South wall
+        south_wall = [(self.prefab.x + x, self.prefab.y + self.prefab.height) for x in range(0, self.prefab.width)]
+        south_wall = [tile for tile in south_wall if tilemap.check_bounds(*tile)]
+        # West wall
+        west_wall = [(self.prefab.x - 1, self.prefab.y + y) for y in range(0, self.prefab.height)]
+        west_wall = [tile for tile in west_wall if tilemap.check_bounds(*tile)]
+
+        return [north_wall, east_wall, south_wall, west_wall]
+
+    @property
+    def width(self):
+        return self.prefab.width
+
+    @property
+    def height(self):
+        return self.prefab.height
+
+@dataclass(eq=False)
+class Area:
     tiles: Set[tuple] = None
 
     @property
@@ -227,98 +224,130 @@ class Room:
     @property
     def height(self):
         return max(tile[1] for tile in self.tiles) - min(tile[1] for tile in self.tiles) + 1
-
-    def get_center_tiles(self) -> List[tuple]:
-        center_tiles = []
-        for tile in self.tiles:
-            if all(adj in self.tiles for adj in utils.get_cardinal_positions(tile)):
-                center_tiles.append(tile)
-        return center_tiles
     
-def find_new_rooms(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Room]:
+def print_rooms(rooms: List[Room]):
+    # Print rooms
+    all_positions = {}
+    for idx, room in enumerate(rooms):
+        all_positions.update({pos: idx for pos in room.tiles})
+    width = max(pos[0] for pos in all_positions.keys()) + 1
+    height = max(pos[1] for pos in all_positions.keys()) + 1
+    for y in range(height):
+        print("%02d " % y, end='')
+        for x in range(width):
+            if (x, y) in all_positions:
+                print("%d" % (all_positions[(x, y)] % 10), end='')
+            else:
+                print(" ", end='')
+        print("\n", end='')
+
+def print_room_prefabs(rooms, width, height):
+    for y in range(height):
+        print("%02d " % y, end='')
+        for x in range(width):
+            for idx, room in enumerate(rooms[:10]):
+                if (int(room.x - room.width/2) == x and room.y - room.height/2 <= y <= room.y + room.height/2) or \
+                   (int(room.x + room.width/2) == x and room.y - room.height/2 <= y <= room.y + room.height/2) or \
+                   (int(room.y - room.height/2) == y and room.x - room.width/2 <= x <= room.x + room.width/2) or \
+                   (int(room.y + room.height/2) == y and room.x - room.width/2 <= x <= room.x + room.width/2):
+                    print("%1d" % idx, end='')
+                    break
+            else:
+                print(" ", end='')
+        print("\n", end='')
+
+def create_room(avg_size: float, map_width: int, map_height: int):
+    while True:
+        # Random size
+        rwidth = int(round(random.normalvariate(mu=avg_size, sigma=1)))
+        # Generally square
+        rheight = int(round(random.normalvariate(mu=rwidth, sigma=0.75)))
+        if rwidth <= 0 or rheight <= 0:
+            continue
+        # choose a random point to place the room
+        center = random.randrange(0, map_width * map_height)
+        x, y = center % map_width, center // map_height
+        x -= rwidth//2
+        y -= rheight//2
+        new_room = RoomPrefab(x, y, rwidth, rheight)
+        return new_room
+
+def find_adjacency_connections(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
+    print("Find connections")
+    # Find walls between rooms
+    new_floors = set()
+    all_checked_walls = set()
+    for room in rooms:
+        print(room)
+        for wall in room.get_walls(tilemap):
+            # Remove any walls that have already been processed
+            wall = sorted(tile for tile in wall if tile not in all_checked_walls)
+            
+            if len(wall) == 0:
+                # No wall, just skip
+                pass
+            elif len(wall) % 2:  # odd
+                # Remove center of wall
+                idx = len(wall) // 2
+                new_floors.add(wall[idx])
+            else:  # even
+                # Remove center of wall
+                idx = len(wall) // 2
+                new_floors.add(wall[idx - 1])
+                new_floors.add(wall[idx])
+            all_checked_walls |= set(wall)
+    return new_floors
+
+def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[int, int]]):
+    for connection in connections:
+        # Check layers of nearby positions
+        north, east, south, west = tilemap.get_cardinal_layers(connection)
+        layers = {north, east, south, west}
+        layers.discard(None)
+        # Place regular floors
+        if len(layers) == 1:
+            tilemap.terrain_grid[connection] = 'Floor'
+            # Set the layer of this one
+            tilemap.layer_grid[connection] = list(layers)[0]
+        # Place stairs
+        elif len(layers) == 2:
+            # Determine direction
+            if north != south:
+                tilemap.terrain_grid[connection] = 'StairsUpDown'
+            elif east != west and east and west:
+                print(east, west)
+                if west > east:
+                    tilemap.terrain_grid[connection] = 'StairsLeft'
+                elif east > west:
+                    tilemap.terrain_grid[connection] = 'StairsRight'
+            else:
+                print("Could not determine which direction the stairs should face (%s, %s)" % connection)
+        else:
+            print("No nearby floor tiles? (%s, %s)" % connection)
+
+def fill_in_one_way_alcoves(tilemap: DungeonTileMap) -> None:
+    for pos in tilemap.terrain_grid.keys():
+        north, east, south, west = tilemap.get_cardinal_terrain(pos)
+        if sum([north == 'Wall', east == 'Wall', south == 'Wall', west == 'Wall']) >= 3:
+            tilemap.set_terrain(*pos, 'Wall')
+
+def get_floor_positions(tilemap: DungeonTileMap) -> List[Tuple[int, int]]:
+    valid_positions = [(x, y) for x in range(tilemap.width) for y in range(tilemap.height)]
+    return sorted([pos for pos in valid_positions if tilemap.get_terrain(pos) in ('Floor', 'Pillar', 'StairsUpDown', 'StairsLeft', 'StairsRight')])
+
+def find_new_areas(tilemap: DungeonTileMap, room_tiles: Set[Tuple]) -> List[Area]:
     rooms = []
     while room_tiles:
         tile = next(iter(room_tiles))
         extant_tiles = flood_fill(tilemap.check_bounds, room_tiles, tile)
         if extant_tiles:
-            room = Room(extant_tiles)
+            room = Area(extant_tiles)
             rooms.append(room)
             for tile in extant_tiles:
                 room_tiles.remove(tile)
     return rooms
 
-def combine_rooms(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
-    # Find walls between rooms
-    new_floors = set()
-    all_checked_walls = set()
-    for room, other_room in itertools.combinations(rooms, 2):
-        for tile in room.tiles:
-            for direction in [(0, -1), (-1, 0), (1, 0), (0, 1)]:
-                next_tile = tile[0] + direction[0], tile[1] + direction[1]
-                next2_tile = tile[0] + direction[0] * 2, tile[1] + direction[1] * 2
-                if tilemap.check_bounds(*next_tile) and tilemap.check_bounds(*next2_tile) and \
-                        next_tile not in all_room_tiles and next2_tile in other_room.tiles and \
-                        next_tile not in all_checked_walls:
-                    wall = [next_tile]
-                    # Find rest of wall
-                    if abs(direction[0]) == 1:
-                        # Go up 
-                        while True:
-                            next_tile = next_tile[0], next_tile[1] - 1
-                            left_tile = next_tile[0] - 1, next_tile[1]
-                            right_tile = next_tile[0] + 1, next_tile[1]
-                            if next_tile not in all_room_tiles and left_tile in all_room_tiles and right_tile in all_room_tiles:
-                                wall.append(next_tile)
-                            else:
-                                break                                    
-                        # Go down
-                        while True:
-                            next_tile = next_tile[0], next_tile[1] + 1
-                            left_tile = next_tile[0] - 1, next_tile[1]
-                            right_tile = next_tile[0] + 1, next_tile[1]
-                            if next_tile not in all_room_tiles and left_tile in all_room_tiles and right_tile in all_room_tiles:
-                                wall.append(next_tile)
-                            else:
-                                break
-                    else:
-                        # Go left 
-                        while True:
-                            next_tile = next_tile[0] - 1, next_tile[1]
-                            up_tile = next_tile[0], next_tile[1] - 1
-                            down_tile = next_tile[0], next_tile[1] + 1
-                            if next_tile not in all_room_tiles and up_tile in all_room_tiles and down_tile in all_room_tiles:
-                                wall.append(next_tile)
-                            else:
-                                break                                    
-                        # Go right
-                        while True:
-                            next_tile = next_tile[0] + 1, next_tile[1]
-                            up_tile = next_tile[0], next_tile[1] - 1
-                            down_tile = next_tile[0], next_tile[1] + 1
-                            if next_tile not in all_room_tiles and up_tile in all_room_tiles and down_tile in all_room_tiles:
-                                wall.append(next_tile)
-                            else:
-                                break                                    
-                    # Cut opening in middle of wall
-                    wall = sorted(list(set(wall)))
-                    if len(wall) % 2:  # Odd
-                        # If wall is odd, place opening between them
-                        cut = wall[len(wall)//2]
-                        new_floors.add(cut)
-                    else:  # Even
-                        # If wall is even, place two-opening between them
-                        cut1 = wall[len(wall)//2 - 1]
-                        cut2 = wall[len(wall)//2]
-                        new_floors.add(cut1)
-                        new_floors.add(cut2)
-                    all_checked_walls |= set(wall)
-    return new_floors
-
-def get_floor_positions(tilemap: DungeonTileMap) -> List[Tuple]:
-    valid_positions = [(x, y) for x in range(tilemap.width) for y in range(tilemap.height)]
-    return sorted([pos for pos in valid_positions if tilemap.get_terrain(pos) in ('Floor', 'Pillar', 'StairsUpDown', 'StairsLeft', 'StairsRight')])
-
-def find_all_rooms(positions: List[Tuple]) -> List[Room]:
+def find_all_areas(positions: List[Tuple]) -> List[Area]:
     rooms = []
     floors = set(positions)
 
@@ -403,71 +432,13 @@ def find_all_rooms(positions: List[Tuple]) -> List[Room]:
                 if pos in positions:
                     positions.remove(pos)
 
-    return [Room(tiles) for tiles in rooms]
+    return [Area(tiles) for tiles in rooms]
 
-def print_rooms(rooms: List[Room]):
-    # Print rooms
-    all_positions = {}
-    for idx, room in enumerate(rooms):
-        all_positions.update({pos: idx for pos in room.tiles})
-    width = max(pos[0] for pos in all_positions.keys()) + 1
-    height = max(pos[1] for pos in all_positions.keys()) + 1
-    for y in range(height):
-        print("%02d " % y, end='')
-        for x in range(width):
-            if (x, y) in all_positions:
-                print("%d" % (all_positions[(x, y)] % 10), end='')
-            else:
-                print(" ", end='')
-        print("\n", end='')
-
-def print_room_prefabs(rooms, width, height):
-    for y in range(height):
-        print("%02d " % y, end='')
-        for x in range(width):
-            for idx, room in enumerate(rooms[:10]):
-                if (int(room.x - room.width/2) == x and room.y - room.height/2 <= y <= room.y + room.height/2) or \
-                   (int(room.x + room.width/2) == x and room.y - room.height/2 <= y <= room.y + room.height/2) or \
-                   (int(room.y - room.height/2) == y and room.x - room.width/2 <= x <= room.x + room.width/2) or \
-                   (int(room.y + room.height/2) == y and room.x - room.width/2 <= x <= room.x + room.width/2):
-                    print("%1d" % idx, end='')
-                    break
-            else:
-                print(" ", end='')
-        print("\n", end='')
-
-def place_connections_onto_grid(tilemap: DungeonTileMap, connections: Set[Tuple[int, int]]):
-    for connection in connections:
-        # Check layers of nearby positions
-        north, east, south, west = tilemap.get_cardinal_layers(connection)
-        layers = {north, east, south, west}
-        layers.discard(None)
-        # Place regular floors
-        if len(layers) == 1:
-            tilemap.terrain_grid[connection] = 'Floor'
-            # Set the layer of this one
-            tilemap.layer_grid[connection] = list(layers)[0]
-        # Place stairs
-        elif len(layers) == 2:
-            # Determine direction
-            if north != south:
-                tilemap.terrain_grid[connection] = 'StairsUpDown'
-            elif east != west:
-                print(east, west)
-                if west > east:
-                    tilemap.terrain_grid[connection] = 'StairsLeft'
-                elif east > west:
-                    tilemap.terrain_grid[connection] = 'StairsRight'
-            else:
-                print("Could not determine which direction the stairs should face %s" % connection)
-        else:
-            print("No nearby floor tiles? %s" % connection)
-
-def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reverse_x: bool = False, reverse_y: bool = False) -> None:
-    min_x = min(tile[0] for tile in room.tiles)
-    max_x = max(tile[0] for tile in room.tiles)
-    min_y = min(tile[1] for tile in room.tiles)
-    max_y = max(tile[1] for tile in room.tiles)
+def place_pillar(tilemap: DungeonTileMap, area: Area, pos: Tuple[int, int], reverse_x: bool = False, reverse_y: bool = False) -> None:
+    min_x = min(tile[0] for tile in area.tiles)
+    max_x = max(tile[0] for tile in area.tiles)
+    min_y = min(tile[1] for tile in area.tiles)
+    max_y = max(tile[1] for tile in area.tiles)
     offset_x = max_x - pos[0] if reverse_x else min_x + pos[0]
     offset_y = max_y - pos[1] if reverse_y else min_y + pos[1]
     terrain = tilemap.get_terrain((offset_x, offset_y))
@@ -475,34 +446,42 @@ def place_pillar(tilemap: DungeonTileMap, room: Room, pos: Tuple[int, int], reve
     if terrain == 'Floor' and south_terrain in ('Floor', None):
         tilemap.set_terrain(offset_x, offset_y, 'Pillar')
 
-def add_pillars(tilemap: DungeonTileMap, final_rooms: List[Room]):
-    for room in final_rooms:
+def add_pillars(tilemap: DungeonTileMap, final_areas: List[Area]):
+    for area in final_areas:
         # Wider
-        if room.width > room.height:
-            if room.height == 3 or room.height == 5:
-                for x in range(1, room.width//2, 3):
-                    place_pillar(tilemap, room, (x, room.height//2))
-                    place_pillar(tilemap, room, (x, room.height//2), reverse_x=True)
-            elif room.height >= 6:
-                for x in range(1, room.width//2, 3):
-                    place_pillar(tilemap, room, (x, 1))
-                    place_pillar(tilemap, room, (x, 1), reverse_x=True)
-                for x in range(1, room.width//2, 3):
-                    place_pillar(tilemap, room, (x, 1), reverse_y=True)
-                    place_pillar(tilemap, room, (x, 1), reverse_x=True, reverse_y=True)
+        if area.width > area.height:
+            if area.height == 3 or area.height == 5:
+                for x in range(1, area.width//2, 3):
+                    place_pillar(tilemap, area, (x, area.height//2))
+                    place_pillar(tilemap, area, (x, area.height//2), reverse_x=True)
+            elif area.height >= 6:
+                for x in range(1, area.width//2, 3):
+                    place_pillar(tilemap, area, (x, 1))
+                    place_pillar(tilemap, area, (x, 1), reverse_x=True)
+                for x in range(1, area.width//2, 3):
+                    place_pillar(tilemap, area, (x, 1), reverse_y=True)
+                    place_pillar(tilemap, area, (x, 1), reverse_x=True, reverse_y=True)
         # Taller 
-        elif room.height >= room.width:
-            if room.width == 3 or room.width == 5:
-                for y in range(1, room.height//2, 3):
-                    place_pillar(tilemap, room, (room.width//2, y))
-                    place_pillar(tilemap, room, (room.width//2, y), reverse_y=True)
-            elif room.width >= 6:
-                for y in range(1, room.height//2, 3):
-                    place_pillar(tilemap, room, (1, y))
-                    place_pillar(tilemap, room, (1, y), reverse_y=True)
-                for y in range(1, room.height//2, 3):
-                    place_pillar(tilemap, room, (1, y), reverse_x=True)
-                    place_pillar(tilemap, room, (1, y), reverse_x=True, reverse_y=True)
+        elif area.height >= area.width:
+            if area.width == 3 or area.width == 5:
+                for y in range(1, area.height//2, 3):
+                    place_pillar(tilemap, area, (area.width//2, y))
+                    place_pillar(tilemap, area, (area.width//2, y), reverse_y=True)
+            elif area.width >= 6:
+                for y in range(1, area.height//2, 3):
+                    place_pillar(tilemap, area, (1, y))
+                    place_pillar(tilemap, area, (1, y), reverse_y=True)
+                for y in range(1, area.height//2, 3):
+                    place_pillar(tilemap, area, (1, y), reverse_x=True)
+                    place_pillar(tilemap, area, (1, y), reverse_x=True, reverse_y=True)
+
+def convert_to_floor_2(tilemap: DungeonTileMap) -> None:
+    for pos in tilemap.terrain_grid.keys():
+        if tilemap.get_layer(pos) == 2:
+            if tilemap.get_terrain(pos) == 'Floor':
+                tilemap.set_terrain(*pos, 'Floor2')
+            if tilemap.get_terrain(pos) == 'Pillar':
+                tilemap.set_terrain(*pos, 'Pillar2')
 
 def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     print("Theme: %s" % theme)
@@ -510,80 +489,55 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     width, height = size
 
     # Set up magic numbers
-    num_rooms = int(width * height / 20)
-    fill_size_threshold = 11
-
-    if theme == 'default':
-        vert_symmetrical = False
-    else:
-        vert_symmetrical = False
+    avg_size = 4.5
 
     # Keep trying until we get a good one
     while True:
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
-        tilemap.reset_grid('Wall')
+        tilemap.reset_grid('Floor')
         
-        rooms: List[RoomPrefab] = get_rooms(num_rooms=num_rooms, offset=(width/2, height/2))
-        rooms: List[RoomPrefab] = separation_steering(rooms)
-        print_room_prefabs(rooms, width, height)
-        room_tiles: Set[Tuple[int, int]] = get_room_tiles(tilemap, rooms)
-
-        if vert_symmetrical:
-            new_room_tiles = set()
-            for pos in room_tiles:
-                if pos[0] < width / 2:
-                    new_room_tiles.add(pos)
-                    new_room_tiles.add((width - pos[0] - 1, pos[1]))
-            room_tiles = new_room_tiles
-
-        new_rooms: List[Room] = find_new_rooms(tilemap, room_tiles.copy())
-        print("Initial Rooms")
-        print_rooms(new_rooms)
-
-        # Big areas of blankness get filled
-        tilemap_tiles = {(x, y) for x in range(tilemap.width) for y in range(tilemap.height)}
-        empty_tiles: Set[Tuple] = tilemap_tiles - room_tiles
-        thin_empty_tiles = {tile for tile in empty_tiles if sum(adj in empty_tiles for adj in utils.get_cardinal_positions(tile)) <= 2}
-        empty_tiles -= thin_empty_tiles
-        empty_rooms: List[Room] = find_new_rooms(tilemap, empty_tiles.copy())
-        num_starting_rooms = len(new_rooms)
-        for room in empty_rooms:
-            if room.size >= fill_size_threshold:
-                center_tiles: List[Tuple[int, int]] = room.get_center_tiles()
-                new_room = Room(center_tiles)
-                new_rooms.append(new_room)
-                for tile in new_room.tiles:
-                    room_tiles.add(tile)
-        print("Final Rooms")
-        print_rooms(new_rooms)
-
-        # Assign each room a random layer (1 or 2)
-        room_to_layer = {}
-        for idx, room in enumerate(new_rooms):
-            if vert_symmetrical and idx >= num_starting_rooms:
+        # Create several rooms and place them in the map
+        # Some of them will be level 1 and some level 2
+        # A room needs to have walls and a floor
+        room_prefabs: List[RoomPrefab] = []
+        rooms: List[Room] = []
+        while len(rooms) < 4:
+            new_room_prefab: RoomPrefab = create_room(avg_size, width, height)
+            if not any(room_prefab.overlaps(new_room_prefab) for room_prefab in room_prefabs):
+                room_prefabs.append(new_room_prefab)
+                new_room = Room.from_prefab(new_room_prefab, tilemap)
+                rooms.append(new_room)
+                idx = len(rooms) - 1
+                # layer = idx % 2 + 1
                 layer = 2
+                for tile in new_room.tiles:
+                    tilemap.set_layer(*tile, layer)
+                if layer == 2:
+                    for tile in new_room.wall_tiles:
+                        tilemap.set_layer(*tile, layer)
             else:
-                layer = idx % 2 + 1
-            # layer = 1
-            room_to_layer[room] = layer
-            for tile in room.tiles:
-                tilemap.set_layer(*tile, layer)
+                continue  # Overlaps, so ignore this
 
-        # Need to recalculate what tiles actually belong in the room after making room for 2-tall walls
-        # Combine Rooms
-        connections: Set[Tuple[int, int]] = combine_rooms(tilemap, new_rooms, room_tiles)        
-
-        # Place rooms onto grid
-        for room in new_rooms:
+        # Place walls and floors on the tilemap
+        for room in rooms:
             for tile in room.tiles:
                 tilemap.terrain_grid[tile] = 'Floor'
+            for tile in room.wall_tiles:
+                tilemap.terrain_grid[tile] = 'Wall'
+        tilemap.print_grid()
+        tilemap.print_layer_grid()
 
+        # Find connections
+        floor_tiles = get_floor_positions(tilemap)
+        new_floors = find_adjacency_connections(tilemap, rooms, set(floor_tiles))
         # Place connections onto grid
-        place_connections_onto_grid(tilemap, connections)
+        place_connections_onto_grid(tilemap, new_floors)
+
         print("Tilemap Grid")
         tilemap.print_grid()
 
+        print("2 tile walls")
         # Make sure there's room for 2-tile tall walls in layer 1 rooms
         for pos in tilemap.terrain_grid.keys():
             layer = tilemap.get_layer(pos)
@@ -594,34 +548,27 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                 if north == 'Wall' and north2 != 'Wall':
                     tilemap.set_terrain(*pos, 'Wall')
 
-        # Fill in one-way alcoves
-        for pos in tilemap.terrain_grid.keys():
-            north, east, south, west = tilemap.get_cardinal_terrain(pos)
-            if sum([north == 'Wall', east == 'Wall', south == 'Wall', west == 'Wall']) >= 3:
-                tilemap.set_terrain(*pos, 'Wall')
+        tilemap.print_grid()
+        print("remove 1 way alcoves")
+        fill_in_one_way_alcoves(tilemap)
+        tilemap.print_grid()
 
         # Check number of rooms
         floor_tiles = get_floor_positions(tilemap)
         print(len(floor_tiles))
-        rooms: List[Room] = find_new_rooms(tilemap, floor_tiles.copy())
-        print("Number of Rooms", len(rooms))
-        if len(rooms) != 1:
+        areas: List[Area] = find_new_areas(tilemap, floor_tiles.copy())
+        print("Number of Areas", len(areas))
+        print_rooms(areas)
+        if len(areas) != 1:
             continue
-        print_rooms(rooms)
 
-        final_rooms: List[Room] = find_all_rooms(floor_tiles)
-        print_rooms(final_rooms)
+        final_areas: List[Area] = find_all_areas(floor_tiles)
+        print_rooms(final_areas)
 
         # Add Pillars where appropriate
-        add_pillars(tilemap, final_rooms)
+        add_pillars(tilemap, final_areas)
 
-        # Convert any floors/pillars on layer 2 to floor2/pillar2
-        for pos in tilemap.terrain_grid.keys():
-            if tilemap.get_layer(pos) == 2:
-                if tilemap.get_terrain(pos) == 'Floor':
-                    tilemap.set_terrain(*pos, 'Floor2')
-                if tilemap.get_terrain(pos) == 'Pillar':
-                    tilemap.set_terrain(*pos, 'Pillar2')
+        convert_to_floor_2(tilemap)
 
         tilemap.print_grid()
 
@@ -629,9 +576,3 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         break
 
     return tilemap
-
-# to test
-# python -m app.dungeon_maker.dungeon_maker
-if __name__ == '__main__':
-    tilemap = generate_dungeon('Soldier', (20, 20), 0)
-    tilemap.print_grid()

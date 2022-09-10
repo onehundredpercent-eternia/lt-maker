@@ -114,7 +114,7 @@ class FloorTerrain(Terrain):
             corner = True
         if west == 'Pillar' and pillar:
             left = True
-        if west and west.startswith('Stairs') and northwest == 'Wall':
+        if west and west == 'StairsLeft' and northwest == 'Wall':
             corner = True
         if northwest == 'Wall' and west and west.startswith('Floor') \
                 and self._is_column_bottom(tilemap, (pos[0] - 1, pos[1]), database):
