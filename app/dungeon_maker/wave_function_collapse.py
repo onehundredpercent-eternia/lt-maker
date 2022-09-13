@@ -1,3 +1,4 @@
+import random
 from collections import Counter
 
 from app.engine import engine
@@ -9,6 +10,33 @@ Color3 = Tuple[int, int, int]
 PatternHash = int
 
 direction_offsets = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+
+class Contradiction(Exception):
+    """Solver could not proceed."""
+    pass
+
+class TimedOut(Exception):
+    """
+    Solver ran out of attempts
+    """
+    pass
+
+def shannon_entropy(weights: List[int]) -> float:
+    """
+    Returns the entropy of the given list of weights
+    1 is highly entropic and random
+    0 is a single settled possibility
+    """
+    assert(len(weights) > 0)
+    n = sum(weights)
+    assert(n > 0)
+    probabilities = [weight / n for weight in weights]
+    log_probabilities = [math.log2(_) for _ in probabilities]
+    total = sum([a * b for a, b in zip(probabilities, log_probabilities)])
+    constant = -1 / math.log2(n)
+    h = constant * total
+    assert(0 <= h <= 1)
+    return h
 
 def read_image(image_fn: str) -> Tuple[engine.Surface, Tuple[int, int]]:
     im = engine.image_load(image_fn)
@@ -81,8 +109,120 @@ def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size
                     legal.append((direction, pattern1, pattern2))
     return legal
 
+class Solver:
+    def __init__(self, wave: Dict[Point, Set[PatternHash]], adj: Dict[Point, Dict[PatternHash, Set[PatternHash]]], pattern_incidence: Dict[PatternHash, int]):
+        self.wave = wave
+        self.adj = adj
+        self.pattern_incidence = pattern_incidence
 
-def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (20, 15), attempt_limit: int = 10):
+    @property
+    def is_solved(self) -> bool:
+        return all(len(possibilities) == 1 for possibilities in self.wave.values())
+
+    def solve_next(self) -> bool:
+        if self.is_solved:
+            return True
+        self.propagate()
+        try:
+            pattern, i, j = self.observe()
+            self.wave[(i, j)] = {pattern}
+            self.propagate()
+            return False  # Assume there are remaining steps
+        except Contradiction:
+            raise
+
+    def num_possibilities(self):
+        return sum([len(possibilities) for possibilities in self.wave.values()])
+
+    def propagate(self):
+        """
+        Completely propagate any newly collapsed waves to all areas
+        """
+        last_count = self.num_possibilities()
+
+        while True:
+            for coord, possibility_cell in self.wave.items():
+                for possibility in possibility_cell:
+                    for direction in self.adj:
+                        dx, dy = direction
+                        other_coord = (coord[0] + dx), (coord[1] + dy)
+                        other_cell = self.wave.get(other_coord)
+                        if other_cell is None:  # Output does not wrap, so it's possible to run into bounds
+                            continue
+                        valid_possibilities = self.adj[direction][possibility]
+                        other_cell &= valid_possibilities
+
+            if self.num_possibilities() == last_count:
+                break # No changes since the last loop, changed waves have been full propagated
+            last_count = self.num_possibilities()
+
+        if any(len(patterns) == 0 for patterns in self.wave.values()):
+            raise Contradiction("Wave is in a contradictory state and cannot be solved")
+
+    def observe(self):
+        i, j = self.location_heuristic()
+        pattern = self.pattern_heurisitic(i, j)
+        return pattern, i, j
+
+    def location_heuristic(self):
+        """
+        Returns the location with the minimum amount of entropy
+        That has more than one valid choice
+        """
+        min_entropy = 1 + .01
+        min_coord = None
+        for coord in self.wave:
+            possibilities = self.wave[coord]
+            if len(possibilities) == 0:
+                raise Contradiction("Wave is in a contradictory state and cannot be solved")
+            elif len(possibilities) == 1:
+                continue  # Only one valid choice
+            incidence = [self.pattern_incidence[possibility] for possibility in possibilities]
+            entropy = shannon_entropy(incidence)
+            if entropy < min_entropy:
+                min_entropy = entropy
+                min_coord = coord
+        assert(min_coord is not None)
+        return min_coord
+
+    def pattern_heuristic(self, i: int, j: int):
+        patterns = self.wave[(i, j)]
+        weights = [self.pattern_incidence[pattern] for pattern in patterns]
+        choice = random.choices(patterns, weights=weights)
+        return choice
+
+def run(wave, adj):
+    solver = Solver(wave, adj)
+    while not solver.solve_next():
+        pass
+    return solver.wave
+
+def pattern_grid_to_tiles(solution: Dict[Point, Set[PatternHash]], patterns: Dict[PatternHash, List[Color3]], pattern_size: int) -> Dict[Point, Color3]:
+    tile_grid: Dict[Point, Color3] = {}
+    for coord, pattern_set in solution.items():
+        pattern = next(iter(pattern_set))
+        offsets = get_offsets(pattern_size)
+        for idx, offset in enumerate(offsets):
+            new_coord = (coord[0] + offset[0]), (coord[1] + offset[1])
+            # This section is for testing
+            if new_coord in tile_grid:
+                current_pattern = tile_grid[new_coord]
+                if pattern[idx] != current_pattern:
+                    print("Something's gone wrong with the pattern matching...")
+            # End testing
+            tile_grid[new_coord] = pattern[idx]
+    return tile_grid
+
+def render_output(tile_grid: Dict[Point, Color3], output_fn: str, output_size: Tuple[int, int]) -> None:
+    width, height = output_size
+    im = engine.create_surface((output_size))
+    for x in range(width):
+        for y in range(height):
+            im.putpixel((x, y), tile_grid[(x, y)])
+    im.save(output_fn)
+
+def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (10, 10), attempt_limit: int = 10) -> None:
+    random.seed(0)
     image, image_size = read_image_file(image_fn)
     tile_grid, code_list, unique_tiles = make_tile_catalog(image, image_size)
     patterns, pattern_incidence = make_pattern_catalog(tile_grid, pattern_width, image_size)
@@ -97,45 +237,17 @@ def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] 
     for direction, pattern1, pattern2 in adjacency_relations:
         adjacency_list[direction][pattern1].add(pattern2)
 
-    wave = make_wave(number_of_patterns, output_size[0], output_size[1])
-
     attempts = 0
     while attempts < attempt_limit:
         attempts += 1
         try:
-            solution = run(wave.copy(), adjacency_list)
+            wave: Dict[Point, Set[PatternHash]]] = {(x, y): set(pattern_incidence.keys()) for x in range(output_size[0]) for y in range(output_size[1])}
+            solution = run(wave, adjacency_list)
             solution_tile_grid = pattern_grid_to_tiles(solution, patterns)
             output_fn = image_fn[:-4] + "_output.png"
-            render_output(solution_tile_grid, output_fn)
-        except StopEarly:
-            raise
+            render_output(solution_tile_grid, output_fn, output_size)
         except Contradiction as exc:
             print("Contradiction on attempt %d of %d" % (attempts, attempt_limit))
 
-    raise Timedout("Attempt Limit Exceeded!")
+    raise TimedOut("Attempt Limit Exceeded!")
 
-def solve(adjacencies, wave_matrix):
-    contradiction = False
-    while not contradiciton:
-        wave_matrix = propagate(wave_matrix, adjacencies)
-        if all_domains_collapsed:
-            return wave_matrix
-        wave_matrix = observe(wave_matrix)
-    throw ValueError("Resource Generation Failed")
-
-def observe(wave_matrix):
-    """
-    Finds the most constrained variable and picks a value to assign
-    """
-    # Find the minimum entropy cell in grid
-    cell = find_minimum_entropy(wave_matrix)
-    if all(cell.entropy == 0 for cell in wave_matrix):
-        # We are done
-        return wave_matrix
-    cell.value = get_value(cell)
-    propagation_stack.append(cell)
-
-def propagate(wave_matrix, adjacencies):
-    """
-    Update the domain of variables at each grid location
-    """
