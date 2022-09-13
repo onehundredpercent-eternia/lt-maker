@@ -8,6 +8,8 @@ Point = Tuple[int, int]
 Color3 = Tuple[int, int, int]
 PatternHash = int
 
+direction_offsets = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+
 def read_image(image_fn: str) -> Tuple[engine.Surface, Tuple[int, int]]:
     im = engine.image_load(image_fn)
     im_size = im.get_width(), im.get_height()
@@ -62,10 +64,55 @@ def make_pattern_catalog(tile_grid: Dict[Point, Color], ksize: int, im_size: Tup
             pattern_incidence[pattern_hash] += 1
     return patterns, pattern_incidence
 
-def execute(image_fn, pattern_width=2):
+def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size: int) -> List[Tuple[Point, int, int]]:
+    """
+    Take a pattern grid and return a list of legal adjacencies found in it
+    """
+
+    def is_valid_overlap(adjacency_direction: Point, pattern1: int, pattern2: int) -> bool:
+        return True
+
+    pattern_list = list(patterns.keys())
+    legal = []
+    for pattern1 in pattern_list:
+        for pattern2 in pattern_list:
+            for direction in direction_offsets:
+                if is_valid_overlap_xy(direction, pattern1, pattern2):
+                    legal.append((direction, pattern1, pattern2))
+    return legal
+
+
+def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (20, 15), attempt_limit: int = 10):
     image, image_size = read_image_file(image_fn)
     tile_grid, code_list, unique_tiles = make_tile_catalog(image, image_size)
     patterns, pattern_incidence = make_pattern_catalog(tile_grid, pattern_width, image_size)
+    adjacency_relations = adjacency_extraction(patterns, pattern_width)
+    number_of_patterns = len(pattern_incidence)
+    print("Number of Patterns: %d" % number_of_patterns)
+
+    # Set up, for each direction, which patterns connect to which patterns
+    adjacency_list: Dict[Point, Dict[PatternHash, Set[PatternHash]]] = {}
+    for direction in direction_offsets:
+        adjacency_list[direction] = {pattern: set() for pattern in pattern_incidence}
+    for direction, pattern1, pattern2 in adjacency_relations:
+        adjacency_list[direction][pattern1].add(pattern2)
+
+    wave = make_wave(number_of_patterns, output_size[0], output_size[1])
+
+    attempts = 0
+    while attempts < attempt_limit:
+        attempts += 1
+        try:
+            solution = run(wave.copy(), adjacency_list)
+            solution_tile_grid = pattern_grid_to_tiles(solution, patterns)
+            output_fn = image_fn[:-4] + "_output.png"
+            render_output(solution_tile_grid, output_fn)
+        except StopEarly:
+            raise
+        except Contradiction as exc:
+            print("Contradiction on attempt %d of %d" % (attempts, attempt_limit))
+
+    raise Timedout("Attempt Limit Exceeded!")
 
 def solve(adjacencies, wave_matrix):
     contradiction = False
