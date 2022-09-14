@@ -221,8 +221,8 @@ def render_output(tile_grid: Dict[Point, Color3], output_fn: str, output_size: T
             im.putpixel((x, y), tile_grid[(x, y)])
     im.save(output_fn)
 
-def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (10, 10), attempt_limit: int = 10) -> None:
-    random.seed(0)
+def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (10, 10), attempt_limit: int = 10, seed=0) -> None:
+    random.seed(seed)
     image, image_size = read_image_file(image_fn)
     tile_grid, code_list, unique_tiles = make_tile_catalog(image, image_size)
     patterns, pattern_incidence = make_pattern_catalog(tile_grid, pattern_width, image_size)
@@ -246,8 +246,11 @@ def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] 
             solution_tile_grid = pattern_grid_to_tiles(solution, patterns)
             output_fn = image_fn[:-4] + "_output.png"
             render_output(solution_tile_grid, output_fn, output_size)
+            return
         except Contradiction as exc:
             print("Contradiction on attempt %d of %d" % (attempts, attempt_limit))
 
     raise TimedOut("Attempt Limit Exceeded!")
 
+if __name__ == '__main__':
+    execute('input1.png', 2, (10, 10))
