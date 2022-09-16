@@ -1,9 +1,9 @@
-import random
+import math, random
 from collections import Counter
 
 from app.engine import engine
 
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 
 Point = Tuple[int, int]
 Color3 = Tuple[int, int, int]
@@ -72,7 +72,7 @@ def hash_pattern(pattern: List[Color3]) -> int:
 def get_offsets(ksize: int) -> List[Point]:
     return [(x, y) for x in range(ksize) for y in range(ksize)]  
 
-def make_pattern_catalog(tile_grid: Dict[Point, Color], ksize: int, im_size: Tuple[int, int]) -> Tuple[Dict[PatternHash, List[Color3]], Dict[PatternHash, int]]:
+def make_pattern_catalog(tile_grid: Dict[Point, Color3], ksize: int, im_size: Tuple[int, int]) -> Tuple[Dict[PatternHash, List[Color3]], Dict[PatternHash, int]]:
     """
     Returns a pattern catalog (dictionary of pattern hashes to constituent tiles),
     pattern weights (dictionary of pattern hashes to incidence)
@@ -98,6 +98,22 @@ def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size
     """
 
     def is_valid_overlap(adjacency_direction: Point, pattern1: int, pattern2: int) -> bool:
+        actual_pattern1: List[Color3] = patterns[pattern1]
+        actual_pattern2: List[Color3] = patterns[pattern2]
+
+        offsets = get_offsets(pattern_size)
+        adjacent1 = [actual_pattern1[idx] for idx, offset in enumerate(offsets) if 
+                     offset[0] == adjacency_direction[0] * (pattern_size - 1) and
+                     offset[1] == adjacency_direction[1] * (pattern_size - 1)]
+        assert(len(adjacent1) == pattern_size)
+        # Make negative to account for opposite direction
+        adjacent2 = [actual_pattern2[idx] for idx, offset in enumerate(offsets) if 
+                     offset[0] == -adjacency_direction[0] * (pattern_size - 1) and
+                     offset[1] == -adjacency_direction[1] * (pattern_size - 1)]
+        assert(len(adjacent2) == pattern_size)
+        for adj1, adj2 in zip(adjacent1, adjacent2):
+            if adj1 != adj2:
+                return False
         return True
 
     pattern_list = list(patterns.keys())
@@ -105,7 +121,7 @@ def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size
     for pattern1 in pattern_list:
         for pattern2 in pattern_list:
             for direction in direction_offsets:
-                if is_valid_overlap_xy(direction, pattern1, pattern2):
+                if is_valid_overlap(direction, pattern1, pattern2):
                     legal.append((direction, pattern1, pattern2))
     return legal
 
@@ -223,7 +239,7 @@ def render_output(tile_grid: Dict[Point, Color3], output_fn: str, output_size: T
 
 def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (10, 10), attempt_limit: int = 10, seed=0) -> None:
     random.seed(seed)
-    image, image_size = read_image_file(image_fn)
+    image, image_size = read_image(image_fn)
     tile_grid, code_list, unique_tiles = make_tile_catalog(image, image_size)
     patterns, pattern_incidence = make_pattern_catalog(tile_grid, pattern_width, image_size)
     adjacency_relations = adjacency_extraction(patterns, pattern_width)
@@ -241,16 +257,16 @@ def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] 
     while attempts < attempt_limit:
         attempts += 1
         try:
-            wave: Dict[Point, Set[PatternHash]]] = {(x, y): set(pattern_incidence.keys()) for x in range(output_size[0]) for y in range(output_size[1])}
+            wave: Dict[Point, Set[PatternHash]] = {(x, y): set(pattern_incidence.keys()) for x in range(output_size[0]) for y in range(output_size[1])}
             solution = run(wave, adjacency_list)
             solution_tile_grid = pattern_grid_to_tiles(solution, patterns)
             output_fn = image_fn[:-4] + "_output.png"
             render_output(solution_tile_grid, output_fn, output_size)
             return
-        except Contradiction as exc:
+        except Contradiction:
             print("Contradiction on attempt %d of %d" % (attempts, attempt_limit))
 
     raise TimedOut("Attempt Limit Exceeded!")
 
 if __name__ == '__main__':
-    execute('input1.png', 2, (10, 10))
+    execute('wfc_input1.png', 2, (10, 10))
