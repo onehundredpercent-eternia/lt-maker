@@ -3,7 +3,7 @@ from collections import Counter
 
 from app.engine import engine
 
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Callable
 
 Point = Tuple[int, int]
 Color3 = Tuple[int, int, int]
@@ -56,12 +56,12 @@ def make_tile_catalog(image: engine.Surface, image_size: Tuple[int, int]) -> Tup
     code_list = []
     for x in range(width):
         for y in range(height):
-            r, g, b = image.get_color((x, y))
+            r, g, b, _ = image.get_at((x, y))
             tile_grid[(x, y)] = (r, g, b)
             code_list.append((r, g, b))
 
     unique_tiles = Counter()
-    for pos, color in code_list:
+    for color in code_list:
         unique_tiles[color] += 1
     
     return tile_grid, code_list, unique_tiles
@@ -70,7 +70,7 @@ def hash_pattern(pattern: List[Color3]) -> int:
     return hash(tuple(pattern))
 
 def get_offsets(ksize: int) -> List[Point]:
-    return [(x, y) for x in range(ksize) for y in range(ksize)]  
+    return [(x, y) for y in range(ksize) for x in range(ksize)]  
 
 def make_pattern_catalog(tile_grid: Dict[Point, Color3], ksize: int, im_size: Tuple[int, int]) -> Tuple[Dict[PatternHash, List[Color3]], Dict[PatternHash, int]]:
     """
@@ -102,15 +102,26 @@ def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size
         actual_pattern2: List[Color3] = patterns[pattern2]
 
         offsets = get_offsets(pattern_size)
+        if adjacency_direction == (-1, 0):
+            pattern_match1 = lambda offset: offset[0] == 0
+            pattern_match2 = lambda offset: offset[0] == pattern_size - 1
+        elif adjacency_direction == (1, 0):
+            pattern_match1 = lambda offset: offset[0] == pattern_size - 1
+            pattern_match2 = lambda offset: offset[0] == 0
+        elif adjacency_direction == (0, -1):
+            pattern_match1 = lambda offset: offset[1] == 0
+            pattern_match2 = lambda offset: offset[1] == pattern_size - 1
+        elif adjacency_direction == (0, 1):
+            pattern_match1 = lambda offset: offset[1] == pattern_size - 1
+            pattern_match2 = lambda offset: offset[1] == 0
+
         adjacent1 = [actual_pattern1[idx] for idx, offset in enumerate(offsets) if 
-                     offset[0] == adjacency_direction[0] * (pattern_size - 1) and
-                     offset[1] == adjacency_direction[1] * (pattern_size - 1)]
-        assert(len(adjacent1) == pattern_size)
+                     pattern_match1(offset)]
+        assert len(adjacent1) == pattern_size, "%d %d" % (len(adjacent1), pattern_size)
         # Make negative to account for opposite direction
         adjacent2 = [actual_pattern2[idx] for idx, offset in enumerate(offsets) if 
-                     offset[0] == -adjacency_direction[0] * (pattern_size - 1) and
-                     offset[1] == -adjacency_direction[1] * (pattern_size - 1)]
-        assert(len(adjacent2) == pattern_size)
+                     pattern_match2(offset)]
+        assert len(adjacent2) == pattern_size, "%d %d" % (len(adjacent1), pattern_size)
         for adj1, adj2 in zip(adjacent1, adjacent2):
             if adj1 != adj2:
                 return False
@@ -126,10 +137,15 @@ def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size
     return legal
 
 class Solver:
-    def __init__(self, wave: Dict[Point, Set[PatternHash]], adj: Dict[Point, Dict[PatternHash, Set[PatternHash]]], pattern_incidence: Dict[PatternHash, int]):
+    def __init__(self, wave: Dict[Point, Set[PatternHash]], 
+                 adj: Dict[Point, Dict[PatternHash, Set[PatternHash]]],
+                 pattern_incidence: Dict[PatternHash, int],
+                 render_intermediate: Callable):
         self.wave = wave
         self.adj = adj
         self.pattern_incidence = pattern_incidence
+        self.render_intermediate = render_intermediate
+        self.counter = 0
 
     @property
     def is_solved(self) -> bool:
@@ -139,10 +155,13 @@ class Solver:
         if self.is_solved:
             return True
         self.propagate()
+        self.render_intermediate(self.wave, self.counter); self.counter += 1
         try:
             pattern, i, j = self.observe()
             self.wave[(i, j)] = {pattern}
+            self.render_intermediate(self.wave, self.counter); self.counter += 1
             self.propagate()
+            self.render_intermediate(self.wave, self.counter); self.counter += 1
             return False  # Assume there are remaining steps
         except Contradiction:
             raise
@@ -155,18 +174,23 @@ class Solver:
         Completely propagate any newly collapsed waves to all areas
         """
         last_count = self.num_possibilities()
+        print(last_count)
+        print([len(patterns) for patterns in self.wave.values()])
 
         while True:
             for coord, possibility_cell in self.wave.items():
-                for possibility in possibility_cell:
-                    for direction in self.adj:
-                        dx, dy = direction
-                        other_coord = (coord[0] + dx), (coord[1] + dy)
-                        other_cell = self.wave.get(other_coord)
-                        if other_cell is None:  # Output does not wrap, so it's possible to run into bounds
-                            continue
+                for direction in self.adj:
+                    dx, dy = direction
+                    other_coord = (coord[0] + dx), (coord[1] + dy)
+                    other_cell = self.wave.get(other_coord)
+                    if other_cell is None:  # Output does not wrap, so it's possible to run into bounds
+                        continue
+                    other_possibilities = set()
+                    for possibility in possibility_cell:                            
                         valid_possibilities = self.adj[direction][possibility]
-                        other_cell &= valid_possibilities
+                        # print(valid_possibilities)
+                        other_possibilities |= valid_possibilities
+                    other_cell &= other_possibilities
 
             if self.num_possibilities() == last_count:
                 break # No changes since the last loop, changed waves have been full propagated
@@ -177,7 +201,7 @@ class Solver:
 
     def observe(self):
         i, j = self.location_heuristic()
-        pattern = self.pattern_heurisitic(i, j)
+        pattern = self.pattern_heuristic(i, j)
         return pattern, i, j
 
     def location_heuristic(self):
@@ -201,14 +225,15 @@ class Solver:
         assert(min_coord is not None)
         return min_coord
 
-    def pattern_heuristic(self, i: int, j: int):
-        patterns = self.wave[(i, j)]
+    def pattern_heuristic(self, i: int, j: int) -> PatternHash:
+        patterns = list(self.wave[(i, j)])  # Order matters here
         weights = [self.pattern_incidence[pattern] for pattern in patterns]
-        choice = random.choices(patterns, weights=weights)
+        choice = random.choices(patterns, weights=weights)[0]
+        print("Chosen Pattern: %s" % choice)
         return choice
 
-def run(wave, adj):
-    solver = Solver(wave, adj)
+def run(wave, adj, pattern_incidence, render_intermediate):
+    solver = Solver(wave, adj, pattern_incidence, render_intermediate)
     while not solver.solve_next():
         pass
     return solver.wave
@@ -216,7 +241,7 @@ def run(wave, adj):
 def pattern_grid_to_tiles(solution: Dict[Point, Set[PatternHash]], patterns: Dict[PatternHash, List[Color3]], pattern_size: int) -> Dict[Point, Color3]:
     tile_grid: Dict[Point, Color3] = {}
     for coord, pattern_set in solution.items():
-        pattern = next(iter(pattern_set))
+        pattern: List[Color3] = patterns[next(iter(pattern_set))]
         offsets = get_offsets(pattern_size)
         for idx, offset in enumerate(offsets):
             new_coord = (coord[0] + offset[0]), (coord[1] + offset[1])
@@ -229,19 +254,60 @@ def pattern_grid_to_tiles(solution: Dict[Point, Set[PatternHash]], patterns: Dic
             tile_grid[new_coord] = pattern[idx]
     return tile_grid
 
+def color_mean(colors: Set[Color3]) -> Color3:
+    num = len(colors)
+    r = int(sum(color[0] for color in colors) / num)
+    g = int(sum(color[1] for color in colors) / num)
+    b = int(sum(color[2] for color in colors) / num)
+    return (r, g, b)
+
 def render_output(tile_grid: Dict[Point, Color3], output_fn: str, output_size: Tuple[int, int]) -> None:
     width, height = output_size
-    im = engine.create_surface((output_size))
+    im = engine.create_simple_surface(output_size)
     for x in range(width):
         for y in range(height):
-            im.putpixel((x, y), tile_grid[(x, y)])
-    im.save(output_fn)
+            im.set_at((x, y), tile_grid[(x, y)])
+    engine.save_surface(im, output_fn)
 
-def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] = (10, 10), attempt_limit: int = 10, seed=0) -> None:
+def get_render(patterns, pattern_size: int, 
+               output_size: Tuple[int, int],
+               output_magnification: int):
+    def render_intermediate(wave, idx: int):
+        print("Rendering: %d" % idx)
+        tile_grid: Dict[Point, Set[Color3]] = {}
+        for coord, pattern_set in wave.items():
+            if coord not in tile_grid:
+                tile_grid[coord] = set()
+            for pattern in pattern_set:
+                color = patterns[pattern][0]
+                tile_grid[coord].add(color)
+
+        width, height = output_size
+        im = engine.create_simple_surface(output_size)
+        for x in range(width):
+            for y in range(height):
+                color = color_mean(tile_grid[(x, y)])
+                im.set_at((x, y), color)
+        scale = (output_magnification * width, output_magnification * height)
+        im = engine.transform_scale(im, scale)
+        engine.save_surface(im, 'app/dungeon_maker/intermediate%03d.png' % idx)
+
+    return render_intermediate
+
+def execute(image_fn: str, pattern_width: int = 2, 
+            output_size: Tuple[int, int] = (10, 10), 
+            attempt_limit: int = 10, seed=0, 
+            render_intermediate=False,
+            output_magnification=1) -> None:
+    assert pattern_width >= 2
     random.seed(seed)
     image, image_size = read_image(image_fn)
+    print(image_size)
+    print(get_offsets(pattern_width))
     tile_grid, code_list, unique_tiles = make_tile_catalog(image, image_size)
+    print(len(unique_tiles))
     patterns, pattern_incidence = make_pattern_catalog(tile_grid, pattern_width, image_size)
+    print(pattern_incidence)
     adjacency_relations = adjacency_extraction(patterns, pattern_width)
     number_of_patterns = len(pattern_incidence)
     print("Number of Patterns: %d" % number_of_patterns)
@@ -252,14 +318,22 @@ def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] 
         adjacency_list[direction] = {pattern: set() for pattern in pattern_incidence}
     for direction, pattern1, pattern2 in adjacency_relations:
         adjacency_list[direction][pattern1].add(pattern2)
+    # for direction in adjacency_list:
+    #     for pattern1 in adjacency_list[direction]:
+    #         print(direction, patterns[pattern1])
+    #         print([patterns[pattern2] for pattern2 in adjacency_list[direction][pattern1]])
+    if render_intermediate:
+        render_intermediate = get_render(patterns, pattern_width, output_size, output_magnification)
+    else:
+        render_intermediate = lambda wave, idx: 0  # Pass
 
     attempts = 0
     while attempts < attempt_limit:
         attempts += 1
         try:
             wave: Dict[Point, Set[PatternHash]] = {(x, y): set(pattern_incidence.keys()) for x in range(output_size[0]) for y in range(output_size[1])}
-            solution = run(wave, adjacency_list)
-            solution_tile_grid = pattern_grid_to_tiles(solution, patterns)
+            solution = run(wave, adjacency_list, pattern_incidence, render_intermediate)
+            solution_tile_grid = pattern_grid_to_tiles(solution, patterns, pattern_width)
             output_fn = image_fn[:-4] + "_output.png"
             render_output(solution_tile_grid, output_fn, output_size)
             return
@@ -269,4 +343,4 @@ def execute(image_fn: str, pattern_width: int = 2, output_size: Tuple[int, int] 
     raise TimedOut("Attempt Limit Exceeded!")
 
 if __name__ == '__main__':
-    execute('wfc_input1.png', 2, (10, 10))
+    execute('app/dungeon_maker/wfc_input1.png', 2, (10, 10), 1, render_intermediate=True, output_magnification=20)
