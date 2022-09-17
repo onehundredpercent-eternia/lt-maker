@@ -103,25 +103,25 @@ def adjacency_extraction(patterns: Dict[PatternHash, List[Color3]], pattern_size
 
         offsets = get_offsets(pattern_size)
         if adjacency_direction == (-1, 0):
-            pattern_match1 = lambda offset: offset[0] == 0
-            pattern_match2 = lambda offset: offset[0] == pattern_size - 1
+            pattern_match1 = lambda offset: offset[0] != pattern_size - 1
+            pattern_match2 = lambda offset: offset[0] != 0
         elif adjacency_direction == (1, 0):
-            pattern_match1 = lambda offset: offset[0] == pattern_size - 1
-            pattern_match2 = lambda offset: offset[0] == 0
+            pattern_match1 = lambda offset: offset[0] != 0
+            pattern_match2 = lambda offset: offset[0] != pattern_size - 1
         elif adjacency_direction == (0, -1):
-            pattern_match1 = lambda offset: offset[1] == 0
-            pattern_match2 = lambda offset: offset[1] == pattern_size - 1
+            pattern_match1 = lambda offset: offset[1] != pattern_size - 1
+            pattern_match2 = lambda offset: offset[1] != 0
         elif adjacency_direction == (0, 1):
-            pattern_match1 = lambda offset: offset[1] == pattern_size - 1
-            pattern_match2 = lambda offset: offset[1] == 0
+            pattern_match1 = lambda offset: offset[1] != 0
+            pattern_match2 = lambda offset: offset[1] != pattern_size - 1
 
         adjacent1 = [actual_pattern1[idx] for idx, offset in enumerate(offsets) if 
                      pattern_match1(offset)]
-        assert len(adjacent1) == pattern_size, "%d %d" % (len(adjacent1), pattern_size)
+        assert len(adjacent1) == pattern_size**2 - pattern_size, "%d %d" % (len(adjacent1), pattern_size)
         # Make negative to account for opposite direction
         adjacent2 = [actual_pattern2[idx] for idx, offset in enumerate(offsets) if 
                      pattern_match2(offset)]
-        assert len(adjacent2) == pattern_size, "%d %d" % (len(adjacent1), pattern_size)
+        assert len(adjacent2) == pattern_size**2 - pattern_size, "%d %d" % (len(adjacent1), pattern_size)
         for adj1, adj2 in zip(adjacent1, adjacent2):
             if adj1 != adj2:
                 return False
@@ -147,6 +147,9 @@ class Solver:
         self.render_intermediate = render_intermediate
         self.counter = 0
 
+        self.coords = list(self.wave.keys())
+        random.shuffle(self.coords)
+
     @property
     def is_solved(self) -> bool:
         return all(len(possibilities) == 1 for possibilities in self.wave.values())
@@ -154,12 +157,16 @@ class Solver:
     def solve_next(self) -> bool:
         if self.is_solved:
             return True
-        self.propagate()
-        self.render_intermediate(self.wave, self.counter); self.counter += 1
+        # Only needs to be done once
+        if self.counter == 0:
+            self.propagate()
+            self.render_intermediate(self.wave, self.counter); self.counter += 1
+
         try:
             pattern, i, j = self.observe()
             self.wave[(i, j)] = {pattern}
-            self.render_intermediate(self.wave, self.counter); self.counter += 1
+            # self.print_wave()
+            # self.render_intermediate(self.wave, self.counter); self.counter += 1
             self.propagate()
             self.render_intermediate(self.wave, self.counter); self.counter += 1
             return False  # Assume there are remaining steps
@@ -169,15 +176,19 @@ class Solver:
     def num_possibilities(self):
         return sum([len(possibilities) for possibilities in self.wave.values()])
 
+    def print_wave(self):
+        print([len(patterns) for coord, patterns in sorted(self.wave.items())])
+
     def propagate(self):
         """
         Completely propagate any newly collapsed waves to all areas
         """
         last_count = self.num_possibilities()
         print(last_count)
-        print([len(patterns) for patterns in self.wave.values()])
 
         while True:
+            # self.print_wave()
+            # self.render_intermediate(self.wave, self.counter)
             for coord, possibility_cell in self.wave.items():
                 for direction in self.adj:
                     dx, dy = direction
@@ -185,12 +196,15 @@ class Solver:
                     other_cell = self.wave.get(other_coord)
                     if other_cell is None:  # Output does not wrap, so it's possible to run into bounds
                         continue
+                    # a = other_cell.copy()
                     other_possibilities = set()
                     for possibility in possibility_cell:                            
                         valid_possibilities = self.adj[direction][possibility]
-                        # print(valid_possibilities)
                         other_possibilities |= valid_possibilities
                     other_cell &= other_possibilities
+                    # if len(a) != len(other_cell):
+                    #     print(direction, coord, other_coord)
+                    #     print(len(a), "$", len(other_cell), "$", a, "$", other_cell)
 
             if self.num_possibilities() == last_count:
                 break # No changes since the last loop, changed waves have been full propagated
@@ -198,6 +212,8 @@ class Solver:
 
         if any(len(patterns) == 0 for patterns in self.wave.values()):
             raise Contradiction("Wave is in a contradictory state and cannot be solved")
+
+        # self.print_wave()
 
     def observe(self):
         i, j = self.location_heuristic()
@@ -211,7 +227,8 @@ class Solver:
         """
         min_entropy = 1 + .01
         min_coord = None
-        for coord in self.wave:
+       
+        for coord in self.coords:
             possibilities = self.wave[coord]
             if len(possibilities) == 0:
                 raise Contradiction("Wave is in a contradictory state and cannot be solved")
@@ -229,7 +246,7 @@ class Solver:
         patterns = list(self.wave[(i, j)])  # Order matters here
         weights = [self.pattern_incidence[pattern] for pattern in patterns]
         choice = random.choices(patterns, weights=weights)[0]
-        print("Chosen Pattern: %s" % choice)
+        # print("Chosen Pattern: %s" % choice)
         return choice
 
 def run(wave, adj, pattern_incidence, render_intermediate):
@@ -247,14 +264,14 @@ def pattern_grid_to_tiles(solution: Dict[Point, Set[PatternHash]], patterns: Dic
             new_coord = (coord[0] + offset[0]), (coord[1] + offset[1])
             # This section is for testing
             if new_coord in tile_grid:
-                current_pattern = tile_grid[new_coord]
+                current_pattern: Color3 = tile_grid[new_coord]
                 if pattern[idx] != current_pattern:
-                    print("Something's gone wrong with the pattern matching...")
+                    print("Something's gone wrong with the pattern matching...", offset)
             # End testing
             tile_grid[new_coord] = pattern[idx]
     return tile_grid
 
-def color_mean(colors: Set[Color3]) -> Color3:
+def color_mean(colors: List[Color3]) -> Color3:
     num = len(colors)
     r = int(sum(color[0] for color in colors) / num)
     g = int(sum(color[1] for color in colors) / num)
@@ -274,13 +291,13 @@ def get_render(patterns, pattern_size: int,
                output_magnification: int):
     def render_intermediate(wave, idx: int):
         print("Rendering: %d" % idx)
-        tile_grid: Dict[Point, Set[Color3]] = {}
+        tile_grid: Dict[Point, List[Color3]] = {}
         for coord, pattern_set in wave.items():
             if coord not in tile_grid:
-                tile_grid[coord] = set()
+                tile_grid[coord] = list()
             for pattern in pattern_set:
                 color = patterns[pattern][0]
-                tile_grid[coord].add(color)
+                tile_grid[coord].append(color)
 
         width, height = output_size
         im = engine.create_simple_surface(output_size)
@@ -312,16 +329,26 @@ def execute(image_fn: str, pattern_width: int = 2,
     number_of_patterns = len(pattern_incidence)
     print("Number of Patterns: %d" % number_of_patterns)
 
+    if True:
+        for hs, pattern in patterns.items():
+            print(hs)
+            print(pattern)
+
     # Set up, for each direction, which patterns connect to which patterns
     adjacency_list: Dict[Point, Dict[PatternHash, Set[PatternHash]]] = {}
     for direction in direction_offsets:
         adjacency_list[direction] = {pattern: set() for pattern in pattern_incidence}
     for direction, pattern1, pattern2 in adjacency_relations:
         adjacency_list[direction][pattern1].add(pattern2)
-    # for direction in adjacency_list:
-    #     for pattern1 in adjacency_list[direction]:
-    #         print(direction, patterns[pattern1])
-    #         print([patterns[pattern2] for pattern2 in adjacency_list[direction][pattern1]])
+
+    if False:
+        for direction in adjacency_list:
+            for pattern1 in adjacency_list[direction]:
+                print(direction, patterns[pattern1])
+                other_patterns = [patterns[pattern2] for pattern2 in adjacency_list[direction][pattern1]]
+                print(len(other_patterns))
+                print(other_patterns)
+
     if render_intermediate:
         render_intermediate = get_render(patterns, pattern_width, output_size, output_magnification)
     else:
@@ -343,4 +370,4 @@ def execute(image_fn: str, pattern_width: int = 2,
     raise TimedOut("Attempt Limit Exceeded!")
 
 if __name__ == '__main__':
-    execute('app/dungeon_maker/wfc_input1.png', 2, (10, 10), 1, render_intermediate=True, output_magnification=20)
+    execute('app/dungeon_maker/wfc_input4.png', 3, (30, 30), 10, seed=0, render_intermediate=True, output_magnification=16)

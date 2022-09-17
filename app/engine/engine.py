@@ -106,7 +106,7 @@ def create_surface(size, transparent=False) -> pygame.Surface:
         surf = surf.convert_alpha()
     else:
         surf = pygame.Surface(size)
-        # surf = surf.convert()
+        surf = surf.convert()
     return surf
 
 def create_simple_surface(size) -> pygame.Surface:
