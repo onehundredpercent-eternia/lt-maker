@@ -5,11 +5,11 @@ def get_next_name(name, names):
     if name not in names:
         return name
     else:
-        # Remove the (1) when generating additional names
-        name = re.sub(r' \(\d+\)$', '', name)
+        # Remove the _1 when generating additional names
+        name = re.sub(r'_\d+$', '', name)
         counter = 1
         while True:
-            test_name = name + (' (%s)' % counter)
+            test_name = name + ('_%s' % counter)
             if test_name not in names:
                 return test_name
             counter += 1

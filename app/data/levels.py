@@ -28,7 +28,7 @@ class LevelPrefab(Prefab):
         self.go_to_overworld: bool = False
 
         self.units = Data[Union[UniqueUnit, GenericUnit]]()
-        self.regions = Data()
+        self.regions = Data[Region]()
         self.unit_groups = Data()
 
     def save_attr(self, name, value):

@@ -456,7 +456,7 @@ A style only applies to `speak` commands inside this event.
 
     keywords = ['Style']
     optional_keywords = ['Speaker', 'TextPosition', 'Width', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail']
-    keyword_types = ['Nid', 'Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'FontType', 'DialogBox', 'PositiveInteger', 'Bool', 'MessageTail']
+    keyword_types = ['Nid', 'Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit']
 
 class Speak(EventCommand):
@@ -494,7 +494,7 @@ Extra flags:
 
     keywords = ['Speaker', 'Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail']
-    keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'Nid', 'Float', 'FontColor', 'FontType', 'DialogBox', 'PositiveInteger', 'Bool', 'MessageTail']
+    keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
 class Unhold(EventCommand):
@@ -544,9 +544,14 @@ class Transition(EventCommand):
 If a scene is currently displayed, it is faded out to a black screen.
 The next use of this function will fade the scene back into view.
 The optional *Speed* and *Color3* keywords control the speed and color of the transition.
+
+Extra flags:
+
+1. *no_block*: The event script will continue to execute while the screen is fading in or out
         """
 
     optional_keywords = ['Direction', 'Speed', 'Color3']
+    _flags = ['no_block']
 
 class ChangeBackground(EventCommand):
     # Also does remove background
@@ -563,6 +568,27 @@ Displayed portraits are also removed unless the *keep_portraits* flag is set.
 
     optional_keywords = ['Panorama']
     _flags = ["keep_portraits"]
+
+class PauseBackground(EventCommand):
+    nid = "pause_background"
+    tag = Tags.BG_FG
+
+    desc = \
+        """
+Pauses the current background if it has multiple frames. Optional *PauseAt* parameter lets you control exactly which frame to pause on.
+        """
+
+    optional_keywords = ['PauseAt']
+    keyword_types = ['WholeNumber']
+
+class UnpauseBackground(EventCommand):
+    nid = "unpause_background"
+    tag = Tags.BG_FG
+
+    desc = \
+        """
+Unpauses the current background.
+        """
 
 class DispCursor(EventCommand):
     nid = "disp_cursor"
@@ -621,9 +647,34 @@ Causes the cursor to briefly blink on and off at the indicated *Position*.
     keywords = ["Position"]
     _flags = ["immediate"]
 
+class ScreenShake(EventCommand):
+    nid = 'screen_shake'
+    tag = Tags.CURSOR_CAMERA
+
+    desc = \
+        """
+Causes the map to shake rapidly, imitating an earthquake, powerful strike, or other effect.
+Several different screen shake variations are available.
+Set *Duration* to 0 to make screen shake effect last indefinitely.
+        """
+
+    keywords = ["Duration"]
+    optional_keywords = ["ShakeType"]
+    keyword_types = ["Time", "ShakeType"]
+    _flags = ["no_block"]
+
+class ScreenShakeEnd(EventCommand):
+    nid = 'screen_shake_end'
+    tag = Tags.CURSOR_CAMERA
+
+    desc = \
+        """
+Ends any extant screen shake command if there is one present
+        """
+
 class GameVar(EventCommand):
     nid = 'game_var'
-    nickname = 'set'
+    nickname = 'gvar'
     tag = Tags.GAME_VARS
 
     desc = \
@@ -637,7 +688,7 @@ The *Nid* is the variable's identifier, and the *Condition* is the value that is
 
 class IncGameVar(EventCommand):
     nid = 'inc_game_var'
-    nickname = 'inc'
+    nickname = 'ginc'
     tag = Tags.GAME_VARS
 
     desc = \
@@ -651,6 +702,7 @@ Increments a game variable by one, or by a Python expression provided using the 
 
 class LevelVar(EventCommand):
     nid = 'level_var'
+    nickname = 'lvar'
     tag = Tags.LEVEL_VARS
 
     desc = \
@@ -666,6 +718,7 @@ value that is given to the variable. *Expression* can be a number or a Python ex
 
 class IncLevelVar(EventCommand):
     nid = 'inc_level_var'
+    nickname = 'linc'
     tag = Tags.LEVEL_VARS
 
     desc = \
@@ -1004,13 +1057,14 @@ Causes *Unit* to move to a new position on the map.
 The optional keywords define how the movement occurs.
 *Position* indicates the target map coordinates. *MovementType* selects the method of movement.
 *Placement* defines the behavior that occurs if the chosen map position is already occupied.
+*Speed* defines the speed of the moving unit. 120 is the default. Lower numbers are faster and higher slower.
 
 The *no_block* optional flag causes the event script to continue to execute while the unit is moving.
 The *no_follow* flag prevents the camera from tracking the unit as it moves.
         """
 
     keywords = ["Unit"]
-    optional_keywords = ["Position", "MovementType", "Placement"]
+    optional_keywords = ["Position", "MovementType", "Placement", "Speed"]
     _flags = ['no_block', 'no_follow']
 
 class RemoveUnit(EventCommand):
@@ -1305,9 +1359,13 @@ Forces *GlobalUnit* to equip *Item*.
 
 The event will produce no effect if the item does not exist in the unit's inventory yet.
 It will also produce no effect if the item cannot be equipped by that unit.
+If the item chosen is a multi-item, the top-most valid option will be equipped.
+If the *recursive* flag is set, the event will first attempt to equip items directly
+in the unit's inventory, and then if no matching item is found, check the sub-items of multi-items.
         """
         
     keywords = ["GlobalUnit", "Item"]
+    _flags = ['recursive']
 
 class RemoveItem(EventCommand):
     nid = 'remove_item'
@@ -1998,12 +2056,22 @@ Stores a given position as the event's home position. It can later be referenced
 class MapAnim(EventCommand):
     nid = 'map_anim'
     tag = Tags.TILEMAP
-    desc = ('Plays a map animation denoted by the nid *MapAnim* at *Position*. Optional args: a speed multiplier'
-            ' which increases the length of time it takes to play the animation (larger is slower)')
+    desc = \
+'''Plays a map animation denoted by the nid *MapAnim* at *Position*. Optional args: a speed multiplier
+which increases the length of time it takes to play the animation (larger is slower).
+
+Flags:
+* *no_block* - whether to wait until the animation finishes to continue
+* *permanent* - whether the effect persists
+* *blend* - additive blending
+* *multiply* - multiplicative blending
+* *overlay* - whether the animation will be played above units or below units
+'''
+
     keywords = ["MapAnim", "FloatPosition"]
     optional_keywords = ["Speed"]
     keyword_types = ["MapAnim", "FloatPosition", "Float"]
-    _flags = ["no_block", "permanent", "blend"]
+    _flags = ["no_block", "permanent", "blend", "multiply", "overlay"]
 
 class RemoveMapAnim(EventCommand):
     nid = 'remove_map_anim'

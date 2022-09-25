@@ -10,7 +10,7 @@ import app.engine.graphics.ui_framework as uif
 from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
 from app.data.database import DB
 from app.engine import (action, dialog, engine, evaluate,
-                        static_random, target_system)
+                        static_random, target_system, item_funcs)
 from app.engine.game_state import GameState
 from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.unit import UnitObject
@@ -63,6 +63,7 @@ class Event():
         self.text_boxes: List[dialog.Dialog] = []
         self.other_boxes: List[Tuple[NID, Any]] = []
         self.overlay_ui = uif.UIComponent.create_base_component()
+        self.overlay_ui.name = self.nid
 
         self.prev_state = None
         self.state = 'processing'
@@ -186,7 +187,7 @@ class Event():
                 self.state = 'processing'
 
             elif self.state == 'almost_complete':
-                if len(self.game.movement) <= 0:
+                if not self.game.movement or len(self.game.movement) <= 0:
                     self.state = 'complete'
 
             elif self.state == 'complete':
@@ -316,11 +317,11 @@ class Event():
                 arg_list = self.text_evaluator.direct_eval(cond)
                 arg_list = [self._object_to_str(arg) for arg in arg_list]
             except Exception as e:
-                self.logger.error("%s: Could not evaluate {%s}" % (e, command.parameters['Expression']))
+                self.logger.error("%s: Could not evaluate {%s} in %s" % (e, command.parameters['Expression'], command.to_plain_text()))
                 return True
             if not arg_list:
                 if show_warning:
-                    self.logger.warning("Arg list is empty for: %s" % (command.parameters['Expression']))
+                    self.logger.warning("Arg list is empty for: %s in %s" % (command.parameters['Expression'], command.to_plain_text()))
 
             # template and paste all commands inside the for loop
             # to find the correct endf, we'll need to make sure that
@@ -356,13 +357,13 @@ class Event():
             return True
         return False
 
-    def _get_truth(self, command) -> bool:
+    def _get_truth(self, command: event_commands.EventCommand) -> bool:
         try:
             cond = command.parameters['Expression']
             cond = self._evaluate_all(cond)
             truth = bool(self.text_evaluator.direct_eval(cond))
         except Exception as e:
-            self.logger.error("%s: Could not evaluate {%s}" % (e, cond))
+            self.logger.error("%s: Could not evaluate {%s} in %s" % (e, cond, command.to_plain_text()))
             truth = False
         self.logger.info("Result: %s" % truth)
         return truth
@@ -592,16 +593,14 @@ class Event():
             self.logger.warning("Could not find level unit prefab for unit with nid: %s", unit_nid)
             return None
         new_nid = str_utils.get_next_int(level_unit_prefab.nid, self.game.unit_registry.keys())
-        level_unit_prefab.nid = new_nid
-        new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
-        level_unit_prefab.nid = unit_nid  # Set back to old nid
+        new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode, new_nid)
         new_unit.position = None
         new_unit.dead = False
         new_unit.party = self.game.current_party
         self.game.full_register(new_unit)
         return new_unit
 
-    def _get_item_in_inventory(self, unit_nid: str, item: str) -> tuple[UnitObject, ItemObject]:
+    def _get_item_in_inventory(self, unit_nid: str, item: str, recursive=False) -> tuple[UnitObject, ItemObject]:
         if unit_nid.lower() == 'convoy':
             unit = self.game.get_party()
         else:
@@ -610,12 +609,16 @@ class Event():
                 self.logger.error("Couldn't find unit with nid %s" % unit_nid)
                 return None, None
         item_id = item
-        inids = [item.nid for item in unit.items]
-        iuids = [item.uid for item in unit.items]
+        if recursive:
+            item_list = item_funcs.get_all_items_with_multiitems(unit.items)
+        else:
+            item_list = unit.items
+        inids = [item.nid for item in item_list]
+        iuids = [item.uid for item in item_list]
         if (item_id not in inids) and (not str_utils.is_int(item_id) or not int(item_id) in iuids):
             self.logger.error("Couldn't find item with id %s" % item)
             return None, None
-        item = [item for item in unit.items if (item.nid == item_id or (str_utils.is_int(item_id) and item.uid == int(item_id)))][0]
+        item = [item for item in item_list if (item.nid == item_id or (str_utils.is_int(item_id) and item.uid == int(item_id)))][0]
         return unit, item
 
     def _apply_stat_changes(self, unit, stat_changes, flags):

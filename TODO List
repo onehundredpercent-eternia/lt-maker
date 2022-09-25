@@ -1,0 +1,36 @@
+TODO List
+
+Base:
+    World Map in Codex option
+    Achievements (Achievement Editor?)
+Map Maker:
+    Refactor for better efficiency ( I think I know how)
+    Export to LT map format
+    Export to TMX format for FEBuilder
+    Package as Executable
+In-game UI:
+    Refactor the Choice, Table, and Unit menu ui display for efficiency
+    Overlay sprites should be able to be formed from slice9 sprites
+    Place Tables, Choices, etc with pixel perfect precision
+    Dialogue Log Polish
+        - Introduce Chibi portrait
+        - Preserve forced line breaks
+        - Even if you skip over dialogue, make sure it still gets added to the dialoge log
+    Dialoge Polish
+        - Italics, Bold, Wave
+        - Right Justify
+        - Hold for X seconds
+Editor:
+    Map Animation Editor -> Needs solid UX
+    Event Editor -> Portraits and Background have graphical representation
+    Event Editor -> Possible graphical representation of dialogue?
+Overworld:
+    Implement enemies onto Overworld map
+    Confirm multiple parties work
+Asset Management:
+    Music asset manager (so we don't load all the music for the entire game at the beginning of the game)
+    Map asset manager (so we can chunkify big maps and only load portions of it at a time (mainly for free roam))
+Other:
+    Port to Android
+    Spell Animation Importer
+    Joystick Control Selection

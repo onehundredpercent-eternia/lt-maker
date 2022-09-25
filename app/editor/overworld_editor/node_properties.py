@@ -1,3 +1,4 @@
+from app.editor.lib.components.validated_line_edit import NidLineEdit
 from PyQt5.QtWidgets import QVBoxLayout, QLineEdit, \
     QWidget, QMessageBox, QLabel, QComboBox, QHBoxLayout
 from PyQt5.QtCore import Qt
@@ -98,7 +99,7 @@ class NodePropertiesMenu(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setAlignment(Qt.AlignTop)
 
-        self.nid_box = PropertyBox("Node ID", QLineEdit, self)
+        self.nid_box = PropertyBox("Node ID", NidLineEdit, self)
         self.nid_box.edit.textChanged.connect(self.nid_changed)
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
         self.layout.addWidget(self.nid_box)

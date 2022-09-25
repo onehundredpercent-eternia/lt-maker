@@ -1,5 +1,6 @@
 from __future__ import annotations
 from app.data.items import ItemPrefab
+from app.data.levels import LevelPrefab
 from app.data.skills import SkillPrefab
 
 import re
@@ -7,6 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple, Type
 
 from app.data.database import Database
 from app.editor.event_editor.event_inspector import EventInspectorEngine
+from app.engine.fonts import FONT
 from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
                                                                   VAlignment)
 from app.events import event_commands
@@ -489,6 +491,9 @@ it will be facing right, and vice versa.
 class Slide(OptionValidator):
     valid = ["normal", "left", "right"]
 
+class Font(OptionValidator):
+    valid = FONT.keys()
+
 class Direction(OptionValidator):
     valid = ["open", "close"]
 
@@ -496,8 +501,8 @@ class Orientation(OptionValidator):
     valid = ["h", "horiz", "horizontal", "v", "vert", "vertical"]
 
 class ExpressionList(Validator):
-    valid_expressions = ["NoSmile", "Smile", "NormalBlink", "CloseEyes", "HalfCloseEyes", "OpenEyes"]
-    desc = "expects a comma-delimited list of expressions. Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `OpenEyes`). Example: `Smile,CloseEyes`"
+    valid_expressions = ["NoSmile", "Smile", "NormalBlink", "CloseEyes", "HalfCloseEyes", "OpenEyes", "OpenMouth"]
+    desc = "expects a comma-delimited list of expressions. Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `OpenEyes`, `OpenMouth`). Example: `Smile,CloseEyes`"
 
     def validate(self, text, level):
         text = text.split(',')
@@ -525,8 +530,23 @@ class IllegalCharacterList(Validator):
         valids = [(None, option) for option in self.valid_sets]
         return valids
 
-class DialogVariant(OptionValidator):
-    valid = ["thought_bubble", "noir", "hint", "narration", "narration_top", "cinematic", "clear"]
+class DialogVariant(Validator):
+    built_in = ["thought_bubble", "noir", "hint", "narration", "narration_top", "cinematic", "clear"]
+
+    def validate(self, text, level):
+        slots = self.built_in.copy()
+        predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
+        slots += list(set([variant.parameters['Style'] for variant in predefined_variants.values()]))
+        if text in slots:
+            return text
+        return None
+
+    def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
+        slots = [(None, style) for style in self.built_in]
+        text = text.split(',')
+        predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
+        slots += [(None, style) for style in list(set([variant.parameters['Style'] for variant in predefined_variants.values()]))]
+        return slots
 
 class StringList(Validator):
     desc = "must be delimited by commas. For example: `Water,Earth,Fire,Air`"
@@ -646,10 +666,13 @@ class Chapter(Validator):
 class FogOfWarType(OptionValidator):
     valid = ['clear', 'gba', 'thracia']
 
+class ShakeType(OptionValidator):
+    valid = ['default', 'combat', 'kill', 'random', 'celeste']
+
 class Position(Validator):
     desc = "accepts a valid `(x, y)` position. You use a unit's nid to use their position. Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`, `{position}`)"
 
-    def validate(self, text, level):
+    def validate(self, text, level: LevelPrefab):
         text = text.split(',')
         if len(text) == 1:
             text = text[0]
@@ -659,6 +682,9 @@ class Position(Validator):
                 return text
             elif text in self.valid_overworld_nids().values():
                 return text
+            if level and level.regions:
+                if text in level.regions.keys():
+                    return text
             return None
         if len(text) > 2:
             return None
@@ -685,6 +711,8 @@ class Position(Validator):
             valids.append((None, "{position}"))
             for pair in self.valid_overworld_nids().items():
                 valids.append(pair)
+            for region in level_prefab.regions.values():
+                valids.append((None, region.nid))
             return valids
         else:
             valids = []

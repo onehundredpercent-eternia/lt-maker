@@ -20,6 +20,7 @@ from app.editor.stat_widget import StatListWidget, StatAverageDialog, ClassStatA
 from app.editor.weapon_editor.weapon_rank import WexpGainDelegate, WexpGainMultiAttrModel
 from app.editor.learned_skill_delegate import LearnedSkillDelegate
 from app.editor.icons import ItemIcon80
+from app.editor.lib.components.validated_line_edit import NidLineEdit
 
 from app.editor.class_editor import class_model
 from app.editor.map_sprite_editor import map_sprite_tab
@@ -52,7 +53,7 @@ class ClassProperties(QWidget):
         self.icon_edit = ItemIcon80(self)
         main_section.addWidget(self.icon_edit, 0, 0, 2, 2, Qt.AlignHCenter)
 
-        self.nid_box = PropertyBox("Unique ID", QLineEdit, self)
+        self.nid_box = PropertyBox("Unique ID", NidLineEdit, self)
         self.nid_box.edit.textChanged.connect(self.nid_changed)
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
         main_section.addWidget(self.nid_box, 0, 2)

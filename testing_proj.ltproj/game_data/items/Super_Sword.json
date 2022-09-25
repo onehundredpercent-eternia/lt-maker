@@ -1,0 +1,25 @@
+[
+    {
+        "nid": "Super Sword",
+        "name": "Super Sword",
+        "desc": "",
+        "icon_nid": "Sword",
+        "icon_index": [
+            0,
+            6
+        ],
+        "components": [
+            [
+                "multi_item",
+                [
+                    "Iron Sword",
+                    "Steel Sword"
+                ]
+            ],
+            [
+                "weapon_type",
+                "Sword"
+            ]
+        ]
+    }
+]

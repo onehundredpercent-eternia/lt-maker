@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 import ast
 from typing import TYPE_CHECKING
 
@@ -433,6 +434,7 @@ def unhold(self: Event, nid, flags=None):
             box.hold = False
 
 def transition(self: Event, direction=None, speed=None, color3=None, flags=None):
+    flags = flags or set()
     current_time = engine.get_time()
     if direction:
         self.transition_state = direction.lower()
@@ -445,6 +447,9 @@ def transition(self: Event, direction=None, speed=None, color3=None, flags=None)
 
     if not self.do_skip:
         self.transition_update = current_time
+        if 'no_block' in flags:
+            pass
+        else:
         self.wait_time = current_time + int(self.transition_speed * 1.33)
         self.state = 'waiting'
 
@@ -461,6 +466,18 @@ def change_background(self: Event, panorama=None, flags=None):
         pass
     else:
         self.portraits.clear()
+
+def pause_background(self: Event, pause_at=None, flags=None):
+    if not self.background:
+        self.logger.warning("No current background to pause!")
+        return
+    self.background.pause(pause_at)
+
+def unpause_background(self: Event, flags=None):
+    if not self.background:
+        self.logger.warning("No current background to unpause")
+        return 
+    self.background.unpause()
 
 def disp_cursor(self: Event, show_cursor, flags=None):
     if show_cursor.lower() in self.true_vals:
@@ -521,6 +538,41 @@ def flicker_cursor(self: Event, position, flags=None):
     self.commands.insert(self.command_idx + 1, wait_command)
     self.commands.insert(self.command_idx + 1, disp_cursor_command1)
     self.commands.insert(self.command_idx + 1, move_cursor_command)
+
+def screen_shake(self: Event, duration, shake_type=None, flags=None):
+    flags = flags or set()
+    shake_type = shake_type or 'default'
+    duration = int(duration)
+
+    shake_offset = None
+    if shake_type == 'default':
+        shake_offset = [(0, -2), (0, -2), (0, 0), (0, 0)]
+    elif shake_type == 'combat':
+        shake_offset = [(-3, -3), (0, 0), (3, 3), (0, 0)]
+    elif shake_type == 'kill':
+        shake_offset = [(3, 3), (0, 0), (0, 0), (3, 3), (-3, -3), (3, 3), (-3, -3), (0, 0)]
+    elif shake_type == 'random':
+        shake_offset = [(random.randint(-4, 4), random.randint(-4, 4)) for _ in range(16)]
+    elif shake_type == 'celeste':
+        shake_offset = [(random.choice([-1, 1]), random.choice([-1, 1])) for _ in range(16)]
+
+    if not shake_offset:
+        self.logger.error("shake mode %s not recognized by screen shake command. Recognized modes are ('default', 'combat').", shake_type)
+        return
+    
+    self.game.camera.set_shake(shake_offset, duration)
+    if self.background:
+        self.background.set_shake(shake_offset, duration)
+    if 'no_block' in flags:
+        pass
+    else:
+        self.wait_time = engine.get_time() + duration
+        self.state = 'waiting'
+
+def screen_shake_end(self: Event, flags=None):
+    self.game.camera.reset_shake()
+    if self.background:
+        self.background.reset_shake()
 
 def game_var(self: Event, nid, expression, flags=None):
     try:
@@ -813,8 +865,8 @@ def make_generic(self: Event, nid, klass, level, team, ai=None, faction=None, an
         starting_items = item_list.split(',')
     else:
         starting_items = []
-    level_unit_prefab = GenericUnit(unit_nid, animation_variant, level, klass, faction, starting_items, team, ai)
-    new_unit = UnitObject.from_prefab(level_unit_prefab)
+    level_unit_prefab = GenericUnit(unit_nid, animation_variant, level, klass, faction, starting_items, [], team, ai)
+    new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
     new_unit.party = self.game.current_party
     #self.game.full_register(new_unit)
     action.do(action.RegisterUnit(new_unit))
@@ -859,7 +911,7 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
     if not faction:
         faction = DB.factions[0].nid
     level_unit_prefab = GenericUnit(
-        unit_nid, unit.variant, int(level), unit.klass, faction, [item.nid for item in unit.items], unit.team, unit.ai)
+        unit_nid, unit.variant, int(level), unit.klass, faction, [item.nid for item in unit.items], [skill.nid for skill in unit.skills], unit.team, unit.ai)
     new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
 
     if 'copy_stats' in flags:
@@ -942,7 +994,7 @@ def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, 
         action.do(action.InsertInitiative(unit))
     self._place_unit(unit, position, entry_type, fade_direction)
 
-def move_unit(self: Event, unit, position=None, movement_type=None, placement=None, flags=None):
+def move_unit(self: Event, unit, position=None, movement_type=None, placement=None, speed=None, flags=None):
     flags = flags or set()
 
     new_unit = self._get_unit(unit)
@@ -983,6 +1035,9 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
         action.do(action.FadeMove(unit, position))
     elif movement_type == 'normal':
         path = target_system.get_path(unit, position)
+        if speed:
+            action.do(action.Move(unit, position, path, event=True, follow=follow, speed=speed))
+        else:
         action.do(action.Move(unit, position, path, event=True, follow=follow))
 
     if 'no_block' in flags or self.do_skip:
@@ -1386,23 +1441,30 @@ def give_item(self: Event, global_unit_or_convoy, item, flags=None):
 
 def equip_item(self: Event, global_unit, item, flags=None):
     flags = flags or set()
+    recursive_flag = 'recursive' in flags
     item_input = item
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("equip_item: Couldn't find unit with nid %s" % global_unit)
         return
-    unit, item = self._get_item_in_inventory(global_unit, item)
+    unit, item = self._get_item_in_inventory(global_unit, item, recursive=recursive_flag)
     if not unit or not item:
-        self.logger.error("equip_item: Either unit %s or item %s was invalid, see above" % (global_unit, item_input))
+        self.logger.error("equip_item: Item %s was invalid, see above" % item_input)
         return
-    
+    if item.multi_item:
+        for subitem in item.subitems:
+            if item_system.equippable(unit, subitem) and item_system.available(unit, subitem):
+                equip_action = action.EquipItem(unit, subitem)
+                action.do(equip_action)
+                return
+        self.logger.error("equip_item: No valid subitem to equip in %s" % item.nid)
+    else:
     if not item_system.equippable(unit, item):
         self.logger.error("equip_item: %s is not an item that can be equipped" % item.nid)
         return
     if not item_system.available(unit, item):
         self.logger.error("equip_item: %s is unable to equip %s" % (unit.nid, item.nid))
         return
-    
     equip_action = action.EquipItem(unit, item)
     action.do(equip_action)
     
@@ -2259,12 +2321,17 @@ def map_anim(self: Event, map_anim, float_position, speed=None, flags=None):
         speed_mult = float(speed)
     else:
         speed_mult = 1
+    mode = engine.BlendMode.NONE
+    if 'blend' in flags:
+        mode = engine.BlendMode.BLEND_RGB_ADD
+    elif 'multiply' in flags:
+        mode = engine.BlendMode.BLEND_RGB_MULT
     if 'permanent' in flags:
-        action.do(action.AddMapAnim(map_anim, pos, speed_mult, 'blend' in flags))
+        action.do(action.AddMapAnim(map_anim, pos, speed_mult, mode, 'overlay' in flags))
     else:
         anim = RESOURCES.animations.get(map_anim)
         anim = MapAnimation(anim, pos, speed_adj=speed_mult)
-        anim.set_tint('blend' in flags)
+        anim.set_tint(mode)
         self.animations.append(anim)
 
     if 'no_block' in flags or self.do_skip or 'permanent' in flags:
@@ -2693,7 +2760,7 @@ def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, z_level=None
         if anim_dir == 'fade':
             enter_anim = fade_anim(0, 1, 1000)
             exit_anim = fade_anim(1, 0, 1000)
-            component.margin = (x, y, 0, 0)
+            component.margin = (x, 0, y, 0)
         else:
             if anim_dir == 'west':
                 start_x = -component.width
@@ -2712,7 +2779,7 @@ def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, z_level=None
         component.save_animation(enter_anim, '!enter')
         component.save_animation(exit_anim, '!exit')
     else:
-        component.margin = (x, y, 0, 0)
+        component.margin = (x, 0, y, 0)
     self.overlay_ui.add_child(component)
     if self.do_skip:
         component.enable()
@@ -2729,8 +2796,10 @@ def remove_overlay_sprite(self: Event, nid, flags=None):
     component = self.overlay_ui.get_child(nid)
     if component:
         if self.do_skip:
+            self.overlay_ui._should_redraw = True
             component.disable()
         else:
+            self.overlay_ui._should_redraw = True
             component.exit()
             if component.is_animating() and 'no_block' not in flags:
                 self.wait_time = engine.get_time() + 750
@@ -2768,7 +2837,7 @@ def location_card(self: Event, string, flags=None):
 def credits(self: Event, role, credits, flags=None):
     flags = flags or set()
 
-    title = role
+    title = role or ''
     credits = credits.split(',') if 'no_split' not in flags else [credits]
     wait = 'wait' in flags
     center = 'center' in flags

@@ -13,6 +13,7 @@ from app.extensions.custom_gui import PropertyBox, PropertyCheckBox, ComboBox, R
 from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.editor.base_database_gui import DragDropCollectionModel
 from app.editor.custom_widgets import SkillBox, ItemBox
+from app.editor.lib.components.validated_line_edit import NidLineEdit
 from app.events import regions
 
 from app.editor import timer
@@ -179,7 +180,7 @@ class ModifyRegionWidget(QWidget):
 
         self.current = current
 
-        self.nid_box = PropertyBox("Unique ID", QLineEdit, self)
+        self.nid_box = PropertyBox("Unique ID", NidLineEdit, self)
         self.nid_box.edit.textChanged.connect(self.nid_changed)
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
         layout.addWidget(self.nid_box)
@@ -191,7 +192,7 @@ class ModifyRegionWidget(QWidget):
             self.region_type_changed)
         layout.addWidget(self.region_type_box)
 
-        self.sub_nid_box = PropertyBox("Event Name", QLineEdit, self)
+        self.sub_nid_box = PropertyBox("Event Name", NidLineEdit, self)
         # if self.current.sub_nid and self.current.region_type == 'Event':
         #     self.sub_nid_box.edit.setText(self.current.sub_nid)
         self.sub_nid_box.edit.textChanged.connect(self.sub_nid_changed)

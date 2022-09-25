@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 @dataclass
 class UnitObject(Prefab):
     nid: NID
+    prefab_nid: NID = None
     generic: bool = False
     persistent: bool = True
     ai: str = None
@@ -95,15 +96,19 @@ class UnitObject(Prefab):
         if attr.startswith('__') and attr.endswith('__'):
             return super().__getattr__(attr)
         elif self.nid:
-            prefab = DB.units.get(self.nid)
+            prefab = DB.units.get(self.prefab_nid)
+            if prefab:
             return getattr(prefab, attr)
-        return None
+        # not in prefab, so...
+        raise AttributeError('UnitObject has no attribute %s' % attr)
 
     @classmethod
-    def from_prefab(cls, prefab: UniqueUnit | GenericUnit | UnitPrefab, current_mode: DifficultyModeObject = None):
-        self = cls(prefab.nid)
+    def from_prefab(cls, prefab: UniqueUnit | GenericUnit | UnitPrefab, current_mode: DifficultyModeObject = None, new_nid=None):
+        new_nid = new_nid or prefab.nid
+        self = cls(new_nid)
         is_level_unit = not isinstance(prefab, UnitPrefab)
-        self.nid = prefab.nid
+        self.nid = new_nid
+        self.prefab_nid = prefab.nid
         if not is_level_unit: # initing a non-level unit
             self.generic = False
             self.persistent = True
@@ -120,7 +125,6 @@ class UnitObject(Prefab):
             self.ai_group = prefab.ai_group
             self.faction = prefab.faction
             self.team = prefab.team
-
         self.portrait_nid = prefab.portrait_nid if not self.generic else None
         self.affinity = prefab.affinity if not self.generic else None
         self.notes = [(n[0], n[1]) for n in prefab.unit_notes] if not self.generic else []
@@ -222,6 +226,9 @@ class UnitObject(Prefab):
             self.skills += personal_skills
             class_skills = unit_funcs.get_starting_skills(self)
             self.skills += class_skills
+            if self.generic:
+                generic_skills = item_funcs.create_skills(self, prefab.starting_skills)
+                self.skills += generic_skills
 
         klass = DB.classes.get(self.klass)
         if klass.tier == 0:
@@ -536,7 +543,10 @@ class UnitObject(Prefab):
             skill_system.on_add_item(self, item)
 
     def remove_item(self, item):
-        if item is self.equipped_weapon or item is self.equipped_accessory:
+        if self.equipped_weapon is item or \
+                self.equipped_accessory is item or \
+                item.multi_item and self.equipped_weapon in item_funcs.get_all_items_from_multi_item(self, item) or \
+                item.multi_item and self.equipped_accessory in item_funcs.get_all_items_from_multi_item(self, item):
             self.unequip(item)
         self.items.remove(item)
         item.change_owner(None)
@@ -642,6 +652,7 @@ class UnitObject(Prefab):
 
     def save(self):
         s_dict = {'nid': self.nid,
+                  'prefab_nid': self.prefab_nid,
                   'position': self.position,
                   'team': self.team,
                   'party': self.party,
@@ -686,6 +697,7 @@ class UnitObject(Prefab):
     @classmethod
     def restore(cls, s_dict, game):
         self = cls(s_dict['nid'])
+        self.prefab_nid = s_dict.get('prefab_nid', s_dict['nid'])
         if s_dict['position']:
             self.position = self.previous_position = tuple(s_dict['position'])
         else:

@@ -1,3 +1,4 @@
+from app.editor.skill_list_widget import SkillListWidget
 from PyQt5.QtWidgets import QPushButton, QLineEdit, \
     QWidget, QStyledItemDelegate, QDialog, QSpinBox, \
     QVBoxLayout, QHBoxLayout, QMessageBox, QApplication, QCheckBox
@@ -21,6 +22,7 @@ from app.editor.faction_editor import faction_model
 from app.editor.stat_widget import StatAverageDialog, GenericStatAveragesModel
 from app.editor.item_list_widget import ItemListWidget
 from app.editor.event_editor.event_inspector import EventInspectorEngine
+from app.editor.lib.components.validated_line_edit import NidLineEdit
 from app.events.event_commands import ChangeRoaming
 
 
@@ -503,16 +505,16 @@ class GenericUnitDialog(Dialog):
                 example.nid, self._data.keys())
             self.current = GenericUnit(
                 new_nid, example.variant, example.level, example.klass, example.faction,
-                example.starting_items, example.team, example.ai)
+                example.starting_items, example.starting_skills, example.team, example.ai)
         else:
             new_nid = str_utils.get_next_generic_nid("101", self._data.keys())
             assert len(DB.classes) > 0 and len(DB.factions) > 0 and len(
                 DB.items) > 0 and len(DB.ai) > 0
             self.current = GenericUnit(
                 new_nid, None, 1, DB.classes[0].nid, DB.factions[0].nid,
-                [(DB.items[0].nid, False)], 'player', DB.ai[0].nid)
+                [(DB.items[0].nid, False)], [], 'player', DB.ai[0].nid)
 
-        self.nid_box = PropertyBox("Unique ID", QLineEdit, self)
+        self.nid_box = PropertyBox("Unique ID", NidLineEdit, self)
         self.nid_box.edit.setPlaceholderText("Unique ID")
         self.nid_box.edit.textChanged.connect(self.nid_changed)
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
@@ -582,6 +584,11 @@ class GenericUnitDialog(Dialog):
         self.item_widget = ItemListWidget("Items", self)
         self.item_widget.items_updated.connect(self.items_changed)
         layout.addWidget(self.item_widget)
+
+        self.skill_widget = SkillListWidget("Skills", self)
+        self.skill_widget.skills_updated.connect(self.skills_changed)
+        # self.item_widget.setMaximumHeight(200)
+        layout.addWidget(self.skill_widget)
 
         layout.addWidget(self.buttonbox)
 
@@ -689,6 +696,9 @@ class GenericUnitDialog(Dialog):
         self.current.starting_items = self.item_widget.get_items()
         # self.check_color()
 
+    def skills_changed(self):
+        self.current.starting_skills = self.skill_widget.get_skills()
+
     def display_averages(self):
         # Modeless dialog
         if not self.averages_dialog:
@@ -727,6 +737,7 @@ class GenericUnitDialog(Dialog):
             self.traveler_button.setChecked(False)
             self.traveler_box.edit.clear()
         self.item_widget.set_current(current.starting_items)
+        self.skill_widget.set_current(current.starting_skills)
         if self.averages_dialog:
             self.averages_dialog.set_current(current)
 
