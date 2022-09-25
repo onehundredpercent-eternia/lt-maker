@@ -4,6 +4,7 @@ from app.data.database import DB
 from app.engine import line_of_sight, target_system
 from app.engine.game_state import game
 from app.utilities.typing import NID
+from app.utilities import utils
 
 
 class Node():
@@ -38,8 +39,6 @@ class Node():
         return "Node(%d, %d): cost=%d, g=%d, h=%d, f=%f, %s" % (self.x, self.y, self.cost, self.g, self.h, self.f, self.reachable)
 
 class GameBoard(object):
-    # __slots__ = ['width', 'height', 'grids', 'team_grid', 'unit_grid',
-    #              'aura_grid', 'known_auras']
 
     def __init__(self, tilemap):
         self.width = tilemap.width
@@ -145,6 +144,24 @@ class GameBoard(object):
         if self.team_grid[idx]:
             return self.team_grid[idx][0]
         return None
+
+    def can_move_through(self, team, adj) -> bool:
+        unit_team = next(iter(self.get_team((adj.x, adj.y))), None)
+        if not unit_team or utils.compare_teams(team, unit_team):
+            return True
+        if team == 'player' or DB.constants.value('ai_fog_of_war'):
+            if not self.in_vision((adj.x, adj.y), team):
+                return True  # Can always move through what you can't see
+        return False
+
+    def can_move_through_ally_block(self, team, adj) -> bool:
+        unit_team = next(iter(self.get_team((adj.x, adj.y))), None)
+        if not unit_team:
+            return True
+        if team == 'player' or DB.constants.value('ai_fog_of_war'):
+            if not self.in_vision((adj.x, adj.y), team):
+                return True
+        return False
 
     # Fog of war
     def update_fow(self, pos, unit, sight_range: int):

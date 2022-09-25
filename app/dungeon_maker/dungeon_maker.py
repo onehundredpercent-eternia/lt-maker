@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List, Set, Dict, Tuple
 
 from app.utilities import utils
+from app.utilities.direction import Direction
 
 
 def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
@@ -256,7 +257,7 @@ def print_room_prefabs(rooms, width, height):
                 print(" ", end='')
         print("\n", end='')
 
-def create_room(avg_size: float, map_width: int, map_height: int):
+def create_random_size(avg_size: float) -> Tuple[int, int]:
     while True:
         # Random size
         rwidth = int(round(random.normalvariate(mu=avg_size, sigma=1)))
@@ -264,13 +265,17 @@ def create_room(avg_size: float, map_width: int, map_height: int):
         rheight = int(round(random.normalvariate(mu=rwidth, sigma=0.75)))
         if rwidth <= 0 or rheight <= 0:
             continue
-        # choose a random point to place the room
-        center = random.randrange(0, map_width * map_height)
-        x, y = center % map_width, center // map_width
-        x -= rwidth//2
-        y -= rheight//2
-        new_room = RoomPrefab(x, y, rwidth, rheight)
-        return new_room
+        return rwidth, rheight
+
+def create_room(avg_size: float, map_width: int, map_height: int):
+    rwidth, rheight = create_random_size(avg_size)    
+    # choose a random point to place the room
+    center = random.randrange(0, map_width * map_height)
+    x, y = center % map_width, center // map_width
+    x -= rwidth//2
+    y -= rheight//2
+    new_room = RoomPrefab(x, y, rwidth, rheight)
+    return new_room
 
 def find_adjacency_connections(tilemap: DungeonTileMap, rooms: List[Room], all_room_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
     print("Find connections")
@@ -508,7 +513,85 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     while True:
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
-        tilemap.reset_grid('Floor')
+
+        if theme == 'Simple':
+            """
+            Essentially it draws a single meandering path from
+            the start corner to the end corner
+            """
+
+            tilemap.reset_grid('Wall')
+
+            # Choose start and end corner randomly
+            valid_directions = [Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST]
+            start_corner = random.choice(valid_directions)
+            valid_directions.remove(start_corner)
+            end_corner = random.choice(valid_directions)
+            valid_directions.remove(end_corner)
+            
+            # Find start and closest tile
+            all_tiles = [(x, y) for x in range(width) for y in range(height)]
+            starting_tiles = sorted(all_tiles, key=Direction.sorting_key(start_corner, (width, height)))
+            start_tile = random.choice(starting_tiles)
+            if Direction.opposite(start_corner) == end_corner:
+                closest_corner = random.choice(valid_directions)
+            else:
+                closest_corner = Direction.closer_of(start_corner, valid_directions)
+            ending_tiles = sorted(all_tiles, key=Direction.sorting_key(end_corner, (width, height)))
+            end_tile = random.choice(ending_tiles)
+            closest_tiles = sorted(all_tiles, key=Direction.sorting_key(closest_corner, (width, height)))
+            closest_tile = random.choice(closest_tiles)
+            
+            # Draw path from start to closest corner
+            # Create grid
+            cells = []
+            for x in range(width):
+                for y in range(height):
+                    cells.append(Node(x, y, True, 1))
+            pathfinder = pathfinding.AStar(start_tile, closest_tile, cells,
+                                           (0, 0, width, height), height, None)
+            can_move_through = lambda adj, team: True
+            path1 = pathfinder.process(can_move_through)
+            # May have to reverse path1
+            print(path1, start_tile, closest_tile)
+
+            # Draw meandering space filling path to end corner
+            cells = []
+            for x in range(width):
+                for y in range(height):
+                    def foo():
+                        max_distance = 5
+                        closest_distance = min(max_distance, min([utils.calculate_distance((x, y), p) for p in path1]))
+                        return int(lerp(10, 1, closest_distance/max_distance))
+                    cost = property(foo)
+                    # Cost needs to be constantly recalculated to get meandering space filling curve
+                    cells.append(Node(x, y, True, cost))
+            pathfinder = pathfinding.AStar(closest_tile, end_tile, cells,
+                                           (0, 0, width, height), height, None)
+            can_move_through = lambda adj, team: True
+            path2 = pathfinder.process(can_move_through)
+            # May have to reverse path2
+            print(path2, closest_tile, end_tile)
+            path = path1 + path2
+            # Now we have a path
+            # Decide on width for each tile
+            tile_radius = 2
+            tile_extend = tile_radius * 2
+            # Fill with floor and walls
+            rooms = []
+            for pos in path:
+                x, y = pos[0] - tile_radius, pos[1] - tile_radius
+                room_prefab = RoomPrefab(x, y, tile_extend, tile_extend)
+                rooms.append(Room.from_prefab(room_prefab, tilemap))
+
+            # Override all walls with floors
+            for room in rooms:
+                for tile in room.tiles:
+                    tilemap.terrain_grid[tile] = 'Floor'    
+            tilemap.print_grid()
+
+            # Fill large empty areas with floor 2
+            # Draw doors to floor 2 areas
         
         # Create several rooms and place them in the map
         # Some of them will be level 1 and some level 2
@@ -567,7 +650,6 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
                         tilemap.set_terrain(*left, 'Floor')
                     elif tilemap.get_terrain(right) in ('StairsLeft', 'StairsRight'):
                         tilemap.set_terrain(*right, 'Floor')
-
 
         tilemap.print_grid()
         print("remove 1 way alcoves")
