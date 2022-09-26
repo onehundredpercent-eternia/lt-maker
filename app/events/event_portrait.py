@@ -163,7 +163,7 @@ class EventPortrait():
         main_image = self.main_portrait.copy()
         # For smile image
         if "OpenMouth" in self.expressions:
-        if "Smile" in self.expressions:
+            if "Smile" in self.expressions:
                 mouth_image = engine.subsurface(self.portrait.image, self.opensmile)
             else:
                 mouth_image = engine.subsurface(self.portrait.image, self.openmouth)

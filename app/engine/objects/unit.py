@@ -98,7 +98,7 @@ class UnitObject(Prefab):
         elif self.nid:
             prefab = DB.units.get(self.prefab_nid)
             if prefab:
-            return getattr(prefab, attr)
+                return getattr(prefab, attr)
         # not in prefab, so...
         raise AttributeError('UnitObject has no attribute %s' % attr)
 

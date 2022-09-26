@@ -5,6 +5,7 @@ from typing import List, Set, Dict, Tuple
 
 from app.utilities import utils
 from app.utilities.direction import Direction
+from app.utilities.algorithms.interpolation import lerp
 
 
 def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
@@ -348,6 +349,53 @@ def fill_in_one_way_alcoves(tilemap: DungeonTileMap) -> None:
         if sum([north == 'Wall', east == 'Wall', south == 'Wall', west == 'Wall']) >= 3:
             tilemap.set_terrain(*pos, 'Wall')
 
+def create_2_tile_walls(tilemap: DungeonTileMap) -> None:
+    for pos in tilemap.terrain_grid.keys():
+        layer = tilemap.get_layer(pos)
+        if layer == 1:
+            # Remove the top tiles of the room
+            north = tilemap.get_terrain((pos[0], pos[1] - 1))
+            north2 = tilemap.get_terrain((pos[0], pos[1] - 2))
+            if north == 'Wall' and north2 != 'Wall':
+                tilemap.set_terrain(*pos, 'Wall')
+                # Also fix anything that is now blocked
+                left = (pos[0] - 1, pos[1])
+                right = (pos[0] + 1, pos[1])
+                if tilemap.get_terrain(left) in ('StairsLeft', 'StairsRight'):
+                    tilemap.set_terrain(*left, 'Floor')
+                elif tilemap.get_terrain(right) in ('StairsLeft', 'StairsRight'):
+                    tilemap.set_terrain(*right, 'Floor')
+
+def fill_large_empty_areas(tilemap: DungeonTileMap, old: str, new: str, layer_choice: List[int]) -> List[List[Tuple[int, int]]]:
+    large_empty_size_room_limit = 11
+    tiles = [pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == old]
+    blobs = []
+    while tiles:
+        tile = tiles.pop()
+        blob = flood_fill(tilemap.check_bounds, tiles, tile)
+        blobs.append(blob)
+        for b in blob:
+            if b in tiles:
+                tiles.remove(b)
+
+    new_rooms = []
+    for blob in blobs:
+        layer = random.choice(layer_choice)
+        if len(blob) > large_empty_size_room_limit:
+            room = []
+            for tile in blob:
+                north, east, south, west = tilemap.get_cardinal_terrain(tile)
+                if (not north or north == old) and \
+                        (not east or east == old) and \
+                        (not south or south == old) and \
+                        (not west or west == old):
+                    tilemap.set_terrain(*tile, new)
+                    tilemap.set_layer(*tile, layer)
+                    room.append(tile)
+            new_rooms.append(room)
+
+    return new_rooms
+
 def get_floor_positions(tilemap: DungeonTileMap) -> List[Tuple[int, int]]:
     valid_positions = [(x, y) for x in range(tilemap.width) for y in range(tilemap.height)]
     return sorted([pos for pos in valid_positions if tilemap.get_terrain(pos) in ('Floor', 'Pillar', 'StairsUpDown', 'StairsLeft', 'StairsRight')])
@@ -501,6 +549,7 @@ def convert_to_floor_2(tilemap: DungeonTileMap) -> None:
                 tilemap.set_terrain(*pos, 'Pillar2')
 
 def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
+    theme = theme.lower()
     print("Theme: %s" % theme)
     random.seed(seed)
     width, height = size
@@ -514,7 +563,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
 
-        if theme == 'Simple':
+        if theme == 'simple':
             """
             Essentially it draws a single meandering path from
             the start corner to the end corner
@@ -587,69 +636,75 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             # Override all walls with floors
             for room in rooms:
                 for tile in room.tiles:
-                    tilemap.terrain_grid[tile] = 'Floor'    
+                    tilemap.terrain_grid[tile] = 'Floor'
+                    tilemap.set_layer(*tile, 1)
             tilemap.print_grid()
 
             # Fill large empty areas with floor 2
+            new_rooms: List[List[Tuple[int, int]]] = \
+                fill_large_empty_areas(tilemap, 'Wall', 'Floor', [2])
+
             # Draw doors to floor 2 areas
-        
-        # Create several rooms and place them in the map
-        # Some of them will be level 1 and some level 2
-        # A room needs to have walls and a floor
-        room_prefabs: List[RoomPrefab] = []
-        rooms: List[Room] = []
-        while len(rooms) < num_rooms:
-            new_room_prefab: RoomPrefab = create_room(avg_size, width, height)
-            if not any(room_prefab.overlaps(new_room_prefab) for room_prefab in room_prefabs):
-                room_prefabs.append(new_room_prefab)
-                new_room = Room.from_prefab(new_room_prefab, tilemap)
-                rooms.append(new_room)
-                idx = len(rooms) - 1
-                # layer = idx % 2 + 1
-                layer = 2
-                for tile in new_room.tiles:
-                    tilemap.set_layer(*tile, layer)
-                if layer == 2:
-                    for tile in new_room.wall_tiles:
+            connections = []
+            for room in new_rooms:
+                selected_point = random.choice(room)
+                for direction in [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]:
+                    # Find wall in that direction
+                    # Determine if it is assailable to a connection
+                    # If so, add it to the list of connections
+                    pass
+
+            place_connections_onto_grid(tilemap, connections)
+
+        elif theme == 'noise':
+            # Create several rooms and place them in the map
+            # Some of them will be level 1 and some level 2
+            # A room needs to have walls and a floor
+            room_prefabs: List[RoomPrefab] = []
+            rooms: List[Room] = []
+            while len(rooms) < num_rooms:
+                new_room_prefab: RoomPrefab = create_room(avg_size, width, height)
+                if not any(room_prefab.overlaps(new_room_prefab) for room_prefab in room_prefabs):
+                    room_prefabs.append(new_room_prefab)
+                    new_room = Room.from_prefab(new_room_prefab, tilemap)
+                    rooms.append(new_room)
+                    idx = len(rooms) - 1
+                    # layer = idx % 2 + 1
+                    layer = 2
+                    for tile in new_room.tiles:
                         tilemap.set_layer(*tile, layer)
-            else:
-                continue  # Overlaps, so ignore this
+                    if layer == 2:
+                        for tile in new_room.wall_tiles:
+                            tilemap.set_layer(*tile, layer)
+                else:
+                    continue  # Overlaps, so ignore this
 
-        # Place walls and floors on the tilemap
-        for room in rooms:
-            for tile in room.tiles:
-                tilemap.terrain_grid[tile] = 'Floor'
-            for tile in room.wall_tiles:
-                tilemap.terrain_grid[tile] = 'Wall'
-        tilemap.print_grid()
-        tilemap.print_layer_grid()
+            # Place walls and floors on the tilemap
+            for room in rooms:
+                for tile in room.tiles:
+                    tilemap.terrain_grid[tile] = 'Floor'
+                for tile in room.wall_tiles:
+                    tilemap.terrain_grid[tile] = 'Wall'
+            tilemap.print_grid()
+            tilemap.print_layer_grid()
 
-        # Find connections
-        floor_tiles = get_floor_positions(tilemap)
-        new_floors = find_adjacency_connections(tilemap, rooms, set(floor_tiles))
-        # Place connections onto grid
-        place_connections_onto_grid(tilemap, new_floors)
+            # Find connections
+            floor_tiles = get_floor_positions(tilemap)
+            new_floors = find_adjacency_connections(tilemap, rooms, set(floor_tiles))
+            # Place connections onto grid
+            place_connections_onto_grid(tilemap, new_floors)
 
+        else:
+            print("Theme %s is not supported" % theme)
+            raise NotImplementedError
+
+        # all themes use this section
         print("Tilemap Grid")
         tilemap.print_grid()
 
         print("2 tile walls")
         # Make sure there's room for 2-tile tall walls in layer 1 rooms
-        for pos in tilemap.terrain_grid.keys():
-            layer = tilemap.get_layer(pos)
-            if layer == 1:
-                # Remove the top tiles of the room
-                north = tilemap.get_terrain((pos[0], pos[1] - 1))
-                north2 = tilemap.get_terrain((pos[0], pos[1] - 2))
-                if north == 'Wall' and north2 != 'Wall':
-                    tilemap.set_terrain(*pos, 'Wall')
-                    # Also fix anything that is now blocked
-                    left = (pos[0] - 1, pos[1])
-                    right = (pos[0] + 1, pos[1])
-                    if tilemap.get_terrain(left) in ('StairsLeft', 'StairsRight'):
-                        tilemap.set_terrain(*left, 'Floor')
-                    elif tilemap.get_terrain(right) in ('StairsLeft', 'StairsRight'):
-                        tilemap.set_terrain(*right, 'Floor')
+        create_2_tile_walls(tilemap)
 
         tilemap.print_grid()
         print("remove 1 way alcoves")
