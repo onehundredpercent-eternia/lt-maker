@@ -309,4 +309,4 @@ Example usage:
             bool: if the unit has died
         """
         unit = self._resolve_to_unit(unit)
-        return self.game.check_dead(unit)
+        return self.game.check_dead(unit.nid)

@@ -1381,6 +1381,33 @@ Also, if the item is removed from the convoy, there will not be a banner.
     keywords = ["GlobalUnitOrConvoy", "Item"]
     _flags = ['no_banner']
 
+class MoveItem(EventCommand):
+    nid = 'move_item'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Removes *Item* from the inventory of *Giver* and adds it to the inventory of *Receiver*.
+If *Item* is not supplied, just moves the last item from the inventory of *Giver*.
+If the inventory of *Receiver* is full, this command will not succeed.
+        """
+
+    keywords = ["Giver", "Receiver"]
+    optional_keywords = ["Item"]
+    keyword_types = ["GlobalUnitOrConvoy", "GlobalUnitOrConvoy", "Item"]
+
+class MoveItemBetweenConvoys(EventCommand):
+    nid = 'move_item_between_convoys'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Moves *Item* from the convoy of *Party1* and adds it to the convoy of *Party2*.
+        """
+
+    keywords = ["Item", "Party1", "Party2"]
+    keyword_types = ["Item", "Party", "Party"]
+
 class SetItemUses(EventCommand):
     nid = 'set_item_uses'
     tag = Tags.MODIFY_ITEM_PROPERTIES

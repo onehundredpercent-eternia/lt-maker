@@ -1408,7 +1408,7 @@ def give_item(self: Event, global_unit_or_convoy, item, flags=None):
         self.logger.error("give_item: Couldn't find item with nid %s" % item_id)
         return
     banner_flag = 'no_banner' not in flags
-    item.droppable = 'droppable' in flags
+    action.do(action.SetDroppable(item, 'droppable' in flags))
 
     if unit:
         if item_funcs.inventory_full(unit, item):
@@ -1489,6 +1489,80 @@ def remove_item(self: Event, global_unit_or_convoy, item, flags=None):
             self.game.alerts.append(b)
             self.game.state.change('alert')
             self.state = 'paused'
+
+def move_item(self: Event, giver, receiver, item=None, flags=None):
+    flags = flags or set()
+
+    if item:
+        unit, item = self._get_item_in_inventory(giver, item)
+        if not unit or not item:
+            self.logger.error("move_item: Either unit or item was invalid, see above")
+            return
+    else:
+        item = None
+        if giver.lower() == 'convoy':
+            unit = self.game.get_party()
+        else:
+            unit = self.game.get_unit(giver)
+            if not unit:
+                self.logger.error("Could not find unit %s", giver)
+                return
+
+        if unit.items:
+            item = unit.items[-1]
+        else:
+            self.logger.warning("Unit %s has no items", giver)
+            return
+
+    if giver.lower() == 'convoy':
+        if receiver.lower() == 'convoy':
+            self.logger.warning("No change, since moving from current convoy to current convoy")
+        else:
+            other_unit = self.game.get_unit(receiver)
+            if not other_unit:
+                self.logger.error("Could not find unit %s", receiver)
+                return
+            if not item_funcs.inventory_full(other_unit, item):
+                action.do(action.TakeItemFromConvoy(other_unit, item))
+            else:
+                self.logger.warning("No space in unit %s's inventory", receiver)
+                return
+    else:
+        if receiver.lower() == 'convoy':
+            action.do(action.RemoveItem(unit, item))
+            action.do(action.PutItemInConvoy(item))
+        else:
+            other_unit = self.game.get_unit(receiver)
+            if not other_unit:
+                self.logger.error("Could not find unit %s", receiver)
+                return
+            if not item_funcs.inventory_full(other_unit, item):
+                action.do(action.MoveItem(unit, other_unit, item))
+            else:
+                self.logger.warning("No space in unit %s's inventory", receiver)
+                return
+
+def move_item_between_convoys(self: Event, item, party1, party2, flags=None):
+    giver = self.game.get_party(party1)
+    if not giver:
+        self.logger.error("Could not find party with nid %s", party1)
+        return
+    receiver = self.game.get_party(party2)
+    if not receiver:
+        self.logger.error("Could not find party with nid %s", party2)
+        return
+
+    item_id = item
+    item_list = giver.items
+    inids = [item.nid for item in item_list]
+    iuids = [item.uid for item in item_list]
+    if (item_id not in inids) and (not str_utils.is_int(item_id) or not int(item_id) in iuids):
+        self.logger.error("Couldn't find item with id %s" % item)
+        return
+    item = [item for item in item_list if (item.nid == item_id or (str_utils.is_int(item_id) and item.uid == int(item_id)))][0]
+
+    action.do(action.RemoveItemFromConvoy(item, party1))
+    action.do(action.PutItemInConvoy(item, party2))
 
 def set_item_uses(self: Event, global_unit_or_convoy, item, uses, flags=None):
     flags = flags or set()

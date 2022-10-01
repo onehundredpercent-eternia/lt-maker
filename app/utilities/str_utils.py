@@ -1,15 +1,15 @@
 import functools
 import re
 
-def get_next_name(name, names):
+def get_next_name(name, names, infix='_'):
     if name not in names:
         return name
     else:
         # Remove the _1 when generating additional names
-        name = re.sub(r'_\d+$', '', name)
+        name = re.sub(('%s' % infix) + r'\d+$', '', name)
         counter = 1
         while True:
-            test_name = name + ('_%s' % counter)
+            test_name = name + ('%s%s' % (infix, counter))
             if test_name not in names:
                 return test_name
             counter += 1
