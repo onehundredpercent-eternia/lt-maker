@@ -1,5 +1,7 @@
-import heapq
+import heapq, random
 from typing import Tuple, Callable
+
+from app.utilities import utils
 
 class Djikstra():
     __slots__ = ['open', 'closed', 'cells', 'bounds', 'height', 'start_pos',
@@ -237,3 +239,107 @@ class AStar():
                     else:  # Is blocked
                         pass
         return []
+
+class MeanderingPathFinder:
+    """
+    Just finds a greedy meandering path that tries to ignore the goal as
+    long as possible
+    """
+
+    class Node:
+        def __init__(self, x, y, cost):
+            self.x, self.y = x, y
+            self.cost = cost
+            self.parent = None
+
+    def __init__(self, start_pos: tuple, goal_pos: tuple,
+                 bounds: Tuple[int, int, int, int], keep_away_dist=3):
+        self.bounds = bounds
+        self.start_pos = start_pos
+        self.goal_pos = goal_pos
+        self.keep_away_dist = keep_away_dist
+
+        self.reset()
+
+    def reset_grid(self):
+        self.grid = {}
+        for x in range(self.bounds[0], self.bounds[2] + 1):
+            for y in range(self.bounds[1], self.bounds[3] + 1):
+                self.grid[(x, y)] = self.Node(x, y, 1)
+        self.cost_path([self.goal_pos])
+
+    def reset(self):
+        self.open = []
+        heapq.heapify(self.open)
+        self.closed = set()
+        self.reset_grid()
+
+    def cost_path(self, path: list):
+        for path_pos in path:
+            for pos in self.grid:
+                dist = utils.calculate_distance(path_pos, pos)
+                if dist < self.keep_away_dist:
+                    node = self.grid[pos]
+                    new_cost = max(self.keep_away_dist - dist + 1, 1)
+                    node.cost = max(new_cost, node.cost)
+
+    def get_adjacent_pos(self, pos: tuple) -> list:
+        cells = []
+        x, y = pos
+        if y < self.bounds[3]:
+            cells.append((x, y + 1))
+        if x < self.bounds[2]:
+            cells.append((x + 1, y))
+        if x > self.bounds[0]:
+            cells.append((x - 1, y))
+        if y > self.bounds[1]:
+            cells.append((x, y - 1))
+        random.shuffle(cells)
+        return cells
+
+    def update_cell(self, adj, cell):
+        self.cost_path([adj])
+        self.grid[adj].parent = cell
+
+    def return_path(self, cell) -> list:
+        path = []
+        while cell:
+            path.append((cell.x, cell.y))
+            cell = cell.parent
+        return path
+
+    def process(self) -> list:
+        # Add starting cell to open queue
+        heapq.heappush(self.open, (self.grid[self.start_pos].cost, self.start_pos))
+        counter = 0
+        while self.open:
+            counter += 1
+            print(len(self.closed))
+            if counter % 10:
+                self.print_grid()
+                input()
+
+            cost, pos = heapq.heappop(self.open)
+            self.closed.add(pos)
+            if pos is self.goal_pos:
+                return self.return_path(pos)
+            adj_positions = self.get_adjacent_pos(pos)
+            for adj in adj_positions:
+                if adj not in self.closed:
+                    self.update_cell(adj, pos)
+                    heapq.heappush(self.open, (self.grid[adj].cost, adj))
+        return []
+
+    def print_grid(self):
+        for y in range(self.bounds[1], self.bounds[3] + 1):
+            print("%02d: " % y, end='')
+            for x in range(self.bounds[0], self.bounds[2] + 1):
+                print("%02d " % self.grid[(x, y)].cost, end='')
+            print("\n", end='')
+
+if __name__ == '__main__':
+    pathfinder = MeanderingPathFinder((0, 0), (19, 19), (0, 0, 19, 19))
+    pathfinder.print_grid()
+    path = pathfinder.process()
+    pathfinder.print_grid()
+    print(path)
