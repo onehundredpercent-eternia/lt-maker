@@ -11,7 +11,7 @@ from app.engine import action, engine, random_groups
 from app.events import regions
 from app.engine.game_state import game
 
-from app.utilities import utils
+from app.utilities import utils, static_random
 from app.utilities.direction import Direction
 from app.utilities.algorithms.interpolation import lerp
 
@@ -113,7 +113,6 @@ def generate_enemies(enemy_type=None) -> None:
 
     # Populate rooms with enemies
     group_data = {'valid_tags': enemy_type}
-    from app.engine import static_random
     static_random.set_other_random_state(seed)
     logging.debug(static_random.get_other_random_state())
 

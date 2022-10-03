@@ -13,15 +13,14 @@ from app.events.regions import RegionType
 from app.events import triggers
 from app.resources.resources import RESOURCES
 from app.engine import (aura_funcs, banner, equations, item_funcs, item_system,
-                        particles, skill_system, static_random, unit_funcs, animations)
+                        particles, skill_system, unit_funcs, animations)
 from app.engine.game_state import game
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
 from app.engine.objects.unit import UnitObject
 from app.engine import engine
 from app.events.regions import Region
-from app.utilities import utils
-
+from app.utilities import utils, static_random
 
 class Action():
     def __init__(self):

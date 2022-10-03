@@ -9,10 +9,10 @@ from app.data.level_units import GenericUnit, UniqueUnit
 
 from app.engine.objects.unit import UnitObject
 
-from app.engine import action, unit_funcs, item_funcs, static_random
+from app.engine import action, unit_funcs, item_funcs
 from app.engine.game_state import game
 
-from app.utilities import utils, str_utils
+from app.utilities import utils, str_utils, static_random
 from app.utilities.algorithms.interpolation import lerp
 
 import logging

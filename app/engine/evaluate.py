@@ -3,12 +3,11 @@ import math, random, re
 from typing import Dict
 from app.engine.query_engine import GameQueryEngine
 
-from app.utilities import utils
+from app.utilities import utils, static_random
 from app.data.database import DB
 
 import app.engine.config as cf
 from app.engine import engine, item_funcs, item_system, skill_system, combat_calcs, unit_funcs, target_system, random_groups
-from app.engine import static_random
 
 """
 Essentially just a repository that imports a lot of different things so that many different eval calls

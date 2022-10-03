@@ -1,9 +1,9 @@
 from app.data.database import DB
 from app.data.difficulty_modes import RNGOption
-from app.engine import (combat_calcs, item_funcs, item_system, skill_system,
-                        static_random, action)
+from app.engine import combat_calcs, item_funcs, item_system, skill_system, action
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
+from app.utilities import static_random
 
 import logging
 

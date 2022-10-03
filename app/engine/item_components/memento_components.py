@@ -6,7 +6,7 @@ from app.data.components import Type
 from app.data.database import DB
 
 from app.utilities import utils
-from app.engine import target_system, skill_system, action, equations
+from app.engine import skill_system, action, equations
 from app.engine.combat import playback as pb
 from app.engine.animations import MapAnimation
 from app.engine.game_state import game 

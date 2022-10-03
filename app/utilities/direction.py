@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Tuple
 
 class Direction(str, Enum):
     CENTER = 'center'
@@ -32,7 +33,33 @@ class Direction(str, Enum):
         return None
 
     @staticmethod
-    def sorting_key(direction, size):
+    def determine(old: Tuple[int, int], new: Tuple[int, int]):
+        oldx, oldy = old
+        newx, newy = new
+        if newx > oldx:
+            if newy > oldy:
+                return Direction.SOUTHEAST
+            elif newy < oldy:
+                return Direction.NORTHEAST
+            else:
+                return Direction.EAST
+        elif newx < oldx:
+            if newy > oldy:
+                return Direction.SOUTHWEST
+            elif newy < oldy:
+                return Direction.NORTHWEST
+            else:
+                return Direction.WEST
+        else:
+            if newy > oldy:
+                return Direction.SOUTH
+            elif newy < oldy:
+                return Direction.NORTH
+            else:
+                return Direction.CENTER
+
+    @staticmethod
+    def sorting_key(direction, size: Tuple[int, int]):
         width, height = size
         if direction == Direction.CENTER:
             return lambda x: abs(x[0] - width/2.) + abs(x[1] - height/2.)

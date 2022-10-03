@@ -1,9 +1,9 @@
 from app.data.database import DB
 from app.data.difficulty_modes import GrowthOption
-from app.engine import item_funcs, static_random
+from app.engine import item_funcs
 from app.engine.game_state import game
 from app.events import triggers
-from app.utilities import utils
+from app.utilities import utils, static_random
 
 import logging
 

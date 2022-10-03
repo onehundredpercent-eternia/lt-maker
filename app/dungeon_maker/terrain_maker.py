@@ -3,9 +3,9 @@ import os
 import random
 
 from app.constants import TILEWIDTH, TILEHEIGHT
-from app.engine import engine, static_random
+from app.engine import engine
 from app.map_maker import simplex_noise
-from app.utilities import utils
+from app.utilities import utils, static_random
 
 def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
     if seed is None:
