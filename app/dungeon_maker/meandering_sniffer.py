@@ -25,6 +25,7 @@ class MeanderingPathSniffer:
         self.current_direction = None
         self.keep_out.clear()
         self.path.clear()
+        self.path.append(self.current_position)
 
     def add_to_keep_out(self, pos):
         self.keep_out.add(pos)
@@ -43,6 +44,7 @@ class MeanderingPathSniffer:
             # Now update to new loc
             self.current_direction = Direction.determine(self.current_position, next_position)
             self.current_position = next_position
+            self.path.append(self.current_position)
 
     def get_utility(self, pos: Tuple[int, int]) -> float:
         # X points for continuing in the same direction
