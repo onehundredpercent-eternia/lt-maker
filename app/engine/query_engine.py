@@ -48,8 +48,8 @@ class GameQueryEngine():
     def _resolve_pos(self, has_pos_or_is_pos) -> Tuple[int, int] | None:
         try:
             # possibly a unit?
-            has_pos_or_is_pos = self._resolve_to_unit(has_pos_or_is_pos)
-            return has_pos_or_is_pos.position
+            a_unit = self._resolve_to_unit(has_pos_or_is_pos)
+            return a_unit.position
         except:
             return has_pos_or_is_pos
 
