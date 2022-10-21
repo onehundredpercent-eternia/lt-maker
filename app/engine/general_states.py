@@ -1330,7 +1330,8 @@ class WeaponChoiceState(MapState):
         game.cursor.hide()
         self.cur_unit = game.cursor.cur_unit
         self.cur_unit.sprite.change_state('chosen')
-        options = self.options
+        # Sort it by the current unit's inventory so that if the order of the inventory changes, it changes here too
+        options = sorted(self.options, key=lambda item: self.cur_unit.items.index(item) if item in self.cur_unit.items else 99)
         self.menu = menus.Choice(self.cur_unit, options)
         self.menu.set_limit(8)
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
