@@ -80,6 +80,9 @@ class DungeonTileMap:
                 print("%d" % layer, end='')
             print("\n", end='')
 
+    def get_bounds(self):
+        return (0, 0, self.width, self.height)
+
     def check_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 

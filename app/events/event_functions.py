@@ -24,7 +24,7 @@ from app.engine.objects.item import ItemObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
-from app.engine import map_generator
+from app.dungeon_maker import map_generator, random_groups
 from app.events import event_commands, regions, triggers
 from app.events.event_portrait import EventPortrait, MementoEventPortrait
 from app.events.speak_style import SpeakStyle
@@ -934,14 +934,12 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
 
 def generate_groups(self: Event, flags=None):
     flags = flags or set()
-
-    from app.engine import random_groups
+    
     random_groups.build_groups()
 
 def get_recruitable_unit(self: Event, level_var_nid, level, tag_list, team=None, flags=None):
     flags = flags or set()
 
-    from app.engine import random_groups
     level = int(level)
     team = team or 'player'
     tag_list = tag_list.split(',') if tag_list else ['Soldier']

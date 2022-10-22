@@ -3,11 +3,11 @@ from typing import Dict, List, Tuple
 
 from app.constants import TILEWIDTH, TILEHEIGHT
 
-from app.dungeon_maker import dungeon_maker, terrain_maker
+from app.dungeon_maker import dungeon_maker, terrain_maker, random_groups
 
 from app.engine.objects.tilemap import TileMapObject
 
-from app.engine import action, engine, random_groups
+from app.engine import action, engine
 from app.events import regions
 from app.engine.game_state import game
 

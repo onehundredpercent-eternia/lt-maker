@@ -9,6 +9,7 @@ from app.utilities.algorithms.interpolation import lerp
 from app.engine import pathfinding, node
 from app.dungeon_maker.dungeon_tilemap import DungeonTileMap
 from app.dungeon_maker.rooms import Room, RoomPrefab, Area, print_rooms
+from app.dungeon_maker.meandering_sniffer import MeanderingPathSniffer
 
 def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
     blob_positions = set()
@@ -387,20 +388,8 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             print(path1, start_tile, closest_tile)
 
             # Draw meandering space filling path to end corner
-            cells = []
-            for x in range(width):
-                for y in range(height):
-                    def foo():
-                        max_distance = 5
-                        closest_distance = min(max_distance, min([utils.calculate_distance((x, y), p) for p in path1]))
-                        return int(lerp(10, 1, closest_distance/max_distance))
-                    cost = property(foo)
-                    # Cost needs to be constantly recalculated to get meandering space filling curve
-                    cells.append(Node(x, y, True, cost))
-            pathfinder = pathfinding.AStar(closest_tile, end_tile, cells,
-                                           (0, 0, width, height), height, None)
-            can_move_through = lambda adj, team: True
-            path2 = pathfinder.process(can_move_through)
+            mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), seed=seed)
+            path2 = mpathfinder.process()
             # May have to reverse path2
             print(path2, closest_tile, end_tile)
             path = path1 + path2

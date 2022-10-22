@@ -45,10 +45,13 @@ class MeanderingPathSniffer:
             self.current_direction = Direction.determine(self.current_position, next_position)
             self.current_position = next_position
             self.path.append(self.current_position)
+        return self.path
 
     def get_utility(self, pos: Tuple[int, int]) -> float:
         # X points for continuing in the same direction
         # Always 0 points for going off the map or crossing over your own path or a keep out area
         # -X points for heading towards the goal_pos
         # -X points for heading towards your own path or a keep out area
-        return 1
+        if 0 <= pos[0] < self.bounds[2] and 0 <= pos[1] < self.bounds[3]:
+            return 1
+        return 0

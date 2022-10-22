@@ -291,7 +291,7 @@ class TileMapObject(Prefab):
     @classmethod
     def restore(cls, s_dict):
         if s_dict.get('scratch_data'):
-            from app.engine import map_generator
+            from app.dungeon_maker import map_generator
             self = map_generator.build_tilemap(**s_dict['scratch_data'])
         else:
             prefab = RESOURCES.tilemaps.get(s_dict['nid'])
