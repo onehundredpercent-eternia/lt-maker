@@ -345,6 +345,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     while True:
         print("Start Process!")
         tilemap = DungeonTileMap(width, height)
+        start_corner, end_corner = None, None
 
         if theme == 'simple':
             """
@@ -388,8 +389,13 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             # May have to reverse path1
             print(path1, start_tile, closest_tile)
 
+            # Decide on width for each tile
+            tile_radius = 2
+            tile_extend = tile_radius * 2
+
             # Draw meandering space filling path to end corner
-            mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), seed=seed)
+            mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), tile_radius + 1, seed=seed)
+            # Keep out of the old path
             for tile in path1:
                 mpathfinder.add_to_keep_out(tile)
             path2 = mpathfinder.process()
@@ -397,9 +403,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             print(path2, closest_tile, end_tile)
             path = path1 + path2
             # Now we have a path
-            # Decide on width for each tile
-            tile_radius = 2
-            tile_extend = tile_radius * 2
+            
             # Fill with floor and walls
             rooms = []
             for pos in path:
@@ -524,4 +528,4 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
         # Done!
         break
 
-    return tilemap
+    return tilemap, start_corner, end_corner

@@ -22,7 +22,11 @@ def get_floor_positions():
     return sorted([pos for pos in valid_positions if game.movement.check_simple_traversable(pos)])
 
 def build_tilemap(theme, map_palette, size, seed, level_nid):
-    dungeon = dungeon_maker.generate_dungeon(theme, size, seed)
+    dungeon, start_corner, end_corner = \
+        dungeon_maker.generate_dungeon(theme, size, seed)
+    game.game_vars['_start_corner'] = start_corner
+    game.game_vars['_end_corner'] = end_corner
+
     DB_terrain = terrain_maker.get_terrain(map_palette)
 
     # Need to create an image for the base layer
@@ -85,7 +89,11 @@ def generate_enemies(enemy_type=None) -> None:
     seed = get_seed()
 
     size = game.tilemap.width, game.tilemap.height
-    starting_pos = Direction.SOUTHWEST
+    start_corner = game.game_vars.get('_start_corner')
+    if start_corner:
+        starting_pos = start_corner
+    else:
+        starting_pos = Direction.SOUTHWEST
     # Find floor positions
     valid_positions = get_floor_positions()
     # Create formations
@@ -106,8 +114,12 @@ def generate_enemies(enemy_type=None) -> None:
     start_pos = (start_pos_x, start_pos_y)
 
     # Figure out boss position
-    # Find northeast most position
-    boss_starting_pos = Direction.opposite(starting_pos)
+    end_corner = game.game_vars.get('_end_corner')
+    if end_corner:
+        boss_starting_pos = end_corner
+    else:
+        # Find northeast most position
+        boss_starting_pos = Direction.opposite(starting_pos)
     all_boss_pos = sorted(valid_positions, key=Direction.sorting_key(boss_starting_pos, size))
     boss_pos = all_boss_pos[0]
 
