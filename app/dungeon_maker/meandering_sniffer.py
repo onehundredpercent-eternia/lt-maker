@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from app.utilities.direction import Direction
-from app.utilities import static_random
+from app.utilities import static_random, utils
 
 class MeanderingPathSniffer:
     # Order of directions is N, E, S, W
@@ -48,10 +48,33 @@ class MeanderingPathSniffer:
         return self.path
 
     def get_utility(self, pos: Tuple[int, int]) -> float:
-        # X points for continuing in the same direction
-        # Always 0 points for going off the map or crossing over your own path or a keep out area
-        # -X points for heading towards the goal_pos
-        # -X points for heading towards your own path or a keep out area
+        utility = 5
+        # 5 points for continuing in the same direction
+        direc = Direction.determine(self.current_position, pos)
+        if direc == self.current_direction:
+            utility += 10
+
+        # Always 0 points for going off the map
         if 0 <= pos[0] < self.bounds[2] and 0 <= pos[1] < self.bounds[3]:
-            return 1
-        return 0
+            pass
+        else:
+            return 0
+
+        # 0 points for crossing over your own path or a keep out area
+        if pos in self.path:
+            return 0
+        elif pos in self.keep_out:
+            return 0
+        
+        # -X points for heading towards the goal_pos
+        goal_distance = utils.calculate_distance(self.goal_pos, pos)
+        utility -= abs(self.path_girth * 2 - goal_distance)
+        # -X points for heading towards your own path or a keep out area
+        closest_distance = 100
+        for opos in self.path + self.keep_out:
+            distance = utils.calculate_distance(opos, pos)
+            if distance < closest_distance:
+                closest_distance = distance
+        utility -= abs(self.path_girth - closest_distance)
+
+        return max(0, utility)

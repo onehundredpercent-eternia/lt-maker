@@ -350,6 +350,7 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             """
             Essentially it draws a single meandering path from
             the start corner to the end corner
+            Sometimes it draws smaller rooms that fit inside corners and such
             """
 
             tilemap.reset_grid('Wall')
@@ -389,6 +390,8 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
 
             # Draw meandering space filling path to end corner
             mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), seed=seed)
+            for tile in path1:
+                mpathfinder.add_to_keep_out(tile)
             path2 = mpathfinder.process()
             # May have to reverse path2
             print(path2, closest_tile, end_tile)
@@ -418,12 +421,29 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
             # Draw doors to floor 2 areas
             connections = []
             for room in new_rooms:
-                selected_point = random.choice(room)
+                valid_tiles = [tile for tile in room.tiles if tilemap.get_terrain(tile) == 'Floor']
+                selected_point = random.choice(valid_tiles)
                 for direction in [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]:
-                    # Find wall in that direction
-                    # Determine if it is assailable to a connection
-                    # If so, add it to the list of connections
-                    pass
+                    wall = False
+                    counter = 0
+                    done = False
+                    while not done and counter < 10:
+                        counter += 1
+                        # Get the next point
+                        if direction == Direction.NORTH:
+                            selected_point = selected_point[0], selected_point[1] - 1
+                        elif direction == Direction.SOUTH:
+                            selected_point = selected_point[0], selected_point[1] + 1
+                        elif direction == Direction.EAST:
+                            selected_point = selected_point[0] + 1, selected_point[1]
+                        elif direction == Direction.WEST:
+                            selected_point = selected_point[0] - 1, selected_point[1]
+                        # Figure out what to do
+                        if tilemap.get_terrain(selected_point) == 'Wall':
+                            wall = True
+                            connections.append(selected_point)
+                        elif wall:
+                            done = True
 
             place_connections_onto_grid(tilemap, connections)
 
