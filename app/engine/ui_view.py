@@ -1,3 +1,4 @@
+from app.engine.graphics.text.text_renderer import fix_tags, render_text, text_width
 import logging
 from app.engine.text_evaluator import TextEvaluator
 import app.engine.config as cf
@@ -315,7 +316,7 @@ class UIView():
         # text_parser = TextEvaluator(logging.getLogger(), game)
         # text_lines = text_parser._evaluate_all(obj).split(',')
         # text_lines = [line.replace('{comma}', ',') for line in text_lines]
-        # longest_surf_width = text_funcs.get_max_width(font, text_lines)
+        # longest_surf_width = text_funcs.get_max_width('text', text_lines)
         # bg_surf = base_surf.create_base_surf(longest_surf_width + 16, 16 * len(text_lines) + 8)
 
         # if len(text_lines) == 1:
@@ -951,9 +952,15 @@ class ItemDescriptionPanel():
                 desc = self.item.desc
             else:
                 desc = "Cannot wield."
+
+            desc = desc.replace('{br}', '\n')
             lines = text_funcs.line_wrap('text', desc, width - 8)
+            new_lines = []
+            for line in lines:
+                new_lines += line.split('\n')
+            lines = fix_tags(new_lines)
             for idx, line in enumerate(lines):
-                FONT['text'].blit(line, bg_surf, (4 + 2, 8 + idx * 16))
+                render_text(bg_surf, ['text'], [line], [None], (4 + 2, 8 + idx * 16))
 
         return bg_surf
 

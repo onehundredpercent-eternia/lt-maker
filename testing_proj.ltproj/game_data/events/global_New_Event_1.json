@@ -1,0 +1,32 @@
+[
+    {
+        "name": "New Event_1",
+        "trigger": "on_title_screen",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "Left"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "Hi!"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]

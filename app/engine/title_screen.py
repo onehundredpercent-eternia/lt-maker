@@ -63,6 +63,19 @@ class TitleStartState(State):
             get_sound_thread().fade_in(DB.constants.value('music_main'), fade_in=50)
 
         game.state.refresh()
+
+        # Title Screen Intro Cinematic
+        if game.memory.get('title_intro_already_played'):
+            game.state.change('transition_in')
+        else:
+            game.sweep()
+            game.events.trigger(triggers.OnTitleScreen())
+            game.memory['title_intro_already_played'] = True
+
+        return 'repeat'
+
+    def begin(self):
+        if game.state.from_transition():
         game.state.change('transition_in')
         return 'repeat'
 
@@ -465,7 +478,7 @@ class TitleLoadState(State):
                 if save_slot.kind == 'start':  # Restart
                     # Restart level
                     next_level_nid = game.game_vars['_next_level_nid']
-                    game.load_states(['turn_change'])
+                    game.load_states(['start_level_asset_loading'])
                     game.start_level(next_level_nid)
                 elif save_slot.kind == 'overworld': # load overworld
                     game.load_states(['overworld'])
@@ -575,7 +588,7 @@ def build_new_game(slot: int):
         first_overworld_nid = DB.overworlds[0].nid
         game.game_vars['_next_overworld_nid'] = first_overworld_nid
     else:
-        game.state.change('turn_change')
+        game.state.change('start_level_asset_loading')
         game.state.process_temp_state()
 
         first_level_nid = DB.levels[0].nid
@@ -699,7 +712,7 @@ class TitleExtrasState(TitleLoadState):
         self.bg = game.memory['title_bg']
         self.particles = game.memory['title_particles']
 
-        options = ['Options', 'Credits', 'Sound Room']
+        options = ['Options', 'Achievements', 'Credits', 'Sound Room']
         if cf.SETTINGS['debug']:
             options.insert(0, 'All Saves')
         self.menu = menus.Main(options, 'title_menu_dark')
@@ -751,6 +764,10 @@ class TitleExtrasState(TitleLoadState):
                 game.state.change('transition_to')
             elif selection == 'Sound Room':
                 game.memory['next_state'] = 'extras_sound_room'
+                game.memory['base_bg'] = self.bg
+                game.state.change('transition_to')
+            elif selection == 'Achievements':
+                game.memory['next_state'] = 'base_achievement'
                 game.memory['base_bg'] = self.bg
                 game.state.change('transition_to')
 
@@ -852,7 +869,7 @@ class TitleSaveState(State):
         current_state = game.state.state[-1]
         next_level_nid = game.game_vars['_next_level_nid']
 
-        game.load_states(['turn_change'])
+        game.load_states(['start_level_asset_loading'])
         if make_save:
             save.suspend_game(game, game.memory['save_kind'], slot=self.menu.current_index)
 

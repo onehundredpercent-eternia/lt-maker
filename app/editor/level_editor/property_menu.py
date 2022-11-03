@@ -155,7 +155,6 @@ class PropertiesMenu(QWidget):
         current = self.current
         if not current:
             return
-
         self.title_box.edit.setText(current.name)
         self.nid_box.edit.setText(current.nid)
         if current.party in DB.parties.keys():
@@ -170,11 +169,11 @@ class PropertiesMenu(QWidget):
         if DB.units:
             self.unit_box.model._data = DB.units
             self.unit_box.model.layoutChanged.emit()
-        self.free_roam_box.edit.setChecked(bool(current.roam))
         if current.roam_unit:
             self.unit_box.edit.setValue(current.roam_unit)
         elif DB.units:
             self.unit_box.edit.setValue(DB.units[0].nid)
+        self.free_roam_box.edit.setChecked(bool(current.roam))
         if bool(current.roam):
             self.unit_box.show()
         else:
