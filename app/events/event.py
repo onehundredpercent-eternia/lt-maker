@@ -15,7 +15,7 @@ from app.engine.game_state import GameState
 from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
-from app.events import event_commands, triggers
+from app.events import event_commands, triggers, event_logging
 from app.events.event_portrait import EventPortrait
 from app.utilities import str_utils, utils
 from app.utilities.typing import NID
@@ -32,6 +32,8 @@ class Event():
 
         self.nid = nid
         self.commands: List[event_commands.EventCommand] = commands.copy()
+        for idx, command in enumerate(self.commands):
+            command.line_num = idx
         self.command_idx = 0
 
         self.background = None
@@ -99,7 +101,7 @@ class Event():
         # maps name to function
         self.should_update: Dict[str, Callable[[bool], bool]] = {}
 
-        self.logger = logging.getLogger()
+        self.logger = event_logging.EventLoggingAdapter(self.nid, logging.getLogger())
 
     @property
     def unit1(self):
@@ -430,7 +432,7 @@ class Event():
 
     def run_command(self, command: event_commands.EventCommand):
         from app.events.function_catalog import get_catalog
-
+        self.logger.line_num = command.line_num
         self.logger.info('%s: %s, %s', command.nid, command.parameters, command.chosen_flags)
 
         parameters, flags = event_commands.convert_parse(command, self._evaluate_all)

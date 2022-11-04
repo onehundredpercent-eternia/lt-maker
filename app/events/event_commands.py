@@ -47,6 +47,7 @@ class EventCommand(Prefab):
     parameters: dict = {}
     chosen_flags: set = set()
     display_values: list = []
+    line_num: int = 0
 
     def __init__(self, parameters: Dict[str, str] = None, flags: Set[str] = None, display_values: List[str] = None):
         self.parameters: Dict[str, str] = parameters or {}
