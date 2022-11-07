@@ -198,7 +198,7 @@ class PhaseChangeState(MapState):
 
         # we want to skip aesthetics if we're in free roam mode though
         if not self.is_roam():
-        phase.fade_out_phase_music()
+            phase.fade_out_phase_music()
             game.phase.slide_in()
         game.cursor.hide()
         action.do(action.LockTurnwheel(game.phase.get_current() != 'player'))
@@ -223,7 +223,7 @@ class PhaseChangeState(MapState):
     def draw(self, surf):
         surf = super().draw(surf)
         if not self.is_roam():
-        surf = game.phase.draw(surf)
+            surf = game.phase.draw(surf)
         return surf
 
     def end(self):
@@ -629,7 +629,7 @@ class MoveState(MapState):
                         if game.cursor.position in witch_warp:
                             cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         else:
-                        cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
+                            cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
                     elif game.cursor.position in witch_warp:
                         cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
@@ -903,8 +903,8 @@ class MenuState(MapState):
                 if selection in ('Attack', 'Spells', 'Item', 'Wait'):
                     info_menu.handle_info()
                 else:  # Show description for everything else.
-                get_sound_thread().play_sfx('Info In')
-                self.menu.info_flag = True
+                    get_sound_thread().play_sfx('Info In')
+                    self.menu.info_flag = True
 
         elif event == 'SELECT':
             get_sound_thread().play_sfx('Select 1')

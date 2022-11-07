@@ -13,6 +13,18 @@ class Direction(str, Enum):
     NORTHWEST = 'northwest'
 
     @staticmethod
+    def next(direction, pos: Tuple[int, int]) -> Tuple[int, int]:
+        if direction == Direction.NORTH:
+            pos = pos[0], pos[1] - 1
+        elif direction == Direction.SOUTH:
+            pos = pos[0], pos[1] + 1
+        elif direction == Direction.EAST:
+            pos = pos[0] + 1, pos[1]
+        elif direction == Direction.WEST:
+            pos = pos[0] - 1, pos[1]
+        return pos
+
+    @staticmethod
     def opposite(direction):
         if direction == Direction.NORTH:
             return Direction.SOUTH

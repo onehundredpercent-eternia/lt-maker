@@ -234,7 +234,7 @@ class MockCombat():
                 if animation:
                     anim = Animation(animation, position)
                 anim.set_tint(engine.BlendMode.BLEND_RGB_ADD)
-                    self.animations.append(anim)
+                self.animations.append(anim)
         else:
             self.no_damage()
 

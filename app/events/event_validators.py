@@ -965,7 +965,7 @@ class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
 
 class Theme(OptionValidator):
-    valid = ["default"]
+    valid = ["simple", "noise"]
 
 class MapPalette(OptionValidator):
     valid = ["dungeon", "monastery"]

@@ -359,7 +359,7 @@ class Dialog():
             line = processed_text_lines[-self.num_lines - 1]
             width = text_width(self.font_type, line)
             render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_pos))
-                x_pos += width
+            x_pos += width
 
         display_lines = processed_text_lines[-self.num_lines:]
         for idx, line in enumerate(display_lines):
@@ -371,7 +371,7 @@ class Dialog():
                 y_set = y_pos
             width = text_width(self.font_type, line)
             render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_set))
-                x_pos += width
+            x_pos += width
 
             end_x_pos = self.position[0] + 8 + x_pos
             end_y_pos = self.position[1] + 8 + y_pos

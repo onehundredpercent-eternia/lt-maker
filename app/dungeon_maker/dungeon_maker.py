@@ -335,197 +335,197 @@ def generate_dungeon(theme: str, size: Tuple[int, int], seed=-1):
     theme = theme.lower()
     print("Theme: %s" % theme)
     random.seed(seed)
-    width, height = size
 
+    # Keep trying until we get a good one
+    while True:
+        result =_generate_dungeon_process(theme, size, seed)
+        if result:
+            break
+
+    tilemap, start_corner, end_corner = result
+    return tilemap, start_corner, end_corner
+
+def _generate_dungeon_process(theme: str, size: Tuple[int, int], seed: int):
+    print("Start Process!")
+    width, height = size
     # Set up magic numbers
     avg_size = 3.5
     num_rooms = 6
 
-    # Keep trying until we get a good one
-    while True:
-        print("Start Process!")
-        tilemap = DungeonTileMap(width, height)
-        start_corner, end_corner = None, None
+    tilemap = DungeonTileMap(width, height)
+    start_corner, end_corner = None, None
 
-        if theme == 'simple':
-            """
-            Essentially it draws a single meandering path from
-            the start corner to the end corner
-            Sometimes it draws smaller rooms that fit inside corners and such
-            """
+    if theme == 'simple':
+        """
+        Essentially it draws a single meandering path from
+        the start corner to the end corner
+        Sometimes it draws smaller rooms that fit inside corners and such
+        """
 
-            tilemap.reset_grid('Wall')
+        tilemap.reset_grid('Wall')
 
-            # Choose start and end corner randomly
-            valid_directions = [Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST]
-            start_corner = random.choice(valid_directions)
-            valid_directions.remove(start_corner)
-            end_corner = random.choice(valid_directions)
-            valid_directions.remove(end_corner)
-            
-            # Find start and closest tile
-            all_tiles = [(x, y) for x in range(width) for y in range(height)]
-            starting_tiles = sorted(all_tiles, key=Direction.sorting_key(start_corner, (width, height)))
-            start_tile = random.choice(starting_tiles)
-            if Direction.opposite(start_corner) == end_corner:
-                closest_corner = random.choice(valid_directions)
-            else:
-                closest_corner = Direction.closer_of(start_corner, valid_directions)
-            ending_tiles = sorted(all_tiles, key=Direction.sorting_key(end_corner, (width, height)))
-            end_tile = random.choice(ending_tiles)
-            closest_tiles = sorted(all_tiles, key=Direction.sorting_key(closest_corner, (width, height)))
-            closest_tile = random.choice(closest_tiles)
-            
-            # Draw path from start to closest corner
-            # Create grid
-            cells = []
-            for x in range(width):
-                for y in range(height):
-                    cells.append(node.Node(x, y, True, 1))
-            pathfinder = pathfinding.AStar(start_tile, closest_tile, cells,
-                                           (0, 0, width, height), height, None)
-            can_move_through = lambda adj, team: True
-            path1 = pathfinder.process(can_move_through)
-            # May have to reverse path1
-            print(path1, start_tile, closest_tile)
-
-            # Decide on width for each tile
-            tile_radius = 2
-            tile_extend = tile_radius * 2
-
-            # Draw meandering space filling path to end corner
-            mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), tile_radius + 1, seed=seed)
-            # Keep out of the old path
-            for tile in path1:
-                mpathfinder.add_to_keep_out(tile)
-            path2 = mpathfinder.process()
-            # May have to reverse path2
-            print(path2, closest_tile, end_tile)
-            path = path1 + path2
-            # Now we have a path
-            
-            # Fill with floor and walls
-            rooms = []
-            for pos in path:
-                x, y = pos[0] - tile_radius, pos[1] - tile_radius
-                room_prefab = RoomPrefab(x, y, tile_extend, tile_extend)
-                rooms.append(Room.from_prefab(room_prefab, tilemap))
-
-            # Override all walls with floors
-            for room in rooms:
-                for tile in room.tiles:
-                    tilemap.terrain_grid[tile] = 'Floor'
-                    tilemap.set_layer(*tile, 1)
-            tilemap.print_grid()
-
-            # Fill large empty areas with floor 2
-            new_rooms: List[List[Tuple[int, int]]] = \
-                fill_large_empty_areas(tilemap, 'Wall', 'Floor', [2])
-
-            # Draw doors to floor 2 areas
-            connections = []
-            for room in new_rooms:
-                valid_tiles = [tile for tile in room.tiles if tilemap.get_terrain(tile) == 'Floor']
-                selected_point = random.choice(valid_tiles)
-                for direction in [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]:
-                    wall = False
-                    counter = 0
-                    done = False
-                    while not done and counter < 10:
-                        counter += 1
-                        # Get the next point
-                        if direction == Direction.NORTH:
-                            selected_point = selected_point[0], selected_point[1] - 1
-                        elif direction == Direction.SOUTH:
-                            selected_point = selected_point[0], selected_point[1] + 1
-                        elif direction == Direction.EAST:
-                            selected_point = selected_point[0] + 1, selected_point[1]
-                        elif direction == Direction.WEST:
-                            selected_point = selected_point[0] - 1, selected_point[1]
-                        # Figure out what to do
-                        if tilemap.get_terrain(selected_point) == 'Wall':
-                            wall = True
-                            connections.append(selected_point)
-                        elif wall:
-                            done = True
-
-            place_connections_onto_grid(tilemap, connections)
-
-        elif theme == 'noise':
-            # Create several rooms and place them in the map
-            # Some of them will be level 1 and some level 2
-            # A room needs to have walls and a floor
-            room_prefabs: List[RoomPrefab] = []
-            rooms: List[Room] = []
-            while len(rooms) < num_rooms:
-                new_room_prefab: RoomPrefab = create_room(avg_size, width, height)
-                if not any(room_prefab.overlaps(new_room_prefab) for room_prefab in room_prefabs):
-                    room_prefabs.append(new_room_prefab)
-                    new_room = Room.from_prefab(new_room_prefab, tilemap)
-                    rooms.append(new_room)
-                    idx = len(rooms) - 1
-                    # layer = idx % 2 + 1
-                    layer = 2
-                    for tile in new_room.tiles:
-                        tilemap.set_layer(*tile, layer)
-                    if layer == 2:
-                        for tile in new_room.wall_tiles:
-                            tilemap.set_layer(*tile, layer)
-                else:
-                    continue  # Overlaps, so ignore this
-
-            # Place walls and floors on the tilemap
-            for room in rooms:
-                for tile in room.tiles:
-                    tilemap.terrain_grid[tile] = 'Floor'
-                for tile in room.wall_tiles:
-                    tilemap.terrain_grid[tile] = 'Wall'
-            tilemap.print_grid()
-            tilemap.print_layer_grid()
-
-            # Find connections
-            floor_tiles = get_floor_positions(tilemap)
-            new_floors = find_adjacency_connections(tilemap, rooms, set(floor_tiles))
-            # Place connections onto grid
-            place_connections_onto_grid(tilemap, new_floors)
-
+        # Choose start and end corner randomly
+        valid_directions = [Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST]
+        start_corner = random.choice(valid_directions)
+        valid_directions.remove(start_corner)
+        end_corner = random.choice(valid_directions)
+        valid_directions.remove(end_corner)
+        
+        # Find start and closest tile
+        all_tiles = [(x, y) for x in range(width) for y in range(height)]
+        starting_tiles = sorted(all_tiles, key=Direction.sorting_key(start_corner, (width, height)))
+        start_tile = random.choice(starting_tiles)
+        if Direction.opposite(start_corner) == end_corner:
+            closest_corner = random.choice(valid_directions)
         else:
-            print("Theme %s is not supported" % theme)
-            raise NotImplementedError
+            closest_corner = Direction.closer_of(start_corner, valid_directions)
+        ending_tiles = sorted(all_tiles, key=Direction.sorting_key(end_corner, (width, height)))
+        end_tile = random.choice(ending_tiles)
+        closest_tiles = sorted(all_tiles, key=Direction.sorting_key(closest_corner, (width, height)))
+        closest_tile = random.choice(closest_tiles)
+        
+        # Draw path from start to closest corner
+        # Create grid
+        cells = []
+        for x in range(width):
+            for y in range(height):
+                cells.append(node.Node(x, y, True, 1))
+        pathfinder = pathfinding.AStar(start_tile, closest_tile, cells,
+                                       (0, 0, width, height), height, None)
+        can_move_through = lambda adj, team: True
+        path1 = pathfinder.process(can_move_through)
+        # May have to reverse path1
+        print(path1, start_tile, closest_tile)
 
-        # all themes use this section
-        print("Tilemap Grid")
+        # Decide on width for each tile
+        tile_radius = 2
+        tile_extend = tile_radius * 2
+
+        # Draw meandering space filling path to end corner
+        mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), tile_radius + 1, seed=seed)
+        # Keep out of the old path
+        for tile in path1:
+            mpathfinder.add_to_keep_out(tile)
+        path2 = mpathfinder.process()
+        # May have to reverse path2
+        print(path2, closest_tile, end_tile)
+        path = path1 + path2
+        print(path)
+        # Now we have a path
+        
+        # Fill with floor and walls
+        rooms = []
+        for pos in path:
+            x, y = pos[0] - tile_radius, pos[1] - tile_radius
+            room_prefab = RoomPrefab(x, y, tile_extend, tile_extend)
+            rooms.append(Room.from_prefab(room_prefab, tilemap))
+
+        # Override all walls with floors
+        for room in rooms:
+            for tile in room.tiles:
+                tilemap.terrain_grid[tile] = 'Floor'
+                tilemap.set_layer(*tile, 1)
         tilemap.print_grid()
 
-        print("2 tile walls")
-        # Make sure there's room for 2-tile tall walls in layer 1 rooms
-        create_2_tile_walls(tilemap)
+        # Fill large empty areas with floor 2
+        new_rooms: List[List[Tuple[int, int]]] = \
+            fill_large_empty_areas(tilemap, 'Wall', 'Floor', [2])
 
-        tilemap.print_grid()
-        print("remove 1 way alcoves")
-        fill_in_one_way_alcoves(tilemap)
-        tilemap.print_grid()
+        # Draw doors to floor 2 areas
+        connections = []
+        for room in new_rooms:
+            valid_tiles = [tile for tile in room.tiles if tilemap.get_terrain(tile) == 'Floor']
+            selected_point = random.choice(valid_tiles)
+            for direction in [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]:
+                wall = False
+                counter = 0
+                done = False
+                while not done and counter < 10:
+                    counter += 1
+                    # Get the next point
+                    selected_point = Direction.next(direction, selected_point)
+                    # Figure out what to do
+                    if tilemap.get_terrain(selected_point) == 'Wall':
+                        wall = True
+                        connections.append(selected_point)
+                    elif wall:
+                        done = True
 
-        # Check number of rooms
+        place_connections_onto_grid(tilemap, connections)
+
+    elif theme == 'noise':
+        # Create several rooms and place them in the map
+        # Some of them will be level 1 and some level 2
+        # A room needs to have walls and a floor
+        room_prefabs: List[RoomPrefab] = []
+        rooms: List[Room] = []
+        while len(rooms) < num_rooms:
+            new_room_prefab: RoomPrefab = create_room(avg_size, width, height)
+            if not any(room_prefab.overlaps(new_room_prefab) for room_prefab in room_prefabs):
+                room_prefabs.append(new_room_prefab)
+                new_room = Room.from_prefab(new_room_prefab, tilemap)
+                rooms.append(new_room)
+                # idx = len(rooms) - 1
+                # layer = idx % 2 + 1
+                layer = 2
+                for tile in new_room.tiles:
+                    tilemap.set_layer(*tile, layer)
+                if layer == 2:
+                    for tile in new_room.wall_tiles:
+                        tilemap.set_layer(*tile, layer)
+            else:
+                continue  # Overlaps, so ignore this
+
+        # Place walls and floors on the tilemap
+        for room in rooms:
+            for tile in room.tiles:
+                tilemap.terrain_grid[tile] = 'Floor'
+            for tile in room.wall_tiles:
+                tilemap.terrain_grid[tile] = 'Wall'
+        tilemap.print_grid()
+        tilemap.print_layer_grid()
+
+        # Find connections
         floor_tiles = get_floor_positions(tilemap)
-        print(len(floor_tiles))
-        areas: List[Area] = find_new_areas(tilemap, floor_tiles.copy())
-        print("Number of Areas", len(areas))
-        print_rooms(areas)
-        if len(areas) != 1:
-            continue
+        new_floors = find_adjacency_connections(tilemap, rooms, set(floor_tiles))
+        # Place connections onto grid
+        place_connections_onto_grid(tilemap, new_floors)
 
-        final_areas: List[Area] = find_all_areas(floor_tiles)
-        print_rooms(final_areas)
+    else:
+        print("Theme %s is not supported" % theme)
+        raise NotImplementedError
 
-        # Add Pillars where appropriate
-        add_pillars(tilemap, final_areas)
+    # all themes use this section
+    print("Tilemap Grid")
+    tilemap.print_grid()
 
-        convert_to_floor_2(tilemap)
+    print("2 tile walls")
+    # Make sure there's room for 2-tile tall walls in layer 1 rooms
+    create_2_tile_walls(tilemap)
 
-        tilemap.print_grid()
+    tilemap.print_grid()
+    print("remove 1 way alcoves")
+    fill_in_one_way_alcoves(tilemap)
+    tilemap.print_grid()
 
-        # Done!
-        break
+    # Check number of rooms
+    floor_tiles = get_floor_positions(tilemap)
+    print(len(floor_tiles))
+    areas: List[Area] = find_new_areas(tilemap, floor_tiles.copy())
+    print("Number of Areas", len(areas))
+    print_rooms(areas)
+    if len(areas) != 1:
+        return None
 
+    final_areas: List[Area] = find_all_areas(floor_tiles)
+    print_rooms(final_areas)
+
+    # Add Pillars where appropriate
+    add_pillars(tilemap, final_areas)
+
+    convert_to_floor_2(tilemap)
+
+    tilemap.print_grid()
+
+    # Done!
     return tilemap, start_corner, end_corner

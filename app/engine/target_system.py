@@ -258,7 +258,7 @@ def get_valid_targets(unit, item=None) -> set:
     if not item:
         return set()
     if ((item_system.no_attack_after_move(unit, item) or skill_system.no_attack_after_move(unit))
-         and unit.has_moved_any_distance):
+            and unit.has_moved_any_distance):
         return set()
     # Check sequence item targeting
     if item.sequence_item:
@@ -288,7 +288,7 @@ def get_valid_targets(unit, item=None) -> set:
         item_range = item_funcs.get_range(unit, item)
         if item_range:
             max_item_range = max(item_range)
-        valid_targets = set(line_of_sight.line_of_sight([unit.position], valid_targets, max_item_range))
+            valid_targets = set(line_of_sight.line_of_sight([unit.position], valid_targets, max_item_range))
         else: # I think this is impossible to happen, as it is checked in various places above in this function
             valid_targets = set()  
     return valid_targets
@@ -371,9 +371,10 @@ def find_strike_partners(attacker, defender, item):
     return attacker_partner, defender_partner
 
 def strike_partner_formula(allies: list, attacker, defender, mode, attack_info):
-    '''This is the formula for the best choice to make
+    '''
+    This is the formula for the best choice to make
     when autoselecting strike partners
-    It returns a new list!'''
+    '''
     if not allies:
         return None
     damage = [combat_calcs.compute_assist_damage(ally, defender, ally.get_weapon(), defender.get_weapon(), mode, attack_info) for ally in allies]

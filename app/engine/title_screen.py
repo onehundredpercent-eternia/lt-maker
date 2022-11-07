@@ -76,8 +76,8 @@ class TitleStartState(State):
 
     def begin(self):
         if game.state.from_transition():
-        game.state.change('transition_in')
-        return 'repeat'
+            game.state.change('transition_in')
+            return 'repeat'
 
     def take_input(self, event):
         if event:

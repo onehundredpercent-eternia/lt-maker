@@ -136,9 +136,9 @@ class Armsthrift(SkillComponent):
     def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
         # Handles Uses
         if item.data.get('uses', None) and item.data.get('starting_uses', None):
-        curr_uses = item.data.get('uses')
-        max_uses = item.data.get('starting_uses')
-        actions.append(action.SetObjData(item, 'uses', min(curr_uses + self.value - 1, max_uses)))
+            curr_uses = item.data.get('uses')
+            max_uses = item.data.get('starting_uses')
+            actions.append(action.SetObjData(item, 'uses', min(curr_uses + self.value - 1, max_uses)))
         # Handles Chapter Uses
         if item.data.get('c_uses', None) and item.data.get('starting_c_uses', None):
             curr_uses = item.data.get('c_uses')

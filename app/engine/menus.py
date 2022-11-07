@@ -1060,7 +1060,7 @@ class Table(Simple):
             if self.mode == 'objective_menu':
                 row += 5
             else:
-            row += 1
+                row += 1
             if self._exists(row, col):
                 pass
             elif first_push:
@@ -1098,7 +1098,7 @@ class Table(Simple):
             if self.mode == 'objective_menu':
                 row -= 5
             else:
-            row -= 1
+                row -= 1
             if self._exists(row, col):
                 pass
             elif first_push:
@@ -1180,7 +1180,7 @@ class Table(Simple):
         if self.mode == 'objective_menu':
             total_width = 120
         else:
-        total_width = total_width - total_width%8
+            total_width = total_width - total_width%8
         if self.mode in ('unit', 'prep_manage'):
             total_width += 32
         return total_width
@@ -1264,18 +1264,18 @@ class Table(Simple):
                             FONT['text-yellow'].blit("Loss Conditions", surf, (topleft[0] + 4, topleft[1] + 4 + (win_count - self.scroll + 2) * 16))
                     choice.draw(surf, left, top)
                 else:
-                if self.mode in ('unit', 'prep_manage'):
-                    left += 16
-                if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
-                    choice.draw_highlight(surf, left, top, width - 8 if draw_scroll_bar else width)
-                elif idx + (self.scroll * self.columns) == self.fake_cursor_idx:
-                    choice.draw_highlight(surf, left, top, width - 8 if draw_scroll_bar else width)
-                else:
-                    choice.draw(surf, left, top)
-                if idx + (self.scroll * self.columns) == self.fake_cursor_idx:
-                    self.stationary_cursor.draw(surf, left, top)
-                if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
-                    self.cursor.draw(surf, left, top)
+                    if self.mode in ('unit', 'prep_manage'):
+                        left += 16
+                    if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
+                        choice.draw_highlight(surf, left, top, width - 8 if draw_scroll_bar else width)
+                    elif idx + (self.scroll * self.columns) == self.fake_cursor_idx:
+                        choice.draw_highlight(surf, left, top, width - 8 if draw_scroll_bar else width)
+                    else:
+                        choice.draw(surf, left, top)
+                    if idx + (self.scroll * self.columns) == self.fake_cursor_idx:
+                        self.stationary_cursor.draw(surf, left, top)
+                    if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
+                        self.cursor.draw(surf, left, top)
         else:
             FONT['text-grey'].blit("Nothing", bg_surf, (topleft[0] + 16, topleft[1] + 4))
 
