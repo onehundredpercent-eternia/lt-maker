@@ -9,6 +9,7 @@ from app.data.database import DB
 import app.engine.config as cf
 from app.engine.persistent_records import RECORDS
 from app.engine import engine, item_funcs, item_system, skill_system, combat_calcs, unit_funcs, target_system
+from app.engine import rogue_emblem
 """
 Essentially just a repository that imports a lot of different things so that many different eval calls
 will be accepted

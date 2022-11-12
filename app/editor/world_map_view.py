@@ -196,29 +196,6 @@ class WorldMapView(SimpleMapView):
                     coord[0] * TILEWIDTH - 8, coord[1] * TILEHEIGHT - 5, cursor_image)
             painter.end()
 
-    def draw_hex(self, painter, hex_prefab, selected=False):
-        pixel_corners = hex_math.polygon_corners(hex_math.default_layout(), hex_prefab.pos)
-        
-        if selected:
-            pen = QPen(Qt.yellow, 2, style=Qt.SolidLine)
-            painter.setRenderHint(QPainter.Antialiasing)
-            painter.setPen(pen)
-        else:
-            pen = QPen(Qt.black, 1, style=Qt.SolidLine)
-            painter.setRenderHint(QPainter.Antialiasing)
-            painter.setPen(pen)
-
-        for point1, point2 in zip(pixel_corners, [pixel_corners[5]] + pixel_corners[:5]):
-            painter.drawLine(point1[0], point1[1], point2[0], point2[1])
-
-    def paint_hexes(self, current_level):
-        if self.working_image:
-            painter = QPainter()
-            painter.begin(self.working_image)
-            for hex_prefab in current_level.hexes.values():
-                self.draw_hex(painter, hex_prefab, selected=hex_prefab is self.selected)
-            painter.end()
-
     def show_map(self):
         if self.working_image:
             self.clear_scene()

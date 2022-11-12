@@ -377,7 +377,6 @@ class OverworldEditor(QMainWindow):
             self.addDockWidget(Qt.RightDockWidgetArea, dock)
 
         self.tabifyDockWidget(self.docks['Properties'], self.docks['Node Editor'])
-        self.tabifyDockWidget(self.docks['Node Editor'], self.docks['Hex Editor'])
 
         for title, dock in self.docks.items():
             dock.show()
