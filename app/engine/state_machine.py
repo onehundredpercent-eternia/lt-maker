@@ -41,7 +41,6 @@ class StateMachine():
                                 settings, status_upkeep, text_entry,
                                 title_screen, trade, transitions, turnwheel,
                                 victory_screen)
-        # from app.engine import stat_screen
         from app.engine.game_menus.menu_states import unit_menu_state
         from app.engine.overworld import overworld_states
         from app.events import event_state
@@ -74,7 +73,6 @@ class StateMachine():
              'objective_menu': objective_menu.ObjectiveMenuState,
              'unit_menu': unit_menu_state.UnitMenuState,
              'info_menu': info_menu.InfoMenuState,
-             # 'stat_screen': stat_screen.StatScreenState,
              'phase_change': general_states.PhaseChangeState,
              'move': general_states.MoveState,
              'movement': general_states.MovementState,
@@ -154,7 +152,6 @@ class StateMachine():
              'overworld_game_option_menu': overworld_states.OverworldGameOptionMenuState,
              'overworld_party_option_menu': overworld_states.OverworldPartyOptionMenu,
              'overworld_on_node': overworld_states.OverworldNodeTransition,
-             'overworld_on_hex': overworld_states.OverworldHexTransition,
              'overworld_next_level': overworld_states.OverworldLevelTransition,
              'dialog_log': dialog_log.DialogLogState
              }

@@ -7,32 +7,11 @@ from app.engine import engine
 from app.engine.graphics.ingame_ui.overworld_ui import OverworldTravelUI
 from app.engine.overworld.overworld_cursor import OverworldCursor
 
-from app.engine.sprites import SPRITES
-from app.engine.hex_board import Sight
-from app.utilities import hex_math
-
 class OverworldMapView():
     def __init__(self, overworld: OverworldManager = None, cursor: OverworldCursor = None):
         self.overworld = overworld
         self.cursor = cursor
         self.overworld_ui = OverworldTravelUI(overworld, cursor)
-
-    def draw_hexes(self, surf, full_size, cull_rect):
-        hex_board = self.overworld.hex_board
-        if self.cursor:
-            hovered_hex_position = self.cursor.get_hovered_hex()
-        else:
-            hovered_hex_position = None
-        for h in hex_board.hex_graph.values():
-            if h.sight == Sight.INSIGHT or h.sight == Sight.EXPLORED or True:
-                # special behavior for the hovered hex
-                if hovered_hex_position == h.pos:
-                    hex_outline = SPRITES.get('selected_hex_outline')
-                else:
-                    hex_outline = SPRITES.get('hex_outline')
-                pos = hex_math.hex_to_pixel(h.pos)
-                pos = pos[0] - cull_rect[0] - TILEWIDTH//2, pos[1] - cull_rect[1] - TILEHEIGHT//2
-                surf.blit(hex_outline, pos)
 
     def draw_nodes(self, surf, cull_rect):
         for node in self.overworld.revealed_nodes:
@@ -89,7 +68,6 @@ class OverworldMapView():
         surf = surf.convert_alpha()
 
         # draw the map objects: roads, nodes, and entities
-        self.draw_hexes(surf, full_size, cull_rect)
         self.draw_roads(surf, full_size, cull_rect)
         self.draw_nodes(surf, cull_rect)
         self.overworld.tilemap.animations = [anim for anim in self.overworld.tilemap.animations if not anim.update()]

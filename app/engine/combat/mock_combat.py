@@ -367,8 +367,8 @@ class MockCombat():
             self.darken_ui_background += 1
 
     def draw_ui(self, surf) -> tuple:
-        platform_trans = 88 + 20
-        platform_top = 88 + 20
+        platform_trans = WINHEIGHT - 72
+        platform_top = WINHEIGHT - 72
         if self.darken_background or self.target_dark:
             bg = image_mods.make_translucent(SPRITES.get('bg_black'), 1 - self.darken_background)
             surf.blit(bg, (0, 0))

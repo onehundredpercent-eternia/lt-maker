@@ -7,10 +7,6 @@ class RegionType(str, Enum):
     EVENT = 'event'
     FORMATION = 'formation'
     TIME = 'time'
-    GROUP = 'group'
-    GRAVE = 'grave'
-
-DROPPABLE_OPTIONS = ["None", "Weapon", "Weapon+", "Spell", "Spell+", "Forge", "Promo", "Exp", "GraveWeapon", "Any"]
 
 class Region(Prefab):
     def __init__(self, nid):
@@ -23,16 +19,6 @@ class Region(Prefab):
         self.condition = 'True'
         self.only_once = False
         self.interrupt_move = False
-
-        # Only used for group regions
-        self.group_data = {}
-
-    def save_attr(self, name, value):
-        if name == 'group_data':
-            value = self.group_data.copy()
-        else:
-            value = super().save_attr(name, value)
-        return value
 
     def restore_attr(self, name, value):
         if name == 'region_type':

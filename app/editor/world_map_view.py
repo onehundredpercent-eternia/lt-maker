@@ -9,7 +9,6 @@ from app.editor.tile_editor import tile_model
 from app.resources.resources import RESOURCES
 from app.sprites import SPRITES
 from app.utilities.typing import Point
-from app.utilities import hex_math
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QTransform
 
@@ -47,7 +46,6 @@ class WorldMapView(SimpleMapView):
         else:
             self.clear_scene()
             return
-        self.paint_hexes(self.current_level)
         self.paint_roads(self.current_level)
         self.paint_nodes(self.current_level)
         self.paint_selected()

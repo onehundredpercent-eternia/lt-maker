@@ -13,6 +13,7 @@ class MeanderingPathCreator:
         self.goal_pos = goal_pos
         self.bounds = bounds
         self.path_girth = path_girth
+        self.num_positions = 6
 
         self.keep_out = set()
         self.path = []
@@ -26,7 +27,6 @@ class MeanderingPathCreator:
 
     def draw_line(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> List[Tuple[int, int]]:
         assert pos1[0] == pos2[0] or pos1[1] == pos2[1]
-        print(pos1, pos2)
         if pos1[0] == pos2[0]:
             if pos1[1] < pos2[1]:
                 return [(pos1[0], y) for y in range(pos1[1], pos2[1])]
@@ -41,11 +41,10 @@ class MeanderingPathCreator:
     def process(self):
         # Choose X number of random positions that are more than 
         # path_girth from start_pos, goal_pos, existing positions, and keep_out zones
-        num_positions = 6
         positions = set()
         bad_positions = self.keep_out | {self.start_pos, self.goal_pos}
         width, height = self.bounds[2], self.bounds[3]
-        while len(positions) < num_positions:
+        while len(positions) < self.num_positions:
             valid_positions = [(x, y) for x in range(width) for y in range(height)]
             valid_positions = [pos for pos in valid_positions if all(utils.calculate_distance(pos, opos) > self.path_girth for opos in bad_positions)]
             pos = self.rn.choice(valid_positions)
@@ -63,10 +62,8 @@ class MeanderingPathCreator:
                 best_permutation = perm
 
         points = best_permutation
-        print(points)
         path = []
         for a, b in zip(points[:-1], points[1:]):
-            print("Connection", a, b)
             if a[0] == b[0]:
                 path += self.draw_line(a, b)
             elif a[1] == b[1]:
@@ -82,10 +79,9 @@ class MeanderingPathCreator:
                     other_corner = corners[0] if corner == corners[1] else corners[1]
                     line1 = self.draw_line(a, other_corner)
                     line2 = self.draw_line(other_corner, b)
-                    
+
                 path += line1
                 path += line2
-            print(path)
         path.append(self.goal_pos)
         return path
 

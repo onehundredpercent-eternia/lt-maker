@@ -9,7 +9,7 @@ from app.utilities.algorithms.interpolation import lerp
 from app.engine import pathfinding, node
 from app.dungeon_maker.dungeon_tilemap import DungeonTileMap
 from app.dungeon_maker.rooms import Room, RoomPrefab, Area, print_rooms
-from app.dungeon_maker.meandering_sniffer import MeanderingPathSniffer
+from app.dungeon_maker.meandering_path_creator import MeanderingPathCreator
 
 def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
     blob_positions = set()
@@ -21,7 +21,6 @@ def flood_fill(check_bounds, room_tiles: set, pos: tuple) -> set:
         counter = 0
         while unexplored_stack and counter < 99999:
             current_pos = unexplored_stack.pop()
-
             if current_pos in blob_positions:
                 continue
             if not check_bounds(*current_pos):
@@ -154,13 +153,14 @@ def fill_large_empty_areas(tilemap: DungeonTileMap, old: str, new: str, layer_ch
     tiles = [pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == old]
     blobs = []
     while tiles:
-        tile = tiles.pop()
+        tile = tiles[-1]
         blob = flood_fill(tilemap.check_bounds, tiles, tile)
         blobs.append(blob)
         for b in blob:
             if b in tiles:
                 tiles.remove(b)
 
+    # Find where we can make new rooms
     new_rooms = []
     for blob in blobs:
         layer = random.choice(layer_choice)
@@ -172,10 +172,15 @@ def fill_large_empty_areas(tilemap: DungeonTileMap, old: str, new: str, layer_ch
                         (not east or east == old) and \
                         (not south or south == old) and \
                         (not west or west == old):
-                    tilemap.set_terrain(*tile, new)
-                    tilemap.set_layer(*tile, layer)
                     room.append(tile)
-            new_rooms.append(room)
+            if room:
+                new_rooms.append(room)
+
+    # Now actually convert these to floors
+    for room in new_rooms:
+        for tile in room:
+            tilemap.set_terrain(*tile, new)
+            tilemap.set_layer(*tile, layer)
 
     return new_rooms
 
@@ -370,19 +375,22 @@ def _generate_dungeon_process(theme: str, size: Tuple[int, int], seed: int):
         valid_directions.remove(start_corner)
         end_corner = random.choice(valid_directions)
         valid_directions.remove(end_corner)
+        print(start_corner, end_corner)
         
         # Find start and closest tile
+        # Don't always pick the exact corner. Sometimes randomly pick other nearby tiles
+        num_tiles_to_pick_from = 12  
         all_tiles = [(x, y) for x in range(width) for y in range(height)]
         starting_tiles = sorted(all_tiles, key=Direction.sorting_key(start_corner, (width, height)))
-        start_tile = random.choice(starting_tiles)
+        start_tile = random.choice(starting_tiles[:num_tiles_to_pick_from])
         if Direction.opposite(start_corner) == end_corner:
             closest_corner = random.choice(valid_directions)
         else:
             closest_corner = Direction.closer_of(start_corner, valid_directions)
         ending_tiles = sorted(all_tiles, key=Direction.sorting_key(end_corner, (width, height)))
-        end_tile = random.choice(ending_tiles)
+        end_tile = random.choice(ending_tiles[:num_tiles_to_pick_from])
         closest_tiles = sorted(all_tiles, key=Direction.sorting_key(closest_corner, (width, height)))
-        closest_tile = random.choice(closest_tiles)
+        closest_tile = random.choice(closest_tiles[:num_tiles_to_pick_from])
         
         # Draw path from start to closest corner
         # Create grid
@@ -394,22 +402,21 @@ def _generate_dungeon_process(theme: str, size: Tuple[int, int], seed: int):
                                        (0, 0, width, height), height, None)
         can_move_through = lambda adj, team: True
         path1 = pathfinder.process(can_move_through)
-        # May have to reverse path1
-        print(path1, start_tile, closest_tile)
+        path1 = list(reversed(path1))
+        print(path1, start_tile, closest_corner, closest_tile)
 
         # Decide on width for each tile
         tile_radius = 2
         tile_extend = tile_radius * 2
 
         # Draw meandering space filling path to end corner
-        mpathfinder = MeanderingPathSniffer(closest_tile, end_tile, tilemap.get_bounds(), tile_radius + 1, seed=seed)
+        mpathfinder = MeanderingPathCreator(closest_tile, end_tile, tilemap.get_bounds(), tile_radius, seed=seed)
         # Keep out of the old path
         for tile in path1:
             mpathfinder.add_to_keep_out(tile)
         path2 = mpathfinder.process()
-        # May have to reverse path2
         print(path2, closest_tile, end_tile)
-        path = path1 + path2
+        path = path1[:-1] + path2
         print(path)
         # Now we have a path
         
@@ -417,7 +424,7 @@ def _generate_dungeon_process(theme: str, size: Tuple[int, int], seed: int):
         rooms = []
         for pos in path:
             x, y = pos[0] - tile_radius, pos[1] - tile_radius
-            room_prefab = RoomPrefab(x, y, tile_extend, tile_extend)
+            room_prefab = RoomPrefab(x, y, tile_extend + 1, tile_extend + 1)
             rooms.append(Room.from_prefab(room_prefab, tilemap))
 
         # Override all walls with floors
@@ -430,11 +437,13 @@ def _generate_dungeon_process(theme: str, size: Tuple[int, int], seed: int):
         # Fill large empty areas with floor 2
         new_rooms: List[List[Tuple[int, int]]] = \
             fill_large_empty_areas(tilemap, 'Wall', 'Floor', [2])
-
+        print("Fill Large Empty Areas")
+        tilemap.print_grid()
         # Draw doors to floor 2 areas
         connections = []
+        print(new_rooms)
         for room in new_rooms:
-            valid_tiles = [tile for tile in room.tiles if tilemap.get_terrain(tile) == 'Floor']
+            valid_tiles = [tile for tile in room if tilemap.get_terrain(tile) == 'Floor']
             selected_point = random.choice(valid_tiles)
             for direction in [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]:
                 wall = False

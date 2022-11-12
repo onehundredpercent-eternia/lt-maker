@@ -57,7 +57,6 @@ from app.editor.translation_widget import TranslationDialog
 from app.editor.equation_widget import EquationDialog
 from app.editor.event_editor.event_tab import EventDatabase
 from app.editor.lore_editor.lore_tab import LoreDatabase
-from app.editor.hex_editor.hex_type_tab import HexTypeDatabase
 from app.editor.raw_editor.raw_data_tab import RawDataDatabase
 
 # Resources
@@ -245,7 +244,6 @@ class MainEditor(QMainWindow):
                             "Difficulty Modes": DifficultyModeDatabase.edit,
                             "Supports": self.edit_supports,
                             "Lore": LoreDatabase.edit,
-                            "Hex Types": HexTypeDatabase.edit,
                             "Raw Data": RawDataDatabase.edit,
                             "Translations": self.edit_translations
                             }

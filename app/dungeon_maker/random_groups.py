@@ -283,7 +283,7 @@ def create_unit(klass, position, level, ai, ai_group, is_elite=False, droppable=
     assert all(item[0] in DB.items.keys() for item in starting_items)
     team = 'enemy'
     starting_position = position
-    level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, team, ai, None, ai_group, starting_position)
+    level_unit_prefab = GenericUnit(unit_nid, None, level, klass, DB.factions[0].nid, starting_items, [], team, ai, None, ai_group, starting_position)
     new_unit = UnitObject.from_prefab(level_unit_prefab, game.current_mode)
     if is_elite:
         new_unit._tags.append('Elite')

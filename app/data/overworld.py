@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from app.resources.tiles import TileMapPrefab
 
 from app.data.overworld_node import OverworldNodeCatalog, OverworldNodePrefab
-from app.data.hex_prefab import OverworldHexCatalog, HexPrefab
 from app.resources.resources import RESOURCES
 from app.utilities.data import Data, Prefab
 
@@ -21,24 +20,12 @@ class OverworldPrefab(Prefab):
         self.tilemap: str = None               # Tilemap Nid - background\
         self.music: str = None                 # Music Nid
         self.overworld_nodes: OverworldNodeCatalog = OverworldNodeCatalog()
-        self.hexes: OverworldHexCatalog = OverworldHexCatalog()
         self.map_paths: Dict[str, List[Point]] = {}   # dict that maps string points_to_key(start_point, end_point) to a
                                                       # list of coords that define the road between those two nodes
                                                       # (See points_to_key function below)
         self.border_tile_width: int = 0        # how many tiles thick the border should be around the overworld map.
                                                # this is to support maps with fancy borders that shouldn't be navigable or selectable,
                                                # or just to lock off the sides of the map (Sacred Stones does this)
-
-    @property
-    def width(self):
-        return self.get_tilemap_resource().width if self.get_tilemap_resource() else 0
-
-    @property
-    def height(self):
-        return self.get_tilemap_resource().height if self.get_tilemap_resource() else 0
-
-    def get_hex(self, pos: tuple) -> HexPrefab:
-        return self.hexes.get(pos)
 
     def get_music_resource(self) -> Song:
         return RESOURCES.music.get(self.music)
@@ -49,8 +36,6 @@ class OverworldPrefab(Prefab):
     def save_attr(self, name, value):
         if name == 'overworld_nodes':
             value = [node.save() for node in value]
-        elif name == 'hexes':
-            value = self.hexes.save()
         else:
             value = super().save_attr(name, value)
         return value
@@ -58,11 +43,6 @@ class OverworldPrefab(Prefab):
     def restore_attr(self, name, value):
         if name == 'overworld_nodes':
             value = Data([OverworldNodePrefab.restore(map_node) for map_node in value])
-        elif name == 'hexes':
-            d = OverworldHexCatalog()
-            if value:
-                d.restore(value)
-            value = d
         else:
             value = super().restore_attr(name, value)
         return value

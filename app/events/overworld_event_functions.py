@@ -8,7 +8,7 @@ from app.engine import engine, action
 from app.engine.game_state import game
 from app.engine.graphics.dialog.narration_dialogue import NarrationDialogue
 from app.engine.objects.overworld import OverworldNodeObject, OverworldEntityObject
-from app.engine.overworld.overworld_actions import OverworldMove, OverworldHexMove
+from app.engine.overworld.overworld_actions import OverworldMove
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
 from app.utilities import hex_math
@@ -46,21 +46,13 @@ def set_overworld_position(self: Event, overworld_entity: NID, overworld_locatio
     flags = flags or set()
 
     if isinstance(overworld_location, tuple): # setting to a direct coordinate
+        display_pos = overworld_location
         overworld = game.overworld_controller
         entity = overworld.entities[overworld_entity]
         if entity is None:
             self.logger.error('{}: Party with NID {} not found.'.format('set_overworld_position', overworld_entity))
             return
-        if len(overworld_location) == 2:
-            display_pos = overworld_location
-            entity.display_position = display_pos
-        elif len(overworld_location) == 3:
-            if overworld_location in overworld.hex_board.hex_graph:
-                entity.on_hex = overworld_location
-                overworld.hex_board.fow_arrive(overworld_location)
-            else:
-                self.logger.error("Hex {} does not exist".format(overworld_location))
-                return
+        entity.display_position = display_pos
     else: # setting position to node
         overworld_node_nid: NID = overworld_location
         overworld = game.overworld_controller
@@ -138,16 +130,11 @@ def overworld_move_unit(self: Event, overworld_entity: NID, overworld_location: 
                     return
         movement = OverworldMove(entity, target_node, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, after_move_callback=disable_func, mute=mute)
     elif isinstance(target_location, Tuple):
-        if len(target_location) == 2:
-            movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)
-            if self.do_skip: # we are skipping; resolve this instantly
-                entity.display_position = path[-1]
-                return
-        elif len(target_location) == 3:
-            movement = OverworldHexMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)    
-            if self.do_skip:
-                entity.display_position = hex_math.hex_to_pixel(path[-1])
-                return
+        path = [target_location]
+        movement = OverworldMove(entity, None, game.overworld_controller, event=True, follow=follow, speed_adj=speed_adj, path=path, linger=0, after_move_callback=disable_func, mute=mute)
+        if self.do_skip: # we are skipping; resolve this instantly
+            entity.display_position = path[-1]
+            return
     else:
         self.logger.error("%s: No valid path or target location specified: path: %s | target_location: %s", "overworld_move_unit", str(path), str(target_location))
         return

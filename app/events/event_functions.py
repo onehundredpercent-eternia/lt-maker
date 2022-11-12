@@ -283,7 +283,8 @@ def expression(self: Event, portrait, expression_list, flags=None):
     _portrait.set_expression(expression_list)
 
 def speak_style(self: Event, style, speaker=None, text_position=None, width=None, text_speed=None,
-                font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None, message_tail=None, flags=None):
+                font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None, 
+                message_tail=None, transparency=None, flags=None):
     flags = flags or set()
     style_nid = style
     if style_nid in self.game.speak_styles:
@@ -314,13 +315,15 @@ def speak_style(self: Event, style, speaker=None, text_position=None, width=None
         style.draw_cursor = bool(draw_cursor)
     if message_tail:
         style.message_tail = message_tail
+    if transparency is not None:
+        style.transparency = transparency
     if flags:
         style.flags = flags
     self.game.speak_styles[style.nid] = style
 
 def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
-          message_tail=None, flags=None):
+          message_tail=None, transparency=None, flags=None):
     flags = flags or set()
     # special char: this is a unicode single-line break.
     # basically equivalent to {br}
@@ -409,6 +412,13 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
     else:
         tail = "message_bg_tail"
 
+    if transparency:
+        transparency = float(transparency)
+    elif speak_style and speak_style.transparency is not None:
+        transparency = speak_style.transparency
+    else:
+        transparency = 0.05
+
     if speak_style and speak_style.flags:
         flags = speak_style.flags.union(flags)
 
@@ -422,7 +432,7 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
             dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
                           style_nid=style_nid, autosize=autosize, speed=speed,
                           font_color=fcolor, font_type=ftype, num_lines=lines,
-                          draw_cursor=cursor, message_tail=tail)
+                          draw_cursor=cursor, message_tail=tail, transparency=transparency)
         new_dialog.hold = 'hold' in flags
         if 'no_popup' in flags:
             new_dialog.last_update = engine.get_time() - 10000
@@ -656,7 +666,6 @@ def main_menu(self: Event, flags=None):
 def force_chapter_cleanup(self: Event, flags=None):
     from app.engine import supports, turnwheel
     supports.increment_end_chapter_supports()
-    self.game_vars['_turnwheel_uses'] = 0
     self.game_vars['_current_turnwheel_uses'] = \
         self.game_vars.get('_max_turnwheel_uses', -1)
 
@@ -933,28 +942,6 @@ def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_ty
         position = self._check_placement(new_unit, position, placement)
     if position:
         self._place_unit(new_unit, position, entry_type)
-
-def generate_groups(self: Event, flags=None):
-    flags = flags or set()    
-    random_groups.build_groups()
-
-def get_recruitable_unit(self: Event, level_var_nid, level, tag_list, team=None, flags=None):
-    flags = flags or set()
-
-    level = int(level)
-    team = team or 'player'
-    tag_list = tag_list.split(',') if tag_list else ['Soldier']
-    random_groups.get_recruitable_unit(level_var_nid, level, tag_list, team)
-
-def generate_map(self: Event, theme, map_palette, size, flags=None):
-    flags = flags or set()
-    size = self._parse_pos(size)
-
-    map_generator.generate_map(theme, map_palette, size)
-
-def generate_enemies(self: Event, enemy_type, flags=None):
-    flags = flags or set()
-    map_generator.generate_enemies(enemy_type)
 
 def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, animation_type=None, flags=None):
     new_unit = self._get_unit(unit)

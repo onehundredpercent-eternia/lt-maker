@@ -3,7 +3,7 @@ from app.engine.graphics.text.text_renderer import render_text, text_width
 from app.engine.objects.unit import UnitObject
 from dataclasses import dataclass
 
-from app.constants import WINWIDTH, WINHEIGHT
+from app.constants import WINWIDTH, WINHEIGHT, MEMENTO_MODE
 from app.utilities import utils
 
 from app.resources.resources import RESOURCES
@@ -339,14 +339,14 @@ class InfoMenuState(State):
                 get_sound_thread().play_sfx('Info In')
                 self.info_graph.set_transition_in()
                 self.info_flag = True
-            # elif event == 'AUX':
-            #     if self.state == 'personal_data' and self.unit.team == 'player' and DB.constants.value('growth_info'):
-            #         get_sound_thread().play_sfx('Select 3')
-            #         self.growth_flag = not self.growth_flag
-            #         if self.growth_flag:
-            #             self.info_graph.set_current_state('growths')
-            #         else:
-            #             self.info_graph.set_current_state('personal_data')
+            elif event == 'AUX':
+                if self.state == 'personal_data' and self.unit.team == 'player' and DB.constants.value('growth_info'):
+                    get_sound_thread().play_sfx('Select 3')
+                    self.growth_flag = not self.growth_flag
+                    if self.growth_flag:
+                        self.info_graph.set_current_state('growths')
+                    else:
+                        self.info_graph.set_current_state('personal_data')
             elif event == 'BACK':
                 if self.rescuer:
                     self.move_up()
@@ -509,36 +509,31 @@ class InfoMenuState(State):
             self.transition_counter += 1
             # Transition in
             if self.next_state == self.state:
-                if self.transition_counter == 1:
-                    self.scroll_offset_x = 208 if self.transition == 'RIGHT' else -208
-                elif self.transition_counter == 2:
-                    self.scroll_offset_x = 144 if self.transition == 'RIGHT' else -144
-                elif self.transition_counter == 3:
-                    self.scroll_offset_x = 112 if self.transition == 'RIGHT' else -112
-                elif self.transition_counter == 4:
-                    self.scroll_offset_x = 80 if self.transition == 'RIGHT' else -80
-                elif self.transition_counter == 5:
-                    self.scroll_offset_x = 48 if self.transition == 'RIGHT' else -48
-                elif self.transition_counter == 6:
-                    self.scroll_offset_x = 16 if self.transition == 'RIGHT' else -16
+                if MEMENTO_MODE:
+                    idxs = (208, 144, 112, 80, 48, 16)
+                else:
+                    idxs = (104, 72, 56, 40, 24, 8)
+                counter = self.transition_counter - 1
+                if 0 <= counter < len(idxs):
+                    self.scroll_offset_x = idxs[counter] if self.transition == 'RIGHT' else -idxs[counter]
                 else:
                     self.transition = None
                     self.scroll_offset_x = 0
                     self.next_state = None
                     self.transition_counter = 0
             else:
-                if self.transition_counter == 1:
-                    self.scroll_offset_x = -64 if self.transition == 'RIGHT' else 64
-                elif self.transition_counter == 2:
-                    self.scroll_offset_x = -112 if self.transition == 'RIGHT' else 112
-                elif self.transition_counter == 3:
-                    self.scroll_offset_x = -160 if self.transition == 'RIGHT' else 160
-                elif self.transition_counter == 4:
-                    self.scroll_offset_x = -192 if self.transition == 'RIGHT' else 192
-                elif self.transition_counter == 5:
-                    self.scroll_offset_x = -224 if self.transition == 'RIGHT' else 224
+                if MEMENTO_MODE:
+                    idxs = (-64, -112, -160, -192, -224)
                 else:
-                    self.scroll_offset_x = -280 if self.transition == 'RIGHT' else 280
+                    idxs = (-32, -56, -80, -96, -112)
+                counter = self.transition_counter - 1
+                if 0 <= counter < len(idxs):
+                    self.scroll_offset_x = idxs[self.counter] if self.transition == 'RIGHT' else -idxs[self.counter]
+                else:
+                    if MEMENTO_MODE:
+                        self.scroll_offset_x = -280 if self.transition == 'RIGHT' else 280
+                    else:
+                        self.scroll_offset_x = -140 if self.transition == 'RIGHT' else 140
                     self.state = self.next_state
                     self.info_graph.set_current_state(self.state)
                     self.transition_counter = 0

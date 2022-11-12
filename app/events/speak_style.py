@@ -11,7 +11,8 @@ class SpeakStyle(Prefab):
     def __init__(self, nid: NID = None, speaker: NID = None, text_position: str | Tuple[int, int] = None,
                  width: int = None, text_speed: float = None, font_color: str = None,
                  font_type: str = None, dialog_box: str = None, num_lines: int = None,
-                 draw_cursor: bool = None, message_tail: str = None, flags: Set[str] = None):
+                 draw_cursor: bool = None, message_tail: str = None, transparency: float = None,
+                 flags: Set[str] = None):
         self.nid: NID = nid
         self.speaker: NID = speaker
         self.text_position: str | Tuple[int, int] = text_position
@@ -23,6 +24,7 @@ class SpeakStyle(Prefab):
         self.num_lines: int = num_lines
         self.draw_cursor: bool = draw_cursor
         self.message_tail: str = message_tail
+        self.transparency: float = transparency
         self.flags: Set[str] = flags
 
 class SpeakStyleLibrary(dict):
@@ -38,7 +40,8 @@ class SpeakStyleLibrary(dict):
              'narration_top': SpeakStyle(dialog_box='menu_bg_base', text_position=(4, 2), width=WINWIDTH - 8, 
                                          font_color='white', message_tail='None'),
              'clear': SpeakStyle(dialog_box='None', font_color='white', draw_cursor=False, message_tail='None'),
-             'thought_bubble': SpeakStyle(message_tail='message_bg_thought_tail')
+             'thought_bubble': SpeakStyle(message_tail='message_bg_thought_tail'),
+             'rogue_emblem': SpeakStyle(font_color='white', transparency=0.4)
              }
         )
 

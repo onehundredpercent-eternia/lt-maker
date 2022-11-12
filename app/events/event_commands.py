@@ -457,8 +457,8 @@ A style only applies to `speak` commands inside this event.
 """
 
     keywords = ['Style']
-    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail']
-    keyword_types = ['Nid', 'Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail']
+    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency']
+    keyword_types = ['Nid', 'Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail', 'Float']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit']
 
 class Speak(EventCommand):
@@ -495,8 +495,8 @@ Extra flags:
         """
 
     keywords = ['Speaker', 'Text']
-    optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail']
-    keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail']
+    optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency']
+    keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail', 'Float']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
 class Unhold(EventCommand):
@@ -979,55 +979,6 @@ The optional flag *copy_stats* will cause the new unit to have exactly the same 
     optional_keywords = ["Nid", "Level", "Position", "EntryType", "Placement"]
     keyword_types = ["Unit", "Nid", "PositiveInteger", "Position", "EntryType", "Placement"]
     _flags = ["copy_stats"]
-
-class GenerateGroups(EventCommand):
-    nid = 'generate_groups'
-    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
-
-    desc = \
-        """
-Iterates through each of the 'group' regions and generates random enemies for
-each region. 
-        """
-
-class GetRecruitableUnit(EventCommand):
-    nid = 'get_recruitable_unit'
-    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
-
-    desc = \
-        """
-        Creates a random recruitable unit with the chosen characteristics.
-        Stores the unit's nid in the game's level_vars under the 
-        key of the level_var_nid
-        """
-
-    keywords = ["LevelVarNid", "Level", "TagList"]
-    optional_keywords = ["Team"]
-    keyword_types = ["Nid", "PositiveInteger", "TagList", "Team"]
-
-class GenerateMap(EventCommand):
-    nid = 'generate_map'
-    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
-
-    desc = \
-        """
-        Creates a randomly generated map according to the *Theme* and with the chosen *MapPalette*.
-        """
-
-    keywords = ["Theme", "MapPalette", "Size"]
-    keyword_types = ["Theme", "MapPalette", "Size"]
-
-class GenerateEnemies(EventCommand):
-    nid = 'generate_enemies'
-    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
-
-    desc = \
-        """
-          Populates the map randomly with enemies and grave trees
-        """
-
-    keywords = ["EnemyType"]
-    keyword_types = ["TagList"]
 
 class AddUnit(EventCommand):
     nid = 'add_unit'

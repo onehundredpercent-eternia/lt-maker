@@ -6,11 +6,8 @@ from typing import Tuple
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 
-from app.constants import TILEHEIGHT, TILEWIDTH
-
 from app.data.database import DB
 # Data
-from app.data.hex_prefab import HexPrefab
 from app.data.overworld import OverworldPrefab
 from app.data.overworld_node import OverworldNodePrefab
 # Components
@@ -21,21 +18,19 @@ from app.editor.lib.state_editor.state_enums import MainEditorScreenStates
 # Application State
 from app.editor.settings import MainSettingsController
 from app.editor.world_map_view import WorldMapView
-from app.utilities import str_utils, utils, hex_math
+from app.utilities import str_utils, utils
 from app.utilities.typing import Point
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QDockWidget, QMainWindow, QLabel, QFrame
 
 from .node_properties import NodePropertiesMenu
-from .hex_properties import HexPropertiesMenu
 from .overworld_properties import OverworldPropertiesMenu
 
 
 class OverworldEditorEditMode(Enum):
     NONE = 0
     NODES = 1
-    HEXES = 2
 
 class OverworldEditorInternalTypes(Enum):
     NONE = 0
@@ -43,7 +38,6 @@ class OverworldEditorInternalTypes(Enum):
     UNFINISHED_ROAD = 1
     FINISHED_ROAD = 2
     MAP_NODE = 3
-    MAP_HEX = 4
 
 SelectedObject = namedtuple('SelectedObject', ['type', 'obj'])
 
@@ -89,10 +83,6 @@ class OverworldEditor(QMainWindow):
         elif sel.type == OverworldEditorInternalTypes.FINISHED_ROAD:
             # is a road
             self.map_view.set_selected(obj)
-        elif sel.type == OverworldEditorInternalTypes.MAP_HEX:
-            # is a hex
-            self.map_view.set_selected(obj)
-            self.state_manager.change_and_broadcast('selected_node', obj)
         else:
             # deselect
             self.map_view.set_selected(obj)
@@ -121,11 +111,6 @@ class OverworldEditor(QMainWindow):
             current_node = sel.obj
             nid_to_delete = current_node.nid
             self.current_overworld.overworld_nodes.remove_key(nid_to_delete)
-        elif sel.type == OverworldEditorInternalTypes.MAP_HEX:
-            # delete hex from overworld
-            current_hex = sel.obj
-            pos_to_delete = current_hex.pos
-            del self.current_overworld.hexes[pos_to_delete]
         # reset selection
         self.selected_object = SelectedObject(type=OverworldEditorInternalTypes.NONE, obj=None)
 
@@ -133,11 +118,11 @@ class OverworldEditor(QMainWindow):
         self.current_overworld = DB.overworlds.get(overworld_nid)
 
     def on_map_double_left_click(self, x, y):
-        if(self.edit_mode == OverworldEditorEditMode.NODES):
+        if self.edit_mode == OverworldEditorEditMode.NODES:
             self.create_node(x, y)
 
     def on_map_right_click(self, x, y):
-        if(self.edit_mode == OverworldEditorEditMode.NODES):
+        if self.edit_mode == OverworldEditorEditMode.NODES:
             self.edit_road(x, y)
 
     def on_map_left_click(self, x, y):
@@ -149,8 +134,6 @@ class OverworldEditor(QMainWindow):
         """
         if self.edit_mode == OverworldEditorEditMode.NODES:
             self.select_object_on_map(x, y)
-        elif self.edit_mode == OverworldEditorEditMode.HEXES:
-            self.select_hex(x, y)
 
     def on_map_hover(self, x, y):
         self.set_position_bar((x, y))
@@ -240,28 +223,6 @@ class OverworldEditor(QMainWindow):
             self.set_message("Selected road")
         elif closest_obj_type == OverworldEditorInternalTypes.MAP_NODE:
             self.set_message("Selected map node: %s" % closest_obj.nid)
-
-    def select_hex(self, x, y):
-        """Handles selecting the nearest hex.
-        Selection is stored in self.selected_object.
-
-        Args:
-            x (float): x-coordinate (in tiles)
-            y (float): y-coordinate (in tiles)
-        """
-        pixel_x = TILEWIDTH * utils.clamp(x + 0.5, 0.05, self.current_overworld.width) 
-        pixel_y = TILEHEIGHT * utils.clamp(y + 0.5, 0.05, self.current_overworld.height)
-
-        hex_coord_f = hex_math.pixel_to_hex((pixel_x, pixel_y))
-        hex_coord = hex_math.hex_round(hex_coord_f)
-        current_hex = self.current_overworld.get_hex(hex_coord)
-        if not current_hex:
-            current_hex = HexPrefab(hex_coord, None)
-            self.current_overworld.hexes[hex_coord] = current_hex
-        current_obj_type = OverworldEditorInternalTypes.MAP_HEX
-
-        self.selected_object = SelectedObject(type=current_obj_type, obj=current_hex)
-        self.set_message("Selected Hex(q=%s, r=%s, s=%s)" % (current_hex.pos[0], current_hex.pos[1], current_hex.pos[2]))
 
     def lock_angle(self, prev_point: Point, next_point: Point, short=True) -> Point:
         """Roads can only run either horizontal/vertical, or in 45 degree angles.
@@ -410,11 +371,6 @@ class OverworldEditor(QMainWindow):
         self.node_menu = NodePropertiesMenu(self.state_manager)
         self.docks['Node Editor'].setWidget(self.node_menu)
 
-        self.docks['Hex Editor'] = Dock(
-            'Hex Editor', self, self.on_hex_tab_select)
-        self.hex_menu = HexPropertiesMenu(self.state_manager)
-        self.docks['Hex Editor'].setWidget(self.hex_menu)
-
         for title, dock in self.docks.items():
             dock.setAllowedAreas(Qt.RightDockWidgetArea)
             dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
@@ -443,11 +399,6 @@ class OverworldEditor(QMainWindow):
                              " Double L-click to create a new node."
                              " Space to toggle road guide."
                              " Hold Shift to lock road guide to a straight line.")
-
-    def on_hex_tab_select(self, visible):
-        if visible:
-            self.edit_mode = OverworldEditorEditMode.HEXES
-            self.set_message(" L-click to select a hex.")
 
     def on_property_tab_select(self, visible):
         if visible:

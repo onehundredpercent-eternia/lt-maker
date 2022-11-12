@@ -115,7 +115,7 @@ class GameBoard(object):
         return None
 
     def can_move_through(self, team, adj) -> bool:
-        unit_team = next(iter(self.get_team((adj.x, adj.y))), None)
+        unit_team = self.get_team((adj.x, adj.y))
         if not unit_team or utils.compare_teams(team, unit_team):
             return True
         if team == 'player' or DB.constants.value('ai_fog_of_war'):
@@ -124,7 +124,7 @@ class GameBoard(object):
         return False
 
     def can_move_through_ally_block(self, team, adj) -> bool:
-        unit_team = next(iter(self.get_team((adj.x, adj.y))), None)
+        unit_team = self.get_team((adj.x, adj.y))
         if not unit_team:
             return True
         if team == 'player' or DB.constants.value('ai_fog_of_war'):

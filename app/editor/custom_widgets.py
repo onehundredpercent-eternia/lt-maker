@@ -126,11 +126,3 @@ class EventBox(ObjBox):
         if exclude:
             database = Data([d for d in DB.events if d is not exclude])
         super().__init__("Event", EventModel, database, parent, button)
-
-class HexTypeBox(ObjBox):
-    def __init__(self, parent=None, button=False, exclude=None):
-        from app.editor.hex_editor.hex_type_model import HexTypeModel
-        database = DB.hex_types
-        if exclude:
-            database = Data([d for d in DB.hex_types if d is not exclude])
-        super().__init__("Hex Type", HexTypeModel, database, parent, button)

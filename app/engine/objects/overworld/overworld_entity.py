@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 from app.engine.overworld.overworld_map_sprites import (OverworldUnitSprite)
 from app.engine.unit_sound import UnitSound
 from app.utilities.typing import NID, Point
-from app.utilities import hex_math
 
 import logging
 
@@ -31,7 +30,6 @@ class OverworldEntityObject():
         self.dnid: NID = None                   # the nid of the data this entity is associated with
 
         self.on_node: NID = None                 # NID of node on which the unit is standing
-        self.on_hex: hex_math.Hex = None         # Position of hex on which the unit is standing
         self.team: NID = 'player'                # team of party. @TODO: Implement non-player entities.
 
         # unsaved data
@@ -42,20 +40,12 @@ class OverworldEntityObject():
         self._display_position: Point = None        # display position for drawing purposes
 
     @classmethod
-    def from_party_prefab(cls, initial_loc: NID | hex_math.Hex, party_prefab_nid: NID, unit_registry: Dict[NID, UnitObject] = None):
+    def from_party_prefab(cls, initial_loc: NID, party_prefab_nid: NID, unit_registry: Dict[NID, UnitObject] = None):
         entity = cls()
         entity.nid = party_prefab_nid
         entity.dtype = OverworldEntityTypes.PARTY
         entity.dnid = party_prefab_nid
-        if isinstance(initial_loc, tuple):
-            entity.on_node = None
-            entity.on_hex = initial_loc
-        elif initial_loc:
-            entity.on_node = initial_loc
-            entity.on_hex = None
-        else:
-            entity.on_node = None
-            entity.on_hex = None
+        entity.on_node = initial_loc
 
         # create unit
         party_prefab = DB.parties.get(party_prefab_nid)
@@ -83,7 +73,6 @@ class OverworldEntityObject():
         entity.dnid = unit_nid
         entity.dtype = OverworldEntityTypes.UNIT
         entity.on_node = None
-        entity.on_hex = None
         entity.team = team
 
         unit = DB.units.get(unit_nid)
@@ -103,7 +92,6 @@ class OverworldEntityObject():
                   'dtype': self.dtype.name,
                   'dnid': self.dnid,
                   'on_node_nid': self.on_node,
-                  'on_hex': self.on_hex,
 
                   # only used for dummy entities
                   'position': self.display_position,
@@ -116,13 +104,8 @@ class OverworldEntityObject():
         prefab_nid = s_dict['dnid']
         entity_dtype = OverworldEntityTypes[s_dict['dtype']]
         if entity_dtype == OverworldEntityTypes.PARTY:
-            if s_dict.get('on_node_nid'):
-                map_loc = s_dict['on_node_nid']
-            elif s_dict.get('on_hex'):
-                map_loc = hex_math.Hex(*s_dict['on_hex'])
-            else:
-                map_loc = None
-            entity_object = OverworldEntityObject.from_party_prefab(map_loc, prefab_nid, game.unit_registry)
+            on_node_nid = s_dict['on_node_nid']
+            entity_object = OverworldEntityObject.from_party_prefab(on_node_nid, prefab_nid, game.unit_registry)
             entity_object.team = s_dict['team']
             return entity_object
         elif entity_dtype == OverworldEntityTypes.UNIT: # dummy entity
@@ -143,9 +126,6 @@ class OverworldEntityObject():
                 node = overworld.overworld_nodes.get(self.on_node, None)
                 if node is not None:
                     return node.pos
-        elif self.on_hex:
-            pixel_pos = hex_math.hex_to_pixel(self.on_hex)
-            return pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
         else:
             return None
 

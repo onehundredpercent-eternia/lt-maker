@@ -4,15 +4,14 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QColor, QPixmap
 
 from app.data.database import DB
-from app.events.regions import RegionType, DROPPABLE_OPTIONS
+from app.events.regions import RegionType
 
 from app.utilities import utils, str_utils
 from app.utilities.data import Data
 
 from app.extensions.custom_gui import PropertyBox, PropertyCheckBox, ComboBox, RightClickListView
-from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.editor.base_database_gui import DragDropCollectionModel
-from app.editor.custom_widgets import SkillBox, ItemBox
+from app.editor.custom_widgets import SkillBox
 from app.editor.lib.components.validated_line_edit import NidLineEdit
 from app.events import regions
 
@@ -215,44 +214,11 @@ class ModifyRegionWidget(QWidget):
         self.status_box.edit.currentIndexChanged.connect(self.status_changed)
         layout.addWidget(self.status_box)
 
-        self.item_box = ItemBox(self)
-        self.item_box.edit.currentIndexChanged.connect(self.item_changed)
-        layout.addWidget(self.item_box)
-
-        # For group region
-        self.group_class_box = PropertyBox("Classes", MultiSelectComboBox, self)
-        self.group_class_box.edit.setPlaceholderText("Potential Classes...")
-        self.group_class_box.edit.addItems(DB.classes.keys())
-        self.group_class_box.edit.updated.connect(self.group_class_changed)
-        layout.addWidget(self.group_class_box)
-
-        self.group_tags_box = PropertyBox("Tags", MultiSelectComboBox, self)
-        self.group_tags_box.edit.setPlaceholderText("Potential Tags...")
-        self.group_tags_box.edit.addItems(DB.tags.keys())
-        self.group_tags_box.edit.updated.connect(self.group_tags_changed)
-        layout.addWidget(self.group_tags_box)
-
-        self.valid_ai_box = PropertyBox("AI", ComboBox, self)
-        valid_ais = list(DB.ai.keys())
-        self.valid_ai_box.edit.addItems(valid_ais)
-        self.valid_ai_box.edit.activated.connect(self.valid_ai_changed)
-        layout.addWidget(self.valid_ai_box)
-
-        self.droppable_box = PropertyBox("Droppable", ComboBox, self)
-        self.droppable_box.edit.addItems(DROPPABLE_OPTIONS)
-        self.droppable_box.edit.activated.connect(self.droppable_changed)
-        layout.addWidget(self.droppable_box)
-
         self.sub_nid_box.hide()
         self.condition_box.hide()
         self.only_once_box.hide()
         self.interrupt_move_box.hide()
         self.status_box.hide()
-        self.item_box.hide()
-        self.group_class_box.hide()
-        self.group_tags_box.hide()
-        self.valid_ai_box.hide()
-        self.droppable_box.hide()
 
     def nid_changed(self, text):
         if self.current:
@@ -283,11 +249,6 @@ class ModifyRegionWidget(QWidget):
         self.only_once_box.hide()
         self.interrupt_move_box.hide()
         self.status_box.hide()
-        self.item_box.hide()
-        self.group_class_box.hide()
-        self.group_tags_box.hide()
-        self.valid_ai_box.hide()
-        self.droppable_box.hide()
         if self.current.region_type in (RegionType.NORMAL, RegionType.FORMATION):
             pass
         elif self.current.region_type == RegionType.STATUS:
@@ -299,13 +260,6 @@ class ModifyRegionWidget(QWidget):
             self.interrupt_move_box.show()
         elif self.current.region_type == RegionType.TIME:
             self.sub_nid_box.show()
-        elif self.current.region_type == RegionType.GROUP:
-            self.group_class_box.show()
-            self.group_tags_box.show()
-            self.valid_ai_box.show()
-            self.droppable_box.show()
-        elif self.current.region_type == RegionType.GRAVE:
-            self.item_box.show()
 
     def sub_nid_changed(self, text):
         self.current.sub_nid = text
@@ -325,22 +279,6 @@ class ModifyRegionWidget(QWidget):
         self.current.sub_nid = self.status_box.edit.currentText()
         self.window.update_list()
 
-    def item_changed(self, index):
-        self.current.sub_nid = self.item_box.edit.currentText()
-        self.window.update_list()
-
-    def group_class_changed(self):
-        self.current.group_data['valid_classes'] = self.group_class_box.edit.currentText()
-
-    def group_tags_changed(self):
-        self.current.group_data['valid_tags'] = self.group_tags_box.edit.currentText()
-
-    def valid_ai_changed(self):
-        self.current.group_data['ai'] = self.valid_ai_box.edit.currentText()
-
-    def droppable_changed(self):
-        self.current.group_data['droppable'] = self.droppable_box.edit.currentText()
-
     def set_current(self, current):
         self.current = current
         self.nid_box.edit.setText(current.nid)
@@ -350,30 +288,7 @@ class ModifyRegionWidget(QWidget):
         self.interrupt_move_box.edit.setChecked(bool(current.interrupt_move))
         if current.region_type == RegionType.STATUS:
             self.status_box.edit.setValue(current.sub_nid)
-        elif current.region_type == RegionType.GRAVE:
-            self.item_box.edit.setValue(current.sub_nid)
         elif current.region_type == RegionType.EVENT:
             self.sub_nid_box.edit.setText(current.sub_nid)
         else:
             self.sub_nid_box.edit.setText('')
-
-        valid_classes = current.group_data.get('valid_classes', [])[:]
-        self.group_class_box.edit.clear()
-        self.group_class_box.edit.addItems(DB.classes.keys())
-        self.group_class_box.edit.setCurrentTexts(valid_classes)
-
-        tags = current.group_data.get('valid_tags', [])[:]
-        self.group_tags_box.edit.clear()
-        self.group_tags_box.edit.addItems(DB.tags.keys())
-        self.group_tags_box.edit.setCurrentTexts(tags)
-
-        valid_ais = list(DB.ai.keys())
-        ai = current.group_data.get('ai', 'Attack' if 'Attack' in valid_ais else valid_ais[0])
-        self.valid_ai_box.edit.clear()
-        self.valid_ai_box.edit.addItems(valid_ais)
-        self.valid_ai_box.edit.setValue(ai)
-
-        droppable = current.group_data.get('droppable', DROPPABLE_OPTIONS[0])
-        self.droppable_box.edit.clear()
-        self.droppable_box.edit.addItems(DROPPABLE_OPTIONS)
-        self.droppable_box.edit.setValue(droppable)

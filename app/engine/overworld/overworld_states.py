@@ -3,13 +3,13 @@ import logging
 
 import app.engine.config as cf
 from app.data.database import DB
-from app.engine import engine, hex_board, menus
+from app.engine import engine, menus
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
-from app.engine.objects.overworld import (OverworldNodeObject, OverworldEntityObject,
+from app.engine.objects.overworld import (OverworldNodeObject,
                                           OverworldNodeProperty, OverworldEntityTypes)
-from app.engine.overworld.overworld_actions import OverworldMove, OverworldHexMove
+from app.engine.overworld.overworld_actions import OverworldMove
 from app.engine.overworld.overworld_manager import OverworldManager
 from app.engine.overworld.overworld_map_view import OverworldMapView
 from app.engine.overworld.overworld_movement_manager import \
@@ -56,38 +56,23 @@ class OverworldFreeState(MapState):
         OverworldFreeState.set_up_overworld_game_state()
         self.begin_time = engine.get_time()
 
-        # the free state requires that the main party is initialized.
-        # if not game.overworld_controller.selected_party_node():
-        #     # if it's not, add it to the current level's node and forcibly enable it
-        #     try:
-        #         current_level = DB.levels[DB.levels.index(game.overworld_controller.next_level) - 1].nid
-        #     except:
-        #         current_level = DB.levels.values()[0].nid
-        #     current_level_node = game.overworld_controller.node_by_level(current_level)
-        #     if not current_level_node:
-        #         current_level_node = list(game.overworld_controller.nodes.values())[0]
-        #     if current_level_node not in game.overworld_controller.revealed_nodes:
-        #         game.overworld_controller.enable_node(current_level_node)
-        #     game.overworld_controller.move_party_to_node(game.overworld_controller.selected_entity.nid, current_level_node.nid)
-        #     logging.warning('%s: no position detected. automatically placing party %s at node %s. Use the set_overworld_position command \
-        #                             in a previous event to circumvent this.',
-        #                     'OverworldFreeState',
-        #                     game.overworld_controller.selected_entity.nid,
-        #                     current_level_node.name)
-
-        # # If no entities at all, create the player party without a location
-        # if not game.overworld_controller.entities:
-        #     first_party_nid = DB.parties[0].nid
-        #     new_entity = OverworldEntityObject.from_party_prefab(None, first_party_nid)
-        #     game.overworld_controller.add_entity(new_entity)
-
-        # party_loc = game.overworld_controller.selected_party_node()
-        # if party_loc:
-        #     party_pos = party_loc.position
-        #     game.cursor.set_pos(party_pos)
-        #     game.camera.force_center(*party_pos)
-        # print("Trigger Overworld Start")
-        # game.events.trigger('overworld_start', level_nid=game.overworld_controller.next_level)
+        if not game.overworld_controller.selected_party_node():
+            # if it's not, add it to the current level's node and forcibly enable it
+            try:
+                current_level = DB.levels[DB.levels.index(game.overworld_controller.next_level) - 1].nid
+            except:
+                current_level = DB.levels.values()[0].nid
+            current_level_node = game.overworld_controller.node_by_level(current_level)
+            if not current_level_node:
+                current_level_node = list(game.overworld_controller.nodes.values())[0]
+            if current_level_node not in game.overworld_controller.revealed_nodes:
+                game.overworld_controller.enable_node(current_level_node)
+            game.overworld_controller.move_party_to_node(game.overworld_controller.selected_entity.nid, current_level_node.nid)
+            logging.warning('%s: no position detected. automatically placing party %s at node %s. Use the set_overworld_position command \
+                                    in a previous event to circumvent this.',
+                            'OverworldFreeState',
+                            game.overworld_controller.selected_entity.nid,
+                            current_level_node.name)
 
         game.cursor.set_pos(game.overworld_controller.selected_party_node().position)
         game.camera.force_center(*game.overworld_controller.selected_party_node().position)
@@ -109,7 +94,6 @@ class OverworldFreeState(MapState):
         elif event == 'SELECT': # this is where the fun begins
             cur_pos = game.cursor.position
             selected_node: OverworldNodeObject = game.overworld_controller.node_at(cur_pos)
-            selected_hex: hex_board.HexData = game.overworld_controller.hex_at(cur_pos)
 
             if selected_node: # if we clicked on a node
                 entity = game.overworld_controller.entity_at(selected_node.position)
@@ -136,42 +120,7 @@ class OverworldFreeState(MapState):
                         game.camera.do_slow_pan(1000)
                         game.camera.set_center(party_node.position[0], party_node.position[1])
                         game.state.change('overworld_movement')
-                        movement.queue(game.movement)
-
-            elif selected_hex: # if we clicked on a hex
-                entity = game.overworld_controller.entity_at(selected_hex.position)
-                print("Entity", entity, game.overworld_controller.selected_entity)
-
-                # there's a party underneath us, select it and launch the party menu
-                if entity and entity.team == 'player' and entity.dtype == OverworldEntityTypes.PARTY:
-                    game.overworld_controller.select_entity(entity)
-                    get_sound_thread().play_sfx('Select 5')
-                    game.state.change('overworld_party_option_menu')
-                    return
-
-                elif game.overworld_controller.selected_entity:   # we selected a hex without a player party
-                    current_party_hex: hex_board.HexData = game.overworld_controller.selected_party_node()
-                    print(current_party_hex, current_party_hex.pos, current_party_hex.position, game.overworld_controller.selected_entity.display_position)
-                    if game.overworld_controller.hex_path(current_party_hex, selected_hex):  # if there is a path from our party to this hex
-                        # if there is an event that will take place upon reaching this node, stop short and trigger event start
-                        hex_type = game.overworld_controller.hex_board.hexes.get(current_party_hex.pos).hex_type
-                        if game.events.should_trigger('on_overworld_hex_select', unit=game.overworld_controller.selected_entity, region=hex_type, level_nid=game.overworld_controller.next_level):
-                            movement = OverworldHexMove(game.overworld_controller.selected_entity, selected_hex.pos, game.overworld_controller, event=True, remove_last=True)
-                            game.game_vars['_target_hex_type'] = hex_type
-                            game.state.change('overworld_on_hex')
-                        else:
-                            movement = OverworldHexMove(game.overworld_controller.selected_entity, selected_hex.pos, game.overworld_controller)
-                        # queue camera movement to unit
-                        game.camera.do_slow_pan(1000)
-                        game.camera.set_center(current_party_hex.position[0], current_party_hex.position[1])
-                        game.state.change('overworld_movement')
-                        movement.queue(game.movement)
-                    else:
-                        print("No Path!")
-                        get_sound_thread().play_sfx('Error')
-                else:
-                    print("No Selected Party!")
-                    get_sound_thread().play_sfx('Error')    
+                        movement.queue(game.movement) 
 
             else:   # clicked on empty space, trigger the general menu
                 get_sound_thread().play_sfx('Select 5')
@@ -256,27 +205,6 @@ class OverworldNodeTransition(State):
     def update(self):
         game.state.back()
         game.game_vars['_target_node_nid'] = None
-
-class OverworldHexTransition(State):
-    """State for triggering hex events
-    """
-    name = 'overworld_on_hex'
-    transparent = True
-
-    def start(self):
-        logging.debug("Trigger hex arrival event")
-        if not game.events.trigger('on_overworld_hex_select', unit=game.overworld_controller.selected_entity.nid, region=game.game_vars['_target_hex_type'], level_nid=game.overworld_controller.next_level):
-            # no events, then just queue the move
-            movement = OverworldMove(game.overworld_controller.selected_entity.nid,
-                                     game.game_vars['_target_hex_type'],
-                                     game.overworld_controller)
-            game.state.change('overworld_movement')
-            movement.queue(game.movement)
-        return 'repeat'
-
-    def update(self):
-        game.state.back()
-        game.game_vars['_target_hex_type'] = None
 
 class OverworldLevelTransition(State):
     """State handling transition events between overworld and
@@ -415,21 +343,18 @@ class OverworldPartyOptionMenu(State):
 
         self.events = [None for option in options]
         current_node = game.overworld_controller.selected_party_node()  # Can also be a HexData
-        if isinstance(current_node, hex_board.HexData):
-            pass # Currently hexes don't define new menu options...
-        else:
-            all_options = current_node.menu_options
+        all_options = current_node.menu_options
 
-            additional_option_names = [option.option_name for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
-            additional_ignore = [not game.overworld_controller.menu_option_enabled(current_node.nid, option.nid) for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
-            additional_events = [option.event for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
-            additional_info = [None for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_option_names = [option.option_name for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_ignore = [not game.overworld_controller.menu_option_enabled(current_node.nid, option.nid) for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_events = [option.event for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
+        additional_info = [None for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]
 
-            options += additional_option_names
-            ignore += additional_ignore
-            self.events += additional_events
-            #Options seem to need info_descs, no idea what to do with those. They're just None for now to prevent crashes
-            info_desc += additional_info
+        options += additional_option_names
+        ignore += additional_ignore
+        self.events += additional_events
+        #Options seem to need info_descs, no idea what to do with those. They're just None for now to prevent crashes
+        info_desc += additional_info
 
         self.menu = menus.Choice(None, options, info=info_desc)
         self.menu.set_ignore(ignore)

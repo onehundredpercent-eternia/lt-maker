@@ -10,12 +10,11 @@ from app.engine.sound import get_sound_thread
 from app.engine.base_surf import create_base_surf
 from app.engine import text_funcs, engine, image_mods
 from app.engine import config as cf
+from app.events import event_portrait, screen_positions
 
 from app.engine.game_state import game
 
-DIALOG_TRANSPARENCY = 0.4
 MATCH_DIALOG_COMMAND_RE = re.compile('(\{[^\{]*?\})')
-
 
 class Dialog():
     solo_flag = False
@@ -26,14 +25,15 @@ class Dialog():
     attempt_split: bool = True # Whether we attempt to split big chunks across multiple lines
 
     def __init__(self, text, portrait=None, background=None, position=None, width=None,
-                 speaker=None, style_nid=None, autosize=False, speed=1, font_color='white',
-                 font_type='convo', num_lines=2, draw_cursor=True, message_tail='message_bg_tail'):
+                 speaker=None, style_nid=None, autosize=False, speed=1, font_color='black',
+                 font_type='convo', num_lines=2, draw_cursor=True, message_tail='message_bg_tail',
+                 transparency=0.05):
         self.plain_text = text
         self.portrait = portrait
         self.speaker = speaker
         self.style_nid = style_nid
         self.font_type = font_type
-        self.font_color = font_color or 'white'
+        self.font_color = font_color or 'black'
         self.autosize = autosize
         self.speed = speed
         self.num_lines = num_lines
@@ -77,7 +77,7 @@ class Dialog():
                 pos_x += 4
             if pos_x == 0:
                 pos_x = 4
-            pos_y = WINHEIGHT - self.height - 96
+            pos_y = WINHEIGHT - self.height - event_portrait.EventPortrait.main_portrait_coords[3]
         else:
             pos_x = 4
             pos_y = WINHEIGHT - self.height - 4
@@ -85,6 +85,7 @@ class Dialog():
 
         self.background = None
         self.tail = None
+        self.dialog_transparency = transparency
 
         if background and background not in ('None', 'clear'):
             self.background = self.make_background(background)
@@ -136,20 +137,7 @@ class Dialog():
 
     def determine_desired_center(self, portrait):
         x = self.portrait.position[0] + self.portrait.get_width()//2
-        if x < 80:  # FarLeft
-            return 8
-        elif x < 120:  # Left
-            return 104
-        elif x < 144:  # MidLeft
-            return 144
-        elif x > WINWIDTH - 80:  # FarRight
-            return WINWIDTH - 8
-        elif x > WINWIDTH - 120:  # Right
-            return WINWIDTH - 104
-        elif x > WINWIDTH - 144:  # MidRight
-            return WINWIDTH - 144
-        else:
-            return WINWIDTH//2
+        return screen_positions.get_desired_center(x)
 
     def determine_width(self):
         width = 0
@@ -394,7 +382,7 @@ class Dialog():
         elif x_pos < self.position[0] + 8:
             x_pos = self.position[0] + 8
 
-        tail_surf = image_mods.make_translucent(tail_surf, DIALOG_TRANSPARENCY)
+        tail_surf = image_mods.make_translucent(tail_surf, self.dialog_transparency)
         surf.blit(tail_surf, (x_pos, y_pos))
 
     def draw_nametag(self, surf, name):
@@ -414,10 +402,10 @@ class Dialog():
                 new_width = max(1, self.background.get_width() - 10 + int(10*self.transition_progress))
                 new_height = max(1, self.background.get_height() - 10 + int(10*self.transition_progress))
                 bg = engine.transform_scale(self.background, (new_width, new_height))
-                bg = image_mods.make_translucent(bg, DIALOG_TRANSPARENCY + (0.9 - DIALOG_TRANSPARENCY) * (1 - self.transition_progress))
+                bg = image_mods.make_translucent(bg, self.dialog_transparency + (0.75 - self.dialog_transparency) * (1 - self.transition_progress))
                 surf.blit(bg, (self.position[0], self.position[1] + self.height - bg.get_height()))
             else:
-                bg = image_mods.make_translucent(self.background, DIALOG_TRANSPARENCY)
+                bg = image_mods.make_translucent(self.background, self.dialog_transparency)
                 surf.blit(bg, self.position)
 
         if self.state != 'transition':
@@ -497,13 +485,13 @@ class LocationCard():
             self.font.blit_center(line, bg, (bg.get_width()//2, idx * self.font.height + 4))
 
         if self.transition == 'start':
-            transparency = DIALOG_TRANSPARENCY + 0.1 - self.transition_progress
+            transparency = 1.1 + 0.1 - self.transition_progress
             bg = image_mods.make_translucent(bg, transparency)
         elif self.transition == 'end':
-            transparency = .1 + (self.transition_progress * (0.9 - DIALOG_TRANSPARENCY))
+            transparency = .1 + (self.transition_progress * 0.9)
             bg = image_mods.make_translucent(bg, transparency)
         else:
-            bg = image_mods.make_translucent(bg, DIALOG_TRANSPARENCY)
+            bg = image_mods.make_translucent(bg, .1)
         surf.blit(bg, self.position)
 
         return surf

@@ -1,15 +1,11 @@
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List
 
-from app.constants import TILEWIDTH, TILEHEIGHT
 from app.engine.objects.overworld import OverworldEntityObject, OverworldNodeObject, RoadObject
 from .overworld_manager import OverworldManager
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
-from app.utilities.typing import NID, Point
-from app.utilities import hex_math
-from app.engine import hex_board
-
+from app.utilities.typing import NID
 
 class OverworldMove():
     """
@@ -49,58 +45,6 @@ class OverworldMove():
                 self.path.insert(0, self.entity.display_position)
         else: # queue custom path
             self.path = path
-            if self.entity.display_position != self.path[0]:
-                self.path.insert(0, self.entity.display_position)
-        # finally, since movement is queued LIFO, we reverse the path
-        # so the first step is last in the list
-        self.path.reverse()
-        self.event = event
-        self.follow = follow
-        self.after_move_callback = after_move_callback
-        self.mute = mute
-
-    def queue(self, movement_manager: OverworldMovementManager):
-        if self.path:
-            movement_manager.begin_move(self.entity, self.path, self.event, self.follow, self.speed_adj, self.linger, self.after_move_callback, self.mute)
-
-class OverworldHexMove():
-    """
-    A user-issued move to a party on the overworld between two hexes.
-    """
-    def __init__(self, entity: OverworldEntityObject | NID, target_hex: hex_math.Hex,
-                 overworld: OverworldManager, event=False, follow=True, speed_adj=1,
-                 remove_last=False, path: List[Point] = None, linger=250, after_move_callback=None, mute=False):
-        if isinstance(entity, OverworldEntityObject):
-            entity = entity.nid
-        self.entity = overworld.entities[entity]
-        self.speed_adj = speed_adj
-        self.linger = linger
-
-        # pathfinding
-        if not path and self.entity.on_hex:
-            target_hex: hex_board.HexData = overworld.hex_board.hex_graph[target_hex]
-            old_hex: hex_board.HexData = overworld.hex_board.hex_graph[self.entity.on_hex]
-            new_hex = target_hex
-
-            hexes: List[hex_math.Hex] = overworld.shortest_hex_path(old_hex, new_hex)
-            if remove_last:
-                hexes.pop()
-            pixel_pos = hex_math.hex_to_pixel(old_hex.pos)
-            pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
-            self.path: List[Point] = [pos]
-
-            for hex_pos in hexes:                
-                pixel_pos = hex_math.hex_to_pixel(hex_pos)
-                pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
-                self.path.append(pos)
-        elif not path and not self.entity.on_hex: # path directly to hex from where we're at
-            pixel_pos = hex_math.hex_to_pixel(target_hex.pos)
-            pos = pixel_pos[0] / TILEWIDTH, pixel_pos[1] / TILEHEIGHT
-            self.path: List[Point] = [pos]
-            if self.entity.display_position != self.path[0]:
-                self.path.insert(0, self.entity.display_position)
-        else: # queue custom path
-            self.path: List[Point] = path
             if self.entity.display_position != self.path[0]:
                 self.path.insert(0, self.entity.display_position)
         # finally, since movement is queued LIFO, we reverse the path

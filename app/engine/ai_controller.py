@@ -438,9 +438,9 @@ class PrimaryAI():
                 item_range = item_funcs.get_range(self.unit, item)
                 if item_range:
                     max_item_range = max(item_range)
-                valid_targets = line_of_sight.line_of_sight([move], [target], max_item_range)
-                if not valid_targets:
-                    line_of_sight_flag = False
+                    valid_targets = line_of_sight.line_of_sight([move], [target], max_item_range)
+                    if not valid_targets:
+                        line_of_sight_flag = False
                 else:
                     line_of_sight_flag = False
 

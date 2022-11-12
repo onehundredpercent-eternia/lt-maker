@@ -7,7 +7,7 @@ import re
 import shutil
 from typing import Any, Dict, List
 
-from app.data import (ai, constants, difficulty_modes, equations, factions, hex_type,
+from app.data import (ai, constants, difficulty_modes, equations, factions,
                       items, klass, levels, lore, mcost, minimap, overworld,
                       overworld_node, parties, raw_data, skills, stats, varslot,
                       supports, tags, terrain, translations, units, weapons)
@@ -19,7 +19,7 @@ class Database(object):
                        "weapons", "factions", "items", "skills", "tags", "game_var_slots", "classes",
                        "support_constants", "support_ranks", "affinities", "units", "support_pairs",
                        "ai", "parties", "difficulty_modes",
-                       "translations", "lore", "hex_types", "levels", "events", "overworlds", "raw_data")
+                       "translations", "lore", "levels", "events", "overworlds", "raw_data")
     save_as_chunks = ("events", 'items', 'skills', 'units', 'classes', 'levels')
 
     def __init__(self):
@@ -53,7 +53,6 @@ class Database(object):
         self.ai = ai.AICatalog()
         self.difficulty_modes = difficulty_modes.DifficultyModeCatalog()
 
-        self.hex_types = hex_type.HexTypeCatalog()
         self.overworlds = overworld.OverworldCatalog()
 
         self.levels = levels.LevelCatalog()

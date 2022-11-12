@@ -75,7 +75,7 @@ class RawDataValidator(EvalValidator):
     tags = ['d', 'data']
 
     def validate(self, text, level):
-            return text
+        return text
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         text = self.process_arg_text(text)
@@ -117,7 +117,7 @@ class UnitFieldValidator(EvalValidator):
     tags = ['f', 'field']
 
     def validate(self, text, level):
-            return text
+        return text
 
     def valid_entries(self, level: NID = None, text: str = None) -> List[Tuple[str, NID]]:
         text = self.process_arg_text(text)
@@ -964,12 +964,6 @@ class VAlign(OptionValidator):
 class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
 
-class Theme(OptionValidator):
-    valid = ["simple", "noise"]
-
-class MapPalette(OptionValidator):
-    valid = ["dungeon", "monastery"]
-
 class CombatScript(Validator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
     desc = "specifies the order and type of actions in combat. Valid actions: (`hit1`, `hit2`, `crit1`, `crit2`, `miss1`, `miss2`, `--`, `end`)."
@@ -1230,7 +1224,7 @@ class OverworldNID(Validator):
         return valids
 
 class OverworldLocation(Validator):
-    desc = "accepts the nid of an overworld location/node, or a hex coordinate (r, q, s), or a display coordinate x, y"
+    desc = "accepts the nid of an overworld location/node, or a display coordinate x, y"
     decimal_converter = re.compile(r'[^\d.-]+')
 
     def validate(self, text, level):
@@ -1259,15 +1253,6 @@ class OverworldLocation(Validator):
                 x = float(self.decimal_converter.sub('', coords[0]))
                 y = float(self.decimal_converter.sub('', coords[1]))
                 return (x, y)
-            except:
-                raise ValueError("Could not parse coordinates from string %s" % text)
-        elif len(text.split(',')) == 3: # is hex position
-            try:
-                coords = text.split(',')
-                q = int(self.decimal_converter.sub('', coords[0]))
-                r = int(self.decimal_converter.sub('', coords[1]))
-                s = int(self.decimal_converter.sub('', coords[2]))
-                return (q, r, s)
             except:
                 raise ValueError("Could not parse coordinates from string %s" % text)
         else: # is nid

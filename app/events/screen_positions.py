@@ -32,6 +32,38 @@ vertical_screen_positions = {'Top': 0,
 if MEMENTO_MODE:
     vertical_screen_positions['Top'] = 20
 
+def get_desired_center(x: int) -> int:
+    if MEMENTO_MODE:
+        if x < 80:  # FarLeft
+            return 8
+        elif x < 120:  # Left
+            return 104
+        elif x < 144:  # MidLeft
+            return 144
+        elif x > WINWIDTH - 80:  # FarRight
+            return WINWIDTH - 8
+        elif x > WINWIDTH - 120:  # Right
+            return WINWIDTH - 104
+        elif x > WINWIDTH - 144:  # MidRight
+            return WINWIDTH - 144
+        else:
+            return WINWIDTH//2
+    else:
+        if x < 48:  # FarLeft
+            return 8
+        elif x < 72:  # Left
+            return 80
+        elif x < 104:  # MidLeft
+            return 104
+        elif x > WINWIDTH - 48:  # FarRight
+            return WINWIDTH - 8
+        elif x > WINWIDTH - 72:  # Right
+            return WINWIDTH - 88
+        elif x > WINWIDTH - 144:  # MidRight
+            return WINWIDTH - 112
+        else:
+            return WINWIDTH//2
+  
 def parse_screen_position(pos) -> tuple:
     x, y = 0, 0
     mirror = False
