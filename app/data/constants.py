@@ -69,6 +69,7 @@ constants = ConstantCatalog([
     Constant('enemy_leveling', "Method for autoleveling generic units", (*[growth.value for growth in GrowthOption if growth != GrowthOption.PLAYER_CHOICE], "Match"), "Match", 'leveling'),
     Constant('auto_promote', "Units will promote automatically upon reaching max level", bool, False, 'leveling'),
     Constant('promote_level_reset', "Promotion resets level back to 1", bool, True, 'leveling'),
+    Constant('promote_skill_inheritance', "Promoted units inherit their previous classes' skills", bool, True, 'leveling'),
     Constant('class_change_level_reset', "Class Change resets level back to 1", bool, False, 'leveling'),
     Constant('negative_growths', "Negative growth rates will reduce stats", bool, True, 'leveling'),
     Constant('class_change_same_tier', "Class Change only between classes of the same tier", bool, False, 'leveling'),

@@ -247,15 +247,16 @@ def get_starting_skills(unit) -> list:
     klass_obj = DB.classes.get(unit.klass)
     current_klass = klass_obj
     all_klasses = [klass_obj]
-    counter = 5
-    while current_klass and current_klass.tier > 1 and counter > 0:
-        counter -= 1  # Prevent infinite loops
-        if current_klass.promotes_from:
-            current_klass = DB.classes.get(current_klass.promotes_from)
-            all_klasses.append(current_klass)
-        else:
-            break
-    all_klasses.reverse()
+    if DB.constants.value('promote_skill_inheritance'):
+        counter = 5
+        while current_klass and current_klass.tier > 1 and counter > 0:
+            counter -= 1  # Prevent infinite loops
+            if current_klass.promotes_from:
+                current_klass = DB.classes.get(current_klass.promotes_from)
+                all_klasses.append(current_klass)
+            else:
+                break
+        all_klasses.reverse()
 
     skills_to_add = []
     feats = DB.skills.get_feats()

@@ -313,3 +313,16 @@ class MementoStatusOnCrit(SkillComponent):
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
             action.do(action.RemoveSkill(unit, self.value))
+
+class MementoUpgradeTo(SkillComponent):
+    nid = 'memento_upgrade_to'
+    desc = "Removes the chosen skill when this skill is added to a unit"
+    tag = SkillTags.CUSTOM
+
+    expose = Type.Skill
+    value = None
+
+    def on_add(self, unit, skill):
+        for other_skill in unit.skills:
+            if other_skill.nid == self.value:
+                action.do(action.RemoveSkill(unit, other_skill))
