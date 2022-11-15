@@ -27,13 +27,12 @@ class HelpDialog():
             desc = ''
         desc = text_funcs.translate(desc)
 
-        self.num_lines = self.find_num_lines(desc)
         self.build_lines(desc)
+        self.num_lines = len(self.lines)
 
         greater_line_len = text_funcs.get_max_width(self.font, self.lines)
         if self.name:
             greater_line_len = max(greater_line_len, text_width(self.font, self.name))
-
         self.width = greater_line_len + 24
         if self.name:
             self.num_lines += 1
@@ -64,10 +63,11 @@ class HelpDialog():
             self.lines = []
             for line in lines:
                 num = self.find_num_lines(line)
-                line = text_funcs.split(self.font, line, num, WINWIDTH - 20)
+                line = text_funcs.flex_split(self.font, line, num, WINWIDTH - 20)
                 self.lines.extend(line)
         else:
-            self.lines = text_funcs.split(self.font, desc, self.num_lines, WINWIDTH - 20)
+            guess_num_lines = self.find_num_lines(desc)
+            self.lines = text_funcs.flex_split(self.font, desc, guess_num_lines, WINWIDTH - 20)
         self.lines = fix_tags(self.lines)
 
     def set_transition_in(self):

@@ -1,6 +1,7 @@
 from typing import List
 
 from app.engine.graphics.text.text_renderer import text_width
+import re
 
 def translate(string):
     from app.data.database.database import DB
@@ -45,6 +46,30 @@ def split(font_name, string, num_lines, max_width):
             new_line = True
 
     return [''.join(line) for line in lines]
+
+def flex_split(font_name, string: str, num_lines: int, max_width: int):
+    """Same as the split method above, except that it will
+    actually respect the max_width argument, and add new lines
+    if necessary.
+    """
+    total_length = text_width(font_name, string)
+    best_guess_width = total_length // num_lines
+    true_max_width = min(best_guess_width, max_width)
+    words = re.split(r'(\s)', string)
+    lines = ['']
+    if words: # initialize first word
+        lines[-1] += words.pop(0)
+    while len(words) > 0:
+        next_word = words.pop(0)
+        test_new_line = lines[-1] + next_word
+        if text_width(font_name, test_new_line) > true_max_width:
+            if next_word != ' ':
+                lines.append(next_word)
+            else:
+                lines.append('')
+        else:
+            lines[-1] = test_new_line
+    return lines
 
 def line_chunk(string: str) -> list:
     chunks = string.strip().split(' ')
