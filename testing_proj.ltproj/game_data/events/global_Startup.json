@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Startup",
+        "trigger": "on_startup",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [
+            [
+                "add_portrait",
+                [
+                    "Eirika",
+                    "Left"
+                ]
+            ],
+            [
+                "speak",
+                [
+                    "Eirika",
+                    "This is a Startup Event"
+                ]
+            ],
+            [
+                "remove_portrait",
+                [
+                    "Eirika"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]
