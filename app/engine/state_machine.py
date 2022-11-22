@@ -146,6 +146,7 @@ class StateMachine():
              'base_achievement': base.BaseAchievementState,
              'extras_sound_room': base.BaseSoundRoomState,
              'free_roam': roam_state.FreeRoamState,
+             'rationalize': roam_state.RationalizeState,
              'debug': debug_mode.DebugState,
              'overworld': overworld_states.OverworldFreeState,
              'overworld_movement': overworld_states.OverworldMovementState,

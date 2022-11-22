@@ -6,10 +6,10 @@ from typing import Tuple
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 
-from app.data.database import DB
+from app.data.database.database import DB
 # Data
-from app.data.overworld import OverworldPrefab
-from app.data.overworld_node import OverworldNodePrefab
+from app.data.database.overworld import OverworldPrefab
+from app.data.database.overworld_node import OverworldNodePrefab
 # Components
 from app.editor.lib.components.dock import Dock
 # utils

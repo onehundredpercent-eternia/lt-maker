@@ -4,7 +4,8 @@ from app.utilities.data import Data
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.tilemap import TileMapObject
 from app.events.regions import Region
-from app.data.level_units import UnitGroup
+
+from app.data.database.level_units import UnitGroup
 from app.data.levels import music_keys
 from app.utilities.typing import NID
 

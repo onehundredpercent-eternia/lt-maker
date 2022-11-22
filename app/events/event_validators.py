@@ -1,19 +1,19 @@
 from __future__ import annotations
-from app.data.items import ItemPrefab
-from app.data.levels import LevelPrefab
-from app.data.skills import SkillPrefab
+from app.data.database.items import ItemPrefab
+from app.data.database.levels import LevelPrefab
+from app.data.database.skills import SkillPrefab
 
 import re
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type
 
-from app.data.database import Database
+from app.data.database.database import Database
 from app.editor.event_editor.event_inspector import EventInspectorEngine
 from app.engine.fonts import FONT
 from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
                                                                   VAlignment)
 from app.events import event_commands
 from app.events.screen_positions import horizontal_screen_positions, vertical_screen_positions
-from app.resources.resources import Resources
+from app.data.resources.resources import Resources
 from app.sprites import SPRITES
 from app.utilities import str_utils
 from app.utilities.enums import Alignments
@@ -954,6 +954,16 @@ class Weather(OptionValidator):
 
 class Align(OptionValidator):
     valid = [align.value for align in Alignments]
+
+class AlignOrPosition(OptionValidator):
+    valid = [align.value for align in Alignments]
+
+    def validate(self, text, level):
+        if text in self.valid:
+            return text
+        elif text and ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
+            return text
+        return None
 
 class HAlign(OptionValidator):
     valid = [align.value for align in HAlignment]

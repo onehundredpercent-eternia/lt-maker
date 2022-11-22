@@ -1,6 +1,6 @@
 from app.utilities.data import Data
 
-from app.data.database import DB
+from app.data.database.database import DB
 import app.engine.item_component_access as ICA
 
 import logging
@@ -75,7 +75,7 @@ class ItemObject():
                         components.append(new_component)
                     break
 
-                # Regular components
+            # Regular components
             for component in prefab.components:
                 new_component = ICA.restore_component((component.nid, component.value))
                 components.append(new_component, overwrite=True)

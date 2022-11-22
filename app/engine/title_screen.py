@@ -1,9 +1,11 @@
 import os, math
 
 from app import autoupdate
+
 from app.constants import TILEX, TILEY, FULLTILEX, WINHEIGHT, WINWIDTH
-from app.data.database import DB
-from app.data.difficulty_modes import GrowthOption, PermadeathOption
+from app.data.database.database import DB
+from app.data.database.difficulty_modes import GrowthOption, PermadeathOption
+
 from app.engine import banner, base_surf
 from app.engine import config as cf
 from app.engine import (dialog, engine, gui, image_mods, menus, particles,
@@ -18,9 +20,8 @@ from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.events.event import Event
 from app.events import triggers
-from app.resources.resources import RESOURCES
-# from app.shaders import shaders
-from app.utilities import utils
+
+from app.data.resources.resources import RESOURCES
 
 import logging
 

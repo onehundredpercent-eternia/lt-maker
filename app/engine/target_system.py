@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import FrozenSet, TYPE_CHECKING, List, Tuple
 from functools import lru_cache
 
-from app.data.database import DB
+from app.data.database.database import DB
 from app.engine import (combat_calcs, equations, item_funcs, item_system,
                         line_of_sight, pathfinding, skill_system)
 from app.engine.game_state import game
@@ -61,6 +61,21 @@ def get_nearest_open_tile(unit, position):
             if game.movement.check_weakly_traversable(unit, n1) and not game.board.get_unit(n1) and not game.movement.check_if_occupied_in_future(n1):
                 return n1
             elif game.movement.check_weakly_traversable(unit, n2) and not game.board.get_unit(n2) and not game.movement.check_if_occupied_in_future(n2):
+                return n2
+        r += 1
+    return None
+
+def get_nearest_open_tile_rationalization(unit, position, taken_positions):
+    r = 0
+    _abs = abs
+    while r < 10:
+        for x in range(-r, r + 1):
+            magn = _abs(x)
+            n1 = position[0] + x, position[1] + r - magn
+            n2 = position[0] + x, position[1] - r + magn
+            if game.movement.check_weakly_traversable(unit, n1) and not game.board.get_unit(n1) and not n1 in taken_positions:
+                return n1
+            elif game.movement.check_weakly_traversable(unit, n2) and not game.board.get_unit(n2) and not n2 in taken_positions:
                 return n2
         r += 1
     return None

@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Tuple
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
 from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
-from app.data.database import DB
+from app.data.database.database import DB
 from app.engine import (action, dialog, engine, evaluate,
                         target_system, item_funcs)
 from app.engine.game_state import GameState
@@ -451,7 +451,9 @@ class Event():
         elif command.nid == 'table':
             unevaled_parameters, _ = event_commands.convert_parse(command, None)
             parameters['TableData'] = unevaled_parameters['TableData']
-
+        elif command.nid == 'textbox':
+            unevaled_parameters, _ = event_commands.convert_parse(command, None)
+            parameters['Text'] = unevaled_parameters['Text']
         if 'no_warn' in flags:
             self.logger.disabled = True
         else:

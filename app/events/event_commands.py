@@ -453,12 +453,15 @@ Automatically formats all `speak` commands with NID equal to the style's NID wit
 
 A style consists of all parameters that one can apply to individual speak commands, including flags.
 
-A style only applies to `speak` commands inside this event.
+NOTE: Speak styles persist through events. If you load your speak styles in the `on_title_screen` trigger, you will be able to use them
+throughout the entire game.
+
+NOTE: You can set the `__default` speak style, which will automatically apply to all speak commands thereafter.
 """
 
     keywords = ['Style']
-    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency']
-    keyword_types = ['Nid', 'Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail', 'Float']
+    optional_keywords = ['Speaker', 'TextPosition', 'Width', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg']
+    keyword_types = ['Nid', 'Speaker', 'TextPosition', 'Width', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail', 'Float', 'Sprite']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit']
 
 class Speak(EventCommand):
@@ -495,8 +498,8 @@ Extra flags:
         """
 
     keywords = ['Speaker', 'Text']
-    optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency']
-    keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail', 'Float']
+    optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg']
+    keyword_types = ['Speaker', 'Text', 'TextPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'DialogVariant', 'PositiveInteger', 'Bool', 'MessageTail', 'Float', 'Sprite']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block']
 
 class Unhold(EventCommand):
@@ -1634,6 +1637,16 @@ Changes *GlobalUnit*'s portrait to the one specified by *PortraitNid*.
 
     keywords = ["GlobalUnit", "PortraitNid"]
 
+class ChangeUnitDesc(EventCommand):
+    nid = 'change_unit_desc'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Changes *GlobalUnit*'s description to *String*.
+        """
+    keywords = ["GlobalUnit", "String"]
+
 class ChangeStats(EventCommand):
     nid = 'change_stats'
     tag = Tags.MODIFY_UNIT_PROPERTIES
@@ -1679,6 +1692,18 @@ Sets the growths (STR, SKL, etc.) of *GlobalUnit* to specific values defined in 
         """
 
     keywords = ["GlobalUnit", "StatList"]
+
+class SetUnitLevel(EventCommand):
+    nid = 'set_unit_level'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Sets *GlobalUnit*'s level to the specified value. Does not change stats like a levelup.
+        """
+
+    keywords = ["GlobalUnit", "Level"]
+    keyword_types = ["GlobalUnit", "Integer"]
 
 class AutolevelTo(EventCommand):
     nid = 'autolevel_to'
@@ -2247,6 +2272,17 @@ class Unchoice(EventCommand):
 If this event was called from a Choice, then prevents that Choice from ending once this event ends. Otherwise, does nothing.
     """
 
+class Textbox(EventCommand):
+    nid = 'textbox'
+    tag = Tags.MISCELLANEOUS
+
+    desc = ""
+
+    keywords = ['NID', 'Text']
+    optional_keywords = ['BoxPosition', 'Width', 'NumLines', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'BG']
+    keyword_types = ['Nid', 'String', 'AlignOrPosition', 'Width', 'PositiveInteger', 'Nid', 'Float', 'FontColor', 'Font', 'Sprite']
+    _flags = ['expression']
+
 class Table(EventCommand):
     nid = 'table'
     tag = Tags.MISCELLANEOUS
@@ -2792,7 +2828,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
 
         for idx, arg in enumerate(cmd_args):
             # remove line break chars. speak has its own handling, so keep them
-            if command_info.nid != 'speak':
+            if command_info.nid not in ('speak', 'textbox'):
                 arg = arg.replace('\u2028', '')
 
             all_keywords = command_info.keywords + command_info.optional_keywords

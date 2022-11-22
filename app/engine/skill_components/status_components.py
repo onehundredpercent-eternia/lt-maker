@@ -1,7 +1,7 @@
 import random
 
-from app.data.skill_components import SkillComponent, SkillTags
-from app.data.components import Type
+from app.data.database.skill_components import SkillComponent, SkillTags
+from app.data.database.components import ComponentType
 
 from app.engine import equations, action
 from app.engine.game_state import game
@@ -14,7 +14,7 @@ class Aura(SkillComponent):
     tag = SkillTags.STATUS
     paired_with = ('aura_range', 'aura_target')
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
 
 class AuraRange(SkillComponent):
     nid = 'aura_range'
@@ -22,7 +22,7 @@ class AuraRange(SkillComponent):
     tag = SkillTags.STATUS
     paired_with = ('aura', 'aura_target')
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 3
 
 class AuraTarget(SkillComponent):
@@ -31,7 +31,7 @@ class AuraTarget(SkillComponent):
     tag = SkillTags.STATUS
     paired_with = ('aura', 'aura_range')
 
-    expose = Type.String
+    expose = ComponentType.String
     value = 'unit'
 
 class AuraShow(SkillComponent):
@@ -40,7 +40,7 @@ class AuraShow(SkillComponent):
     tag = SkillTags.STATUS
     paired_with = ('aura', 'aura_range', 'aura_target')
 
-    expose = Type.Color3
+    expose = ComponentType.Color3
     value = (128, 0, 0)
 
 class PairUpBonus(SkillComponent):
@@ -48,7 +48,7 @@ class PairUpBonus(SkillComponent):
     desc = "Grants a child skill to lead units while in guard stance."
     tag = SkillTags.STATUS
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
 
     def on_pairup(self, unit, leader):
         action.do(action.AddSkill(leader, self.value))
@@ -62,7 +62,7 @@ class Regeneration(SkillComponent):
     desc = "Unit restores %% of HP at beginning of turn"
     tag = SkillTags.STATUS
 
-    expose = Type.Float
+    expose = ComponentType.Float
     value = 0.2
 
     def on_upkeep(self, actions, playback, unit):
@@ -86,7 +86,7 @@ class ManaRegeneration(SkillComponent):
     desc = "Unit restores X mana at beginning of turn"
     tag = SkillTags.STATUS
 
-    expose = Type.Int
+    expose = ComponentType.Int
 
     def on_upkeep(self, actions, playback, unit):
         actions.append(action.ChangeMana(unit, self.value))
@@ -96,7 +96,7 @@ class UpkeepDamage(SkillComponent):
     desc = "Unit takes damage at upkeep"
     tag = SkillTags.STATUS
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 5
 
     def _playback_processing(self, playback, unit, hp_change):
@@ -127,7 +127,7 @@ class EndstepDamage(UpkeepDamage, SkillComponent):
     desc = "Unit takes damage at endstep"
     tag = SkillTags.STATUS
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 5
 
     def on_upkeep(self, actions, playback, unit):
@@ -144,7 +144,7 @@ class GBAPoison(SkillComponent):
     desc = "Unit takes random amount of damage up to num"
     tag = SkillTags.STATUS
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 5
 
     def on_upkeep(self, actions, playback, unit):

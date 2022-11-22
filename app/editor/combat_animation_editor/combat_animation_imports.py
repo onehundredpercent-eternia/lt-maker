@@ -5,8 +5,8 @@ from PyQt5.QtGui import QImage, QPixmap, qRgb, QColor, QPainter
 
 from app.constants import COLORKEY
 from app.utilities import str_utils
-from app.resources.resources import RESOURCES
-from app.resources import combat_anims, combat_commands, combat_palettes
+from app.data.resources.resources import RESOURCES
+from app.data.resources import combat_anims, combat_commands, combat_palettes
 
 from app.editor.settings import MainSettingsController
 

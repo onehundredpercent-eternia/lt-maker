@@ -1,6 +1,6 @@
 from typing import Set, Tuple
-from app.data.skill_components import SkillComponent, SkillTags
-from app.data.components import Type
+from app.data.database.skill_components import SkillComponent, SkillTags
+from app.data.database.components import ComponentType
 
 from app.engine import equations, target_system, action
 from app.engine.game_state import game
@@ -38,7 +38,7 @@ class MovementType(SkillComponent):
     desc = "Unit will have a non-default movement type"
     tag = SkillTags.MOVEMENT
 
-    expose = Type.MovementType
+    expose = ComponentType.MovementType
 
     def movement_type(self, unit):
         return self.value
@@ -101,7 +101,7 @@ class WitchWarp(SkillComponent):
                 left = (pos[0] - 1, pos[1])
                 right = (pos[0] + 1, pos[1])
                 for point in [up, down, left, right]:
-                    if game.board.check_bounds(point) and game.movement.check_weakly_traversable(unit, point):
+                    if game.board.check_bounds(point) and game.movement.check_weakly_traversable(unit, point) and not game.board.get_unit(point):
                         warp_spots.add(point)
         return warp_spots
 
@@ -110,7 +110,7 @@ class SpecificWitchWarp(SkillComponent):
     desc = "Allows unit to witch warp to the given units"
     tag = SkillTags.MOVEMENT
 
-    expose = (Type.List, Type.Unit)
+    expose = (ComponentType.List, ComponentType.Unit)
 
     def witch_warp(self, unit: UnitObject) -> list:
         positions = []
@@ -121,7 +121,7 @@ class SpecificWitchWarp(SkillComponent):
             else:
                 continue
             if partner_pos:
-                positions += [pos for pos in target_system.get_adjacent_positions(partner_pos) if game.movement.check_weakly_traversable(unit, pos)]
+                positions += [pos for pos in target_system.get_adjacent_positions(partner_pos) if game.movement.check_weakly_traversable(unit, pos) and not game.board.get_unit(pos)]
         return positions
 
 class Galeforce(SkillComponent):

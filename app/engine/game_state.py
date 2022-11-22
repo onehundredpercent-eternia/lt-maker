@@ -29,13 +29,13 @@ if TYPE_CHECKING:
     from app.utilities.typing import NID, UID
 
 from app.constants import VERSION
-from app.data.database import DB
-from app.data.difficulty_modes import GrowthOption, PermadeathOption
+from app.data.database.database import DB
+from app.data.database.difficulty_modes import GrowthOption, PermadeathOption
 from app.events.regions import RegionType
 from app.engine import config as cf
 from app.engine import state_machine
 from app.utilities import static_random
-from app.resources.resources import RESOURCES
+from app.data.resources.resources import RESOURCES
 
 import logging
 

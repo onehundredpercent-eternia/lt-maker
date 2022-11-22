@@ -2,8 +2,8 @@ from app.engine.objects.unit import UnitObject
 import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
-from app.resources.resources import RESOURCES
-from app.data.database import DB
+from app.data.resources.resources import RESOURCES
+from app.data.database.database import DB
 
 from app.utilities import utils
 from app.engine import engine, image_mods, icons, unit_funcs, action, banner, skill_system
@@ -15,6 +15,8 @@ from app.engine.state import State
 from app.engine.state_machine import SimpleStateMachine
 from app.engine.animations import Animation
 from app.engine.game_state import game
+from app.engine.graphics.text.text_renderer import render_text
+from app.utilities.enums import Alignments
 
 class ExpState(State):
     name = 'exp'
@@ -71,8 +73,9 @@ class ExpState(State):
         self.stat_changes = None
         self.new_wexp = None
 
-        if self.unit.level >= self.unit_klass.max_level and not (self.auto_promote or self.starting_state in ('promote', 'class_change')):
-            # We're done here
+        if self.unit.level >= self.unit_klass.max_level and \
+                not self.auto_promote and self.starting_state not in ('promote', 'class_change', 'stat_booster'):
+            # We're done here, since the unit is at max level and has no stats to gain
             game.state.back()
             return 'repeat'
 
@@ -407,6 +410,7 @@ class LevelUpScreen():
 
         self.animations = []
         self.arrow_animations = []
+        self.simple_nums = []
 
         self.state = 'scroll_in'
         self.start_time = 0
@@ -507,6 +511,11 @@ class LevelUpScreen():
                 if anim:
                     number_animation = Animation(anim, (offset_pos[0] + 37, offset_pos[1] + 4), delay=80, hold=True)
                     self.animations.append(number_animation)
+                else:
+                    if increase > 0:
+                        self.simple_nums.append(('stat', 'white', '+' + str(increase), (offset_pos[0] + 57, offset_pos[1] - 2), current_time))
+                    elif increase < 0:
+                        self.simple_nums.append(('stat', 'purple', str(increase), (offset_pos[0] + 57, offset_pos[1] - 2), current_time))
 
                 get_sound_thread().play_sfx('Stat Up')
                 self.underline_offset = 36 # for underline growing
@@ -520,6 +529,7 @@ class LevelUpScreen():
         elif self.state == 'level_up_wait':
             if current_time - self.start_time > self.level_up_wait:
                 self.animations.clear()
+                self.simple_nums.clear()
                 self.state = 'scroll_out'
                 self.start_time = current_time
 
@@ -592,6 +602,10 @@ class LevelUpScreen():
         # offset = game.camera.get_x() * TILEWIDTH, game.camera.get_y() * TILEHEIGHT
         for animation in self.animations:
             animation.draw(surf)
+
+        for font, color, text, pos, time in self.simple_nums:
+            if engine.get_time() - time > 80:
+                render_text(surf, [font], [text], [color], pos, align=Alignments.RIGHT)
 
         return surf
 

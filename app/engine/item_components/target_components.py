@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 
-from app.data.components import Type
-from app.data.item_components import ItemComponent, ItemTags
+from app.data.database.components import ComponentType
+from app.data.database.item_components import ItemComponent, ItemTags
 from app.engine import item_funcs, skill_system, target_system
 from app.engine.game_state import game
 from app.utilities import utils
@@ -68,7 +68,7 @@ class TargetsSpecificTiles(ItemComponent):
     desc = "Item targets tiles specified by the condition. Condition must return a list of positions, or a list of lists of positions. Positions must be within the item's range."
     tag = ItemTags.TARGET
 
-    expose = Type.String
+    expose = ComponentType.String
     value = ''
 
     def ai_targets(self, unit, item) -> set:
@@ -77,13 +77,13 @@ class TargetsSpecificTiles(ItemComponent):
     def valid_targets(self, unit, item) -> set:
         rng = item_funcs.get_range(unit, item)
         range_restrictions = target_system.find_manhattan_spheres(rng, *unit.position)
-        targetable_positions = self.resolve_targets()
+        targetable_positions = self.resolve_targets(unit, item)
         return {pos for pos in targetable_positions if pos in range_restrictions}
 
-    def resolve_targets(self):
+    def resolve_targets(self, unit, item):
         from app.engine import evaluate
         try:
-            value_list = evaluate.evaluate(self.value)
+            value_list = evaluate.evaluate(self.value, unit, position=unit.position, local_args={'item': item})
         except Exception as e:
             logging.error("target_specific_tile component failed to evaluate expression %s with error %s", self.value, e)
             value_list = []
@@ -94,7 +94,7 @@ class EvalSpecialRange(ItemComponent):
     desc = "Use this to restrict range to specific tiles around the unit"
     tag = ItemTags.TARGET
 
-    expose = Type.String
+    expose = ComponentType.String
     value = ''
 
     # if the range is large, the calculation will be large; let's not repeat this more than necessary.
@@ -142,7 +142,7 @@ Restricts which units can be targeted. These properties are accessible in the ev
 """
     tag = ItemTags.TARGET
 
-    expose = Type.String
+    expose = ComponentType.String
     value = 'True'
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
@@ -198,7 +198,7 @@ class MinimumRange(ItemComponent):
     desc = "Set the minimum_range of the item to an integer"
     tag = ItemTags.TARGET
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 0
 
     def minimum_range(self, unit, item) -> int:
@@ -209,7 +209,7 @@ class MaximumRange(ItemComponent):
     desc = "Set the maximum_range of the item to an integer"
     tag = ItemTags.TARGET
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 0
 
     def maximum_range(self, unit, item) -> int:
@@ -220,7 +220,7 @@ class MaximumEquationRange(ItemComponent):
     desc = "Set the maximum_range of the item to an equation"
     tag = ItemTags.TARGET
 
-    expose = Type.Equation
+    expose = ComponentType.Equation
 
     def maximum_range(self, unit, item) -> int:
         from app.engine import equations

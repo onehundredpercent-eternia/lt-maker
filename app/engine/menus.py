@@ -1,10 +1,10 @@
 import math, string
 
 from app.constants import TILEX, WINWIDTH, WINHEIGHT, STATWIDTH
-from app.data.database import DB
+from app.data.database.database import DB
 from app.utilities import utils
 
-from app.data import lore
+from app.data.database import lore
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine.input_manager import get_input_manager
@@ -14,7 +14,6 @@ from app.engine.gui import ScrollBar
 from app.engine.base_surf import create_base_surf
 from app.engine.objects.item import ItemObject
 from app.engine.objects.unit import UnitObject
-from app.engine.objects.skill import SkillObject
 from app.engine.game_state import game
 from app.engine.achievements import Achievement
 
