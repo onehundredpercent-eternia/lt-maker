@@ -353,7 +353,7 @@ class GainSkillAfterTakeMiss(SkillComponent):
     desc = "Gain a skill immediately after an enemy misses you"
     tag = SkillTags.COMBAT2
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
 
     def after_take_miss(self, actions, playback, unit, item, target, mode, attack_info):
         actions.append(action.AddSkill(unit, self.value, unit))

@@ -1,9 +1,9 @@
-from app.resources.resources import RESOURCES
+from app.data.resources.resources import RESOURCES
 
-from app.data.item_components import ItemComponent, ItemTags
-from app.data.components import Type
+from app.data.database.item_components import ItemComponent, ItemTags
+from app.data.database.components import ComponentType
 
-from app.data.database import DB
+from app.data.database.database import DB
 
 from app.utilities import utils
 from app.engine import skill_system, action, equations
@@ -84,7 +84,7 @@ class MementoBurstAOE(ItemComponent):
     desc = "Gives Memento Burst AOE"
     tag = ItemTags.CUSTOM
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 1
 
     def splash(self, unit, item, position) -> tuple:
@@ -121,7 +121,7 @@ class MementoPull(ItemComponent):
     desc = "Item moves target toward user on hit, and if it cannot, applies this status instead"
     tag = ItemTags.CUSTOM
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
 
     def _pull(self, user, target, magnitude: int) -> tuple:
         offset_x = utils.clamp(target.position[0] - user.position[0], -1, 1)
@@ -151,7 +151,7 @@ class MementoRallyStatus(ItemComponent):
     desc = "Item gives this status to nearby allies after combat"
     tag = ItemTags.CUSTOM
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
     distance = 2
 
     def end_combat(self, playback, unit, item, target, mode):
@@ -183,7 +183,7 @@ class MementoRallyHeals(ItemComponent):
     desc = "Item heals this amount to nearby allies after combat"
     tag = ItemTags.CUSTOM
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 10
     distance = 2
 
@@ -229,7 +229,7 @@ class MementoAnimaAvailable(ItemComponent):
     desc = "Item can only be used when in the correct mode"
     tag = ItemTags.CUSTOM
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
 
     def available(self, unit, item) -> bool:
         if unit.team != 'player':
@@ -249,14 +249,14 @@ class MementoUpgradeTo(ItemComponent):
     desc = "Item can be upgraded to any of the following items"
     tag = ItemTags.CUSTOM
 
-    expose = (Type.List, Type.Item)
+    expose = (ComponentType.List, ComponentType.Item)
 
 class MementoForge(ItemComponent):
     nid = 'memento_forge'
     desc = "Forges a selected item in the target's inventory."
     tag = ItemTags.CUSTOM
 
-    expose = Type.Event
+    expose = ComponentType.Event
 
     _did_hit = False
 

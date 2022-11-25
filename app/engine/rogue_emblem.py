@@ -1,4 +1,4 @@
-from app.data.database import DB
+from app.data.database.database import DB
 from app.engine.game_state import game
 from app.utilities import static_random
 import logging

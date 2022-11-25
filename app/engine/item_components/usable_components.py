@@ -181,7 +181,7 @@ class EvalManaCost(ItemComponent):
     desc = "Item costs mana to use, the amount is eval'd at runtime"
     tag = ItemTags.USES
 
-    expose = Type.String
+    expose = ComponentType.String
 
     def _check_value(self, unit, item) -> int:
         from app.engine import evaluate

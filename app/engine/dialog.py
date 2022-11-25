@@ -413,7 +413,7 @@ class Dialog():
         if self.position[1] < 10: # if it would get cut off
             y_pos = self.position[1] + self.height - 6
         else:
-        y_pos = self.position[1] - 10
+            y_pos = self.position[1] - 10
         x_pos = self.position[0] - 4
         if x_pos < 0:
             x_pos = self.position[0] + 16

@@ -1,5 +1,5 @@
-from app.data.skill_components import SkillComponent, SkillTags
-from app.data.components import Type
+from app.data.database.skill_components import SkillComponent, SkillTags
+from app.data.database.components import ComponentType
 
 from app.utilities import utils
 from app.engine import action, skill_system, target_system
@@ -13,7 +13,7 @@ class MementoHitBonus(SkillComponent):
     desc = "Gives out bonus to hit when another character can attack the same unit"
     tag = SkillTags.CUSTOM
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 10
 
     def dynamic_accuracy(self, unit, item, target, mode, attack_info, base_value):
@@ -102,7 +102,7 @@ class WitchWarp(SkillComponent):
     desc = "Allows unit to witch warp to the given units"
     tag = SkillTags.CUSTOM
 
-    expose = (Type.List, Type.Unit)
+    expose = (ComponentType.List, ComponentType.Unit)
 
     def witch_warp(self, unit) -> list:
         positions = []
@@ -121,7 +121,7 @@ class WitchWarpExpression(SkillComponent):
     desc = "Allows unit to witch warp to the units that satisfy the expression"
     tag = SkillTags.CUSTOM
 
-    expose = Type.String
+    expose = ComponentType.String
     value = 'True'
 
     def witch_warp(self, unit) -> list:
@@ -194,7 +194,7 @@ class MementoImmortal(SkillComponent):
     desc = "Unit ignores first damage taken each phase"
     tag = SkillTags.CUSTOM
 
-    expose = Type.Int
+    expose = ComponentType.Int
     value = 1
 
     def init(self, skill):
@@ -235,7 +235,7 @@ class MementoRage(SkillComponent):
     desc = "After killing an enemy, if under 50% hp, unit refreshes, heals to full, and gains skill."
     tag = SkillTags.CUSTOM
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
     value = None
 
     def end_combat(self, playback, unit, item, target, mode):
@@ -299,7 +299,7 @@ class MementoStatusOnCrit(SkillComponent):
     desc = "Gain skill during criticals"
     tag = SkillTags.CUSTOM
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
     value = None
 
     _did_action = False
@@ -319,7 +319,7 @@ class MementoUpgradeTo(SkillComponent):
     desc = "Removes the chosen skill when this skill is added to a unit"
     tag = SkillTags.CUSTOM
 
-    expose = Type.Skill
+    expose = ComponentType.Skill
     value = None
 
     def on_add(self, unit, skill):
