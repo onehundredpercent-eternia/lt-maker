@@ -254,11 +254,13 @@ class ModifyRegionWidget(QWidget):
         elif self.current.region_type == RegionType.STATUS:
             self.status_box.show()
         elif self.current.region_type == RegionType.EVENT:
+            self.sub_nid_box.label.setText("Event Name")
             self.sub_nid_box.show()
             self.condition_box.show()
             self.only_once_box.show()
             self.interrupt_move_box.show()
         elif self.current.region_type == RegionType.TIME:
+            self.sub_nid_box.label.setText("Num Turns")
             self.sub_nid_box.show()
 
     def sub_nid_changed(self, text):

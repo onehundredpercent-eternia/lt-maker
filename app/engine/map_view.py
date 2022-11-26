@@ -7,10 +7,7 @@ from app.events.regions import RegionType
 from app.engine import config as cf
 from app.engine import engine
 from app.engine.fonts import FONT
-from app.engine.value_noise import ValueNoise
 from app.engine.game_state import game
-
-import time
 
 from app.utilities.utils import magnitude, tmult, tuple_add, tuple_sub
 
@@ -19,7 +16,6 @@ class MapView():
         self._unit_surf = engine.create_surface((WINWIDTH, WINHEIGHT), transparent=True)
         self._line_surf = engine.copy_surface(self._unit_surf)
         self._line_surf.fill((0, 0, 0, 0))
-        # self._value_noise = ValueNoise()
 
     def save_screenshot(self):
         import os

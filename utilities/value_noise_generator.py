@@ -1,8 +1,5 @@
 import random, math
 
-# from app.engine import engine
-
-import time
 from PIL import Image
 
 class ValueNoise():
