@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import List, Type
 from app.utilities.data import Data
 from app.data.database.components import ComponentType
 from app.data.database.item_components import ItemComponent, ItemTags
@@ -20,11 +21,11 @@ def get_cached_item_components(proj_dir: str):
     subclasses = sorted(subclasses, key=lambda x: list(ItemTags).index(x.tag) if x.tag in list(ItemTags) else 100)
     return Data(subclasses)
 
-def get_item_components():
+def get_item_components() -> Data[Type[ItemComponent]]:
     from app.data.database.database import DB
     return get_cached_item_components(DB.current_proj_dir)
 
-def get_item_tags():
+def get_item_tags() -> List[ItemTags]:
     return list(ItemTags)
 
 def get_component(nid):

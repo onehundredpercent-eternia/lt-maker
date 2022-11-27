@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, \
 from PyQt5.QtGui import QIcon
 
 from app import autoupdate
+from app.data.resources.resources import RESOURCES
+from app.editor.item_editor.new_item_tab import NewItemDatabase
 
 from app.editor.settings import MainSettingsController
 
@@ -234,6 +236,7 @@ class MainEditor(QMainWindow):
                             _("Game Vars"): self.edit_game_vars,
                             _("Weapon Types"): WeaponDatabase.edit,
                             _("Items"): ItemDatabase.edit,
+                            "Items2": NewItemDatabase.edit,
                             _("Skills"): SkillDatabase.edit,
                             "AI": AIDatabase.edit,
                             _("Terrain"): TerrainDatabase.edit,
