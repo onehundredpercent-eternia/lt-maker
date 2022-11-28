@@ -18,8 +18,8 @@ from app.engine.game_state import game
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
 from app.engine.objects.unit import UnitObject
+from app.engine.objects.region import RegionObject
 from app.engine import engine
-from app.events.regions import Region
 from app.utilities import utils, static_random
 
 class Action():
@@ -54,7 +54,7 @@ class Action():
             value = ('item', value.uid)
         elif isinstance(value, SkillObject):
             value = ('skill', value.uid)
-        elif isinstance(value, Region):
+        elif isinstance(value, RegionObject):
             value = ('region', value.nid)
         elif isinstance(value, list):
             value = ('list', [Action.save_obj(v) for v in value])
@@ -2418,7 +2418,7 @@ class AddRegion(Action):
     def do(self):
         self.subactions.clear()
         if self.region.nid in game.level.regions:
-            logging.warning("AddRegion Action: Region with nid %s already in level", self.region.nid)
+            logging.warning("AddRegion Action: RegionObject with nid %s already in level", self.region.nid)
         else:
             game.get_region_under_pos.cache_clear()
             game.level.regions.append(self.region)

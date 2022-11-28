@@ -11,7 +11,7 @@ class ParticleSystem():
     def __init__(self, nid, particle, abundance, bounds, size, blend=None, position=None):
         width, height = size
         self.nid = nid
-        self.pos = position
+        self.pos = tuple(position) if position else None
         self.particle = particle
         self.abundance = int(abundance * width * height)
         self.particles = []

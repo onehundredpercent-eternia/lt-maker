@@ -2,8 +2,9 @@ from app.engine.objects.difficulty_mode import DifficultyModeObject
 from app.utilities.data import Data
 
 from app.engine.objects.unit import UnitObject
+from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
-from app.events.regions import Region
+
 
 from app.data.database.level_units import UnitGroup
 from app.data.database.levels import music_keys
@@ -25,7 +26,7 @@ class LevelObject():
         self.objective = {}
 
         self.units: Data[UnitObject] = Data()
-        self.regions = Data()
+        self.regions: Data[RegionObject] = Data()
         self.unit_groups = Data()
 
     @classmethod
@@ -57,7 +58,7 @@ class LevelObject():
                 new_unit = UnitObject.from_prefab(unit_prefab, current_mode)
                 level.units.append(new_unit)
 
-        level.regions = Data([p for p in prefab.regions])
+        level.regions = Data([RegionObject.from_prefab(p) for p in prefab.regions])
         level.unit_groups = Data([UnitGroup.from_prefab(p) for p in prefab.unit_groups])
 
         return level
@@ -96,7 +97,7 @@ class LevelObject():
                   'music': self.music,
                   'objective': self.objective,
                   'units': [unit.nid for unit in self.units],
-                  'regions': [region.save() for region in self.regions],
+                  'regions': [region.nid for region in self.regions],
                   'unit_groups': [unit_group.save() for unit_group in self.unit_groups],
                   }
         return s_dict
@@ -116,7 +117,7 @@ class LevelObject():
         level.objective = s_dict.get('objective', {})
 
         level.units = Data([game.get_unit(unit_nid) for unit_nid in s_dict.get('units', [])])
-        level.regions = Data([Region.restore(region) for region in s_dict.get('regions', [])])
+        level.regions = Data([game.get_region(region_nid) for region_nid in s_dict.get('regions', [])])
         level.unit_groups = Data([UnitGroup.restore(unit_group) for unit_group in s_dict.get('unit_groups', [])])
 
         return level

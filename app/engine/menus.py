@@ -30,7 +30,7 @@ def make_bg_surf(shimmer):
     bg_surf = create_base_surf(104, 16 * DB.constants.total_items() + 8, 'menu_bg_base')
     if shimmer:
         img = SPRITES.get('menu_shimmer%d' % shimmer)
-        bg_surf.blit(img, (bg_surf.get_width() - img.get_width() - 1, bg_surf.get_height() - img.get_height() - 5))
+        bg_surf.blit(img, (bg_surf.get_width() - img.get_width() - 1, bg_surf.get_height() - img.get_height() - 4))
     bg_surf = image_mods.make_translucent(bg_surf, 0.1)
     return bg_surf
 
@@ -42,9 +42,9 @@ def draw_unit_face(surf, topleft, unit, right):
     face_image = face_image.convert_alpha()
     face_image = engine.subsurface(face_image, (0, max(0, offset - 4), 96, 76))
     face_image = image_mods.make_translucent(face_image, 0.5)
-    left = x + 104//2 + 1
-    top = y + (16 * DB.constants.total_items() + 8)//2 - 1 + 2
-    engine.blit_center(surf, face_image, (left, top))
+    left = x + 4 + 1
+    top = y + (16 * DB.constants.total_items() + 8) - 4 - 76
+    engine.blit(surf, face_image, (left, top))
 
 def draw_unit_items(surf, topleft, unit, include_top=False, include_bottom=True, include_face=False, right=True, shimmer=0):
     x, y = topleft
@@ -61,10 +61,10 @@ def draw_unit_items(surf, topleft, unit, include_top=False, include_bottom=True,
         # Blit items
         for idx, item in enumerate(unit.nonaccessories):
             item_option = menu_options.ItemOption(idx, item)
-            item_option.draw(surf, topleft[0] + 2, topleft[1] + idx * 16 + 4)
+            item_option.draw(surf, topleft[0] + 1, topleft[1] + idx * 16 + 4)
         for idx, item in enumerate(unit.accessories):
             item_option = menu_options.ItemOption(idx, item)
-            item_option.draw(surf, topleft[0] + 2, topleft[1] + item_funcs.get_num_items(unit) * 16 + idx * 16 + 4)
+            item_option.draw(surf, topleft[0] + 1, topleft[1] + item_funcs.get_num_items(unit) * 16 + idx * 16 + 4)
 
 
 def draw_unit_bexp(surf, topleft, unit, new_exp, new_bexp, current_bexp, include_top=False, include_bottom=True,

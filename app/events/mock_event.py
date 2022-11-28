@@ -43,6 +43,7 @@ class MockEvent(Event):
         self.if_statement_strategy = if_statement_strategy
 
         self.background = None
+        self.dialog_background = None
         self.bg_black = SPRITES.get('bg_black').copy()
         self.game = MockGame()
 

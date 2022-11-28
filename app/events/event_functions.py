@@ -14,7 +14,6 @@ from app.engine import (action, background, banner, base_surf, dialog, engine,
 from app.engine.achievements import ACHIEVEMENTS
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
-from app.engine.fonts import FONT
 from app.engine.game_menus.menu_components.generic_menu.simple_menu_wrapper import \
     SimpleMenuUI
 from app.engine.graphics.text.text_renderer import rendered_text_width
@@ -30,6 +29,7 @@ from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
 from app.engine.objects.item import ItemObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
+from app.engine.objects.region import RegionObject
 from app.engine.persistent_records import RECORDS
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, regions, triggers
@@ -40,8 +40,6 @@ from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID
-
-from app.dungeon_maker import map_generator, random_groups
 
 if TYPE_CHECKING:
     from app.events.event import Event
@@ -2310,7 +2308,7 @@ def add_region(self: Event, region, position, size, region_type, string=None, fl
     flags = flags or set()
 
     if region in self.game.level.regions.keys():
-        self.logger.error("add_region: Region nid %s already present!" % region)
+        self.logger.error("add_region: RegionObject nid %s already present!" % region)
         return
     position = self._parse_pos(position)
     size = self._parse_pos(size)
@@ -2319,8 +2317,7 @@ def add_region(self: Event, region, position, size, region_type, string=None, fl
     region_type = region_type.lower()
     sub_region_type = string
 
-    new_region = regions.Region(region)
-    new_region.region_type = regions.RegionType(region_type)
+    new_region = RegionObject(region, regions.RegionType(region_type))
     new_region.position = position
     new_region.size = size
     new_region.sub_nid = sub_region_type
@@ -2338,14 +2335,14 @@ def region_condition(self: Event, region, expression, flags=None):
         region = self.game.level.regions.get(region)
         action.do(action.ChangeRegionCondition(region, expression))
     else:
-        self.logger.error("region_condition: Couldn't find Region %s" % region)
+        self.logger.error("region_condition: Couldn't find RegionObject %s" % region)
 
 def remove_region(self: Event, region, flags=None):
     if region in self.game.level.regions.keys():
         region = self.game.level.regions.get(region)
         action.do(action.RemoveRegion(region))
     else:
-        self.logger.error("remove_region: Couldn't find Region %s" % region)
+        self.logger.error("remove_region: Couldn't find RegionObject %s" % region)
 
 def remove_generics_from_region(self: Event, nid, flags=None):
     if nid in self.game.level.regions.keys():
@@ -2355,7 +2352,7 @@ def remove_generics_from_region(self: Event, nid, flags=None):
             if unit and unit.generic:
                 action.LeaveMap(unit).execute()
     else:
-        self.logger.error("remove_generics_from_region: Couldn't find Region %s" % nid)
+        self.logger.error("remove_generics_from_region: Couldn't find RegionObject %s" % nid)
 
 def show_layer(self: Event, layer, layer_transition=None, flags=None):
     if layer not in self.game.level.tilemap.layers.keys():
@@ -2417,8 +2414,8 @@ def map_anim(self: Event, map_anim, float_position, speed=None, flags=None):
     if map_anim not in RESOURCES.animations.keys():
         self.logger.error("map_anim: Could not find map animation %s" % map_anim)
         return
-    pos = self._parse_pos(float_position, True)
-    assert(pos is not None)
+    pos = tuple(self._parse_pos(float_position, True))
+    assert pos is not None, float_position
     if speed:
         speed_mult = float(speed)
     else:

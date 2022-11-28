@@ -4,8 +4,8 @@ from enum import Enum
 from typing import Dict, List, Tuple
 
 from app.utilities.data import Data
-from app.data.database import DB
-from app.data.level_units import GenericUnit, UniqueUnit
+from app.data.database.database import DB
+from app.data.database.level_units import GenericUnit, UniqueUnit
 
 from app.engine.objects.unit import UnitObject
 

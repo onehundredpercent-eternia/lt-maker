@@ -22,9 +22,9 @@ if TYPE_CHECKING:
     from app.engine.objects.party import PartyObject
     from app.engine.objects.skill import SkillObject
     from app.engine.objects.unit import UnitObject
+    from app.engine.objects.unit import RegionObject
     from app.engine.dialog_log import DialogLog
     from app.events.event_manager import EventManager
-    from app.events.regions import Region
     from app.utilities.typing import NID, UID
 
 from app.constants import VERSION
@@ -61,7 +61,7 @@ class GameState():
         self.item_registry: Dict[UID, ItemObject] = {}
         self.skill_registry: Dict[UID, SkillObject] = {}
         self.terrain_status_registry: Dict[NID, NID] = {}
-        self.region_registry: Dict[NID, Region] = {}
+        self.region_registry: Dict[NID, RegionObject] = {}
         self.overworld_registry: Dict[NID, OverworldObject] = {}
         self.parties: Dict[NID, PartyObject] = {}
         self.unlocked_lore: List[NID] = []
@@ -371,8 +371,9 @@ class GameState():
         from app.engine.objects.party import PartyObject
         from app.engine.objects.skill import SkillObject
         from app.engine.objects.unit import UnitObject
+        from app.engine.objects.region import RegionObject
+
         from app.events import event_manager, speak_style
-        from app.events.regions import Region
 
         logging.info("Loading Game...")
         self.game_vars = Counter(s_dict.get('game_vars', {}))
@@ -393,7 +394,6 @@ class GameState():
         self.skill_registry = {skill['uid']: SkillObject.restore(skill) for skill in s_dict['skills']}
         save.set_next_uids(self)
         self.terrain_status_registry = s_dict.get('terrain_status_registry', {})
-        self.region_registry = {region['nid']: Region.restore(region) for region in s_dict.get('regions', [])}
         self.unit_registry = {unit['nid']: UnitObject.restore(unit, self) for unit in s_dict['units']}
 
         # Handle subitems
@@ -450,6 +450,7 @@ class GameState():
             logging.info("Loading Level...")
             self.current_level = LevelObject.restore(s_dict['level'], self)
             self.set_up_game_board(self.current_level.tilemap, s_dict.get('bounds'))
+            self.region_registry = {region['nid']: RegionObject.restore(self.current_level, region) for region in s_dict.get('regions', [])}    
 
             self.generic()
             from app.engine.level_cursor import LevelCursor
@@ -466,6 +467,8 @@ class GameState():
                     action.UpdateFogOfWar(unit).execute()
 
             self.cursor.autocursor(True)
+        else:
+            self.region_registry = {}
 
         self.events = event_manager.EventManager.restore(s_dict.get('events'))
 
@@ -638,7 +641,7 @@ class GameState():
 
     @property
     def regions(self):
-        return list(self.level.regions.values())
+        return list(self.region_registry.values())
 
     def register_unit(self, unit):
         logging.debug("Registering unit %s as %s", unit, unit.nid)
@@ -680,7 +683,7 @@ class GameState():
         logging.debug("Registering terrain status %s", skill_uid)
         self.terrain_status_registry[key] = skill_uid
 
-    def register_region(self, region):
+    def register_region(self, region: RegionObject):
         logging.debug("Registering region %s", region.nid)
         self.region_registry[region.nid] = region
 
@@ -727,7 +730,7 @@ class GameState():
         return region
 
     @lru_cache(128)
-    def get_region_under_pos(self, pos: Tuple[int, int]) -> Region:
+    def get_region_under_pos(self, pos: Tuple[int, int]) -> RegionObject:
         if pos:
             for region in self.level.regions.values():
                 if region.contains(pos):
@@ -899,7 +902,7 @@ class GameState():
                     act = action.AddSkill(unit, skill_obj)
                     action.do(act)
 
-    def add_region_status(self, unit, region, test):
+    def add_region_status(self, unit: UnitObject, region: RegionObject, test: bool):
         from app.engine import action, item_funcs
         skill_uid = self.get_terrain_status(region.nid)
         skill_obj = self.get_skill(skill_uid)

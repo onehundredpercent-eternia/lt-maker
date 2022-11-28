@@ -11,7 +11,6 @@ from app.engine.objects.overworld import OverworldNodeObject, OverworldEntityObj
 from app.engine.overworld.overworld_actions import OverworldMove
 from app.engine.overworld.overworld_movement_manager import \
     OverworldMovementManager
-from app.utilities import hex_math
 from app.utilities.typing import NID, Point
 
 if TYPE_CHECKING:

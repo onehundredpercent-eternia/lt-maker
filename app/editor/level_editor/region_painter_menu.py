@@ -289,8 +289,8 @@ class ModifyRegionWidget(QWidget):
         self.only_once_box.edit.setChecked(bool(current.only_once))
         self.interrupt_move_box.edit.setChecked(bool(current.interrupt_move))
         if current.region_type == RegionType.STATUS:
-            self.status_box.edit.setValue(current.sub_nid)
-        elif current.region_type == RegionType.EVENT:
-            self.sub_nid_box.edit.setText(current.sub_nid)
+            self.status_box.edit.setValue(str(current.sub_nid))
+        elif current.region_type in (RegionType.EVENT, RegionType.TIME):
+            self.sub_nid_box.edit.setText(str(current.sub_nid))
         else:
             self.sub_nid_box.edit.setText('')

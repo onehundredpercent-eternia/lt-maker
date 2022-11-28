@@ -226,9 +226,9 @@ class MockCombat():
                 self.glancing_hit()
             else:
                 if self.current_battle_anim is self.right_battle_anim:
-                    position = (-110 + 120 - WINWIDTH//2, -30)
+                    position = (-110 + WINWIDTH//2 - 120, -30)
                 else:
-                    position = (-40 + 120 - WINWIDTH//2, -30)
+                    position = (-40 + WINWIDTH//2 - 120, -30)
                 anim_nid = 'HitSpark'
                 animation = RESOURCES.animations.get(anim_nid)
                 if animation:

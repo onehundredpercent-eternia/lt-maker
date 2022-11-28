@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Dict, Tuple
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
     from app.engine.objects.unit import UnitObject
+    from app.engine.objects.unit import RegionObject
 
-from app.events.regions import Region
 from app.utilities.typing import NID
 
 
@@ -123,7 +123,7 @@ class OnRegionInteract(EventTrigger):
     nid: ClassVar[NID] = 'on_region_interact'
     unit1: UnitObject
     position: Tuple[int, int]
-    region: Region
+    region: RegionObject
 
 @dataclass(init=True)
 class UnitDeath(EventTrigger):
@@ -151,7 +151,7 @@ class UnitWait(EventTrigger):
     nid: ClassVar[NID] = 'unit_wait'
     unit1: UnitObject
     position: Tuple[int, int]
-    region: Region
+    region: RegionObject
 
 @dataclass(init=True)
 class UnitSelect(EventTrigger):
@@ -310,7 +310,7 @@ class TimeRegionComplete(EventTrigger):
         region: the region that has run out of time..
     """
     nid: ClassVar[NID] = 'time_region_complete'
-    region: Region
+    region: RegionObject
 
 @dataclass(init=True)
 class OnOverworldNodeSelect(EventTrigger):
@@ -364,7 +364,7 @@ class RoamingInterrupt(EventTrigger):
     nid: ClassVar[NID] = 'roaming_interrupt'
     unit1: UnitObject
     position: Tuple[int, int]
-    region: Region
+    region: RegionObject
 
 @dataclass(init=True)
 class RegionTrigger(EventTrigger):
@@ -381,7 +381,7 @@ class RegionTrigger(EventTrigger):
     nid: NID
     unit1: UnitObject
     position: Tuple[int, int]
-    region: Region
+    region: RegionObject
     item: ItemObject = None
 
 ALL_TRIGGERS = [tclass for tclass in EventTrigger.__subclasses__() if hasattr(tclass, 'nid')]

@@ -644,7 +644,7 @@ class Event():
     def _parse_pos(self, text: str, is_float=False):
         position = None
         if ',' in text:
-            text = text.replace(')', '').replace('(', '')
+            text = text.replace(')', '').replace('(', '').replace('[', '').replace(']', '')
             if is_float:
                 position = tuple(float(_) for _ in text.split(','))
             else:

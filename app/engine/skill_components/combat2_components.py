@@ -6,6 +6,8 @@ from app.engine import action, skill_system, target_system
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
 
+import logging
+
 class Miracle(SkillComponent):
     nid = 'miracle'
     desc = "Unit cannot be reduced below 1 HP"
@@ -179,7 +181,7 @@ class EvalMaximumRange(SkillComponent):
         try:
             return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
         except:
-            print("Couldn't evaluate %s conditional" % self.value)
+            logging.error("Couldn't evaluate %s conditional" % self.value)
         return 0
 
     def has_dynamic_range(sellf, unit):
@@ -358,6 +360,20 @@ class GainSkillAfterTakeMiss(SkillComponent):
     def after_take_miss(self, actions, playback, unit, item, target, mode, attack_info):
         actions.append(action.AddSkill(unit, self.value, unit))
         actions.append(action.TriggerCharge(unit, self.skill))
+
+class GainSkillAfterTakeDamage(SkillComponent):
+    nid = 'gain_skill_after_take_damage'
+    desc = "Gain a skill immediately after an enemy damages you"
+    tag = SkillTags.COMBAT2
+
+    expose = ComponentType.Skill
+
+    def after_take_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        for act in actions:
+            if isinstance(act, action.ChangeHP) and act.num < 0 and act.unit == unit:
+                actions.append(action.AddSkill(unit, self.value, unit))
+                actions.append(action.TriggerCharge(unit, self.skill))
+                return
 
 class DelayInitiativeOrder(SkillComponent):
     nid = 'delay_initiative_order'
