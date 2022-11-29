@@ -137,7 +137,7 @@ class TurnChangeState(MapState):
                             action.do(action.DecrementTimeRegion(region))
                             if region.sub_nid <= 0:
                                 action.do(action.RemoveRegion(region))
-                                game.events.trigger(triggers.TimeRegionComplete(region))
+                                game.events.trigger(triggers.TimeRegionComplete(region.position, region))
                 
                 game.events.trigger(triggers.TurnChange())
                 if game.turncount - 1 <= 0:  # Beginning of the level

@@ -837,6 +837,8 @@ class TitleSaveState(State):
     particles = None
     menu = None
 
+    wait_time = 0
+
     def start(self):
         if game.memory.get('_skip_save', False):
             game.memory['_skip_save'] = False

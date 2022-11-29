@@ -395,6 +395,7 @@ class GameState():
         save.set_next_uids(self)
         self.terrain_status_registry = s_dict.get('terrain_status_registry', {})
         self.unit_registry = {unit['nid']: UnitObject.restore(unit, self) for unit in s_dict['units']}
+        self.region_registry = {region['nid']: RegionObject.restore(region) for region in s_dict.get('regions', [])}
 
         # Handle subitems
         for item in self.item_registry.values():
@@ -450,7 +451,6 @@ class GameState():
             logging.info("Loading Level...")
             self.current_level = LevelObject.restore(s_dict['level'], self)
             self.set_up_game_board(self.current_level.tilemap, s_dict.get('bounds'))
-            self.region_registry = {region['nid']: RegionObject.restore(self.current_level, region) for region in s_dict.get('regions', [])}    
 
             self.generic()
             from app.engine.level_cursor import LevelCursor
@@ -467,8 +467,6 @@ class GameState():
                     action.UpdateFogOfWar(unit).execute()
 
             self.cursor.autocursor(True)
-        else:
-            self.region_registry = {}
 
         self.events = event_manager.EventManager.restore(s_dict.get('events'))
 

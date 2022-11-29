@@ -1,9 +1,7 @@
-from typing import List, Tuple
+from typing import Tuple
 from app.utilities.typing import NID
 
 from app.events.regions import RegionType, Region
-
-import logging
 
 class RegionObject(Region):
     """
@@ -17,7 +15,7 @@ class RegionObject(Region):
                  only_once: bool = False, interrupt_move: bool = False):
         self.nid = nid
         self.region_type = region_type
-        self.position = position
+        self.position = tuple(position) if position else None
         self.size = size
 
         self.sub_nid = sub_nid
@@ -35,16 +33,20 @@ class RegionObject(Region):
     def save(self) -> dict:
         serial_dict = {}
         serial_dict['nid'] = self.nid
+        serial_dict['region_type'] = self.region_type
+        serial_dict['position'] = self.position
+        serial_dict['size'] = self.size
+        serial_dict['sub_nid'] = self.sub_nid
+        serial_dict['condition'] = self.condition
+        serial_dict['only_once'] = self.only_once
+        serial_dict['interrupt_move'] = self.interrupt_move
+
         serial_dict['data'] = self.data
         return serial_dict
 
     @classmethod
     def restore(cls, level_prefab, dat: dict):
-        prefab = level_prefab.regions.get(dat['nid'])
-        if prefab:
-            self = cls.from_prefab(prefab)
-        else:
-            logging.error("Could not locate region with nid %s in level %s" % (dat['nid'], level.nid))
-            self = cls(dat['nid'], RegionType.NORMAL)
+        self = cls(dat['nid'], dat['region_type'], dat['position'], dat['size'],
+                   dat['sub_nid'], dat['condition'], dat['only_one'], dat['interrupt_move'])
         self.data = dat['data']
         return self

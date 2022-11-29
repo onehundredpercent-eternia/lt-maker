@@ -1,3 +1,4 @@
+import math
 from typing import Dict
 from app.data.database.skill_components import SkillComponent, SkillTags
 from app.data.database.components import ComponentType
@@ -79,7 +80,7 @@ class CombinedTime(SkillComponent):
             actions.append(action.RemoveSkill(unit, self.skill))
 
     def text(self) -> str:
-        return str(self.skill.data['turns'] // 2)
+        return str(math.ceil(self.skill.data['turns'] / 2))
 
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))

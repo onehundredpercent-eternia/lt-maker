@@ -6,7 +6,7 @@ from app.data.database.components import ComponentType
 from app.data.database.database import DB
 
 from app.utilities import utils
-from app.engine import skill_system, action, equations
+from app.engine import skill_system, action, equations, engine, image_mods
 from app.engine.combat import playback as pb
 from app.engine.animations import MapAnimation
 from app.engine.game_state import game 
@@ -311,3 +311,56 @@ class MementoRemoveOnEndChapter(ItemComponent):
         new_item = game.get_item(replace_with_uid)
         unit.remove_item(item)
         unit.add_item(new_item)
+
+class DynamicCritAccuracy(ItemComponent):
+    nid = 'dynamic_crit_accuracy'
+    desc = "Gives +X crit solved dynamically"
+    tag = ItemTags.CUSTOM
+
+    expose = ComponentType.String
+
+    def dynamic_crit_accuracy(self, unit, item, target, mode, attack_info, base_value) -> int:
+        from app.engine import evaluate
+        try:
+            local_args = {'item': item, 'mode': mode, 'attack_info': attack_info, 'base_value': base_value}
+            return int(evaluate.evaluate(self.value, unit, target, unit.position, local_args))
+        except Exception as e:
+            logging.error("Couldn't evaluate %s conditional (%s)", self.value, e)
+            return 0
+
+class EffectiveTag(ItemComponent):
+    nid = 'effective_icon'
+    desc = "Shows the effective icon when appropriate."
+    tag = ItemTags.CUSTOM
+
+    expose = (ComponentType.List, ComponentType.Tag)
+    value = []
+
+    def _check_negate(self, target) -> bool:
+        # Returns whether it DOES negate the effectiveness
+        # Still need to check negation (Fili Shield, etc.)
+        if any(skill.negate for skill in target.skills):
+            return True
+        for skill in target.skills:
+            # Do the tags match?
+            if skill.negate_tags and skill.negate_tags.value and \
+                    any(tag in self.value for tag in skill.negate_tags.value):
+                return True
+        # No negation, so proceed with effective damage
+        return False
+
+    def item_icon_mod(self, unit, item, target, sprite):
+        if any(tag in target.tags for tag in self.value):
+            if self._check_negate(target):
+                return sprite
+            sprite = image_mods.make_white(sprite.convert_alpha(), abs(250 - engine.get_time()%500)/250)
+        return sprite
+
+    def target_icon(self, target, item, unit) -> bool:
+        if not skill_system.check_enemy(target, unit):
+            return None
+        if self._check_negate(target):
+            return None
+        if any(tag in target.tags for tag in self.value):
+            return 'danger'
+        return None
