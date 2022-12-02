@@ -3340,5 +3340,12 @@ def update_record(self: Event, nid: str, expression: str, flags=None):
     except Exception as e:
         self.logger.error("update_record: Could not evaluate %s (%s)" % (expression, e))
 
+def replace_record(self: Event, nid: str, expression: str, flags=None):
+    try:
+        val = self.text_evaluator.direct_eval(expression)
+        RECORDS.replace(nid, val)
+    except Exception as e:
+        self.logger.error("replace_record: Could not evaluate %s (%s)" % (expression, e))
+
 def delete_record(self: Event, nid: str, flags=None):
     RECORDS.delete(nid)

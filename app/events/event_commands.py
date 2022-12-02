@@ -2756,6 +2756,13 @@ class UpdateRecord(EventCommand):
 
     keywords = ['Nid', 'Expression']
 
+class ReplaceRecord(EventCommand):
+    nid = 'replace_record'
+    tag = Tags.PERSISTENT_RECORDS
+    desc = ("Updates a persistent record with a new value. Creates it first if it doesn't already exist")
+
+    keywords = ['Nid', 'Expression']
+
 class DeleteRecord(EventCommand):
     nid = 'delete_record'
     tag = Tags.PERSISTENT_RECORDS

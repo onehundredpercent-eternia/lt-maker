@@ -142,6 +142,15 @@ class ObjectiveMenuState(State):
         else:
             unit = game.get_unit(game.get_party().leader_nid)
 
+        if not unit:
+            # Try for a lord
+            all_units = game.get_units_in_party()
+            lord_units = [unit for unit in all_units if 'Lord' in unit.tags]
+            if lord_units:
+                unit = lord_units[0]
+            elif all_units:
+                unit = all_units[0]
+
         # ChibiPortraitSurf
         chibi = engine.create_surface((96, WINHEIGHT + 24), transparent=True)
         icons.draw_chibi(chibi, unit.portrait_nid, (7, 8))

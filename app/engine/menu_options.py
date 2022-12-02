@@ -624,7 +624,7 @@ class UnitOption(BasicOption):
                 color = 'red'
             elif not self.unit.position:
                 color = 'grey'
-            elif self.unit.position and not game.check_for_region(self.unit.position, 'formation'):
+            elif self.unit.position and (not game.check_for_region(self.unit.position, 'formation') or 'Required' in self.unit.tags):
                 color = 'green'
             else:
                 color = None
