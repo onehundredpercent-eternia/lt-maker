@@ -671,57 +671,8 @@ def lose_game(self: Event, flags=None):
 def main_menu(self: Event, flags=None):
     self.game.level_vars['_main_menu'] = True
 
-def force_chapter_cleanup(self: Event, flags=None):
-    from app.engine import supports, turnwheel
-    supports.increment_end_chapter_supports()
-    self.game_vars['_current_turnwheel_uses'] = \
-        self.game_vars.get('_max_turnwheel_uses', -1)
-
-    for unit in self.get_player_units():
-        self.leave(unit)
-    for unit in self.get_player_units():
-        # Unit cleanup
-        unit.is_dying = False
-        if unit.traveler:
-            unit.traveler = None
-            action.execute(action.RemoveSkill(unit, 'Rescue'))
-        unit.set_hp(1000)  # Set to full health
-        unit.set_guard_gauge(0) # Remove all guard gauge
-        if DB.constants.value('reset_mana'):
-            unit.set_mana(1000)  # Set to full mana
-        unit.position = None
-        unit.sprite.change_state('normal')
-        unit.reset()
-
-    for item in self.item_registry.values():
-        unit = None
-        if item.owner_nid:
-            unit = self.get_unit(item.owner_nid)
-        item_system.on_end_chapter(unit, item)
-
-    for skill in self.skill_registry.values():
-        unit = None
-        if skill.owner_nid:
-            unit = self.get_unit(skill.owner_nid)
-            if unit:
-                skill_system.on_end_chapter(unit, skill)
-            else:
-                self.logger.error("Unable to find owner %s in unit_registry", skill.owner_nid)
-
-    # Handle player death
-    for unit in self.get_player_units():
-        if unit.dead:
-            action.do(action.ChangeFatigue(unit, -unit.get_fatigue()))  # Reset fatigue
-            if not self.game.current_mode.permadeath:
-                unit.dead = False  # Resurrect unit
-            elif DB.constants.value('convoy_on_death'):
-                for item in item_funcs.get_all_tradeable_items(unit):
-                    unit.remove_item(item)
-                    # Put the item in the unit's party's convoy
-                    self.parties[unit.party].convoy.append(item)
-
-    self.game.turncount = 0
-    self.game.action_log = turnwheel.ActionLog()
+def force_chapter_clean_up(self: Event, flags=None):
+    self.game.clean_up(full=False)
 
 def skip_save(self: Event, true_or_false: str, flags=None):
     state = true_or_false.lower() in self.true_vals

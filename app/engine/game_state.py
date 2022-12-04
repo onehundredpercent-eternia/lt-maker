@@ -470,28 +470,48 @@ class GameState():
 
         self.events = event_manager.EventManager.restore(s_dict.get('events'))
 
-    def clean_up(self):
+    def clean_up(self, full: bool = True):
+        '''
+        A `full` cleanup does everything associated with cleaning up
+        a chapter in preparation for the next.
+        A non-full cleanup does not
+            - Remove any units from the field
+            - Remove all generic units from memory
+            - Remove all now unused items and skills from memory
+            - Remove any regions or terrain statuses
+            - Reset level vars
+            - Reset talk options or base convos
+            - Actually remove the level
+        '''
+
         from app.engine import (action, item_funcs, item_system, skill_system,
-                                supports)
+                                supports, target_system)
 
         supports.increment_end_chapter_supports()
 
         self.game_vars['_current_turnwheel_uses'] = \
             self.game_vars.get('_max_turnwheel_uses', -1)
 
-        for unit in self.unit_registry.values():
-            self.leave(unit)
+        if full:
+            for unit in self.unit_registry.values():
+                self.leave(unit)
         for unit in self.unit_registry.values():
             # Unit cleanup
             unit.is_dying = False
             if unit.traveler:
-                unit.traveler = None
-                action.execute(action.RemoveSkill(unit, 'Rescue'))
+                if full:
+                    unit.traveler = None
+                    action.execute(action.RemoveSkill(unit, 'Rescue'))
+                else:
+                    droppee = self.get_unit(unit.traveler)
+                    pos = target_system.get_nearest_open_tile(droppee, unit.position)
+                    action.execute(action.Drop(unit, droppee, pos))
             unit.set_hp(1000)  # Set to full health
             unit.set_guard_gauge(0) # Remove all guard gauge
             if DB.constants.value('reset_mana'):
                 unit.set_mana(1000)  # Set to full mana
-            unit.position = None
+            if full:
+                unit.position = None
             unit.sprite.change_state('normal')
             unit.reset()
 
@@ -510,37 +530,39 @@ class GameState():
                 else:
                     logging.error("Unable to find owner %s in unit_registry", skill.owner_nid)
 
-        self.terrain_status_registry.clear()
-        self.region_registry.clear()
+        if full:
+            self.terrain_status_registry.clear()
+            self.region_registry.clear()
 
-        # Remove all generics
-        self.unit_registry = {k: v for (k, v) in self.unit_registry.items() if v.persistent}
+            # Remove all generics
+            self.unit_registry = {k: v for (k, v) in self.unit_registry.items() if v.persistent}
 
-        # Remove any skill that's not on a unit and does not have a parent_skill
-        for k, v in list(self.skill_registry.items()):
-            if v.parent_skill:
-                if v.parent_skill.owner_nid:
-                    if v.parent_skill.owner_nid not in self.unit_registry:
+            # Remove any skill that's not on a unit and does not have a parent_skill
+            for k, v in list(self.skill_registry.items()):
+                if v.parent_skill:
+                    if v.parent_skill.owner_nid:
+                        if v.parent_skill.owner_nid not in self.unit_registry:
+                            del self.skill_registry[k]
+                    else:
+                        del self.skill_registry[k]
+                elif v.owner_nid:  # Remove skills from units that no longer exist
+                    if v.owner_nid not in self.unit_registry:
                         del self.skill_registry[k]
                 else:
                     del self.skill_registry[k]
-            elif v.owner_nid:  # Remove skills from units that no longer exist
-                if v.owner_nid not in self.unit_registry:
-                    del self.skill_registry[k]
-            else:
-                del self.skill_registry[k]
 
-        # Remove any item that's not on a unit or in the convoy
-        for k, v in list(self.item_registry.items()):
-            if v.owner_nid:  # Remove items from units that no longer exist
-                if v.owner_nid not in self.unit_registry:
-                    del self.item_registry[k]
-            else:
-                for party in self.parties.values():
-                    if v in party.convoy or (v.parent_item and v.parent_item in party.convoy):
-                        break
-                else:  # No party ever found
-                    del self.item_registry[k]
+            # Remove any item that's not on a unit or in the convoy
+            for k, v in list(self.item_registry.items()):
+                if v.owner_nid:  # Remove items from units that no longer exist
+                    if v.owner_nid not in self.unit_registry:
+                        del self.item_registry[k]
+                else:
+                    for party in self.parties.values():
+                        if v in party.convoy or (v.parent_item and v.parent_item in party.convoy):
+                            break
+                    else:  # No party ever found
+                        del self.item_registry[k]
+        # End If
 
         # Handle player death
         for unit in self.unit_registry.values():
@@ -556,8 +578,12 @@ class GameState():
                         self.parties[unit.party].convoy.append(item)
 
         # Remove unnecessary information between levels
-        self.sweep()
-        self.current_level = None
+        if full:
+            self.sweep()
+            self.current_level = None
+        else:
+            self.turncount = 1
+            self.action_log.set_first_free_action()
 
     @property
     def level(self):
@@ -761,7 +787,10 @@ class GameState():
     def get_units_in_party(self, party=None) -> List[UnitObject]:
         if party is None:
             party = self.current_party
-        return [unit for unit in self.get_all_units_in_party() if not unit.dead]
+        party_order = self.parties[party].party_prep_manage_sort_order
+        party_units = [unit for unit in game.get_all_units_in_party(party) if not unit.dead]
+        party_units = sorted(party_units, key=lambda unit: party_order.index(unit.nid) if unit.nid in party_order else 999999)
+        return party_units
 
     def check_dead(self, nid):
         unit = self.get_unit(nid)

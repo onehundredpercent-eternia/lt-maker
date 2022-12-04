@@ -1317,6 +1317,8 @@ class TradeItem(Action):
         self.item_index1 = unit1.items.index(item1) if item1 else DB.constants.total_items() - 1
         self.item_index2 = unit2.items.index(item2) if item2 else DB.constants.total_items() - 1
 
+        self.subactions = []
+
     def swap(self, unit1, unit2, item1, item2, item_index1, item_index2):
         # Do the swap
         if item1:
@@ -1326,13 +1328,35 @@ class TradeItem(Action):
             unit2.remove_item(item2)
             unit1.insert_item(item_index1, item2)
 
+    def equip_items(self, unit):
+        for item in unit.nonaccessories:
+            available = item_system.available(unit, item)
+            equippable = item_system.equippable(unit, item)
+            if available and equippable:
+                self.subactions.append(EquipItem(unit, item))
+                break
+        for item in unit.accessories:
+            available = item_system.available(unit, item)
+            equippable = item_system.equippable(unit, item)
+            if available and equippable:
+                self.subactions.append(EquipItem(unit, item))
+                break
+
     def do(self):
+        self.subactions.clear()
+
         self.swap(self.unit1, self.unit2, self.item1, self.item2, self.item_index1, self.item_index2)
+
+        self.equip_items(self.unit1)
+        self.equip_items(self.unit2)
 
         if self.unit1.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit1)
         if self.unit2.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit2)
+
+        for act in self.subactions:
+            act.do()
 
     def reverse(self):
         self.swap(self.unit1, self.unit2, self.item2, self.item1, self.item_index2, self.item_index1)
@@ -1341,6 +1365,9 @@ class TradeItem(Action):
             game.boundary.recalculate_unit(self.unit1)
         if self.unit2.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit2)
+
+        for act in self.subactions:
+            act.reverse()
 
 
 class RepairItem(Action):
