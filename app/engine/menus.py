@@ -1,6 +1,6 @@
 import math, string
 
-from app.constants import TILEX, WINWIDTH, WINHEIGHT, STATWIDTH
+from app.constants import TILEX, WINWIDTH, WINHEIGHT
 from app.data.database.database import DB
 from app.utilities import utils
 
@@ -304,7 +304,7 @@ class Simple():
     def get_topleft(self):
         if not self.topleft:
             if game.cursor.position[0] > TILEX//2 + game.camera.get_x():
-                return (STATWIDTH + 14, 8)
+                return (14, 8)
             else:
                 return (WINWIDTH - self.get_menu_width() - 14, 8)
         elif self.topleft == 'center':

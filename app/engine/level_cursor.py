@@ -1,7 +1,7 @@
 import math
 from typing import Tuple
 
-from app.constants import TILEHEIGHT, TILEWIDTH, STATWIDTH
+from app.constants import TILEHEIGHT, TILEWIDTH
 from app.counters import generic3counter
 from app.engine import engine, target_system, image_mods, skill_system
 from app.engine.cursor import BaseCursor

@@ -1,6 +1,6 @@
 import math
 
-from app.constants import TILEWIDTH, TILEHEIGHT, STATWIDTH, TILEX, TILEY, WINWIDTH, WINHEIGHT
+from app.constants import TILEWIDTH, TILEHEIGHT, TILEX, TILEY, WINWIDTH, WINHEIGHT
 
 from app.events.regions import RegionType
 
@@ -138,7 +138,7 @@ class MapView():
 
         game.tilemap.animations = [anim for anim in game.tilemap.animations if not anim.update()]
         for anim in game.tilemap.animations:
-            anim.draw(surf, offset=(-game.camera.get_x() - STATWIDTH/TILEWIDTH, -game.camera.get_y()))
+            anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
 
         if subsurface_cull:  # Forced smaller cull rect from animation combat black background
             # Make sure it has a width

@@ -3,7 +3,7 @@ import logging
 from app.engine.text_evaluator import TextEvaluator
 import app.engine.config as cf
 
-from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, STATWIDTH, MAPWIDTH
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import RNGOption
 
@@ -199,7 +199,7 @@ class UIView():
                 if right:
                     surf.blit(self.tile_info_disp, (5 - offset, WINHEIGHT - self.tile_info_disp.get_height() - 3)) # Bottomleft
                 else:
-                    xpos = MAPWIDTH - self.tile_info_disp.get_width() - 5 + offset
+                    xpos = WINWIDTH - self.tile_info_disp.get_width() - 5 + offset
                     ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
                     surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
 
@@ -565,9 +565,9 @@ class UIView():
         if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
             if DB.constants.value('pairup') and \
                     (a_assist or d_assist) and not (attacker.traveler or defender.traveler):
-                topleft = (STATWIDTH + 8 - self.attack_info_offset, 4)
+                topleft = (8 - self.attack_info_offset, 4)
             else:
-                topleft = (STATWIDTH + 17 - self.attack_info_offset, 4)
+                topleft = (17 - self.attack_info_offset, 4)
         else:
             if DB.constants.value('pairup') and \
                     (a_assist or d_assist) and not (attacker.traveler or defender.traveler):
@@ -772,9 +772,9 @@ class UIView():
             unit_surf = defender.sprite.create_image('passive')
 
         if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
-            topleft = (STATWIDTH + 4, 4)
+            topleft = (4, 4)
             if defender:
-                u_topleft = (STATWIDTH + 16 - max(0, (unit_surf.get_width() - 16)//2), 12 - max(0, (unit_surf.get_width() - 16)//2))
+                u_topleft = (16 - max(0, (unit_surf.get_width() - 16)//2), 12 - max(0, (unit_surf.get_width() - 16)//2))
         else:
             topleft = (WINWIDTH - 4 - width, 4)
             if defender:
@@ -925,7 +925,7 @@ class ItemDescriptionPanel():
             topleft = (WINWIDTH - 8 - self.surf.get_width(), WINHEIGHT - 8 - self.surf.get_height())
         else:
             cursor_left = True
-            topleft = (STATWIDTH + 8, WINHEIGHT - 8 - self.surf.get_height())
+            topleft = (8, WINHEIGHT - 8 - self.surf.get_height())
 
         portrait, _ = icons.get_portrait(self.unit)
         if portrait:
