@@ -22,6 +22,7 @@ from app.events.event import Event
 from app.events import triggers
 
 from app.data.resources.resources import RESOURCES
+from app.utilities import utils
 
 import logging
 
@@ -44,6 +45,14 @@ class TitleStartState(State):
             num_frames = 1
             speed = 64
             self.logo = gui.Logo(logo, (WINWIDTH//2, WINHEIGHT//2 - 40), num_frames, speed)
+        else:
+            self.logo = None
+
+        if logo:
+            num_frames = 1
+            speed = 64
+            height = utils.clamp(WINHEIGHT//2 - 40, logo.get_height()//2, WINHEIGHT//2)
+            self.logo = gui.Logo(logo, (WINWIDTH//2, height), num_frames, speed)
         else:
             self.logo = None
 
@@ -97,13 +106,6 @@ class TitleStartState(State):
         if self.logo:
             self.logo.update()
             self.logo.draw(surf)
-            # logo_image = self.logo.copy()
-            # Add bloom to logo
-            # idx = (math.sin(engine.get_time()/2000) + 1) / 2
-            # intensity = utils.clamp(idx * 255, 0, 255)
-            # shaders.bloom(logo_image, intensity)
-            # shaders.bloom(logo_image, intensity)  # Yes, twice is done on purpose
-            # engine.blit(surf, logo_image, (WINWIDTH//2 - self.logo.get_width()//2, WINHEIGHT//2 - self.logo.get_height()//2 - 20))
         if self.press_start:
             self.press_start.update()
             self.press_start.draw(surf)

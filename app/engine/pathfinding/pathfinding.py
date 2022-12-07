@@ -1,7 +1,5 @@
-import heapq, random
+import heapq
 from typing import Tuple, Callable
-
-from app.utilities import utils
 
 class Djikstra():
     __slots__ = ['open', 'closed', 'cells', 'bounds', 'height', 'start_pos',
@@ -239,4 +237,3 @@ class AStar():
                     else:  # Is blocked
                         pass
         return []
-

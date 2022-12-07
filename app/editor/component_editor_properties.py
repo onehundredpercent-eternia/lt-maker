@@ -58,12 +58,12 @@ class NewComponentProperties(QWidget, Generic[T]):
 
         name_section = QVBoxLayout()
 
-        self.nid_box = PropertyBox("Unique ID", NidLineEdit, self)
+        self.nid_box = PropertyBox(_("Unique ID"), NidLineEdit, self)
         self.nid_box.edit.textChanged.connect(self.nid_changed)
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
         name_section.addWidget(self.nid_box)
 
-        self.name_box = PropertyBox("Display Name", QLineEdit, self)
+        self.name_box = PropertyBox(_("Display Name"), QLineEdit, self)
         self.name_box.setMinimumWidth(250)
         self.name_box.edit.textChanged.connect(self.name_changed)
         name_section.addWidget(self.name_box)
@@ -72,14 +72,14 @@ class NewComponentProperties(QWidget, Generic[T]):
 
         main_section = QGridLayout()
 
-        self.desc_box = PropertyBox("Description", QTextEdit, self)
+        self.desc_box = PropertyBox(_("Description"), QTextEdit, self)
         self.desc_box.edit.textChanged.connect(self.desc_changed)
         font_height = QFontMetrics(self.desc_box.edit.font())
         self.desc_box.edit.setFixedHeight(font_height.lineSpacing() * 3 + 20)
         main_section.addWidget(self.desc_box, 0, 0, 1, 3)
 
         component_section = QGridLayout()
-        component_label = QLabel("Components")
+        component_label = QLabel(_("Components"))
         component_label.setAlignment(Qt.AlignBottom)
         component_section.addWidget(component_label, 0, 0, Qt.AlignBottom)
 

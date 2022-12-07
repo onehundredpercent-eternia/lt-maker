@@ -13,6 +13,7 @@ GRADIENTS2 = [5, 2, 2, 5,
               5, -2, 2, -5,
               -5, -2, -2, -5]
 
+@lru_cache(64)
 def _overflow(x):
     return c_int64(x).value
 
@@ -204,25 +205,25 @@ def gen_double_noise_map(size: tuple, seed,
     return noise_map1, noise_map2, noise_map3
 
 if __name__ == '__main__':
-    # perm = _init(47)
-    # val = _noise2(0, 0, perm)
-    # print(val)
+    perm = _init(47)
+    val = _noise2(0, 0, perm)
+    print(val)
 
-    # width, height = 100, 100
-    # total = 0
-    # minimum, maximum = 0, 0
-    # for y in range(width):
-    #     for x in range(height):
-    #         val = _noise2(x, y, perm)
-    #         if val < minimum:
-    #             minimum = val
-    #         if val > maximum:
-    #             maximum = val
-    #         total += val
-    #         # print("%.2f " % val, end='')
-    #     print("")
-    # print(total / (width * height))
-    # print(minimum, maximum)
+    width, height = 100, 100
+    total = 0
+    minimum, maximum = 0, 0
+    for y in range(width):
+        for x in range(height):
+            val = _noise2(x, y, perm)
+            if val < minimum:
+                minimum = val
+            if val > maximum:
+                maximum = val
+            total += val
+            # print("%.2f " % val, end='')
+        print("")
+    print(total / (width * height))
+    print(minimum, maximum)
 
     from PIL import Image
 

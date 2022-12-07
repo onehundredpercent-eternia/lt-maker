@@ -2,13 +2,12 @@ from typing import Dict
 
 from app.data.database.database import DB
 from app.engine import line_of_sight, target_system
-from app.engine.node import Node
+from app.engine.pathfinding.node import Node
 from app.engine.game_state import game
 from app.utilities.typing import NID
 from app.utilities import utils
 
 class GameBoard(object):
-
     def __init__(self, tilemap):
         self.width = tilemap.width
         self.height = tilemap.height

@@ -36,7 +36,7 @@ class SpeakStyleLibrary(Dict[NID, SpeakStyle]):
             {'__default': SpeakStyle(text_speed=1, font_type='convo', dialog_box='message_bg_base', num_lines=2, draw_cursor=True,
                                      message_tail='message_bg_tail', name_tag_bg='name_tag'),
              '__default_text': SpeakStyle(text_speed=0.5, font_type='text', dialog_box='menu_bg_base', num_lines=0, name_tag_bg='menu_bg_base'),
-             '__default_help': SpeakStyle(text_speed=0.5, font_type='text', dialog_box='None', draw_cursor=False, num_lines=8, name_tag_bg='name_tag'),
+             '__default_help': SpeakStyle(text_speed=0.5, font_type='convo', dialog_box='None', draw_cursor=False, num_lines=8, name_tag_bg='name_tag'),
              'noir': SpeakStyle(dialog_box='menu_bg_dark', font_color='white', message_tail='None'),
              'hint': SpeakStyle(dialog_box='menu_bg_parchment', text_position=Alignments.CENTER, width=WINWIDTH//2 + 8, num_lines=4, message_tail='None'),
              'cinematic': SpeakStyle(dialog_box='None', text_position=Alignments.CENTER, font_color='grey', num_lines=5,

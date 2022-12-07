@@ -552,9 +552,13 @@ class LocationCard():
             self.font.blit_center(line, bg, (bg.get_width()//2, idx * self.font.height + 4))
 
         if self.transition == 'start':
-            transparency = 1.1 + 0.1 - self.transition_progress
+            # when the location would enter, it's transparency changes from 
+            # 1.0 (100% transprenct) to .1 (Which is 90% opaque).
+            transparency = 1.0 - (0.9 * self.transition_progress)
             bg = image_mods.make_translucent(bg, transparency)
         elif self.transition == 'end':
+            # When the location card would leave, it's transparency changes
+            # from .1 (90% opaque) to 1.0 (100% transparency)
             transparency = .1 + (self.transition_progress * 0.9)
             bg = image_mods.make_translucent(bg, transparency)
         else:

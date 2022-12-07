@@ -413,6 +413,13 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
     else:
         tail = default_speak_style.message_tail
 
+    if transparency:
+        transparency = float(transparency)
+    elif speak_style and speak_style.transparency is not None:
+        transparency = speak_style.transparency
+    else:
+        transparency = 0.05
+
     if name_tag_bg:
         nametag = name_tag_bg
     elif speak_style and speak_style.name_tag_bg:
@@ -440,7 +447,8 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
             dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
                           style_nid=style_nid, autosize=autosize, speed=speed,
                           font_color=fcolor, font_type=ftype, num_lines=lines,
-                          draw_cursor=cursor, message_tail=tail, transparency=transparency, name_tag_bg=nametag)
+                          draw_cursor=cursor, message_tail=tail, transparency=transparency, 
+                          name_tag_bg=nametag)
         new_dialog.hold = 'hold' in flags
         if 'no_popup' in flags:
             new_dialog.last_update = engine.get_time() - 10000
@@ -2301,7 +2309,7 @@ def remove_generics_from_region(self: Event, nid, flags=None):
         for position in region.get_all_positions():
             unit = self.game.get_unit(position)
             if unit and unit.generic:
-                action.LeaveMap(unit).execute()
+                action.execute(action.LeaveMap(unit))
     else:
         self.logger.error("remove_generics_from_region: Couldn't find RegionObject %s" % nid)
 

@@ -1,7 +1,6 @@
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import GrowthOption
 from app.engine import item_funcs
-
 from app.engine.game_state import game
 from app.events import triggers
 from app.utilities import utils, static_random

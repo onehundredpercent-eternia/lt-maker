@@ -22,7 +22,11 @@ if TYPE_CHECKING:
     from app.engine.objects.party import PartyObject
     from app.engine.objects.skill import SkillObject
     from app.engine.objects.unit import UnitObject
+<<<<<<< HEAD
     from app.engine.objects.unit import RegionObject
+=======
+    from app.engine.objects.region import RegionObject
+>>>>>>> master
     from app.engine.dialog_log import DialogLog
     from app.events.event_manager import EventManager
     from app.utilities.typing import NID, UID
@@ -372,7 +376,10 @@ class GameState():
         from app.engine.objects.skill import SkillObject
         from app.engine.objects.unit import UnitObject
         from app.engine.objects.region import RegionObject
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
         from app.events import event_manager, speak_style
 
         logging.info("Loading Game...")
@@ -394,6 +401,10 @@ class GameState():
         self.skill_registry = {skill['uid']: SkillObject.restore(skill) for skill in s_dict['skills']}
         save.set_next_uids(self)
         self.terrain_status_registry = s_dict.get('terrain_status_registry', {})
+<<<<<<< HEAD
+=======
+        self.region_registry = {region['nid']: RegionObject.restore(region) for region in s_dict.get('regions', [])}
+>>>>>>> master
         self.unit_registry = {unit['nid']: UnitObject.restore(unit, self) for unit in s_dict['units']}
         self.region_registry = {region['nid']: RegionObject.restore(region) for region in s_dict.get('regions', [])}
 
@@ -501,11 +512,11 @@ class GameState():
             if unit.traveler:
                 if full:
                     unit.traveler = None
-                    action.execute(action.RemoveSkill(unit, 'Rescue'))
+                    action.RemoveSkill(unit, 'Rescue').execute()
                 else:
                     droppee = self.get_unit(unit.traveler)
                     pos = target_system.get_nearest_open_tile(droppee, unit.position)
-                    action.execute(action.Drop(unit, droppee, pos))
+                    action.Drop(unit, droppee, pos).execute()
             unit.set_hp(1000)  # Set to full health
             unit.set_guard_gauge(0) # Remove all guard gauge
             if DB.constants.value('reset_mana'):

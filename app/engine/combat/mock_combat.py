@@ -243,7 +243,7 @@ class MockCombat():
             anim_nid = 'CritSpark'
             animation = RESOURCES.animations.get(anim_nid)
             if animation:
-                position = (-40 + 120 - WINWIDTH//2, -30)
+                position = (-40 + WINWIDTH//2 - 120, -30)
                 anim = Animation(animation, position)
                 if self.current_battle_anim is self.right_battle_anim:
                     pass
@@ -393,7 +393,7 @@ class MockCombat():
         if not self.battle_background or DB.constants.value('battle_platforms'):
             top = platform_top + (platform_trans - self.bar_offset * platform_trans) + total_shake_y
             if self.at_range:
-                surf.blit(self.left_platform, (WINWIDTH//2 - self.left_platform.get_width() - 11 - self.pan_max + total_shake_x + self.pan_offset, top))
+                surf.blit(self.left_platform, (WINWIDTH // 2 - self.left_platform.get_width() - 11 - self.pan_max + total_shake_x + self.pan_offset, top))
                 surf.blit(self.right_platform, (WINWIDTH // 2 + 11 + self.pan_max + total_shake_x + self.pan_offset, top))
             else:
                 surf.blit(self.left_platform, (WINWIDTH // 2 - self.left_platform.get_width() + total_shake_x, top))

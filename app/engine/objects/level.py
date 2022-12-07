@@ -5,7 +5,6 @@ from app.engine.objects.unit import UnitObject
 from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
 
-
 from app.data.database.level_units import UnitGroup
 from app.data.database.levels import music_keys
 from app.utilities.typing import NID
@@ -76,12 +75,12 @@ class LevelObject():
 
         level.music = {k: None for k in music_keys}
         level.objective = {
-            'simple': "Rout.",
-            'win': "Rout all enemies",
-            'loss': "Memory falls below 0"}
+            'simple': "",
+            'win': "",
+            'loss': ""}
 
-        level.units = Data()
-        level.regions = Data()
+        level.units: Data[UnitObject] = Data()
+        level.regions: Data[RegionObject] = Data()
         level.unit_groups = Data()
 
         return level

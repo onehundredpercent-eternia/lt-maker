@@ -5,6 +5,7 @@ import logging
 import os
 from typing import Dict, Generic, List, Optional, Type, TypeVar
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QHBoxLayout,
                              QMessageBox, QPushButton, QSplitter, QVBoxLayout,
@@ -34,6 +35,8 @@ class ComponentObjectEditor(QWidget, Generic[T]):
         self.tree_list = LTNestedList(self, self.data.keys(), self.categories, self.get_icon,
                                       self.on_select, self.resort_db, self.delete_from_db, self.create_new,
                                       self.duplicate)
+        left_frame_layout.setContentsMargins(0, 0, 0, 0)
+        left_frame_layout.setSpacing(0)
         left_frame_layout.addWidget(self.tree_list)
 
         button_frame = QWidget()

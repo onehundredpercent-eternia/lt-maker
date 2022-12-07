@@ -37,7 +37,7 @@ class MapView():
         for unit in draw_units:
             unit.sprite.draw(surf, (0, 0))
 
-        engine.save_surface(surf, 'screenshots/LT_map_view_%s.png' % current_time)
+        engine.save_surface(surf, 'screenshots/LT_%s_map_view.png' % current_time)
 
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
         unit_surf = engine.copy_surface(self._unit_surf)

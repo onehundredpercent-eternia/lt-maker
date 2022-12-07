@@ -16,13 +16,13 @@ class EventPortrait():
     halfblink = (width - 32, 48, 32, 16)
     fullblink = (width - 32, 64, 32, 16)
 
-    openmouth = (0, 96, 32, 16)
-    halfmouth = (32, 96, 32, 16)
-    closemouth = (64, 96, 32, 16)
+    openmouth = (0, height - 16, 32, 16)
+    halfmouth = (32, height - 16, 32, 16)
+    closemouth = (64, height - 16, 32, 16)
 
-    opensmile = (0, 80, 32, 16)
-    halfsmile = (32, 80, 32, 16)
-    closesmile = (64, 80, 32, 16)
+    opensmile = (0, height - 32, 32, 16)
+    halfsmile = (32, height - 32, 32, 16)
+    closesmile = (64, height - 32, 32, 16)
 
     transition_speed = utils.frames2ms(14)
     travel_time = utils.frames2ms(15)

@@ -4,7 +4,8 @@ from functools import lru_cache
 
 from app.data.database.database import DB
 from app.engine import (combat_calcs, equations, item_funcs, item_system,
-                        line_of_sight, pathfinding, skill_system)
+                        line_of_sight, skill_system)
+from app.engine.pathfinding import pathfinding
 from app.engine.game_state import game
 from app.utilities import utils
 
