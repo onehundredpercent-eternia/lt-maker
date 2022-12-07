@@ -1,7 +1,7 @@
 import math
 from app import counters
 
-from app.constants import WINWIDTH, WINHEIGHT
+from app.constants import WINWIDTH, WINHEIGHT, BEEG_MODE
 from app.utilities import utils
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
@@ -342,10 +342,16 @@ class PopUpDisplay():
                 surf.blit(my_surf, (self.topright[0] - self.width + 8, self.topright[1]))
 
 class MouseIndicator():
-    mouse_indicator_right = SPRITES.get('mouse_indicator_right')
-    mouse_indicator_left = engine.flip_horiz(SPRITES.get('mouse_indicator_right'))
-    mouse_indicator_top = SPRITES.get('mouse_indicator_top')
-    mouse_indicator_bottom = engine.flip_vert(SPRITES.get('mouse_indicator_top'))
+    if BEEG_MODE:
+        mouse_indicator_right = SPRITES.get('mouse_indicator_right_beeg')
+        mouse_indicator_left = engine.flip_horiz(SPRITES.get('mouse_indicator_right_beeg'))
+        mouse_indicator_top = SPRITES.get('mouse_indicator_top_beeg')
+        mouse_indicator_bottom = engine.flip_vert(SPRITES.get('mouse_indicator_top_beeg'))
+    else:
+        mouse_indicator_right = SPRITES.get('mouse_indicator_right')
+        mouse_indicator_left = engine.flip_horiz(SPRITES.get('mouse_indicator_right'))
+        mouse_indicator_top = SPRITES.get('mouse_indicator_top')
+        mouse_indicator_bottom = engine.flip_vert(SPRITES.get('mouse_indicator_top'))
 
     def draw(self, surf):
         mouse_position = get_input_manager().get_real_mouse_position()

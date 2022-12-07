@@ -342,7 +342,7 @@ class OverworldPartyOptionMenu(State):
         ignore = [False]
 
         self.events = [None for option in options]
-        current_node = game.overworld_controller.selected_party_node()  # Can also be a HexData
+        current_node = game.overworld_controller.selected_party_node()
         all_options = current_node.menu_options
 
         additional_option_names = [option.option_name for option in all_options if game.overworld_controller.menu_option_visible(current_node.nid, option.nid)]

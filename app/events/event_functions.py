@@ -419,13 +419,6 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
     else:
         nametag = default_speak_style.name_tag_bg
 
-    if transparency:
-        transparency = float(transparency)
-    elif speak_style and speak_style.transparency is not None:
-        transparency = speak_style.transparency
-    else:
-        transparency = 0.05
-
     if speak_style and speak_style.flags:
         flags = speak_style.flags.union(flags)
 

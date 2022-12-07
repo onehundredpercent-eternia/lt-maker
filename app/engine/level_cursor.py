@@ -70,6 +70,10 @@ class LevelCursor(BaseCursor):
         else:
             self._transition_speed = 1
 
+    def set_pos(self, pos):
+        super().set_pos(pos)
+        self.game.ui_view.remove_unit_display()
+
     def _get_path(self) -> list:
         if not self._last_valid_position:
             self.path.clear()

@@ -36,6 +36,7 @@ class Dialog():
     cursor = SPRITES.get('waiting_cursor')
     cursor_offset = [0]*20 + [1]*2 + [2]*8 + [1]*2
     transition_speed = 166  # 10 frames
+    pause_before_wait_time = 150 # 9 frames
     pause_time = 150  # 9 frames
     attempt_split: bool = True # Whether we attempt to split big chunks across multiple lines
 
@@ -57,8 +58,8 @@ class Dialog():
         if '{sub_break}' in self.plain_text:
             self.attempt_split = False
 
-        # States: process, transition, pause, wait, done, new_line
-        self.state = 'transition'
+        # States: process, transition_in, pause, pause_before_wait, wait, done, new_line
+        self.state = 'transition_in'
 
         self.no_wait = False
         self.text_commands = self.format_text(text)
@@ -241,13 +242,13 @@ class Dialog():
 
     def _next_char(self, sound=True):  # Add the next character to the text_lines list
         if self.text_index >= len(self.text_commands):
-            self.pause()
+            self.pause_before_wait()
             return
         command = self.text_commands[self.text_index]
         if command in ('{br}', '{break}', '{sub_break}'):
             self._next_line()
         elif command == '{w}' or command == '{wait}':
-            self.pause()
+            self.pause_before_wait()
         elif command == '{clear}':
             self.text_lines.clear()
             self._next_line()
@@ -307,6 +308,12 @@ class Dialog():
         self.state = 'pause'
         self.last_update = engine.get_time()
 
+    def pause_before_wait(self):
+        if self.portrait:
+            self.portrait.stop_talking()
+        self.state = 'pause_before_wait'
+        self.last_update = engine.get_time()
+
     def hurry_up(self):
         if self.state == 'process':
             while self.state == 'process':
@@ -330,7 +337,7 @@ class Dialog():
     def update(self):
         current_time = engine.get_time()
 
-        if self.state == 'transition':
+        if self.state == 'transition_in':
             perc = (current_time - self.last_update) / self.transition_speed
             self.transition_progress = utils.clamp(perc, 0, 1)
             if self.transition_progress == 1:
@@ -351,12 +358,15 @@ class Dialog():
                     if self.state == 'pause':
                         self.state = 'process'
                 self.play_talk_boop()
-        elif self.state == 'pause':
-            if current_time - self.last_update > self.pause_time:
+        elif self.state == 'pause_before_wait':
+            if current_time - self.last_update > self.pause_before_wait_time:
                 if self.no_wait:
                     self.state = 'done'
                 else:
                     self.state = 'wait'
+        elif self.state == 'pause':  # Regular pause for periods
+            if current_time - self.last_update > self.pause_time:
+                self.state = 'process'
         elif self.state == 'new_line':
             # Update y_offset
             self.y_offset = max(0, self.y_offset - 2)
@@ -433,7 +443,7 @@ class Dialog():
 
     def draw(self, surf: engine.Surface) -> engine.Surface:
         if self.background:
-            if self.state == 'transition':
+            if self.state == 'transition_in':
                 # bg = image_mods.resize(self.background, (1, .5 + self.transition_progress/2.))
                 new_width = max(1, self.background.get_width() - 10 + int(10*self.transition_progress))
                 new_height = max(1, self.background.get_height() - 10 + int(10*self.transition_progress))
@@ -444,7 +454,7 @@ class Dialog():
                 bg = image_mods.make_translucent(self.background, self.dialog_transparency)
                 surf.blit(bg, self.position)
 
-        if self.state != 'transition':
+        if self.state != 'transition_in':
             # Draw message tail
             if self.portrait and self.background and self.tail:
                 self.draw_tail(surf, self.portrait)

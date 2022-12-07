@@ -158,8 +158,6 @@ class MapView():
         # Handle time region text
         self.time_region_text(surf, cull_rect)
 
-        # surf = self._value_noise.draw(surf)
-
         surf = game.cursor.draw(surf, cull_rect)
 
         for weather in game.tilemap.weather:

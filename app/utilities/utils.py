@@ -72,22 +72,6 @@ def calculate_distance(pos1: tuple, pos2: tuple) -> int:
     """
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
-def get_cardinal_positions(pos: tuple) -> tuple:
-    return (
-        (pos[0], pos[1] - 1), # North
-        (pos[0] + 1, pos[1]), # East
-        (pos[0], pos[1] + 1), # South
-        (pos[0] - 1, pos[1]), # West
-    )
-
-def get_diagonal_positions(pos: tuple) -> tuple:
-    return (
-        (pos[0] + 1, pos[1] - 1),  # Northeast
-        (pos[0] + 1, pos[1] + 1),  # Southeast
-        (pos[0] - 1, pos[1] + 1),  # Southwest
-        (pos[0] - 1, pos[1] - 1),  # Northwest
-    )
-
 def process_terms(terms):
     """
     Processes weighted lists

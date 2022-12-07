@@ -2,7 +2,7 @@ import os, math
 
 from app import autoupdate
 
-from app.constants import TILEX, TILEY, FULLTILEX, WINHEIGHT, WINWIDTH
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import GrowthOption, PermadeathOption
 
@@ -41,12 +41,6 @@ class TitleStartState(State):
             self.press_start = gui.Logo(press_start_sprite, (WINWIDTH//2, 4*WINHEIGHT//5))
         else:
             self.press_start = None
-        if logo:
-            num_frames = 1
-            speed = 64
-            self.logo = gui.Logo(logo, (WINWIDTH//2, WINHEIGHT//2 - 40), num_frames, speed)
-        else:
-            self.logo = None
 
         if logo:
             num_frames = 1
@@ -59,7 +53,7 @@ class TitleStartState(State):
         self.particles = None
         if DB.constants.value('title_particles'):
             bounds = (-WINHEIGHT, WINWIDTH, WINHEIGHT, WINHEIGHT + 16)
-            self.particles = particles.ParticleSystem('title', particles.Smoke, .075, bounds, (FULLTILEX, TILEY))
+            self.particles = particles.ParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
             self.particles.prefill()
         game.memory['title_particles'] = self.particles
         game.memory['transition_speed'] = 0.5
@@ -854,7 +848,7 @@ class TitleSaveState(State):
         self.particles = None
         if DB.constants.value('title_particles'):
             bounds = (-WINHEIGHT, WINWIDTH, WINHEIGHT, WINHEIGHT + 16)
-            self.particles = particles.ParticleSystem('title', particles.Smoke, .075, bounds, (FULLTILEX, TILEY))
+            self.particles = particles.ParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
             self.particles.prefill()
         game.memory['title_particles'] = self.particles
 

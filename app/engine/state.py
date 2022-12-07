@@ -1,7 +1,6 @@
 from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_state import game
-from app.engine import engine
 
 class State():
     name = None

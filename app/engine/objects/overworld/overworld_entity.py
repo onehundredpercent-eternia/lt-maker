@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from app.engine.game_state import GameState
     from app.engine.objects.unit import UnitObject
 
-from app.engine.overworld.overworld_map_sprites import (OverworldUnitSprite)
+from app.engine.overworld.overworld_map_sprites import OverworldUnitSprite
 from app.engine.unit_sound import UnitSound
 from app.utilities.typing import NID, Point
 
@@ -39,12 +39,12 @@ class OverworldEntityObject():
         self._display_position: Point = None        # display position for drawing purposes
 
     @classmethod
-    def from_party_prefab(cls, initial_loc: NID, party_prefab_nid: NID, unit_registry: Dict[NID, UnitObject] = None):
+    def from_party_prefab(cls, initial_node: NID, party_prefab_nid: NID, unit_registry: Dict[NID, UnitObject] = None):
         entity = cls()
         entity.nid = party_prefab_nid
         entity.dtype = OverworldEntityTypes.PARTY
         entity.dnid = party_prefab_nid
-        entity.on_node = initial_loc
+        entity.on_node = initial_node
 
         # create unit
         party_prefab = DB.parties.get(party_prefab_nid)

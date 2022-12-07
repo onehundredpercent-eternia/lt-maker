@@ -57,14 +57,6 @@ class DebugState(MapState):
             self.current_command = self.current_command[:-1]
             self.backspace_down = current_time
 
-            elif event.type == engine.KEYUP:
-                if event.key == engine.key_map['backspace']:
-                    self.backspace_down = 0
-
-        if self.backspace_down and current_time - self.backspace_down > self.backspace_time:
-            self.current_command = self.current_command[:-1]
-            self.backspace_down = current_time
-
     def parse_command(self, command):
         if command in self.quit_commands:
             get_sound_thread().play_sfx('Select 4')

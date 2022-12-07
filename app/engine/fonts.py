@@ -21,18 +21,8 @@ text.colors['yellow'] = ((248, 240, 136, 255), (168, 168, 72, 255), (72, 64, 8, 
 text.colors['brown'] = ((248, 248, 248, 255), (144, 112, 88, 255), (80, 40, 0, 255))
 text.colors['purple'] = ((199, 155, 232, 255), (147, 61, 212, 255), (62, 37, 82, 255))
 
-runes = FontType('runes', 'white')
-runes.colors['white'] = ((248, 248, 248, 255), (160, 136, 216, 255), (56, 48, 40, 255))
-runes.colors['blue'] = ((192, 248, 248, 255), (80, 112, 248, 255), (24, 24, 88, 255))
-runes.colors['green'] = ((72, 232, 32, 255), (112, 160, 72, 255), (24, 88, 24, 255))
-runes.colors['red'] = ((224, 96, 80, 255), (160, 88, 72, 255), (88, 24, 24, 255))
-runes.colors['grey'] = ((184, 176, 176, 255), (136, 128, 120, 255), (56, 48, 40, 255))
-runes.colors['yellow'] = ((248, 240, 136, 255), (168, 168, 72, 255), (72, 64, 8, 255))
-runes.colors['brown'] = ((248, 248, 248, 255), (144, 112, 88, 255), (80, 40, 0, 255))
-
 narrow = FontType('narrow', 'white')
 narrow.colors = text.colors
-
 
 small = FontType('small', 'white')
 small.colors = text.colors
@@ -78,7 +68,7 @@ stat = FontType('stat', 'white')
 stat.colors['white'] = ((248, 248, 200, 255), (248, 112, 40, 255), (152, 32, 0, 255), (80, 56, 32, 255))
 stat.colors['purple'] = ((184, 184, 248, 255), (104, 156, 184, 255), (0, 120, 152, 255), (80, 56, 32, 255))
 
-font_types = [text, narrow, small, info, nconvo, convo, chapter, runes, stat]
+font_types = [text, narrow, small, info, nconvo, convo, chapter, stat]
 
 # Load in default, uncolored fonts
 FONT: Dict[NID, bmpfont.BmpFont] = {}

@@ -47,7 +47,6 @@ class SpeakStyleLibrary(Dict[NID, SpeakStyle]):
                                          font_color='white', message_tail='None'),
              'clear': SpeakStyle(dialog_box='None', font_color='white', draw_cursor=False, message_tail='None'),
              'thought_bubble': SpeakStyle(message_tail='message_bg_thought_tail'),
-             'rogue_emblem': SpeakStyle(font_color='white', transparency=0.4)
              }
         )
 

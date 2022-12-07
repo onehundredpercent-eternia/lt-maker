@@ -310,6 +310,8 @@ class FancyDialog(dialog.Dialog):
         return self.state == 'transition_out'
 
     def pause_before_wait(self):
+        if self.portrait:
+            self.portrait.stop_talking()
         self.cursor.wait()
         self.state = 'pause_before_wait'
         self.last_update = engine.get_time()

@@ -30,7 +30,7 @@ def make_bg_surf(shimmer):
     bg_surf = create_base_surf(104, 16 * DB.constants.total_items() + 8, 'menu_bg_base')
     if shimmer:
         img = SPRITES.get('menu_shimmer%d' % shimmer)
-        bg_surf.blit(img, (bg_surf.get_width() - img.get_width() - 1, bg_surf.get_height() - img.get_height() - 4))
+        bg_surf.blit(img, (bg_surf.get_width() - img.get_width() - 1, bg_surf.get_height() - img.get_height() - 5))
     bg_surf = image_mods.make_translucent(bg_surf, 0.1)
     return bg_surf
 

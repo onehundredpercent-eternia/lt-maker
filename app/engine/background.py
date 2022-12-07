@@ -131,8 +131,7 @@ class PanoramaBackground():
         surf.blit(image, (x, y))
 
     def draw(self, surf):
-        image = self.panorama.images[self.counter].copy()
-        # shaders.bloom(image, 128 + 64)
+        image = self.panorama.images[self.counter]
         if self.fade_state == 'normal':
             if image:
                 self._draw(surf, image)

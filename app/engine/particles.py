@@ -5,7 +5,6 @@ from app.engine.sprites import SPRITES
 
 from app.engine import engine, image_mods
 from app.engine.game_state import game
-from app.engine.fog_particles import FogParticleSystem
 
 class ParticleSystem():
     def __init__(self, nid, particle, abundance, bounds, size, blend=None, position=None):
@@ -321,9 +320,6 @@ def create_system(nid, width, height, position):
     elif nid == 'dark':
         creation_bounds = 0, twidth, 0, theight
         ps = ParticleSystem(nid, DarkMote, .02, creation_bounds, (width, height))
-    elif nid == 'fog':
-        creation_bounds = -16, 0, -twidth//2, theight
-        ps = FogParticleSystem(nid, .2, creation_bounds, (width, height))
     elif nid == 'fire':
         creation_bounds = 0, WINWIDTH + 64, WINHEIGHT, WINHEIGHT + 16
         blend = SPRITES.get('particle_bg_fire')

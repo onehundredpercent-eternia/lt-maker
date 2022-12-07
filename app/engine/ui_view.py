@@ -18,6 +18,8 @@ from app.utilities import utils
 
 from typing import List
 
+MEMORY_BAR_MODE = True
+
 class MemoryBar():
     background = engine.subsurface(SPRITES.get('memorybar'), (0, 0, 136, 24))
     begin = engine.subsurface(SPRITES.get('memorybar'), (0, 24, 3, 7))
@@ -311,35 +313,31 @@ class UIView():
         return bg_surf
 
     def create_obj_info(self):
-        # font = FONT['text']
+        if MEMORY_BAR_MODE:
+            big_surf = engine.create_surface((self.memory_bar.width, self.memory_bar.height), transparent=True)
+            self.memory_bar.draw(big_surf, (0, 0), game.party.money)
 
-        # Draw Objective
-        # obj = game.level.objective['simple']
-        # text_parser = TextEvaluator(logging.getLogger(), game)
-        # text_lines = text_parser._evaluate_all(obj).split(',')
-        # text_lines = [line.replace('{comma}', ',') for line in text_lines]
-        # longest_surf_width = text_funcs.get_max_width('text', text_lines)
-        # bg_surf = base_surf.create_base_surf(longest_surf_width + 16, 16 * len(text_lines) + 8)
+        else:
+            obj = game.level.objective['simple']
+            text_parser = TextEvaluator(logging.getLogger(), game)
+            text_lines = text_parser._evaluate_all(obj).split(',')
+            text_lines = [line.replace('{comma}', ',') for line in text_lines]
+            longest_surf_width = text_funcs.get_max_width('text', text_lines)
+            bg_surf = base_surf.create_base_surf(longest_surf_width + 16, 16 * len(text_lines) + 8)
 
-        # if len(text_lines) == 1:
-        #     shimmer = SPRITES.get('menu_shimmer1')
-        # else:
-        #     shimmer = SPRITES.get('menu_shimmer2')
-        # bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 5))
-        # surf = image_mods.make_translucent(bg_surf, .1)
+            if len(text_lines) == 1:
+                shimmer = SPRITES.get('menu_shimmer1')
+            else:
+                shimmer = SPRITES.get('menu_shimmer2')
+            bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 5))
+            surf = image_mods.make_translucent(bg_surf, .1)
 
-        # for idx, line in enumerate(text_lines):
-        #     pos = (surf.get_width()//2 - font.width(line)//2, 16 * idx + 4)
-        #     font.blit(line, surf, pos)
+            for idx, line in enumerate(text_lines):
+                pos = (surf.get_width()//2 - text_width('text', line)//2, 16 * idx + 6)
+                render_text(surf, ['text'], [line], [None], pos)
 
-        # big_surf = engine.create_surface((max(surf.get_width(), self.memory_bar.width), self.memory_bar.height + surf.get_height()), transparent=True)
-        # Draw memory
-        # self.memory_bar.draw(big_surf, (0, 0), game.party.money)
-        # big_surf.blit(surf, (big_surf.get_width() - surf.get_width(), self.memory_bar.height))
-
-        big_surf = engine.create_surface((self.memory_bar.width, self.memory_bar.height), transparent=True)
-        self.memory_bar.draw(big_surf, (0, 0), game.party.money)
-        
+            big_surf = engine.create_surface((max(surf.get_width(), self.memory_bar.width), self.memory_bar.height + surf.get_height()), transparent=True)
+    
         return big_surf
 
     def create_initiative_info(self):
@@ -388,14 +386,11 @@ class UIView():
 
         grandmaster = game.mode.rng_choice == RNGOption.GRANDMASTER
         crit_flag = DB.constants.value('crit')
-        as_flag = DB.constants.value('display_attack_speed')
 
         # Choose attack info background
         prefix = 'attack_info_'
         if grandmaster:
             infix = 'grandmaster'
-        elif crit_flag and as_flag:
-            infix = 'dbl'
         elif crit_flag:
             infix = 'crit'
         else:
@@ -466,8 +461,6 @@ class UIView():
         render_text(surf, ['text'], [attacker.name], ['white'], (67 - width//2, 3))
         # Enemy name
         y_pos = 84
-        if as_flag:
-            y_pos += 16
         if not crit_flag:
             y_pos -= 16
         if grandmaster:
@@ -478,8 +471,6 @@ class UIView():
         if defender.get_weapon():
             width = text_width('text', defender.get_weapon().name)
             y_pos = 100
-            if as_flag:
-                y_pos += 16
             if not crit_flag:
                 y_pos -= 16
             if grandmaster:
@@ -512,15 +503,10 @@ class UIView():
                 e_crit = combat_calcs.compute_crit(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
             else:
                 e_crit = 0
-            if as_flag:
-                e_dbl = combat_calcs.compute_true_speed(defender, attacker, defender.get_weapon(), weapon, 'defense', (0, 0))
-            else:
-                e_dbl = 0
         else:
             e_mt = '--'
             e_hit = '--'
             e_crit = '--'
-            e_dbl = '--'
 
         if grandmaster:
             if e_mt == '--' or e_hit == '--':
