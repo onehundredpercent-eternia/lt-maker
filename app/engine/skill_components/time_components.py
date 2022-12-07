@@ -117,6 +117,17 @@ class LostOnEndstep(SkillComponent):
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))
 
+class LostOnUpkeep(SkillComponent):
+    nid = 'lost_on_upkeep'
+    desc = "Remove on next upkeep"
+    tag = SkillTags.TIME
+
+    def on_upkeep(self, actions, playback, unit):
+        actions.append(action.RemoveSkill(unit, self.skill))
+
+    def on_end_chapter(self, unit, skill):
+        action.do(action.RemoveSkill(unit, self.skill))
+
 class LostOnEndCombat(SkillComponent):
     nid = 'lost_on_end_combat'
     desc = "Remove after combat"
@@ -146,6 +157,18 @@ class LostOnEndCombat(SkillComponent):
         if self.values.get('LostOnSplash (T/F)', 'T') == 'T':
             if not target:
                 action.do(action.RemoveSkill(unit, self.skill))
+
+    def on_end_chapter(self, unit, skill):
+        action.do(action.RemoveSkill(unit, self.skill))
+
+class LostOnKill(SkillComponent):
+    nid = 'lost_on_kill'
+    desc = "Remove after getting a kill"
+    tag = SkillTags.TIME
+
+    def post_combat(self, playback, unit, item, target, mode):
+        if target and target.get_hp() <= 0:
+            action.do(action.RemoveSkill(unit, self.skill))
 
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))

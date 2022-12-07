@@ -324,6 +324,17 @@ class GainSkillAfterKill(SkillComponent):
             action.do(action.AddSkill(unit, self.value))
             action.do(action.TriggerCharge(unit, self.skill))
 
+class GainSkillAfterCombat(SkillComponent):
+    nid = 'gain_skill_after_combat'
+    desc = "Gives a skill to user after any combat"
+    tag = SkillTags.COMBAT2
+
+    expose = ComponentType.Skill
+
+    def end_combat(self, playback, unit, item, target, mode):
+        action.do(action.AddSkill(unit, self.value))
+        action.do(action.TriggerCharge(unit, self.skill))
+
 class GainSkillAfterAttacking(SkillComponent):
     nid = 'gain_skill_after_attack'
     desc = "Gives a skill to user after an attack"

@@ -15,13 +15,13 @@ def get_random_item(tags=None, exclude=None, pos=(0, 0)) -> str:
     for tag in tags:
         if tag == 'Forge':
             chance = 10
-            items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
         elif tag == 'Promo':
             chance = 10
-            items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
+        elif tag in ('Accessory', 'Accessory+'):
+            chance = 45
         else:
             chance = 30
-            items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
+        items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
         items = [item for item in items if item.nid not in exclude]
         assert len(items) >= 1
         all_items.append(items)
