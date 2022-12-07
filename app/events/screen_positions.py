@@ -1,6 +1,6 @@
-from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE, FANCY_DIALOG_MODE
+from app.constants import WINHEIGHT, WINWIDTH, BEEG_MODE, FANCY_DIALOG_MODE
 
-if MEMENTO_MODE:
+if BEEG_MODE:
     horizontal_screen_positions = {'OffscreenLeft': -128,
                                    'FarLeft': 0,
                                    'Left': 36,
@@ -29,7 +29,7 @@ vertical_screen_positions = {'Top': 0,
                              'Middle': (WINHEIGHT - 80) // 2,
                              'Bottom': WINHEIGHT - 80}
 
-if MEMENTO_MODE:
+if BEEG_MODE:
     vertical_screen_positions['Top'] = 20
 
 def parse_screen_position(pos) -> tuple:
@@ -68,7 +68,7 @@ def parse_screen_position(pos) -> tuple:
     return (x, y), mirror
 
 def get_desired_center(x: int) -> int:
-    if MEMENTO_MODE:
+    if BEEG_MODE:
         if x < 80:  # FarLeft
             return 8
         elif x < 120:  # Left

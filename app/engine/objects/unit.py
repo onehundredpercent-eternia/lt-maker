@@ -466,13 +466,6 @@ class UnitObject(Prefab):
                     self.equip(item)
                     _weapon = item
                     break
-        # Handle memento_staff mechanic
-        if _weapon and _weapon.memento_staff:
-            spell = self.get_spell()
-            if spell:
-                _weapon = _weapon.memento_staff.get_ward(spell)
-            else:
-                _weapon = None
         return _weapon
 
     def get_spell(self):

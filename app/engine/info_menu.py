@@ -3,7 +3,7 @@ from app.engine.graphics.text.text_renderer import render_text, text_width
 from app.engine.objects.unit import UnitObject
 from dataclasses import dataclass
 
-from app.constants import WINWIDTH, WINHEIGHT, MEMENTO_MODE
+from app.constants import WINWIDTH, WINHEIGHT, BEEG_MODE
 from app.utilities import utils
 
 from app.data.resources.resources import RESOURCES
@@ -509,7 +509,7 @@ class InfoMenuState(State):
             self.transition_counter += 1
             # Transition in
             if self.next_state == self.state:
-                if MEMENTO_MODE:
+                if BEEG_MODE:
                     idxs = (208, 144, 112, 80, 48, 16)
                 else:
                     idxs = (104, 72, 56, 40, 24, 8)
@@ -522,7 +522,7 @@ class InfoMenuState(State):
                     self.next_state = None
                     self.transition_counter = 0
             else:
-                if MEMENTO_MODE:
+                if BEEG_MODE:
                     idxs = (-64, -112, -160, -192, -224)
                 else:
                     idxs = (-32, -56, -80, -96, -112)
@@ -530,7 +530,7 @@ class InfoMenuState(State):
                 if 0 <= counter < len(idxs):
                     self.scroll_offset_x = idxs[self.counter] if self.transition == 'RIGHT' else -idxs[self.counter]
                 else:
-                    if MEMENTO_MODE:
+                    if BEEG_MODE:
                         self.scroll_offset_x = -280 if self.transition == 'RIGHT' else 280
                     else:
                         self.scroll_offset_x = -140 if self.transition == 'RIGHT' else 140

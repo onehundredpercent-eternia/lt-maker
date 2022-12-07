@@ -1368,11 +1368,6 @@ class WeaponChoiceState(MapState):
             options = game.memory['valid_weapons']
         else:
             items = target_system.get_weapons(unit)
-            # Handle memento staff
-            if items and items[0].memento_staff:
-                staff = items[0]
-                spells = target_system.get_spells(unit)
-                options = [staff.memento_staff.get_ward(spell) for spell in spells]
             # Skill straining
             options = [item for item in items if target_system.get_valid_targets_recursive_with_availability_check(unit, item)]
         return options
@@ -1456,9 +1451,6 @@ class WeaponChoiceState(MapState):
             # If the item is in our inventory, bring it to the top
             if selection in self.cur_unit.items:
                 action.do(action.BringToTopItem(self.cur_unit, selection))
-            elif selection.memento_ward:
-                spell = selection.memento_ward.get_spell(self.cur_unit, selection)
-                action.do(action.BringToTopItem(self.cur_unit, spell))
 
             game.memory['item'] = selection
             game.state.change('combat_targeting')

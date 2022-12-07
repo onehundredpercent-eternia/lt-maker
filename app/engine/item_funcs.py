@@ -107,10 +107,6 @@ def create_item(unit, item_nid, droppable=False, parent: ItemObject = None) -> I
         for subitem_nid in item.sequence_item.value:
             create_item(unit, subitem_nid, parent=item)
 
-    elif item.memento_staff:
-        for subitem_nid in item.memento_staff.value:
-            create_item(unit, subitem_nid, parent=item)
-
     return item
 
 def create_items(unit, item_nid_list: list) -> list:

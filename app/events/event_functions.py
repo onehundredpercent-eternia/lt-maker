@@ -10,7 +10,7 @@ from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.resources.resources import RESOURCES
 from app.engine import (action, background, banner, base_surf, dialog, engine, 
                         evaluate, icons, image_mods, item_funcs, item_system,
-                        skill_system, target_system, unit_funcs, memento_dialog)
+                        skill_system, target_system, unit_funcs, fancy_dialog)
 from app.engine.achievements import ACHIEVEMENTS
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -33,7 +33,7 @@ from app.engine.objects.region import RegionObject
 from app.engine.persistent_records import RECORDS
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, regions, triggers
-from app.events.event_portrait import EventPortrait, MementoEventPortrait
+from app.events.event_portrait import EventPortrait
 from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.sprites import SPRITES
@@ -126,12 +126,9 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
     if 'immediate' in flags or self.do_skip:
         transition = False
 
-    if FANCY_DIALOG_MODE:
-        new_portrait = MementoEventPortrait(portrait, position, priority, transition, 'right', mirror, name)
-    else:
-        new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror, name)
+    new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror, name)
 
-    if 'desaturate' in flags:
+    if FANCY_DIALOG_MODE:
         new_portrait.saturation = 0
 
     self.portraits[name] = new_portrait
@@ -237,13 +234,8 @@ def mirror_portrait(self: Event, portrait, flags=None):
     if not portrait:
         return False
 
-    if FANCY_DIALOG_MODE:
-        portrait_type = MementoEventPortrait
-    else:
-        portrait_type = EventPortrait
-
     self.portraits[name] = \
-        portrait_type(
+        EventPortrait(
             self.portraits[name].portrait,
             self.portraits[name].position,
             self.portraits[name].priority,
@@ -438,7 +430,11 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
         flags = speak_style.flags.union(flags)
 
     if FANCY_DIALOG_MODE:
-        new_dialog = memento_dialog.MementoDialog(text, self.dialog_background, portrait)
+        new_dialog = \
+            fancy_dialog.FancyDialog(text, portrait, self.dialog_background,
+                                     speaker=portrait.name if portrait else speaker, 
+                                     style_nid=style_nid, speed=speed,
+                                     font_color=fcolor, font_type=ftype)
         if portrait:
             self._saturate_portrait(portrait)
     else:

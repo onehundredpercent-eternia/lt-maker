@@ -1,4 +1,3 @@
-from app.constants import COLORKEY
 import os
 import shutil
 
@@ -6,13 +5,13 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QIcon, QImage, QColor
 
+from app.constants import PORTRAIT_WIDTH, PORTRAIT_HEIGHT
+
 from app.data.resources.portraits import Portrait
 from app.data.resources.resources import RESOURCES
 
 from app.utilities.data import Data
 from app.data.database.database import DB
-from app.constants import MEMENTO_MODE
-
 from app.extensions.custom_gui import DeletionDialog
 from app.editor.base_database_gui import ResourceCollectionModel
 from app.editor.settings import MainSettingsController
@@ -34,8 +33,8 @@ def auto_frame_portrait(portrait: Portrait):
     if not portrait.pixmap:
         portrait.pixmap = QPixmap(portrait.full_path)
     pixmap = portrait.pixmap
-    blink_frame1 = QImage(pixmap.copy(96, 48, 32, 16))
-    mouth_frame1 = QImage(pixmap.copy(96, 80, 32, 16))
+    blink_frame1 = QImage(pixmap.copy(pixmap.width() - 32, 48, 32, 16))
+    mouth_frame1 = QImage(pixmap.copy(pixmap.width() - 32, pixmap.height() - 32, 32, 16))
     main_frame = QImage(pixmap.copy(0, 0, 96, 80))
     best_blink_similarity = width * height * 128**3
     best_mouth_similarity = width * height * 128**3
@@ -109,15 +108,11 @@ class PortraitModel(ResourceCollectionModel):
                     nid = os.path.split(fn)[-1][:-4]
                     pix = QPixmap(fn)
                     nid = str_utils.get_next_name(nid, [d.nid for d in RESOURCES.portraits])
-                    if pix.width() == 128 and pix.height() == 112:
+                    if pix.width() == PORTRAIT_WIDTH and pix.height() == PORTRAIT_HEIGHT:
                         # Swap to use colorkey color if it's not
                         new_portrait = Portrait(nid, fn, pix)
                         auto_colorkey(new_portrait)
                         auto_frame_portrait(new_portrait)
-                        RESOURCES.portraits.append(new_portrait)
-                    elif MEMENTO_MODE:
-                        new_portrait = Portrait(nid, fn, pix)
-                        auto_colorkey(new_portrait)
                         RESOURCES.portraits.append(new_portrait)
                     else:
                         QMessageBox.critical(self.window, "Error", "Image is not correct size (128x112 px)")

@@ -263,6 +263,9 @@ class Dialog():
                 self._add_letter(' ')
                 if sound:
                     self.play_talk_boop()
+        elif command in ('.', ',', ';', '!', '?'):
+            self._add_letter(command)
+            self.pause()
         else:
             self._add_letter(command)
             if sound:
@@ -308,6 +311,9 @@ class Dialog():
         if self.state == 'process':
             while self.state == 'process':
                 self._next_char(sound=False)
+                # Skip regular pauses because we want maximum velocity of speech
+                if self.state == 'pause':
+                    self.state = 'process'
         elif self.state == 'wait':
             if self.text_index >= len(self.text_commands):
                 self.state = 'done'
@@ -341,6 +347,9 @@ class Dialog():
             else:
                 while self.state == 'process':
                     self._next_char(sound=False)
+                    # Skip regular pauses because we want MAXIMUM VELOCITY of characters
+                    if self.state == 'pause':
+                        self.state = 'process'
                 self.play_talk_boop()
         elif self.state == 'pause':
             if current_time - self.last_update > self.pause_time:

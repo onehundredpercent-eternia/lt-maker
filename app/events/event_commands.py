@@ -339,7 +339,7 @@ Extra flags:
 
     keywords = ['Portrait', 'ScreenPosition']
     optional_keywords = ['Slide', 'ExpressionList']
-    _flags = ["mirror", "low_priority", "immediate", "no_block", "desaturate"]
+    _flags = ["mirror", "low_priority", "immediate", "no_block"]
 
 class MultiAddPortrait(EventCommand):
     nid = "multi_add_portrait"

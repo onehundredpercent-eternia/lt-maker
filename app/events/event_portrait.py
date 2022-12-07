@@ -4,12 +4,12 @@ import random
 
 from app import counters
 from app.utilities import utils
-from app.constants import COLORKEY
+from app.constants import PORTRAIT_WIDTH, PORTRAIT_HEIGHT, COLORKEY
 
 from app.engine import engine, image_mods
 
 class EventPortrait():
-    width, height = 128, 112
+    width, height = PORTRAIT_WIDTH, PORTRAIT_HEIGHT
     main_portrait_coords = (0, 0, 96, 80)
     chibi_coords = (width - 32, 16, 32, 32)
 
@@ -87,6 +87,12 @@ class EventPortrait():
 
     def set_expression(self, expression_list):
         self.expressions = expression_list
+
+    def saturate(self):
+        self.saturation_state = 1
+
+    def desaturate(self):
+        self.saturation_state = -1
 
     def bop(self, num=2, height=2):
         self.bops_remaining = num
@@ -294,14 +300,3 @@ class EventPortrait():
         self.transition = True
         self.remove = True
         self.transition_update = engine.get_time()
-
-class MementoEventPortrait(EventPortrait):
-    def create_image(self):
-        main_image = self.main_portrait.copy()
-        return main_image
-
-    def saturate(self):
-        self.saturation_state = 1
-
-    def desaturate(self):
-        self.saturation_state = -1

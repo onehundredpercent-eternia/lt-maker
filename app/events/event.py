@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import app.engine.config as cf
 import app.engine.graphics.ui_framework as uif
-from app.constants import WINHEIGHT, WINWIDTH, MEMENTO_MODE
+from app.constants import WINHEIGHT, WINWIDTH, FANCY_DIALOG_MODE
 from app.data.database.database import DB
 from app.engine import (action, dialog, engine, evaluate,
                         target_system, item_funcs)
@@ -48,9 +48,9 @@ class Event():
             from app.engine.game_state import game
             self.game = game
 
-        if MEMENTO_MODE:
-            from app.engine import memento_dialog
-            self.dialog_background = memento_dialog.MementoDialogBackground()
+        if FANCY_DIALOG_MODE:
+            from app.engine import fancy_dialog
+            self.dialog_background = fancy_dialog.FancyDialogBackground()
         else:
             self.dialog_background = None
 

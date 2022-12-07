@@ -7,9 +7,11 @@ from app.engine.fonts import FONT
 from app.engine.sprites import SPRITES
 from app.engine import text_funcs, engine, image_mods, dialog, base_surf
 from app.engine import config as cf
+from app.engine.graphics.text.text_renderer import (fix_tags, render_text,
+                                                    text_width)
 
-class MementoDialogBackground():
-    background = base_surf.create_base_surf(WINWIDTH, 80, 'memento_dialog_bg')
+class FancyDialogBackground():
+    background = base_surf.create_base_surf(WINWIDTH, 80, 'fancy_dialog_bg')
     background = background.convert_alpha()
     transition_in_speed = utils.frames2ms(12)
     transition_out_speed = utils.frames2ms(10)
@@ -69,8 +71,8 @@ class MementoDialogBackground():
         elif self.state == 'normal':
             surf.blit(self.background, self.position)
 
-class MementoDialogNametag():
-    sprite = SPRITES.get('memento_nametag')
+class FancyDialogNametag():
+    sprite = SPRITES.get('fancy_nametag')
     sprite = sprite.convert_alpha()
     transition_in_speed = utils.frames2ms(12)
     transition_out_speed = utils.frames2ms(10)
@@ -147,7 +149,7 @@ class MementoDialogNametag():
         surf.blit(name_tag_surf, self.current_position)
         return surf
 
-class MementoDialogCursor():
+class FancyDialogCursor():
     sprite = SPRITES.get('waiting_cursor_red')
     sprite = sprite.convert_alpha()
     pulse_sprite = SPRITES.get('waiting_cursor_pulse')
@@ -205,33 +207,35 @@ class MementoDialogCursor():
             pos = WINWIDTH//2 - self.main_image.get_width()//2, WINHEIGHT - 24 + y_offset
             surf.blit(self.main_image, pos)
 
-class MementoDialog(dialog.Dialog):
+class FancyDialog(dialog.Dialog):
     solo_flag = True
     draw_cursor_flag = True
     pause_before_wait_time = 150  # 9 frames
     pause_time = 150  # 9 frames
     text_width = WINWIDTH - 40
     text_height = 64
-    name_tag = MementoDialogNametag()  # Shared with all dialogs
-    cursor = MementoDialogCursor()
+    name_tag = FancyDialogNametag()  # Shared with all dialogs
+    cursor = FancyDialogCursor()
 
-    def __init__(self, text, background, portrait=None):
+    def __init__(self, text, portrait=None, background=None,
+                 speaker=None, style_nid=None, speed: float = 1.0,
+                 font_color='black', font_type='convo'):
         self.plain_text = text
-        self.background = background
         self.portrait = portrait
-        self.speaker = self.portrait.name if self.portrait else None
+        self.background = background
+        self.speaker = speaker
         self.font_type = 'convo'
         self.font_color = 'black'
-        self.font = FONT[self.font_type + '-' + self.font_color]
 
         # States: 
         # transition_in -- waiting for the dialog box to appear
-        # write -- actually adding text to the screen, one character at a time
+        # process -- actually adding text to the screen, one character at a time
         # pause -- occasionally pauses for a period
-        # pause_before_wait -- will pause for some time between write and wait states (to account for player mashing A)
+        # pause_before_wait* -- will pause for some time between write and wait states (to account for player mashing A)
         # wait -- Done writing, now waiting for the player to press A
         # done -- No more dialog to show, waiting for the event to clean me up
-        # transition_out -- waiting for the dialog box to disappear
+        # transition_out* -- waiting for the dialog box to disappear
+        # * unique to fancy dialog
         self.state = 'transition_in'
 
         self.no_wait: bool = False  # Whether to wait for the player to press
@@ -288,53 +292,10 @@ class MementoDialog(dialog.Dialog):
         return num_lines
 
     def _next_line(self):
-        self.text_lines.append([])
-
-    def _add_letter(self, letter):
-        self.text_lines[-1].append(letter)
-
-    def _next_char(self, sound=True):  # Add the next character to the text_lines list
-        if self.text_index >= len(self.text_commands):
-            self.pause_before_wait()
-            return
-        command = self.text_commands[self.text_index]
-        if command == '{br}' or command == '{break}':
-            self._next_line()
-        elif command == '{w}' or command == '{wait}':
-            self.pause_before_wait()
-        elif command == '{clear}':
-            self._next_block()
-        elif command == ' ':  # Check to see if we should move to next line
-            current_line = ''.join(self.text_lines[-1])
-            # Remove any commands from line
-            current_line = re.sub(r'\{[^}]*\}', '', current_line)
-            next_word = self._get_next_word(self.text_index)
-            if self.font.width(current_line + ' ' + next_word) > self.text_width:
-                self._next_line()
-            else:
-                self._add_letter(' ')
-        elif command in self.aesthetic_commands:
-            self._add_letter(command)
-        elif command in ('.', ',', ';', '!', '?'):
-            self._add_letter(command)
-            self.pause()
-        else:
-            self._add_letter(command)
-        self.text_index += 1
-
-    def _get_next_word(self, text_index):
-        word = ''
-        for letter in self.text_commands[self.text_index + 1:]:
-            if letter == ' ':
-                break
-            elif len(letter) > 1:  # Command
-                if letter in self.aesthetic_commands:
-                    continue
-                else:
-                    break
-            else:
-                word += letter
-        return word
+        self.state = 'process'
+        if self.portrait:
+            self.portrait.talk()
+        self.text_lines.append("")
 
     def _next_block(self):
         self.text_lines.clear()
@@ -348,37 +309,26 @@ class MementoDialog(dialog.Dialog):
         """
         return self.state == 'transition_out'
 
-    def is_done(self):
-        """
-        Can move onto processing other commands
-        """
-        return self.state == 'done'
-
-    def is_done_or_wait(self):
-        return self.state in ('done', 'wait')
-
-    def pause(self):
-        self.state = 'pause'
-        self.last_update = engine.get_time()
-
     def pause_before_wait(self):
         self.cursor.wait()
         self.state = 'pause_before_wait'
         self.last_update = engine.get_time()
 
     def hurry_up(self):
-        if self.state == 'write':
-            while self.state == 'write':
-                self._next_char()
-                # Skip regular pauses
+        if self.state == 'process':
+            while self.state == 'process':
+                self._next_char(sound=False)
+                # Skip regular pauses because we want maximum velocity of speech
                 if self.state == 'pause':
-                    self.state = 'write'
+                    self.state = 'process'
         elif self.state == 'wait':
             if self.text_index >= len(self.text_commands):
                 self.state = 'done'
             else:
                 self._next_block()
-                self.state = 'write'
+                self.state = 'process'
+                if self.portrait:
+                    self.portrait.talk()
             self.cursor.flip()
 
     def end(self):
@@ -390,24 +340,25 @@ class MementoDialog(dialog.Dialog):
         if self.state == 'transition_in':
             if self.background.ready():
                 self._next_line()
-                self.state = 'write'
+                self.state = 'process'
         elif self.state == 'transition_out':
             self.background.update()
-        elif self.state == 'write':
+        elif self.state == 'process':
             if cf.SETTINGS['text_speed'] > 0:
-                num_updates = engine.get_delta() / float(cf.SETTINGS['text_speed'])
+                num_updates = engine.get_delta() / (float(cf.SETTINGS['text_speed']) * self.speed)
                 self.total_num_updates += num_updates
-                while self.total_num_updates >= 1 and self.state == 'write':
+                while self.total_num_updates >= 1 and self.state == 'process':
                     self.total_num_updates -= 1
-                    self._next_char()
-                    if self.state != 'write':
+                    self._next_char(sound=self.total_num_updates < 2)
+                    if self.state != 'process':
                         self.total_num_updates = 0
             else:
-                while self.state == 'write':
-                    self._next_char()
-                    # Skip regular pauses
+                while self.state == 'process':
+                    self._next_char(sound=False)
+                    # Skip regular pauses because we want MAXIMUM VELOCITY of characters
                     if self.state == 'pause':
-                        self.state = 'write'
+                        self.state = 'process'
+                self.play_talk_boop()
         elif self.state == 'pause_before_wait':
             if current_time - self.last_update > self.pause_before_wait_time:
                 if self.no_wait:
@@ -416,28 +367,25 @@ class MementoDialog(dialog.Dialog):
                     self.state = 'wait'
         elif self.state == 'pause':  # Regular pause for periods
             if current_time - self.last_update > self.pause_time:
-                self.state = 'write'
+                self.state = 'process'
+
+        return True
 
     def draw_text(self, surf):
         text_surf = engine.create_surface((self.text_width, self.text_height), transparent=True)
 
-        current_color = self.font_color
-
-        for idx, line in enumerate(self.text_lines):
+        processed_text_lines = fix_tags(self.text_lines)
+        for idx, line in enumerate(processed_text_lines):
             x_pos = 0
             y_pos = 16 * idx + (8 * (4 - self.num_lines))
 
-            line_chunks, current_color = self.chunkify(line, current_color)
-            for chunk in line_chunks:
-                text, color = chunk
-                font = FONT[self.font_type + '-' + color]
-                width = font.width(text)
-                font.blit(text, text_surf, (x_pos, y_pos))
-                x_pos += width
+            width = text_width(self.font_type, line)
+            render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_pos))
+            x_pos += width
 
         surf.blit(text_surf, (20, WINHEIGHT - 64 - 12))
 
-    def draw(self, surf):
+    def draw(self, surf: engine.Surface) -> engine.Surface:
         if self.state not in ('transition_in', 'transition_out'):
             # Draw nametag
             if self.portrait and self.speaker:
