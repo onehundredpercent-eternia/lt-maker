@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import GrowthOption
+from app.data.database.klass import Klass
 from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.database.units import UnitPrefab
 from app.data.database.weapons import WexpGain
@@ -49,7 +50,7 @@ class UnitObject(Prefab):
     stats: Dict[NID, int] = field(default_factory=dict)
     growths: Dict[NID, int] = field(default_factory=dict)
     growth_points: Dict[NID, int] = field(default_factory=dict)
-    wexp: Dict[NID, WexpGain] = field(default_factory=dict)
+    wexp: Dict[NID, int] = field(default_factory=dict)
 
     position: Tuple[int, int] = None
     starting_position: Tuple[int, int] = None
@@ -148,7 +149,7 @@ class UnitObject(Prefab):
         self.exp = 0
 
         if self.generic:
-            klass_obj = DB.classes.get(self.klass)
+            klass_obj: Klass = DB.classes.get(self.klass)
             bases = klass_obj.bases
             growths = klass_obj.growths
             self.stats = {stat_nid: bases.get(stat_nid, 0) for stat_nid in DB.stats.keys()}

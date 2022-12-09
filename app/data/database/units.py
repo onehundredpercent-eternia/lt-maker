@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, List, Optional, Tuple
 
 from app.data.database.weapons import WexpGain
 from app.utilities.data import Data, Prefab
@@ -8,27 +8,27 @@ from app.utilities.typing import NID
 
 @dataclass
 class UnitPrefab(Prefab):
-    nid: str = None
-    name: str = None
-    desc: str = None
-    variant: str = None
+    nid: str
+    name: Optional[str] = None
+    desc: Optional[str] = None
+    variant: Optional[str] = None
 
-    level: int = None
+    level: int = 1
     klass: str = None
 
-    tags: list = None
+    tags: List[NID] = field(default_factory=list)
     bases: Dict[NID, int] = field(default_factory=dict)
     growths: Dict[NID, int] = field(default_factory=dict)
-    starting_items: list = field(default_factory=list)  # of tuples (ItemPrefab, droppable)
+    starting_items: List[Tuple[NID, bool]] = field(default_factory=list)  # of tuples (item_nid, droppable)
 
-    learned_skills: list = None
+    learned_skills: List[Tuple[int, NID]] = field(default_factory=list) # tuples (level, skill_nid)
     unit_notes: list = field(default_factory=list)
     wexp_gain: Dict[NID, WexpGain] = field(default_factory=dict)
 
     alternate_classes: list = field(default_factory=list)
 
-    portrait_nid: str = None
-    affinity: str = None
+    portrait_nid: Optional[NID] = None
+    affinity: Optional[NID] = None
 
     fields: list = field(default_factory=list) # arbitrary field, allow players to fill out anything they want
 
@@ -47,12 +47,12 @@ class UnitPrefab(Prefab):
     def replace_item_nid(self, old_nid, new_nid):
         for item in self.starting_items:
             if item[0] == old_nid:
-                item[0] = new_nid
+                item = new_nid, item[1]
 
     def replace_skill_nid(self, old_nid, new_nid):
         for skill in self.learned_skills:
             if skill[1] == old_nid:
-                skill[1] = new_nid
+                skill = skill[0], new_nid
 
     def save_attr(self, name, value):
         if name in ('bases', 'growths'):
@@ -86,6 +86,10 @@ class UnitPrefab(Prefab):
         else:
             value = super().restore_attr(name, value)
         return value
+
+    @classmethod
+    def default(cls):
+        return cls('0')
 
 class UnitCatalog(Data[UnitPrefab]):
     datatype = UnitPrefab

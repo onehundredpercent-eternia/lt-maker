@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 
 from app.utilities.data import Data, Prefab
@@ -155,13 +156,13 @@ class WexpGain():
         self.usable = usable
         self.wexp_gain = wexp_gain
 
-    def absorb(self, wexp_gain):
+    def absorb(self, wexp_gain: WexpGain):
         self.usable = wexp_gain.usable
         self.wexp_gain = wexp_gain.wexp_gain
 
     def save(self):
         return (self.usable, self.wexp_gain)
-    
+
     @classmethod
     def restore(cls, s_tuple):
         return cls(*s_tuple)

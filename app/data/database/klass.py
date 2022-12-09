@@ -1,38 +1,39 @@
-from dataclasses import dataclass
-from typing import Dict
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 
 from app.utilities.data import Data, Prefab
 from app.data.database.weapons import WexpGain
+from app.utilities.typing import NID
 
 @dataclass
 class Klass(Prefab):
     nid: str = None
-    name: str = None
+    name: Optional[str] = None
 
     desc: str = ""
     tier: int = 1
-    movement_group: str = None
+    movement_group: Optional[NID] = None
 
-    promotes_from: str = None
-    turns_into: list = None
-    tags: list = None
+    promotes_from: Optional[NID] = None
+    turns_into: List[NID] = field(default_factory=list)
+    tags: List[NID] = field(default_factory=list)
     max_level: int = 20
 
-    bases: dict = None
-    growths: dict = None
-    growth_bonus: dict = None
-    promotion: dict = None
-    max_stats: dict = None
+    bases: Dict[NID, int] = field(default_factory=dict)
+    growths: Dict[NID, int] = field(default_factory=dict)
+    growth_bonus: Dict[NID, int] = field(default_factory=dict)
+    promotion: Dict[NID, int] = field(default_factory=dict)
+    max_stats: Dict[NID, int] = field(default_factory=dict)
 
-    learned_skills: list = None
-    wexp_gain: dict = None
+    learned_skills: List[Tuple[int, NID]] = field(default_factory=list)
+    wexp_gain: Dict[NID, WexpGain] = field(default_factory=dict)
 
-    icon_nid: str = None
+    icon_nid: Optional[NID] = None
     icon_index: tuple = (0, 0)
-    map_sprite_nid: str = None
-    combat_anim_nid: str = None
+    map_sprite_nid: Optional[NID] = None
+    combat_anim_nid: Optional[NID] = None
 
-    fields: list = None # arbitrary field, allow players to fill out anything they want for XTRA POWERFUL SCRIPTING
+    fields: list = field(default_factory=list) # arbitrary field, allow players to fill out anything they want for XTRA POWERFUL SCRIPTING
 
     def get_stat_titles(self):
         return ['Generic Bases', 'Generic Growths', 'Promotion Gains', 'Growth Bonuses', 'Stat Maximums']
