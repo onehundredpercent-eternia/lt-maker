@@ -3,7 +3,6 @@ from typing import List, Type
 
 from app.data.database.components import ComponentType
 from app.data.database.item_components import ItemComponent, ItemTags
-from app.data.resources.resources import RESOURCES
 from app.utilities.data import Data
 
 
@@ -13,6 +12,7 @@ def get_cached_item_components(proj_dir: str):
     # item components defined in item_components folder
     from app.engine import item_components
 
+    from app.data.resources.resources import RESOURCES
     if RESOURCES.has_loaded_custom_components():
         # Necessary for get_item_components to find the item component subclasses
         # defined here

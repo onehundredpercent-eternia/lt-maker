@@ -632,14 +632,15 @@ class MoveState(MapState):
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
                     get_sound_thread().play_sfx('Error')
                 else:
+                    normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
                     witch_warp = set(skill_system.witch_warp(cur_unit))
                     if cur_unit.has_attacked or cur_unit.has_traded:
-                        if game.cursor.position in witch_warp:
+                        if game.cursor.position in witch_warp and game.cursor.position not in normal_moves:
                             cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         else:
                             cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
-                    elif game.cursor.position in witch_warp:
+                    elif game.cursor.position in witch_warp and game.cursor.position not in normal_moves:
                         cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         game.state.change('menu')
                     else:

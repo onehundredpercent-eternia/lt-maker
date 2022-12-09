@@ -2832,10 +2832,12 @@ class RemoveInitiative(Action):
         self.initiative = game.initiative.get_initiative(self.unit)
 
     def do(self):
+        game.initiative.next()
         game.initiative.remove_unit(self.unit)
 
     def reverse(self):
         game.initiative.insert_at(self.unit, self.old_idx, self.initiative)
+        game.initiative.back()
 
 class MoveInInitiative(Action):
     def __init__(self, unit, offset):

@@ -124,7 +124,7 @@ def get_attacks(unit: UnitObject, item: ItemObject = None, force=False) -> set:
     item_range = item_funcs.get_range(unit, item)
     if not item_range:
         return set()
-        
+
     if max(item_range) >= 99:
         attacks = {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
     else:
@@ -180,7 +180,7 @@ def find_potential_range(unit, weapon=True, spell=False, boundary=False) -> set:
             potential_range.add(rng)
     return potential_range
 
-def get_valid_moves(unit, force=False) -> set:
+def get_valid_moves(unit, force=False, witch_warp=True) -> set:
     # Assumes unit is on the map
     if not force and unit.finished:
         return set()
@@ -199,8 +199,9 @@ def get_valid_moves(unit, force=False) -> set:
         can_move_through = game.board.can_move_through
     valid_moves = pathfinder.process(can_move_through, movement_left)
     valid_moves.add(unit.position)
-    witch_warp = set(skill_system.witch_warp(unit))
-    valid_moves |= witch_warp
+    if witch_warp:
+        witch_warp = set(skill_system.witch_warp(unit))
+        valid_moves |= witch_warp
     return valid_moves
 
 def get_path(unit, position, ally_block=False, use_limit=False, free_movement=False) -> list:
@@ -274,7 +275,7 @@ def get_valid_targets(unit, item=None) -> set:
     if not item:
         return set()
     if ((item_system.no_attack_after_move(unit, item) or skill_system.no_attack_after_move(unit))
-            and unit.has_moved_any_distance):
+         and unit.has_moved_any_distance):
         return set()
     # Check sequence item targeting
     if item.sequence_item:
@@ -306,7 +307,7 @@ def get_valid_targets(unit, item=None) -> set:
             max_item_range = max(item_range)
             valid_targets = set(line_of_sight.line_of_sight([unit.position], valid_targets, max_item_range))
         else: # I think this is impossible to happen, as it is checked in various places above in this function
-            valid_targets = set()  
+            valid_targets = set()
     return valid_targets
 
 def get_valid_targets_recursive_with_availability_check(unit, item) -> set:

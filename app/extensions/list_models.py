@@ -66,6 +66,25 @@ class SingleListModel(VirtualListModel):
         new_index = self.index(idx + 1, 0)
         self.window.view.setCurrentIndex(new_index)
 
+    def duplicate(self, idx):
+        obj = self._data[idx]
+        if hasattr(obj, 'nid'):
+            new_nid = str_utils.get_next_name(obj.nid, self._data.keys())
+            if isinstance(obj, Prefab):
+                serialized_obj = obj.save()
+                new_obj = self._data.datatype.restore(serialized_obj)
+            else:
+                new_obj = copy.copy(obj)
+            new_obj.nid = new_nid
+        else:
+            new_obj = copy.copy(obj)
+
+        self._data.insert(idx + 1, new_obj)
+        self.layoutChanged.emit()
+
+        new_index = self.index(idx + 1)
+        return new_index
+
     def headerData(self, idx, orientation, role=Qt.DisplayRole):
         if role != Qt.DisplayRole:
             return None
