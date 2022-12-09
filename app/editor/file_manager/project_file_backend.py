@@ -12,7 +12,8 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog
 
 from app.constants import VERSION
 from app.data.database.database import DB, Database
-from app.data.resources.resources import RESOURCES
+from app.data.database_validator import DatabaseRepair
+from app.data.resources.resources import RESOURCES, Resources
 from app.editor import timer
 from app.editor.file_manager.project_initializer import ProjectInitializer
 from app.editor.lib.csv import csv_data_exporter, text_data_exporter
@@ -95,6 +96,9 @@ class ProjectFileBackend():
                     pass
                 else:
                     return False
+        # clean up the db
+        database_repair = DatabaseRepair(DB, RESOURCES)
+        database_repair.autorepair_db()
 
         # Make directory for saving if it doesn't already exist
         if not new and self.settings.get_should_make_backup_save():
@@ -313,13 +317,13 @@ class ProjectFileBackend():
     def clean(self):
         RESOURCES.clean(self.current_proj)
 
-    def dump_csv(self, db: Database):
+    def dump_csv(self, db: Database, resources: Resources):
         starting_path = self.current_proj or QDir.currentPath()
         fn = QFileDialog.getExistingDirectory(
             self.parent, "Choose dump location", starting_path)
         if fn:
             csv_direc = fn
-            for ttype, tstr in csv_data_exporter.dump_as_csv(db):
+            for ttype, tstr in csv_data_exporter.dump_as_csv(db, resources):
                 with open(os.path.join(csv_direc, ttype + '.csv'), 'w') as f:
                     f.write(tstr)
         else:

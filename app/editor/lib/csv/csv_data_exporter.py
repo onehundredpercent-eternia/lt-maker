@@ -1,17 +1,21 @@
-from app.data.database.database_validator import DatabaseValidatorEngine
+from app.data.resources.resources import Resources
 import logging
 from typing import List
-from app.data.database.components import ComponentType, convert_type_from_string
+
+import app.engine.item_component_access as ICA
+import app.engine.item_components.base_components as base_components
+import app.engine.item_components.target_components as target_components
+import app.engine.item_components.usable_components as usable_components
+import app.engine.item_components.weapon_components as weapon_components
+from app.data.database.components import (ComponentType,
+                                          convert_type_from_string)
 from app.data.database.database import Database
 from app.data.database.items import ItemCatalog, ItemPrefab
 from app.data.database.klass import ClassCatalog
 from app.data.database.units import UnitCatalog, UnitPrefab
 from app.data.database.weapons import WexpGain
-import app.engine.item_components.weapon_components as weapon_components
-import app.engine.item_components.base_components as base_components
-import app.engine.item_components.usable_components as usable_components
-import app.engine.item_components.target_components as target_components
-import app.engine.item_component_access as ICA
+from app.data.database_validator import DatabaseRepair, DatabaseValidatorEngine
+
 
 def csv_str_as_grid(csv_str: str) -> List[List[str]]:
     csv_str = csv_str.strip()
@@ -94,9 +98,9 @@ def klass_db_to_csv(klass_db: ClassCatalog):
         ss += ','.join([str(dat) for dat in data]) + '\n'
     return ss
 
-def dump_as_csv(db: Database):
-    db_validator = DatabaseValidatorEngine(db)
-    db_validator.repair()
+def dump_as_csv(db: Database, resources: Resources):
+    db_repairer = DatabaseRepair(db, resources)
+    db_repairer.autorepair_db()
     # csv dump functions
     dump = []
     try:

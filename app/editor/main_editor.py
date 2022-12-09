@@ -15,6 +15,7 @@ from app.editor.settings import MainSettingsController
 
 from app.constants import VERSION
 from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
 
 from app.editor import log_viewer, timer
 
@@ -195,7 +196,7 @@ class MainEditor(QMainWindow):
             _("&Quit"), self, shortcut="Ctrl+Q", triggered=self.close)
 
         self.dump_csv = QAction(
-            "Dump CSV data", self, triggered=lambda: self.project_save_load_handler.dump_csv(DB))
+            "Dump CSV data", self, triggered=lambda: self.project_save_load_handler.dump_csv(DB, RESOURCES))
         self.dump_script = QAction(
             "Dump script", self, triggered=lambda: self.project_save_load_handler.dump_script(DB))
 
