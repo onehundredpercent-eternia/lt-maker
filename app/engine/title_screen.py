@@ -53,7 +53,7 @@ class TitleStartState(State):
         self.particles = None
         if DB.constants.value('title_particles'):
             bounds = (-WINHEIGHT, WINWIDTH, WINHEIGHT, WINHEIGHT + 16)
-            self.particles = particles.ParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
+            self.particles = particles.MapParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
             self.particles.prefill()
         game.memory['title_particles'] = self.particles
         game.memory['transition_speed'] = 0.5
@@ -848,7 +848,7 @@ class TitleSaveState(State):
         self.particles = None
         if DB.constants.value('title_particles'):
             bounds = (-WINHEIGHT, WINWIDTH, WINHEIGHT, WINHEIGHT + 16)
-            self.particles = particles.ParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
+            self.particles = particles.MapParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
             self.particles.prefill()
         game.memory['title_particles'] = self.particles
 
