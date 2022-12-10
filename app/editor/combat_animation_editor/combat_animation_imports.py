@@ -753,6 +753,8 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
             elif command_code == '18':
                 dodge_front = True
                 write_extra_frame = False
+            elif command_code == '19':
+                parse_text('sound;Bow')
             elif command_code == '1A':  # Start hit
                 parse_text('enemy_flash_white;8')
                 if current_command:
@@ -760,11 +762,7 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
                 parse_text('screen_flash_white;4')
                 crit = False
                 start_hit = True
-            elif command_code in ('1F', '20', '21'):  # Actual hit
-                write_extra_frame = False
             # Sounds and other effects
-            elif command_code == '19':
-                parse_text('sound;Bow')
             elif command_code == '1B':
                 parse_text('sound;Foot Step')
             elif command_code == '1C':
@@ -773,6 +771,8 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
                 parse_text('sound;Horse Step 3')
             elif command_code == '1E':
                 parse_text('sound;Horse Step 2')
+            elif command_code in ('1F', '20', '21'):  # Actual hit
+                write_extra_frame = False
             elif command_code == '22':
                 parse_text('sound;Weapon Pull')
             elif command_code == '23':
@@ -795,6 +795,8 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
                 parse_text('sound;MageCrit')
                 logging.warning("Change MageCrit effect to SageCrit effect if working with Sage animations")
             elif command_code == '30':
+                parse_text('effect;DirtKick')
+            elif command_code == '32':
                 parse_text('effect;DirtKick')
             elif command_code == '33':
                 parse_text('sound;Battle Cry')
@@ -837,11 +839,23 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
             elif command_code == '5A':
                 parse_text('sound;MautheDoogGrowl')
             elif command_code == '5B':
-                parse_text('sound;MautheDoogBark')
+                parse_text('sound;MautheDoogBite')
             elif command_code == '5C':
                 parse_text('sound;MautheDoogHowl')
             elif command_code == '5D':
                 parse_text('sound;MautheDoogWalk')
+            elif command_code == '64':
+                parse_text('sound;ZombieWindup')
+            elif command_code == '65':
+                parse_text('sound;ZombieHit')
+            elif command_code == '66':
+                parse_text('sound;Map_Step_Zombie')
+            elif command_code == '67':
+                parse_text('sound;Map_Step_Skeleton')
+            elif command_code == '73':
+                parse_text('sound;ZombieCrit')
+            elif command_code == '74':
+                parse_text('sound;SkeletonCrit')
             elif command_code == '79':
                 parse_text('sound;StrategistRune')
             elif command_code == '7A':
