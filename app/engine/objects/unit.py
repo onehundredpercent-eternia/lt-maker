@@ -240,7 +240,8 @@ class UnitObject(Prefab):
         if current_mode:
             mode = DB.difficulty_modes.get(current_mode.nid)
             if klass.tier >= 2:
-                num_levels = int(num_levels * mode.promoted_autolevels_fraction)
+                prev_levels = num_levels - (self.level - 1)
+                num_levels = self.level + int(prev_levels * mode.promoted_autolevels_fraction)
             stat_bonus = mode.get_base_bonus(self)
             bonus = {nid: 0 for nid in DB.stats.keys()}
             for nid in DB.stats.keys():
@@ -257,7 +258,7 @@ class UnitObject(Prefab):
                     unit_funcs.difficulty_auto_level(self, 1, num_levels)
 
             difficulty_autolevels = mode.get_difficulty_autolevels(self)
-                # Handle the ones that you can change in events
+            # Handle the ones that you can change in events
             if self.team.startswith('enemy'):
                 difficulty_autolevels += current_mode.enemy_autolevels
                 difficulty_autolevels += current_mode.enemy_truelevels

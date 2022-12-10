@@ -211,7 +211,7 @@ class FancyDialog(dialog.Dialog):
     solo_flag = True
     draw_cursor_flag = True
     pause_before_wait_time = 150  # 9 frames
-    pause_time = 150  # 9 frames
+    pause_time = 50  # 3 frames
     text_width = WINWIDTH - 40
     text_height = 64
     name_tag = FancyDialogNametag()  # Shared with all dialogs

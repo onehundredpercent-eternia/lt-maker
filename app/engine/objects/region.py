@@ -45,8 +45,8 @@ class RegionObject(Region):
         return serial_dict
 
     @classmethod
-    def restore(cls, level_prefab, dat: dict):
+    def restore(cls, dat: dict):
         self = cls(dat['nid'], dat['region_type'], dat['position'], dat['size'],
-                   dat['sub_nid'], dat['condition'], dat['only_one'], dat['interrupt_move'])
+                   dat['sub_nid'], dat['condition'], dat['only_once'], dat['interrupt_move'])
         self.data = dat['data']
         return self

@@ -37,7 +37,7 @@ class Dialog():
     cursor_offset = [0]*20 + [1]*2 + [2]*8 + [1]*2
     transition_speed = 166  # 10 frames
     pause_before_wait_time = 150 # 9 frames
-    pause_time = 150  # 9 frames
+    pause_time = 50  # 3 frames
     attempt_split: bool = True # Whether we attempt to split big chunks across multiple lines
 
     def __init__(self, text, portrait=None, background=None, position=None, width=None,

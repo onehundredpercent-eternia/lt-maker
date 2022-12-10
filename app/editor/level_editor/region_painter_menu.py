@@ -140,6 +140,9 @@ class RegionModel(DragDropCollectionModel):
                     text += ' ' + reg.sub_nid
                 if reg.condition:
                     text += '\n' + reg.condition
+            elif reg.region_type == RegionType.TIME:
+                if reg.sub_nid:
+                    text += ' ' + reg.sub_nid
             return text
         elif role == Qt.DecorationRole:
             reg = self._data[index.row()]
