@@ -252,7 +252,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # Blit items
         for idx, item in enumerate(self.unit.nonaccessories):
             if item.multi_item and any(subitem is weapon for subitem in item.subitems):
-                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
+                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 4))
                 for subitem in item.subitems:
                     if subitem is weapon:
                         item_option = menu_options.FullItemOption(idx, subitem)
@@ -261,15 +261,15 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     item_option = menu_options.FullItemOption(idx, item)
             else:
                 if item is weapon:
-                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
+                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 4))
                 item_option = menu_options.FullItemOption(idx, item)
-            item_option.draw(surf, 8, idx * 16 + 4)
-            self.info_graph.register((4 + 8, idx * 16 + 4 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
+            item_option.draw(surf, 8, idx * 16)
+            self.info_graph.register((4 + 8, idx * 16 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
 
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):
             aidx = item_funcs.get_num_items(self.unit) + idx
-            y_pos = aidx * 16 + 4
+            y_pos = aidx * 16
             if item.multi_item and any(subitem is accessory for subitem in item.subitems):
                 surf.blit(SPRITES.get('equipment_highlight'), (8, y_pos + 8))
                 for subitem in item.subitems:
@@ -284,7 +284,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 item_option = menu_options.FullItemOption(aidx, item)
             item_option.draw(surf, 8, y_pos)
             first = (idx == 0 and not self.unit.nonaccessories)
-            self.info_graph.register((WINWIDTH//2 + 8, y_pos + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=first)
+            self.info_graph.register((4 + 8, y_pos + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=first)
 
         return surf
 
@@ -312,7 +312,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 charge = ' %d / %d' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
-            self.info_graph.register((8 + left_pos + 8, WINHEIGHT - 28, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+            self.info_graph.register((WINWIDTH//2 + 4 + left_pos + 8, WINHEIGHT - 24, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
 
         return surf
 
@@ -330,7 +330,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 charge = ' (%d/%d)' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
-            self.info_graph.register((4 + WINWIDTH//2 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+            self.info_graph.register((4 + WINWIDTH//2 + left_pos + 8, WINHEIGHT - 52, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
 
         return surf
 
