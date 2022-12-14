@@ -834,12 +834,14 @@ class TitleSaveState(State):
     menu = None
 
     wait_time = 0
+    fluid = None
 
     def start(self):
         if game.memory.get('_skip_save', False):
             game.memory['_skip_save'] = False
             self.go_to_next_level(False)
             return 'repeat'
+
         self.fluid = FluidScroll(128)
         imgs = RESOURCES.panoramas.get('title_background')
         self.bg = PanoramaBackground(imgs) if imgs else None
@@ -893,6 +895,8 @@ class TitleSaveState(State):
         if self.wait_time > 0:
             return
 
+        if not self.fluid:
+            return
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
 

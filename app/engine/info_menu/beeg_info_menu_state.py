@@ -317,7 +317,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         return surf
 
     def draw_skill_surf(self, surf):
-        surf.blit(self.skill_surf, (4, WINHEIGHT - 32))
+        surf.blit(self.skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 32))
 
     def create_class_skill_surf(self):
         surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)
@@ -335,7 +335,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         return surf
 
     def draw_class_skill_surf(self, surf):
-        surf.blit(self.class_skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 36))
+        surf.blit(self.class_skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 56))
 
     def create_support_surf(self):
         surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)
