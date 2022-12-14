@@ -6,7 +6,7 @@ import logging
 def completed_chapters() -> int:
     return game.game_vars.get('completed_chapters', 0)
 
-def get_random_item(tags=None, exclude=None, pos=(0, 0)) -> str:
+def get_random_item(tags: list = None, exclude: list = None, pos=(0, 0)) -> str:
     tags = tags or []
     exclude = exclude or []
     logging.debug("Get random item with tags %s and exclude %s", tags, exclude)
@@ -22,6 +22,7 @@ def get_random_item(tags=None, exclude=None, pos=(0, 0)) -> str:
         else:
             chance = 30
         items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
+        items = [item for item in items if not item.weapon_type or item.weapon_type.value not in exclude]
         items = [item for item in items if item.nid not in exclude]
         assert len(items) >= 1
         all_items.append(items)
