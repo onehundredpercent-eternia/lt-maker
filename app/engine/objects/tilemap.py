@@ -115,7 +115,7 @@ class LayerObject():
 class TileMapObject(Prefab):
     def __init__(self):
         super().__init__()
-        self.weather: List[particles.ParticleSystem] = []
+        self.weather: List[particles.SimpleParticleSystem] = []
         self.animations: List[animations.MapAnimation] = []
         self.high_animations: List[animations.MapAnimation] = []
         self.width: int = 0

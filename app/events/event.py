@@ -21,7 +21,7 @@ from app.utilities import str_utils, utils, static_random
 from app.utilities.typing import NID
 
 class Event():
-    true_vals = ('t', 'true', '1', 'y', 'yes')
+    true_vals = ('t', 'true', 'True', '1', 'y', 'yes')
 
     skippable = {"speak", "wait", "bop_portrait",
                  "sound", "location_card", "credits", "ending"}

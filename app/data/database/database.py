@@ -206,6 +206,10 @@ class Database(object):
             if hasattr(catalog, 'categories'):
                 getattr(self, key).categories = key_categories
 
+        # TODO -- This is a shitty fix that will be superseded
+        from app.engine import equations
+        equations.clear()
+
         end = time.perf_counter() * 1000
 
         logging.warning("Total Time Taken for Database: %s ms" % (end - start))

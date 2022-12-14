@@ -154,6 +154,7 @@ class Particle():
     def reset(self, pos):
         self.x, self.y = pos
         self.remove_me_flag = False
+        return self
 
     def update(self):
         raise NotImplementedError
@@ -213,6 +214,7 @@ class Fire(Particle):
         super().reset(pos)
         self.speed = random.randint(1, 4)
         self.sprite = self.sprites[-1]
+        return self
 
     def update(self):
         self.x -= random.randint(0, self.speed)
@@ -246,6 +248,7 @@ class Snow(Particle):
         self.y_speed = random.choice(speeds)
         x_speeds = speeds[:speeds.index(self.y_speed) + 1]
         self.x_speed = random.choice(x_speeds)
+        return self
 
     def update(self):
         self.x += self.x_speed
@@ -258,11 +261,12 @@ class WarpFlower(Particle):
     speed = 0
     angle = 0
 
-    def __init__(self, pos, speed, angle):
-        super().__init__(pos)
+    def reset(self, pos, speed, angle):
+        super().reset(pos)
         self.speed = speed
         self.angle = angle
         self.counter = 0
+        return self
 
     def update(self):
         self.counter += 1
@@ -273,11 +277,12 @@ class WarpFlower(Particle):
             self.remove_me_flag = True
 
 class ReverseWarpFlower(WarpFlower):
-    def __init__(self, pos, speed, angle):
-        super().__init__(pos, speed, angle)
+    def reset(self, pos, speed, angle):
+        super().reset(pos, speed, angle)
         self.init_x, self.init_y = pos
         for _ in range(40):
             self.pre_update()
+        return self
 
     def pre_update(self):
         self.angle -= math.pi / 64.
@@ -301,6 +306,7 @@ class LightMote(Particle):
         self.transparency = .75
         self.change_over_time = random.choice([0.01, 0.02, 0.03])
         self.transition = True
+        return self
 
     def update(self):
         self.x += self.speed
@@ -344,6 +350,7 @@ class EventTileParticle(Particle):
         self.transparency = 0.6 * (random.random() * 0.3)
         self.transition = False
         self.change_over_time = 0.05
+        return self
 
     def update(self):
         self.x += self.my_x_speed
@@ -374,6 +381,7 @@ class SwitchTileParticle(Particle):
         self.transparency = 0.6
         self.height = 16
         self.change_over_time = 0.4 / self.height / 2
+        return self
 
     def update(self):
         self.y += self.y_speed
@@ -397,6 +405,7 @@ class PurpleMote(Particle):
         self.x_change = self.speed * math.cos(self.direction)
         self.y_change = self.speed * math.sin(self.direction)
         self.transition = True
+        return self
 
     def update(self):
         self.x += self.x_change
@@ -462,4 +471,7 @@ def create_system(nid, width, height, position):
         y = position[1] * TILEWIDTH
         creation_bounds = x, x, y, y
         ps = SimpleParticleSystem(nid, SwitchTileParticle, position, creation_bounds, 5)
+
+    if ps:
+        ps.prefill()
     return ps
