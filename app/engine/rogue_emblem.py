@@ -22,21 +22,24 @@ def get_random_item(tags: list = None, exclude: list = None, pos=(0, 0)) -> str:
         else:
             chance = 30
         items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
-        items = [item for item in items if not item.weapon_type or item.weapon_type.value not in exclude]
+        if tag in ('Weapon', 'Weapon+', 'Spell', 'Spell+'):
+            # Don't allow two of the same weapon type in the three item choice
+            items = [item for item in items if item.item_tags.value not in exclude]
         items = [item for item in items if item.nid not in exclude]
         assert len(items) >= 1
         all_items.append(items)
         all_chances.append(chance)
     assert len(all_items) >= 1
     assert len(all_chances) >= 1
-    logging.debug(all_items)
     logging.debug(all_chances)
     generator: static_random.LCG = \
         static_random.get_generator_from_pos(pos, completed_chapters())
+    logging.debug(pos)
+    logging.debug(generator.state)
     idx = static_random.weighted_choice(all_chances, generator)
     items = all_items[idx]
     assert len(items) >= 1
-    logging.debug(items)
+    logging.debug([i.nid for i in items])
     item = generator.choice(items)
     logging.debug(item.nid)
     return item.nid

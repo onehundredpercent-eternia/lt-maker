@@ -93,7 +93,7 @@ class Database(object):
                 if not fname.endswith('.json'): # ignore other files
                     continue
                 save_loc = os.path.join(data_dir, key, fname)
-                logging.info("Deserializing %s from %s" % (key, save_loc))
+                # logging.info("Deserializing %s from %s" % (key, save_loc))
                 with open(save_loc) as load_file:
                     for data in json.load(load_file):
                         data['fname'] = os.path.basename(fname)
@@ -173,7 +173,7 @@ class Database(object):
                     fname = name + '.json'
                     orderkeys[fname] = idx
                     save_loc = os.path.join(save_dir, name + '.json')
-                    logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
+                    # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
                     self.json_save(save_loc, [subvalue])
                 self.json_save(os.path.join(save_dir, '.orderkeys'), orderkeys)
 
