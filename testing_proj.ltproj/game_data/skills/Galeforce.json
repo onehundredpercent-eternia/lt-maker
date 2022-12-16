@@ -1,0 +1,22 @@
+[
+    {
+        "nid": "Galeforce",
+        "name": "Galeforce",
+        "desc": "",
+        "icon_nid": "Skills",
+        "icon_index": [
+            2,
+            0
+        ],
+        "components": [
+            [
+                "galeforce",
+                null
+            ],
+            [
+                "class_skill",
+                null
+            ]
+        ]
+    }
+]

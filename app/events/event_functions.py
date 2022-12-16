@@ -276,7 +276,7 @@ def expression(self: Event, portrait, expression_list, flags=None):
     _portrait.set_expression(expression_list)
 
 def speak_style(self: Event, style, speaker=None, text_position=None, width=None, text_speed=None,
-                font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None, 
+                font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
                 message_tail=None, transparency=None, name_tag_bg=None, flags=None):
     flags = flags or set()
     style_nid = style
@@ -2746,12 +2746,18 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
     else:
         box_bg = default_textbox_style.dialog_box
 
+    if textbox_style and textbox_style.transparency is not None:
+        transparency = textbox_style.transparency
+    else:
+        transparency = 0.05
+
     if num_lines:
         lines = int(num_lines)
     elif textbox_style and textbox_style.num_lines:
         lines = textbox_style.num_lines
     else:
-        lines = default_textbox_style.num_lines
+        # let's not default to 0 please
+        lines = default_textbox_style.num_lines or 1
 
     if textbox_style and textbox_style.flags:
         flags = textbox_style.flags.union(flags)
@@ -2773,7 +2779,7 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
         textbox = dialog.DynamicDialogWrapper(expr, background=box_bg, position=position, width=box_width,
                       style_nid=style_nid, speed=speed,
                       font_color=fcolor, font_type=ftype, num_lines=lines,
-                      draw_cursor=False)
+                      draw_cursor=False, transparency=transparency)
     else:
         text = self.text_evaluator._evaluate_all(text)
         text = dialog.clean_newlines(text)
@@ -2783,7 +2789,7 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
             dialog.Dialog(text, background=box_bg, position=position, width=box_width,
                         style_nid=style_nid, speed=speed,
                         font_color=fcolor, font_type=ftype, num_lines=lines,
-                        draw_cursor=False)
+                        draw_cursor=False, transparency=transparency)
     self.other_boxes.append((nid, textbox))
 
 def table(self: Event, nid: NID, table_data: str, title: str = None,

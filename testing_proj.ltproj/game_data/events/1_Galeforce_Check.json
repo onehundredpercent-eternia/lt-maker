@@ -1,0 +1,18 @@
+[
+    {
+        "name": "Galeforce Check",
+        "trigger": "unit_wait",
+        "level_nid": "1",
+        "condition": "has_skill(unit, 'Galeforce')",
+        "commands": [
+            [
+                "reset",
+                [
+                    "{unit}"
+                ]
+            ]
+        ],
+        "only_once": false,
+        "priority": 20
+    }
+]
