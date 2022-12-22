@@ -13,10 +13,8 @@ def get_random_item(tags: list = None, exclude: list = None, pos=(0, 0)) -> str:
     all_items = []
     all_chances = []
     for tag in tags:
-        if tag == 'Forge':
-            chance = 10
-        elif tag == 'Promo':
-            chance = 10
+        if tag == 'Promo':
+            chance = 20
         elif tag in ('Accessory', 'Accessory+'):
             chance = 45
         else:
@@ -48,18 +46,14 @@ def get_random_tree_item(pos: tuple = (0, 0)):
     chapter_num = completed_chapters()
     if chapter_num == 0:
         tags = ['Weapon']
-    elif chapter_num == 1:
+    elif chapter_num in (1, 2, 3):
         tags = ['Weapon', 'Spell', 'Accessory']
-    elif chapter_num == 2:
-        tags = ['Weapon', 'Spell', 'Forge', 'Accessory']
-    elif chapter_num == 3:
-        tags = ['Weapon', 'Spell', 'Forge', 'Accessory']
     elif chapter_num == 4:
-        tags = ['Weapon', 'Spell', 'Forge', 'Promo', 'Accessory']
+        tags = ['Weapon', 'Spell', 'Promo', 'Accessory']
     elif chapter_num == 5:
-        tags = ['Weapon', 'Weapon+', 'Spell', 'Forge', 'Promo', 'Accessory', 'Accessory+']
+        tags = ['Weapon', 'Weapon+', 'Spell', 'Promo', 'Accessory', 'Accessory+']
     elif chapter_num == 6:
-        tags = ['Weapon+', 'Spell', 'Spell+', 'Forge', 'Promo', 'Accessory', 'Accessory+']
+        tags = ['Weapon+', 'Spell', 'Spell+', 'Promo', 'Accessory', 'Accessory+']
     elif chapter_num == 7:
         tags = ['Weapon+', 'Spell+', 'Promo', 'Accessory+']
     elif chapter_num >= 8:

@@ -496,13 +496,15 @@ class SimpleCombat():
 
     def get_exp(self, attacker, item, defender) -> int:
         exp = item_system.exp(self.full_playback, attacker, item, defender)
-        exp *= skill_system.exp_multiplier(attacker, defender)
+        self_mult = skill_system.exp_multiplier(attacker, defender)
+        exp *= self_mult
         if defender:
-            exp *= skill_system.enemy_exp_multiplier(defender, attacker)
+            enemy_mult = skill_system.enemy_exp_multiplier(defender, attacker)
+            exp *= enemy_mult
             if defender.is_dying:
                 exp *= float(DB.constants.value('kill_multiplier'))
                 if 'Boss' in defender.tags:
-                    exp += int(DB.constants.value('boss_bonus'))
+                    exp += int(DB.constants.value('boss_bonus') * self_mult * enemy_mult)
         return exp
 
     def calculate_exp(self, unit, item):

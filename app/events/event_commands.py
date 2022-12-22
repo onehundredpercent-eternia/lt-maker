@@ -1169,6 +1169,7 @@ Please try to avoid using `increment_mode` with non-numerical fields. That would
 
 class Resurrect(EventCommand):
     nid = 'resurrect'
+    nickname = 'resurrect_unit'
     tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
 
     desc = \
@@ -1180,6 +1181,7 @@ Brings a dead unit back to life. This does not place the unit on the map.
 
 class Reset(EventCommand):
     nid = 'reset'
+    nickname = 'reset_unit'
     tag = Tags.MODIFY_UNIT_PROPERTIES
 
     desc = \
