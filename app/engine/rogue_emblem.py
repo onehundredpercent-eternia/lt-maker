@@ -65,12 +65,13 @@ def get_random_grave(tag: str, unit) -> str:
     # Only items that match the main tag
     items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
     # Only items that match the tags of the unit (Sword for Sword units, Axe for Axe units, etc.)
-    items = [item for item in items if any(t for t in unit.tags in item.item_tags.value)]
+    items = [item for item in items if any(t in item.item_tags.value for t in unit.tags)]
     logging.debug([item.nid for item in items])
     generator: static_random.LCG = \
         static_random.get_generator_from_unit(unit.nid)
     logging.debug(unit.nid)
     logging.debug(generator.state)
+    assert len(items) > 0
     item = generator.choice(items)
     logging.debug(item.nid)
     return item.nid

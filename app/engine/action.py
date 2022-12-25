@@ -1526,7 +1526,7 @@ class SetObjData(Action):
     def do(self):
         if self.keyword in self.obj.data:
             self.old_value = self.obj.data[self.keyword]
-            self.obj.data[self.keyword] = self.value
+        self.obj.data[self.keyword] = self.value
 
     def reverse(self):
         if self.keyword in self.obj.data:
