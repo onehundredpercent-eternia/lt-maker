@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Generic, List, TypeVar
+from typing import Dict, Generic, List, Type, TypeVar
 from app.utilities.data import Data, HasNid
 
 from app.utilities.typing import NID
@@ -31,4 +31,13 @@ class Categories(Dict[NID, List[str]]):
         return super().__repr__()
 
 class CategorizedCatalog(Data[T], Generic[T]):
+    datatype: Type
     categories: Categories = field(default_factory=Categories)
+
+    def copy(self) -> CategorizedCatalog[T]:
+        copied = self.__class__()
+        s_dict = self.save()
+        c_dict = self.categories.save()
+        copied.restore(s_dict)
+        copied.categories = Categories.load(c_dict)
+        return copied

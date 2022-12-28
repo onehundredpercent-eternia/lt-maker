@@ -1,6 +1,7 @@
 import os
 import sys
 import functools
+from typing import TypeVar
 
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, \
     QDesktopWidget, \
@@ -8,6 +9,7 @@ from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, \
 from PyQt5.QtGui import QIcon
 
 from app import autoupdate
+from app.editor.editor_launcher import EditorLauncher
 
 from app.editor.settings import MainSettingsController
 
@@ -33,6 +35,7 @@ from app.editor.file_manager.project_file_backend import ProjectFileBackend
 from app.editor.global_editor.global_editor import GlobalEditor
 from app.editor.level_editor.level_editor import LevelEditor
 from app.editor.overworld_editor.overworld_editor import OverworldEditor
+
 
 # Game interface
 import app.editor.game_actions.game_actions as GAME_ACTIONS
@@ -103,6 +106,9 @@ class MainEditor(QMainWindow):
         self.project_save_load_handler = ProjectFileBackend(
             self,
             self.app_state_manager)
+
+        # initialize manager for windowed editors
+        self.editor_launcher = EditorLauncher(DB)
 
         # initialize possible editors and put them in the stack
         self.global_editor = GlobalEditor(self.app_state_manager)
@@ -233,7 +239,7 @@ class MainEditor(QMainWindow):
                             _("Tags"): self.edit_tags,
                             _("Game Vars"): self.edit_game_vars,
                             _("Weapon Types"): WeaponDatabase.edit,
-                            _("Items"): NewItemDatabase.edit,
+                            _("Items"): lambda window: self.editor_launcher.item_editor(self, self.app_state_manager),
                             _("Skills"): NewSkillDatabase.edit,
                             "AI": AIDatabase.edit,
                             _("Terrain"): TerrainDatabase.edit,

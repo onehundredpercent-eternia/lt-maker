@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
+from typing import Callable, Optional
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QFileDialog)
+from app.data.database.database import Database
+from app.editor.lib.state_editor.editor_state_manager import EditorStateManager
 
 import app.engine.item_component_access as ICA
 from app.data.database.items import ItemCatalog, ItemPrefab
@@ -27,11 +29,12 @@ class NewItemDatabase(ComponentObjectEditor):
     properties_type = NewItemProperties
 
     @classmethod
-    def edit(cls, parent=None):
-        timer.get_timer().stop_for_editor()  # Don't need these while running game
-        window = SingleDatabaseEditor(NewItemDatabase, parent)
-        window.exec_()
-        timer.get_timer().start_for_editor()
+    def edit(cls,  db: Database, parent=None, state_manager: Optional[EditorStateManager] = None, on_cancel: Optional[Callable] = None):
+        item_db = NewItemDatabase(None, db, state_manager)
+        window = SingleDatabaseEditor(item_db, parent, on_cancel)
+        item_db.setParent(window)
+        window.show()
+        return window
 
     @property
     def data(self):
@@ -53,7 +56,8 @@ class NewItemDatabase(ComponentObjectEditor):
             new_items = item_import.get_from_xml(parent_dir, fn)
             for item in new_items:
                 self.data.append(item)
-            self.reset()
+            if self.state_manager:
+                self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
 
     def import_csv(self):
         settings = MainSettingsController()
@@ -63,7 +67,8 @@ class NewItemDatabase(ComponentObjectEditor):
             parent_dir = os.path.split(fn)[0]
             settings.set_last_open_path(parent_dir)
             item_import.update_db_from_csv(self._db, fn)
-            self.reset()
+            if self.state_manager:
+                self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
 
 # Testing
 # Run "python -m app.editor.item_editor.new_item_tab" from main directory

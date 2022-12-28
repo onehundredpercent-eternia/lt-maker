@@ -39,7 +39,10 @@ class Data(Generic[T]):
         return self._dict.get(key, fallback)
 
     def sort(self, sort_func=None):
-        self._list = sorted(self._list, key=sort_func)
+        if sort_func:
+            self._list = sorted(self._list, key=sort_func)
+        else:
+            self._list = sorted(self._list, key=lambda v: v.nid)
         self._dict.clear()
         for val in self._list:
             self._dict[val.nid] = val
@@ -52,6 +55,12 @@ class Data(Generic[T]):
                     val.nid = nid
                 self._dict[nid] = val
                 break
+
+    def update_obj(self, val: T):
+        if val.nid in self._dict: # update only; if doesn't already exist, doesn't create
+            idx = self.index(val.nid)
+            self.remove_key(val.nid)
+            self.insert(idx, val)
 
     def find_key(self, val: T) -> Optional[NID]:
         for k, v in self._dict.items():
@@ -119,9 +128,6 @@ class Data(Generic[T]):
         obj = self._list.pop(old_index)
         self._list.insert(new_index, obj)
 
-    # def begin_insert_row(self, index):
-    #     self.drop_to = index
-
     # Saving functions
     def save(self):
         if self.datatype and issubclass(self.datatype, Prefab):
@@ -129,7 +135,7 @@ class Data(Generic[T]):
         else:
             return self._list[:]
 
-    def restore(self, vals: T):
+    def restore(self, vals: List):
         self.clear()
         if self.datatype and issubclass(self.datatype, Prefab):
             for s_dict in vals:
@@ -139,6 +145,12 @@ class Data(Generic[T]):
             for val in vals:
                 self.append(val)
         return self
+
+    def copy(self) -> Data[T]:
+        s_dict = self.save()
+        copied = Data()
+        copied.restore(s_dict)
+        return copied
 
     # Magic Methods
     def __repr__(self):

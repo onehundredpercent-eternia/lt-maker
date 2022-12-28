@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 from enum import Enum
 from typing import (Callable, Dict, Generic, List, Optional, Tuple, Type,
@@ -21,7 +23,8 @@ from app.extensions.qhelpmenu import QHelpMenu
 from app.utilities.data import Data
 from app.utilities.typing import NID, Protocol
 
-class HasComponents(Protocol):
+
+class DBItemSkillLike(Protocol):
     nid: NID
     name: str
     desc: str
@@ -29,7 +32,12 @@ class HasComponents(Protocol):
     icon_nid: Optional[NID]
     icon_index: Tuple[int, int]
 
-T = TypeVar('T', bound=HasComponents)
+
+    def save(self) -> Dict: pass # type: ignore
+    @classmethod
+    def restore(cls: Type[T], s_dict: Dict) -> T: pass  # type: ignore
+
+T = TypeVar('T', bound=DBItemSkillLike)
 
 class NewComponentProperties(QWidget, Generic[T]):
     title = None
@@ -39,12 +47,15 @@ class NewComponentProperties(QWidget, Generic[T]):
 
     def __init__(self, parent, current: Optional[T]=None,
                  attempt_change_nid: Optional[Callable[[NID, NID], bool]]=None,
-                 on_icon_change: Optional[Callable]=None):
+                 on_icon_change: Optional[Callable]=None,
+                 read_only = False):
         super().__init__(parent)
         self.attempt_change_nid = attempt_change_nid
         self.on_icon_change = on_icon_change
+        self.read_only = read_only
 
-        self.current: Optional[T] = current
+        # editors hold a local copy
+        self.current: Optional[T] = current.restore(current.save()) if current else None
         self.cached_nid: Optional[NID] = self.current.nid if self.current else None
 
         top_section = QHBoxLayout()
@@ -245,10 +256,10 @@ class NewComponentProperties(QWidget, Generic[T]):
 
     def set_current(self, current: Optional[T]):
         if not current:
-            self.setEnabled(False)
+            self.setDisabled(True)
         else:
-            self.setEnabled(True)
-            self.current = current
+            self.setDisabled(self.read_only)
+            self.current = current.restore(current.save())
             self.cached_nid = current.nid
             self.nid_box.edit.setText(current.nid)
             self.name_box.edit.setText(current.name)
@@ -257,3 +268,6 @@ class NewComponentProperties(QWidget, Generic[T]):
             self.component_list.clear()
             for component in current.components.values():
                 self.add_component_widget(component)
+
+    def get_current(self) -> Optional[T]:
+        return self.current

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, fields
+from typing import Optional
 from .state_enums import MainEditorScreenStates
 
 import logging
@@ -15,10 +16,10 @@ class EditorState():
     selected_overworld: str = '0'
     # NID of current node selected on overworld
     selected_node: str = None
-    
+
     # Main editor mode, edit enum to add modes
     main_editor_mode: MainEditorScreenStates = MainEditorScreenStates.GLOBAL_EDITOR
-    
+
 
     """
     # This one is a cheeky dummy signal; broadcast this whenever you want to refresh the whole editor
@@ -36,10 +37,14 @@ class EditorState():
     #       update_self_with_data_that_changed_elsewhere()
     #           ### Since I updated, let's update everyone!
     #       self.state_manager.change_and_broadcast('ui_refresh_signal', None)
-    
+
     # Broadcasting is DANGEROUS, kids.
     """
     ui_refresh_signal: str = None
+
+    # a number of other signals used by the editor
+    # use this when altering the item db. hook into this when UI is sensitive to DB items.
+    item_db_changed: Optional[str] = None
 
 
 class EditorStateManager():
@@ -54,8 +59,8 @@ class EditorStateManager():
                                      for field in fields(EditorState)}
 
     def subscribe_to_key(self, name, key, callback):
-        """Subscribes a callback to a key in state. Upon change in state key, 
-        the callback will be called like so: callback(state[key]). The `name` field 
+        """Subscribes a callback to a key in state. Upon change in state key,
+        the callback will be called like so: callback(state[key]). The `name` field
         keys the subscription for cancellation purposes.
 
         Args:
@@ -68,8 +73,8 @@ class EditorStateManager():
             raise AttributeError
         self.subscribed_callbacks[key][name] = callback
 
-    def change_and_broadcast(self, key, value):
-        """Sets key to value, then broadcasts the change to all subscribed callbacks.
+    def change_and_broadcast(self, key, value, name=None):
+        """Sets key to value, then broadcasts the change to all subscribed callbacks except the ones matching name.
 
         Args:
             key (str): valid field in EditorState
@@ -79,8 +84,9 @@ class EditorStateManager():
             logging.error("Key not found in EditorState")
             raise AttributeError
         setattr(self.state, key, value)
-        for callback in self.subscribed_callbacks[key].values():
-            callback(getattr(self.state, key))
+        for cname, callback in self.subscribed_callbacks[key].items():
+            if name != cname:
+                callback(getattr(self.state, key))
 
     def unsubscribe_from_key(self, name, key):
         """Unsubscribe from state updates.

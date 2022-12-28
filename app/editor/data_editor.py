@@ -7,16 +7,21 @@ from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 
 from app.editor.settings import MainSettingsController
+from app.utilities import Protocol
+
 
 class SingleDatabaseEditor(QDialog):
-    def __init__(self, tab, parent=None):
+    def __init__(self, tab, parent=None, on_cancel=None):
         super().__init__(parent)
         self.window = parent
         self.main_editor = self.window
+        self.on_cancel = on_cancel
 
         self.set_up()
-
-        self.tab = tab.create(self)
+        if isinstance(tab, type):
+            self.tab = tab.create(self)
+        else:
+            self.tab = tab
         self.grid.addWidget(self.tab, 0, 0, 1, 2)
 
         self.setWindowTitle(self.tab.windowTitle())
@@ -64,7 +69,10 @@ class SingleDatabaseEditor(QDialog):
         super().accept()
 
     def reject(self):
-        self.restore()
+        if not self.on_cancel:
+            self.restore()
+        else:
+            self.on_cancel()
         current_proj = self.settings.get_current_project()
         self.save_geometry()
         self.on_tab_close()

@@ -15,7 +15,7 @@ from app.utilities.data import Prefab
 from app.extensions.custom_gui import RightClickListView
 from app.editor.data_editor import SingleDatabaseEditor
 
-from app.utilities import str_utils
+from app.utilities import str_utils, Protocol
 
 import logging
 

@@ -4,8 +4,10 @@ import json
 import logging
 import os
 from typing import Dict, Generic, List, Optional, Type, TypeVar
+import uuid
 
 from PyQt5.QtCore import Qt
+from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QHBoxLayout,
                              QMessageBox, QPushButton, QSplitter, QVBoxLayout,
@@ -13,8 +15,10 @@ from PyQt5.QtWidgets import (QApplication, QGridLayout, QHBoxLayout,
 
 from app.data.category import Categories, CategorizedCatalog
 from app.data.database.database import DB, Database
-from app.editor.component_editor_properties import NewComponentProperties
+from app.data.database.items import ItemPrefab
+from app.editor.component_editor_properties import DBItemSkillLike, NewComponentProperties
 from app.editor.lib.components.nested_list import LTNestedList
+from app.editor.lib.state_editor.editor_state_manager import EditorStateManager
 from app.utilities import str_utils
 from app.utilities.typing import NID
 
@@ -22,12 +26,12 @@ T = TypeVar('T', bound=CategorizedCatalog)
 
 class ComponentObjectEditor(QWidget, Generic[T]):
     catalog_type: Type[T]
-    properties_type: NewComponentProperties
+    properties_type: Type[NewComponentProperties[DBItemSkillLike]]
 
-    def __init__(self, parent, database: Database) -> None:
+    def __init__(self, parent, database: Database, state_manager: Optional[EditorStateManager] = None) -> None:
         QWidget.__init__(self, parent)
         self._db = database
-        self.categories = self.data.categories
+        self.state_manager = state_manager
 
         self.left_frame = QWidget()
         left_frame_layout = QVBoxLayout()
@@ -66,10 +70,19 @@ class ComponentObjectEditor(QWidget, Generic[T]):
         self.setLayout(self._layout)
 
         self._layout.addWidget(self.splitter)
+        # self.installEventFilter(self)
+
+        self._window_id = str(uuid.uuid4())
+        if self.state_manager:
+            self.state_manager.subscribe_to_key(self._window_id, 'item_db_changed', self.reset)
 
     @property
     def data(self) -> T:
         raise NotImplementedError("This class must be extended and this method overriden.")
+
+    @property
+    def categories(self) -> Categories:
+        return self.data.categories
 
     @classmethod
     def edit(cls, parent=None):
@@ -84,10 +97,17 @@ class ComponentObjectEditor(QWidget, Generic[T]):
     def import_xml(self):
         raise NotImplementedError("This class must be extended and this method overriden.")
 
-    def reset(self):
-        self.tree_list.reset(self.data.keys(), self.categories)
+    def reset(self, _=None):
+        if self.data.keys() != self.tree_list.get_list_and_category_structure()[0]:
+            self.tree_list.reset(self.data.keys(), self.categories)
+            current_selected = self.right_frame.get_current()
+            if current_selected and current_selected.nid not in self.data.keys():
+                self.on_select(None)
 
     def attempt_change_nid(self, old_nid: NID, new_nid: NID) -> bool:
+        current = self.right_frame.get_current()
+        if not current: # should never happen
+            return False
         if not new_nid:
             return False
         if old_nid == new_nid:
@@ -97,9 +117,19 @@ class ComponentObjectEditor(QWidget, Generic[T]):
             return False
         self.data.change_key(old_nid, new_nid)
         self.tree_list.update_nid(old_nid, new_nid)
+        if self.state_manager:
+            self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
         return True
 
+    def save_item_changes(self, current: DBItemSkillLike):
+        self.data.update_obj(current)
+        if self.state_manager:
+            self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
+
     def on_select(self, entry_nid: Optional[NID]):
+        sel_obj = self.right_frame.get_current()
+        if sel_obj and sel_obj.nid != entry_nid and sel_obj.nid in self.data.keys():
+            self.save_item_changes(sel_obj)
         if not entry_nid:
             self.right_frame.set_current(None)
             return
@@ -110,9 +140,13 @@ class ComponentObjectEditor(QWidget, Generic[T]):
     def resort_db(self, entries: List[str], categories: Categories):
         self.data.categories = categories
         self.data.sort(lambda x: entries.index(x.nid) if x.nid in entries else -1)
+        if self.state_manager:
+            self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
 
     def delete_from_db(self, nid):
         self.data.remove_key(nid)
+        if self.state_manager:
+            self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
         return True
 
     def create_new(self, nid):
@@ -121,6 +155,8 @@ class ComponentObjectEditor(QWidget, Generic[T]):
             return False
         new_obj = self.catalog_type.datatype(nid, nid, '')
         self.data.append(new_obj)
+        if self.state_manager:
+            self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
         return True
 
     def duplicate(self, old_nid, nid):
@@ -134,6 +170,8 @@ class ComponentObjectEditor(QWidget, Generic[T]):
         orig_obj = self.catalog_type.datatype.restore(orig_obj.save())
         orig_obj.nid = nid
         self.data.append(orig_obj)
+        if self.state_manager:
+            self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
         return True
 
     def copy_to_clipboard(self):
@@ -156,7 +194,8 @@ class ComponentObjectEditor(QWidget, Generic[T]):
                 prefab.nid = str_utils.get_next_name(prefab.nid, self.data.keys())
                 self.data.append(prefab)
                 any_nid = prefab.nid
-            self.reset()
+            if self.state_manager:
+                self.state_manager.change_and_broadcast('item_db_changed', None, self._window_id)
             if any_nid:
                 self.tree_list.select_item(any_nid)
         except Exception as e:
