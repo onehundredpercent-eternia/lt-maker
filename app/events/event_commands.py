@@ -771,6 +771,19 @@ Activates or deactivates supports.
     keywords = ["Activated"]
     keyword_types = ['Bool']
 
+class EnableTurnwheel(EventCommand):
+    nid = 'enable_turnwheel'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Activates or deactivates turnwheel. You will also need the Constant
+checked to see the turnwheel option in your menu.
+        """
+
+    keywords = ["Activated"]
+    keyword_types = ['Bool']
+
 class WinGame(EventCommand):
     nid = 'win_game'
     tag = Tags.LEVEL_VARS

@@ -104,6 +104,7 @@ def recalculate_unit(func):
         func(*args, **kwargs)
         self = args[0]
         if self.unit.position and game.tilemap and game.boundary:
+            self.unit.autoequip()
             game.boundary.recalculate_unit(self.unit)
     return wrapper
 
@@ -112,7 +113,7 @@ class Move(Action):
     A basic, user-directed move
     """
 
-    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=cf.SETTINGS['unit_speed']):
+    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0):
         self.unit = unit
         self.old_pos = self.unit.position
         self.new_pos = new_pos
@@ -124,7 +125,7 @@ class Move(Action):
         self.has_moved = self.unit.has_moved
         self.event = event
         self.follow = follow
-        self.speed = speed
+        self.speed = speed or cf.SETTINGS['unit_speed']
 
     def do(self):
         if self.path is None:
@@ -1329,18 +1330,19 @@ class TradeItem(Action):
             unit1.insert_item(item_index1, item2)
 
     def equip_items(self, unit):
-        for item in unit.nonaccessories:
-            available = item_system.available(unit, item)
-            equippable = item_system.equippable(unit, item)
-            if available and equippable:
+        all_items = item_funcs.get_all_items(unit)
+        for item in all_items:
+            if not item_system.is_accessory(unit, item):
+                if item_system.equippable(unit, item) and item_funcs.available(unit, item):
                 self.subactions.append(EquipItem(unit, item))
                 break
-        for item in unit.accessories:
-            available = item_system.available(unit, item)
-            equippable = item_system.equippable(unit, item)
-            if available and equippable:
+        for item in all_items:
+            if item_system.is_accessory(unit, item):
+                if item_system.equippable(unit, item) and item_funcs.available(unit, item):
                 self.subactions.append(EquipItem(unit, item))
                 break
+        # keep accessories sorted after items
+        self.items = sorted(unit.items, key=lambda item: item_system.is_accessory(unit, item))
 
     def do(self):
         self.subactions.clear()

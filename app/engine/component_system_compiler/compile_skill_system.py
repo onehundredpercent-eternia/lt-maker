@@ -32,6 +32,7 @@ multiply_hooks = ('damage_multiplier', 'resist_multiplier', 'crit_multiplier')
 simple_event_hooks = ('on_death',)
 # Takes in playback, unit, item, target, mode
 combat_event_hooks = ('start_combat', 'cleanup_combat', 'end_combat', 'pre_combat', 'post_combat', 'test_on', 'test_off')
+aesthetic_combat_hooks = ('battle_music', )
 # Takes in actions, playback, unit, item, target, mode, attack_info
 subcombat_event_hooks = ('after_hit', 'after_take_hit', 'after_take_miss', 'start_sub_combat', 'end_sub_combat')
 # Takes in unit, item
@@ -99,7 +100,7 @@ def %s(unit, item):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     return component.%s(unit, item)
     return Defaults.%s(unit, item)""" \
             % (behaviour, behaviour, behaviour, behaviour)
@@ -113,7 +114,7 @@ def %s(unit, item):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     val += component.%s(unit, item)
     return val""" \
             % (hook, hook, hook)
@@ -127,7 +128,7 @@ def %s(unit, item, target, mode, attack_info, base_value):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     val += component.%s(unit, item, target, mode, attack_info, base_value)
     return val""" \
             % (hook, hook, hook)
@@ -141,7 +142,7 @@ def %s(unit, item, target, mode, attack_info, base_value):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     val *= component.%s(unit, item, target, mode, attack_info, base_value)
     return val""" \
             % (hook, hook, hook)
@@ -166,8 +167,20 @@ def %s(playback, unit, item, target, mode):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     component.%s(playback, unit, item, target, mode)""" \
+            % (hook, hook, hook)
+        compiled_skill_system.write(func)
+        compiled_skill_system.write('\n')
+
+    for hook in aesthetic_combat_hooks:
+        func = """
+def %s(playback, unit, item, target, mode):
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('%s'):
+                if component.ignore_conditional or condition(skill, unit):
+                    return component.%s(playback, unit, item, target, mode)""" \
             % (hook, hook, hook)
         compiled_skill_system.write(func)
         compiled_skill_system.write('\n')
@@ -178,7 +191,7 @@ def %s(actions, playback, unit, item, target, mode, attack_info):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     component.%s(actions, playback, unit, item, target, mode, attack_info)""" \
             % (hook, hook, hook)
         compiled_skill_system.write(func)
@@ -190,7 +203,7 @@ def %s(unit, item):
     for skill in unit.skills:
         for component in skill.components:
             if component.defines('%s'):
-                if component.ignore_conditional or condition(skill, unit):
+                if component.ignore_conditional or condition(skill, unit, item):
                     component.%s(unit, item)""" \
             % (hook, hook, hook)
         compiled_skill_system.write(func)
