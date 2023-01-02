@@ -1334,13 +1334,13 @@ class TradeItem(Action):
         for item in all_items:
             if not item_system.is_accessory(unit, item):
                 if item_system.equippable(unit, item) and item_funcs.available(unit, item):
-                self.subactions.append(EquipItem(unit, item))
-                break
+                    self.subactions.append(EquipItem(unit, item))
+                    break
         for item in all_items:
             if item_system.is_accessory(unit, item):
                 if item_system.equippable(unit, item) and item_funcs.available(unit, item):
-                self.subactions.append(EquipItem(unit, item))
-                break
+                    self.subactions.append(EquipItem(unit, item))
+                    break
         # keep accessories sorted after items
         self.items = sorted(unit.items, key=lambda item: item_system.is_accessory(unit, item))
 
