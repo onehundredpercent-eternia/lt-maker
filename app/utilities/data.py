@@ -35,7 +35,7 @@ class Data(Generic[T]):
     def items(self) -> List[Tuple[NID, T]]:
         return [(val.nid, val) for val in self._list]
 
-    def get(self, key: NID, fallback: Optional[T] = None) -> Optional[T]:
+    def get(self, key: NID | None, fallback: Optional[T] = None) -> Optional[T]:
         return self._dict.get(key, fallback)
 
     def sort(self, sort_func=None):
@@ -153,7 +153,9 @@ class Data(Generic[T]):
     def __iter__(self):
         return iter(self._list)
 
-class Prefab():
+class Prefab(HasNid):
+    nid: NID
+
     def save(self):
         s_dict = {}
         for attr in self.__dict__.items():
