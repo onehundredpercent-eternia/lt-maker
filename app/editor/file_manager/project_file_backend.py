@@ -32,7 +32,7 @@ class ProjectFileBackend():
         self.save_progress.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.save_progress.reset()
 
-        project_nid = DB.constants.get('game_nid').value.replace(' ', '_')
+        project_nid = DB.constants.value('game_nid').replace(' ', '_')
         autosave_path = os.path.abspath('autosave_%s.ltproj' % project_nid)
         self.autosave_progress = QProgressDialog("Autosaving project to %s" % autosave_path, None, 0, 100, self.parent)
         self.autosave_progress.setAutoClose(True)
@@ -247,8 +247,9 @@ class ProjectFileBackend():
             DB.load(self.current_proj)
 
     def autosave(self):
-        project_nid = DB.constants.get('game_nid').value.replace(' ', '_')
+        project_nid = DB.constants.value('game_nid').replace(' ', '_')
         autosave_path = os.path.abspath('autosave_%s.ltproj' % project_nid)
+        self.autosave_progress.setLabelText("Autosaving project to %s" % autosave_path)
         autosave_dir = os.path.abspath(autosave_path)
         # Make directory for saving if it doesn't already exist
         if not os.path.isdir(autosave_dir):
@@ -263,7 +264,7 @@ class ProjectFileBackend():
 
         # Actually save project
         logging.info("Autosaving project to %s..." % autosave_dir)
-        RESOURCES.save(autosave_dir, progress=self.autosave_progress)
+        RESOURCES.autosave(self.current_proj, autosave_dir, self.autosave_progress)
         self.autosave_progress.setValue(75)
         DB.serialize(autosave_dir)
         self.autosave_progress.setValue(99)
