@@ -144,12 +144,11 @@ class Move(Action):
     def reverse(self):
         game.leave(self.unit)
         self.new_movement_left = self.unit.movement_left
-        self.unit.movement_left = self.prev_movement_left
         self.unit.has_moved = self.has_moved
         self.new_pos = self.unit.position
         self.unit.position = self.old_pos
         game.arrive(self.unit)
-
+        self.unit.movement_left = self.prev_movement_left
 
 # Just another name for move
 class CantoMove(Move):
@@ -2926,7 +2925,6 @@ class AddSkill(Action):
 
         if self.skill_obj.aura and self.unit.position and game.board and game.tilemap:
             aura_funcs.release_aura(self.unit, self.skill_obj, game)
-
 
 class RemoveSkill(Action):
     def __init__(self, unit, skill, count=-1):

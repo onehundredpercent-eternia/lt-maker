@@ -84,6 +84,10 @@
         true
     ],
     [
+        "glancing_hit",
+        false
+    ],
+    [
         "backpropagate_difficulty_growths",
         true
     ],
@@ -121,6 +125,10 @@
     ],
     [
         "auto_promote",
+        true
+    ],
+    [
+        "promote_skill_inheritance",
         true
     ],
     [
@@ -321,10 +329,6 @@
     ],
     [
         "dark_sprites",
-        false
-    ],
-    [
-        "glancing_hit",
         false
     ],
     [

@@ -1,5 +1,6 @@
 import math
-from typing import Tuple
+from app.engine.objects.unit import UnitObject
+from typing import Optional, Tuple
 
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.counters import generic3counter
@@ -33,7 +34,7 @@ class LevelCursor(BaseCursor):
 
         self.position = (self.get_bounds()[0], self.get_bounds()[1])
 
-    def get_hover(self):
+    def get_hover(self) -> Optional[UnitObject]:
         unit = self.game.board.get_unit(self.position)
         if unit and 'Tile' not in unit.tags and self.game.board.in_vision(unit.position):
             return unit

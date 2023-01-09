@@ -1610,6 +1610,26 @@ class RemoveSkill(EventCommand):
     keyword_types = ['GlobalUnit', 'Skill', 'Integer']
     _flags = ['no_banner']
 
+class SetSkillData(EventCommand):
+    nid = 'set_skill_data'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Finds the first matching *Skill* of *GlobalUnit*.
+Then, it sets the data field *Nid* of the *Skill* to *Expression*.
+
+
+As an example, you could change the number of charges a skill has using this.
+
+`set_skill_data;Eirika;Luna;charge;5`
+
+In general, you need to know how the innards of a given skill component
+interacts with the data of the skill to use this command.
+        """
+
+    keywords = ["GlobalUnit", "Skill", "Nid", "Expression"]
+
 class ChangeAI(EventCommand):
     nid = 'change_ai'
     tag = Tags.MODIFY_UNIT_PROPERTIES

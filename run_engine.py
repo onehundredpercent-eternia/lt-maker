@@ -9,20 +9,11 @@ from app.engine import driver
 from app.engine import game_state
 from app.engine.component_system_compiler import source_generator
 
-'''
-# Translation currently unused within engine proper
-# If you need to use translation, remember to copy the locale folder to your build.
-current_locale = 'en_US'
-locale_path = 'locale/'
-translation_module = gettext.translation(
-    domain='messages',
-    localedir=locale_path,
-    languages=[current_locale]
-)
-translation_module.install()  # Magically make the _ function globally available
-'''
-
 def main(name: str = 'testing_proj'):
+    # Translation currently unused within engine proper
+    # If you need to use translation, remember to copy the locale folder to your build.
+    # from app.editor.editor_locale import init_locale
+    # init_locale()
     if not os.path.exists(name + '.ltproj'):
         raise ValueError("Could not locate LT project %s" % (name + '.ltproj'))
     RESOURCES.load(name + '.ltproj')
@@ -59,7 +50,7 @@ def find_and_run_project():
     for name in os.listdir('./'):
         if name.endswith(proj):
             name = name.replace(proj, '')
-            if name not in ('autosave',):
+            if not name.startswith('autosave'):
                 main(name)
 
 if __name__ == '__main__':
