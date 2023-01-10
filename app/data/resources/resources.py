@@ -198,6 +198,7 @@ class Resources():
                 if os.path.exists(new_path) and filecmp.cmp(old_path, new_path, shallow=False):
                     pass
                 else:
+                    os.makedirs(os.path.dirname(new_path), exist_ok=True)
                     shutil.copy(old_path, new_path)
                 if progress and idx % 100 == 0:
                     perc = int((idx / num_files) * 74) + 1
