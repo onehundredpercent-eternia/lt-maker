@@ -579,7 +579,7 @@ class InfoMenuState(State):
         elif stat == 'AID':
             if growths:
                 icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
-                    render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
+                render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
             else:
                 aid = equations.parser.rescue_aid(self.unit)
@@ -595,13 +595,13 @@ class InfoMenuState(State):
                 else:
                     aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 0, 16, 16))
                 surf.blit(aid_surf, (112, 16 * true_idx + 24))
-                    render_text(surf, ['text'], [text_funcs.translate('Aid')], ['yellow'], (72, 16 * true_idx + 24))
+                render_text(surf, ['text'], [text_funcs.translate('Aid')], ['yellow'], (72, 16 * true_idx + 24))
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'Aid_desc', state)
 
         elif stat == 'RAT':
             rat = str(equations.parser.rating(self.unit))
             render_text(surf, ['text'], [rat], ['blue'], (111, 16 * true_idx + 24), Alignments.RIGHT)
-                render_text(surf, ['text'], [text_funcs.translate('Rat')], ['yellow'], (72, 16 * true_idx + 24))
+            render_text(surf, ['text'], [text_funcs.translate('Rat')], ['yellow'], (72, 16 * true_idx + 24))
             self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'Rating_desc', state)
 
         elif stat == 'MANA':
@@ -617,7 +617,7 @@ class InfoMenuState(State):
             self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'GAUGE_desc', state)
 
         if DB.constants.value('lead'):
-                render_text(surf, ['text'], [text_funcs.translate('Lead')], ['yellow'], (72, 120))
+            render_text(surf, ['text'], [text_funcs.translate('Lead')], ['yellow'], (72, 120))
             self.info_graph.register((96 + 72, 120, 64, 16), 'Lead_desc', state)
 
             if growths:

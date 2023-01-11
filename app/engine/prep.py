@@ -875,9 +875,9 @@ class PrepItemsState(State):
                         self._proceed_with_targets_item = True
                         game.state.change('item_targeting')
                     else:
-                    action.do(action.HasTraded(self.unit))
-                    interaction.start_combat(self.unit, None, item)
-                    self.state = 'free'
+                        action.do(action.HasTraded(self.unit))
+                        interaction.start_combat(self.unit, None, item)
+                        self.state = 'free'
                 elif current == 'Restock':
                     action.do(action.HasTraded(self.unit))
                     convoy_funcs.restock(item)
@@ -908,9 +908,9 @@ class PrepItemsState(State):
                         self._proceed_with_targets_item = True
                         game.state.change('item_targeting')
                     else:
-                    action.do(action.HasTraded(self.unit))
-                    interaction.start_combat(self.unit, None, item)
-                    self.state = 'free'
+                        action.do(action.HasTraded(self.unit))
+                        interaction.start_combat(self.unit, None, item)
+                        self.state = 'free'
                 elif current == 'Nothing':
                     self.state = 'free'
                 self.sub_menu = None
