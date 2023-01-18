@@ -237,8 +237,6 @@ class Endf(EventCommand):
 Ends a for block. Refer to the **for** command for more information.
         """
 
-
-
 class Finish(EventCommand):
     nid = "finish"
     nickname = "break"
@@ -338,7 +336,8 @@ Extra flags:
         """
 
     keywords = ['Portrait', 'ScreenPosition']
-    optional_keywords = ['Slide', 'ExpressionList']
+    optional_keywords = ['Slide', 'ExpressionList', 'SpeedMult']
+    keyword_types = ['Portrait', 'ScreenPosition', 'Slide', 'ExpressionList', 'Float']
     _flags = ["mirror", "low_priority", "immediate", "no_block"]
 
 class MultiAddPortrait(EventCommand):
@@ -371,6 +370,8 @@ Extra flags:
         """
 
     keywords = ['Portrait']
+    optional_keywords = ['SpeedMult']
+    keyword_types = ['Portrait', 'Float']
     _flags = ["immediate", "no_block"]
 
 class MultiRemovePortrait(EventCommand):
@@ -393,7 +394,7 @@ class MovePortrait(EventCommand):
 
     desc = \
         """
-Causes a portrait to "walk" from one screen position to another.
+Causes a portrait to "walk" from one screen position to another. Default *SpeedMult* is 1. Higher speeds are faster.
 
 Extra flags:
 
@@ -402,6 +403,8 @@ Extra flags:
         """
 
     keywords = ['Portrait', 'ScreenPosition']
+    optional_keywords = ['SpeedMult']
+    keyword_types = ['Portrait', 'ScreenPosition', 'Float']
     _flags = ["immediate", "no_block"]
 
 class BopPortrait(EventCommand):
@@ -521,6 +524,18 @@ class DialogStart(EventCommand):
 class DialogEnd(EventCommand):
     nid = 'dialog_end'
     tag = Tags.DIALOGUE_TEXT
+
+class Unpause(EventCommand):
+    nid = "unpause"
+    tag = Tags.DIALOGUE_TEXT
+
+    desc = """
+Unpauses a previously paused text box. Has no effect if text box was not paused using `{p}` before.
+
+This will 'unpause' the text box with the specified speaker NID.
+    """
+
+    keywords = ['Nid']
 
 class Narrate(EventCommand):
     nid = "narrate"
@@ -758,6 +773,18 @@ Sets the fog of war state for the current level.
     keywords = ["FogOfWarType", "Radius"]
     optional_keywords = ["AIRadius", "OtherRadius"]
     keyword_types = ["FogOfWarType", "PositiveInteger", "PositiveInteger", "PositiveInteger"]
+
+class EnableFogOfWar(EventCommand):
+    nid = 'enable_fog_of_war'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Activates or deactivates base level of fog of war. Does not affect presence of fog or vision regions
+        """
+
+    keywords = ["Activated"]
+    keyword_types = ['Bool']
 
 class EnableSupports(EventCommand):
     nid = 'enable_supports'
@@ -1987,7 +2014,7 @@ Adds a new region to the map that can be referenced by events. *Nid* will be the
 
 The optional *String* keyword can be used to specify the sub-region type.
 
-When set, the *only_once* flag prevents multiples of the same region from being created. The *interrupt_move* flag halts a unit's movement once they move into the region.
+When set, the *only_once* flag applies only to event region, preventing them from being used more than once. The *interrupt_move* flag halts a unit's movement once they move into the region.
         """
 
     keywords = ["Region", "Position", "Size", "RegionType"]
@@ -2857,13 +2884,35 @@ def restore_command(dat) -> EventCommand:
 
 evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList', 'Nid')
 
+def get_command_arguments(text: str) -> List[str]:
+    # Replacement for text.split(';') 
+    # that ignores any semicolons
+    # found within '{}' brackets
+    arguments = []
+    curr = ""
+    level = 0
+    for t in text:
+        if t == ';' and level == 0:
+            arguments.append(curr)
+            curr = ""
+        elif t == '{':
+            level += 1
+            curr += t
+        elif t == '}':
+            level -= 1
+            curr += t
+        else:
+            curr += t
+    arguments.append(curr)
+    return arguments
+
 def determine_command_type(text: str) -> EventCommand:
     text = text.lstrip()
     if text.startswith('#'):
         return Comment(display_values=[text])
     if text.startswith('comment;'):
         return Comment(display_values=[text[8:]])
-    arguments = text.split(';')
+    arguments = get_command_arguments(text)
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
     for command_type in subclasses:
@@ -2883,6 +2932,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
 
     Returns:
         EventCommand: parsed command
+        int: Index of the character the command failed to parse at (only if strict)
     """
     def _process_arg(cmd_keyword: str, arg: str) -> str:
         # if parentheses exists, then they contain the "true" arg, with everything outside parens essentially as comments
@@ -2961,7 +3011,8 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
     if text.endswith(';'):
         text = text[:-1]
 
-    arguments = text.split(';')
+    arguments = get_command_arguments(text)
+
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
     bad_idx = None

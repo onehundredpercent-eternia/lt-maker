@@ -92,7 +92,7 @@ def change_music(self: Event, phase, music, flags=None):
     else:
         action.do(action.ChangePhaseMusic(phase, music))
 
-def add_portrait(self: Event, portrait, screen_position, slide=None, expression_list=None, flags=None):
+def add_portrait(self: Event, portrait, screen_position, slide=None, expression_list=None, speed_mult=1, flags=None):
     flags = flags or set()
 
     name = portrait
@@ -126,7 +126,10 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
     if 'immediate' in flags or self.do_skip:
         transition = False
 
-    new_portrait = EventPortrait(portrait, position, priority, transition, slide, mirror, name)
+    speed_mult = 1 / max(speed_mult, 0.001)
+
+    new_portrait = EventPortrait(portrait, position, priority, transition,
+                                 slide, mirror, name, speed_mult=speed_mult)
 
     if FANCY_DIALOG_MODE:
         new_portrait.saturation = 0
@@ -162,7 +165,7 @@ def multi_add_portrait(self: Event, portrait1, screen_position1, portrait2, scre
         # Done backwards to preserve order upon insertion
         self.commands.insert(self.command_idx + 1, command)
 
-def remove_portrait(self: Event, portrait, flags=None):
+def remove_portrait(self: Event, portrait, speed_mult=1, flags=None):
     flags = flags or set()
 
     name = portrait
@@ -172,11 +175,13 @@ def remove_portrait(self: Event, portrait, flags=None):
     if name not in self.portraits:
         return False
 
+    speed_mult = 1 / max(speed_mult, 0.001)
+
     if 'immediate' in flags or self.do_skip:
         portrait = self.portraits.pop(name)
     else:
         portrait = self.portraits[name]
-        portrait.end()
+        portrait.end(float(speed_mult))
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
         pass
@@ -199,7 +204,7 @@ def multi_remove_portrait(self: Event, portrait1, portrait2, portrait3=None, por
         # Done backwards to preserve order upon insertion
         self.commands.insert(self.command_idx + 1, command)
 
-def move_portrait(self: Event, portrait, screen_position, flags=None):
+def move_portrait(self: Event, portrait, screen_position, speed_mult=1, flags=None):
     flags = flags or set()
 
     name = portrait
@@ -215,7 +220,7 @@ def move_portrait(self: Event, portrait, screen_position, flags=None):
     if 'immediate' in flags or self.do_skip:
         portrait.quick_move(position)
     else:
-        portrait.move(position)
+        portrait.move(position, float(speed_mult))
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
         pass
@@ -339,6 +344,20 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
         speaker = unit.nid
     portrait = self.portraits.get(speaker)
 
+    # Process text for commands
+    blocks = str_utils.matched_block_expr(text, '{', '}')
+    for block in reversed(blocks):  # reversed to preserve order upon insertion
+        if block.startswith('{command:') and block.endswith('}'):
+            event_command_str = block[len('{command:'):-1]
+        elif block.startswith('{c:') and block.endswith('}'):
+            event_command_str = block[len('{c:'):-1]
+        else:
+            continue
+        text = text.replace(block, '{p}', 1)  # Replace first instance
+        # Done backwards to preserve order
+        self._queue_command('unpause;%s' % speaker)
+        self._queue_command(event_command_str)
+
     if text_position:
         try:
             position = Alignments(text_position)
@@ -454,6 +473,15 @@ def unhold(self: Event, nid, flags=None):
     for box in self.text_boxes:
         if box.style_nid == nid:
             box.hold = False
+
+def unpause(self: Event, nid, flags=None):
+    for box in reversed(self.text_boxes):
+        if box.speaker == nid:
+            box.command_unpause()
+            break
+    else:
+        self.logger.warning("Did not find any text box with speaker: %s", nid)
+    self.state = 'dialog'
 
 def transition(self: Event, direction=None, speed=None, color3=None, flags=None):
     flags = flags or set()
@@ -579,7 +607,7 @@ def screen_shake(self: Event, duration, shake_type=None, flags=None):
         shake_offset = [(random.choice([-1, 1]), random.choice([-1, 1])) for _ in range(16)]
 
     if not shake_offset:
-        self.logger.error("shake mode %s not recognized by screen shake command. Recognized modes are ('default', 'combat').", shake_type)
+        self.logger.error("shake mode %s not recognized by screen shake command.", shake_type)
         return
 
     self.game.camera.set_shake(shake_offset, duration)
@@ -645,6 +673,10 @@ def enable_turnwheel(self: Event, activated: str, flags=None):
     state = activated.lower() in self.true_vals
     action.do(action.SetGameVar("_turnwheel", state))
 
+def enable_fog_of_war(self: Event, activated: str, flags=None):
+    state = activated.lower() in self.true_vals
+    action.do(action.SetLevelVar("_fog_of_war", state))
+
 def set_fog_of_war(self: Event, fog_of_war_type, radius, ai_radius=None, other_radius=None, flags=None):
     fowt = fog_of_war_type.lower()
     if fowt == 'gba':
@@ -653,7 +685,7 @@ def set_fog_of_war(self: Event, fog_of_war_type, radius, ai_radius=None, other_r
         fowt = 2
     else:
         fowt = 0
-    action.do(action.SetLevelVar('_fog_of_war', fowt))
+    action.do(action.SetLevelVar('_fog_of_war_type', fowt))
     radius = int(radius)
     action.do(action.SetLevelVar('_fog_of_war_radius', radius))
     if ai_radius is not None:
@@ -2799,7 +2831,8 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
             expr = lambda: tryexcept(text)
         except:
             self.logger.error('textbox: %s is not a valid python expression' % text)
-        textbox = dialog.DynamicDialogWrapper(expr, background=box_bg, position=position, width=box_width,
+        textbox = dialog.DynamicDialogWrapper(
+            expr, background=box_bg, position=position, width=box_width,
                       style_nid=style_nid, speed=speed,
                       font_color=fcolor, font_type=ftype, num_lines=lines,
                       draw_cursor=False, transparency=transparency)

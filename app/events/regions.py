@@ -7,6 +7,8 @@ class RegionType(str, Enum):
     EVENT = 'event'
     FORMATION = 'formation'
     TIME = 'time'
+    FOG = 'fog'
+    VISION = 'vision'
 
 class Region(Prefab):
     def __init__(self, nid):
@@ -39,7 +41,7 @@ class Region(Prefab):
             return x, y
         else:
             return None
-    
+
     def contains(self, pos: tuple) -> bool:
         x, y = pos
         if self.position:

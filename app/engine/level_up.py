@@ -53,8 +53,8 @@ class ExpState(State):
             if mana_instances_for_unit:
                 mana_instance = game.mana_instance.pop(mana_instances_for_unit[-1])
                 self.mana_to_gain = mana_instance[1]
-            if self.mana_to_gain + self.old_mana > self.max_mana:
-                self.mana_to_gain = self.max_mana - self.old_mana
+                if self.mana_to_gain + self.old_mana > self.max_mana:
+                    self.mana_to_gain = self.max_mana - self.old_mana
         self.mana_bar = None
 
         self.state = SimpleStateMachine(self.starting_state)
@@ -268,7 +268,12 @@ class ExpState(State):
                 # get to this screen
                 if self.starting_state != "stat_booster":
                     ExpState.give_new_personal_skills(self.unit)
-                    ExpState.give_new_class_skills(self.unit)
+                    if self.starting_state == 'class_change' and not DB.constants.value('learn_skills_on_reclass'):
+                        pass
+                    elif self.starting_state == 'promote' and not DB.constants.value('learn_skills_on_promote'):
+                        pass
+                    else:
+                        ExpState.give_new_class_skills(self.unit)
 
         # Wait 100 ms before transferring to the promotion state
         elif self.state.get_state() == 'prepare_promote':

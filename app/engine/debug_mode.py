@@ -95,6 +95,9 @@ class DebugState(MapState):
         if unit:
             unit_position_info = [unit.nid, ': ', str(unit.position)]
             colors = ['white', 'white', 'blue']
+        else:
+            unit_position_info = [str(game.cursor.position)]
+            colors = ['blue']
         render_text(surf, ['text'], unit_position_info, colors, topleft=(WINWIDTH, 0), align=Alignments.RIGHT)
 
     def end(self):

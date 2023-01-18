@@ -108,6 +108,23 @@ def recalculate_unit(func):
             game.boundary.recalculate_unit(self.unit)
     return wrapper
 
+def recalculate_unit_sprite(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+
+        old_sprite = self.unit.sprite
+        animations = list(old_sprite.animations.keys())
+        self.unit.reset_sprite()
+
+        func(*args, **kwargs)
+
+        new_sprite = self.unit.sprite
+        for anim_nid in animations:
+            new_sprite.add_animation(anim_nid)
+
+    return wrapper
+
 class Move(Action):
     """
     A basic, user-directed move
@@ -466,7 +483,7 @@ class SetGameVar(Action):
 
 
 class SetLevelVar(Action):
-    fog_nids = ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius', '_other_fog_of_war_radius')
+    fog_nids = ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius', '_other_fog_of_war_radius', '_fog_of_war_type')
 
     def __init__(self, nid, val):
         self.nid = nid
@@ -535,7 +552,6 @@ class UpdateFogOfWar(Action):
 
     def do(self):
         # Handle fog of war
-        if game.level_vars.get('_fog_of_war'):
             self.prev_pos = game.board.fow_vantage_point.get(self.unit.nid)
             fog_of_war_radius = game.board.get_fog_of_war_radius(self.unit.team)
             sight_range = skill_system.sight_range(self.unit) + fog_of_war_radius
@@ -544,7 +560,6 @@ class UpdateFogOfWar(Action):
 
     def reverse(self):
         # Handle fog of war
-        if game.level_vars.get('_fog_of_war'):
             fog_of_war_radius = game.board.get_fog_of_war_radius(self.unit.team)
             sight_range = skill_system.sight_range(self.unit) + fog_of_war_radius
             game.board.update_fow(self.prev_pos, self.unit, sight_range)
@@ -1723,12 +1738,12 @@ class Promote(Action):
     def get_data(self):
         return self.stat_changes, self.new_wexp
 
+    @recalculate_unit_sprite
     def do(self):
         self.subactions.clear()
         for act in self.subactions:
             act.do()
 
-        self.unit.reset_sprite()
         self.unit.klass = self.new_klass
         if DB.constants.value('promote_level_reset'):
             self.unit.set_exp(0)
@@ -1736,8 +1751,8 @@ class Promote(Action):
 
         unit_funcs.apply_stat_changes(self.unit, self.stat_changes)
 
+    @recalculate_unit_sprite
     def reverse(self):
-        self.unit.reset_sprite()
         self.unit.klass = self.old_klass
         self.unit.set_exp(self.old_exp)
         self.unit.level = self.old_level
@@ -1786,22 +1801,24 @@ class ClassChange(Action):
     def get_data(self):
         return self.stat_changes, self.new_wexp
 
+    @recalculate_unit_sprite
     def do(self):
         self.subactions.clear()
         for act in self.subactions:
             act.do()
 
-        self.unit.reset_sprite()
         self.unit.klass = self.new_klass
+
         if DB.constants.value('class_change_level_reset'):
             self.unit.set_exp(0)
             self.unit.level = 1
 
         unit_funcs.apply_stat_changes(self.unit, self.stat_changes)
 
+    @recalculate_unit_sprite
     def reverse(self):
-        self.unit.reset_sprite()
         self.unit.klass = self.old_klass
+
         self.unit.set_exp(self.old_exp)
         self.unit.level = self.old_level
 
@@ -2457,9 +2474,20 @@ class AddRegion(Action):
             if self.region.region_type == RegionType.STATUS:
                 for unit in game.units:
                     if unit.position and self.region.contains(unit.position):
+                        # add region status does the action, we just need to remember it here
                         add_skill_action = game.add_region_status(unit, self.region, False)
                         if add_skill_action:
                             self.subactions.append(add_skill_action)
+
+            # Update fog of war if appropriate
+            elif self.region.region_type == RegionType.FOG:
+                update_fow_action = AddFogRegion(self.region)
+                update_fow_action.do()
+                self.subactions.append(update_fow_action)
+            elif self.region.region_type == RegionType.VISION:
+                update_fow_action = AddVisionRegion(self.region)
+                update_fow_action.do()
+                self.subactions.append(update_fow_action)
 
     def reverse(self):
         if self.did_add:
@@ -2467,7 +2495,6 @@ class AddRegion(Action):
                 act.reverse()
             game.get_region_under_pos.cache_clear()
             game.level.regions.delete(self.region)
-
 
 class ChangeRegionCondition(Action):
     def __init__(self, region, condition):
@@ -2506,6 +2533,14 @@ class RemoveRegion(Action):
                     if unit.position and self.region.contains(unit.position):
                         self.subactions.append(RemoveSkill(unit, self.region.sub_nid))
 
+            # Update fog of war if appropriate
+            elif self.region.region_type == RegionType.FOG:
+                update_fow_action = RemoveFogRegion(self.region)
+                self.subactions.append(update_fow_action)
+            elif self.region.region_type == RegionType.VISION:
+                update_fow_action = RemoveVisionRegion(self.region)
+                self.subactions.append(update_fow_action)
+
             for act in self.subactions:
                 act.do()
 
@@ -2522,6 +2557,54 @@ class RemoveRegion(Action):
 
             for act in self.subactions:
                 act.reverse()
+
+class AddFogRegion(Action):
+    def __init__(self, region):
+        self.region = region
+
+    def do(self):
+        game.board.add_fog_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+    def reverse(self):
+        game.board.remove_fog_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+class RemoveFogRegion(Action):
+    def __init__(self, region):
+        self.region = region
+
+    def do(self):
+        game.board.remove_fog_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+    def reverse(self):
+        game.board.add_fog_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+class AddVisionRegion(Action):
+    def __init__(self, region):
+        self.region = region
+
+    def do(self):
+        game.board.add_vision_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+    def reverse(self):
+        game.board.remove_vision_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+class RemoveVisionRegion(Action):
+    def __init__(self, region):
+        self.region = region
+
+    def do(self):
+        game.board.remove_vision_region(self.region)
+        game.boundary.reset_fog_of_war()
+
+    def reverse(self):
+        game.board.add_vision_region(self.region)
+        game.boundary.reset_fog_of_war()
 
 def _leave(layer):
     # Force all affected units to leave

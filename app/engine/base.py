@@ -633,6 +633,7 @@ class BaseSupportsState(State):
                 self.display.draw_cursor = True
 
         elif event == 'INFO':
+            get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = self.units
             game.memory['current_unit'] = self.menu.get_current()
             info_menu.to_info_menu()

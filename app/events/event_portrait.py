@@ -24,12 +24,15 @@ class EventPortrait():
     halfsmile = (32, height - 32, 32, 16)
     closesmile = (64, height - 32, 32, 16)
 
-    transition_speed = utils.frames2ms(14)
+    base_transition_speed = utils.frames2ms(14)
     travel_time = utils.frames2ms(15)
     bop_time = utils.frames2ms(8)
     saturation_time = utils.frames2ms(10)
+    travel_speed_mult = 1
 
-    def __init__(self, portrait: Portrait, position: Point, priority, transition=False, slide=None, mirror=False, name='', expressions=None):
+    def __init__(self, portrait: Portrait, position: Point, priority, 
+                 transition=False, slide=None, mirror=False, name='', expressions=None,
+                 speed_mult=1):
         self.portrait = portrait
         if not self.portrait.image:
             self.portrait.image = engine.image_load(self.portrait.full_path)
@@ -40,6 +43,7 @@ class EventPortrait():
         self.position = position
         self.priority = priority
         self.transition = transition
+        self.transition_speed = self.base_transition_speed * max(speed_mult, 0.001)
         self.transition_update = engine.get_time()
         self.slide = slide
         self.mirror = mirror
@@ -100,12 +104,14 @@ class EventPortrait():
         self.bop_height = height
         self.last_bop = engine.get_time()
 
-    def move(self, position):
+    def move(self, position, speed_mult=1):
         self.orig_position = self.position
         self.next_position = position
         self.moving = True
+        self.travel_speed_mult = max(0.001, speed_mult)
 
         self.travel_time = self.determine_travel_time(abs(self.next_position[0] - self.orig_position[0]))
+        self.travel_time = int(self.travel_time / speed_mult)
 
     def quick_move(self, position):
         self.position = position
@@ -253,6 +259,8 @@ class EventPortrait():
                 if travel_mag in (1, 4, 5, 6, 7):
                     self.bop_state = True
                     self.bop_height = 1
+                # Multiply by travel speed
+                travel_mag = min(self.travel_speed_mult * travel_mag, abs(diff_x))
                 # angle = math.atan2(self.travel[1], self.travel[0])
                 # updated_position = (self.orig_position[0] + abs(self.travel[0]) * travel_mag * math.cos(angle),
                 #                     self.orig_position[1] + abs(self.travel[1]) * travel_mag * math.sin(angle))
@@ -296,7 +304,8 @@ class EventPortrait():
 
         surf.blit(image, position)
 
-    def end(self):
+    def end(self, speed_mult=1):
         self.transition = True
         self.remove = True
+        self.transition_speed = self.base_transition_speed * max(speed_mult, 0.001)
         self.transition_update = engine.get_time()
