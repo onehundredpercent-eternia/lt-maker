@@ -10,7 +10,7 @@ from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.resources.resources import RESOURCES
 from app.engine import (action, background, banner, base_surf, dialog, engine, 
                         evaluate, icons, image_mods, item_funcs, item_system,
-                        skill_system, target_system, unit_funcs, fancy_dialog)
+                        skill_system, target_system, unit_funcs)
 from app.engine.achievements import ACHIEVEMENTS
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -40,6 +40,9 @@ from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID
+
+if FANCY_DIALOG_MODE:
+    from app.engine import fancy_dialog
 
 if TYPE_CHECKING:
     from app.events.event import Event

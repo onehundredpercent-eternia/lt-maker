@@ -193,7 +193,7 @@ class Database(object):
             catalog = getattr(self, key)
             if isinstance(catalog, CategorizedCatalog):
                 if key in self.save_as_chunks and main_settings.get_should_save_as_chunks():
-                self.json_save(os.path.join(data_dir, key, '.categories'), catalog.categories.save())
+                    self.json_save(os.path.join(data_dir, key, '.categories'), catalog.categories.save())
                 else:
                     self.json_save(os.path.join(data_dir, '.%s_categories' % key), catalog.categories.save())
         end = time.perf_counter() * 1000
