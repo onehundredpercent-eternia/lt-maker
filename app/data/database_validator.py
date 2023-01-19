@@ -1,10 +1,16 @@
 from __future__ import annotations
+from app.events.regions import Region
+from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
+from app.data.database.levels import OBJECTIVE_KEYS
+
+from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
+
 from app.data.database.database_types import DatabaseType as DType
+from app.data.resources.resource_types import ResourceType as RType
 from app.data.database.weapons import WexpGain
 from app.data.validation_errors import InvalidValueError, ValidationError
 from app.utilities.data import Data
 from app.utilities.typing import NID
-from typing import Callable, Dict, List, Set, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.data.database.database import Database
@@ -53,10 +59,30 @@ class DatabaseValidatorEngine():
             DType.LORE: is_nid_in_db_func(self.db.lore),
             DType.RAW_DATA: is_nid_in_db_func(self.db.raw_data),
         }
+        self._validate_resources: Dict[RType, Callable[[str, NID], bool]] = {
+            RType.ICONS16: is_nid_in_db_func(self.resources.icons16),
+            RType.ICONS32: is_nid_in_db_func(self.resources.icons32),
+            RType.ICONS80: is_nid_in_db_func(self.resources.icons80),
+            RType.PORTRAITS: is_nid_in_db_func(self.resources.portraits),
+            RType.ANIMATIONS: is_nid_in_db_func(self.resources.animations),
+            RType.PANORAMAS: is_nid_in_db_func(self.resources.panoramas),
+            RType.MAP_ICONS: is_nid_in_db_func(self.resources.map_icons),
+            RType.MAP_SPRITES: is_nid_in_db_func(self.resources.map_sprites),
+            RType.COMBAT_PALETTES: is_nid_in_db_func(self.resources.combat_palettes),
+            RType.COMBAT_ANIMS: is_nid_in_db_func(self.resources.combat_anims),
+            RType.COMBAT_EFFECTS: is_nid_in_db_func(self.resources.combat_effects),
+            RType.TILESETS: is_nid_in_db_func(self.resources.tilesets),
+            RType.TILEMAPS: is_nid_in_db_func(self.resources.tilemaps),
+            RType.MUSIC: is_nid_in_db_func(self.resources.music),
+            RType.SFX: is_nid_in_db_func(self.resources.sfx),
+        }
         self._valid_entry_map: Dict[DType, Callable[[], List[str]]] = {}
 
-    def validate(self, type: DType, nid: NID, level: NID='all') -> bool:
-        return self._validate_db[type](nid, level)
+    def validate(self, xtype: DType | RType, nid: NID, level: NID='all') -> bool:
+        if isinstance(xtype, DType):
+            return self._validate_db[xtype](nid, level)
+        else:
+            return self._validate_resources[xtype](nid, level)
 
 def sync_keys(data_dict: dict, expected_keys: set, default_value_factory: Callable):
     """Fills and trims a dict inplace.
@@ -82,7 +108,10 @@ class DatabaseRepair():
     def __init__(self, db: Database, resources: Resources):
         self.db = db
         self.resources = resources
-        self.validators = DatabaseValidatorEngine(db, resources)
+        self.dbv = DatabaseValidatorEngine(db, resources)
+
+    def _val(self, xtype: DType | RType, nid: NID):
+        return self.dbv.validate(xtype, nid)
 
     def validate_db(self):
         pass
@@ -91,40 +120,138 @@ class DatabaseRepair():
         """Repairs all erroneous entries in the database. Pointers to nonexistent skills, tilemaps, units, etc. are cleared"""
         # @TODO(mag): implement repairs for all data types
         self.repair_units()
+        self.repair_levels()
 
     def repair_units(self):
         all_weapon_types = set(self.db.weapons.keys())
         all_stats = set(self.db.stats.keys())
-        all_classes = set(self.db.classes.keys())
         _default_class = self.db.classes.keys()[0]
-        all_tags = set(self.db.tags.keys())
-        all_items = set(self.db.items.keys())
-        all_skills = set(self.db.skills.keys())
-        all_portraits = set(self.resources.portraits.keys())
-        all_affinities = set(self.db.affinities.keys())
         for unit in self.db.units:
-            if unit.klass not in all_classes:
+            if not self._val(DType.CLASSES, unit.klass):
                 unit.klass = _default_class
 
-            unit.tags = [tag for tag in unit.tags if tag in all_tags]
+            unit.tags = [tag for tag in unit.tags if self._val(DType.TAGS, tag)]
 
             # make sure each unit has an entry for every stat, and no extraneous ones
             sync_keys(unit.bases, all_stats, lambda: 0)
             sync_keys(unit.growths, all_stats, lambda: 0)
 
-            unit.starting_items = [(item_nid, droppable) for item_nid, droppable in unit.starting_items if item_nid in all_items]
-
-            unit.learned_skills = [(lvl, skill_nid) for lvl, skill_nid in unit.learned_skills if skill_nid in all_skills]
+            unit.starting_items = [[item_nid, droppable] for item_nid, droppable in unit.starting_items if self._val(DType.ITEMS, item_nid)]
+            unit.learned_skills = [[lvl, skill_nid] for lvl, skill_nid in unit.learned_skills if self._val(DType.ITEMS, skill_nid)]
 
             # make sure each unit has an entry for every weapon type, and no extraneous ones
             sync_keys(unit.wexp_gain, all_weapon_types, lambda: WexpGain(False, 0))
 
-            unit.alternate_classes = [class_nid for class_nid in unit.alternate_classes if class_nid in all_classes]
+            unit.alternate_classes = [class_nid for class_nid in unit.alternate_classes if self._val(DType.CLASSES, class_nid)]
 
-            if unit.portrait_nid:
-                if not unit.portrait_nid in all_portraits:
-                    unit.portrait_nid = None
+            if unit.portrait_nid and not self._val(RType.PORTRAITS, unit.portrait_nid):
+                unit.portrait_nid = None
 
-            if unit.affinity:
-                if not unit.affinity in all_affinities:
-                    unit.affinity = None
+            if unit.affinity and not self._val(DType.AFFINITIES, unit.affinity):
+                unit.affinity = None
+
+    def repair_levels(self):
+        default_party = self.db.parties[0].nid
+        default_unit = self.db.units[0].nid
+        for level in self.db.levels:
+            if level.tilemap and not self._val(RType.TILEMAPS, level.tilemap):
+                level.tilemap = None
+
+            if level.bg_tilemap and not self._val(RType.TILEMAPS, level.bg_tilemap):
+                level.bg_tilemap = None
+
+            if not level.party or not self._val(DType.PARTIES, level.party):
+                level.party = default_party
+
+            sync_keys(level.music, set(self.db.music_keys), lambda: None)
+            for k, v in level.music.items():
+                if not self._val(RType.MUSIC, v):
+                    level.music[k] = None
+            sync_keys(level.objective, set(OBJECTIVE_KEYS), lambda: '')
+
+            if not level.roam_unit or not self._val(DType.UNITS, level.roam_unit):
+                level.roam_unit = default_unit
+
+            level.units = Data([unit for unit in level.units if
+                                isinstance(unit, GenericUnit) or self._val(DType.UNITS, unit.nid)])
+
+            level_travelers: Dict[NID, NID] = {}
+            for level_unit in level.units:
+                if level_unit.starting_traveler:
+                    level_travelers[level_unit.nid] = level_unit.starting_traveler
+            all_level_units: Set[NID] = set()
+            for level_unit in level.units:
+                all_level_units.add(level_unit.nid)
+            context: Dict[str, Any] = {
+                'level_units': all_level_units,
+                'level_travelers': level_travelers
+            }
+
+            for level_unit in level.units:
+                if isinstance(level_unit, GenericUnit):
+                    self._repair_generic_unit(level_unit, context)
+                else:
+                    self._repair_unique_unit(level_unit, context)
+
+            for group in level.unit_groups:
+                self._repair_unit_group(group, context)
+
+    # context contains tertiary information that may be necessary to validate
+    def _repair_generic_unit(self, unit: GenericUnit, context: Dict[str, Any]):
+        _default_class = self.db.classes.keys()[0]
+        _default_faction = self.db.factions.keys()[0]
+        _default_team = self.db.teams[0]
+        level_units: Set[NID] = context['level_units']
+        if not self._val(DType.CLASSES, unit.klass):
+            unit.klass = _default_class
+        if not self._val(DType.FACTIONS, unit.faction):
+            unit.faction = _default_faction
+        unit.starting_items = [[item_nid, droppable] for item_nid, droppable in unit.starting_items if self._val(DType.ITEMS, item_nid)]
+        unit.starting_skills = [skill_nid for skill_nid in unit.starting_skills if self._val(DType.SKILLS, skill_nid)]
+        if not self._val(DType.TEAMS, unit.team):
+            unit.team = _default_team
+        if unit.ai and not self._val(DType.AI, unit.ai):
+            unit.ai = None
+        if unit.roam_ai and not self._val(DType.AI, unit.roam_ai):
+            unit.roam_ai = None
+        travelers: Dict[NID, NID] = context['level_travelers']
+        for owner, traveler in travelers.items():
+            if unit.starting_traveler == traveler and not unit.nid == owner:
+                unit.starting_traveler = None
+        if unit.starting_traveler not in level_units:
+            unit.starting_traveler = None
+        if unit.starting_traveler == unit.nid:
+            unit.starting_traveler = None
+        if not unit.starting_position:
+            unit.starting_traveler = None
+
+    # context contains tertiary information that may be necessary to validate
+    def _repair_unique_unit(self, unit: UniqueUnit, context: Dict[str, Any]):
+        _default_faction = self.db.factions.keys()[0]
+        _default_team = self.db.teams[0]
+        level_units: Set[NID] = context['level_units']
+
+        if not self._val(DType.TEAMS, unit.team):
+            unit.team = _default_team
+        if unit.ai and not self._val(DType.AI, unit.ai):
+            unit.ai = None
+        if unit.roam_ai and not self._val(DType.AI, unit.roam_ai):
+            unit.roam_ai = None
+        if not self._val(DType.FACTIONS, unit.faction):
+            unit.faction = _default_faction
+        travelers: Dict[NID, NID] = context['level_travelers']
+        for owner, traveler in travelers.items():
+            if unit.starting_traveler == traveler and not unit.nid == owner:
+                unit.starting_traveler = None
+        if unit.starting_traveler not in level_units:
+            unit.starting_traveler = None
+        if unit.starting_traveler == unit.nid:
+            unit.starting_traveler = None
+        if not unit.starting_position:
+            unit.starting_traveler = None
+
+    def _repair_unit_group(self, group: UnitGroup, context: Dict[str, Any]):
+        level_units: Set[NID] = context['level_units']
+        group.units = [unit_nid for unit_nid in group.units if unit_nid in level_units]
+        group.positions = {unit_nid: pos for unit_nid, pos in group.positions.items() if unit_nid in group.units}
+        sync_keys(group.positions, set(group.units), lambda: (0, 0))

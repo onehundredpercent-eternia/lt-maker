@@ -21,9 +21,9 @@ class UnitPrefab(Prefab):
     bases: Dict[NID, int] = field(default_factory=dict)
     growths: Dict[NID, int] = field(default_factory=dict)
     stat_cap_modifiers: Dict[NID, int] = field(default_factory=dict)
-    starting_items: List[Tuple[NID, bool]] = field(default_factory=list)  # of tuples (item_nid, droppable)
+    starting_items: List[Tuple[NID, bool]] = field(default_factory=list)  # of list is a tuple (item_nid, droppable)
 
-    learned_skills: List[Tuple[int, NID]] = field(default_factory=list) # tuples (level, skill_nid)
+    learned_skills: List[List] = field(default_factory=list) # each list is a tuple (level, skill_nid)
     unit_notes: list = field(default_factory=list)
     wexp_gain: Dict[NID, WexpGain] = field(default_factory=dict)
 
@@ -49,12 +49,12 @@ class UnitPrefab(Prefab):
     def replace_item_nid(self, old_nid, new_nid):
         for item in self.starting_items:
             if item[0] == old_nid:
-                item = new_nid, item[1]
+                item[0] = new_nid
 
     def replace_skill_nid(self, old_nid, new_nid):
         for skill in self.learned_skills:
             if skill[1] == old_nid:
-                skill = skill[0], new_nid
+                skill[1] = new_nid
 
     def save_attr(self, name, value):
         if name in ('bases', 'growths', 'stat_cap_modifiers'):
