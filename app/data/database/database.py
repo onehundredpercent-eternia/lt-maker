@@ -65,6 +65,16 @@ class Database(object):
 
         self.raw_data = raw_data.RawDataCatalog()
 
+    @property
+    def music_keys(self):
+        keys = []
+        for team in self.teams:
+            keys.append("%s_phase" % team)
+        for team in self.teams:
+            keys.append("%s_battle" % team)
+        keys.append("boss_battle")
+        return keys
+
     # Disk Interaction Functions
     def json_save(self, save_loc: str, value: Any):
         temp_save_loc = save_loc + ".tmp"

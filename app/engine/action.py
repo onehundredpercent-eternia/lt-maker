@@ -454,7 +454,7 @@ class LockTurnwheel(Action):
 class ChangePhaseMusic(Action):
     def __init__(self, phase, music):
         self.phase = phase
-        self.old_music = game.level.music[phase]
+        self.old_music = game.level.music.get(phase, None)
         self.new_music = music
 
     def do(self):
