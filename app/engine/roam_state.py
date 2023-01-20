@@ -247,8 +247,8 @@ class FreeRoamState(MapState):
     def can_move(self, direc: str) -> bool:
         pos = (self.roam_unit.position[0] + self.hspeed, self.roam_unit.position[1])
         check_x, check_y = self.get_next_location(direc, pos)
-            mcost = game.movement.get_mcost(self.roam_unit, (check_x, check_y))
-            return mcost < 99 and self.no_bumps(check_x, check_y)
+        mcost = game.movement.get_mcost(self.roam_unit, (check_x, check_y))
+        return mcost < 99 and self.no_bumps(check_x, check_y)
 
     def no_bumps(self, x: int, y: int) -> bool:
         '''Used to detect if the space is occupied by an impassable unit'''

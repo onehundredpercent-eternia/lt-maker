@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
+from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH, BEEG_MODE
 # from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 from app.engine import action, background, banner, base_surf
@@ -17,6 +17,8 @@ from app.engine.game_state import game
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.engine.state import MapState, State
+from app.engine.graphics.text.text_renderer import text_width, render_text
+from app.utilities.enums import Alignments
 from app.events import triggers
 
 
@@ -164,7 +166,11 @@ class PrepPickUnitsState(State):
         unstuck_units = [unit for unit in player_units if unit not in stuck_units]
 
         self.units = stuck_units + sorted(unstuck_units, key=lambda unit: bool(unit.position), reverse=True)
-        self.menu = menus.Table(None, self.units, (6, 2), (110, 24))
+        if BEEG_MODE:
+            size = (7, 3)
+        else:
+            size = (6, 2)
+        self.menu = menus.Table(None, self.units, size, (110, 24))
         self.menu.set_mode('position')
 
         self.bg = background.create_background('rune_background')
@@ -238,7 +244,11 @@ class PrepPickUnitsState(State):
         self.menu.update()
 
     def draw_pick_units_card(self, surf):
-        bg_surf = base_surf.create_base_surf(132, 24, 'menu_bg_white')
+        if BEEG_MODE:
+            width = 196
+        else:
+            width = 132
+        bg_surf = base_surf.create_base_surf(width, 24, 'menu_bg_white')
         player_units = game.get_units_in_party()
         on_map = [unit for unit in game.units if unit.position and unit in player_units and game.check_for_region(unit.position, 'formation')]
         num_slots = game.level_vars.get('_prep_slots')
@@ -267,6 +277,19 @@ class PrepPickUnitsState(State):
         FONT['text'].blit_center(text, bg_surf, (66, 4))
         surf.blit(bg_surf, topleft)
 
+    def draw_objective_card(self, surf):
+        width = 104
+        bg_surf = base_surf.create_base_surf(width, 32, 'menu_bg_clear')
+        topleft = (4, WINHEIGHT - 32)
+        obj = game.level.objective['simple']
+        info_icon = engine.subsurface(SPRITES.get('buttons'), (1, 149, 16, 9))
+        info_text = '    : Info'
+        render_text(bg_surf, ['text'], [obj], ['white'], (width//2, 0), Alignments.CENTER)
+        info_text_width = text_width('chapter', info_text)
+        render_text(bg_surf, ['chapter'], [info_text], ['green'], (width//2, 16), Alignments.CENTER)
+        bg_surf.blit(info_icon, (width//2 - info_text_width//2, 20))
+        surf.blit(bg_surf, topleft)
+
     def draw(self, surf):
         if self.bg:
             self.bg.draw(surf)
@@ -276,6 +299,9 @@ class PrepPickUnitsState(State):
         self.draw_pick_units_card(surf)
         if DB.constants.value('fatigue') and game.game_vars.get('_fatigue'):
             self.draw_fatigue_card(surf)
+
+        if BEEG_MODE:
+            self.draw_objective_card(surf)
 
         self.menu.draw(surf)
         return surf
