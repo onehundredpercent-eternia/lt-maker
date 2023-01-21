@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.data.database.components import Component
 from app.events.regions import Region
 from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
 from app.data.database.levels import OBJECTIVE_KEYS
@@ -255,3 +256,20 @@ class DatabaseRepair():
         group.units = [unit_nid for unit_nid in group.units if unit_nid in level_units]
         group.positions = {unit_nid: pos for unit_nid, pos in group.positions.items() if unit_nid in group.units}
         sync_keys(group.positions, set(group.units), lambda: (0, 0))
+
+    def repair_items_and_skills(self):
+        for item in self.db.items:
+            if item.icon_nid and not self._val(RType.ICONS16, item.icon_nid):
+                item.icon_nid = None
+                item.icon_index = (0, 0)
+            for component in item.components:
+                self._repair_component(component)
+        for skill in self.db.skills:
+            if skill.icon_nid and not self._val(RType.ICONS16, skill.icon_nid):
+                skill.icon_nid = None
+                skill.icon_index = (0, 0)
+            for component in skill.components:
+                self._repair_component(component)
+
+    def _repair_component(self, comp: Component):
+        pass
