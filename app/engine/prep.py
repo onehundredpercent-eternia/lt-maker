@@ -290,6 +290,31 @@ class PrepPickUnitsState(State):
         bg_surf.blit(info_icon, (width//2 - info_text_width//2, 20))
         surf.blit(bg_surf, topleft)
 
+    def draw_statistics_card(self, surf, unit):
+        width = WINWIDTH - 104 - 20
+        rows, columns = 2, 2
+        height = rows * 16 + 8
+        row_height = 16
+        column_width = width // 2
+        bg_surf = base_surf.create_base_surf(width, height, 'menu_bg_brown')
+        bg_surf = image_mods.make_translucent(bg_surf, 0.1)
+        topleft = 110, WINHEIGHT - height
+        kills = str(game.records.get_kills(unit.nid))
+        damage = str(game.records.get_damage(unit.nid))
+        damage_records = [record.damage for record in game.records.damage if record.dealer == unit.nid]
+        if damage_records:
+            most_damage = str(max(damage_records))
+        else:
+            most_damage = '0'
+        healing = str(game.records.get_heal(unit.nid))
+        content = [('Kills', kills), ('Damage', damage), ('Most Damage', most_damage), ('Healing', healing)]
+        for idx, con in enumerate(content):
+            x, y = idx % columns, idx // columns
+            pos = (4 + x * column_width, 4 + y * row_height)
+            text = text_funcs.translate(con[0]) + ': '
+            render_text(bg_surf, ['text', 'text'], [text, con[1]], ['yellow', 'blue'], pos)
+        surf.blit(bg_surf, topleft)
+
     def draw(self, surf):
         if self.bg:
             self.bg.draw(surf)
@@ -302,6 +327,8 @@ class PrepPickUnitsState(State):
 
         if BEEG_MODE:
             self.draw_objective_card(surf)
+            if self.menu.get_current():
+                self.draw_statistics_card(surf, self.menu.get_current())
 
         self.menu.draw(surf)
         return surf
@@ -430,11 +457,27 @@ class PrepFormationSelectState(MapState):
 
         return surf
 
-def draw_funds(surf):
-    # Draw R: Info display
+def draw_info(surf):
     helper = engine.get_key_name(cf.SETTINGS['key_INFO']).upper()
     FONT['text-yellow'].blit(helper, surf, (123, 143))
     FONT['text'].blit(': Info', surf, (123 + FONT['text-blue'].width(helper), 143))
+
+    info_icon = engine.subsurface(SPRITES.get('buttons'), (1, 149, 16, 9))
+    info_text = '    : Info'
+    render_text(surf, ['chapter'], [info_text], ['green'], (123 + 16, 143), Alignments.CENTER)
+    surf.blit(info_icon, (123, 147))
+
+def draw_memory(surf):
+    # Draw R: Info display
+    draw_info(surf)
+    # Draw Funds display
+    surf.blit(SPRITES.get('funds_display'), (168, 137))
+    money = str(game.get_money())
+    render_text(surf, ['text', 'text'], ['Memory: ', money], ['white', 'blue'], (219, 141), Alignments.RIGHT)
+
+def draw_funds(surf):
+    # Draw R: Info display
+    draw_info(surf)
     # Draw Funds display
     surf.blit(SPRITES.get('funds_display'), (168, 137))
     money = str(game.get_money())
@@ -541,7 +584,10 @@ class PrepManageState(State):
         self.menu.draw(surf)
         menus.draw_unit_items(surf, (6, 72), self.menu.get_current(), include_face=True, shimmer=2)
         surf.blit(self.quick_disp, (WINWIDTH//2 + 10, WINHEIGHT//2 + 9))
-        draw_funds(surf)
+        if BEEG_MODE:
+            draw_memory(surf)
+        else:
+            draw_funds(surf)
         return surf
 
 class OptimizeAllChoiceState(State):
