@@ -66,8 +66,13 @@ class AttackerState(SolverState):
                 if solver.attacker.strike_partner and (solver.num_attacks == 1 or can_double_in_pairup):
                     solver.num_subattacks = 0
                     return 'attacker_partner'
-                if solver.item_has_uses() and \
+                elif solver.item_has_uses() and \
                         solver.num_subattacks < self.num_multiattacks:
+                    return 'attacker'
+                elif solver.item_has_uses() and \
+                        solver.attacker_has_desperation() and \
+                        solver.num_attacks < attacker_outspeed:
+                    solver.num_subattacks = 0
                     return 'attacker'
                 elif solver.allow_counterattack() and \
                         solver.num_defends < defender_outspeed:
@@ -152,6 +157,11 @@ class AttackerPartnerState(SolverState):
                 if solver.item_has_uses() and \
                         solver.num_subattacks < self.num_multiattacks:
                     return 'attacker_partner'
+                elif solver.item_has_uses() and \
+                        solver.attacker_has_desperation() and \
+                        solver.num_attacks < attacker_outspeed:
+                    solver.num_subattacks = 0
+                    return 'attacker'
                 elif solver.allow_counterattack() and \
                         solver.num_defends < defender_outspeed:
                     solver.num_subdefends = 0
@@ -225,6 +235,11 @@ class DefenderState(SolverState):
                 if solver.allow_counterattack() and \
                         solver.num_subdefends < self.num_multiattacks:
                     return 'defender'
+                elif solver.allow_counterattack() and \
+                        solver.defender_has_desperation() and \
+                        solver.num_defends < defender_outspeed:
+                    solver.num_subdefends = 0
+                    return 'defender'
                 elif solver.item_has_uses() and \
                         solver.num_attacks < attacker_outspeed:
                     solver.num_subattacks = 0
@@ -283,6 +298,11 @@ class DefenderPartnerState(SolverState):
                 if solver.allow_counterattack() and \
                         solver.num_subdefends < self.num_multiattacks:
                     return 'defender_partner'
+                elif solver.allow_counterattack() and \
+                        solver.defender_has_desperation() and \
+                        solver.num_defends < defender_outspeed:
+                    solver.num_subdefends = 0
+                    return 'defender'
                 elif solver.item_has_uses() and \
                         solver.num_attacks < attacker_outspeed:
                     solver.num_subattacks = 0
@@ -502,6 +522,13 @@ class CombatPhaseSolver():
     def defender_has_vantage(self) -> bool:
         return self.allow_counterattack() and \
             (skill_system.vantage(self.defender) or skill_system.disvantage(self.attacker))
+
+    def attacker_has_desperation(self) -> bool:
+        return skill_system.desperation(self.attacker)
+
+    def defender_has_desperation(self) -> bool:
+        return self.allow_counterattack() and \
+            skill_system.desperation(self.defender)
 
     def allow_counterattack(self) -> bool:
         return combat_calcs.can_counterattack(self.attacker, self.main_item, self.defender, self.def_item)

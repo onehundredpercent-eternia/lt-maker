@@ -229,6 +229,8 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
             name = DB.stats.get(stat_nid).name
             render_text(surf, ['text'], [name], ['yellow'], (8 + stat_offset * x_idx, 16 * y_idx))
             base_value = self.unit.stats.get(stat_nid, 0)
+            subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
+            base_value += subtle_stat_bonus
             contribution = self.unit.stat_contribution(stat_nid)
             contribution['Base Value'] = base_value
             desc_text = curr_stat.desc

@@ -315,7 +315,7 @@ def speak_style(self: Event, style, speaker=None, text_position=None, width=None
     if num_lines:
         style.num_lines = int(num_lines)
     if draw_cursor:
-        style.draw_cursor = bool(draw_cursor)
+        style.draw_cursor = draw_cursor.lower() in self.true_vals
     if message_tail:
         style.message_tail = message_tail
     if transparency is not None:
@@ -414,8 +414,8 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
         lines = default_speak_style.num_lines
 
     if draw_cursor:
-        cursor = bool(draw_cursor)
-    elif speak_style and speak_style.draw_cursor:
+        cursor = draw_cursor.lower() in self.true_vals
+    elif speak_style and speak_style.draw_cursor is not None:
         cursor = speak_style.draw_cursor
     else:
         cursor = default_speak_style.draw_cursor
@@ -459,11 +459,7 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
                           style_nid=style_nid, autosize=autosize, speed=speed,
                           font_color=fcolor, font_type=ftype, num_lines=lines,
                           draw_cursor=cursor, message_tail=tail, transparency=transparency, 
-                          name_tag_bg=nametag)
-        new_dialog.hold = 'hold' in flags
-        if 'no_popup' in flags:
-            new_dialog.last_update = engine.get_time() - 10000
-
+                          name_tag_bg=nametag, flags=flags)
     self.text_boxes.append(new_dialog)
     if 'no_block' not in flags:
         self.state = 'dialog'
