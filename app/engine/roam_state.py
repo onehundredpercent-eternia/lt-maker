@@ -1,3 +1,4 @@
+from ctypes import util
 import logging
 import math
 from typing import Optional, Tuple
@@ -15,20 +16,21 @@ from app.events.regions import RegionType
 from app.utilities import utils
 from app.utilities.direction import Direction
 
+EPSILON = 0.008
 
 EPSILON = 0.008
 
 class FreeRoamState(MapState):
     name = 'free_roam'
+    BASE_ACCEL = 0.008
+    RUNNING_ACCEL = 0.01
 
     def start(self):
         self.roam_unit = None
 
         # speed and direction variables
-        self.speed = 0.00
-        self.vspeed = 0.0
-        self.hspeed = 0.0
-        self.direction = [0, 0]
+        self.velocity: Tuple[int, int] = (0, 0)
+        self.max_speed: float = game.game_vars.get('_roam_speed', 1.0)
 
         # AI manager
         self.ai_handler = roam_ai.FreeRoamAIHandler()
@@ -85,13 +87,10 @@ class FreeRoamState(MapState):
         if not self.roam_unit:
             return
 
-        base_accel = 0.008
-        running_accel = 0.01
-
         if get_input_manager().is_pressed('BACK'):
-            max_speed = 0.15 * game.game_vars.get("_roam_speed", 1.0)
+            self.max_speed = 0.15 * game.game_vars.get("_roam_speed", 1.0)
         else:
-            max_speed = 0.1 * game.game_vars.get("_roam_speed", 1.0)
+            self.max_speed = 0.1 * game.game_vars.get("_roam_speed", 1.0)
 
         # Horizontal direction
         if (get_input_manager().is_pressed('LEFT') or get_input_manager().just_pressed('LEFT')) and self.roam_unit.position[0] > game.board.bounds[0]:
@@ -148,10 +147,8 @@ class FreeRoamState(MapState):
         for region in game.level.regions:
             if region.contains(rounded_position) and region.interrupt_move:
                 current_occupant = game.board.get_unit(rounded_position)
-                if current_occupant:
-                    rounded_position = target_system.get_nearest_open_tile(current_occupant, rounded_position)
-                    if rounded_position:
-                        self.roam_unit.position = rounded_position
+                if current_occupant and rounded_position:
+                    self.roam_unit.position = target_system.get_nearest_open_tile(current_occupant, rounded_position)
                 did_trigger = game.events.trigger(triggers.RoamingInterrupt(self.roam_unit, self.roam_unit.position, region))
                 if did_trigger:
                     self.rationalize()
@@ -208,7 +205,7 @@ class FreeRoamState(MapState):
         else:
             self.roam_unit.sprite.change_state('normal')
             self.roam_unit.sound.stop()
-            self.direction = [0, 0]
+            self.velocity = (0, 0)
 
     def move(self, velocity: Tuple[float, float]):
         if not self.roam_unit:
@@ -277,7 +274,6 @@ class FreeRoamState(MapState):
         """
         Done whenever the roam unit should be returned to a regular unit
         """
-
         for t in self.ai_handler.targets:
             t.ai.stop_unit()
 
