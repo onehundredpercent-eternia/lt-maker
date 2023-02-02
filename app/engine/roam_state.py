@@ -16,12 +16,13 @@ from app.utilities import utils
 from app.utilities.direction import Direction
 
 
+EPSILON = 0.008
+
 class FreeRoamState(MapState):
     name = 'free_roam'
 
     def start(self):
         self.roam_unit = None
-        self.last_move = 0
 
         # speed and direction variables
         self.speed = 0.00
@@ -76,6 +77,7 @@ class FreeRoamState(MapState):
             game.state.back()
             return 'repeat'
 
+        game.camera.force_center(*self.roam_unit.position)
         rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
         game.cursor.set_pos(rounded_pos)
 
@@ -83,7 +85,6 @@ class FreeRoamState(MapState):
         if not self.roam_unit:
             return
 
-        base_speed = 0.008
         base_accel = 0.008
         running_accel = 0.01
 
@@ -94,10 +95,8 @@ class FreeRoamState(MapState):
 
         # Horizontal direction
         if (get_input_manager().is_pressed('LEFT') or get_input_manager().just_pressed('LEFT')) and self.roam_unit.position[0] > game.board.bounds[0]:
-            self.last_move = engine.get_time()
             self.direction[0] = -5
         elif (get_input_manager().is_pressed('RIGHT') or get_input_manager().just_pressed('RIGHT')) and self.roam_unit.position[0] < game.board.bounds[2]:
-            self.last_move = engine.get_time()
             self.direction[0] = 5
 
         if not get_input_manager().is_pressed('RIGHT') and self.direction[0] > 0:
@@ -108,10 +107,8 @@ class FreeRoamState(MapState):
 
         # Vertical direction
         if (get_input_manager().is_pressed('UP') or get_input_manager().just_pressed('UP')) and self.roam_unit.position[1] > game.board.bounds[1]:
-            self.last_move = engine.get_time()
             self.direction[1] = -5
         elif (get_input_manager().is_pressed('DOWN') or get_input_manager().just_pressed('DOWN')) and self.roam_unit.position[1] < game.board.bounds[3]:
-            self.last_move = engine.get_time()
             self.direction[1] = 5
 
         if not get_input_manager().is_pressed('DOWN') and self.direction[1] > 0:
@@ -136,10 +133,6 @@ class FreeRoamState(MapState):
         else:
             self.vspeed = 0.0
 
-        # Actually move the unit
-        if abs(self.hspeed) > base_speed or abs(self.vspeed) > base_speed:
-            self.move((self.hspeed, self.vspeed))
-
         if any((get_input_manager().just_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))) \
                 or any((get_input_manager().is_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))):
             if self.speed < max_speed and get_input_manager().is_pressed('BACK'):
@@ -148,7 +141,7 @@ class FreeRoamState(MapState):
                 self.speed += base_accel
             elif self.speed > max_speed:
                 self.speed -= running_accel
-        elif self.speed >= base_speed or self.speed > max_speed:
+        elif self.speed >= EPSILON or self.speed > max_speed:
             self.speed -= running_accel
 
         rounded_position: Optional[Tuple[int, int]] = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
@@ -208,8 +201,11 @@ class FreeRoamState(MapState):
     def update(self):
         super().update()
         self.ai_handler.update()
-        if self.last_move and engine.get_time() - self.last_move > 166:
-            self.last_move = 0
+
+        velocity = self.hspeed, self.vspeed
+        if utils.magnitude(velocity) > EPSILON:
+            self.move(velocity)
+        else:
             self.roam_unit.sprite.change_state('normal')
             self.roam_unit.sound.stop()
             self.direction = [0, 0]
@@ -293,7 +289,6 @@ class FreeRoamState(MapState):
         self.vspeed = 0
         self.hspeed = 0
         self.roam_unit = None
-        self.last_move = 0
 
         game.state.change('rationalize')
 
