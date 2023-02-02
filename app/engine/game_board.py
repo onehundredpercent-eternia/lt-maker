@@ -97,7 +97,7 @@ class GameBoard(object):
             self.unit_grid[idx].remove(unit)
             self.team_grid[idx].remove(unit.team)
 
-    def get_unit(self, pos: Tuple[int, int]) -> Optional[UnitObject]:
+    def get_unit(self, pos: Optional[Tuple[int, int]]) -> Optional[UnitObject]:
         if not pos:
             return None
         idx = pos[0] * self.height + pos[1]

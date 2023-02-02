@@ -1,6 +1,6 @@
 import logging
 import math
-from typing import Tuple
+from typing import Optional, Tuple
 
 from app.data.database.database import DB
 from app.engine import (action, ai_controller, engine, equations, evaluate,
@@ -86,7 +86,6 @@ class FreeRoamState(MapState):
         base_speed = 0.008
         base_accel = 0.008
         running_accel = 0.01
-        rounded_position = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
 
         if get_input_manager().is_pressed('BACK'):
             max_speed = 0.15 * game.game_vars.get("_roam_speed", 1.0)
@@ -140,7 +139,6 @@ class FreeRoamState(MapState):
         # Actually move the unit
         if abs(self.hspeed) > base_speed or abs(self.vspeed) > base_speed:
             self.move((self.hspeed, self.vspeed))
-            rounded_position = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
 
         if any((get_input_manager().just_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))) \
                 or any((get_input_manager().is_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))):
@@ -153,12 +151,14 @@ class FreeRoamState(MapState):
         elif self.speed >= base_speed or self.speed > max_speed:
             self.speed -= running_accel
 
+        rounded_position: Optional[Tuple[int, int]] = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
         for region in game.level.regions:
             if region.contains(rounded_position) and region.interrupt_move:
                 current_occupant = game.board.get_unit(rounded_position)
                 if current_occupant:
                     rounded_position = target_system.get_nearest_open_tile(current_occupant, rounded_position)
-                    self.roam_unit.position = rounded_position
+                    if rounded_position:
+                        self.roam_unit.position = rounded_position
                 did_trigger = game.events.trigger(triggers.RoamingInterrupt(self.roam_unit, self.roam_unit.position, region))
                 if did_trigger:
                     self.rationalize()

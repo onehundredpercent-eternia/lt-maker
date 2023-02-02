@@ -354,7 +354,7 @@ class RoamPressInfo(EventTrigger):
     """
     nid: ClassVar[NID] = 'roam_press_info'
     unit1: UnitObject
-    unit2: UnitObject
+    unit2: Optional[UnitObject]
 
 @dataclass(init=True)
 class RoamingInterrupt(EventTrigger):
