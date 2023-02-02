@@ -1,16 +1,19 @@
 import logging
 import math
+from typing import Tuple
 
 from app.data.database.database import DB
 from app.engine import (action, ai_controller, engine, equations, evaluate,
                         info_menu, roam_ai, skill_system, target_system)
 from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
+from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.events import triggers
 from app.events.regions import RegionType
 from app.utilities import utils
+from app.utilities.direction import Direction
 
 
 class FreeRoamState(MapState):
@@ -119,29 +122,25 @@ class FreeRoamState(MapState):
             self.direction[1] += 1
 
         # Horizontal speed
-        if self.direction[0] > 0 and self.can_move('RIGHT'):
+        if self.direction[0] > 0:
             self.hspeed = self.speed
-        elif self.direction[0] < 0 and self.can_move('LEFT'):
+        elif self.direction[0] < 0:
             self.hspeed = -self.speed
         else:
             self.hspeed = 0.0
 
         # Vertcal speed
-        if self.direction[1] > 0 and self.can_move('DOWN'):
+        if self.direction[1] > 0:
             self.vspeed = self.speed
-        elif self.direction[1] < 0 and self.can_move('UP'):
+        elif self.direction[1] < 0:
             self.vspeed = -self.speed
         else:
             self.vspeed = 0.0
 
         # Actually move the unit
         if abs(self.hspeed) > base_speed or abs(self.vspeed) > base_speed:
-            self.move(self.hspeed, self.vspeed)
-            self.roam_unit.sprite.change_state('moving')
-            self.roam_unit.sprite.handle_net_position((self.hspeed, self.vspeed))
+            self.move((self.hspeed, self.vspeed))
             rounded_position = (round(self.roam_unit.position[0]), round(self.roam_unit.position[1]))
-
-        game.camera.force_center(*self.roam_unit.position)
 
         if any((get_input_manager().just_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))) \
                 or any((get_input_manager().is_pressed(direction) for direction in ('LEFT', 'RIGHT', 'UP', 'DOWN'))):
@@ -215,41 +214,57 @@ class FreeRoamState(MapState):
             self.roam_unit.sound.stop()
             self.direction = [0, 0]
 
-    def move(self, dx, dy):
+    def move(self, velocity: Tuple[float, float]):
+        if not self.roam_unit:
+            return
         x, y = self.roam_unit.position
+        dx, dy = velocity
+        if dx > 0 and not self.can_move(self.roam_unit, Direction.RIGHT):
+            dx = 0
+        if dx < 0 and not self.can_move(self.roam_unit, Direction.LEFT):
+            dx = 0
+        if dy > 0 and not self.can_move(self.roam_unit, Direction.DOWN):
+            dy = 0
+        if dy < 0 and not self.can_move(self.roam_unit, Direction.UP):
+            dy = 0
         self.roam_unit.position = x + dx, y + dy
         self.roam_unit.sound.play()
-        rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
-        game.cursor.set_pos(rounded_pos)
+        self.roam_unit.sprite.change_state('moving')
+        self.roam_unit.sprite.handle_net_position((self.hspeed, self.vspeed))
+        game.camera.force_center(*self.roam_unit.position)
 
         # update fog of war, need to inject the rounded position for this action
+        rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
         if game.board.fow_vantage_point.get(self.roam_unit.nid) != rounded_pos:
             true_pos = self.roam_unit.position
             self.roam_unit.position = rounded_pos
             action.UpdateFogOfWar(self.roam_unit).do()
             self.roam_unit.position = true_pos  # Remember to reset the position to what we want
 
-    def get_next_location(self, direc: str, pos: tuple):
+    def can_move(self, roam_unit: UnitObject, direc: Direction) -> bool:
         tolerance = 0.4
-        if direc == 'LEFT':
-            check_x = int(round(pos[0] - tolerance))
-            check_y = int(round(pos[1]))
-        elif direc == 'RIGHT':
-            check_x = int(round(pos[0] + tolerance))
-            check_y = int(round(pos[1]))
-        elif direc == 'UP':
-            check_x = int(round(pos[0]))
-            check_y = int(round(pos[1] - tolerance))
-        elif direc == 'DOWN':
-            check_x = int(round(pos[0]))
-            check_y = int(round(pos[1] + tolerance))
-        return check_x, check_y
+        if direc == Direction.LEFT:
+            check_x = int(round(roam_unit.position[0] - tolerance))
+            check_y = int(round(roam_unit.position[1]))
+            mcost = game.movement.get_mcost(roam_unit, (check_x, check_y))
+            return mcost < 99 and self.no_bumps(check_x, check_y)
+        elif direc == Direction.RIGHT:
+            check_x = int(round(roam_unit.position[0] + tolerance))
+            check_y = int(round(roam_unit.position[1]))
+            mcost = game.movement.get_mcost(roam_unit, (check_x, check_y))
+            return mcost < 99 and self.no_bumps(check_x, check_y)
+        elif direc == Direction.UP:
+            check_x = int(round(roam_unit.position[0]))
+            check_y = int(round(roam_unit.position[1] - tolerance))
+            mcost = game.movement.get_mcost(roam_unit, (check_x, check_y))
+            return mcost < 99 and self.no_bumps(check_x, check_y)
+        elif direc == Direction.DOWN:
+            check_x = int(round(roam_unit.position[0]))
+            check_y = int(round(roam_unit.position[1] + tolerance))
+            mcost = game.movement.get_mcost(roam_unit, (check_x, check_y))
+            return mcost < 99 and self.no_bumps(check_x, check_y)
+        return True
 
-    def can_move(self, direc: str) -> bool:
-        pos = (self.roam_unit.position[0] + self.hspeed, self.roam_unit.position[1])
-        check_x, check_y = self.get_next_location(direc, pos)
-        mcost = game.movement.get_mcost(self.roam_unit, (check_x, check_y))
-        return mcost < 99 and self.no_bumps(check_x, check_y)
 
     def no_bumps(self, x: int, y: int) -> bool:
         '''Used to detect if the space is occupied by an impassable unit'''
@@ -270,13 +285,17 @@ class FreeRoamState(MapState):
         for t in self.ai_handler.targets:
             t.ai.stop_unit()
 
-        game.state.change('rationalize')
+        if self.roam_unit:
+            rounded_pos = round(self.roam_unit.position[0]), round(self.roam_unit.position[1])
+            game.cursor.set_pos(rounded_pos)
 
         self.speed = 0
         self.vspeed = 0
         self.hspeed = 0
         self.roam_unit = None
         self.last_move = 0
+
+        game.state.change('rationalize')
 
     def can_talk(self):
         """

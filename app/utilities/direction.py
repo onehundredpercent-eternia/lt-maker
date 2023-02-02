@@ -13,6 +13,7 @@ class Direction(str, Enum):
     SOUTHWEST = 'southwest'
     NORTHWEST = 'northwest'
 
+    NONE = 'none'
     LEFT = 'west'
     UP = 'north'
     RIGHT = 'east'
@@ -103,7 +104,7 @@ class Direction(str, Enum):
             return Direction.NORTHEAST
         elif direction == Direction.NORTHWEST:
             return Direction.SOUTHEAST
-        return None
+        return Direction.NONE
 
     @staticmethod
     def determine(old: Tuple[int, int], new: Tuple[int, int]) -> Direction:
@@ -132,7 +133,7 @@ class Direction(str, Enum):
                 return Direction.CENTER
 
     @staticmethod
-    def sorting_key(direction, size: Tuple[int, int]) -> Callable[Tuple[int, int]]:
+    def sorting_key(direction, size: Tuple[int, int]) -> Callable[[Tuple[int, int]], float]:
         width, height = size
         if direction == Direction.CENTER:
             return lambda x: abs(x[0] - width/2.) + abs(x[1] - height/2.)
