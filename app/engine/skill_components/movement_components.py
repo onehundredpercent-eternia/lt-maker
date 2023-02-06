@@ -34,6 +34,23 @@ class CantoSharp(SkillComponent):
 
     def has_canto(self, unit, unit2) -> bool:
         return not unit.has_attacked or unit.movement_left >= equations.parser.movement(unit)
+        
+class Canter(SkillComponent):
+    nid = 'canter'
+    desc = "Unit can move a specified number of spaces after any action"
+    tag = SkillTags.MOVEMENT
+    
+    expose = ComponentType.Int
+    value = 2
+    
+    def canto_movement(self, unit, unit2) -> int:
+        return self.value
+
+    def has_canto(self, unit, unit2) -> bool:
+        """
+        Can move again after any action, has exactly the number of movement that was determined in the component
+        """
+        return True        
 
 class MovementType(SkillComponent):
     nid = 'movement_type'

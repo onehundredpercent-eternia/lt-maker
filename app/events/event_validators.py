@@ -19,6 +19,7 @@ from app.utilities import str_utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
 from app.events.event_commands import CreateAchievement
+from app.events.regions import RegionType as RegionTypeEnum
 
 class Validator():
     desc = ""
@@ -947,7 +948,7 @@ class RemoveType(OptionValidator):
     valid = ['fade', 'immediate', 'warp', 'swoosh']
 
 class RegionType(OptionValidator):
-    valid = ['normal', 'event', 'status', 'formation', 'time', 'fog', 'vision']
+    valid = [r.value for r in RegionTypeEnum]
 
 class Weather(OptionValidator):
     valid = ["rain", "sand", "snow", "fire", "light", "purple", "dark", "smoke", "night", "sunset", "event_tile", "switch_tile"]

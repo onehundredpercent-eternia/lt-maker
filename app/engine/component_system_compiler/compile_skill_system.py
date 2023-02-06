@@ -15,7 +15,7 @@ exclusive_behaviours += formula
 # Takes in unit and item, returns default value
 item_behaviours = ('modify_buy_price', 'modify_sell_price', 'limit_maximum_range', 'modify_maximum_range', 'wexp_usable_skill', 'wexp_unusable_skill')
 # Takes in unit and target, returns default value
-targeted_behaviours = ('check_ally', 'check_enemy', 'can_trade', 'exp_multiplier', 'enemy_exp_multiplier', 'wexp_multiplier', 'enemy_wexp_multiplier', 'has_canto', 'empower_heal', 'empower_heal_received')
+targeted_behaviours = ('check_ally', 'check_enemy', 'can_trade', 'exp_multiplier', 'enemy_exp_multiplier', 'wexp_multiplier', 'enemy_wexp_multiplier', 'has_canto', 'empower_heal', 'empower_heal_received', 'canto_movement')
 # Takes in unit, item returns bonus
 modify_hooks = (
     'modify_damage', 'modify_resist', 'modify_accuracy', 'modify_avoid',
@@ -152,7 +152,7 @@ def %s(unit, item, target, mode, attack_info, base_value):
     for hook in simple_event_hooks:
         func = """
 def %s(unit):
-    for skill in unit.skills:
+    for skill in unit.skills[:]:
         for component in skill.components:
             if component.defines('%s'):
                 if component.ignore_conditional or condition(skill, unit):
@@ -164,7 +164,7 @@ def %s(unit):
     for hook in combat_event_hooks:
         func = """
 def %s(playback, unit, item, target, mode):
-    for skill in unit.skills:
+    for skill in unit.skills[:]:
         for component in skill.components:
             if component.defines('%s'):
                 if component.ignore_conditional or condition(skill, unit, item):
@@ -188,7 +188,7 @@ def %s(playback, unit, item, target, mode):
     for hook in subcombat_event_hooks:
         func = """
 def %s(actions, playback, unit, item, target, mode, attack_info):
-    for skill in unit.skills:
+    for skill in unit.skills[:]:
         for component in skill.components:
             if component.defines('%s'):
                 if component.ignore_conditional or condition(skill, unit, item):
@@ -200,7 +200,7 @@ def %s(actions, playback, unit, item, target, mode, attack_info):
     for hook in item_event_hooks:
         func = """
 def %s(unit, item):
-    for skill in unit.skills:
+    for skill in unit.skills[:]:
         for component in skill.components:
             if component.defines('%s'):
                 if component.ignore_conditional or condition(skill, unit, item):

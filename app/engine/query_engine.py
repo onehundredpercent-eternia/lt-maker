@@ -346,9 +346,33 @@ Example usage:
         """
         return self._resolve_to_unit(unit)
 
+    @categorize(QueryType.UNIT)
+    def get_support_rank(self, unit1, unit2) -> Optional[NID]:
+        """Returns the most recently obtained support rank between two units.
+
+        Args:
+            unit1: unit in the support pair
+            unit2: the other unit in the support pair
+
+        Returns:
+            Rank nid: if the two units have achieved a support rank.
+            none: if the support pair is invalid or no rank has been obtained
+        """
+        unit1 = self._resolve_to_nid(unit1)
+        unit2 = self._resolve_to_nid(unit2)
+        
+        support_pair = self.game.supports.get(unit1, unit2)
+        if support_pair and support_pair.unlocked_ranks:
+            most_recent_rank = support_pair.unlocked_ranks[-1]
+            return most_recent_rank
+        else: # no support exists, or no support is unlocked
+            return None
+
     @categorize(QueryType.VARIABLES)
     def v(self, varname, fallback=None) -> Any:
-        """shorthand for game.game_vars.get. Fetches the variable
+        """shorthand for game.level_vars.get and game.game_vars.get. Fetches the variable
+        if game.level_vars and game.game_vars share an identical name,
+        game.level_vars takes priority
 
         Args:
             varname: name of the variable
@@ -357,7 +381,10 @@ Example usage:
         Returns:
             Any: the value of the variable
         """
-        return self.game.game_vars.get(varname, fallback)
+        var = self.game.level_vars.get(varname, None)
+        if var is None:
+            var = self.game.game_vars.get(varname, fallback)
+        return var
 
     @categorize(QueryType.ACHIEVEMENT)
     def has_achievement(self, nid) -> bool:

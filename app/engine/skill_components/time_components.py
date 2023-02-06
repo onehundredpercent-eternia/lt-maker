@@ -143,20 +143,24 @@ class LostOnEndCombat(SkillComponent):
 
     def post_combat(self, playback, unit, item, target, mode):
         from app.engine import skill_system
+        remove_skill = False
         if self.values.get('LostOnSelf (T/F)', 'T') == 'T':
             if unit == target:
-                action.do(action.RemoveSkill(unit, self.skill))
+                remove_skill = True
         if self.values.get('LostOnAlly (T/F)', 'T') == 'T':
             if target:
                 if skill_system.check_ally(unit, target):
-                    action.do(action.RemoveSkill(unit, self.skill))
+                    remove_skill = True
         if self.values.get('LostOnEnemy (T/F)', 'T') == 'T':
             if target:
                 if skill_system.check_enemy(unit, target):
-                    action.do(action.RemoveSkill(unit, self.skill))
+                    remove_skill = True
         if self.values.get('LostOnSplash (T/F)', 'T') == 'T':
             if not target:
-                action.do(action.RemoveSkill(unit, self.skill))
+                remove_skill = True
+
+        if remove_skill:
+            action.do(action.RemoveSkill(unit, self.skill))
 
     def on_end_chapter(self, unit, skill):
         action.do(action.RemoveSkill(unit, self.skill))

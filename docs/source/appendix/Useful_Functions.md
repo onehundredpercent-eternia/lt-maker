@@ -288,6 +288,24 @@ Shorthand for game.get_unit. Fetches the unit object.
         
   ---------------------
 
+  ---------------------
+
+
+#### Get Support Rank
+
+    get_support_rank(unit1, unit2) 
+		-> 'Optional[NID]'
+
+Returns the most recently unlocked support rank between unit1 and unit2.
+
+        Args:
+            unit1: unit in support pair
+			unit2: the other unit in support pair
+
+        Returns:
+            Optional[NID]: the support rank nid for the two units, if exists, else None
+        
+  ---------------------
 
 ## VARIABLES
 

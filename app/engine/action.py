@@ -103,8 +103,8 @@ def recalculate_unit(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
         self = args[0]
+        self.unit.autoequip()
         if self.unit.position and game.tilemap and game.boundary:
-            self.unit.autoequip()
             game.boundary.recalculate_unit(self.unit)
     return wrapper
 
@@ -504,6 +504,18 @@ class SetLevelVar(Action):
     def reverse(self):
         game.level_vars[self.nid] = self.old_val
         self._update_fog_of_war()
+
+class SetMovementLeft(Action):
+    def __init__(self, unit, val):
+        self.unit = unit
+        self.val = val
+        self.old_val = unit.movement_left
+
+    def do(self):
+        self.unit.movement_left = self.val
+
+    def reverse(self):
+        self.unit.movement_left = self.old_val
 
 class Wait(Action):
     def __init__(self, unit):
@@ -1296,13 +1308,22 @@ class UnequipItem(Action):
         self.unit = unit
         self.item = item
         self.is_equipped_weapon = self.item is self.unit.equipped_weapon
+        self.is_equipped_accesory = self.item is self.unit.equipped_accessory
 
     def do(self):
-        if self.is_equipped_weapon:
+        if self.is_equipped_weapon or self.is_equipped_accesory:
             self.unit.unequip(self.item)
 
+            # Unequip now auto-equips the next valid item
+            all_items = item_funcs.get_all_items(self.unit)
+            for item in all_items:
+                if item is not self.item and (item_system.is_accessory(self.unit, item) ^ self.is_equipped_weapon):
+                    if self.unit.can_equip(item):
+                        self.unit.equip(item)
+                        break
+
     def reverse(self):
-        if self.is_equipped_weapon:
+        if self.is_equipped_weapon or self.is_equipped_accesory:
             self.unit.equip(self.item)
 
 
@@ -1347,12 +1368,12 @@ class TradeItem(Action):
         all_items = item_funcs.get_all_items(unit)
         for item in all_items:
             if not item_system.is_accessory(unit, item):
-                if item_system.equippable(unit, item) and item_funcs.available(unit, item):
+                if unit.can_equip(item):
                     self.subactions.append(EquipItem(unit, item))
                     break
         for item in all_items:
             if item_system.is_accessory(unit, item):
-                if item_system.equippable(unit, item) and item_funcs.available(unit, item):
+                if unit.can_equip(item):
                     self.subactions.append(EquipItem(unit, item))
                     break
         # keep accessories sorted after items
@@ -2044,8 +2065,11 @@ class Die(Action):
         self.unit = unit
         self.old_pos = unit.position
         self.leave_map = LeaveMap(self.unit)
-        self.lock_all_support_ranks = \
-            [LockAllSupportRanks(pair.nid) for pair in game.supports.get_pairs(self.unit.nid)]
+        if DB.support_constants.value('break_supports_on_death') and not game.current_mode.permadeath:
+            self.lock_all_support_ranks = \
+                [LockAllSupportRanks(pair.nid) for pair in game.supports.get_pairs(self.unit.nid)]
+        else:
+            self.lock_all_support_ranks = []
         self.drop = None
 
         self.initiative_action = None
@@ -2456,6 +2480,20 @@ class SetGameBoardBounds(Action):
     def reverse(self):
         game.board.set_bounds(*self.old_bounds)
 
+def _region_leave(region):
+    # Force all affected units to leave
+    region_positions = region.get_all_positions()
+    for unit in game.units:
+        if unit.position in region_positions:
+            game.leave(unit)
+
+def _region_arrive(region):
+    # Force all affected units to arrive
+    region_positions = region.get_all_positions()
+    for unit in game.units:
+        if unit.position in region_positions:
+            game.arrive(unit)
+
 class AddRegion(Action):
     def __init__(self, region):
         self.region = region
@@ -2467,6 +2505,9 @@ class AddRegion(Action):
         if self.region.nid in game.level.regions:
             logging.warning("AddRegion Action: RegionObject with nid %s already in level", self.region.nid)
         else:
+            if self.region.region_type == RegionType.TERRAIN:
+                _region_leave(self.region)
+
             game.get_region_under_pos.cache_clear()
             game.level.regions.append(self.region)
             self.did_add = True
@@ -2478,6 +2519,12 @@ class AddRegion(Action):
                         add_skill_action = game.add_region_status(unit, self.region, False)
                         if add_skill_action:
                             self.subactions.append(add_skill_action)
+
+            # Reset movement and opacity grids
+            elif self.region.region_type == RegionType.TERRAIN:
+                game.board.reset_grid(game.level.tilemap)
+                game.boundary.reset()
+                _region_arrive(self.region)
 
             # Update fog of war if appropriate
             elif self.region.region_type == RegionType.FOG:
@@ -2491,10 +2538,19 @@ class AddRegion(Action):
 
     def reverse(self):
         if self.did_add:
+            if self.region.region_type == RegionType.TERRAIN:
+                _region_leave(self.region)
+
             for act in self.subactions:
                 act.reverse()
             game.get_region_under_pos.cache_clear()
             game.level.regions.delete(self.region)
+
+            # Reset movement and opacity grids
+            if self.region.region_type == RegionType.TERRAIN:
+                game.board.reset_grid(game.level.tilemap)
+                game.boundary.reset()
+                _region_arrive(self.region)
 
 class ChangeRegionCondition(Action):
     def __init__(self, region, condition):
@@ -2513,10 +2569,10 @@ class DecrementTimeRegion(Action):
         self.region = region
 
     def do(self):
-        self.region.sub_nid = int(self.region.sub_nid) - 1
+        self.region.time_left = self.region.time_left - 1
 
     def reverse(self):
-        self.region.sub_nid = int(self.region.sub_nid) + 1
+        self.region.time_left = self.region.time_left + 1
 
 class RemoveRegion(Action):
     def __init__(self, region):
@@ -2541,22 +2597,40 @@ class RemoveRegion(Action):
                 update_fow_action = RemoveVisionRegion(self.region)
                 self.subactions.append(update_fow_action)
 
+            if self.region.region_type == RegionType.TERRAIN:
+                _region_leave(self.region)
+
             for act in self.subactions:
                 act.do()
 
             game.get_region_under_pos.cache_clear()
             game.level.regions.delete(self.region)
             self.did_remove = True
+
+            # Reset movement and opacity grids
+            if self.region.region_type == RegionType.TERRAIN:
+                game.board.reset_grid(game.level.tilemap)
+                game.boundary.reset()
+                _region_arrive(self.region)
         else:
             logging.error("RemoveRegion Action: Could not find region with nid %s", self.region.nid)
 
     def reverse(self):
         if self.did_remove:
+            if self.region.region_type == RegionType.TERRAIN:
+                _region_leave(self.region)
+
             game.get_region_under_pos.cache_clear()
             game.level.regions.append(self.region)
 
             for act in self.subactions:
                 act.reverse()
+
+            # Reset movement and opacity girds
+            if self.region.region_type == RegionType.TERRAIN:
+                game.board.reset_grid(game.level.tilemap)
+                game.boundary.reset()
+                _region_arrive(self.region)
 
 class AddFogRegion(Action):
     def __init__(self, region):

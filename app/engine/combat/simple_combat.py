@@ -43,7 +43,7 @@ class SimpleCombat():
                     s.append(unit)
             self.splashes.append(s)
 
-        # All splash is the flattened version of self.splashes
+        # All splash is the flattened version of self.splashes with no duplicates
         all_splash = [a for sublist in self.splashes for a in sublist]  # Flatten list
         self.all_splash = list(set([s for s in all_splash if s]))
 
@@ -321,6 +321,7 @@ class SimpleCombat():
             elif skill_system.has_canto(self.attacker, self.defender):
                 game.cursor.set_pos(self.attacker.position)
                 game.state.change('move')
+                action.do(action.SetMovementLeft(self.attacker, skill_system.canto_movement(self.attacker, self.defender)))
                 game.cursor.place_arrows()
 
             else:

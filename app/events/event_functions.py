@@ -744,6 +744,7 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
         reload_map_nid = tilemap_nid
 
     reload_map = 'reload' in flags
+    # For Overworld
     if reload_map and self.game.is_displaying_overworld(): # just go back to the level
         from app.engine import level_cursor, map_view, movement
         self.game.cursor = level_cursor.LevelCursor(self.game)
@@ -775,6 +776,16 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     current_tilemap_nid = self.game.level.tilemap.nid
     self.game.level_vars['_prev_pos_%s' % current_tilemap_nid] = previous_unit_pos
 
+    # Remove all regions from the map
+    # But remember their original positions for later
+    previous_region_pos = {}
+    for region in list(self.game.level.regions):
+        if region.position:
+            previous_region_pos[region.nid] = region.position
+            act = action.RemoveRegion(region)
+            act.execute()
+    self.game.level_vars['_prev_region_%s' % current_tilemap_nid] = previous_region_pos
+
     tilemap = TileMapObject.from_prefab(tilemap_prefab)
     self.game.level.tilemap = tilemap
     if self.game.is_displaying_overworld():
@@ -793,6 +804,13 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
             if self.game.tilemap.check_bounds(final_pos):
                 unit = self.game.get_unit(unit_nid)
                 act = action.ArriveOnMap(unit, final_pos)
+                act.execute()
+
+        for region_nid, pos in self.game.level_vars['_prev_region_%s' % reload_map_nid].items():
+            region = self.game.get_region(region_nid)
+            if region:
+                region.position = pos[0] + position_offset[0], pos[1] + position_offset[1]
+                act = action.AddRegion(region)
                 act.execute()
 
     # Can't use turnwheel to go any further back
@@ -1431,21 +1449,16 @@ def equip_item(self: Event, global_unit, item, flags=None):
         return
     if item.multi_item:
         for subitem in item.subitems:
-            if item_system.equippable(unit, subitem) and item_system.available(unit, subitem):
+            if unit.can_equip(subitem):
                 equip_action = action.EquipItem(unit, subitem)
                 action.do(equip_action)
                 return
         self.logger.error("equip_item: No valid subitem to equip in %s" % item.nid)
+    elif unit.can_equip(item):
+        equip_action = action.EquipItem(unit, item)
+        action.do(equip_action)
     else:
-        if not item_system.equippable(unit, item):
-            self.logger.error("equip_item: %s is not an item that can be equipped" % item.nid)
-            return
-        if not item_system.available(unit, item):
-            self.logger.error("equip_item: %s is unable to equip %s" % (unit.nid, item.nid))
-            return
-    equip_action = action.EquipItem(unit, item)
-    action.do(equip_action)
-
+        self.logger.error("equip_item: %s is not an item that can be equipped" % item.nid)
 
 def remove_item(self: Event, global_unit_or_convoy, item, flags=None):
     flags = flags or set()
@@ -1658,7 +1671,10 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
         owner_nid = unit.nid
     action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
     if 'equip' in flags and owner_nid:
-        action.do(action.EquipItem(unit, subitem))
+        if unit.can_equip(subitem):
+            action.do(action.EquipItem(unit, subitem))
+        else:
+            self.logger.error("add_item_to_multiitem: Subitem %s could not be equipped" % subitem)
 
 def remove_item_from_multiitem(self: Event, global_unit_or_convoy, multi_item, child_item=None, flags=None):
     unit, item = self._get_item_in_inventory(global_unit_or_convoy, multi_item)
@@ -2306,7 +2322,7 @@ def remove_market_item(self: Event, item, stock=None, flags=None):
 def clear_market_items(self: Event, flags=None):
     self.game.market_items.clear()
 
-def add_region(self: Event, region, position, size, region_type, string=None, flags=None):
+def add_region(self: Event, region, position, size, region_type, string=None, time_left=None, flags=None):
     flags = flags or set()
 
     if region in self.game.level.regions.keys():
@@ -2323,6 +2339,7 @@ def add_region(self: Event, region, position, size, region_type, string=None, fl
     new_region.position = position
     new_region.size = size
     new_region.sub_nid = sub_region_type
+    new_region.time_left = time_left
 
     if 'only_once' in flags:
         new_region.only_once = True

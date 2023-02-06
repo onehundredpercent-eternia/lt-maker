@@ -559,10 +559,15 @@ class InfoMenuState(State):
             help_box = help_menu.StatDialog('%s_desc' % stat_nid, contribution)
             self.info_graph.register((96 + 72, 16 * idx + 24, 64, 16), help_box, state)
 
-        other_stats = ['TRV', 'AID', 'RAT']
+        other_stats = ['RAT']
+        if DB.constants.value('pairup') and DB.constants.value('attack_stance_only'):
+            pass
+        else:
+            other_stats.insert(0, 'AID')
+            other_stats.insert(0, 'TRV')
         if self.unit.get_max_mana() > 0:
             other_stats.insert(0, 'MANA')
-        if DB.constants.value('pairup'):
+        if DB.constants.value('pairup') and not DB.constants.value('attack_stance_only'):
             other_stats.insert(2, 'GAUGE')
         other_stats = other_stats[:6 - len(right_stats)]
 
