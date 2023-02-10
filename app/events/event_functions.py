@@ -223,6 +223,8 @@ def move_portrait(self: Event, portrait, screen_position, speed_mult=1, flags=No
     if 'immediate' in flags or self.do_skip:
         portrait.quick_move(position)
     else:
+        if not speed_mult:
+            speed_mult = 1
         portrait.move(position, float(speed_mult))
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
@@ -1594,6 +1596,32 @@ def set_item_data(self: Event, global_unit_or_convoy, item, nid, expression, fla
         return
 
     action.do(action.SetObjData(item, nid, data_value))
+    
+def break_item(self: Event, global_unit_or_convoy, item, flags=None):
+    flags = flags or set()
+    global_unit = global_unit_or_convoy
+    
+    banner_flag = 'no_banner' not in flags
+
+    unit, item = self._get_item_in_inventory(global_unit, item)
+    if not unit or not item:
+        self.logger.error("break_item: Either unit or item was invalid, see above")
+        return
+
+    if 'starting_uses' in item.data:
+        action.do(action.SetObjData(item, 'uses', 0))
+    elif 'starting_c_uses' in item.data:
+        action.do(action.SetObjData(item, 'c_uses', 0))
+    else:
+        self.logger.error("break_item: Item %s does not have uses!" % item.nid)
+        return
+        
+    alert = item_system.on_broken(unit, item)
+    if alert and unit.team == 'player' and banner_flag:
+        self.game.alerts.append(banner.BrokenItem(unit, item))
+        self.game.state.change('alert')
+        self.state = 'paused'
+
 
 def give_grave_item(self: Event, global_unit, item, flags=None):
     unit = self._get_unit(global_unit)
@@ -1860,7 +1888,7 @@ def give_skill(self: Event, global_unit, skill, initiator=None, flags=None):
 
 def remove_skill(self: Event, global_unit, skill, count='-1', flags=None):
     flags = flags or set()
-    count = int(count)
+    count = int(count) if count else -1
 
     unit = self._get_unit(global_unit)
     if not unit:
