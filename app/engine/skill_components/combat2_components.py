@@ -136,6 +136,8 @@ class Armsthrift(SkillComponent):
     value = 1
 
     def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
+        if item_system.unrepairable(unit, item):
+            return  # Don't restore for unrepairable items
         # Handles Uses
         if item.data.get('uses', None) and item.data.get('starting_uses', None):
             curr_uses = item.data.get('uses')
@@ -146,6 +148,11 @@ class Armsthrift(SkillComponent):
             curr_uses = item.data.get('c_uses')
             max_uses = item.data.get('starting_c_uses')
             actions.append(action.SetObjData(item, 'c_uses', min(curr_uses + self.value - 1, max_uses)))
+
+    def after_miss(self, actions, playback, unit, item, target, mode, attack_info):
+        if item and item.uses_options and item.uses_options.lose_uses_on_miss():
+            self.after_hit(actions, playback, unit, item, target, mode, attack_info)
+
 
 class LimitMaximumRange(SkillComponent):
     nid = 'limit_maximum_range'

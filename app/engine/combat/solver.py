@@ -492,6 +492,7 @@ class CombatPhaseSolver():
                 skill_system.after_take_hit(actions, playback, defender, def_item, attacker, mode, attack_info)
         else:
             item_system.on_miss(actions, playback, attacker, item, defender, def_pos, mode, attack_info, first_item)
+            item_system.after_miss(actions, playback, attacker, item, defender, mode, attack_info)
             skill_system.after_take_miss(actions, playback, defender, def_item, attacker, mode, attack_info)
             if defender:
                 playback.append(pb.MarkMiss(attacker, defender, self.attacker, item))
