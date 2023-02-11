@@ -318,6 +318,16 @@ def after_hit(actions, playback, unit, item, target, mode, attack_info):
             if component.defines('after_hit'):
                 component.after_hit(actions, playback, unit, item.parent_item, target, mode, attack_info)
 
+def after_miss(actions, playback, unit, item, target, mode, attack_info):
+    all_components = get_all_components(unit, item)
+    for component in all_components:
+        if component.defines('after_miss'):
+            component.after_miss(actions, playback, unit, item, target, mode, attack_info)
+    if item.parent_item:
+        for component in item.parent_item.components:
+            if component.defines('after_miss'):
+                component.after_miss(actions, playback, unit, item.parent_item, target, mode, attack_info)
+
 def on_hit(actions, playback, unit, item, target, target_pos, mode, attack_info, first_item):
     all_components = get_all_components(unit, item)
     for component in all_components:
