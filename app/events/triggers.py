@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
@@ -151,7 +151,7 @@ class UnitWait(EventTrigger):
     nid: ClassVar[NID] = 'unit_wait'
     unit1: UnitObject
     position: Tuple[int, int]
-    region: RegionObject
+    region: Optional[RegionObject]
 
 @dataclass(init=True)
 class UnitSelect(EventTrigger):
