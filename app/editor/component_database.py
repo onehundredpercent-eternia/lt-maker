@@ -1,4 +1,6 @@
 from functools import partial
+from typing import Any, Dict
+from app.editor.component_subcomponent_editors import get_editor_widget
 
 from app.utilities import utils
 from app.data.database.components import ComponentType
@@ -14,8 +16,8 @@ from app.extensions.list_widgets import (AppendMultiListWidget,
 from app.extensions.widget_list import WidgetList
 from app.data.resources.resources import RESOURCES
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import (QDoubleSpinBox, QHBoxLayout,
+from PyQt5.QtGui import QColor, QIcon, QPalette
+from PyQt5.QtWidgets import (QApplication, QDoubleSpinBox, QHBoxLayout, QVBoxLayout,
                              QItemDelegate, QLabel, QLineEdit, QListWidgetItem,
                              QSpinBox, QToolButton, QWidget)
 
@@ -24,12 +26,23 @@ MAX_DROP_DOWN_WIDTH = 640
 DROP_DOWN_BUFFER = 24
 
 class ComponentList(WidgetList):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.order_swapped.connect(self.rerender)
+        palette = QApplication.palette()
+        self.bg_color = palette.color(QPalette.Base)
+        self.highlight_color = palette.color(QPalette.AlternateBase)
+
     def add_component(self, component):
         item = QListWidgetItem()
         item.setSizeHint(component.sizeHint())
         self.addItem(item)
         self.setItemWidget(item, component)
         self.index_list.append(component.data.nid)
+        if len(self.index_list) % 2 == 0:
+            item.setBackground(self.highlight_color)
+        else:
+            item.setBackground(self.bg_color)
         return item
 
     def remove_component(self, component):
@@ -38,6 +51,14 @@ class ComponentList(WidgetList):
             self.index_list.remove(component.data.nid)
             return self.takeItem(idx)
         return None
+
+    def rerender(self, start, row):
+        for idx in range(self.count()):
+            item = self.item(idx)
+            if idx % 2 == 0:
+                item.setBackground(self.highlight_color)
+            else:
+                item.setBackground(self.bg_color)
 
 class BoolItemComponent(QWidget):
     delegate = None
@@ -149,7 +170,7 @@ class DropDownItemComponent(BoolItemComponent):
     def on_value_changed(self, val):
         self._data.value = self.options[val]
 
-class OptionsItemComponent(BoolItemComponent):
+class DeprecatedOptionsItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         if not self._data.value:
             self._data.value = []
@@ -171,6 +192,15 @@ class OptionsItemComponent(BoolItemComponent):
                 return editor
             else:
                 return super().createEditor(parent, option, index)
+
+class BetterOptionsItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        options: Dict[str, ComponentType] = self._data.options
+        vbox = QVBoxLayout()
+        for field_name, component_type in options.items():
+            editor = get_editor_widget(field_name, component_type, self._data.value)
+            vbox.addWidget(editor)
+        hbox.addLayout(vbox)
 
 class WeaponTypeItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
@@ -569,7 +599,9 @@ def get_display_widget(component, parent):
     elif component.expose == ComponentType.MovementType:
         c = MovementTypeItemComponent(component, parent)
     elif component.expose == ComponentType.MultipleOptions:
-        c = OptionsItemComponent(component, parent)
+        c = DeprecatedOptionsItemComponent(component, parent)
+    elif component.expose == ComponentType.NewMultipleOptions:
+        c = BetterOptionsItemComponent(component, parent)
 
     elif isinstance(component.expose, tuple):
         delegate = None

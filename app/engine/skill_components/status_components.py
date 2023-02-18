@@ -3,7 +3,7 @@ import random
 from app.data.database.skill_components import SkillComponent, SkillTags
 from app.data.database.components import ComponentType
 
-from app.engine import equations, action
+from app.engine import equations, action, skill_system
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
 from app.utilities import static_random
@@ -121,6 +121,7 @@ class UpkeepDamage(SkillComponent):
         actions.append(action.ChangeHP(unit, hp_change))
         actions.append(action.TriggerCharge(unit, self.skill))
         self._playback_processing(playback, unit, hp_change)
+        skill_system.after_take_hit(actions, playback, unit, None, None, 'defense', (0, 0))
 
 class EndstepDamage(UpkeepDamage, SkillComponent):
     nid = 'endstep_damage'
@@ -138,6 +139,7 @@ class EndstepDamage(UpkeepDamage, SkillComponent):
         actions.append(action.ChangeHP(unit, hp_change))
         actions.append(action.TriggerCharge(unit, self.skill))
         self._playback_processing(playback, unit, hp_change)
+        skill_system.after_take_hit(actions, playback, unit, None, None, 'defense', (0, 0))
 
 class GBAPoison(SkillComponent):
     nid = 'gba_poison'

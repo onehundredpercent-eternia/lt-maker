@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
     from app.engine.objects.unit import UnitObject
     from app.engine.objects.region import RegionObject
+    from app.engine.combat.playback import PlaybackBrush
 
 from app.utilities.typing import NID
 
@@ -216,12 +217,14 @@ class CombatEnd(EventTrigger):
         unit2: the target of the combat (can be None).
         item: the item/ability used by unit1.
         position: contains the position of unit1.
+        playback: a list of the playback brushes from the combat.
     """
     nid: ClassVar[NID] = 'combat_end'
     unit1: UnitObject
     unit2: UnitObject
     position: Tuple[int, int]
     item: ItemObject
+    playback: List[PlaybackBrush]
 
 @dataclass(init=True)
 class OnTalk(EventTrigger):

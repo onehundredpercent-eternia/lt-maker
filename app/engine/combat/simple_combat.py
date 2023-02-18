@@ -126,7 +126,7 @@ class SimpleCombat():
         self.turnwheel_death_messages(all_units)
 
         self.handle_state_stack()
-        game.events.trigger(triggers.CombatEnd(self.attacker, self.defender, self.attacker.position, self.main_item))
+        game.events.trigger(triggers.CombatEnd(self.attacker, self.defender, self.attacker.position, self.main_item, self.full_playback))
         self.handle_item_gain(all_units)
 
         pairs = self.handle_supports(all_units)
@@ -523,6 +523,13 @@ class SimpleCombat():
 
             enemies = all_units.copy()
             enemies.remove(self.attacker)
+            if DB.constants.value('pairup'):
+                if self.attacker.traveler:
+                    partner = game.get_unit(self.attacker.traveler)
+                    if partner and partner in enemies:
+                        enemies.remove(partner)
+                if self.attacker.strike_partner and self.attacker.strike_partner in enemies:
+                    enemies.remove(self.attacker.strike_partner)
             for unit in enemies:
                 if supports.increment_interact_supports(self.attacker, unit):
                     pairs.append((self.attacker, unit))
@@ -530,8 +537,9 @@ class SimpleCombat():
             if DB.constants.value('pairup'):
                 for unit in all_units:
                     if unit.traveler:
-                        if supports.increment_pairup_supports(unit, unit.traveler):
-                            pairs.append((unit, unit.traveler))
+                        partner = game.get_unit(unit.traveler)
+                        if supports.increment_pairup_supports(unit, partner):
+                            pairs.append((unit, partner))
                     if unit.strike_partner:
                         if supports.increment_pairup_supports(unit, unit.strike_partner):
                             pairs.append((unit, unit.strike_partner))

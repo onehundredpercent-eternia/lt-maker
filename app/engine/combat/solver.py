@@ -515,10 +515,10 @@ class CombatPhaseSolver():
             playback.append(pb.MarkHit(attacker, defender, self.attacker, item, False))
 
     def attacker_alive(self):
-        return self.attacker.get_hp() > 0
+        return self.attacker.get_hp() > 0 or skill_system.ignore_dying_in_combat(self.attacker)
 
     def defender_alive(self):
-        return self.defender and self.defender.get_hp() > 0
+        return self.defender and (self.defender.get_hp() > 0 or skill_system.ignore_dying_in_combat(self.defender))
 
     def defender_has_vantage(self) -> bool:
         return self.allow_counterattack() and \

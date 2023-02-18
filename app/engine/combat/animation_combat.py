@@ -423,13 +423,21 @@ class AnimationCombat(BaseCombat, MockCombat):
             # Get new battle anims
             if not self._skip:
                 if not self.left.is_dying:
-                    self.left_battle_anim = battle_animation.get_battle_anim(self.left, self.left_item, self.distance, allow_revert=True)
+                    new_left_battle_anim = battle_animation.get_battle_anim(self.left, self.left_item, self.distance, allow_revert=True)
+                    if new_left_battle_anim:  # Need to check that the new animation actually exists
+                        self.left_battle_anim = new_left_battle_anim
                 if not self.right.is_dying:
-                    self.right_battle_anim = battle_animation.get_battle_anim(self.right, self.right_item, self.distance, allow_revert=True)
+                    new_right_battle_anim = battle_animation.get_battle_anim(self.right, self.right_item, self.distance, allow_revert=True)
+                    if new_right_battle_anim:
+                        self.right_battle_anim = new_right_battle_anim
                 if self.lp_battle_anim:
-                    self.lp_battle_anim = battle_animation.get_battle_anim(self.left_partner, self.left_partner.get_weapon(), self.distance, allow_revert=True)
+                    new_lp_battle_anim = battle_animation.get_battle_anim(self.left_partner, self.left_partner.get_weapon(), self.distance, allow_revert=True)
+                    if new_lp_battle_anim:
+                        self.lp_battle_anim = new_lp_battle_anim
                 if self.rp_battle_anim:
-                    self.rp_battle_anim = battle_animation.get_battle_anim(self.right_partner, self.right_partner.get_weapon(), self.distance, allow_revert=True)
+                    new_rp_battle_anim = battle_animation.get_battle_anim(self.right_partner, self.right_partner.get_weapon(), self.distance, allow_revert=True)
+                    if new_rp_battle_anim:
+                        self.rp_battle_anim = new_rp_battle_anim
                 # re-pair
                 self.pair_battle_animations(0)
                 if self.left_battle_anim.is_transform():
@@ -1124,7 +1132,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.turnwheel_death_messages(all_units)
 
         self.handle_state_stack()
-        game.events.trigger(triggers.CombatEnd(self.attacker, self.defender, self.attacker.position, self.main_item))
+        game.events.trigger(triggers.CombatEnd(self.attacker, self.defender, self.attacker.position, self.main_item, self.full_playback))
         self.handle_item_gain(all_units)
 
         pairs = self.handle_supports(all_units)
