@@ -583,20 +583,14 @@ class ResetUnitVars(Action):
         self.unit = unit
         self.old_current_hp = self.unit.get_hp()
         self.old_current_mana = self.unit.get_mana()
-        self.old_movement_left = self.unit.movement_left
-        self.old_possible_movement = equations.parser.movement(self.unit)
 
     def do(self):
         self.unit.set_hp(min(self.unit.get_hp(), equations.parser.hitpoints(self.unit)))
         self.unit.set_mana(min(self.unit.get_mana(), equations.parser.get_mana(self.unit)))
-        new_possible_movement = equations.parser.movement(self.unit)
-        movement_diff = new_possible_movement - self.old_possible_movement
-        self.unit.movement_left = min(self.unit.movement_left + movement_diff, new_possible_movement)
 
     def reverse(self):
         self.unit.set_hp(self.old_current_hp)
         self.unit.set_mana(self.old_current_mana)
-        self.unit.movement_left = self.old_movement_left
 
 
 class SetPreviousPosition(Action):

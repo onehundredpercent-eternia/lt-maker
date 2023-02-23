@@ -435,7 +435,7 @@ class SupportDisplay():
                     other_unit = game.get_unit(other_unit_nid)
                     if other_unit.dead:
                         map_sprite = other_unit.sprite.create_image('gray')
-                    elif self.char_idx - start_index == idx:
+                    elif self.draw_cursor and self.char_idx - start_index == idx:
                         map_sprite = other_unit.sprite.create_image('active')
                     else:
                         map_sprite = other_unit.sprite.create_image('passive')

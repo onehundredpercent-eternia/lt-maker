@@ -21,9 +21,7 @@ from PyQt5.QtWidgets import (QApplication, QDoubleSpinBox, QHBoxLayout, QVBoxLay
                              QItemDelegate, QLabel, QLineEdit, QListWidgetItem,
                              QSpinBox, QToolButton, QWidget)
 
-MIN_DROP_DOWN_WIDTH = 120
-MAX_DROP_DOWN_WIDTH = 640
-DROP_DOWN_BUFFER = 24
+from app.editor.editor_constants import MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH, DROP_DOWN_BUFFER
 
 class ComponentList(WidgetList):
     def __init__(self, parent):
