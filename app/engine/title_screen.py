@@ -74,7 +74,7 @@ class TitleStartState(State):
             game.sweep()
             game.events.trigger(triggers.OnTitleScreen())
             # On startup occurs before on title_screen
-            game.events.trigger(triggers.OnStartup()) 
+            game.events.trigger(triggers.OnStartup())
             game.memory['title_intro_already_played'] = True
 
         get_sound_thread().clear()
@@ -593,7 +593,7 @@ def build_new_game(slot: int):
 
     game.state.clear()
     game.current_save_slot = slot
-    
+
     if DB.constants.value('overworld_start'):
         game.state.change('overworld')
         game.state.process_temp_state()
@@ -725,11 +725,17 @@ class TitleExtrasState(TitleLoadState):
         self.bg = game.memory['title_bg']
         self.particles = game.memory['title_particles']
 
+<<<<<<< HEAD
         options = ['Options', 'Credits']
         if DB.constants.value('title_sound'):
             options.append('Sound Room')
         if ACHIEVEMENTS:
             options.insert(1, 'Achievements')
+=======
+        options = ['Options', 'Achievements', 'Credits', 'Sound Room']
+        if(any([level.is_trial_map for level in DB.levels])):
+            options.insert(0, "Trial Maps")
+>>>>>>> b42b3c88 (add trial map option in main menu)
         if cf.SETTINGS['debug']:
             options.insert(0, 'All Saves')
         self.menu = menus.Main(options, 'title_menu_dark')
@@ -785,6 +791,10 @@ class TitleExtrasState(TitleLoadState):
                 game.state.change('transition_to')
             elif selection == 'Achievements':
                 game.memory['next_state'] = 'base_achievement'
+                game.memory['base_bg'] = self.bg
+                game.state.change('transition_to')
+            elif selection == 'Trial Maps':
+                game.memory['next_state'] = 'trial_map_load'
                 game.memory['base_bg'] = self.bg
                 game.state.change('transition_to')
 
