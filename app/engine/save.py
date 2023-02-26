@@ -1,6 +1,7 @@
 import os, shutil, glob, re
 from datetime import datetime
 import threading
+from app.data.database import constants
 
 try:
     import cPickle as pickle
@@ -23,6 +24,7 @@ def GAME_NID():
     return str(DB.constants.value('game_nid'))
 
 SUSPEND_LOC = 'saves/' + GAME_NID() + '-suspend.pmeta'
+TRIAL_SUSPEND_LOC = 'saves/' + GAME_NID() + '-trial-suspend.pmeta'
 
 class SaveSlot():
     no_name = '--NO DATA--'
@@ -186,6 +188,22 @@ def load_restarts():
         save_slots.append(ss)
     return save_slots
 
+def load_trial_saves():
+    save_slots = []
+    for num in range(0, int(DB.constants.value('num_save_slots'))):
+        meta_fp = 'saves/' + GAME_NID() + '-trial' + str(num) + '.pmeta'
+        ss = SaveSlot(meta_fp, num)
+        save_slots.append(ss)
+    return save_slots
+
+def load_trial_restart_slots():
+    save_slots = []
+    for num in range(0, int(DB.constants.value('num_save_slots'))):
+        meta_fp = 'saves/' + GAME_NID() + '-trial_restart' + str(num) + '.pmeta'
+        ss = SaveSlot(meta_fp, num)
+        save_slots.append(ss)
+    return save_slots
+
 def get_all_saves():
     """
     Grabs all the turn_change saves
@@ -214,3 +232,5 @@ def check_save_slots():
 
 SAVE_SLOTS = load_saves()
 RESTART_SLOTS = load_restarts()
+TRIAL_SLOTS = load_trial_saves()
+TRIAL_RESTART_SLOTS = load_trial_restart_slots()

@@ -57,6 +57,7 @@ class StateMachine():
              'title_all_saves': title_screen.TitleAllSavesState,
              'title_wait': title_screen.TitleWaitState,
              'title_save': title_screen.TitleSaveState,
+             'title_trial_main': title_screen.TitleTrialMain,
              'in_chapter_save': title_screen.TitleSaveState,
              'transition_in': transitions.TransitionInState,
              'transition_out': transitions.TransitionOutState,

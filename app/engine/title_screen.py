@@ -1,4 +1,5 @@
-import os, math
+import os
+import math
 
 from app import autoupdate
 
@@ -29,6 +30,7 @@ from app.utilities import utils
 
 import logging
 
+
 class TitleStartState(State):
     name = "title_start"
     in_level = False
@@ -41,22 +43,26 @@ class TitleStartState(State):
         game.memory['title_bg'] = self.bg
         press_start_sprite = SPRITES.get('press_start')
         if press_start_sprite:
-            self.press_start = gui.Logo(press_start_sprite, (WINWIDTH//2, 4*WINHEIGHT//5))
+            self.press_start = gui.Logo(
+                press_start_sprite, (WINWIDTH//2, 4*WINHEIGHT//5))
         else:
             self.press_start = None
 
         if logo:
             num_frames = 1
             speed = 64
-            height = utils.clamp(WINHEIGHT//2 - 40, logo.get_height()//2, WINHEIGHT//2)
-            self.logo = gui.Logo(logo, (WINWIDTH//2, height), num_frames, speed)
+            height = utils.clamp(
+                WINHEIGHT//2 - 40, logo.get_height()//2, WINHEIGHT//2)
+            self.logo = gui.Logo(
+                logo, (WINWIDTH//2, height), num_frames, speed)
         else:
             self.logo = None
 
         self.particles = None
         if DB.constants.value('title_particles'):
             bounds = (-WINHEIGHT, WINWIDTH, WINHEIGHT, WINHEIGHT + 16)
-            self.particles = particles.MapParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
+            self.particles = particles.MapParticleSystem(
+                'title', particles.Smoke, .075, bounds, (TILEX, TILEY))
             self.particles.prefill()
         game.memory['title_particles'] = self.particles
         game.memory['transition_speed'] = 0.5
@@ -106,8 +112,10 @@ class TitleStartState(State):
         if self.press_start:
             self.press_start.update()
             self.press_start.draw(surf)
-        FONT['text'].blit(text_funcs.translate('_attribution'), surf, (4, WINHEIGHT - 16))
+        FONT['text'].blit(text_funcs.translate(
+            '_attribution'), surf, (4, WINHEIGHT - 16))
         return surf
+
 
 class TitleMainState(State):
     name = 'title_main'
@@ -215,9 +223,11 @@ class TitleMainState(State):
                 elif self.selection == 'Extras':
                     game.state.change('title_extras')
                 elif self.selection == 'New Game':
-                    available_difficulties = [difficulty for difficulty in DB.difficulty_modes if (not difficulty.start_locked or RECORDS.check_difficulty_unlocked(difficulty.nid))]
+                    available_difficulties = [difficulty for difficulty in DB.difficulty_modes if (
+                        not difficulty.start_locked or RECORDS.check_difficulty_unlocked(difficulty.nid))]
                     if not available_difficulties:
-                        logging.error("All difficulties are locked. Using default Difficulty Level.")
+                        logging.error(
+                            "All difficulties are locked. Using default Difficulty Level.")
                         available_difficulties = [DB.difficulty_modes[0]]
                     # Check if more than one mode or the only mode requires a choice
                     if len(available_difficulties) > 1 or \
@@ -228,7 +238,8 @@ class TitleMainState(State):
                         game.state.change('transition_to')
                     else:  # Wow, no need for choice
                         mode = available_difficulties[0]
-                        game.current_mode = DifficultyModeObject.from_prefab(mode)
+                        game.current_mode = DifficultyModeObject.from_prefab(
+                            mode)
                         game.state.change('title_new')
                 self.state = 'transition_in'
                 return 'repeat'
@@ -253,12 +264,14 @@ class TitleMainState(State):
             self.particles.update()
             self.particles.draw(surf)
         if self.menu:
-            self.menu.draw(surf, center=(self.position_x, WINHEIGHT//2), show_cursor=(self.state == 'normal'))
+            self.menu.draw(surf, center=(self.position_x, WINHEIGHT//2),
+                           show_cursor=(self.state == 'normal'))
 
         bb = image_mods.make_translucent(self.background, self.transition/100.)
         surf.blit(bb, (0, 0))
 
         return surf
+
 
 class TitleModeState(State):
     name = 'title_mode'
@@ -284,10 +297,12 @@ class TitleModeState(State):
 
         self.label = base_surf.create_base_surf(96, 88)
         shimmer = SPRITES.get('menu_shimmer2')
-        self.label.blit(shimmer, (95 - shimmer.get_width(), 83 - shimmer.get_height()))
+        self.label.blit(shimmer, (95 - shimmer.get_width(),
+                                  83 - shimmer.get_height()))
         self.label = image_mods.make_translucent(self.label, .1)
-        
-        self.available_difficulties = [difficulty for difficulty in DB.difficulty_modes if (not difficulty.start_locked or RECORDS.check_difficulty_unlocked(difficulty.nid))]
+
+        self.available_difficulties = [difficulty for difficulty in DB.difficulty_modes if (
+            not difficulty.start_locked or RECORDS.check_difficulty_unlocked(difficulty.nid))]
 
     def begin(self):
         if self.state == 'difficulty_setup':
@@ -309,7 +324,8 @@ class TitleModeState(State):
 
         elif self.state == 'death_setup':
             if self.permadeath_choice:
-                options = [perma.value for perma in PermadeathOption if perma != PermadeathOption.PLAYER_CHOICE]
+                options = [perma.value for perma in PermadeathOption if perma !=
+                           PermadeathOption.PLAYER_CHOICE]
                 self.menu = menus.ModeSelect(options)
                 self.menu.current_index = 1
                 self.state = 'death_wait'
@@ -320,7 +336,8 @@ class TitleModeState(State):
 
         elif self.state == 'growth_setup':
             if self.growths_choice:
-                options = [growth.value for growth in GrowthOption if growth != GrowthOption.PLAYER_CHOICE]
+                options = [
+                    growth.value for growth in GrowthOption if growth != GrowthOption.PLAYER_CHOICE]
                 self.menu = menus.ModeSelect(options)
                 self.state = 'growth_wait'
                 game.state.change('transition_in')
@@ -397,7 +414,8 @@ class TitleModeState(State):
                     game.memory['next_state'] = 'title_new'
                     game.state.change('transition_to')
             elif self.state == 'difficulty_wait':
-                mode = self.available_difficulties[self.menu.get_current_index()]
+                mode = self.available_difficulties[self.menu.get_current_index(
+                )]
                 game.current_mode = DifficultyModeObject.from_prefab(mode)
                 self.permadeath_choice = mode.permadeath_choice == PermadeathOption.PLAYER_CHOICE
                 self.growths_choice = mode.growths_choice == GrowthOption.PLAYER_CHOICE
@@ -432,6 +450,7 @@ class TitleModeState(State):
             self.menu.draw(surf)
         return surf
 
+
 class TitleLoadState(State):
     name = 'title_load'
     in_level = False
@@ -455,7 +474,8 @@ class TitleLoadState(State):
         self.save_slots = self.get_slots()
         options, colors = save.get_save_title(self.save_slots)
         self.menu = menus.ChapterSelect(options, colors)
-        most_recent = self.save_slots.index(max(self.save_slots, key=lambda x: x.realtime))
+        most_recent = self.save_slots.index(
+            max(self.save_slots, key=lambda x: x.realtime))
         self.menu.move_to(most_recent)
 
     def take_input(self, event):
@@ -493,7 +513,7 @@ class TitleLoadState(State):
                     next_level_nid = game.game_vars['_next_level_nid']
                     game.load_states(['start_level_asset_loading'])
                     game.start_level(next_level_nid)
-                elif save_slot.kind == 'overworld': # load overworld
+                elif save_slot.kind == 'overworld':  # load overworld
                     game.load_states(['overworld'])
                 game.memory['transition_from'] = 'Load Game'
                 game.memory['title_menu'] = self.menu
@@ -534,8 +554,80 @@ class TitleLoadState(State):
             self.menu.draw(surf, center=(self.position_x, WINHEIGHT//2))
         return surf
 
+
+class TitleTrialLoadState(TitleLoadState):
+    name = 'title_trial_load'
+
+    def get_slots(self):
+        return save.TRIAL_SLOTS
+
+
 class TitleRestartState(TitleLoadState):
     name = 'title_restart'
+
+    def get_slots(self):
+        return save.RESTART_SLOTS
+
+    def get_main_slots(self):
+        return save.SAVE_SLOTS
+
+    def take_input(self, event):
+        # Only take input in normal state
+        if self.state != 'normal':
+            return
+
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        self.menu.handle_mouse()
+        if 'DOWN' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_down(first_push)
+        elif 'UP' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_up(first_push)
+
+        if event == 'BACK':
+            get_sound_thread().play_sfx('Select 4')
+            self.state = 'transition_out'
+
+        elif event == 'SELECT':
+            selection = self.menu.current_index
+            save_slot = self.get_slots()[selection]
+            save_slot_main = self.get_main_slots()[selection]
+            if save_slot.kind:
+                get_sound_thread().play_sfx('Save')
+                logging.info("Loading game...")
+                game.build_new()
+                # Restart level
+                if save_slot_main.kind == 'overworld':
+                    save.load_game(game, save_slot_main)
+                    game.load_states(['overworld'])
+                else:
+                    save.load_game(game, save_slot)
+                    next_level_nid = game.game_vars['_next_level_nid']
+                    game.start_level(next_level_nid)
+                game.memory['transition_from'] = 'Restart Level'
+                game.memory['title_menu'] = self.menu
+                game.state.change('title_wait')
+                game.state.process_temp_state()
+                save.remove_suspend()
+            else:
+                get_sound_thread().play_sfx('Error')
+
+
+class TitleTrialRestartState(TitleRestartState):
+    name = 'title_trial_restart'
+
+    def get_slots(self):
+        return save.TRIAL_RESTART_SLOTS
+
+    def get_main_slots(self):
+        return save.TRIAL_SLOTS
+
+
+class TitleTrialCopyBaseState(TitleLoadState):
+    name = 'title_trial_copy_base'
 
     def get_slots(self):
         return save.RESTART_SLOTS
@@ -562,8 +654,8 @@ class TitleRestartState(TitleLoadState):
 
         elif event == 'SELECT':
             selection = self.menu.current_index
-            save_slot = save.RESTART_SLOTS[selection]
-            save_slot_main = save.SAVE_SLOTS[selection]
+            save_slot = save.TRIAL_RESTART_SLOTS[selection]
+            save_slot_main = save.TRIAL_SLOTS[selection]
             if save_slot.kind:
                 get_sound_thread().play_sfx('Save')
                 logging.info("Loading game...")
@@ -584,9 +676,132 @@ class TitleRestartState(TitleLoadState):
             else:
                 get_sound_thread().play_sfx('Error')
 
+
+class TitleTrialMain(TitleMainState):
+    name = 'title_trial_main'
+
+    def start(self):
+        options = ['New Campaign']
+        if any(ss.kind for ss in save.TRIAL_SLOTS):
+            options.insert(0, 'Restart Level')
+            options.insert(0, 'Load Campaign')
+        if os.path.exists(save.TRIAL_SUSPEND_LOC):
+            options.insert(0, 'Continue')
+
+        self.fluid = FluidScroll(128)
+        self.bg = game.memory['title_bg']
+        self.particles = game.memory['title_particles']
+
+        self.state = 'transition_in'
+        self.position_x = -WINWIDTH//2
+
+        # For fading out to load suspend
+        self.background = SPRITES.get('bg_black')
+        self.transition = 100
+
+        self.banner_flag = False
+
+        self.selection = None
+        self.menu = menus.Main(options, "title_menu_dark")
+        game.state.change('transition_in')
+        return 'repeat'
+
+    def take_input(self, event):
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        if self.state == 'alert':
+            self.state = 'transition_out'
+        if self.state == 'normal':
+            self.menu.handle_mouse()
+            if 'DOWN' in directions:
+                get_sound_thread().play_sfx('Select 6')
+                self.menu.move_down(first_push)
+            elif 'UP' in directions:
+                get_sound_thread().play_sfx('Select 6')
+                self.menu.move_up(first_push)
+
+            if event == 'BACK':
+                get_sound_thread().play_sfx('Select 4')
+                game.memory['next_state'] = 'title_extras'
+                game.state.change('transition_to')
+
+            elif event == 'SELECT':
+                get_sound_thread().play_sfx('Select 1')
+                self.selection = self.menu.get_current()
+                if self.selection == 'Continue':
+                    self.state = 'wait'
+                elif os.path.exists(save.TRIAL_SUSPEND_LOC) and not self.banner_flag and \
+                        self.selection in ('Load Campaign', 'Restart Level', 'New Campaign'):
+                    if self.selection == 'New Campaign':
+                        text = 'Starting a new game will remove suspend!'
+                    elif self.selection == 'Load Campaign':
+                        text = 'Loading a game will remove suspend!'
+                    else:
+                        text = 'Restarting a game will remove suspend!'
+                    game.alerts.append(banner.Custom(text))
+                    game.state.change('alert')
+                    self.state = 'alert'
+                    self.banner_flag = True
+                else:
+                    self.state = 'transition_out'
+
+    def update(self):
+        if self.menu:
+            self.menu.update()
+
+        if self.state == 'transition_in':
+            self.position_x += 20
+            if self.position_x >= WINWIDTH//2:
+                self.position_x = WINWIDTH//2
+                self.state = 'normal'
+
+        elif self.state == 'transition_out':
+            self.position_x -= 20
+            if self.position_x <= -WINWIDTH//2:
+                self.position_x = -WINWIDTH//2
+                if self.selection == 'Load Campaign':
+                    pass
+                    # game.state.change('title_load')
+                elif self.selection == 'Restart Level':
+                    pass
+                    # game.state.change('title_restart')
+                elif self.selection == 'New Campaign':
+                    pass
+                    # game.state.change('title_new')
+                self.state = 'transition_in'
+                return 'repeat'
+
+        elif self.state == 'wait':
+            self.transition -= 5
+            if self.transition <= 0:
+                self.continue_suspend()
+                return 'repeat'
+
+    def continue_suspend(self):
+        self.menu = None
+        suspend = save.SaveSlot(save.SUSPEND_LOC, None)
+        logging.info("Loading suspend...")
+        save.load_game(game, suspend)
+
+    def draw(self, surf):
+        if self.bg:
+            self.bg.draw(surf)
+        if self.particles:
+            self.particles.update()
+            self.particles.draw(surf)
+        if self.menu:
+            self.menu.draw(surf, center=(self.position_x, WINHEIGHT//2),
+                           show_cursor=(self.state == 'normal'))
+
+        bb = image_mods.make_translucent(self.background, self.transition/100.)
+        surf.blit(bb, (0, 0))
+
+        return surf
+
+
 def build_new_game(slot: int):
     # Make sure to keep the current mode
-    assert isinstance(slot, int)
     old_mode = game.current_mode
     game.build_new()
     game.current_mode = old_mode
@@ -614,6 +829,7 @@ def build_new_game(slot: int):
 
     save.suspend_game(game, 'start', slot)
     save.remove_suspend()
+
 
 class TitleNewState(TitleLoadState):
     name = 'title_new'
@@ -664,6 +880,59 @@ class TitleNewState(TitleLoadState):
         game.state.back()
         game.state.back()
 
+
+class TitleTrialNewState(TitleTrialLoadState):
+    name = 'title_trial_new'
+
+    def take_input(self, event):
+        # Only take input in normal state
+        if self.state != 'normal':
+            return
+
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        self.menu.handle_mouse()
+        if 'DOWN' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_down(first_push)
+        elif 'UP' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_up(first_push)
+
+        if event == 'BACK':
+            get_sound_thread().play_sfx('Select 4')
+            self.state = 'transition_out'
+
+        elif event == 'SELECT':
+            selection = self.menu.current_index
+            save_slot = self.save_slots[selection]
+            if save_slot.kind:
+                get_sound_thread().play_sfx('Select 1')
+                game.memory['option_owner'] = selection
+                game.memory['option_menu'] = self.menu
+                game.memory['transition_from'] = 'New Game'
+                game.memory['title_menu'] = self.menu
+                game.state.change('title_new_child')
+            else:
+                # game.state.change('title_trial_copy_base_state')
+                #   -> load restart slot, then copy and save to the trial slot
+                get_sound_thread().play_sfx('Save')
+                build_new_game(selection)
+                save.SAVE_THREAD.join()
+                save.check_save_slots()
+                options, color = save.get_save_title(save.SAVE_SLOTS)
+                self.menu.set_colors(color)
+                self.menu.update_options(options)
+                game.memory['transition_from'] = 'New Game'
+                game.memory['title_menu'] = self.menu
+                game.state.change('title_wait')
+
+    def back(self):
+        game.state.back()
+        game.state.back()
+
+
 class TitleNewChildState(State):
     name = 'title_new_child'
     transparent = True
@@ -712,6 +981,7 @@ class TitleNewChildState(State):
         surf = self.menu.draw(surf)
         return surf
 
+
 class TitleExtrasState(TitleLoadState):
     name = 'title_extras'
     in_level = False
@@ -725,17 +995,13 @@ class TitleExtrasState(TitleLoadState):
         self.bg = game.memory['title_bg']
         self.particles = game.memory['title_particles']
 
-<<<<<<< HEAD
         options = ['Options', 'Credits']
         if DB.constants.value('title_sound'):
             options.append('Sound Room')
         if ACHIEVEMENTS:
             options.insert(1, 'Achievements')
-=======
-        options = ['Options', 'Achievements', 'Credits', 'Sound Room']
         if(any([level.is_trial_map for level in DB.levels])):
             options.insert(0, "Trial Maps")
->>>>>>> b42b3c88 (add trial map option in main menu)
         if cf.SETTINGS['debug']:
             options.insert(0, 'All Saves')
         self.menu = menus.Main(options, 'title_menu_dark')
@@ -773,7 +1039,8 @@ class TitleExtrasState(TitleLoadState):
                 game.sweep()  # Set up event manager
                 event_prefab = DB.events.get_from_nid('Global Credits')
                 if event_prefab:
-                    event = Event(event_prefab.nid, event_prefab.commands, triggers.GenericTrigger())
+                    event = Event(
+                        event_prefab.nid, event_prefab.commands, triggers.GenericTrigger())
                     game.events.append(event)
                     game.memory['next_state'] = 'event'
                     game.state.change('transition_to')
@@ -794,9 +1061,10 @@ class TitleExtrasState(TitleLoadState):
                 game.memory['base_bg'] = self.bg
                 game.state.change('transition_to')
             elif selection == 'Trial Maps':
-                game.memory['next_state'] = 'trial_map_load'
+                game.memory['next_state'] = 'title_trial_main'
                 game.memory['base_bg'] = self.bg
                 game.state.change('transition_to')
+
 
 class TitleAllSavesState(TitleLoadState):
     name = 'title_all_saves'
@@ -814,6 +1082,7 @@ class TitleAllSavesState(TitleLoadState):
         self.save_slots = save.get_all_saves()
         options, colors = save.get_save_title(self.save_slots)
         self.menu = menus.ChapterSelect(options, colors)
+
 
 class TitleWaitState(State):
     name = 'title_wait'
@@ -852,6 +1121,7 @@ class TitleWaitState(State):
                 self.menu.draw(surf)
         return surf
 
+
 class TitleSaveState(State):
     name = 'title_save'
     in_level = False
@@ -877,7 +1147,8 @@ class TitleSaveState(State):
         self.particles = None
         if DB.constants.value('title_particles'):
             bounds = (-WINHEIGHT, WINWIDTH, WINHEIGHT, WINHEIGHT + 16)
-            self.particles = particles.MapParticleSystem('title', particles.Smoke, .075, bounds, (TILEX, TILEY))
+            self.particles = particles.MapParticleSystem(
+                'title', particles.Smoke, .075, bounds, (TILEX, TILEY))
             self.particles.prefill()
         game.memory['title_particles'] = self.particles
 
@@ -889,7 +1160,8 @@ class TitleSaveState(State):
         save.check_save_slots()
         options, colors = save.get_save_title(save.SAVE_SLOTS)
         self.menu = menus.ChapterSelect(options, colors)
-        most_recent = save.SAVE_SLOTS.index(max(save.SAVE_SLOTS, key=lambda x: x.realtime))
+        most_recent = save.SAVE_SLOTS.index(
+            max(save.SAVE_SLOTS, key=lambda x: x.realtime))
         self.menu.move_to(most_recent)
 
         game.state.change('transition_in')
@@ -901,7 +1173,8 @@ class TitleSaveState(State):
 
         game.load_states(['start_level_asset_loading'])
         if make_save:
-            save.suspend_game(game, game.memory['save_kind'], slot=self.menu.current_index)
+            save.suspend_game(
+                game, game.memory['save_kind'], slot=self.menu.current_index)
 
         game.start_level(next_level_nid)
 
@@ -913,7 +1186,8 @@ class TitleSaveState(State):
 
         game.load_states(['overworld'])
         if make_save:
-            save.suspend_game(game, game.memory['save_kind'], slot=self.menu.current_index)
+            save.suspend_game(
+                game, game.memory['save_kind'], slot=self.menu.current_index)
 
         game.state.state.append(current_state)
         game.state.change('transition_pop')
@@ -970,7 +1244,8 @@ class TitleSaveState(State):
             if self.name == 'in_chapter_save':
                 saved_state = game.state.state[:]
                 game.state.state = game.state.state[:-1]  # All except this one
-                save.suspend_game(game, game.memory['save_kind'], slot=self.menu.current_index)
+                save.suspend_game(
+                    game, game.memory['save_kind'], slot=self.menu.current_index)
                 # Put states back
                 game.state.state = saved_state
                 game.state.change('transition_pop')
