@@ -236,6 +236,7 @@ class PrepPickUnitsState(State):
             game.state.change('transition_pop')
 
         elif event == 'INFO':
+            get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = game.get_units_in_party()
             game.memory['current_unit'] = self.menu.get_current()
             info_menu.to_info_menu()
@@ -458,22 +459,18 @@ class PrepFormationSelectState(MapState):
         return surf
 
 def draw_info(surf):
-    helper = engine.get_key_name(cf.SETTINGS['key_INFO']).upper()
-    FONT['text-yellow'].blit(helper, surf, (123, 143))
-    FONT['text'].blit(': Info', surf, (123 + FONT['text-blue'].width(helper), 143))
-
     info_icon = engine.subsurface(SPRITES.get('buttons'), (1, 149, 16, 9))
     info_text = '    : Info'
-    render_text(surf, ['chapter'], [info_text], ['green'], (123 + 16, 143), Alignments.CENTER)
-    surf.blit(info_icon, (123, 147))
+    render_text(surf, ['chapter'], [info_text], ['green'], (116, 159), Alignments.LEFT)
+    surf.blit(info_icon, (116, 163))
 
 def draw_memory(surf):
     # Draw R: Info display
     draw_info(surf)
     # Draw Funds display
-    surf.blit(SPRITES.get('funds_display'), (168, 137))
+    surf.blit(SPRITES.get('funds_display'), (166, 153))
     money = str(game.get_money())
-    render_text(surf, ['text', 'text'], ['Memory: ', money], ['white', 'blue'], (219, 141), Alignments.RIGHT)
+    render_text(surf, ['text', 'text'], ['Memory: ', money], ['white', 'blue'], (225, 157), Alignments.RIGHT)
 
 def draw_funds(surf):
     # Draw R: Info display
@@ -583,7 +580,7 @@ class PrepManageState(State):
             self.bg.draw(surf)
         self.menu.draw(surf)
         menus.draw_unit_items(surf, (6, 72), self.menu.get_current(), include_face=True, shimmer=2)
-        surf.blit(self.quick_disp, (WINWIDTH//2 + 10, WINHEIGHT//2 + 9))
+        surf.blit(self.quick_disp, (10 + 104 + 8, WINHEIGHT//2 + 9))
         if BEEG_MODE:
             draw_memory(surf)
         else:
@@ -736,7 +733,10 @@ class PrepManageSelectState(State):
         self.menu.draw(surf)
         menus.draw_unit_items(surf, (6, 72), self.unit, include_face=True, include_top=True, shimmer=2)
         self.select_menu.draw(surf)
-        draw_funds(surf)
+        if BEEG_MODE:
+            draw_memory(surf)
+        else:
+            draw_funds(surf)
         return surf
 
 class PrepTradeSelectState(State):
@@ -784,6 +784,7 @@ class PrepTradeSelectState(State):
             game.state.change('transition_pop')
 
         elif event == 'INFO':
+            get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = game.get_units_in_party()
             game.memory['current_unit'] = self.menu.get_current()
             info_menu.to_info_menu()

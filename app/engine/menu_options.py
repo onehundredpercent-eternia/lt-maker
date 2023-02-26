@@ -396,9 +396,10 @@ class FullItemOption(ItemOption):
             uses_string_a = str(self.item.data['cooldown'])
             uses_string_b = str(self.item.data['starting_cooldown'])
 
-        render_text(surf, [uses_font], [uses_string_a], [uses_color], (x + 96, y), Alignments.RIGHT)
-        render_text(surf, [uses_font], ["/"], [], (x + 98, y))
-        render_text(surf, [uses_font], [uses_string_b], [uses_color], (x + 120, y), Alignments.RIGHT)
+        if not (uses_string_a == '--' and uses_string_b == '--'):
+            render_text(surf, [uses_font], [uses_string_a], [uses_color], (x + 96, y), Alignments.RIGHT)
+            render_text(surf, [uses_font], ["/"], [], (x + 98, y))
+            render_text(surf, [uses_font], [uses_string_b], [uses_color], (x + 120, y), Alignments.RIGHT)
 
 class ValueItemOption(ItemOption):
     def __init__(self, idx, item, disp_value):
