@@ -90,9 +90,9 @@ class PropertiesMenu(QWidget):
         self.music_button.clicked.connect(self.edit_music)
         form.addWidget(self.music_button)
 
-        self.currently_playing = None
-        self.currently_playing_label = QLabel("")
-        form.addWidget(self.currently_playing_label)
+        self.trial_map_box = PropertyCheckBox("Begins trial campaign?", QCheckBox, self)
+        self.trial_map_box.edit.stateChanged.connect(self.trial_box_changed)
+        form.addWidget(self.trial_map_box)
 
         form.addWidget(QHLine())
 
@@ -271,6 +271,9 @@ class PropertiesMenu(QWidget):
 
     def overworld_box_changed(self, state):
         self.current.go_to_overworld = bool(state)
+
+    def trial_box_changed(self, state):
+        self.current.is_trial_map = bool(state)
 
     def unit_changed(self):
         self.current.roam_unit = self.unit_box.edit.currentText()
