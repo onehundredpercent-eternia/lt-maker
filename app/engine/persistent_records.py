@@ -52,9 +52,21 @@ class PersistentRecordManager(Data):
         else:
             logging.info("Record with nid of %s doesn't exist")
 
+def reset():
+    game_id = str(DB.constants.value('game_nid'))
+    location = 'saves/' + game_id + '-persistent_records.p'
+    print("reset records: %s" % location)
+    RECORDS.location = location
+    data = persistent_data.deserialize(location)
+    if data:
+        RECORDS.restore(data)
+    else:
+        RECORDS.clear()
+
 # Make sure to reload all persistent records whenever we start the engine
 game_id = str(DB.constants.value('game_nid'))
 location = 'saves/' + game_id + '-persistent_records.p'
+print("original records: %s" % location)
 data = persistent_data.deserialize(location)
 RECORDS = PersistentRecordManager(location)
 if data:

@@ -231,9 +231,12 @@ class Database(object):
             if hasattr(catalog, 'categories'):
                 getattr(self, key).categories = key_categories
 
-        # TODO -- This is a shitty fix that will be superseded
+        # TODO -- This is a shitty fix that should be superseded
         from app.engine import equations
         equations.clear()
+        from app.engine import persistent_records
+        persistent_records.reset()
+        # -- End shitty fix
 
         end = time.perf_counter() * 1000
 

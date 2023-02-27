@@ -79,7 +79,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         class_obj = DB.classes.get(self.unit.klass)
         render_text(surf, ['text'], [class_obj.name], ['white'], (x_offset + 8, 24))
         self.info_graph.register((x_offset + 8, 24, 72, 16), class_obj.desc, 'all')
-        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (x_offset + 39, 42), Alignments.RIGHT)
+        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (x_offset + 38, 42), Alignments.RIGHT)
         self.info_graph.register((x_offset + 8, 42, 30, 16), 'Level_desc', 'all')
         render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (x_offset + 63, 42), Alignments.RIGHT)
         self.info_graph.register((x_offset + 38, 42, 30, 16), 'Exp_desc', 'all')

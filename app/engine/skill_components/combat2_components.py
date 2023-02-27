@@ -2,7 +2,7 @@ from app.data.database.skill_components import SkillComponent, SkillTags
 from app.data.database.components import ComponentType
 
 from app.utilities import utils
-from app.engine import action, skill_system, target_system
+from app.engine import action, item_system, skill_system, target_system
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
 
