@@ -23,6 +23,11 @@ def is_ranged(unit, item) -> bool:
         return True
     return False
 
+def is_heal(unit, item) -> bool:
+    if item.heal or item.magic_heal:
+        return True
+    return False
+
 def available(unit, item) -> bool:
     return item_system.available(unit, item) and skill_system.available(unit, item)
 

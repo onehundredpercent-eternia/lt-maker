@@ -1398,6 +1398,8 @@ class WeaponChoiceState(MapState):
 
     def _item_desc_update(self):
         current = self.menu.get_current()
+        if self.cur_unit.can_equip(current):
+            action.EquipItem(self.cur_unit, current).execute()
         self.item_desc_panel.set_item(current)
         game.highlight.remove_highlights()
         self.disp_attacks(self.cur_unit, current)
@@ -1828,7 +1830,10 @@ class CombatTargetingState(MapState):
 
         self.selection = SelectionHelper(positions)
         self.previous_mouse_pos = None
-        closest_pos = self.selection.get_closest(game.cursor.position)
+        if self.item and item_funcs.is_heal(self.cur_unit, self.item):
+            closest_pos = self.selection.get_least_hp(game.cursor.position)
+        else:
+            closest_pos = self.selection.get_closest(game.cursor.position)
         game.cursor.set_pos(closest_pos)
 
         # Sets dual strike variables and chooses attacker dual strike
