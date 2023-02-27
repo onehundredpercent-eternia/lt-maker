@@ -53,13 +53,23 @@ class UpkeepSound(SkillComponent):
     def on_upkeep(self, actions, playback, unit):
         playback.append(pb.HitSound(self.value))
 
-# Get proc skills working before bothering with this one
 class DisplaySkillIconInCombat(SkillComponent):
     nid = 'display_skill_icon_in_combat'
-    desc = "Displays the skill's icon in combat"
+    desc = "Displays the skill's icon in combat even if it's not a proc skill"
     tag = SkillTags.AESTHETIC
 
-    def display_skill_icon(self, unit) -> bool:
+    def show_skill_icon(self, unit) -> bool:
+        return True
+
+class HideSkillIconInCombat(SkillComponent):
+    nid = 'hide_skill_icon_in_combat'
+    desc = """
+        Hide's the skill's icon in combat even if it's a proc skill.
+        Overrides `display_skill_icon_in_combat` if both are present
+           """
+    tag = SkillTags.AESTHETIC
+
+    def hide_skill_icon(self, unit) -> bool:
         return True
 
 # Show steal icon

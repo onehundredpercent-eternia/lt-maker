@@ -7,8 +7,9 @@ default_behaviours = (
     'pass_through', 'vantage', 'desperation', 'ignore_terrain', 'crit_anyway',
     'ignore_region_status', 'no_double', 'def_double', 'alternate_splash',
     'ignore_rescue_penalty', 'ignore_forced_movement', 'distant_counter',
-    'ignore_fatigue', 'no_attack_after_move', 'has_dynamic_range', 'disvantage', 
-    'close_counter', 'attack_stance_double', 'ignore_dying_in_combat')
+    'ignore_fatigue', 'no_attack_after_move', 'has_dynamic_range', 'disvantage',
+    'close_counter', 'attack_stance_double', 'show_skill_icon', 'hide_skill_icon',
+    'ignore_dying_in_combat')
 # Takes in unit, returns default value
 exclusive_behaviours = ('can_select', 'no_trade', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset', 'num_accessories_offset', 'change_variant', 'change_animation', 'change_ai', 'change_roam_ai', 'witch_warp')
 

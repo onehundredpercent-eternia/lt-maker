@@ -316,13 +316,19 @@ class AnimationCombat(BaseCombat, MockCombat):
                 self.state = 'pre_proc'
 
         elif self.state == 'pre_proc':
-            if self.left_battle_anim.done() and self.right_battle_anim.done():
+            if self.left_battle_anim.done() and self.right_battle_anim.done() and \
+                    not self.proc_icons:
                 # These would have happened from pre_combat and start_combat
                 if self.get_from_full_playback('attack_pre_proc'):
                     self.set_up_pre_proc_animation('attack_pre_proc')
                 elif self.get_from_full_playback('defense_pre_proc'):
                     self.set_up_pre_proc_animation('defense_pre_proc')
+                elif self.set_up_other_proc_icons(self.attacker):
+                    pass  # Processing is done in the if check above
+                elif self.set_up_other_proc_icons(self.defender):
+                    pass  # Processing is done in the if check above
                 else:
+                    self.set_up_other_proc_icons.memory.clear()
                     self.state = 'begin_phase'
 
         elif self.state == 'begin_phase':
@@ -789,6 +795,21 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.playback.remove(mark)
         self.mark_proc(mark)
 
+    def set_up_other_proc_icons(self, unit) -> bool:
+        for skill in unit.skills:
+            if skill.nid in self.set_up_other_proc_icons.memory.get(unit.nid, []):
+                continue
+            for component in skill.components:
+                if component.defines('show_skill_icon') and \
+                        component.show_skill_icon(unit):
+                    self.add_proc_icon(unit, skill)
+                    if unit.nid not in self.set_up_other_proc_icons.memory:
+                        self.set_up_other_proc_icons.memory[unit.nid] = []
+                    self.set_up_other_proc_icons.memory[unit.nid].append(skill.nid)
+                    return True
+        return False
+    set_up_other_proc_icons.memory = {}  # Static memory (key: unit.nid, value: List[skill.nid])
+
     def mark_proc(self, mark):
         skill = mark.skill
         unit = mark.unit
@@ -801,7 +822,23 @@ class AnimationCombat(BaseCombat, MockCombat):
             if effect:
                 self.left_battle_anim.add_effect(effect)
 
-        self.add_proc_icon(mark)
+        self.add_proc_icon(unit, skill)
+
+    def add_proc_icon(self, unit, skill):
+        # Check if we should be hiding this skill
+        for component in skill.components:
+            if component.defines('hide_skill_icon') and \
+                    component.hide_skill_icon(unit):
+                return
+
+        c = False
+        if (unit is self.right or unit is self.right.strike_partner) and self.rp_battle_anim:
+            c = True
+        elif (unit is self.left or unit is self.left.strike_partner) and self.lp_battle_anim:
+            c = True
+        new_icon = gui.SkillIcon(skill, unit is self.right, center=c)
+        self.proc_icons.append(new_icon)
+
         if unit == self.right:
             self.focus_right = True
         else:
@@ -863,17 +900,6 @@ class AnimationCombat(BaseCombat, MockCombat):
             for idx, num in enumerate(str_damage):
                 d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'cyan')
                 self.damage_numbers.append(d)
-
-    def add_proc_icon(self, mark):
-        unit = mark.unit
-        skill = mark.skill
-        c = False
-        if (unit is self.right or unit is self.right.strike_partner) and self.rp_battle_anim:
-            c = True
-        elif (unit is self.left or unit is self.left.strike_partner) and self.lp_battle_anim:
-            c = True
-        new_icon = gui.SkillIcon(skill, unit is self.right, center=c)
-        self.proc_icons.append(new_icon)
 
     def get_damage(self) -> int:
         damage_hit_marks = self.get_from_playback('damage_hit')

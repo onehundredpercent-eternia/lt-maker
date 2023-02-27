@@ -74,6 +74,7 @@ class MapCombat(SimpleCombat):
             if self.first_phase:
                 self.set_up_pre_proc_animation('attack_pre_proc')
                 self.set_up_pre_proc_animation('defense_pre_proc')
+                self.set_up_other_proc_icons()
                 self.first_phase = False
 
             # Camera
@@ -316,21 +317,38 @@ class MapCombat(SimpleCombat):
     def set_up_proc_animation(self, mark_type):
         marks = self.get_from_playback(mark_type)
         for mark in marks:
-            self.add_proc_icon(mark)
+            self.add_proc_icon(mark.unit, mark.skill)
 
     def set_up_pre_proc_animation(self, mark_type):
         marks = self.get_from_full_playback(mark_type)
         for mark in marks:
-            self.add_proc_icon(mark)
+            self.add_proc_icon(mark.unit, mark.skill)
 
-    def add_proc_icon(self, mark):
-        unit = mark.unit
-        skill = mark.skill
+    def add_proc_icon(self, unit, skill):
         if unit in self.health_bars:
+            # Check if we should be hiding this skill
+            for component in skill.components:
+                if component.defines('hide_skill_icon') and \
+                        component.hide_skill_icon(unit):
+                    return
+
             health_bar = self.health_bars[unit]
             right = health_bar.ordering == 'right' or health_bar.ordering == 'middle'
             skill_icon = gui.SkillIcon(skill, right)
             health_bar.add_skill_icon(skill_icon)
+
+    def set_up_other_proc_icons(self):
+        for skill in self.attacker.skills:
+            for component in skill.components:
+                if component.defines('show_skill_icon') and \
+                        component.show_skill_icon(self.attacker):
+                    self.add_proc_icon(self.attacker, skill)
+        if self.defender:
+            for skill in self.defender.skills:
+                for component in skill.components:
+                    if component.defines('display_skill_icon') and \
+                            component.show_skill_icon(self.defender):
+                        self.add_proc_icon(self.defender, skill)
 
     def _end_phase(self):
         pass
