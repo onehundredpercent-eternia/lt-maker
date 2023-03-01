@@ -3,7 +3,7 @@ from app.data.resources.resources import RESOURCES
 from app.engine.combat.solver import CombatPhaseSolver
 
 from app.engine.sound import get_sound_thread
-from app.engine import engine, combat_calcs, gui, action, item_system
+from app.engine import engine, combat_calcs, gui, action, item_system, skill_system
 from app.engine.health_bar import MapCombatInfo
 from app.engine.animations import MapAnimation
 from app.engine.game_state import game
@@ -327,10 +327,8 @@ class MapCombat(SimpleCombat):
     def add_proc_icon(self, unit, skill):
         if unit in self.health_bars:
             # Check if we should be hiding this skill
-            for component in skill.components:
-                if component.defines('hide_skill_icon') and \
-                        component.hide_skill_icon(unit):
-                    return
+            if skill_system.get_hide_skill_icon(unit, skill):
+                return
 
             health_bar = self.health_bars[unit]
             right = health_bar.ordering == 'right' or health_bar.ordering == 'middle'
@@ -339,16 +337,12 @@ class MapCombat(SimpleCombat):
 
     def set_up_other_proc_icons(self):
         for skill in self.attacker.skills:
-            for component in skill.components:
-                if component.defines('show_skill_icon') and \
-                        component.show_skill_icon(self.attacker):
-                    self.add_proc_icon(self.attacker, skill)
+            if skill_system.get_show_skill_icon(self.attacker, skill):
+                self.add_proc_icon(self.attacker, skill)
         if self.defender:
             for skill in self.defender.skills:
-                for component in skill.components:
-                    if component.defines('display_skill_icon') and \
-                            component.show_skill_icon(self.defender):
-                        self.add_proc_icon(self.defender, skill)
+                if skill_system.get_show_skill_icon(self.defender, skill):
+                    self.add_proc_icon(self.defender, skill)
 
     def _end_phase(self):
         pass

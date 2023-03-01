@@ -390,6 +390,21 @@ def get_cooldown(skill) -> float:
             return component.cooldown()
     return None
 
+def get_hide_skill_icon(unit, skill) -> bool:
+    # Check if we should be hiding this skill
+    for component in skill.components:
+        if component.defines('hide_skill_icon') and \
+                component.hide_skill_icon(unit, skill):
+            return True
+    return False
+
+def get_show_skill_icon(unit, skill) -> bool:
+    for component in skill.components:
+        if component.defines('show_skill_icon') and \
+                component.show_skill_icon(unit):
+            return True
+    return False
+
 def trigger_charge(unit, skill):
     for component in skill.components:
         if component.defines('trigger_charge'):

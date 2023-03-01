@@ -799,14 +799,12 @@ class AnimationCombat(BaseCombat, MockCombat):
         for skill in unit.skills:
             if skill.nid in self.set_up_other_proc_icons.memory.get(unit.nid, []):
                 continue
-            for component in skill.components:
-                if component.defines('show_skill_icon') and \
-                        component.show_skill_icon(unit):
-                    self.add_proc_icon(unit, skill)
-                    if unit.nid not in self.set_up_other_proc_icons.memory:
-                        self.set_up_other_proc_icons.memory[unit.nid] = []
-                    self.set_up_other_proc_icons.memory[unit.nid].append(skill.nid)
-                    return True
+            if skill_system.get_show_skill_icon(unit, skill):
+                self.add_proc_icon(unit, skill)
+                if unit.nid not in self.set_up_other_proc_icons.memory:
+                    self.set_up_other_proc_icons.memory[unit.nid] = []
+                self.set_up_other_proc_icons.memory[unit.nid].append(skill.nid)
+                return True
         return False
     set_up_other_proc_icons.memory = {}  # Static memory (key: unit.nid, value: List[skill.nid])
 
@@ -825,11 +823,8 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.add_proc_icon(unit, skill)
 
     def add_proc_icon(self, unit, skill):
-        # Check if we should be hiding this skill
-        for component in skill.components:
-            if component.defines('hide_skill_icon') and \
-                    component.hide_skill_icon(unit):
-                return
+        if skill_system.get_hide_skill_icon(unit, skill):
+            return
 
         c = False
         if (unit is self.right or unit is self.right.strike_partner) and self.rp_battle_anim:
