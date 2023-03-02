@@ -302,7 +302,7 @@ class PrepPickUnitsState(State):
         topleft = 110, WINHEIGHT - height
         kills = str(game.records.get_kills(unit.nid))
         damage = str(game.records.get_damage(unit.nid))
-        damage_records = [record.damage for record in game.records.damage if record.dealer == unit.nid]
+        damage_records = [record.over_damage for record in game.records.damage if record.dealer == unit.nid]
         if damage_records:
             most_damage = str(max(damage_records))
         else:

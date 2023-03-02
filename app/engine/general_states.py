@@ -2,7 +2,7 @@ from typing import List
 from app.editor.event_editor.event_inspector import EventInspectorEngine
 from collections import OrderedDict
 
-from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, TILEX
+from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT, TILEX, BEEG_MODE
 from app.data.database.database import DB
 from app.engine.objects.unit import UnitObject
 from app.events.regions import RegionType
@@ -370,6 +370,10 @@ class OptionMenuState(MapState):
         options = ['Unit', 'Objective', 'Options']
         info_desc = ['Unit_desc', 'Objective_desc', 'Options_desc']
         ignore = [False, False, False]
+        if BEEG_MODE:  # Don't display Objectives in BEEG MODE
+            options.remove('Objective')
+            info_desc.remove('Objective_desc')
+
         if game.current_mode.permadeath:
             options.append('Suspend')
             info_desc.append('Suspend_desc')

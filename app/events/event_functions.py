@@ -1643,7 +1643,7 @@ def give_grave_item(self: Event, global_unit, item, flags=None):
     grave_item = items[0]
 
     # Create new item to give
-    if not item:
+    if not item or item == 'None':
         # If item is None, instead get given a random valid weapon
         from app.engine import rogue_emblem
         item = rogue_emblem.get_random_grave('Weapon+', unit)
