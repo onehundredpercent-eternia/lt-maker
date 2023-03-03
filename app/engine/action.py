@@ -3023,7 +3023,7 @@ class AddSkill(Action):
             skill_system.init(skill_obj)
             if skill_obj.uid not in game.skill_registry:
                 game.register_skill(skill_obj)
-        self.skill_obj = skill_obj
+        self.skill_obj: SkillObject = skill_obj
         self.subactions = []
         self.reset_action = ResetUnitVars(self.unit)
 
