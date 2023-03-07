@@ -1,10 +1,10 @@
 import logging
 import math
 
+from app.constants import BEEG_MODE
 from app.data.database.database import DB
 from app.engine import (action, engine, evaluate,
                         roam_ai, target_system)
-from app.engine.info_menu import info_menu
 from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
 from app.engine.sound import get_sound_thread
@@ -197,7 +197,13 @@ class FreeRoamState(MapState):
             if did_trigger:
                 self.rationalize()
             else:
-                info_menu.handle_info()
+                get_sound_thread().play_sfx('Select 1')
+                game.memory['current_unit'] = self.roam_unit
+                if BEEG_MODE:
+                    game.memory['next_state'] = 'beeg_info_menu'
+                else:
+                    game.memory['next_state'] = 'info_menu'
+                game.state.change('transition_to')
 
         elif event == 'START':
             did_trigger = game.events.trigger(triggers.RoamPressStart(self.roam_unit))

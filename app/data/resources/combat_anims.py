@@ -148,7 +148,7 @@ class CombatCatalog(ManifestCatalog):
     def save_image(self, loc, combat_anim, temp=False):
         for weapon_anim in combat_anim.weapon_anims:
             short_path = "%s-%s.png" % (combat_anim.nid, weapon_anim.nid)
-            new_full_path = os.path.join(loc, short_path)
+            new_full_path = os.path.join(loc, short_path)    
             if temp:
                 weapon_anim.pixmap.save(new_full_path, "PNG")
             elif not weapon_anim.full_path:

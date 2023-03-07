@@ -12,6 +12,7 @@ from app.data.resources.resources import RESOURCES
 
 from app.utilities.data import Data
 from app.data.database.database import DB
+
 from app.extensions.custom_gui import DeletionDialog
 from app.editor.base_database_gui import ResourceCollectionModel
 from app.editor.settings import MainSettingsController

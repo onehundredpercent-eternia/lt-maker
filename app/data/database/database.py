@@ -121,7 +121,7 @@ class Database(object):
         else:
             save_loc = os.path.join(data_dir, key + '.json')
             if os.path.exists(save_loc):
-                logging.info("Deserializing %s from %s" % (key, save_loc))
+                # logging.info("Deserializing %s from %s" % (key, save_loc))
                 with open(save_loc) as load_file:
                     try:
                         return json.load(load_file)
@@ -196,7 +196,7 @@ class Database(object):
                 if os.path.exists(save_dir):
                     shutil.rmtree(save_dir)
                 save_loc = os.path.join(data_dir, key + '.json')
-                logging.info("Serializing %s to %s" % (key, save_loc))
+                # logging.info("Serializing %s to %s" % (key, save_loc))
                 self.json_save(save_loc, value)
 
         for key in self.save_data_types:
@@ -234,7 +234,8 @@ class Database(object):
         # TODO -- This is a shitty fix that should be superseded
         from app.engine import equations
         equations.clear()
-        from app.engine import persistent_records
+        from app.engine import achievements, persistent_records
+        achievements.reset()
         persistent_records.reset()
         # -- End shitty fix
 

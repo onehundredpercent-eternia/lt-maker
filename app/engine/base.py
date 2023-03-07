@@ -238,8 +238,9 @@ class BaseMarketSelectState(prep.PrepManageState):
             get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = game.get_units_in_party()
             game.memory['current_unit'] = self.menu.get_current()
-            info_menu.to_info_menu()
-            
+            game.memory['next_state'] = 'info_menu'
+            game.state.change('transition_to')
+
 class BaseConvosChildState(State):
     name = 'base_convos_child'
     transparent = True
@@ -636,7 +637,8 @@ class BaseSupportsState(State):
             get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = self.units
             game.memory['current_unit'] = self.menu.get_current()
-            info_menu.to_info_menu()
+            game.memory['next_state'] = 'info_menu'
+            game.state.change('transition_to')
 
     def update(self):
         if self.menu and not self.display.draw_cursor:
@@ -1195,7 +1197,8 @@ class BaseBEXPSelectState(prep.PrepManageState):
             get_sound_thread().play_sfx('Select 1')
             game.memory['scroll_units'] = game.get_units_in_party()
             game.memory['current_unit'] = self.menu.get_current()
-            info_menu.to_info_menu()
+            game.memory['next_state'] = 'info_menu'
+            game.state.change('transition_to')
 
 class BaseBEXPAllocateState(State):
     show_map = False

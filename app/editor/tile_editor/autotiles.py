@@ -66,7 +66,7 @@ class AutotileMaker():
         self.window = parent
         # Must be TILEWIDTH/TILEHEIGHT or the engine and editor don't display properly
         self.tilewidth = TILEWIDTH
-        self.tileheight = TILEHEIGHT 
+        self.tileheight = TILEHEIGHT
         self.similar_func = similar_fast if fast else similar
 
         self.map_tiles = OrderedDict()

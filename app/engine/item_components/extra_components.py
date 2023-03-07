@@ -105,7 +105,7 @@ class Lifelink(ItemComponent):
     expose = ComponentType.Float
     value = 0.5
 
-    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
+    def after_strike(self, actions, playback, unit, item, target, mode, attack_info, strike):
         total_damage_dealt = 0
         playbacks = [p for p in playback if p.nid in ('damage_hit', 'damage_crit') and p.attacker == unit]
         for p in playbacks:

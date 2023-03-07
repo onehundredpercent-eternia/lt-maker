@@ -43,6 +43,7 @@ class StateMachine():
                                 victory_screen)
         from app.engine.info_menu import info_menu_state, beeg_info_menu_state
         from app.engine.game_menus.menu_states import unit_menu_state
+        from app.engine.info_menu import info_menu_state
         from app.engine.overworld import overworld_states
         from app.events import event_state
         self.all_states = \

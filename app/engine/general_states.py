@@ -19,7 +19,6 @@ from app.engine import engine, action, menus, image_mods, \
     banner, save, phase, skill_system, target_system, item_system, \
     item_funcs, ui_view, base_surf, gui, background, dialog, \
     text_funcs, equations, evaluate, supports
-from app.engine.info_menu import info_menu
 from app.engine.combat import interaction
 from app.engine.selection_helper import SelectionHelper
 from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES
@@ -256,6 +255,19 @@ class PhaseChangeState(MapState):
             name = GAME_NID + '-enemy_turn_change-' + game.level.nid + '-' + str(game.turncount)
             save.suspend_game(game, 'enemy_turn_change', name=name)
 
+def _handle_info():
+    if game.cursor.get_hover():
+        get_sound_thread().play_sfx('Select 1')
+        game.memory['current_unit'] = game.cursor.get_hover()
+        if BEEG_MODE:
+            game.memory['next_state'] = 'beeg_info_menu'
+        else:
+            game.memory['next_state'] = 'info_menu'
+        game.state.change('transition_to')
+    else:
+        get_sound_thread().play_sfx('Select 3')
+        game.boundary.toggle_all_enemy_attacks()
+
 class FreeState(MapState):
     name = 'free'
 
@@ -300,10 +312,10 @@ class FreeState(MapState):
         game.cursor.take_input()
 
         if event == 'INFO':
-            info_menu.handle_info()
+            _handle_info()
 
         elif event == 'AUX':
-            info_menu.handle_aux()
+            self._select_next_available_unit()
 
         elif event == 'SELECT':
             cur_pos = game.cursor.position
@@ -344,6 +356,30 @@ class FreeState(MapState):
     def end(self):
         game.cursor.set_speed_state(False)
         game.highlight.remove_highlights()
+
+    def _select_next_available_unit(self):
+        avail_units = [
+            u for u in game.units
+            if u.team == 'player' and
+            u.position and
+            not u.finished and
+            skill_system.can_select(u) and
+            'Tile' not in u.tags]
+
+        if avail_units:
+            cur_unit = game.cursor.get_hover()
+            if not cur_unit or cur_unit not in avail_units:
+                cur_unit = game.memory.get('aux_unit')
+            if not cur_unit or cur_unit not in avail_units:
+                cur_unit = avail_units[0]
+
+            if cur_unit in avail_units:
+                idx = avail_units.index(cur_unit)
+                idx = (idx + 1) % len(avail_units)
+                new_pos = avail_units[idx].position
+                game.memory['aux_unit'] = cur_unit
+                get_sound_thread().play_sfx('Select 4')
+                game.cursor.set_pos(new_pos)
 
 def suspend():
     game.state.back()
@@ -601,7 +637,7 @@ class MoveState(MapState):
         cur_unit = game.cursor.cur_unit
 
         if event == 'INFO':
-            info_menu.handle_info()
+            _handle_info()
         elif event == 'AUX':
             pass
 
@@ -897,9 +933,9 @@ class MenuState(MapState):
                     act.do()
                     self.cur_unit = u
                     game.cursor.cur_unit = u
+                    game.leave(self.cur_unit)
                 if self.cur_unit.current_move:
                     logging.info("Reversing " + self.cur_unit.nid + "'s move")
-                        # game.leave(self.cur_unit)
                     action.reverse(self.cur_unit.current_move)
                     self.cur_unit.current_move = None
                 game.state.change('move')
@@ -913,7 +949,7 @@ class MenuState(MapState):
                 selection = self.menu.get_current()
                 # Show info menu for the basic stuff
                 if selection in ('Attack', 'Spells', 'Item', 'Wait'):
-                    info_menu.handle_info()
+                    _handle_info()
                 else:  # Show description for everything else.
                     get_sound_thread().play_sfx('Info In')
                     self.menu.info_flag = True
@@ -1400,6 +1436,11 @@ class WeaponChoiceState(MapState):
         self.item_desc_panel = ui_view.ItemDescriptionPanel(self.cur_unit, self.menu.get_current())
         self.disp_attacks(self.cur_unit, self.menu.get_current())
 
+    def _test_equip(self):
+        current = self.menu.get_current()
+        if self.cur_unit.can_equip(current):
+            action.EquipItem(self.cur_unit, current).execute()
+
     def _item_desc_update(self):
         current = self.menu.get_current()
         if self.cur_unit.can_equip(current):
@@ -1414,16 +1455,19 @@ class WeaponChoiceState(MapState):
 
         did_move = self.menu.handle_mouse()
         if did_move:
+            self._test_equip()
             self._item_desc_update()
 
         if 'DOWN' in directions:
             get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
+            self._test_equip()
             self._item_desc_update()
 
         elif 'UP' in directions:
             get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
+            self._test_equip()
             self._item_desc_update()
 
         if event == 'BACK':
@@ -1514,16 +1558,19 @@ class SpellChoiceState(WeaponChoiceState):
 
         did_move = self.menu.handle_mouse()
         if did_move:
+            self._test_equip()
             self._item_desc_update()
 
         if 'DOWN' in directions:
             get_sound_thread().play_sfx('Select 6')
             self.menu.move_down(first_push)
+            self._test_equip()
             self._item_desc_update()
 
         elif 'UP' in directions:
             get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
+            self._test_equip()
             self._item_desc_update()
 
         if event == 'BACK':
@@ -1979,7 +2026,7 @@ class CombatTargetingState(MapState):
             game.cursor.set_pos(mouse_position)
 
         if event == 'INFO':
-            info_menu.handle_info()
+            _handle_info()
 
         elif event == 'AUX':
             adj_allies = target_system.get_adj_allies(self.cur_unit)

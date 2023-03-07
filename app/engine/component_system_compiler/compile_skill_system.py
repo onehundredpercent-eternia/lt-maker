@@ -35,8 +35,10 @@ simple_event_hooks = ('on_death',)
 # Takes in playback, unit, item, target, mode
 combat_event_hooks = ('start_combat', 'cleanup_combat', 'end_combat', 'pre_combat', 'post_combat', 'test_on', 'test_off')
 aesthetic_combat_hooks = ('battle_music', )
+# Takes in actions, playback, unit, item, target, mode, attack_info, strike
+after_strike_event_hooks = ('after_strike', 'after_take_strike')
 # Takes in actions, playback, unit, item, target, mode, attack_info
-subcombat_event_hooks = ('after_hit', 'after_take_hit', 'after_take_miss', 'start_sub_combat', 'end_sub_combat')
+subcombat_event_hooks = ('start_sub_combat', 'end_sub_combat')
 # Takes in unit, item
 item_event_hooks = ('on_add_item', 'on_remove_item', 'on_equip_item', 'on_unequip_item')
 
@@ -183,6 +185,18 @@ def %s(playback, unit, item, target, mode):
             if component.defines('%s'):
                 if component.ignore_conditional or condition(skill, unit):
                     return component.%s(playback, unit, item, target, mode)""" \
+            % (hook, hook, hook)
+        compiled_skill_system.write(func)
+        compiled_skill_system.write('\n')
+
+    for hook in after_strike_event_hooks:
+        func = """
+def %s(actions, playback, unit, item, target, mode, attack_info, strike):
+    for skill in unit.skills[:]:
+        for component in skill.components:
+            if component.defines('%s'):
+                if component.ignore_conditional or condition(skill, unit, item):
+                    component.%s(actions, playback, unit, item, target, mode, attack_info, strike)""" \
             % (hook, hook, hook)
         compiled_skill_system.write(func)
         compiled_skill_system.write('\n')

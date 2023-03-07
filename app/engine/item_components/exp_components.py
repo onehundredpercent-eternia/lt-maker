@@ -51,13 +51,17 @@ def determine_all_healed_defenders(playback: list, attacker) -> set:
 def modify_exp(exp, attacker, defender):
     self_mult = skill_system.exp_multiplier(attacker, defender)
     exp *= self_mult
-    if defender:
-        enemy_mult = skill_system.enemy_exp_multiplier(defender, attacker)
-        exp *= enemy_mult
-        if defender.is_dying:
-            exp *= float(DB.constants.value('kill_multiplier'))
-            if 'Boss' in defender.tags:
-                exp += int(DB.constants.value('boss_bonus') * self_mult * enemy_mult)
+    if not defender:
+        return exp
+
+    enemy_mult = skill_system.enemy_exp_multiplier(defender, attacker)
+    exp *= enemy_mult
+    if not defender.is_dying:
+        return exp
+        
+    exp *= float(DB.constants.value('kill_multiplier'))
+    if 'Boss' in defender.tags:
+        exp += int(DB.constants.value('boss_bonus') * self_mult * enemy_mult)
     return exp
 
 class Exp(ItemComponent):

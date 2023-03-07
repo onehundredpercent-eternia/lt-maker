@@ -3,6 +3,7 @@ from app.data.database.components import ComponentType
 
 from app.engine import equations, item_system, item_funcs, skill_system
 from app.engine.combat import playback as pb
+from app.utilities.enums import Strike
 
 class UnitAnim(SkillComponent):
     nid = 'unit_anim'
@@ -118,9 +119,8 @@ class AlternateBattleAnim(SkillComponent):
     expose = ComponentType.String
     value = 'Critical'
 
-    def after_hit(self, actions, playback, unit, item, target, mode, attack_info):
-        marks = [mark.nid for mark in playback]
-        if 'mark_hit' in marks or 'mark_crit' in marks:
+    def after_strike(self, actions, playback, unit, item, target, mode, attack_info, strike):
+        if strike != Strike.MISS:
             playback.append(pb.AlternateBattlePose(self.value))
 
 class ChangeVariant(SkillComponent):

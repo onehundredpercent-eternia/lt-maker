@@ -4,6 +4,7 @@ from app.engine import action, combat_calcs, item_funcs, item_system, skill_syst
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
 from app.utilities import static_random
+from app.utilities.enums import Strike
 
 import logging
 
@@ -487,13 +488,15 @@ class CombatPhaseSolver():
                 if defender:
                     playback.append(pb.MarkHit(attacker, defender, self.attacker, item, guard_hit))
             if not guard_hit:
-                item_system.after_hit(actions, playback, attacker, item, defender, mode, attack_info)
-                skill_system.after_hit(actions, playback, attacker, item, defender, mode, attack_info)
-                skill_system.after_take_hit(actions, playback, defender, def_item, attacker, mode, attack_info)
+                strike = Strike.CRIT if crit else Strike.HIT
+                item_system.after_strike(actions, playback, attacker, item, defender, mode, attack_info, strike)
+                skill_system.after_strike(actions, playback, attacker, item, defender, mode, attack_info, strike)
+                skill_system.after_take_strike(actions, playback, defender, def_item, attacker, mode, attack_info, strike)
         else:
             item_system.on_miss(actions, playback, attacker, item, defender, def_pos, mode, attack_info, first_item)
-            item_system.after_miss(actions, playback, attacker, item, defender, mode, attack_info)
-            skill_system.after_take_miss(actions, playback, defender, def_item, attacker, mode, attack_info)
+            item_system.after_strike(actions, playback, attacker, item, defender, mode, attack_info, Strike.MISS)
+            skill_system.after_strike(actions, playback, attacker, item, defender, mode, attack_info, Strike.MISS)
+            skill_system.after_take_strike(actions, playback, defender, def_item, attacker, mode, attack_info, Strike.MISS)
             if defender:
                 playback.append(pb.MarkMiss(attacker, defender, self.attacker, item))
 
