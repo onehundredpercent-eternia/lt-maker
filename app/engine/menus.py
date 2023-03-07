@@ -473,11 +473,7 @@ class Choice(Simple):
         if self.horizontal:
             self.cursor.y_offset = 0
         if did_move and self.show_face():
-<<<<<<< HEAD
-            self.update_bg()
-=======
             self.update_bg()  # Unstore bg
->>>>>>> master
         return did_move
 
     def get_menu_width(self):
