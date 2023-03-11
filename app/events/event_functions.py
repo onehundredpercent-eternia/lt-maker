@@ -2816,10 +2816,10 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
             position = Alignments(box_position)
         except:
             position = self._parse_pos(box_position)
-    elif textbox_style and textbox_style.text_position:
-        position = textbox_style.text_position
+    elif textbox_style and textbox_style.position:
+        position = textbox_style.position
     else:
-        position = default_textbox_style.text_position
+        position = default_textbox_style.position
 
     if width:
         box_width = int(width)
@@ -2830,10 +2830,10 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
 
     if text_speed:
         speed = float(text_speed)
-    elif textbox_style and textbox_style.text_speed:
-        speed = textbox_style.text_speed
+    elif textbox_style and textbox_style.speed:
+        speed = textbox_style.speed
     else:
-        speed = default_textbox_style.text_speed
+        speed = default_textbox_style.speed
 
     if font_color:
         fcolor = font_color
