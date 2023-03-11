@@ -1,6 +1,6 @@
 import math, string
 
-from app.constants import TILEX, WINWIDTH, WINHEIGHT
+from app.constants import TILEX, WINWIDTH, WINHEIGHT, BEEG_MODE
 from app.data.database.database import DB
 from app.utilities import utils
 
@@ -1554,7 +1554,7 @@ class Convoy():
             icons.draw_portrait(owner_surf, self.owner, (0, 0))
             owner_surf = engine.subsurface(owner_surf, (0, 0, 96, 68))
             owner_surf = engine.flip_horiz(owner_surf)
-            surf.blit(owner_surf, (18, 0))
+            surf.blit(owner_surf, (18, 4 if BEEG_MODE else 0))
 
         # Get item owner
         surf.blit(self.owner_surf, (156, 0))

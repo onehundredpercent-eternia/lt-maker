@@ -13,7 +13,8 @@ from app.engine import engine, menu_options, help_menu, gui, \
 from app.engine.game_state import game
 from app.utilities.enums import Alignments
 
-from app.engine.info_menu import info_menu, info_graph, info_menu_state
+from app.engine.info_menu import info_graph, info_menu_state
+from app.engine.graphics.ingame_ui.build_groove import build_groove
 
 class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
     name = 'beeg_info_menu'
@@ -223,7 +224,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 if max_stat > 0:
                     total_length = int(max_stat / highest_stat * 42)
                     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
-                    info_menu.build_groove(surf, (27 + stat_offset * x_idx, 16 * y_idx + 8), total_length, frac)
+                    build_groove(surf, (27 + stat_offset * x_idx, 16 * y_idx + 8), total_length, frac)
                 icons.draw_stat(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx))
             # Name
             name = DB.stats.get(stat_nid).name

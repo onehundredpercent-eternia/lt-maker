@@ -341,7 +341,10 @@ class PrepPickUnitsState(State):
 def _handle_info():
     if game.cursor.get_hover():
         get_sound_thread().play_sfx('Select 1')
-        game.memory['next_state'] = 'info_menu'
+        if BEEG_MODE:
+            game.memory['next_state'] = 'beeg_info_menu'
+        else:
+            game.memory['next_state'] = 'info_menu'
         game.memory['current_unit'] = game.cursor.get_hover()
         game.state.change('transition_to')
     else:
