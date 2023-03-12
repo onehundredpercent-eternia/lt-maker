@@ -796,10 +796,13 @@ class AnimationCombat(BaseCombat, MockCombat):
         self.mark_proc(mark)
 
     def set_up_other_proc_icons(self, unit) -> bool:
+        """
+        Returns whether it added a proc icon
+        """
         for skill in unit.skills:
             if skill_system.get_show_skill_icon(unit, skill):
-                self.add_proc_icon(unit, skill)
-                return True
+                if self.add_proc_icon(unit, skill):
+                    return True
         return False
 
     def mark_proc(self, mark):
@@ -816,11 +819,14 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         self.add_proc_icon(unit, skill)
 
-    def add_proc_icon(self, unit, skill):
+    def add_proc_icon(self, unit, skill) -> bool:
+        """
+        Returns whether it successfully added the proc icon
+        """
         if skill_system.get_hide_skill_icon(unit, skill):
-            return
+            return False
         if skill.nid in self.add_proc_icon.memory.get(unit.nid, []):
-            return
+            return False
 
         c = False
         if (unit is self.right or unit is self.right.strike_partner) and self.rp_battle_anim:
@@ -840,6 +846,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         else:
             self.focus_right = False
         self.move_camera()
+        return True
     add_proc_icon.memory = {}
 
     def special_boss_crit(self, defender):
