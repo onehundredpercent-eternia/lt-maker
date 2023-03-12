@@ -57,7 +57,7 @@
                     9
                 ],
                 "icon": "fort",
-                "level": "3",
+                "level": null,
                 "menu_options": []
             },
             {
@@ -68,7 +68,7 @@
                     7
                 ],
                 "icon": "town",
-                "level": "2",
+                "level": null,
                 "menu_options": []
             },
             {

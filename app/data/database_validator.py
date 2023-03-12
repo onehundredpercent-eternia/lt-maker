@@ -1,10 +1,12 @@
 from __future__ import annotations
 from app.data.database.components import Component
+from app.data.database.overworld_node import OverworldNodeCatalog
+from app.data.resources.map_icons import MapIconCatalog
 from app.events.regions import Region
 from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
 from app.data.database.levels import OBJECTIVE_KEYS
 
-from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
+from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set, Tuple
 
 from app.data.database.database_types import DatabaseType as DType
 from app.data.resources.resource_types import ResourceType as RType
@@ -122,6 +124,7 @@ class DatabaseRepair():
         # @TODO(mag): implement repairs for all data types
         self.repair_units()
         self.repair_levels()
+        self.repair_overworlds()
 
     def repair_units(self):
         all_weapon_types = set(self.db.weapons.keys())
@@ -273,3 +276,27 @@ class DatabaseRepair():
 
     def _repair_component(self, comp: Component):
         pass
+
+    def repair_overworlds(self):
+        for overworld in self.db.overworlds:
+            if overworld.tilemap and not self._val(RType.TILEMAPS, overworld.tilemap):
+                overworld.tilemap = None
+            if overworld.music and not self._val(RType.MUSIC, overworld.music):
+                overworld.music = None
+
+            all_node_positions: Set[Tuple[int, int]] = set()
+            overworld.overworld_nodes = OverworldNodeCatalog([node for node in overworld.overworld_nodes if node.pos])
+            for node in overworld.overworld_nodes:
+                if not self._val(RType.MAP_ICONS, node.icon):
+                    node.icon = MapIconCatalog.DEFAULT()
+                if node.level and not self._val(DType.LEVELS, node.level):
+                    node.level = None
+                all_node_positions.add(node.pos)
+
+            to_delete: List[str] = []
+            for pathkey, _ in overworld.map_paths.items():
+                p1, p2 = overworld.string_to_tuples(pathkey)
+                if p1 not in all_node_positions or p2 not in all_node_positions:
+                    to_delete.append(pathkey)
+            overworld.map_paths = {k: v for k, v in overworld.map_paths.items() if k not in to_delete}
+            overworld.border_tile_width = max(overworld.border_tile_width, 0)

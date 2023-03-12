@@ -1,5 +1,6 @@
 from app.data.database.levels import OBJECTIVE_KEYS
 from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
+from app.data.database.overworld_node import OverworldNodePrefab
 from app.data.database.weapons import WexpGain
 import unittest
 from unittest.mock import MagicMock, patch, call
@@ -170,6 +171,29 @@ class DBRepairTests(unittest.TestCase):
         self.assertFalse('Kafu' in group.units)
         self.assertFalse('Luka' in group.positions)
         self.assertEqual(group.positions[GOOD_UNIT], (0, 0))
+
+    def test_good_overworld_repair(self):
+        before_repair = self.db.overworlds[0].save()
+        self.db_repairer.repair_overworlds()
+        after_repair = self.db.overworlds[0].save()
+        self.assertEqual(before_repair, after_repair)
+
+    def test_bad_overworld_repair(self):
+        overworld = self.db.overworlds[0]
+        overworld.tilemap = 'Elysium'
+        overworld.music = 'MELT'
+        BAD_PATH = '(25, 25)-(26, 26)'
+        overworld.map_paths[BAD_PATH] = [(25, 25), (26, 26)]
+        BAD_NODE = 'NodeJS'
+        overworld.overworld_nodes.append(OverworldNodePrefab(BAD_NODE, BAD_NODE, None))
+
+        self.db_repairer.repair_overworlds()
+
+        self.assertIsNone(overworld.tilemap)
+        self.assertIsNone(overworld.music)
+        self.assertNotIn(BAD_PATH, overworld.map_paths)
+        self.assertNotIn(BAD_NODE, overworld.overworld_nodes)
+
 
 if __name__ == '__main__':
     unittest.main()

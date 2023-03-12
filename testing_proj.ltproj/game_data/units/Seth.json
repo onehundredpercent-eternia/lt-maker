@@ -45,12 +45,7 @@
                 false
             ]
         ],
-        "learned_skills": [
-            [
-                1,
-                "Inspiration"
-            ]
-        ],
+        "learned_skills": [],
         "unit_notes": [],
         "wexp_gain": {
             "Sword": [

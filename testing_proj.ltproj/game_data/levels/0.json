@@ -7,13 +7,14 @@
         "party": "Eirika",
         "music": {
             "player_phase": "Distant Roads",
-            "enemy_phase": "Shadow of the Enemy",
+            "enemy_phase": null,
             "other_phase": null,
             "enemy2_phase": null,
-            "player_battle": "Attack",
-            "enemy_battle": "Defense",
+            "player_battle": null,
+            "enemy_battle": null,
             "other_battle": null,
-            "enemy2_battle": null
+            "enemy2_battle": null,
+            "boss_battle": null
         },
         "objective": {
             "simple": "Defeat boss",

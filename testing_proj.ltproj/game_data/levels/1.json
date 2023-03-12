@@ -13,7 +13,8 @@
             "player_battle": null,
             "enemy_battle": null,
             "other_battle": null,
-            "enemy2_battle": null
+            "enemy2_battle": null,
+            "boss_battle": null
         },
         "objective": {
             "simple": "",
@@ -21,7 +22,7 @@
             "loss": ""
         },
         "roam": false,
-        "roam_unit": null,
+        "roam_unit": "Eirika",
         "go_to_overworld": false,
         "units": [
             {
@@ -113,6 +114,7 @@
                 ],
                 "sub_nid": "Destructible",
                 "condition": "True",
+                "time_left": null,
                 "only_once": true,
                 "interrupt_move": false
             },
@@ -129,6 +131,7 @@
                 ],
                 "sub_nid": "Switch",
                 "condition": "True",
+                "time_left": null,
                 "only_once": true,
                 "interrupt_move": false
             }

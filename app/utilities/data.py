@@ -147,7 +147,7 @@ class Data(Generic[T]):
     def __len__(self):
         return len(self._list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         return self._list[idx]
 
     def __iter__(self):
