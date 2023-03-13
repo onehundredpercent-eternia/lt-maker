@@ -1791,6 +1791,7 @@ def give_money(self: Event, money, party=None, flags=None):
     banner_flag = 'no_banner' not in flags
 
     action.do(action.GainMoney(party_nid, money))
+    action.do(action.UpdateRecords('money', (party_nid, money)))
     if banner_flag:
         if money >= 0:
             b = banner.Advanced('Got <blue>{money}</> gold.'.format(money=str(money)), 'Item')
