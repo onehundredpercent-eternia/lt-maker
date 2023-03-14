@@ -68,7 +68,7 @@ class MoneyRecord(Record):
     def __init__(self, party_nid: str, num: int):
         super().__init__()
         self.party_nid = party_nid
-        self.num
+        self.num = num
 
 class Recordkeeper():
     """
@@ -168,7 +168,7 @@ class Recordkeeper():
         elif record_type == 'heal':
             return self.healing.pop()
         elif record_type == 'death':
-            return self.player_death.pop()
+            return self.player_death.pop()  # Death records aren't overwritten by turnwheel
         elif record_type == 'item_use':
             return self.item_use.pop()
         elif record_type == 'steal':
