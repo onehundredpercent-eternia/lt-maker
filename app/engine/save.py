@@ -69,7 +69,6 @@ def dict_print(d):
         else:
             s = "{0} : {1}".format(k, v)
             print(s)
-            logging.error(s)
 
 def save_io(s_dict, meta_dict, old_slot, slot, force_loc=None, name=None):
     if name:
@@ -88,8 +87,15 @@ def save_io(s_dict, meta_dict, old_slot, slot, force_loc=None, name=None):
             pickle.dump(s_dict, fp)
         except TypeError as e:
             # There's a surface somewhere in the dictionary of things to save...
-            dict_print(s_dict)
             print(e)
+            for k, v in s_dict.items():
+                try:
+                    pickle.dumps(v)
+                except TypeError as e2:
+                    print(e2)
+                    print("The offending object is in %s" % k)
+                    print(v)
+
     with open(meta_loc, 'wb') as fp:
         pickle.dump(meta_dict, fp)
 
