@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ast
 import random
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 
 from app.constants import WINHEIGHT, WINWIDTH, FANCY_DIALOG_MODE
 from app.data.database.database import DB
@@ -39,6 +39,7 @@ from app.events.speak_style import SpeakStyle
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments
+from app.utilities.type_checking import check_valid_type
 from app.utilities.typing import NID
 
 if FANCY_DIALOG_MODE:
@@ -628,7 +629,10 @@ def screen_shake_end(self: Event, flags=None):
 def game_var(self: Event, nid, expression, flags=None):
     try:
         val = self.text_evaluator.direct_eval(expression)
-        action.do(action.SetGameVar(nid, val))
+        if check_valid_type(val):
+            action.do(action.SetGameVar(nid, val))
+        else:
+            self.logger.error("game_var: %s is not a valid variable", val)
     except Exception as e:
         self.logger.error("game_var: Could not evaluate %s (%s)" % (expression, e))
 
@@ -636,7 +640,10 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
     if expression:
         try:
             val = self.text_evaluator.direct_eval(expression)
-            action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
+            if check_valid_type(val):
+                action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
+            else:
+                self.logger.error("inc_game_var: %s is not a valid variable", val)
         except Exception as e:
             self.logger.error("inc_game_var: Could not evaluate %s (%s)" % (expression, e))
     else:
@@ -645,7 +652,10 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
 def level_var(self: Event, nid, expression, flags=None):
     try:
         val = self.text_evaluator.direct_eval(expression)
-        action.do(action.SetLevelVar(nid, val))
+        if check_valid_type(val):
+            action.do(action.SetLevelVar(nid, val))
+        else:
+            self.logger.error("level_var: %s is not a valid variable", val)
     except Exception as e:
         self.logger.error("level_var: Could not evaluate %s (%s)" % (expression, e))
         return
@@ -654,7 +664,10 @@ def inc_level_var(self: Event, nid, expression=None, flags=None):
     if expression:
         try:
             val = self.text_evaluator.direct_eval(expression)
-            action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
+            if check_valid_type(val):
+                action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
+            else:
+                self.logger.error("inc_level_var: %s is not a valid variable", val)
         except Exception as e:
             self.logger.error("inc_level_var: Could not evaluate %s (%s)" % (expression, e))
     else:
