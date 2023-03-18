@@ -476,8 +476,8 @@ class Choice(Simple):
             self.update_bg()  # Unstore bg
         return did_move
 
-    def update_options(self):
-        super().update_options()
+    def update_options(self, options=None):
+        super().update_options(options)
         if self.show_face():
             self.update_bg()  # Unstore bg
 

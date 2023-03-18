@@ -62,6 +62,8 @@ def get_random_tree_item(pos: tuple = (0, 0)):
 
 def get_random_grave(tag: str, unit) -> str:
     logging.debug("Get random item with tag %s", tag)
+    if 'Dancer' in unit.tags:
+        return 'Refresh'
     # Only items that match the main tag
     items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
     # Only items that match the tags of the unit (Sword for Sword units, Axe for Axe units, etc.)
