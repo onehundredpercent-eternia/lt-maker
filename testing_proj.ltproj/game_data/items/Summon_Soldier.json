@@ -15,7 +15,7 @@
             ],
             [
                 "event_on_hit",
-                "Global Summon Soldiers"
+                null
             ],
             [
                 "target_ally",

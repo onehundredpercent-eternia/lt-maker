@@ -51,7 +51,7 @@ class Component():
     nid: str
     desc: str
     author: str = 'rainlash'
-    expose: Optional[ComponentType] = None  # Attribute
+    expose: Optional[ComponentType] = ComponentType.String  # Attribute
     paired_with: list = []
     tag: Enum
     value = None

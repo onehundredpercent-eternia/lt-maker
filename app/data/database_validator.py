@@ -1,6 +1,7 @@
 from __future__ import annotations
-from app.data.database.components import Component
+from app.data.database.components import Component, ComponentType
 from app.data.database.overworld_node import OverworldNodeCatalog
+from app.data.engine_types import map_component_type
 from app.data.resources.map_icons import MapIconCatalog
 from app.events.regions import Region
 from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
@@ -120,11 +121,12 @@ class DatabaseRepair():
         pass
 
     def autorepair_db(self):
-        """Repairs all erroneous entries in the database. Pointers to nonexistent skills, tilemaps, units, etc. are cleared"""
+        """Repairs all erroneous entries in the database. References to nonexistent skills, tilemaps, units, etc. are cleared"""
         # @TODO(mag): implement repairs for all data types
         self.repair_units()
         self.repair_levels()
         self.repair_overworlds()
+        self.repair_items_and_skills()
 
     def repair_units(self):
         all_weapon_types = set(self.db.weapons.keys())
@@ -275,7 +277,43 @@ class DatabaseRepair():
                 self._repair_component(component)
 
     def _repair_component(self, comp: Component):
-        pass
+        ctype = comp.expose
+        base_component = comp.__class__()
+        if ctype:
+            if ctype == ComponentType.NewMultipleOptions:
+                for k in comp.options.keys():
+                    nctype = comp.options[k]
+                    value = comp.value[k]
+                    base_value = base_component.value[k]
+                    comp.value[k] = self._get_repaired_value(nctype, value, base_value)
+            else:
+                comp.value = self._get_repaired_value(ctype, comp.value, base_component.value)
+
+    def _get_repaired_value(self, ctype: ComponentType | Tuple[ComponentType, ComponentType | List], value: Any, base_value: Any) -> Any:
+        if isinstance(ctype, tuple):
+            ltype: ComponentType = ctype[0]
+            if ltype == ComponentType.MultipleChoice:
+                valid_values: List[str] = ctype[1]
+                if value not in valid_values:
+                    return base_value
+            vtype: ComponentType = ctype[1]
+            actual_type = map_component_type(vtype)
+            if actual_type:
+                if ltype == ComponentType.List:
+                    return [v for v in value if self._val(actual_type, v)]
+                elif ltype == ComponentType.Dict:
+                    return [[k, v] for k, v in value if self._val(actual_type, k)]
+        elif ctype == ComponentType.NewMultipleOptions:
+            raise ValueError("Shouldn't be calling this function on NewMultipleOptions")
+        else:
+            actual_type = map_component_type(ctype)
+            if actual_type:
+                if value == None:
+                    return base_value
+                else:
+                    if not self._val(actual_type, value):
+                        return base_value
+        return value
 
     def repair_overworlds(self):
         for overworld in self.db.overworlds:

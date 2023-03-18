@@ -31,7 +31,7 @@
             ],
             [
                 "event_on_hit",
-                "Global Summon Phantom"
+                null
             ]
         ]
     }

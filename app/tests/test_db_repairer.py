@@ -1,14 +1,28 @@
-from app.data.database.levels import OBJECTIVE_KEYS
-from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
-from app.data.database.overworld_node import OverworldNodePrefab
-from app.data.database.weapons import WexpGain
 import unittest
-from unittest.mock import MagicMock, patch, call
-from app.data.database.database_types import DatabaseType
-from app.data.database_validator import DatabaseRepair, DatabaseValidatorEngine
+from typing import Any
+from unittest.mock import MagicMock, call, patch
 
 from app.data.database.database import Database
+from app.data.database.database_types import DatabaseType
+from app.data.database.item_components import ItemComponent
+from app.data.database.items import ItemPrefab
+from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
+from app.data.database.levels import OBJECTIVE_KEYS
+from app.data.database.overworld_node import OverworldNodePrefab
+from app.data.database.skills import SkillPrefab
+from app.data.database.weapons import WexpGain
+from app.data.database_validator import DatabaseRepair, DatabaseValidatorEngine
 from app.data.resources.resources import Resources
+from app.engine.item_components.advanced_components import (
+    MultiItem, MultiItemHidesUnusableChildren, MultiTarget)
+from app.engine.item_components.aesthetic_components import (
+    BattleAnimationMusic, MapHitAddBlend)
+from app.engine.item_components.extra_components import EffectiveDamage
+from app.engine.item_components.formula_components import \
+    AlternateResistFormula
+from app.engine.item_components.hit_components import PermanentGrowthChange
+from app.utilities.data import Data
+
 
 class DBRepairTests(unittest.TestCase):
     def setUp(self):
@@ -194,6 +208,55 @@ class DBRepairTests(unittest.TestCase):
         self.assertNotIn(BAD_PATH, overworld.map_paths)
         self.assertNotIn(BAD_NODE, overworld.overworld_nodes)
 
+    def test_good_item_skill_repair(self):
+        skills_before_repair = self.db.skills.save()
+        items_before_repair = self.db.items.save()
+        self.db_repairer.repair_items_and_skills()
+        skills_after_repair = self.db.skills.save()
+        items_after_repair = self.db.items.save()
+        self.assertEqual(skills_before_repair, skills_after_repair)
+        self.assertEqual(items_before_repair, items_after_repair)
+
+    def test_bad_component_repair(self):
+        def _test_item_component(component: ItemComponent, expected_value: Any):
+            item = ItemPrefab('New_Item', 'New Item', 'new_item_desc', None, None, Data([component]))
+            if item.nid in self.db.items.keys():
+                self.db.items.remove_key('New_Item')
+            self.db.items.append(item)
+            self.db_repairer.repair_items_and_skills()
+            self.assertEqual(item[component.nid].value, expected_value)
+        # make sure components without exposes don't throw errors
+        _test_item_component(MultiItemHidesUnusableChildren(35), 35)
+        # Test primitive type that isn't checked/validated yet
+        # @TODO(mag) - once we add validation for primitives/non-db/resource types, these tests will fail
+        _test_item_component(MultiTarget(2), 2)
+        _test_item_component(MapHitAddBlend((300, 300, 300)), (300, 300, 300))
+        # test DB type
+        _test_item_component(AlternateResistFormula("RIEMANN_FORMULA"), "DEFENSE")
+        # test resource type
+        _test_item_component(BattleAnimationMusic("SYMPHONY_IN_C_MAJOR"), None)
+        # test list type
+        _test_item_component(MultiItem([self.db.items[0].nid, 'EXCALIBUR' , self.db.items[1].nid]),
+                                       [self.db.items[0].nid, self.db.items[1].nid])
+        # test dict type
+        _test_item_component(PermanentGrowthChange([['STR', 2], ['SKL', 5], ['MEM', 5]]),
+                                                   [['STR', 2], ['SKL', 5]])
+
+        # test multiple options
+        _test_item_component(EffectiveDamage(
+            {
+                'effective_tags': [self.db.tags[0].nid, 'FALSE_TAG', self.db.tags[1].nid],
+                'effective_multiplier': 3,
+                'effective_bonus_damage': 0,
+                'show_effectiveness_flash': True,
+            }
+        ),  {
+                'effective_tags': [self.db.tags[0].nid, self.db.tags[1].nid],
+                'effective_multiplier': 3,
+                'effective_bonus_damage': 0,
+                'show_effectiveness_flash': True,
+            }
+        )
 
 if __name__ == '__main__':
     unittest.main()

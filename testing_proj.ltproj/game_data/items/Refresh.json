@@ -11,7 +11,7 @@
         "components": [
             [
                 "map_cast_sfx",
-                "RefreshDanceMap"
+                "Attack Hit 1"
             ],
             [
                 "min_range",
