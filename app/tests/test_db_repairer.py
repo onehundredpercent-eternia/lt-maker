@@ -184,7 +184,7 @@ class DBRepairTests(unittest.TestCase):
             return
         self.assertFalse('Kafu' in group.units)
         self.assertFalse('Luka' in group.positions)
-        self.assertEqual(group.positions[GOOD_UNIT], (0, 0))
+        self.assertEqual(group.positions[GOOD_UNIT], None)
 
     def test_good_overworld_repair(self):
         before_repair = self.db.overworlds[0].save()

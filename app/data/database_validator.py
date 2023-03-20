@@ -143,7 +143,7 @@ class DatabaseRepair():
             sync_keys(unit.growths, all_stats, lambda: 0)
 
             unit.starting_items = [[item_nid, droppable] for item_nid, droppable in unit.starting_items if self._val(DType.ITEMS, item_nid)]
-            unit.learned_skills = [[lvl, skill_nid] for lvl, skill_nid in unit.learned_skills if self._val(DType.ITEMS, skill_nid)]
+            unit.learned_skills = [[lvl, skill_nid] for lvl, skill_nid in unit.learned_skills if self._val(DType.SKILLS, skill_nid)]
 
             # make sure each unit has an entry for every weapon type, and no extraneous ones
             sync_keys(unit.wexp_gain, all_weapon_types, lambda: WexpGain(False, 0))
@@ -260,7 +260,7 @@ class DatabaseRepair():
         level_units: Set[NID] = context['level_units']
         group.units = [unit_nid for unit_nid in group.units if unit_nid in level_units]
         group.positions = {unit_nid: pos for unit_nid, pos in group.positions.items() if unit_nid in group.units}
-        sync_keys(group.positions, set(group.units), lambda: (0, 0))
+        sync_keys(group.positions, set(group.units), lambda: None)
 
     def repair_items_and_skills(self):
         for item in self.db.items:
