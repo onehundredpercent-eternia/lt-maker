@@ -153,6 +153,7 @@ class AttackProc(SkillComponent):
 
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
+            action.do(action.TriggerCharge(unit, self.skill))
             action.do(action.RemoveSkill(unit, self.value))
         self._did_action = False
 
@@ -177,6 +178,7 @@ class DefenseProc(SkillComponent):
 
     def end_sub_combat(self, actions, playback, unit, item, target, mode, attack_info):
         if self._did_action:
+            action.do(action.TriggerCharge(unit, self.skill))
             action.do(action.RemoveSkill(unit, self.value))
         self._did_action = False
 
@@ -201,6 +203,7 @@ class AttackPreProc(SkillComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_action:
+            action.do(action.TriggerCharge(unit, self.skill))
             action.do(action.RemoveSkill(unit, self.value))
             self._did_action = False
 
@@ -225,6 +228,7 @@ class DefensePreProc(SkillComponent):
 
     def end_combat(self, playback, unit, item, target, mode):
         if self._did_action:
+            action.do(action.TriggerCharge(unit, self.skill))
             action.do(action.RemoveSkill(unit, self.value))
             self._did_action = False
 
