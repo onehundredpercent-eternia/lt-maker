@@ -584,7 +584,7 @@ class SimpleCombat():
                 pair = (mark.attacker.nid, mark.defender.nid)
                 if pair not in pairs:  # no duplicates
                     pairs.add(pair)
-                    
+
                     act = action.UpdateRecords('kill', pair)
                     action.do(act)
                     if mark.defender.team == 'player':  # If player is dying, save this result even if we turnwheel back

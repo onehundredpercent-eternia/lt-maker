@@ -134,7 +134,6 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
 
     new_portrait = EventPortrait(portrait, position, priority, transition,
                                  slide, mirror, name, speed_mult=speed_mult)
-
     if FANCY_DIALOG_MODE:
         new_portrait.saturation = 0
 
@@ -1780,6 +1779,24 @@ def add_item_component(self: Event, global_unit_or_convoy, item, item_component,
 
     action.do(action.AddItemComponent(item, component_nid, component_value))
 
+def modify_item_component(self: Event, unit_or_convoy, item, item_component, expression, component_property=None, flags=None):
+    flags = flags or set()
+    global_unit = unit_or_convoy
+    component_nid = item_component
+    is_additive = 'additive' in flags
+
+    unit, item = self._get_item_in_inventory(global_unit, item)
+    if not unit or not item:
+        self.logger.error("add_item_component: Either unit or item was invalid, see above")
+        return
+
+    try:
+        component_value = self.text_evaluator.direct_eval(expression)
+    except Exception as e:
+        self.logger.error("add_item_component: %s: Could not evalute {%s}" % (e, expression))
+        return
+
+    action.do(action.ModifyItemComponent(item, component_nid, component_value, component_property, is_additive))
 
 def remove_item_component(self: Event, global_unit_or_convoy, item, item_component, flags=None):
     flags = flags or set()
@@ -2512,8 +2529,9 @@ def map_anim(self: Event, map_anim, float_position, speed=None, flags=None):
         self.state = 'waiting'
 
 def remove_map_anim(self: Event, map_anim, position, flags=None):
+    flags = flags or set()
     pos = self._parse_pos(position, True)
-    action.do(action.RemoveMapAnim(map_anim, pos))
+    action.do(action.RemoveMapAnim(map_anim, pos, 'overlay' in flags))
 
 def add_unit_map_anim(self: Event, map_anim: NID, unit: NID, speed=None, flags=None):
     flags = flags or set()
@@ -3428,3 +3446,6 @@ def replace_record(self: Event, nid: str, expression: str, flags=None):
 
 def delete_record(self: Event, nid: str, flags=None):
     RECORDS.delete(nid)
+
+def unlock_difficulty(self: Event, difficulty_mode: str, flags=None):
+    RECORDS.unlock_difficulty(difficulty_mode)

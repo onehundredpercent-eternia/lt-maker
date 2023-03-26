@@ -449,14 +449,17 @@ class InfoMenuState(State):
             self.logo.update()
             self.logo.draw(top_surf)
         # Blit page numbers
-        if DB.constants.value('unit_notes') and self.unit.notes:
-            num_states = len(info_states)
+        if 'notes' in info_states:
+            if DB.constants.value('unit_notes') and self.unit.notes:
+                num_states = len(info_states)
+            else:
+                num_states = len(info_states) - 1
         else:
-            num_states = len(info_states) - 1
+            num_states = len(info_states)
         page = str(info_states.index(self.state) + 1) + '/' + str(num_states)
         render_text(top_surf, ['small'], [page], [], (235, 12), Alignments.RIGHT)
 
-        if len(info_states) > 1:
+        if num_states > 1:
             self.draw_top_arrows(top_surf)
 
         if self.state == 'personal_data':
