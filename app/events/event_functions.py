@@ -1239,7 +1239,9 @@ def resurrect(self: Event, global_unit, flags=None):
     if not unit:
         self.logger.error("resurrect: Couldn't find unit %s" % global_unit)
         return
-    if unit.dead:
+    if unit.is_dying:
+        self.game.death.miracle(unit)
+    elif unit.dead:
         action.do(action.Resurrect(unit))
     action.do(action.Reset(unit))
     action.do(action.SetHP(unit, 1000))

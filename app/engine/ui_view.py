@@ -869,10 +869,10 @@ class ItemDescriptionPanel():
             FONT['text-blue'].blit_right(str(damage), bg_surf, (left + width//2 - 3, top + 20))
             FONT['text-blue'].blit_right(str(accuracy), bg_surf, (left + width//2 - 3, top + 36))
             if DB.constants.value('crit'):
-                FONT['text-blue'].blit_right(str(crit), bg_surf, (left + width - 10, top + 20))
+                FONT['text-blue'].blit_right(str(crit), bg_surf, (left + width - 3, top + 20))
             else:
-                FONT['text-blue'].blit_right(str(attack_speed), bg_surf, (left + width - 10, top + 20))
-            FONT['text-blue'].blit_right(str(avoid), bg_surf, (left + width - 10, top + 36))
+                FONT['text-blue'].blit_right(str(attack_speed), bg_surf, (left + width - 3, top + 20))
+            FONT['text-blue'].blit_right(str(avoid), bg_surf, (left + width - 3, top + 36))
 
             weapon_type = item_system.weapon_type(self.unit, self.item)
             if weapon_type:
@@ -883,8 +883,10 @@ class ItemDescriptionPanel():
         else:
             if self.item.desc:
                 desc = self.item.desc
-            else:
+            elif not available:
                 desc = "Cannot wield."
+            else:
+                desc = ""
 
             desc = desc.replace('{br}', '\n')
             lines = text_funcs.line_wrap('text', desc, width - 8)

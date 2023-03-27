@@ -795,6 +795,9 @@ class GameState():
     def get_other_units(self) -> List[UnitObject]:
         return [unit for unit in self.get_all_units() if unit.team == 'other']
 
+    def get_team_units(self, team) -> List[UnitObject]:
+        return [unit for unit in self.get_all_units() if unit.team == team]
+
     def get_all_units_in_party(self, party=None) -> List[UnitObject]:
         if party is None:
             party = self.current_party
