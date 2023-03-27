@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.data.database.components import Component, ComponentType
+import logging
 from app.data.database.overworld_node import OverworldNodeCatalog
 from app.data.engine_types import map_component_type
 from app.data.resources.map_icons import MapIconCatalog
@@ -11,6 +11,7 @@ from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set, Tuple
 
 from app.data.database.database_types import DatabaseType as DType
 from app.data.resources.resource_types import ResourceType as RType
+from app.data.database.components import Component, ComponentType as CType
 from app.data.database.weapons import WexpGain
 from app.data.validation_errors import InvalidValueError, ValidationError
 from app.utilities.data import Data
@@ -82,11 +83,18 @@ class DatabaseValidatorEngine():
         }
         self._valid_entry_map: Dict[DType, Callable[[], List[str]]] = {}
 
-    def validate(self, xtype: DType | RType, nid: NID, level: NID='all') -> bool:
+    def validate(self, xtype: DType | RType | CType, nid: NID, level: NID='all') -> bool:
         if isinstance(xtype, DType):
             return self._validate_db[xtype](nid, level)
-        else:
+        elif isinstance(xtype, RType):
             return self._validate_resources[xtype](nid, level)
+        elif isinstance(xtype, CType):
+            actual_type = map_component_type(xtype)
+            if actual_type:
+                return self.validate(actual_type, nid, level)
+            return True
+        else:
+            raise ValueError("Validating Unknown Type %s" % str(xtype))
 
 def sync_keys(data_dict: dict, expected_keys: set, default_value_factory: Callable):
     """Fills and trims a dict inplace.
@@ -114,49 +122,87 @@ class DatabaseRepair():
         self.resources = resources
         self.dbv = DatabaseValidatorEngine(db, resources)
 
-    def _val(self, xtype: DType | RType, nid: NID):
+    def _val(self, xtype: DType | RType | CType, nid: NID):
         return self.dbv.validate(xtype, nid)
 
     def validate_db(self):
-        pass
-
-    def autorepair_db(self):
-        """Repairs all erroneous entries in the database. References to nonexistent skills, tilemaps, units, etc. are cleared"""
+        """Logs all erroneous entries in the database. References to nonexistent skills, tilemaps, units, etc."""
         # @TODO(mag): implement repairs for all data types
         self.repair_units()
         self.repair_levels()
         self.repair_overworlds()
         self.repair_items_and_skills()
 
-    def repair_units(self):
+    def autorepair_db(self):
+        """Repairs all erroneous entries in the database. References to nonexistent skills, tilemaps, units, etc. are cleared"""
+        # @TODO(mag): implement repairs for all data types
+        self.repair_units(True)
+        self.repair_levels(True)
+        self.repair_overworlds(True)
+        self.repair_items_and_skills(True)
+
+    def repair_units(self, commit_changes: bool = False) -> List[ValidationError]:
+        errors: List[ValidationError] = []
+
         all_weapon_types = set(self.db.weapons.keys())
         all_stats = set(self.db.stats.keys())
         _default_class = self.db.classes.keys()[0]
+
         for unit in self.db.units:
+            def create_error(field_name, value):
+                errors.append(InvalidValueError(DType.UNITS, unit.nid, field_name, value))
+
             if not self._val(DType.CLASSES, unit.klass):
-                unit.klass = _default_class
+                create_error("Klass", unit.klass)
+                if commit_changes:
+                    unit.klass = _default_class
 
-            unit.tags = [tag for tag in unit.tags if self._val(DType.TAGS, tag)]
+            for tag in unit.tags:
+                if not self._val(DType.TAGS, tag):
+                    create_error("Tag", tag)
+            if commit_changes:
+                unit.tags = [tag for tag in unit.tags if self._val(DType.TAGS, tag)]
 
-            # make sure each unit has an entry for every stat, and no extraneous ones
-            sync_keys(unit.bases, all_stats, lambda: 0)
-            sync_keys(unit.growths, all_stats, lambda: 0)
+            if commit_changes:
+                # make sure each unit has an entry for every stat, and no extraneous ones
+                sync_keys(unit.bases, all_stats, lambda: 0)
+                sync_keys(unit.growths, all_stats, lambda: 0)
 
-            unit.starting_items = [[item_nid, droppable] for item_nid, droppable in unit.starting_items if self._val(DType.ITEMS, item_nid)]
-            unit.learned_skills = [[lvl, skill_nid] for lvl, skill_nid in unit.learned_skills if self._val(DType.SKILLS, skill_nid)]
+            for item_nid, _ in unit.starting_items:
+                if not self._val(DType.ITEMS, item_nid):
+                    create_error("Item", item_nid)
+            for _, skill_nid in unit.learned_skills:
+                if not self._val(DType.SKILLS, skill_nid):
+                    create_error("Skill", skill_nid)
 
-            # make sure each unit has an entry for every weapon type, and no extraneous ones
-            sync_keys(unit.wexp_gain, all_weapon_types, lambda: WexpGain(False, 0))
+            if commit_changes:
+                unit.starting_items = [[item_nid, droppable] for item_nid, droppable in unit.starting_items if self._val(DType.ITEMS, item_nid)]
+                unit.learned_skills = [[lvl, skill_nid] for lvl, skill_nid in unit.learned_skills if self._val(DType.SKILLS, skill_nid)]
 
-            unit.alternate_classes = [class_nid for class_nid in unit.alternate_classes if self._val(DType.CLASSES, class_nid)]
+            if commit_changes:
+                # make sure each unit has an entry for every weapon type, and no extraneous ones
+                sync_keys(unit.wexp_gain, all_weapon_types, lambda: WexpGain(False, 0))
+
+            for class_nid in unit.alternate_classes:
+                if not self._val(DType.CLASSES, class_nid):
+                    create_error("Alternate Class", class_nid)
+
+            if commit_changes:
+                unit.alternate_classes = [class_nid for class_nid in unit.alternate_classes if self._val(DType.CLASSES, class_nid)]
 
             if unit.portrait_nid and not self._val(RType.PORTRAITS, unit.portrait_nid):
-                unit.portrait_nid = None
+                create_error("Portrait", unit.portrait_nid)
+                if commit_changes:
+                    unit.portrait_nid = None
 
             if unit.affinity and not self._val(DType.AFFINITIES, unit.affinity):
-                unit.affinity = None
+                create_error("Affinity", unit.affinity)
+                if commit_changes:
+                    unit.affinity = None
 
-    def repair_levels(self):
+        return errors
+
+    def repair_levels(self, commit_changes: bool = False) -> List[ValidationError]:
         default_party = self.db.parties[0].nid
         default_unit = self.db.units[0].nid
         for level in self.db.levels:
@@ -203,7 +249,7 @@ class DatabaseRepair():
                 self._repair_unit_group(group, context)
 
     # context contains tertiary information that may be necessary to validate
-    def _repair_generic_unit(self, unit: GenericUnit, context: Dict[str, Any]):
+    def _repair_generic_unit(self, unit: GenericUnit, context: Dict[str, Any], commit_changes: bool = False) -> List[ValidationError]:
         _default_class = self.db.classes.keys()[0]
         _default_faction = self.db.factions.keys()[0]
         _default_team = self.db.teams[0]
@@ -232,7 +278,7 @@ class DatabaseRepair():
             unit.starting_traveler = None
 
     # context contains tertiary information that may be necessary to validate
-    def _repair_unique_unit(self, unit: UniqueUnit, context: Dict[str, Any]):
+    def _repair_unique_unit(self, unit: UniqueUnit, context: Dict[str, Any], commit_changes: bool = False) -> List[ValidationError]:
         _default_faction = self.db.factions.keys()[0]
         _default_team = self.db.teams[0]
         level_units: Set[NID] = context['level_units']
@@ -256,13 +302,13 @@ class DatabaseRepair():
         if not unit.starting_position:
             unit.starting_traveler = None
 
-    def _repair_unit_group(self, group: UnitGroup, context: Dict[str, Any]):
+    def _repair_unit_group(self, group: UnitGroup, context: Dict[str, Any], commit_changes: bool = False) -> List[ValidationError]:
         level_units: Set[NID] = context['level_units']
         group.units = [unit_nid for unit_nid in group.units if unit_nid in level_units]
         group.positions = {unit_nid: pos for unit_nid, pos in group.positions.items() if unit_nid in group.units}
         sync_keys(group.positions, set(group.units), lambda: None)
 
-    def repair_items_and_skills(self):
+    def repair_items_and_skills(self, commit_changes: bool = False) -> List[ValidationError]:
         for item in self.db.items:
             if item.icon_nid and not self._val(RType.ICONS16, item.icon_nid):
                 item.icon_nid = None
@@ -276,11 +322,11 @@ class DatabaseRepair():
             for component in skill.components:
                 self._repair_component(component)
 
-    def _repair_component(self, comp: Component):
+    def _repair_component(self, comp: Component, commit_changes: bool = False) -> List[ValidationError]:
         ctype = comp.expose
         base_component = comp.__class__()
         if ctype:
-            if ctype == ComponentType.NewMultipleOptions:
+            if ctype == CType.NewMultipleOptions:
                 for k in comp.options.keys():
                     nctype = comp.options[k]
                     value = comp.value[k]
@@ -289,33 +335,29 @@ class DatabaseRepair():
             else:
                 comp.value = self._get_repaired_value(ctype, comp.value, base_component.value)
 
-    def _get_repaired_value(self, ctype: ComponentType | Tuple[ComponentType, ComponentType | List], value: Any, base_value: Any) -> Any:
+    def _get_repaired_value(self, ctype: CType | Tuple[CType, CType | List], value: Any, base_value: Any) -> Any:
         if isinstance(ctype, tuple):
-            ltype: ComponentType = ctype[0]
-            if ltype == ComponentType.MultipleChoice:
+            ltype: CType = ctype[0]
+            if ltype == CType.MultipleChoice:
                 valid_values: List[str] = ctype[1]
                 if value not in valid_values:
                     return base_value
-            vtype: ComponentType = ctype[1]
-            actual_type = map_component_type(vtype)
-            if actual_type:
-                if ltype == ComponentType.List:
-                    return [v for v in value if self._val(actual_type, v)]
-                elif ltype == ComponentType.Dict:
-                    return [[k, v] for k, v in value if self._val(actual_type, k)]
-        elif ctype == ComponentType.NewMultipleOptions:
+            vtype: CType = ctype[1]
+            if ltype == CType.List:
+                return [v for v in value if self._val(vtype, v)]
+            elif ltype == CType.Dict:
+                return [[k, v] for k, v in value if self._val(vtype, k)]
+        elif ctype == CType.NewMultipleOptions:
             raise ValueError("Shouldn't be calling this function on NewMultipleOptions")
         else:
-            actual_type = map_component_type(ctype)
-            if actual_type:
-                if value == None:
+            if value == None:
+                return base_value
+            else:
+                if not self._val(ctype, value):
                     return base_value
-                else:
-                    if not self._val(actual_type, value):
-                        return base_value
         return value
 
-    def repair_overworlds(self):
+    def repair_overworlds(self, commit_changes: bool = False) -> List[ValidationError]:
         for overworld in self.db.overworlds:
             if overworld.tilemap and not self._val(RType.TILEMAPS, overworld.tilemap):
                 overworld.tilemap = None
