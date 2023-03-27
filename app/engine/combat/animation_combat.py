@@ -367,6 +367,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             elif self.get_from_playback('defense_proc'):
                 self.set_up_proc_animation('defense_proc')
             else:
+                self.add_proc_icon.memory.clear()
                 self.set_up_combat_animation()
 
         elif self.state == 'combat_effect':

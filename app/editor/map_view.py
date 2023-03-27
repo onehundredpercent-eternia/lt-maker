@@ -45,7 +45,7 @@ class SimpleMapView(QGraphicsView):
 
         self.working_image = None
 
-        self.current_mouse_pos = None
+        self.saturation_direction = None
         self.region_select = None
 
         self.old_middle_pos = None
@@ -161,6 +161,7 @@ class SimpleMapView(QGraphicsView):
             self.current_mouse_pos = pos
         else:
             self.position_moved.emit(-1, -1)
+            self.current_mouse_pos = None
 
         if event.buttons() & Qt.MiddleButton:
             offset = self.old_middle_pos - event.pos()
@@ -294,6 +295,7 @@ class GlobalModeLevelMapView(SimpleMapView):
             else:
                 self.main_editor.set_message(None)
         else:
+            self.current_mouse_pos = None
             self.main_editor.set_position_bar(None)
             self.main_editor.set_message(None)
 
@@ -364,15 +366,20 @@ class NewMapView(SimpleMapView):
                         self.draw_unit(painter, unit, unit.starting_position)
             # Highlight current unit with cursor
             current_unit = self.main_editor.unit_painter_menu.get_current()
-            if current_unit and current_unit.starting_position:
-                coord = current_unit.starting_position
-                cursor_sprite = SPRITES['cursor']
-                if cursor_sprite:
-                    if not cursor_sprite.pixmap:
-                        cursor_sprite.pixmap = QPixmap(cursor_sprite.full_path)
-                    cursor_image = cursor_sprite.pixmap.toImage().copy(0, 64, 32, 32)
-                    painter.drawImage(
-                        coord[0] * TILEWIDTH - 8, coord[1] * TILEHEIGHT - 5, cursor_image)
+            if current_unit:
+                if current_unit.starting_position:
+                    coord = current_unit.starting_position
+                    cursor_sprite = SPRITES['cursor']
+                    if cursor_sprite:
+                        if not cursor_sprite.pixmap:
+                            cursor_sprite.pixmap = QPixmap(cursor_sprite.full_path)
+                        cursor_image = cursor_sprite.pixmap.toImage().copy(0, 64, 32, 32)
+                        painter.drawImage(
+                            coord[0] * TILEWIDTH - 8, coord[1] * TILEHEIGHT - 5, cursor_image)
+                if self.current_mouse_pos:
+                    coord = self.current_mouse_pos
+                    self.draw_unit(painter, current_unit, coord, opacity=True)
+
             painter.end()
 
     def paint_groups(self):
@@ -443,7 +450,7 @@ class NewMapView(SimpleMapView):
                     painter.setOpacity(0.75)
                     painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
                                      width * TILEWIDTH, height * TILEHEIGHT)
-                elif self.region_select:
+                elif self.region_select and self.current_mouse_pos:
                     left = min(self.region_select[0],
                                self.current_mouse_pos[0])
                     right = max(
@@ -589,6 +596,7 @@ class NewMapView(SimpleMapView):
                 else:
                     self.main_editor.set_message(None)
         else:
+            self.current_mouse_pos = None
             self.main_editor.set_position_bar(None)
             self.main_editor.set_message(None)
 
