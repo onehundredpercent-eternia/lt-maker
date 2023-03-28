@@ -136,6 +136,8 @@ class Armsthrift(SkillComponent):
     expose = ComponentType.Int
     value = 1
 
+    _did_something = False
+
     def _after_strike(self, actions, unit, item):
         if item_system.unrepairable(unit, item):
             return  # Don't restore for unrepairable items
@@ -150,6 +152,21 @@ class Armsthrift(SkillComponent):
             max_uses = item.data.get('starting_c_uses')
             actions.append(action.SetObjData(item, 'c_uses', min(curr_uses + self.value - 1, max_uses)))
 
+    def _post_combat(self, unit, item):
+        if item_system.unrepairable(unit, item):
+            return  # Don't restore for unrepairable items
+        # Handles Uses
+        if item.data.get('uses', None) and item.data.get('starting_uses', None):
+            curr_uses = item.data.get('uses')
+            max_uses = item.data.get('starting_uses')
+            # No -1 for post combat since action.do has already happened
+            action.do(action.SetObjData(item, 'uses', min(curr_uses + self.value, max_uses)))
+        # Handles Chapter Uses
+        if item.data.get('c_uses', None) and item.data.get('starting_c_uses', None):
+            curr_uses = item.data.get('c_uses')
+            max_uses = item.data.get('starting_c_uses')
+            action.do(action.SetObjData(item, 'c_uses', min(curr_uses + self.value, max_uses)))
+
     def after_strike(self, actions, playback, unit, item, target, mode, attack_info, strike):
         if not item:
             return
@@ -157,7 +174,20 @@ class Armsthrift(SkillComponent):
         if item.parent_item:
             self.after_strike(actions, playback, unit, item.parent_item, target, mode, attack_info, strike)
         if strike != Strike.MISS or (item.uses_options and item.uses_options.lose_uses_on_miss()):
+            self._did_something = True
             self._after_strike(actions, unit, item)
+
+    def post_combat(self, playback, unit, item, target, mode):
+        if not item:
+            return
+
+        if self._did_something:
+            if item.parent_item:
+                self.post_combat(playback, unit, item.parent_item, target, mode)
+            if (item.uses_options and item.uses_options.one_loss_per_combat()):
+                self._post_combat(unit, item)
+
+        self._did_something = False
 
 class LimitMaximumRange(SkillComponent):
     nid = 'limit_maximum_range'
