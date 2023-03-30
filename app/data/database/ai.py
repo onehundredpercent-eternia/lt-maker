@@ -1,4 +1,5 @@
 from app.utilities.data import Data, Prefab
+from app.utilities.typing import NID
 
 AI_ActionTypes = ['None', 'Attack', 'Support', 'Steal', 'Interact', 'Move_to', 'Move_away_from', 'Wait']
 AI_TargetTypes = ['None', 'Enemy', 'Ally', 'Unit', 'Position', 'Event', 'Time']
@@ -8,7 +9,7 @@ unit_spec = ['All', 'Class', 'Tag', 'Name', 'Team', 'Faction', 'Party', 'ID']
 
 class AIPrefab(Prefab):
     def __init__(self, nid, priority, offense_bias=2):
-        self.nid = nid
+        self.nid: NID = nid
         self.behaviours = [AIBehaviour.DoNothing(), AIBehaviour.DoNothing(), AIBehaviour.DoNothing()]
         self.priority: int = priority
         self.offense_bias: float = offense_bias
@@ -103,4 +104,4 @@ class AIBehaviour(Prefab):
         return self.view_range == -1
 
 class AICatalog(Data[AIPrefab]):
-    datatype = AIPrefab
+    pass

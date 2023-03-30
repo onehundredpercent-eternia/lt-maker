@@ -26,6 +26,11 @@ class Data(Generic[T]):
             self._list: List[T] = []
             self._dict: Dict[NID, T] = {}
 
+    def __class_getitem__(cls, t: Type) -> Data[T]:
+        class Derived(cls):
+            datatype = t
+        return Derived
+
     def values(self) -> List[T]:
         return self._list
 

@@ -73,4 +73,4 @@ class ItemPrefab(Prefab):
         return i
 
 class ItemCatalog(CategorizedCatalog[ItemPrefab]):
-    datatype = ItemPrefab
+    pass
