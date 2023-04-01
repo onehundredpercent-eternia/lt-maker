@@ -1,0 +1,8 @@
+set_current_hp("Seth", 13)
+remove_unit("Eirika", flags=["immediate"])
+remove_unit("Seth", flags=["immediate"])
+remove_group("Enemy1", flags=["immediate"])
+add_unit("Seth", (14, 9))
+move_unit("Seth", (8, 5))
+add_unit("Eirika", (8, 5), flags=['immediate', 'stack'])
+move_unit("Eirika", (9, 5))

@@ -1,0 +1,7 @@
+class SomeClass(OtherClass):
+  def some_fun(self):
+    event.d()
+    event.e()
+
+event.a() is 5
+event.a(event.b(1, 2, ['a', 'b', 'c', defstr]))
