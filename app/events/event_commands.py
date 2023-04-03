@@ -2919,6 +2919,20 @@ class UnlockDifficulty(EventCommand):
     keywords = ['DifficultyMode']
     keyword_types = ['DifficultyMode']
 
+class Python(EventCommand):
+    nid = 'python'
+    tag = Tags.HIDDEN
+    special_handling = True
+
+    desc = "Executes the following lines in python. End with `end_python`"
+
+class EndPython(EventCommand):
+    nid = 'end_python'
+    tag = Tags.HIDDEN
+    special_handling = True
+
+    desc = "Ends a block of python code."
+
 def get_commands():
     return EventCommand.__subclasses__()
 

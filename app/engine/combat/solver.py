@@ -48,12 +48,7 @@ class AttackerState(SolverState):
     def get_next_state(self, solver):
         command = solver.get_script()
 
-        if solver.attacker.strike_partner:
-            can_double_in_pairup = \
-                not DB.constants.value('limit_attack_stance') or \
-                skill_system.attack_stance_double(solver.attacker.strike_partner)
-        else:
-            can_double_in_pairup = False
+        can_double_in_pairup = not DB.constants.value('limit_attack_stance')
 
         if solver.attacker_alive() and solver.defender_alive():
             if command == '--':
@@ -66,7 +61,9 @@ class AttackerState(SolverState):
                 else:
                     attacker_outspeed = defender_outspeed = 1
 
-                if solver.attacker.strike_partner and (solver.num_attacks == 1 or can_double_in_pairup):
+                if solver.attacker.strike_partner and \
+                        (solver.num_attacks == 1 or can_double_in_pairup) and \
+                        solver.num_subattacks >= self.num_multiattacks:
                     solver.num_subattacks = 0
                     return 'attacker_partner'
                 elif solver.item_has_uses() and \
@@ -89,7 +86,9 @@ class AttackerState(SolverState):
             else:
                 return self.process_command(command)
         elif solver.attacker_alive() and not solver.defender:
-            if solver.attacker.strike_partner and (solver.num_attacks == 1 or can_double_in_pairup):
+            if solver.attacker.strike_partner and \
+                    (solver.num_attacks == 1 or can_double_in_pairup) and \
+                    solver.num_subattacks >= self.num_multiattacks:
                 solver.num_subattacks = 0
                 return 'attacker_partner'
         else:
@@ -139,13 +138,6 @@ class AttackerPartnerState(SolverState):
     def get_next_state(self, solver):
         command = solver.get_script()
 
-        if solver.attacker.strike_partner:
-            can_double_in_pairup = \
-                not DB.constants.value('limit_attack_stance') or \
-                skill_system.attack_stance_double(solver.attacker.strike_partner)
-        else:
-            can_double_in_pairup = False
-
         if solver.attacker_alive() and solver.defender_alive():
             if command == '--':
                 if solver.defender:
@@ -175,10 +167,6 @@ class AttackerPartnerState(SolverState):
                         solver.num_attacks < attacker_outspeed:
                     solver.num_subattacks = 0
                     return 'attacker'
-                # When you double but your ally doesn't and also the opponent doesn't counter you.
-                elif solver.num_attacks == 1 and can_double_in_pairup:
-                    solver.num_attacks += 1
-                    return 'attacker_partner'
                 return None
             else:
                 return self.process_command(command)
@@ -220,12 +208,7 @@ class DefenderState(SolverState):
     def get_next_state(self, solver):
         command = solver.get_script()
 
-        if solver.defender.strike_partner:
-            can_double_in_pairup = \
-                not DB.constants.value('limit_attack_stance') or \
-                (skill_system.attack_stance_double(solver.defender.strike_partner) and DB.constants.value('def_double'))
-        else:
-            can_double_in_pairup = False
+        can_double_in_pairup = not DB.constants.value('limit_attack_stance')
 
         if solver.attacker_alive() and solver.defender_alive():
             if command == '--':
@@ -236,7 +219,9 @@ class DefenderState(SolverState):
 
                 attacker_outspeed = combat_calcs.outspeed(solver.attacker, solver.defender, solver.main_item, solver.def_item, 'attack', solver.get_attack_info())
 
-                if solver.defender.strike_partner and (solver.num_defends == 1 or can_double_in_pairup):
+                if solver.defender.strike_partner and \
+                        (solver.num_defends == 1 or can_double_in_pairup) and \
+                        solver.num_subdefends >= self.num_multiattacks:
                     solver.num_subdefends = 0
                     return 'defender_partner'
                 if solver.allow_counterattack() and \
@@ -251,10 +236,6 @@ class DefenderState(SolverState):
                         solver.num_attacks < attacker_outspeed:
                     solver.num_subattacks = 0
                     return 'attacker'
-                elif solver.attacker.strike_partner and \
-                        skill_system.attack_stance_double(solver.attacker.strike_partner):
-                    solver.num_subattacks = 0
-                    return 'attacker_partner'
                 elif solver.allow_counterattack() and \
                         solver.num_defends < defender_outspeed:
                     solver.num_subdefends = 0
@@ -316,10 +297,6 @@ class DefenderPartnerState(SolverState):
                         solver.num_attacks < attacker_outspeed:
                     solver.num_subattacks = 0
                     return 'attacker'
-                elif solver.attacker.strike_partner and \
-                        skill_system.attack_stance_double(solver.attacker.strike_partner):
-                    solver.num_subattacks = 0
-                    return 'attacker_partner'
                 elif solver.allow_counterattack() and \
                         solver.num_defends < defender_outspeed:
                     solver.num_subdefends = 0

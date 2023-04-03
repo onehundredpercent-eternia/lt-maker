@@ -3025,7 +3025,6 @@ def text_entry(self: Event, nid, string, positive_integer=None, illegal_characte
     header = string
     limit = 16
     illegal_characters = []
-    force_entry = False
     if positive_integer:
         limit = int(positive_integer)
     if illegal_character_list:
