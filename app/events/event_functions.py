@@ -271,10 +271,10 @@ def mirror_portrait(self: Event, portrait, flags=None):
             # Immediate removal followed by a transition in
             self.portraits[name] = flipped_portrait
             if 'no_block' in flags:
-        pass
-    else:
-        self.wait_time = engine.get_time() + portrait.transition_speed + 33
-        self.state = 'waiting'
+                pass
+            else:
+                self.wait_time = engine.get_time() + portrait.transition_speed + 33
+                self.state = 'waiting'
 
 def bop_portrait(self: Event, portrait, flags=None):
     flags = flags or set()
@@ -3117,7 +3117,7 @@ def draw_overlay_sprite(self: Event, nid, sprite_id, position=None, z_level=None
     if 'foreground' in self.overlay_ui:
         self.foreground_overlay_ui.add_child(component)
     else:
-    self.overlay_ui.add_child(component)
+        self.overlay_ui.add_child(component)
     if self.do_skip:
         component.enable()
         return
@@ -3133,7 +3133,7 @@ def remove_overlay_sprite(self: Event, nid, animation=None, speed=None, flags=No
     if 'foreground' in flags:
         component = self.foreground_overlay_ui.get_child(nid)
     else:
-    component = self.overlay_ui.get_child(nid)
+        component = self.overlay_ui.get_child(nid)
     if not component:
         return
 
@@ -3167,15 +3167,15 @@ def remove_overlay_sprite(self: Event, nid, animation=None, speed=None, flags=No
     else:
         overlay_ui = self.overlay_ui
 
-        if self.do_skip:
+    if self.do_skip:
         overlay_ui._should_redraw = True
-            component.disable()
-        else:
+        component.disable()
+    else:
         overlay_ui._should_redraw = True
-            component.exit()
-            if component.is_animating() and 'no_block' not in flags:
+        component.exit()
+        if component.is_animating() and 'no_block' not in flags:
             self.wait_time = engine.get_time() + anim_speed
-                self.state = 'waiting'
+            self.state = 'waiting'
 
 def alert(self: Event, string, item=None, skill=None, icon=None, flags=None):
     if item and item in DB.items.keys():
