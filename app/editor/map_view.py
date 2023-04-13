@@ -5,6 +5,7 @@ from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.level_units import UniqueUnit
 from app.data.database.levels import LevelPrefab
+from app.data.resources.tiles import TileMapPrefab
 from app.editor import tilemap_editor, timer
 from app.editor.class_editor import class_model
 from app.editor.overworld_editor.road_sprite_wrapper import RoadSpriteWrapper
@@ -60,6 +61,11 @@ class SimpleMapView(QGraphicsView):
             self.current_map = RESOURCES.tilemaps.get(level.tilemap)
         self.update_view()
 
+    def set_current_map(self, tilemap: TileMapPrefab):
+        self.current_level = None
+        self.current_map = tilemap
+        self.update_view()
+
     def clear_scene(self):
         self.scene.clear()
 
@@ -73,6 +79,7 @@ class SimpleMapView(QGraphicsView):
         else:
             self.clear_scene()
             return
+        if self.current_level:
         self.paint_units(self.current_level)
         self.show_map()
 
@@ -410,6 +417,7 @@ class NewMapView(SimpleMapView):
                 current_unit = self.main_editor.group_painter_menu.get_current_unit()
                 if current_unit and current_unit.nid in current_group.positions:
                     coord = current_group.positions.get(current_unit.nid)
+                    if coord:
                     cursor_sprite = SPRITES['cursor']
                     if cursor_sprite:
                         if not cursor_sprite.pixmap:

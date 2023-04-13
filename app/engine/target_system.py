@@ -132,8 +132,8 @@ def get_attacks(unit: UnitObject, item: ItemObject = None, force=False) -> set:
         attacks = get_shell({unit.position}, item_range, game.board.bounds, manhattan_restriction)
 
     return attacks
-
-def _get_possible_attacks(unit, valid_moves, items):
+    
+def _get_all_attacks(unit, valid_moves, items) -> (set, int):
     attacks = set()
     max_range = 0
     for item in items:
@@ -152,9 +152,21 @@ def _get_possible_attacks(unit, valid_moves, items):
                 attacks |= get_shell({unit.position}, item_range, game.board.bounds, manhattan_restriction)
             else:
                 attacks |= get_shell(valid_moves, item_range, game.board.bounds, manhattan_restriction)
-
+    return (attacks, max_range)
+    
+def _get_possible_attacks(unit, valid_moves, items):
+    items_standard, items_ignore_los = [], []
+    for item in items:
+        (items_standard, items_ignore_los)[item_system.ignore_line_of_sight(unit, item)].append(item)
+    # First get all attacks by items that obey line of sight
+    attacks, max_range = _get_all_attacks(unit, valid_moves, items_standard)
+    # max_range is used only for making line of sight calculation faster
+    # Filter away those that aren't in line of sight
     if DB.constants.value('line_of_sight'):
         attacks = set(line_of_sight.line_of_sight(valid_moves, attacks, max_range))
+    # Now get all attacks by items that ignore line of sight
+    attacks2, _ = _get_all_attacks(unit, valid_moves, items_ignore_los)
+    attacks |= attacks2
     return attacks
 
 def get_possible_attacks(unit, valid_moves) -> set:
@@ -300,7 +312,7 @@ def get_valid_targets(unit, item=None) -> set:
     if unit.team == 'player' or DB.constants.value('ai_fog_of_war'):
         valid_targets = {position for position in valid_targets if game.board.in_vision(position, unit.team)}
     # Line of Sight
-    if DB.constants.value('line_of_sight'):
+    if DB.constants.value('line_of_sight') and not item_system.ignore_line_of_sight(unit, item):
         item_range = item_funcs.get_range(unit, item)
         if item_range:
             max_item_range = max(item_range)
