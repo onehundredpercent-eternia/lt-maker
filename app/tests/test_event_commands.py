@@ -45,6 +45,26 @@ class EventCommandUnitTests(unittest.TestCase):
         command = event_commands.determine_command_type("flgjklskl;sumerian;lorem ipsum")
         self.assertTrue(isinstance(command, event_commands.Comment))
 
+    def test_parse_block_to_command(self):
+        commands = [
+            "speak;Eirika;1",
+            "speak;Seth;2",
+            "python",
+            "for i in range(5):",
+            "    print(i)",
+            "print('12345')",
+            "end_python"
+        ]
+        commands = event_commands.parse_text_block_to_commands(commands)
+        self.assertEqual(len(commands), 5) # speak, speak, python, python_body, end_python
+        c1, c2, c3, c4, c5 = commands
+        self.assertTrue(isinstance(c1, event_commands.Speak))
+        self.assertTrue(isinstance(c2, event_commands.Speak))
+        self.assertTrue(isinstance(c3, event_commands.Python))
+        self.assertTrue(isinstance(c4, event_commands.PythonBody))
+        self.assertEqual(c4.parameters['body'], "for i in range(5):\n    print(i)\nprint('12345')")
+        self.assertTrue(isinstance(c5, event_commands.EndPython))
+
     def test_parse_text_to_command_typing(self):
         # Missing keyword
         command1, bad_idx = event_commands.parse_text_to_command("speak")

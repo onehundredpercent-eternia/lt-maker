@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import Callable, List, Dict, Set, Tuple
+from typing import Callable, List, Dict, Optional, Set, Tuple
 
 from app.utilities.data import Prefab
 
@@ -42,11 +42,6 @@ class EventCommand(Prefab):
     optional_keywords: list = []
     keyword_types: list = []  # always same size as keywords + optional keywords
     _flags: list = []
-
-    # volatile, can be different between the same class
-    parameters: dict = {}
-    chosen_flags: set = set()
-    display_values: list = []
 
     def __init__(self, parameters: Dict[str, str] = None, flags: Set[str] = None, display_values: List[str] = None):
         self.parameters: Dict[str, str] = parameters or {}
@@ -2917,14 +2912,24 @@ class Python(EventCommand):
     tag = Tags.HIDDEN
     special_handling = True
 
-    desc = "Executes the following lines in python. End with `end_python`"
+    desc = "Dummy command to indicate beginning of python zone. End with `end_python`"
 
 class EndPython(EventCommand):
     nid = 'end_python'
     tag = Tags.HIDDEN
     special_handling = True
 
-    desc = "Ends a block of python code."
+    desc = "Dummy command to end a block of python code."
+
+class PythonBody(EventCommand):
+    nid = 'python_body'
+    tag = Tags.HIDDEN
+    special_handling = True
+
+    desc = "Executes the stored lines in Python."
+
+    keywords = ['body']
+    keyword_types = ['String']
 
 def get_commands():
     return EventCommand.__subclasses__()
@@ -2983,7 +2988,36 @@ def determine_command_type(text: str) -> EventCommand:
             return command_type()
     return Comment()
 
-def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand, int]:
+def parse_text_block_to_commands(lines: List[str], strict: bool = False) -> List[EventCommand]:
+    commands: List[EventCommand] = []
+    python_mode = False
+    curr_python_lines = []
+    for line in lines:
+        if python_mode:
+            if line == 'end_python':
+                python_mode = False
+                code_block = '\n'.join(curr_python_lines)
+                commands.append(PythonBody({"body": code_block}, display_values=[code_block]))
+                curr_python_lines = []
+                commands.append(EndPython())
+            else:
+                curr_python_lines.append(line)
+            continue
+        command, _ = parse_text_to_command(line, strict)
+        if not command:
+            continue
+        if isinstance(command, Python):
+            python_mode = True
+            commands.append(Python())
+        else:
+            commands.append(command)
+    if python_mode:
+        code_block = '\n'.join(curr_python_lines)
+        commands.append(PythonBody({"body": code_block}, display_values=[code_block]))
+        commands.append(EndPython())
+    return commands
+
+def parse_text_to_command(text: str, strict: bool = False) -> Tuple[Optional[EventCommand], int]:
     """parses a line into a command
 
     Args:

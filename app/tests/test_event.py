@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import MagicMock, patch, call
 
 from app.tests.mocks.mock_game import get_mock_game
-from app.events.event_commands import parse_text_to_command
+from app.events.event_commands import parse_text_block_to_commands
 from app.utilities.enums import Alignments
 
 class EventUnitTests(unittest.TestCase):
@@ -31,7 +31,7 @@ class EventUnitTests(unittest.TestCase):
 
     def create_event(self, test_commands):
         from app.events.event import Event
-        parsed_test_commands = [parse_text_to_command(command)[0] for command in test_commands]
+        parsed_test_commands = parse_text_block_to_commands(test_commands)
         event = Event('test_nid', parsed_test_commands, GenericTrigger(), game=self.game)
         return event
 
