@@ -80,7 +80,7 @@ class SimpleMapView(QGraphicsView):
             self.clear_scene()
             return
         if self.current_level:
-        self.paint_units(self.current_level)
+            self.paint_units(self.current_level)
         self.show_map()
 
     def draw_unit(self, painter, unit, position, opacity=False):
@@ -417,9 +417,9 @@ class NewMapView(SimpleMapView):
                 current_unit = self.main_editor.group_painter_menu.get_current_unit()
                 if current_unit and current_unit.nid in current_group.positions:
                     coord = current_group.positions.get(current_unit.nid)
-                    if coord:
                     cursor_sprite = SPRITES['cursor']
-                    if cursor_sprite:
+                    if coord and cursor_sprite:
+                    
                         if not cursor_sprite.pixmap:
                             cursor_sprite.pixmap = QPixmap(
                                 cursor_sprite.full_path)
