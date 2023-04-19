@@ -418,8 +418,7 @@ class NewMapView(SimpleMapView):
                 if current_unit and current_unit.nid in current_group.positions:
                     coord = current_group.positions.get(current_unit.nid)
                     cursor_sprite = SPRITES['cursor']
-                    if coord and cursor_sprite:
-                    
+                    if coord and cursor_sprite:    
                         if not cursor_sprite.pixmap:
                             cursor_sprite.pixmap = QPixmap(
                                 cursor_sprite.full_path)

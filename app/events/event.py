@@ -36,6 +36,7 @@ class Event():
 
         self.background = None
 
+        self.trigger = trigger
         event_args = trigger.to_args()
         self.unit = event_args.get('unit1', None)
         self.unit2 = event_args.get('unit2', None)

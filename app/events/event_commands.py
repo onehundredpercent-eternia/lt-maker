@@ -535,9 +535,11 @@ class Unpause(EventCommand):
 Unpauses a previously paused text box. Has no effect if text box was not paused using `{p}` before.
 
 This will 'unpause' the text box with the specified speaker NID.
+
+If no speaker NID is specified, the most recent text box is unpaused.
     """
 
-    keywords = ['Nid']
+    optional_keywords = ['Nid']
 
 class Narrate(EventCommand):
     nid = "narrate"
@@ -917,6 +919,31 @@ class ClearTurnwheel(EventCommand):
         """
 The turnwheel's history will be cleared. The player will not be able to
 return to any action that occurs before this event.
+        """
+
+class StopTurnwheelRecording(EventCommand):
+    nid = 'stop_turnwheel_recording'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Turns off the turnwheel's recording of every action the player makes.
+Use `start_turnwheel_recording` command to start it back up.
+This is a powerful command. Do not use it without great tribulation.
+Make sure you follow it up eventually with a `start_turnwheel_recording`
+        """
+
+class StartTurnwheelRecording(EventCommand):
+    nid = 'start_turnwheel_recording'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Turns on the turnwheel's recording of every action the player makes.
+Usually only called after `stop_turnwheel_recording` was called.
+This is a powerful command. Do not use it without great tribulation.
+You should call it first only in a `on_turnwheel` triggered event,
+since that event does not record by default
         """
 
 class ChangeTilemap(EventCommand):
