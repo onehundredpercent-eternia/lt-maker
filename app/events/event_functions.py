@@ -39,7 +39,7 @@ from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
-from app.utilities.enums import Alignments
+from app.utilities.enums import Alignments, Orientation
 from app.utilities.type_checking import check_valid_type
 from app.utilities.typing import NID
 
@@ -480,7 +480,7 @@ def unpause(self: Event, nid=None, flags=None):
         # Just remove the most recent text box
         box = self.text_boxes[-1]
         box.command_unpause()
-    
+
     else:
         for box in reversed(self.text_boxes):
             if box.speaker == nid:
@@ -2736,11 +2736,11 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
            dimensions: str = None, text_align: str = None, flags=None):
     flags = flags or set()
 
-    nid = nid
+    nid = nid or ""
     header = title
 
     if not row_width:
-        row_width = '-1'
+        row_width = '0'
     if not bg:
         bg = 'menu_bg_base'
     if 'no_bg' in flags:
@@ -2775,13 +2775,9 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
 
     row_width = int(row_width)
 
-    if not orientation:
-        orientation = 'vertical'
-    else:
-        if orientation in ('h', 'horiz', 'horizontal'):
-            orientation = 'horizontal'
-        else:
-            orientation = 'vertical'
+    actual_orientation = Orientation.VERTICAL
+    if orientation and orientation in ('h', 'horiz', 'horizontal'):
+        actual_orientation = Orientation.HORIZONTAL
 
     if not alignment:
         align = Alignments.CENTER
@@ -2798,8 +2794,8 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
 
     should_persist = 'persist' in flags
     no_cursor = 'no_cursor' in flags
-    arrows = 'arrows' in flags and orientation == 'horizontal'
-    scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
+    arrows = 'arrows' in flags and actual_orientation == Orientation.HORIZONTAL
+    scroll_bar = 'scroll_bar' in flags and actual_orientation == Orientation.VERTICAL
     backable = 'backable' in flags
 
     event_context = {
@@ -2810,7 +2806,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
     }
 
     self.game.memory['player_choice'] = (nid, header, data, row_width,
-                                    orientation, dtype, should_persist,
+                                    actual_orientation, dtype, should_persist,
                                     align, bg, event_nid, size, no_cursor,
                                     arrows, scroll_bar, talign, backable, event_context)
     self.game.state.change('player_choice')

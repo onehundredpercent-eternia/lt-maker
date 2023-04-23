@@ -1,10 +1,10 @@
 import math
+from typing import Any, Callable, Optional
 
 from app.data.database.database import DB
-
-from app.engine.sprites import SPRITES
+from app.engine import (engine, help_menu, icons, image_mods, item_funcs,
+                        item_system, text_funcs)
 from app.engine.fonts import FONT
-from app.engine import engine, image_mods, icons, help_menu, text_funcs, item_system, item_funcs
 from app.engine.game_state import game
 
 from app.engine.graphics.text.text_renderer import render_text, text_width, rendered_text_width
@@ -43,25 +43,29 @@ class EmptyOption():
             surf.blit(highlight_surf, (left, top))
         return surf
 
-class BasicOption():
-    def __init__(self, idx, text):
+class BasicOption(IMenuOption):
+    def __init__(self, idx, value: str, display_value: Optional[str] = None, width: int = 0):
         self.idx = idx
-        self.text = text
-        self.display_text = text_funcs.translate(text)
+        self.text = value
+        self.display_text = text_funcs.translate(display_value or value)
         self.help_box = None
         self.font = 'text'
         self.color = None
         self.ignore = False
+        self._width = width
 
     def get(self):
         return self.text
 
-    def set_text(self, text):
-        self.text = text
-        self.display_text = text_funcs.translate(text)
+    def set(self, value: str, display_value: Optional[str]):
+        self.set_text(value, display_value)
+
+    def set_text(self, value: str, display_value=None):
+        self.text = value
+        self.display_text = text_funcs.translate(display_value or value)
 
     def width(self):
-        return text_width(self.font, self.display_text) + 24
+        return self._width or (text_width(self.font, self.display_text) + 24)
 
     def height(self):
         return 16
