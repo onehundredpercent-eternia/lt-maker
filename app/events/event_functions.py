@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ast
 import random
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
@@ -25,12 +25,10 @@ from app.engine.graphics.ui_framework.premade_components.plain_text_component im
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_animation import \
     InterpolationType
-from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
-                                                                  VAlignment)
 from app.engine.objects.item import ItemObject
+from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
-from app.engine.objects.region import RegionObject
 from app.engine.persistent_records import RECORDS
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, regions, triggers
@@ -39,7 +37,7 @@ from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
-from app.utilities.enums import Alignments, Orientation
+from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import check_valid_type
 from app.utilities.typing import NID
 
@@ -2794,8 +2792,16 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
 
     should_persist = 'persist' in flags
     no_cursor = 'no_cursor' in flags
-    arrows = 'arrows' in flags and actual_orientation == Orientation.HORIZONTAL
-    scroll_bar = 'scroll_bar' in flags and actual_orientation == Orientation.VERTICAL
+    arrows = None
+    if 'arrows' in flags:
+        arrows = True
+    elif 'no_arrows' in flags:
+        arrows = False
+    scroll_bar = None
+    if 'scroll_bar' in flags:
+        scroll_bar = True
+    elif 'no_scroll_bar' in flags:
+        scroll_bar = False
     backable = 'backable' in flags
 
     event_context = {

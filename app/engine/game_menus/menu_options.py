@@ -1,14 +1,34 @@
+from __future__ import annotations
+
 import math
+from turtle import width
 from typing import Any, Callable, Optional
 
 from app.data.database.database import DB
+from app.data.database.items import ItemPrefab
+from app.data.database.skills import SkillPrefab
 from app.engine import (engine, help_menu, icons, image_mods, item_funcs,
                         item_system, text_funcs)
 from app.engine.fonts import FONT
 from app.engine.game_state import game
-
-from app.engine.graphics.text.text_renderer import render_text, text_width, rendered_text_width
+from app.engine.graphics.text.text_renderer import (render_text,
+                                                    rendered_text_width,
+                                                    text_width)
+from app.engine.objects.item import ItemObject
+from app.engine.objects.skill import SkillObject
+from app.engine.sprites import SPRITES
 from app.utilities.enums import HAlignment
+from app.utilities.typing import Protocol
+
+
+class IMenuOption(Protocol):
+    get: Callable[[], str]
+    set: Callable[[Any, str], None]
+    height: Callable[[], int]
+    width: Callable[[], int]
+    set_width: Callable[[int], None]
+    draw: Callable[[engine.Surface, int, int], None]
+    draw_highlight: Callable[[engine.Surface, int, int, int], None]
 
 class EmptyOption():
     def __init__(self, idx):
@@ -44,7 +64,8 @@ class EmptyOption():
         return surf
 
 class BasicOption(IMenuOption):
-    def __init__(self, idx, value: str, display_value: Optional[str] = None, width: int = 0):
+    def __init__(self, idx, value: str, display_value: Optional[str] = None, width: int = 0,
+                 align: HAlignment = HAlignment.LEFT):
         self.idx = idx
         self.text = value
         self.display_text = text_funcs.translate(display_value or value)
@@ -53,16 +74,20 @@ class BasicOption(IMenuOption):
         self.color = None
         self.ignore = False
         self._width = width
+        self._align = align
 
     def get(self):
         return self.text
 
-    def set(self, value: str, display_value: Optional[str]):
+    def set(self, value: str, display_value: Optional[str] = None):
         self.set_text(value, display_value)
 
     def set_text(self, value: str, display_value=None):
         self.text = value
         self.display_text = text_funcs.translate(display_value or value)
+
+    def set_width(self, value):
+        self._width = value
 
     def width(self):
         return self._width or (text_width(self.font, self.display_text) + 24)
@@ -76,9 +101,14 @@ class BasicOption(IMenuOption):
         return self.color
 
     def draw(self, surf, x, y):
-        # font = FONT[self.font]
-        render_text(surf, [self.font], [self.display_text], [self.get_color()], (x + 5, y))
-        # font.blit(self.display_text, surf, (x + 5, y), self.get_color())
+        blit_loc = (x + 5, y)
+        if self._align == HAlignment.LEFT:
+            pass
+        elif self._align == HAlignment.CENTER:
+            blit_loc = (x + self.width() / 2, y)
+        else: # Right
+            blit_loc = (x + self.width() - 10, y)
+        render_text(surf, [self.font], [self.display_text], [self.get_color()], blit_loc, self._align)
 
     def draw_highlight(self, surf, x, y, menu_width):
         highlight_surf = SPRITES.get('menu_highlight')
@@ -271,28 +301,35 @@ class ModeOption(TitleOption):
         render_text(surf, [self.font], [text], [color], position)
 
 class ItemOption(BasicOption):
-    def __init__(self, idx, item):
+    def __init__(self, idx, item: ItemObject | ItemPrefab, display_text: Optional[str] = None, width: int = 0,
+                 align: HAlignment = HAlignment.LEFT):
         self.idx = idx
-        self.item = item
+        self.item: ItemObject | ItemPrefab = item
+        self._is_prefab: bool = isinstance(item, ItemPrefab)
+        self.display_text = display_text or item.name
         self.help_box = None
         self.font = 'text'
         self.color = item_system.text_color(None, item)
         self.ignore = False
+        self._width = width
+        self._align = align
 
     def get(self):
         return self.item
 
-    def set_text(self, text):
-        pass
+    def set(self, value: ItemObject | ItemPrefab, display_value: Optional[str] = None):
+        self.item = value
+        self._is_prefab: bool = isinstance(value, ItemPrefab)
+        self.display_text = display_value
+        if display_value is None:
+            self.display_text = value.name
 
-    def set_item(self, item):
+    def set_item(self, item: ItemObject):
         self.item = item
+        self.display_text = item.name
 
     def width(self):
-        return 104
-
-    def height(self):
-        return 16
+        return self._width or 104
 
     def get_color(self):
         owner = game.get_unit(self.item.owner_nid)
@@ -331,19 +368,20 @@ class ItemOption(BasicOption):
             main_font = 'narrow'
         uses_font = 'text'
         render_text(surf, [main_font], [self.item.name], [main_color], (x + 20, y))
-        uses_string = '--'
-        if self.item.uses:
-            uses_string = str(self.item.data['uses'])
-        elif self.item.parent_item and self.item.parent_item.uses and self.item.parent_item.data['uses']:
-            uses_string = str(self.item.parent_item.data['uses'])
-        elif self.item.c_uses:
-            uses_string = str(self.item.data['c_uses'])
-        elif self.item.parent_item and self.item.parent_item.c_uses and self.item.parent_item.data['c_uses']:
-            uses_string = str(self.item.parent_item.data['c_uses'])
-        elif self.item.cooldown:
-            uses_string = str(self.item.data['cooldown'])
-        left = x + 99
-        render_text(surf, [uses_font], [uses_string], [uses_color], (left, y), HAlignment.RIGHT)
+        if not self._is_prefab:
+            uses_string = '--'
+            if self.item.uses:
+                uses_string = str(self.item.data['uses'])
+            elif self.item.parent_item and self.item.parent_item.uses and self.item.parent_item.data['uses']:
+                uses_string = str(self.item.parent_item.data['uses'])
+            elif self.item.c_uses:
+                uses_string = str(self.item.data['c_uses'])
+            elif self.item.parent_item and self.item.parent_item.c_uses and self.item.parent_item.data['c_uses']:
+                uses_string = str(self.item.parent_item.data['c_uses'])
+            elif self.item.cooldown:
+                uses_string = str(self.item.data['cooldown'])
+            left = x + self.width() - 5
+            render_text(surf, [uses_font], [uses_string], [uses_color], (left, y), HAlignment.RIGHT)
 
 class ConvoyItemOption(ItemOption):
     def __init__(self, idx, item, owner):
@@ -502,6 +540,48 @@ class StockValueItemOption(ValueItemOption):
         if self.stock >= 0:
             stock_string = str(self.stock)
         render_text(surf, [main_font], [stock_string], [main_color], (x + 128, y), HAlignment.RIGHT)
+
+class SkillOption(BasicOption):
+    def __init__(self, idx, skill: SkillObject | SkillPrefab, display_text: Optional[str] = None, width: int = 0,
+                 align: HAlignment = HAlignment.LEFT):
+        self.idx = idx
+        self.skill: SkillObject | SkillPrefab = skill
+        self.display_text = display_text or skill.name
+        self.help_box = None
+        self.font = 'text'
+        self.color = 'blue'
+        self.ignore = False
+        self._width = width
+        self._align = align
+
+    def get(self):
+        return self.skill
+
+    def set(self, value: SkillObject | SkillPrefab, display_value: Optional[str] = None):
+        self.skill = value
+        self.display_text = display_value
+        if display_value is None:
+            self.display_text = value.name
+
+    def width(self):
+        return self._width or 104
+
+    def get_color(self):
+        return self.color
+
+    def get_help_box(self):
+        return help_menu.HelpDialog(self.skill.desc)
+
+    def draw(self, surf, x, y):
+        icon = icons.get_icon(self.skill)
+        if icon:
+            surf.blit(icon, (x + 2, y))
+        main_color = self.get_color()
+        main_font = self.font
+        if text_width(main_font, self.skill.name) > 60:
+            main_font = 'narrow'
+        uses_font = 'text'
+        render_text(surf, [main_font], [self.skill.name], [main_color], (x + 20, y))
 
 class UnitOption(BasicOption):
     def __init__(self, idx, unit):

@@ -1,17 +1,68 @@
 from __future__ import annotations
-from typing import Any, List, Optional, Tuple, Type
-from app.constants import WINHEIGHT, WINWIDTH
-from app.editor.lib.math.math_utils import float_eq
-from app.engine.base_surf import create_base_surf
-from app.engine.game_menus.menu_components.generic_menu.cursor_hand import CursorDrawMode, CursorHand
-from app.engine.game_menus.menu_components.generic_menu.menu_options import BasicOption, IMenuOption
-from app.engine.graphics.text.text_renderer import font_height, render_text, text_width
-from app.engine.graphics.ui_framework.ui_framework_layout import HAlignment, VAlignment, convert_align
-from app.engine import engine
 
+from typing import Any, Dict, List, Optional, Tuple, Type
+
+from app.constants import WINHEIGHT, WINWIDTH
+from app.data.database.database import DB
+from app.editor.lib.math.math_utils import float_eq
+from app.engine import engine
+from app.engine.base_surf import create_base_surf
+from app.engine.game_menus.menu_components.generic_menu.cursor_hand import (
+    CursorDrawMode, CursorHand)
+from app.engine.game_menus.menu_components.generic_menu.menu_options import (
+    BasicOption, IMenuOption, ItemOption, SkillOption)
+from app.engine.graphics.text.text_renderer import (font_height, render_text,
+                                                    text_width)
+from app.engine.graphics.ui_framework.ui_framework_layout import convert_align
+from app.engine.gui import ScrollArrow, ScrollBar
+from app.engine.objects.item import ItemObject
+from app.engine.objects.skill import SkillObject
 from app.utilities.enums import Alignments, Orientation
+from app.utilities.str_utils import is_int
 from app.utilities.typing import NID
 from app.utilities.utils import clamp, sign
+from app.utilities.enums import HAlignment, VAlignment
+from app.engine.game_state import game
+
+CHOICE_TYPES: Dict[str, Type[IMenuOption]] = {
+  'type_skill': SkillOption,
+  'type_base_item': ItemOption,
+  'type_game_item': ItemOption,
+  'type_unit': ItemOption,
+  'type_class': ItemOption,
+  'type_icon': ItemOption,
+  'type_portrait': ItemOption,
+  'type_chibi': ItemOption
+}
+
+class ChoiceMenuOptionFactory():
+  @staticmethod
+  def create_option(option_type: Type[IMenuOption], idx: int, value: str, disp_value: Any=None, row_width: int=0, text_align: HAlignment=HAlignment.LEFT):
+    if option_type == BasicOption:
+      return BasicOption(idx, value, disp_value or value, row_width, text_align)
+    elif option_type == ItemOption:
+      item = None
+      if isinstance(value, ItemObject):
+        item = value
+      elif is_int(value):
+        item = game.item_registry.get(int(value))
+      elif isinstance(value, str):
+        item = DB.items.get(value)
+      if not item:
+        raise ValueError("Unknown item: " + value)
+      return ItemOption(idx, item, disp_value, row_width, text_align)
+    elif option_type == SkillOption:
+      skill = None
+      if isinstance(value, SkillObject):
+        skill = value
+      elif is_int(value):
+        skill = game.skill_registry.get(int(value))
+      elif isinstance(value, str):
+        skill = DB.skills.get(value)
+      if not skill:
+        raise ValueError("Unknown skill: " + value)
+      return SkillOption(idx, skill, disp_value, row_width, text_align)
+    return BasicOption(idx, value, disp_value or value, row_width, text_align)
 
 class LayoutManager():
   @staticmethod
@@ -49,8 +100,11 @@ class GridChoiceMenu():
     self._bg_name = bg
     self._orientation: Orientation = orientation
     self._alignment: Alignments | Tuple[int, int] = alignment
+    self._text_align = text_align
 
     self._option_data = self._build_data(data, display_values, self._data_type, self._row_width)
+    self._data = data
+    self._display_values = display_values
     self._item_size = self._determine_item_size(self._option_data, self._row_width)
 
     self._cursor_idx: int = 0
@@ -62,12 +116,55 @@ class GridChoiceMenu():
     self._cached_data_surf: engine.Surface = self._build_data_surf()
 
     self.cursor_hand = CursorHand()
+    self._should_draw_arrows = False
+    self._create_arrows()
+    self.scroll_bar = ScrollBar()
+    self._should_draw_scrollbar = False
+    if self._total_grid_size()[1] > self.num_rows():
+      self._should_draw_scrollbar = True
+
+  def set_scrollbar(self, should_draw_scrollbar):
+    if self._orientation == Orientation.VERTICAL and self._total_grid_size()[1] > self.num_rows():
+      self._should_draw_scrollbar = should_draw_scrollbar
+    else:
+      self._should_draw_scrollbar = False
+
+  def set_arrows(self, should_draw_arrows):
+    if self._orientation == Orientation.HORIZONTAL:
+      self._should_draw_arrows = should_draw_arrows
+    else:
+      self._should_draw_arrows = False
+
+  def _create_arrows(self):
+    left, top = self._get_screen_position()
+    width, height = self._get_pixel_size()
+    v_offset = 16 if self._title else 0
+    h_offset = -5
+    v_offset -= 4
+    arrow_height = (height - v_offset) / 2 + v_offset
+    self.lscroll_arrow = ScrollArrow('left', (left + h_offset, top + arrow_height))
+    self.rscroll_arrow = ScrollArrow('right', (left + width + h_offset, top + arrow_height))
+    if self.num_rows() == 1:
+      self._should_draw_arrows = True
+
+  def num_rows(self):
+    return self._grid_size[1]
+
+  def num_cols(self):
+    return self._grid_size[0]
+
+  def relative_cursor_coord(self) -> Tuple[int, int]:
+    scroll_x, scroll_y = map(int, self._scroll)
+    cursor_x, cursor_y = self._get_coord_of_option_idx(self._cursor_idx)
+    return max(0, cursor_x - scroll_x), max(0, cursor_y - scroll_y)
 
   def set_data(self, data: List, display_values: Optional[List] = None):
     selected_idx = self.get_selected_idx()
     if self._should_autosize:
       self._grid_size: Tuple[int, int] = self._autosize_grid(data)
     self._option_data = self._build_data(data, display_values, self._data_type, self._row_width)
+    self._data = data
+    self._display_values = display_values
     self._item_size = self._determine_item_size(self._option_data, self._row_width)
     self._cached_bg: engine.Surface = self._build_bg()
     self._cached_data_surf: engine.Surface = self._build_data_surf()
@@ -77,6 +174,9 @@ class GridChoiceMenu():
     self.cursor_hand.mode = draw_mode
 
   def move_right(self, first_push: bool = False):
+    cursor_rx, _ = self.relative_cursor_coord()
+    if cursor_rx == self.num_cols() - 1:
+      self.rscroll_arrow.pulse()
     if first_push:
       next_idx = (self._cursor_idx + 1) % len(self._option_data)
     else:
@@ -84,6 +184,9 @@ class GridChoiceMenu():
     self.move_cursor(next_idx)
 
   def move_left(self, first_push: bool = False):
+    cursor_rx, _ = self.relative_cursor_coord()
+    if cursor_rx == 0:
+      self.lscroll_arrow.pulse()
     if first_push:
       next_idx = (self._cursor_idx - 1) % len(self._option_data)
     else:
@@ -127,11 +230,11 @@ class GridChoiceMenu():
   def _total_grid_size(self) -> Tuple[int, int]:
     if self._orientation == Orientation.VERTICAL:
       # constraint on num_cols
-      num_cols = self._grid_size[0]
-      return num_cols, (len(self._option_data) // num_cols) + 1
+      num_cols = self.num_cols()
+      return num_cols, (len(self._option_data) - 1 // num_cols) + 1
     else:
       # constraint on num_rols
-      num_rows = self._grid_size[1]
+      num_rows = self.num_rows()
       return (len(self._option_data) // num_rows) + 1, num_rows
 
   def _get_index_of_coord(self, coord: Tuple[int, int]) -> int:
@@ -152,10 +255,9 @@ class GridChoiceMenu():
     title_width, title_height = 0, 0
     if self._title:
       title_width, title_height = text_width('text', self._title), font_height('text')
-    num_horiz_options, num_vert_options = self._grid_size
     item_width, item_height = self._item_size
-    total_height = num_vert_options * item_height + title_height
-    total_width = max(num_horiz_options * item_width, title_width)
+    total_height = self.num_rows() * item_height + title_height
+    total_width = max(self.num_cols() * item_width, title_width)
     return total_width, total_height
 
   def _get_screen_position(self) -> Tuple[int, int]:
@@ -170,14 +272,14 @@ class GridChoiceMenu():
 
   def get_selected(self) -> Any:
     if self._cursor_idx < len(self._option_data):
-      return self._option_data[self._cursor_idx].get()
+      return self._data[self._cursor_idx]
     raise ValueError("Cursor at invalid index")
 
   def _autosize_grid(self, data: List[Any]):
     return (1, min(len(data), 1))
 
-  def _resolve_data_type(self, data_type: str):
-    return BasicOption
+  def _resolve_data_type(self, data_type: str) -> Type[IMenuOption]:
+    return CHOICE_TYPES.get(data_type, BasicOption)
 
   def _build_bg(self) -> engine.Surface:
     tw, th = self._get_pixel_size()
@@ -187,16 +289,16 @@ class GridChoiceMenu():
   def _build_data(self, data: List[Any], display_values: Optional[List[Any]], data_type: str, row_width: int) -> List[IMenuOption]:
     display_values = display_values or data
     options: List[IMenuOption] = []
+    max_width = 0
     for i in range(len(data)):
       value = data[i]
       disp_value = display_values[i]
-      if data_type == 'text':
-        if row_width:
-          options.append(BasicOption(i, value, disp_value, row_width))
-        else:
-          options.append(BasicOption(i, value, disp_value))
-      else:
-        raise TypeError("Unknown Option Type")
+      new_option = ChoiceMenuOptionFactory.create_option(self._resolve_data_type(data_type), i, value, disp_value, row_width, self._text_align)
+      options.append(new_option)
+      max_width = max(max_width, new_option.width())
+    # normalize option width
+    for option in options:
+      option.set_width(max_width)
     return options
 
   def _build_data_surf(self) -> engine.Surface:
@@ -228,22 +330,22 @@ class GridChoiceMenu():
   def _identify_minimum_scroll_to_loc(self, scroll: Tuple[float, float], loc: Tuple[float, float]) -> Tuple[float, float]:
     """Identifies the scroll location that allows loc to be visible with a minimum of net movement.
     """
-    x, y = self._grid_size
+    ncols, nrows = self.num_cols(), self.num_rows()
     sx, sy = scroll
-    lb, rb = sx, sx + x
-    ub, db = sy, sy + y
+    lb, rb = sx, sx + ncols
+    ub, db = sy, sy + nrows
     nx, ny = loc
 
     fx, fy = scroll
     if nx < lb:
       fx = nx
     elif nx >= rb:
-      fx = nx - x + 1
+      fx = nx - ncols + 1
 
     if ny < ub:
       fy = ny
     elif ny >= db:
-      fy = ny - y + 1
+      fy = ny - nrows + 1
     return fx, fy
 
   def _handle_scrolling(self):
@@ -297,6 +399,19 @@ class GridChoiceMenu():
     py = py + oy + 3
     return self.cursor_hand.draw(surf, (px, py))
 
+  def _draw_other_ui(self, surf, options_top_left) -> engine.Surface:
+    # draw scroll bars
+    if self._should_draw_arrows:
+      self.lscroll_arrow.draw(surf)
+      self.rscroll_arrow.draw(surf)
+    if self._should_draw_scrollbar:
+      _, total_height = self._total_grid_size()
+      if total_height > self.num_rows():
+        x, y = options_top_left
+        y -= 3
+        x += self._get_pixel_size()[0]
+        self.scroll_bar.draw(surf, (x, y), int(self._scroll[1]), self.num_rows(), total_height, self._item_size[1])
+
   def draw(self, surf) -> engine.Surface:
     # copy bg
     base = engine.copy_surface(self._cached_bg)
@@ -314,4 +429,5 @@ class GridChoiceMenu():
     left, top = self._get_screen_position()
     engine.blit(surf, base, (left, top))
     self._draw_cursor(surf, (left, top + options_y))
+    self._draw_other_ui(surf, (left, top + options_y))
     return surf
