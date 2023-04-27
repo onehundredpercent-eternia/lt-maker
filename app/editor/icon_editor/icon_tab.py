@@ -8,11 +8,33 @@ from app.editor.settings.main_settings_controller import MainSettingsController
 from app.data.resources.resources import RESOURCES
 from app.utilities.data import Data
 from app.utilities.typing import NID
-from PyQt5.QtCore import QSize, QSortFilterProxyModel, Qt
+from PyQt5.QtCore import QSize, QSortFilterProxyModel, Qt, QModelIndex
 from PyQt5.QtWidgets import (QCheckBox, QDialog, QGridLayout, QLineEdit,
                              QListView, QListWidget, QPushButton, QVBoxLayout,
                              QWidget)
 
+class IconSortProxy(QSortFilterProxyModel):
+    HorizOrder = 3
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.sort_order = Qt.AscendingOrder
+
+    def lessThan(self, left, right) -> bool:
+        if self.sort_order == self.HorizOrder:
+            left_nid = self.sourceModel().data(left, Qt.DisplayRole)
+            right_nid = self.sourceModel().data(right, Qt.DisplayRole)
+            if ',' in left_nid:
+                idx = left_nid.index(',')
+                left_nid = left_nid[idx:] + left_nid[:idx]
+            if ',' in right_nid:
+                idx = right_nid.index(',')
+                right_nid = right_nid[idx:] + right_nid[:idx]
+            # Backwards because it's using DescendingOrder sorting
+            # It must use a different sorting order than Ascending otherwise Qt does not recognize a change
+            return left_nid >= right_nid
+        else:
+            return super().lessThan(left, right)
 
 class IconTab(QWidget):
     side_menu_enabled: bool = False
@@ -34,7 +56,7 @@ class IconTab(QWidget):
         self.view.setUniformItemSizes(True)
         self.view.setIconSize(QSize(64, 64))
         self.full_model = model(self._data, self)
-        self.model = QSortFilterProxyModel()
+        self.model = IconSortProxy()
         self.model.setSourceModel(self.full_model)
         self.view.setModel(self.model)
         self.view.setViewMode(QListView.IconMode)
@@ -95,7 +117,7 @@ class IconTab(QWidget):
             self.icon_sheet_list.clear()
             for i, icon_sheet in enumerate(self._data):
                 if text in icon_sheet.nid.lower():
-                   self.icon_sheet_list.insertItem(i, icon_sheet.nid)
+                    self.icon_sheet_list.insertItem(i, icon_sheet.nid)
         else:
             self.icon_sheet_list.clear()
             for i, icon_sheet in enumerate(self._data):
@@ -116,21 +138,22 @@ class IconTab(QWidget):
     def save_state(self):
         self.settings.component_controller.set_property(self._type(), 'icon_tab_state', self.widget_state)
 
-    def restore_state(self, widget_state:dict):
+    def restore_state(self, widget_state: dict):
         if self.side_menu_enabled:
             sorted_horizontally = widget_state.get('sort_horizontally', False)
             self.icons_sort_order_checkbox.setChecked(sorted_horizontally)
             self.toggle_icon_sort()
 
-    def toggle_icon_sort(self):
-        pass
-        # self.widget_state['sort_horizontally'] = self.icons_sort_order_checkbox.isChecked()
-        # self.save_state()
-        # if self.icons_sort_order_checkbox.isChecked():
-        #     self.full_model.rearrange_data(True)
-        # else:
-        #     self.full_model.rearrange_data(False)
-        # self.full_model.layoutChanged.emit()
+    def toggle_icon_sort(self, change_layout=True):
+        self.widget_state['sort_horizontally'] = self.icons_sort_order_checkbox.isChecked()
+        self.save_state()
+        if self.icons_sort_order_checkbox.isChecked():
+            self.model.sort_order = IconSortProxy.HorizOrder
+            # To force it to refresh!
+            self.model.sort(0, Qt.DescendingOrder)
+        else:
+            self.model.sort_order = Qt.AscendingOrder
+            self.model.sort(0, Qt.AscendingOrder)
 
     def update_list(self):
         # self.model.dataChanged.emit(self.model.index(0), self.model.index(self.model.rowCount()))

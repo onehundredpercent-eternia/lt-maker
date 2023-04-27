@@ -44,7 +44,7 @@ class IconView(QGraphicsView):
             self.screen_scale -= 1
             self.scale(0.5, 0.5)
 
-def icon_slice(resource: IconSheet, base_width: int, base_height: int, vertical: bool = True) -> list:
+def icon_slice(resource: IconSheet, base_width: int, base_height: int, vertical: bool = False) -> list:
     if not resource.pixmap:
         resource.pixmap = QPixmap(resource.full_path)
     sheet = resource.pixmap
@@ -55,17 +55,19 @@ def icon_slice(resource: IconSheet, base_width: int, base_height: int, vertical:
         new_image.pixmap = resource.pixmap
         return [new_image]
     sub_images = []
+    num_rows = height//base_height
+    num_cols = width//base_width
     if vertical:
-        for x in range(width//base_width):
-            for y in range(height//base_height):
+        for x in range(num_cols):
+            for y in range(num_rows):
                 region = sheet.copy(x*base_width, y*base_height, base_width, base_height)
                 new_nid = resource.get_alias((x, y))
                 new_image = Icon(new_nid, (x, y), resource.nid)
                 new_image.pixmap = region
                 sub_images.append(new_image)
     else:
-        for y in range(height//base_height):
-            for x in range(width//base_width):
+        for y in range(num_rows):
+            for x in range(num_cols):
                 region = sheet.copy(x*base_width, y*base_height, base_width, base_height)
                 new_nid = resource.get_alias((x, y))
                 new_image = Icon(new_nid, (x, y), resource.nid)
