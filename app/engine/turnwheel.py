@@ -112,7 +112,7 @@ class ActionLog():
         self.unique_moves.clear()
         current_move = None
 
-        for action_index in range(self.first_free_action, len(self.actions)):
+        for action_index in range(max(0, self.first_free_action), len(self.actions)):
             action = self.actions[action_index]
             # Only regular moves, not CantoMove or other nonsense gets counted
             if type(action) == Action.Move or type(action) == Action.Teleport:

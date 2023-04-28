@@ -6,13 +6,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.engine import engine, image_mods
+from app.utilities.enums import HAlignment, VAlignment
 from app.utilities.typing import Color4
 from app.utilities.utils import tclamp, tmult, tuple_add, tuple_sub
 
 from .premade_animations.animation_templates import toggle_anim
 from .ui_framework_animation import UIAnimation, animated
-from .ui_framework_layout import (HAlignment, ListLayoutStyle, UILayoutHandler,
-                                  UILayoutType, VAlignment)
+from .ui_framework_layout import ListLayoutStyle, UILayoutHandler, UILayoutType
 from .ui_framework_styling import UIMetric
 
 CACHED_ATTRIBUTES = ['size', 'height', 'width', 'margin', 'padding', 'offset', 'scroll', 'tsize', 'twidth', 'theight', 'max_width', 'max_height', 'overflow']
@@ -762,9 +762,9 @@ class UIComponent():
         csize = (cwidth, cheight)
 
         cpadding = (self.props.padding[0].to_pixels(ctsize[0]),
-                    self.props.padding[1].to_pixels(ctsize[0]),
-                    self.props.padding[2].to_pixels(ctsize[1]),
-                    self.props.padding[3].to_pixels(ctsize[1]))
+            self.props.padding[1].to_pixels(ctsize[0]),
+            self.props.padding[2].to_pixels(ctsize[1]),
+            self.props.padding[3].to_pixels(ctsize[1]))
 
         ciwidth = cwidth - cpadding[0] - cpadding[1]
         ciheight = cheight - cpadding[2] - cpadding[3]
@@ -793,9 +793,9 @@ class UIComponent():
             return
         pwidth, pheight = tuple_sub(self.parent.size, (self.parent.padding[0] + self.parent.padding[1], self.parent.padding[2] + self.parent.padding[3]))
         cmargin = (self.props.margin[0].to_pixels(pwidth),
-                   self.props.margin[1].to_pixels(pwidth),
-                   self.props.margin[2].to_pixels(pheight),
-                   self.props.margin[3].to_pixels(pheight))
+                    self.props.margin[1].to_pixels(pwidth),
+                    self.props.margin[2].to_pixels(pheight),
+                    self.props.margin[3].to_pixels(pheight))
         super(UIComponent, self).__setattr__('margin', cmargin)
         for child in self.children:
             child._recalculate_cached_margin_from_props()

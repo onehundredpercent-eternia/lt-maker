@@ -25,7 +25,7 @@ from app.engine.graphics.text.text_renderer import render_text, text_width, rend
 from app.events import triggers
 from app.data.resources.resources import RESOURCES
 from app.utilities import utils
-from app.utilities.enums import Alignments
+from app.utilities.enums import HAlignment
 
 
 class AnimationCombat(BaseCombat, MockCombat):
@@ -529,7 +529,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             font = 'narrow'
         else:
             font = 'text'
-        render_text(self.left_name, [font], [self.left.name], ['brown'], (30, 8), Alignments.CENTER)
+        render_text(self.left_name, [font], [self.left.name], ['brown'], (30, 8), HAlignment.CENTER)
         # Partner name tag
         if self.lp_battle_anim:
             if self.left.strike_partner:
@@ -541,7 +541,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 font = 'narrow'
             else:
                 font = 'text'
-            render_text(self.lp_name, [font], [ln], ['brown'], (30, 8), Alignments.CENTER)
+            render_text(self.lp_name, [font], [ln], ['brown'], (30, 8), HAlignment.CENTER)
         # Bar
         if crit_flag:
             self.left_bar = SPRITES.get('combat_main_crit_left_' + left_color).copy()
@@ -553,7 +553,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 font = 'narrow'
             else:
                 font = 'text'
-            render_text(self.left_bar, [font], [name], ['brown'], (WINWIDTH//4 + 31, 5 + (8 if crit_flag else 0)), Alignments.CENTER)
+            render_text(self.left_bar, [font], [name], ['brown'], (WINWIDTH//4 + 31, 5 + (8 if crit_flag else 0)), HAlignment.CENTER)
 
         # Right
         right_color = utils.get_team_color(self.right.team)
@@ -563,7 +563,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             font = 'narrow'
         else:
             font = 'text'
-        render_text(self.right_name, [font], [self.right.name], ['brown'], (36, 8), Alignments.CENTER)
+        render_text(self.right_name, [font], [self.right.name], ['brown'], (36, 8), HAlignment.CENTER)
         if self.rp_battle_anim:
             if self.right.strike_partner:
                 rn = self.right.strike_partner.name
@@ -574,7 +574,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 font = 'narrow'
             else:
                 font = 'text'
-            render_text(self.rp_name, [font], [rn], ['brown'], (36, 8), Alignments.CENTER)
+            render_text(self.rp_name, [font], [rn], ['brown'], (36, 8), HAlignment.CENTER)
         # Bar
         if crit_flag:
             self.right_bar = SPRITES.get('combat_main_crit_right_' + right_color).copy()
@@ -586,7 +586,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 font = 'narrow'
             else:
                 font = 'text'
-            render_text(self.right_bar, [font], [name], ['brown'], (WINWIDTH//4 - 13, 5 + (8 if crit_flag else 0)), Alignments.CENTER)
+            render_text(self.right_bar, [font], [name], ['brown'], (WINWIDTH//4 - 13, 5 + (8 if crit_flag else 0)), HAlignment.CENTER)
 
         # Platforms
         if self.left.position:
@@ -658,8 +658,13 @@ class AnimationCombat(BaseCombat, MockCombat):
                 play_sound = brush.sound
                 if play_sound == 'Attack Miss 2':
                     play_sound = 'Miss'  # Replace with miss sound
-                if self.special_boss_crit(defender, after_attack=True) and play_sound.startswith('Attack Hit'):
+                if self.special_boss_crit(defender, after_attack=True):
+                    if play_sound.startswith('Attack Hit'):
                     play_sound = 'Critical Hit ' + str(random.randint(1, 2))
+                    elif play_sound.startswith('Final Hit'):
+                        new_sound = 'Critical Hit ' + str(random.randint(1, 2))
+                        get_sound_thread().play_sfx(new_sound)
+
                 get_sound_thread().play_sfx(play_sound)
 
     def _apply_actions(self):

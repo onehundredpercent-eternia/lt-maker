@@ -1,8 +1,9 @@
 from __future__ import annotations
+from dataclasses import dataclass
 
 import logging
 from enum import Enum
-from typing import Callable, List, Dict, Set, Tuple
+from typing import Callable, List, Dict, Set, Tuple, Type
 
 from app.utilities.data import Prefab
 
@@ -2993,17 +2994,26 @@ def restore_command(dat) -> EventCommand:
 
 evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList', 'Nid')
 
-def get_command_arguments(text: str) -> List[str]:
+@dataclass
+class ArgToken():
+    string: str
+    index: int
+
+def get_command_arguments(text: str) -> List[ArgToken]:
     # Replacement for text.split(';')
     # that ignores any semicolons
     # found within '{}' brackets
+    # in addition, returns the string location
+    # that the arg begins
     arguments = []
     curr = ""
     level = 0
-    for t in text:
+    curr_idx = 0
+    for idx, t in enumerate(text):
         if t == ';' and level == 0:
-            arguments.append(curr)
+            arguments.append(ArgToken(curr, curr_idx))
             curr = ""
+            curr_idx = idx + 1
         elif t == '{':
             level += 1
             curr += t
@@ -3012,22 +3022,22 @@ def get_command_arguments(text: str) -> List[str]:
             curr += t
         else:
             curr += t
-    arguments.append(curr)
+    arguments.append(ArgToken(curr, curr_idx))
     return arguments
 
-def determine_command_type(text: str) -> EventCommand:
+def determine_command_type(text: str) -> Type[EventCommand]:
     text = text.lstrip()
     if text.startswith('#'):
-        return Comment(display_values=[text])
+        return Comment
     if text.startswith('comment;'):
-        return Comment(display_values=[text[8:]])
-    arguments = get_command_arguments(text)
+        return Comment
+    arguments = [arg.string for arg in get_command_arguments(text)]
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()
     for command_type in subclasses:
         if command_type.nid == command_nid or command_type.nickname == command_nid:
-            return command_type()
-    return Comment()
+            return command_type
+    return Comment
 
 def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand, int]:
     """parses a line into a command
@@ -3120,7 +3130,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
     if text.endswith(';'):
         text = text[:-1]
 
-    arguments = get_command_arguments(text)
+    arguments = [arg.string for arg in get_command_arguments(text)]
 
     command_nid = arguments[0]
     subclasses = EventCommand.__subclasses__()

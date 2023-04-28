@@ -2051,7 +2051,15 @@ class CombatTargetingState(MapState):
             game.cursor.set_pos(mouse_position)
 
         if event == 'INFO':
-            _handle_info()
+            if game.cursor.get_hover():
+                get_sound_thread().play_sfx('Select 1')
+                game.memory['next_state'] = 'info_menu'
+                game.memory['current_unit'] = game.cursor.get_hover()
+                game.memory['scroll_units'] = [game.cursor.get_hover()]
+                game.state.change('transition_to')
+            else:
+                get_sound_thread().play_sfx('Select 3')
+                game.boundary.toggle_all_enemy_attacks()
 
         elif event == 'AUX':
             adj_allies = target_system.get_adj_allies(self.cur_unit)
