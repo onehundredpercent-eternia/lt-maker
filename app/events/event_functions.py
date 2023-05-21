@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ast
 import random
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from app.constants import WINHEIGHT, WINWIDTH, FANCY_DIALOG_MODE
 from app.data.database.database import DB
@@ -24,12 +24,10 @@ from app.engine.graphics.ui_framework.premade_components.plain_text_component im
 from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_animation import \
     InterpolationType
-from app.engine.graphics.ui_framework.ui_framework_layout import (HAlignment,
-                                                                  VAlignment)
 from app.engine.objects.item import ItemObject
+from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
-from app.engine.objects.region import RegionObject
 from app.engine.persistent_records import RECORDS
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, regions, triggers
@@ -38,7 +36,7 @@ from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
-from app.utilities.enums import Alignments
+from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import check_valid_type
 from app.utilities.typing import NID
 
@@ -800,9 +798,10 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     reload_map = 'reload' in flags
     # For Overworld
     if reload_map and self.game.is_displaying_overworld(): # just go back to the level
-        from app.engine import level_cursor, map_view, movement
+        from app.engine import level_cursor, map_view
+        from app.engine.movement import movement_system
         self.game.cursor = level_cursor.LevelCursor(self.game)
-        self.game.movement = movement.MovementManager()
+        self.game.movement = movement_system.MovementSystem(self.game.cursor, self.game.camera)
         self.game.map_view = map_view.MapView()
         self.game.boundary = self.prev_game_boundary
         self.game.board = self.prev_board
@@ -844,9 +843,10 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     self.game.level.tilemap = tilemap
     if self.game.is_displaying_overworld():
         # we were in the overworld before this, so we should probably reset cursor and such
-        from app.engine import level_cursor, map_view, movement
+        from app.engine import level_cursor, map_view
+        from app.engine.movement import movement_system
         self.game.cursor = level_cursor.LevelCursor(self.game)
-        self.game.movement = movement.MovementManager()
+        self.game.movement = movement_system.MovementSystem(self.game.cursor, self.game.camera)
         self.game.map_view = map_view.MapView()
     self.game.set_up_game_board(self.game.level.tilemap)
 
@@ -1094,6 +1094,10 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
         path = target_system.get_path(unit, position)
         if path:
             if self.do_skip:
+                # In case the unit is currently still moving
+                if self.game.movement.is_moving(unit):
+                    self.game.movement.stop(unit)
+                    unit.sprite.reset()
                 action.do(action.Teleport(unit, position))
             elif speed:
                 action.do(action.Move(unit, position, path, event=True, follow=follow, speed=speed))
@@ -2798,11 +2802,11 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
            dimensions: str = None, text_align: str = None, flags=None):
     flags = flags or set()
 
-    nid = nid
+    nid = nid or ""
     header = title
 
     if not row_width:
-        row_width = '-1'
+        row_width = '0'
     if not bg:
         bg = 'menu_bg_base'
     if 'no_bg' in flags:
@@ -2837,13 +2841,9 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
 
     row_width = int(row_width)
 
-    if not orientation:
-        orientation = 'vertical'
-    else:
-        if orientation in ('h', 'horiz', 'horizontal'):
-            orientation = 'horizontal'
-        else:
-            orientation = 'vertical'
+    actual_orientation = Orientation.VERTICAL
+    if orientation and orientation in ('h', 'horiz', 'horizontal'):
+        actual_orientation = Orientation.HORIZONTAL
 
     if not alignment:
         align = Alignments.CENTER
@@ -2856,12 +2856,21 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
 
     size = None
     if dimensions:
-        size = tuple([int(x) for x in dimensions.split(',')])
+        rows, columns = tuple([int(x) for x in dimensions.split(',')])
+        size = (columns, rows)
 
     should_persist = 'persist' in flags
     no_cursor = 'no_cursor' in flags
-    arrows = 'arrows' in flags and orientation == 'horizontal'
-    scroll_bar = 'scroll_bar' in flags and orientation == 'vertical'
+    arrows = None
+    if 'arrows' in flags:
+        arrows = True
+    elif 'no_arrows' in flags:
+        arrows = False
+    scroll_bar = None
+    if 'scroll_bar' in flags:
+        scroll_bar = True
+    elif 'no_scroll_bar' in flags:
+        scroll_bar = False
     backable = 'backable' in flags
 
     event_context = {
@@ -2872,7 +2881,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
     }
 
     self.game.memory['player_choice'] = (nid, header, data, row_width,
-                                    orientation, dtype, should_persist,
+                                    actual_orientation, dtype, should_persist,
                                     align, bg, event_nid, size, no_cursor,
                                     arrows, scroll_bar, talign, backable, event_context)
     self.game.state.change('player_choice')
@@ -3382,26 +3391,25 @@ def loop_units(self: Event, expression, event, flags=None):
 
 def change_roaming(self: Event, free_roam_enabled, flags=None):
     val = free_roam_enabled.lower()
-    if self.game.level:
         self.game.action_log.set_first_free_action()
-        self.game.level.roam = val in self.true_vals
+    self.game.set_roam(val in self.true_vals)
 
 def change_roaming_unit(self: Event, unit, flags=None):
-    if self.game.level:
         unit = self._get_unit(unit)
         if unit:
-            self.game.level.roam_unit = unit.nid
+        self.game.set_roam_unit(unit)
         else:
-            self.game.level.roam_unit = None
+        self.game.clear_roam_unit()
 
 def clean_up_roaming(self: Event, flags=None):
     # Not turnwheel compatible
     for unit in self.game.units:
-        if unit.position and not unit == self.game.level.roam_unit:
+        if unit.position and unit != self.game.get_roam_unit():
             action.do(action.FadeOut(unit))
     if DB.constants.value('initiative'):
         self.game.initiative.clear()
-        self.game.initiative.insert_unit(self.game.level.roam_unit)
+        if self.game.get_roam_unit():
+            self.game.initiative.insert_unit(self.game.get_roam_unit().nid)
 
 def add_to_initiative(self: Event, unit, integer, flags=None):
     # NOT CURRENTLY TURNWHEEL COMPATIBLE
