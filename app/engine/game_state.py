@@ -261,7 +261,7 @@ class GameState():
             # Only let unit's that have a VALID position spawn onto the map
             if unit.position:
                 if self.current_level.tilemap.check_bounds(unit.position):
-                self.arrive(unit)
+                    self.arrive(unit)
             else:
                 logging.warning("Unit %s's position not on map. Removing...", unit.nid)
                 unit.position = None

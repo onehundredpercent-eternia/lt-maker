@@ -209,10 +209,10 @@ class MapView():
         # Draw big lines (bounds)
         # Don't bother showing bounds if they are just normal bounds
         if not regular_bounds and cf.SETTINGS['show_bounds']:
-        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, top - 1), (right + 1, top - 1), width=3)
-        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 1, top - 1), (left - 1, bottom), width=3)
-        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (right, top - 1), (right, bottom), width=3)
-        engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, bottom), (right + 1, bottom), width=3)
+            engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, top - 1), (right + 1, top - 1), width=3)
+            engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 1, top - 1), (left - 1, bottom), width=3)
+            engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (right, top - 1), (right, bottom), width=3)
+            engine.draw_line(line_surf, (0, 0, 0, outside_opacity), (left - 2, bottom), (right + 1, bottom), width=3)
         # Draw to map
         surf.blit(line_surf, (0, 0))
 

@@ -7,9 +7,10 @@ from app.data.database.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.state import State
-from app.engine import engine, menu_options, help_menu, gui, \
+from app.engine import engine, help_menu, gui, \
     icons, image_mods, item_funcs, equations, \
     combat_calcs, skill_system
+from app.engine.game_menus import menu_options
 from app.engine.game_state import game
 from app.utilities.enums import Alignments
 

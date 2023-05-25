@@ -709,7 +709,7 @@ class MovementState(State):
         game.movement.update()
         if len(game.movement) <= 0:
             game.boundary.frozen = False
-                game.state.back()
+            game.state.back()
             return 'repeat'
 
 class WaitState(MapState):
