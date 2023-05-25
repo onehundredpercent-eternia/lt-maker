@@ -1,5 +1,6 @@
 from __future__ import annotations
 from app.engine.objects.item import ItemObject
+from app.engine.objects.skill import SkillObject
 from app.engine.text_evaluator import TextEvaluator
 
 import logging
@@ -24,8 +25,8 @@ from app.utilities.typing import NID
 class Event():
     true_vals = ('t', 'true', 'True', '1', 'y', 'yes')
 
-    skippable = {"speak", "wait", "bop_portrait",
-                 "sound", "location_card", "credits", "ending"}
+    skippable = {"wait", "bop_portrait", "sound", 
+                 "location_card", "credits", "ending"}
 
     def __init__(self, nid, commands, trigger: triggers.EventTrigger, game: GameState = None):
         self._transition_speed = 250
@@ -182,7 +183,9 @@ class Event():
                 if self.text_boxes:
                     if self.text_boxes[-1].is_done():
                         if dialog_log:
-                            action.do(action.LogDialog(self.text_boxes[-1]))
+                            speaker = self.text_boxes[-1].speaker
+                            plain_text = self.text_boxes[-1].plain_text
+                            action.do(action.LogDialog(speaker, plain_text))
                         self.state = 'processing'
                         if self.text_boxes[-1].is_complete():
                             self.text_boxes.pop()
@@ -644,6 +647,21 @@ class Event():
             return None, None
         item = [item for item in item_list if (item.nid == item_id or (str_utils.is_int(item_id) and item.uid == int(item_id)))][0]
         return unit, item
+
+    def _get_skill(self, unit_nid: str, skill: str) -> tuple[UnitObject, SkillObject]:
+        unit = self._get_unit(unit_nid)
+        if not unit:
+            self.logger.error("Couldn't find unit with nid %s" % unit_nid)
+            return None, None
+        skill_id = skill
+        skill_list = unit.skills
+        snids = [skill.nid for skill in skill_list]
+        suids = [skill.uid for skill in skill_list]
+        if (skill_id not in snids) and (not str_utils.is_int(skill_id) or not int(skill_id) in suids):
+            self.logger.error("Couldn't find skill with id %s" % skill)
+            return None, None
+        skill = [skill for skill in skill_list if (skill.nid == skill_id or (str_utils.is_int(skill_id) and skill.uid == int(skill_id)))][0]
+        return unit, skill
 
     def _apply_stat_changes(self, unit, stat_changes, flags):
         klass = DB.classes.get(unit.klass)

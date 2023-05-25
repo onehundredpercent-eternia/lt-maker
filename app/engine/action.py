@@ -1597,6 +1597,97 @@ class RemoveItemComponent(Action):
             component.item = self.item
             self._did_remove = False
 
+class AddSkillComponent(Action):
+    def __init__(self, skill, component_nid, component_value):
+        self.skill = skill
+        self.component_nid = component_nid
+        self.component_value = component_value
+        self._did_add = False
+
+    def do(self):
+        import app.engine.skill_component_access as SCA
+        self._did_add = False
+        component = SCA.restore_component((self.component_nid, self.component_value))
+        if not component:
+            logging.error("AddSkillComponent: Couldn't find skill component with nid %s", self.component_nid)
+            return
+        self.skill.components.append(component)
+        self.skill.__dict__[self.component_nid] = component
+        # Assign parent to component
+        component.skill = self.skill
+        if component.defines('init'):
+            component.init(self.skill)
+        self._did_add = True
+
+    def reverse(self):
+        if self._did_add:
+            self.skill.components.remove_key(self.component_nid)
+            del self.skill.__dict__[self.component_nid]
+            self._did_add = False
+            
+class ModifySkillComponent(Action):
+    def __init__(self, skill, component_nid, new_component_value, component_property=None, additive: bool = False):
+        self.skill: SkillObject = skill
+        self.component_nid = component_nid
+        self.property_name: Optional[NID] = None
+        self.prev_component_value = None
+        self.component_value = None
+        if self.component_nid in self.skill.components.keys():
+            component = self.skill.components.get(self.component_nid)
+            if isinstance(component.value, dict):
+                self.property_name = component_property
+                self.prev_component_value = component.value[self.property_name]
+            else:
+                self.prev_component_value = component.value
+            if not additive:
+                self.component_value = new_component_value
+            else:
+                self.component_value = self.prev_component_value + new_component_value
+
+    def do(self):
+        if self.component_nid in self.skill.components.keys():
+            component = self.skill.components.get(self.component_nid)
+            if self.property_name and isinstance(component.value, dict):
+                component.value[self.property_name] = self.component_value
+            else:
+                component.value = self.component_value
+
+    def reverse(self):
+        if self.component_nid in self.skill.components.keys():
+            component = self.skill.components.get(self.component_nid)
+            if self.property_name and isinstance(self.component.value, dict):
+                component.value[self.property_name] = self.prev_component_value
+            else:
+                component.value = self.prev_component_value
+                
+class RemoveSkillComponent(Action):
+    def __init__(self, skill, component_nid):
+        self.skill = skill
+        self.component_nid = component_nid
+        self.component_value = None
+        self._did_remove = False
+
+    def do(self):
+        self._did_remove = False
+        if self.component_nid in self.skill.components.keys():
+            component = self.skill.components.get(self.component_nid)
+            self.component_value = component.value
+            self.skill.components.remove_key(self.component_nid)
+            del self.skill.__dict__[self.component_nid]
+            self._did_remove = True
+        else:
+            logging.warning("remove_skill_component: component with nid %s not found for skill %s", self.component_nid, self.skill)
+
+    def reverse(self):
+        import app.engine.skill_component_access as SCA
+        if self._did_remove:
+            component = SCA.restore_component((self.component_nid, self.component_value))
+            self.skill.components.append(component)
+            self.skill.__dict__[self.component_nid] = component
+            # Assign parent to component
+            component.skill = self.skill
+            self._did_remove = False
+
 class SetObjData(Action):
     def __init__(self, obj, keyword, value):
         self.obj = obj
@@ -2501,9 +2592,9 @@ class RemoveLore(Action):
 
 
 class LogDialog(Action):
-    def __init__(self, dialog):
-        self.speaker = dialog.speaker
-        self.plain_text = dialog.plain_text
+    def __init__(self, speaker: str, plain_text: str):
+        self.speaker = speaker
+        self.plain_text = plain_text
 
     def do(self):
         game.dialog_log.append((self.speaker, self.plain_text))

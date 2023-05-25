@@ -323,7 +323,7 @@ class OverworldManager():
             path = road.prefab
             start_node = self.node_at(path[0], True)
             end_node = self.node_at(path[-1], True)
-            if start_node.nid and end_node.nid:
+            if start_node and end_node and start_node.nid and end_node.nid:
                 self.overworld_full_graph.add_edge(start_node.nid, end_node.nid, data=road, weight=road.tile_length)
         self.regenerate_explored_graph()
 
