@@ -79,7 +79,6 @@ def reset():
 # Make sure to reload all persistent records whenever we start the engine
 game_id = str(DB.constants.value('game_nid'))
 location = 'saves/' + game_id + '-persistent_records.p'
-print("original records: %s" % location)
 data = persistent_data.deserialize(location)
 RECORDS = PersistentRecordManager(location)
 if data:
