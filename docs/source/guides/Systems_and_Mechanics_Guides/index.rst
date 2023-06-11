@@ -1,5 +1,5 @@
 System and Mechanics Guides
-========================
+====================================
 
 These are guides on how to create or use systems and mechanics.
 

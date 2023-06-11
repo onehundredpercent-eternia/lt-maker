@@ -74,7 +74,7 @@ remove_portrait;Eirika
 
 There are many event commands available, and it is not expected that you will remember them all off the top of your head. A searchable index of event commands is available within the event editor.
 
-![Screenshot of list of event commands](../images/Event_Overview/Event_Editor_Show_Commands_List.png)
+![Screenshot of list of event commands](../../images/Event_Overview/Event_Editor_Show_Commands_List.png)
 
 Feel free to check out the events that already exist in the default project or the Lion Throne project. They can and should be used freely as reference.
 

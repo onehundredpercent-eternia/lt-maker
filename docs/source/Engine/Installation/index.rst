@@ -1,5 +1,5 @@
 Installation
-========
+====================================
 
 There are two different versions of the engine available for use - **exe** and **git**.
 

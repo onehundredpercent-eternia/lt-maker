@@ -10,7 +10,7 @@ These relatively new event editor features give you, the game designer, signific
 
 ## Prerequisites
 
-It is expected that you, the reader, are already familiar with the [Mercenary Shop Guide](Mercenary-Shop). If you aren't, you may find it useful to understand that guide before diving into this one.
+It is expected that you, the reader, are already familiar with the [Mercenary Shop Guide](Mercenary_Shop). If you aren't, you may find it useful to understand that guide before diving into this one.
 
 ## Setting up the event
 

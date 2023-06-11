@@ -8,7 +8,7 @@ Regardless, you'll need a [Gitlab Account](https://gitlab.com/users/sign_in) in 
 
 To begin with, you should be signed into your [Gitlab Account](https://gitlab.com/users/sign_in).
 
-Now you can navigate to any page on the [LT Wiki](https://lt-maker.readthedocs.io/en/latest/index.html) and initiate the editor. For this example, let's alter the [Getting Started](Getting-Started) page.
+Now you can navigate to any page on the [LT Wiki](https://lt-maker.readthedocs.io/en/latest/index.html) and initiate the editor. For this example, let's alter the [GIT Intall](../Engine/Installation/GIT_Installation) page.
 
 ![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing1.jpg)
 

@@ -15,7 +15,7 @@ The current system of class and personal skills cannot approximate this behavior
 
 Eventing. The solution is always eventing. Via the `give_skill` event command, we can give skills conditionally to any unit. The event will be as follows.
 
-![image](../images/Conditional_Personal_Skills/ConditionalPersonalSkills1.png)
+![image](../images/Conditional_Personal_Skills/Conditional_Personal_Skills1.png)
 
 ``` text
 if;unit.get_field(unit.klass + str(unit.level)) and unit.get_field(unit.klass + str(unit.level)) not in [skill.nid for skill in unit.skills]

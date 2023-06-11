@@ -49,7 +49,7 @@ Welcome to lt-maker's Wiki!
    :alt: Useful Functions
 
 .. image:: /home_buttons/ButtonTroubleshooting.png
-   :target: https://lt-maker.readthedocs.io/en/latest/source/Engine/Troubleshooting/index
+   :target: https://lt-maker.readthedocs.io/en/latest/source/Engine/Troubleshooting
    :alt: Troubleshooting
 
 .. image:: /home_buttons/ButtonMisc.png
@@ -116,7 +116,7 @@ Welcome to lt-maker's Wiki!
    :alt: Community
 
 .. image:: /home_buttons/ButtonProjects.png
-   :target: https://lt-maker.readthedocs.io/en/latest/source/Projects/index
+   :target: https://lt-maker.readthedocs.io/en/latest/source/Projects/Projects
    :alt: Projects
 
 .. image:: /home_buttons/ButtonDiscord.png
@@ -138,7 +138,7 @@ Welcome to lt-maker's Wiki!
    source/Engine/Data_Types
    source/Engine/Conditionals
    source/Engine/Useful_Functions
-   source/Engine/Troubleshooting/index.rst
+   source/Engine/Troubleshooting
    source/Engine/Misc/index.rst
    source/Engine/FAQ
 

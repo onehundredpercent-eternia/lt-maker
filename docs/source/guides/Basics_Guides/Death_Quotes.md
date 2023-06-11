@@ -41,4 +41,4 @@ if;unit.get_field('DeathQuote')
 end
 ```
 
-For those who are unfamiliar with **Unit Fields**, I would recommend reading both the other tutorials and the [eval documentation](../../events/Conditionals). To put it simply, however, this will check if the unit that died possesses a **field** called `DeathQuote`, and if so, it will play a scene of the unit appearing, speaking the exact contents of their `DeathQuote`, and then disappearing - exactly the same as the above scene.
+For those who are unfamiliar with **Unit Fields**, I would recommend reading both the other tutorials and the [eval documentation](../../Engine/Conditionals). To put it simply, however, this will check if the unit that died possesses a **field** called `DeathQuote`, and if so, it will play a scene of the unit appearing, speaking the exact contents of their `DeathQuote`, and then disappearing - exactly the same as the above scene.

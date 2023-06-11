@@ -179,4 +179,4 @@ Congratulations, **LexTalionis** has been successfully installed!
 ## What's next?
 Most of the features in the engine can be self taught by navigation. Along that, the default project has multiple examples on how to implement staples from the **Fire Emblem** series.
 
-In case you need extra assistance, check the other wiki articles at the panel over the left. The best places to start are the [Editors](/editors) page. You can also join the official [Discord Server](https://discord.gg/dC6VWGh4sw) to learn with other users and get the latest news on updates.
+In case you need extra assistance, check the other wiki articles at the panel over the left. The best places to start are the [basics guides](../../Guides/Basics_Guides/index) page. You can also join the official [Discord Server](https://discord.gg/dC6VWGh4sw) to learn with other users and get the latest news on updates.

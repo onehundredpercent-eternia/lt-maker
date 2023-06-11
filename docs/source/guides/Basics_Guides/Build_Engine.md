@@ -16,7 +16,7 @@ Unzip the download, stick your `.ltproj` file in the folder `lt_engine/lt_engine
 
 If are working with the **git** version of the **Lex Talionis** engine, follow this process.
 
-First, make sure that you have everything installed from the [Python Installation](./source/Engine/Installation/GIT_Installation) guide, including **PyInstaller**.
+First, make sure that you have everything installed from the [Python Installation](../../Engine/Installation/GIT_Installation) guide, including **PyInstaller**.
 
 Next, go to your `/saves/config.ini` file and set debug to 0. Make sure it says `debug=0` at the top. This will remove the debug menu and some other small things from your game that you probably don't want the player to have access to.
 

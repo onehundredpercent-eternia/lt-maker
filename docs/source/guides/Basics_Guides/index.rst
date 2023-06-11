@@ -1,5 +1,5 @@
 Basics Guides
-===============
+====================================
 
 These are guides to get your project starting. For items and/or skills, check their respective guides index.
 

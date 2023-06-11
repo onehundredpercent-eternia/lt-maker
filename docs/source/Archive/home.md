@@ -6,4 +6,4 @@ You can find answers to your questions and a helpful community at the:
 
 [Lex Talionis Discord Server](https://discord.gg/dC6VWGh4sw)
 
-## [Getting Started](Getting-Started)
+## Getting Started

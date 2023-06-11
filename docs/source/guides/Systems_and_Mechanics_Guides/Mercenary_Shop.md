@@ -2,7 +2,7 @@
 
 ## Problem Description
 
-I'd like to make a [choice menu](../Basic_Guides/Choices_and_Battle_Saves) shop that, say, hires mercenaries for the map to make it easier.
+I'd like to make a [choice menu](../Basics_Guides/Choices_and_Battle_Saves) shop that, say, hires mercenaries for the map to make it easier.
 
 ## Solution
 

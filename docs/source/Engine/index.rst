@@ -1,5 +1,5 @@
 Engine
-========
+====================================
 
 These pages contain an overview of engine elements.
 
@@ -15,5 +15,5 @@ These pages contain an overview of engine elements.
     Data_Types
     Conditionals
     Useful_Functions
-    Troubleshooting/index.rst
+    Troubleshooting
     Misc/index.rst

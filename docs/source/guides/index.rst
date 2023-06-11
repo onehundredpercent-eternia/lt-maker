@@ -1,5 +1,5 @@
 Guides
-========
+====================================
 
 These pages contain guides of all sorts.
 

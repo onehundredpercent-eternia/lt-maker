@@ -1,5 +1,5 @@
 Eventing
-========
+====================================
 
 These pages will contain eventing tutorials.
 
@@ -7,6 +7,6 @@ These pages will contain eventing tutorials.
     :maxdepth: 1
     :caption: Contents
 
-    Event-Overview
-    Miscellaneous-Events
-    Region-Events
+    Event_Overview
+    Miscellaneous_Events
+    Region_Events

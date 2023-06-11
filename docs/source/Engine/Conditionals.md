@@ -137,7 +137,7 @@ end
 
 The game object is a very powerful source of information about the state of the game. It keeps track of all units in the current level as well as all non-generic units ever loaded into the game (whether alive or dead).
 
-``` python
+```
 game_vars: dict[str: ??]
 level_vars: dict[str: ??]
 playtime: float  # How long has the player been playing on this save file
