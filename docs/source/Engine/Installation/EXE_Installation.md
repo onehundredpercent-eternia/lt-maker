@@ -1,5 +1,3 @@
-<link rel="stylesheet" type="text/css" href="LT-Maker.css"></link>
-
 Exe Installation
 ========
 <small>`Last Updated 2023-05-22`</small>

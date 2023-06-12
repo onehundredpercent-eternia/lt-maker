@@ -6,6 +6,19 @@ Git Installation
 This guide will focus on the windows installation process. While the process should be the same, Mac and Linux users will have to adapt as it goes on their own.
 </div>
 
+## Index
+* [Requirements](#requirements)
+* [Installing Git](#installing-git)
+  * [Testing Git](#testing-git)
+* [Installing Python](#installing-python)
+  * [Testing Python](#testing-python)
+  * [Python Overview](#python-overview)
+* [Installing Pip](#installing-pip)
+* [Installing the Engine and other Packages](#installing-the-engine-and-other-packages)
+* [What's next?](#what-s-next?)
+
+---------------------
+
 ## Requirements
 * Git
 * Python 3.7.9
@@ -106,7 +119,7 @@ Click **New** on the right. Type the location of your Python executable, in this
 
 Now click **OK** and close all of the windows opened in this process. Next, go back to the [testing step](#testing-python).
 
----
+-------
 </p></details><br/>
 
 ## Installing Pip
@@ -122,7 +135,7 @@ You can check if it is available by typing one of the following in the **Git Bas
 In case any of the installations demmand administrator privileges to install for all users, you can install for just yourself with <b>pip install {package_name} --user</b>.
 </div>
 
-## Installing the Engine and other packages
+## Installing the Engine and other Packages
 
 Select the location you want the engine to be in and use **Git Bash**, then type the following.
 

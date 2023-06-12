@@ -1,8 +1,24 @@
-# Unit Object
+Unit Object
+========
 
 **Unit Objects** are the combatant objects in the game. They are split into **defined units**, as the usual playable characters, and **generic units**, as units built from classes.
 
 If a character isn't playable, it doesn't has to be have its own **unit object**.
+
+---------------------
+
+## Index
+* [Properties](#properties)
+* [Functions](#functions)
+  * [Get HP](#get-hp)
+  * [Get Max HP](#get-max-hp)
+  * [Get Mana](#get-mana)
+  * [Get Max Mana](#get-max-mana)
+  * [Get Fatigue](#get-fatigue)
+  * [Get EXP](#get-exp)
+  * [Get Stat](#get-stat)
+  * [Get Weapon](#get-weapon)
+  * [Get Internal Level](#get-internal-level)
 
 ---------------------
 
@@ -48,9 +64,11 @@ If a character isn't playable, it doesn't has to be have its own **unit object**
 
 Returns the current HP value of an unit.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_hp()` → Returns the <u>unit</u> object current HP value.
 * `u('Eirika').get_hp()` → Returns <u>Eirika</u>'s current HP value.
+</p></details>
 
 ---------------------
 
@@ -62,9 +80,11 @@ Returns the current HP value of an unit.
 
 Returns the maximum HP value of an unit at its current state.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_max_hp()` → Returns the <u>unit</u> object maximum HP value.
 * `u('Eirika').get_max_hp()` → Returns <u>Eirika</u>'s maximum HP value.
+</p></details>
 
 ---------------------
 
@@ -76,9 +96,11 @@ Returns the maximum HP value of an unit at its current state.
 
 Returns the current MANA value of an unit.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_mana()` → Returns the <u>unit</u> object current MANA value.
 * `u('Eirika').get_mana()` → Returns <u>Eirika</u>'s current MANA value.
+</p></details>
 
 ---------------------
 
@@ -90,9 +112,11 @@ Returns the current MANA value of an unit.
 
 Returns the maximum MANA value of an unit at its current state.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_max_hp()` → Returns the <u>unit</u> object maximum MANA value.
 * `u('Eirika').get_max_hp()` → Returns <u>Eirika</u>'s maximum MANA value.
+</p></details>
 
 ---------------------
 
@@ -104,9 +128,11 @@ Returns the maximum MANA value of an unit at its current state.
 
 Returns the fatigue value of an unit at its current state.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_fatigue()` → Returns the <u>unit</u> object fatigue value.
 * `u('Eirika').get_fatigue()` → Returns <u>Eirika</u>'s fatigue value.
+</p></details>
 
 ---------------------
 
@@ -118,9 +144,11 @@ Returns the fatigue value of an unit at its current state.
 
 Returns the current exp value of an unit.
 
-**Examples**:
-* `unit.get_fatigue()` → Returns the <u>unit</u> object current EXP.
-* `u('Eirika').get_fatigue()` → Returns <u>Eirika</u>'s current EXP.
+<details><summary><strong>Examples</strong>:</summary><p>
+
+* `unit.get_fatigue()` → Returns the <u>unit</u> object current EXP value.
+* `u('Eirika').get_fatigue()` → Returns <u>Eirika</u>'s current EXP value.
+</p></details>
 
 ---------------------
 
@@ -135,10 +163,12 @@ Returns the combined value of a base stat with all of its modifiers.
 **Args**:
 * `stat_nid`: Stat NID.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_stat('MAG')` → Returns the total <u>INT</u> of the <u>unit</u> object.
 * `target.get_stat('SPD')` → Returns the total <u>SPD</u> of the <u>target</u> object.
 * `u('Eirika').get_stat('LCK')` → Returns the <u>Eirika</u>'s total <u>LCK</u> value.
+</p></details>
 
 ### Get Weapon
 
@@ -149,14 +179,18 @@ Returns the combined value of a base stat with all of its modifiers.
 
 Returns the weapon **instance** equipped by the unit object.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_weapon()` → Returns the weapon equipped by the <u>unit</u> object.
 * `target.get_weapon()` → Returns the weapon equipped by the <u>target</u> object.
 * `u('Eirika').get_weapon()` → Returns the weapon equipped by <u>Eirika</u>.
+</p></details><br/>
 
-**Notes**:
+<details><summary><strong>Notes</strong>:</summary><p>
+
 * It is possible to use direct object reference in any part of the engine that has access to it, such as the `condition` and `combat condition` skill components and the event editor.
 * Weapon that have the `spell` item component aren't equipped, even if they're the only eligible weapon in the inventory. In that case, the function will return `None`.
+</p></details>
 
 ---------------------
 
@@ -169,9 +203,13 @@ Returns the weapon **instance** equipped by the unit object.
 
 Returns the unit object's internal level, the sum of all levels an unit obtained through its natural promotion path.
 
-**Examples**:
+<details><summary><strong>Examples</strong>:</summary><p>
+
 * `unit.get_internal_level()` → Returns the <u>unit</u> object internal level value.
 * `u('Eirika').get_internal_level()` → Returns <u>Eirika</u>'s internal level value.
+</p></details><br/>
 
-**Notes**:
+<details><summary><strong>Notes</strong>:</summary><p>
+
 * Pre-promoted units have the value calculated as if promoted only at its previous classes maximum levels.
+</p></details>

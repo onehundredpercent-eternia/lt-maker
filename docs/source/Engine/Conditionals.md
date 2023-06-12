@@ -1,6 +1,5 @@
-# Conditionals
-
-_last updated v0.1_
+Conditionals
+========
 
 Conditionals are perhaps the most powerful tool in the game designer's arsenal. They allow you to further refine how and when certain events will occur, abilities can be activated, or items will behave, and much more.
 
@@ -26,25 +25,7 @@ You can do this more than once in a chain. For instance `(A and B) or C` will ch
 
 Example Use Case: `game.check_alive('Joel') and game.check_alive('Nia')` to check that both characters are alive before giving them a post-battle conversation.
 
-## List comprehensions
-
-Sometimes you need to check the values for several objects at once. You can do this using Python *list comprehensions*.
-
-Python list comprehensions follow a simple syntax:
-
-``` python
-[obj for obj in list_of_objects if obj is good]
-```
-
-This python statement will return a list of the objects in `list_of_objects`, filtered by the if statement at the end, so it will only return the *good* objects. The if statement at the end is optional and can be left off if you don't want to filter the object list by any property.
-
-Example (Checks if a unit has a skill with nid `Vantage`)
-
-``` Text
-if;'Vantage' in [skill.nid for skill in unit.skills]
-    s;{unit};I have vantage!
-end
-```
+################################
 
 You can use the python functions `len`, `sum`, `any`, and `all` on list comprehensions.
 
@@ -131,32 +112,4 @@ if;len(game.get_units_in_party()) < 5
     alert;You have lost too many members of your party
     lose_game
 end
-```
-
-## Full Useful Attributes of Global Game Object
-
-The game object is a very powerful source of information about the state of the game. It keeps track of all units in the current level as well as all non-generic units ever loaded into the game (whether alive or dead).
-
-```
-game_vars: dict[str: ??]
-level_vars: dict[str: ??]
-playtime: float  # How long has the player been playing on this save file
-turncount: int
-units: list  # List of all units the game is tracking
-mode: DifficultyModeObject  # the current mode
-level: LevelObject  # the current level object
-tilemap: TileMapObject  # The current tilemap
-party: PartyObject  # the current party
-
-get_unit(str) -> UnitObject  # Returns a Unit with the given nid
-get_region(str) -> RegionObject  # Returns a Region with the given nid
-get_party(str) -> PartyObject # Returns the party with the given nid
-get_all_units() -> list  # Returns all alive units on the map
-get_player_units() -> list  # All alive player units on the map
-get_enemy_units() -> list  # All alive enemy units on the map
-get_all_units_in_party(str?) -> list  # All non-generic player units in the given party (defaults to current party)
-get_units_in_party(str?) -> list  # All alive non-generic player units in the given party (defaults to current party)
-check_dead(str) -> bool
-check_alive(str) -> bool
-get_money() -> int  # money of current party
 ```

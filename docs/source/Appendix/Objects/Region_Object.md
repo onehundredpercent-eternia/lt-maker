@@ -1,4 +1,13 @@
-# Region Object
+Region Object
+========
+
+## Index
+* [Properties](#properties)
+* [Functions](#functions)
+  * [Contains](#contains)
+  * [Get All Positions](#get-all-positions)
+
+---------------------
 
 ## Properties
 
@@ -27,6 +36,11 @@
 
 Checks if a coordinate is inside the region area.
 
+<details><summary><strong>Examples</strong>:</summary><p>
+
+* Placeholder
+</p></details>
+
 ---------------------
 
 ### Get All Positions
@@ -37,3 +51,8 @@ Checks if a coordinate is inside the region area.
 ```
 
 Returns all coordinates inside the region area.
+
+<details><summary><strong>Examples</strong>:</summary><p>
+
+* Placeholder
+</p></details>
