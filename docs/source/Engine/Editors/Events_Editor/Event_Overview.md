@@ -7,7 +7,7 @@ Events are a powerful tool for any game designer, allowing you to implement uniq
 
 An event consists of four things:
 
-![Screenshot of event editor with these sections labeled](../../images/Event_Overview/Event_Editor.png)
+![Screenshot of event editor with these sections labeled](/source/images/Engine/Event_Overview/Event_Editor.png)
 
 1. A unique **name** so that it can be uniquely identified in the engine
 2. A **trigger** that causes the event to activate
@@ -28,7 +28,7 @@ Event Regions can create their own triggers which can also be caught by the even
 
 ## Trigger List
 
-![Screenshot of event editor trigger list](../../images/Event_Overview/Event_Editor_Trigger_List.png)
+![Screenshot of event editor trigger list](/source/images/Engine/Event_Overview/Event_Editor_Trigger_List.png)
 
 |Name|Available Inputs|Description and potential use case.
 |--|--|--
@@ -56,11 +56,11 @@ Imagine you want an event to trigger when a specific unit dies. As stated above,
 
 Setting a Condition allows you to limit the event to activate to only when the Condition is true.
 
-![Screenshot of example condition](../../images/Event_Editor_Condition.png)
+![Screenshot of example condition](/source/images/Engine/Event_Editor_Condition.png)
 
 The `on_unit_death` trigger supplys the unit that died under the name `unit`. So we can simply enter `unit.nid == 'Eirika'` in the Condition box for our event. Now, if the unit that died had an nid of `Eirika`, the event will activate. Otherwise, the event will be ignored.
 
-More information on what can be checked within a condition can be found here: [Conditionals](../../Conditionals)
+More information on what can be checked within a condition can be found here: [Conditionals](/source/Engine/Conditionals)
 
 ## Event Commands
 
@@ -74,7 +74,7 @@ remove_portrait;Eirika
 
 There are many event commands available, and it is not expected that you will remember them all off the top of your head. A searchable index of event commands is available within the event editor.
 
-![Screenshot of list of event commands](../../images/Event_Overview/Event_Editor_Show_Commands_List.png)
+![Screenshot of list of event commands](/source/images/Engine/Event_Overview/Event_Editor_Show_Commands_List.png)
 
 Feel free to check out the events that already exist in the default project or the Lion Throne project. They can and should be used freely as reference.
 

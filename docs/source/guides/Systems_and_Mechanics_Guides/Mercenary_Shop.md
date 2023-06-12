@@ -2,7 +2,7 @@
 
 ## Problem Description
 
-I'd like to make a [choice menu](../Basics_Guides/Choices_and_Battle_Saves) shop that, say, hires mercenaries for the map to make it easier.
+I'd like to make a [choice menu](/source/Guides/Basics_Guides/Choices_and_Battle_Saves) shop that, say, hires mercenaries for the map to make it easier.
 
 ## Solution
 
@@ -14,7 +14,7 @@ First, let's do some preparatory work. We need some data first; what classes sho
 
 In the **Raw Data Editor**, you can write all of these down:
 
-![image](../images/Mercenary_Shop/Merc_Shop_Raw_Data.png)
+![image](/source/images/Guides/Mercenary_Shop/Merc_Shop_Raw_Data.png)
 
 This is just data; it doesn't do anything, but we can access it elsewhere.
 
@@ -46,7 +46,7 @@ choice;MercenaryHireChoice;Hire a merc;{eval:','.join([merc.nid + '|' + merc.Nam
 speak;Eirika;you chose {var:MercenaryHireChoice}
 ```
 
-![merc1](../images/Mercenary_Shop/merc1.gif)
+![merc1](/source/images/Guides/Mercenary_Shop/merc1.gif)
 
 Looking good. But wait, don't we want to know the price and our current money, to see if we can afford it?
 
@@ -80,7 +80,7 @@ Let's break it down:
 
 Let's look at our work:
 
-![merc2](../images/Mercenary_Shop/merc2.gif)
+![merc2](/source/images/Guides/Mercenary_Shop/merc2.gif)
 
 Great success!
 
@@ -98,7 +98,7 @@ Another breakdown:
 4. `funds_display` - This is the name of the stunning BG you're about to see. Unlike the others, this one is a sprite, not a menu_bg, and therefore doesn't automatically resize itself. Choices and textboxes support both bgs. You may find that your bg is off-center. You'll simply have to make new sprites that are offset correctly.
 5. `FLAG(expression)` - What would we do without you?
 
-![image](../images/Mercenary_Shop/Merc_Shop_Menu.png)
+![image](/source/images/Guides/Mercenary_Shop/Merc_Shop_Menu.png)
 
 Lookin' good!
 
@@ -129,7 +129,7 @@ choice;MercenaryHireChoice;Hire a merc;{eval:','.join([merc.nid + '|' + merc.Nam
 
 Let's see what happens now:
 
-![merc5](../images/Mercenary_Shop/merc5.gif)
+![merc5](/source/images/Guides/Mercenary_Shop/merc5.gif)
 
 And we're done.
 

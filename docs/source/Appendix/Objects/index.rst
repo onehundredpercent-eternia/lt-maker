@@ -8,6 +8,7 @@ These pages contain objects attributes, properties and functions.
     :caption: Contents
 
     Difficulty_Mode_Object
+    Game_Object
     Item_Object
     Level_Object
     Party_Object

@@ -12,25 +12,25 @@ We'll start with a simple tool to help you kill your boss.
 
 From the item editor, click **[Create Item]**. A new item will be created.
 
-![image](../images/Creating_Items/Creating_Items1.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items1.png)
 
 We'll start from the top right and work our way down. First, fill out the sword's **unique ID** slot. You'll notice that whatever you type in **unique ID** is copied into the name, but not vice versa. The **unique ID** acts as the weapon's "true name". When referring to an item or skill in events you'll want to make sure that you're calling it's **ID**, rather than it's name.
 
 To the left of those two text boxes is a while square. Click on it to bring up the icon selector. Depending on if you've used the icon selector previously, you might not have any icons to choose from. If that is the case, click **[Add New Icon Sheet]** and add the following image. You can find more like this in the default or `sacred_stones resource/icons16` folder.
 
-![image](../images/Creating_Items/Creating_Items2.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items2.png)
 
 Choose an icon you like and hit okay. Once the window closes, type a description in the box below.
 
 Your item should now look something like this:
 
-![image](../images/Creating_Items/Creating_Items3.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items3.png)
 
 Click **[Apply]** in the bottom right. In **Lex Talionis**, apply equivalent to the save button. Always make sure that you apply changes before you close an editor!
 
 From now on, each item and skill covered in tutorials will assume that you've done the previous steps.
 
-![image](../images/Creating_Items/Creating_Items4.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items4.png)
 
 This list of item components is the essential elements of every item in the game. Each of these icons has a number of components contained within. Before you get too daunted, click the icon on the far right and choose **Weapon Template**. The templates will be a helpful guide to the items we'll make in this tutorial.
 
@@ -38,13 +38,13 @@ Choosing weapon template will apply a number of self-explanatory components to t
 
 Now click on the start icon in the middle. At the top of the list, choose the **Effective component** . If you scroll down using the sidebar, you should see that two new components have been added.
 
-![image](../images/Creating_Items/Creating_Items5.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items5.png)
 
 The **Effective component** decides what the might of the weapon becomes when it is effective against a target. Once added, it will import other two components allowing you to use a flat damage bonus or a multiplier.
 
 Now go to **Effective Tag component**. These determine the tags which this weapon is effective against. Click **[+]** at top right to add a tag to the list. Double click on the newly created tag and choose **Boss** in the popup menu. Repeat the process for each additional tag you want. Further tags can be created in the **Tag editor** and assigned to classes in the **Class editor**. For now, my final item looks like this (weapon and value components are cut off at the top):
 
-![image](../images/Creating_Items/Creating_Items6.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items6.png)
 
 ## Item 2 - Multi-unit Healing Staff
 
@@ -62,13 +62,13 @@ Finally, click the staff icon and choose between **Heal component** and **Magic 
 
 Finally, click the gear icon on the far right and choose **Multi Target component**. This will finish your item. Go ahead and test it!
 
-![image](../images/Creating_Items/Creating_Items7.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items7.png)
 
 ## Item 3 - The Warp Staff
 
 The **Sacred Stones project** already has a warp staff implemented, so instead of creating our own I'll be explaining how sequence item (the component that makes warp staves possible) works.
 
-![image](../images/Creating_Items/Creating_Items8.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items8.png)
 
 Compared to what we saw with the **Symbiosis** staff there are two new components here. The first, and simplest, is **No AI component**. The AI in Lex Talionis currently cannot handle sequence items. As such, any item with the sequence item component must either be given the no AI component or kept away from the AI.
 
@@ -86,7 +86,7 @@ Set up the description and name. Then, choose the farthest left icon and  select
 
 However, if you scroll to the unit's inventory, you might notice something weird. The **Iron Shield** doesn't seem to be there!
 
-![image](../images/Creating_Items/Creating_Items9.png)
+![image](/source/images/Guides/Creating_Items/Creating_Items9.png)
 
 The unit UI currently only has space to display five items. Remember how we increased accessory number to one? That means that the Iron Shield is currently taking up the sixth item slot. Reducing the max number of weapons in a unit's inventory fixes this issue.
 

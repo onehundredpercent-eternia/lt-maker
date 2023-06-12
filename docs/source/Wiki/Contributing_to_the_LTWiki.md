@@ -8,31 +8,31 @@ Regardless, you'll need a [Gitlab Account](https://gitlab.com/users/sign_in) in 
 
 To begin with, you should be signed into your [Gitlab Account](https://gitlab.com/users/sign_in).
 
-Now you can navigate to any page on the [LT Wiki](https://lt-maker.readthedocs.io/en/latest/index.html) and initiate the editor. For this example, let's alter the [GIT Intall](../Engine/Installation/GIT_Installation) page.
+Now you can navigate to any page on the [LT Wiki](https://lt-maker.readthedocs.io/en/latest/index.html) and initiate the editor. For this example, let's alter the [GIT Intall](/source/Engine/Installation/GIT_Installation) page.
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing1.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing1.jpg)
 
 You can click on the `Edit on Gitlab` link on the top left. This will take you to the repository. You can now click on the `Open in Web IDE` button:
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing2.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing2.jpg)
 
 If you haven't done this before, it will prompt you to `Fork` the project. This will create a copy of the project on your account, which is necessary to make merge requests. Go ahead and click `Fork`:
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing3.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing3.jpg)
 
 Wait for the fork to finish. This will take a few seconds. The good news is, you only need to do this once. Once the initial fork is done, you will be free to make merge requests directly.
 
 In either case, you should now be able to see the editor. If you want, you can click on the `Preview` button to see how the page is laid out. This helps in understanding the formatting syntax:
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing4.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing4.jpg)
 
 In either case, you can now make edits freely! Change whatever text you want (as long as it's for the good of the wiki). For this tutorial, let's make a new article. This one is actually easy to do. Just click `New File` in the left pane and it'll make a new article in the current directory. Use your best judgement as to where the article goes. I'm going to make an article in `Guides` called `Contributing to the LTWiki`:
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing5.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing5.jpg)
 
 If I add a new file, I also need to add it to the `index.rst` file in that directory:
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing8.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing8.jpg)
 
 Now that I've finished, how do I merge it? This step is quick. Go to the `Source Control` icon on the side.
 
@@ -40,13 +40,13 @@ Add a commit message describing your new article.
 
 Finally, click `Commit and Push`.
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing9.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing9.jpg)
 
 Hit `Enter` through the dialogs - they aren't important. You'll see a dialog pop up telling you that your commit was a success. Now, you'll click the `Create MR` button, and it'll take you to the final page:
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing10.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing10.jpg)
 
-![GettingStartedImage](images/Contributing_to_the_LTWiki/Contributing11.jpg)
+![GettingStartedImage](/source/images/Wiki/Contributing_to_the_LTWiki/Contributing11.jpg)
 
 Where you can fill out some more information on what you changed. Finally, click the `Create Merge Request` button.
 

@@ -10,13 +10,13 @@ The **Overworld Editor** can be accessed via the **overworld tab**, in much the 
 In order to access the <b>Overworld Editor</b> you must toggle the <b>Overword</b> checkbox in the <b>Constants Editor</b>.
 </div>
 
-![image](../images/Overworld/Overworld1.png)
+![image](/source/images/Guides/Overworld/Overworld1.png)
 
 This is the overworld which ships with the `default.ltproj` project. You can use this as a base for your overworld, or create a new one. I'll make a new one for the benefit of the reader, but it'll be uninspired. You'll see.
 
 Click the **[Create New Overworld]** button to do the thing, and double click to enter the editor.
 
-![image](../images/Overworld/Overworld2.png)
+![image](/source/images/Guides/Overworld/Overworld2.png)
 
 On the left side, there are a lot of fields that are effectively self-explanatory.
 
@@ -28,7 +28,7 @@ On the left side, there are a lot of fields that are effectively self-explanator
 
 Let's make an uninspired overworld:
 
-![image](../images/Overworld/Overworld3.png)
+![image](/source/images/Guides/Overworld/Overworld3.png)
 
 You can see that I've set the border to 1. The player cannot interact with the red zone, so be sure that you don't place anything important in it.
 
@@ -38,7 +38,7 @@ The instructions are at the bottom of the screen, but to reiterate, all controls
 
 We can make two nodes and a road between:
 
-![image](../images/Overworld/Overworld4.png)
+![image](/source/images/Guides/Overworld/Overworld4.png)
 
 The fields are as follows:
 
@@ -53,7 +53,7 @@ This is one of those sections where a picture is worth a thousand words, and a g
 
 You can find this event in `default.ltproj`, level 1, `Outro`.
 
-![image](../images/Overworld/Overworld5.png)
+![image](/source/images/Guides/Overworld/Overworld5.png)
 
 ```text
 speak;Eirika;Thank you, Tana.
@@ -94,7 +94,7 @@ toggle_narration_mode;close
 
 And you can see the results below:
 
-![demo](../images/Overworld/Demo.gif)
+![demo](/source/images/Guides/Overworld/Demo.gif)
 
 Not so painful, is it? There a variety of commands that are used in the overworld. All of them are documented in **[Show Commands]**, in the **Event editor**; feel free to check them out.
 
@@ -107,7 +107,7 @@ This guide will serve as an introduction to the **Overworld Node Menu Options** 
 To demonstrate how this feature works, we will create an **Overworld Armory** on *Renais Castle*.
 
 Before we start with the new features, let's set up the event we need.
-![Picture1](../images/Overworld/Overworld6.png)
+![Picture1](/source/images/Guides/Overworld/Overworld6.png)
 
 Keeping it short and simple for tutorial purposes. This event prompts the player to select a unit from their party, and then initiates a shop with that unit. The trigger, condition, and priority for this event do not matter, Node Menu options ignore these.
 
@@ -117,8 +117,8 @@ Keeping it short and simple for tutorial purposes. This event prompts the player
 
 Now that that's set up, let's walk through how to create a **Node Menu Option**. Navigate to the **Overworld Editor**, and select any node (I will be using *Renais Castle*, which is node NID 25 in the *Sacred Stones project*). To create a menu option for the node, click on **[Create Event]**.
 
-![Picture2](../images/Overworld/Overworld7.png)
-![Picture3](../images/Overworld/Overworld8.png)
+![Picture2](/source/images/Guides/Overworld/Overworld7.png)
+![Picture3](/source/images/Guides/Overworld/Overworld8.png)
 
 The new option will be automatically selected, and you will be presented with the following attributes.
 
@@ -130,22 +130,22 @@ The new option will be automatically selected, and you will be presented with th
 
 From here, we can set up our menu option.
 
-![Picture4](../images/Overworld/Overworld9.png)
+![Picture4](/source/images/Guides/Overworld/Overworld9.png)
 
 Our **Node Menu Option** is now ready! Time to test it in-engine. For this example, I have set things up such that the Overworld is triggered after the prologue, with both *Border Mulan* and *Castle Renais* being available. I have also given the party some money.
 
 We simply need to navigate the party onto *Castle Renais*, and... voila! Our event is available.
 
-![Picture5](../images/Overworld/OverworldA.png)
+![Picture5](/source/images/Guides/Overworld/OverworldA.png)
 
 Let's select our event and see what happens.
 We're given a (kinda ugly, I didn't care about the aesthetics) menu prompting us to select the unit to shop with.
 
-![Picture6](../images/Overworld/OverworldB.png)
+![Picture6](/source/images/Guides/Overworld/OverworldB.png)
 
 Select any of them, and...!
 
-![Picture7](../images/Overworld/OverworldC.png)
+![Picture7](/source/images/Guides/Overworld/OverworldC.png)
 
 The shop works!
 

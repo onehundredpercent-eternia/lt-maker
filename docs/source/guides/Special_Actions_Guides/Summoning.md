@@ -4,11 +4,11 @@ _last updated 2022-04-28_
 
 ## Summoning a generic phantom
 
-![Summon Item Screenshot](../images/Summoning/Summon_Item.png)
+![Summon Item Screenshot](/source/images/Guides/Summoning/Summon_Item.png)
 
 Items can call an event when they hit using the **Event on Hit component**. Assign this component to the item you want to do the summoning. For summoning a generic phantom, you'll want to make sure the item targets an empty space using the **Empty Tile Target Restrict component**.
 
-![Global Summon Event](../images/Summoning/Summon_Event.png)
+![Global Summon Event](/source/images/Guides/Summoning/Summon_Event.png)
 
 ``` text
 # Phantom will always be the same level as the summoner
@@ -47,6 +47,6 @@ wait;200
 
 You can turn any item into an ability that a skill grants very easily.
 
-![Summon Ability](../images/Summoning/Summon_Ability.png)
+![Summon Ability](/source/images/Guides/Summoning/Summon_Ability.png)
 
 Just add the **Ability component** to the skill!

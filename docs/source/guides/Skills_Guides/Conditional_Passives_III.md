@@ -45,7 +45,7 @@ We will also cover an option for *Anima*, *Dark* and *Light* but it's highly rec
 
 The **Weapon Types Editor** can be found within the **Edit Menu**.
 
-![1](../images/Conditional_Passives_III/1.png)
+![1](/source/images/Guides/Conditional_Passives_III/1.png)
 
 ### Step 1.A: Create a new Weapon Type
 
@@ -53,7 +53,7 @@ We can now create a new **Weapon Type**. For this guide, we will create **Dragon
 
 It should look like this:
 
-![2](../images/Conditional_Passives_III/2.png)
+![2](/source/images/Guides/Conditional_Passives_III/2.png)
 
 There's also the option to create a `Manakate` class instead but that isn't the best option to replicate the effects. If that's how you want to do it, check the guide that covers the *Dance* ability.
 
@@ -61,28 +61,28 @@ There's also the option to create a `Manakate` class instead but that isn't the 
 
 For this guide, we'll be changing `Light` **Unique ID** to `Tome` and remove all of the advantages and disadvantages. You can do it by right clicking on them.
 
-![3](../images/Conditional_Passives_III/3.png)
+![3](/source/images/Guides/Conditional_Passives_III/3.png)
 
 Next, we got to delete `Anima` and `Dark`, also by right clicking on them, and set `Tome` as their replacement.
 
-![4](../images/Conditional_Passives_III/4.png)
+![4](/source/images/Guides/Conditional_Passives_III/4.png)
 
 It should look like this:
 
-![5](../images/Conditional_Passives_III/5.png)
+![5](/source/images/Guides/Conditional_Passives_III/5.png)
 
 ## Step 2: Create a Class Skill
 
 ## Step 3: Add the Combat Components
 For *Wyrmbane* and *Tomefaire*, we will need the **Damage component**, found within the **Combat Components** menu.
 
-![6](../images/Conditional_Passives_III/6.png)
+![6](/source/images/Guides/Conditional_Passives_III/6.png)
 
 The **Damage component** will increase the **atk** stat by the set amount, which can be checked in the **Unit Information window**.
 
 We also have the option to use the **Damage Multiplier component** for *Wyrmbane*, also within the **Combat Components** menu.
 
-![7](../images/Conditional_Passives_III/7.png)
+![7](/source/images/Guides/Conditional_Passives_III/7.png)
 
 Unlike the direct counterpart, it will only manifest itself when an attack is calculated.
 
@@ -222,13 +222,13 @@ unit.get_weapon() and item_system.weapon_type(unit, unit.get_weapon()) in ('Anim
 
 The end result should look like this:
 
-![8](../images/Conditional_Passives_III/8.png)
+![8](/source/images/Guides/Conditional_Passives_III/8.png)
 
 ### Step 4.B: [Axe Breaker] Add and set the Combat Condition component
 
 The **Condition component** can only interact with the user and global objects, along their respective methods and attributes. To access other units, we need to use the **Combat Condition component** instead, which can be found within the **Advanced Components** menu.
 
-![9](../images/Conditional_Passives_III/9.png)
+![9](/source/images/Guides/Conditional_Passives_III/9.png)
 
 Whenever we need to reference an unit that is selected by an action, we need to use the **target object**. The **target object** is an instance of an **unit object** and will have all the same attributes and methods. You can just replace the referenced object in your syntax.
 
@@ -244,7 +244,7 @@ target.get_weapon() and item_system.weapon_type(target, target.get_weapon()) == 
 
 The end result should look like this:
 
-![10](../images/Conditional_Passives_III/10.png)
+![10](/source/images/Guides/Conditional_Passives_III/10.png)
 
 ### Step 4.C: [Wyrmbane] Add and set the Combat Condition and the Condition component
 
@@ -274,7 +274,7 @@ unit.get_weapon() and item_system.weapon_type(unit, unit.get_weapon()) == 'Wyrm'
 
 The end result should look like this:
 
-![11](../images/Conditional_Passives_III/11.png)
+![11](/source/images/Guides/Conditional_Passives_III/11.png)
 
 You can see that the **Damage Multiplier component** is present, but it shouldn't be present in the final skill. The only reason it is kept is because the skill can be tested and tuned with either of the options.
 

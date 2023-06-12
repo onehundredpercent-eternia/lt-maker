@@ -8,7 +8,7 @@ If you are working with an **exe** version of the editor, follow this process.
 
 You can download the current version of the standalone engine from [here](https://gitlab.com/rainlash/lt-maker/-/jobs/artifacts/release/download?job=build_engine) (Download will start automatically!)
 
-![Generic Engine Project](../images/Build_Engine/Generic_Engine_Project.png)
+![Generic Engine Project](/source/images/Guides/Build_Engine/Generic_Engine_Project.png)
 
 Unzip the download, stick your `.ltproj` file in the folder `lt_engine/lt_engine` (should be at the same level as `app`, `Include`, etc.), and then you should be good to go. Test that the engine works with your project, and then re-zip it all up for distribution to others!
 
@@ -16,7 +16,7 @@ Unzip the download, stick your `.ltproj` file in the folder `lt_engine/lt_engine
 
 If are working with the **git** version of the **Lex Talionis** engine, follow this process.
 
-First, make sure that you have everything installed from the [Python Installation](../../Engine/Installation/GIT_Installation) guide, including **PyInstaller**.
+First, make sure that you have everything installed from the [Python Installation](/source/Engine/Installation/GIT_Installation) guide, including **PyInstaller**.
 
 Next, go to your `/saves/config.ini` file and set debug to 0. Make sure it says `debug=0` at the top. This will remove the debug menu and some other small things from your game that you probably don't want the player to have access to.
 

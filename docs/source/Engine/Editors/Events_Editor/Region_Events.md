@@ -2,7 +2,7 @@
 
 _last update v0.1_
 
-![RegionEventPane](../../images/Region_Events/Region_Event_Pane.png)
+![RegionEventPane](/source/images/Engine/Region_Events/Region_Event_Pane.png)
 
 Event regions are a flexible way for the game designer to give the player additional actions their characters can perform while on specific regions of the map. With event regions, you can implement visiting villages, visiting shops, seizing thrones, escaping the map, flicking switches, and unlocking chests or doors, and much more.
 
@@ -10,9 +10,9 @@ The condition box in the Region pane allows you to specify which units will be a
 
 ## Villages / Houses
 
-![VillageRegion](../../images/Region_Events/Village_Region.png)
+![VillageRegion](/source/images/Engine/Region_Events/Village_Region.png)
 
-![VillageRegionEvent](../../images/Region_Events/Village_Region_Event.png)
+![VillageRegionEvent](/source/images/Engine/Region_Events/Village_Region_Event.png)
 
 The condition in the Event Editor specifies *which* region this event corresponds to.
 
@@ -38,9 +38,9 @@ The `has_attacked` command at the end is important if you don't want the unit to
 
 ## Shops / Armories
 
-![ShopRegion](../../images/Region_Events/Shop_Region.png)
+![ShopRegion](/source/images/Engine/Region_Events/Shop_Region.png)
 
-![ShopRegionEvent](../../images/Region_Events/Shop_Region_Event.png)
+![ShopRegionEvent](/source/images/Engine/Region_Events/Shop_Region_Event.png)
 
 A normal shop event looks something like this
 
@@ -63,9 +63,9 @@ win_game
 
 ## Escape
 
-![EscapeRegion](../../images/Region_Events/Escape_Region.png)
+![EscapeRegion](/source/images/Engine/Region_Events/Escape_Region.png)
 
-![EscapeRegionEvent](../../images/Region_Events/Escape_Region_Event.png)
+![EscapeRegionEvent](/source/images/Engine/Region_Events/Escape_Region_Event.png)
 
 A normal escape event looks something like this
 
@@ -79,17 +79,17 @@ end
 
 ## Switch
 
-![SwitchRegion](../../images/Region_Events/Switch_Region.png)
+![SwitchRegion](/source/images/Engine/Region_Events/Switch_Region.png)
 
-![SwitchRegionEvent](../../images/Region_Events/Switch_Region_Event.png)
+![SwitchRegionEvent](/source/images/Engine/Region_Events/Switch_Region_Event.png)
 
 You can increment a counter every time a switch event is processed if you want to keep track
 
 ## Chest / Door
 
-![ChestRegion](../../images/Region_Events/Chest_Region.png)
+![ChestRegion](/source/images/Engine/Region_Events/Chest_Region.png)
 
-![ChestRegionEvent](../../images/Region_Events/Chest_Region_Event.png)
+![ChestRegionEvent](/source/images/Engine/Region_Events/Chest_Region_Event.png)
 
 A normal chest event looks something like this
 

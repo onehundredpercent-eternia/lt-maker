@@ -30,27 +30,27 @@ The mode is one of two values: `attack` if the holder of the skill initiated com
 
 The first step is to set up what your skill is supposed to do when it's active. In the case of *Warding Blow*, when it's active, it gives +20 RES. Your skill should look like this to start:
 
-![WardingBlowStep1](../images/Conditional_Passives_II/1.png)
+![WardingBlowStep1](/source/images/Guides/Conditional_Passives_II/1.png)
 
 Since *Warding Blow* only activates while attacking, you need a variable that tracks whether the unit with Warding Blow is attacking or not, which is the 'mode' mentioned above. First, you need to include the **Combat Condition component**.
 
-![WardingBlowStep2](../images/Conditional_Passives_II/2.png)
+![WardingBlowStep2](/source/images/Guides/Conditional_Passives_II/2.png)
 
 Since *Warding Blow* is active when attacking, the condition you need to check is `mode == 'attack'`, so just toss that in and you're done!
 
-![WardingBlowStep3](../images/Conditional_Passives_II/3.png)
+![WardingBlowStep3](/source/images/Guides/Conditional_Passives_II/3.png)
 
 ## Rainlashslayer
 
 Once again, we begin with an empty template and add what the skill does when it's active. In this case, the skill will grant +10 damage when active.
 
-![RainlashslayerStep1](../images/Conditional_Passives_II/4.png)
+![RainlashslayerStep1](/source/images/Guides/Conditional_Passives_II/4.png)
 
 As before, since this skill activates only when there is another combatant, we need to use the **Combat Condition component** to get information about that combatant.
 
 In this case, we want our skill to trigger any time the target is named Rainlash. For this, we will not check the target's **nid** as there can be multiple unique units all named ***Rainlash***. Instead, we can use the target's **name field**, stored as `target.name`.
 
-![RainlashslayerStep2](../images/Conditional_Passives_II/5.png)
+![RainlashslayerStep2](/source/images/Guides/Conditional_Passives_II/5.png)
 
 As mentioned earlier, any of the target's fields can be used in this component, such as their class, stats, and even favorite foods (if you bother to set up Unit Notes).
 

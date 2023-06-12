@@ -41,11 +41,11 @@ As a reminder, **Lex Talionis** is developed in **Python**, so the conditions se
 ## Step 3: Add the Condition component
 There are many conditional and trigger components, for this tutorial we will use the **Condition component** that can be found within the **Advanced Components** menu, represented by the **Gear icon**.
 
-![2_1](../images/Conditional_Passives_I/2_1.png)
+![2_1](/source/images/Guides/Conditional_Passives_I/2_1.png)
 
 The **Condition component** requires a statement. If the condition is true, then the rest of the skill takes effect. If the condition is false, then the rest of the skill is disabled.
 
-![2_2](../images/Conditional_Passives_I/2_2.png)
+![2_2](/source/images/Guides/Conditional_Passives_I/2_2.png)
 
 Here are some few illustrative examples:
 |Statement|Output|
@@ -110,7 +110,7 @@ game.turncount <= 7
 
 Our skill should end up like this:
 
-![2_3](../images/Conditional_Passives_I/2_3.png)
+![2_3](/source/images/Guides/Conditional_Passives_I/2_3.png)
 
 ### Step 4.B: [Odd Rhythm] Set a condition with an expression
 We'll expand from where we left at the previous step. The major change will be the **expression** used as a replacement for one of our elements, along a different **operator** that fits our requirements.
@@ -142,7 +142,7 @@ game.turncount % 2 == 1
 
 Our skill should end up like this:
 
-![2_4](../images/Conditional_Passives_I/2_4.png)
+![2_4](/source/images/Guides/Conditional_Passives_I/2_4.png)
 
 ### Step 4.C: [Wrath] Set a condition with an expression using properties
 Again, we will expand from where we left at previous side step. This time, we'll use expressions in both sides of our condition, and they will use two new variables.
@@ -169,7 +169,7 @@ unit.get_hp() <= unit.get_max_hp() / 2
 
 Our skill should end up like this:
 
-![2_5](../images/Conditional_Passives_I/2_5.png)
+![2_5](/source/images/Guides/Conditional_Passives_I/2_5.png)
 
 <div class="warning">
 The syntax used in the image is wrong. Both <b>get_HP()</b> or <b>get_max_HP()</b> should be written in lower case work. Please use the code reference above.
@@ -180,11 +180,11 @@ At last, we will get into a new type of component that can handle a non-fixed va
 
 Dynamic battle components are represented by the **Crossed Swords icon**. The only exception is the **Dynamic Damage Multiplier component**, found within the **Combat Components**.
 
-![2_6](../images/Conditional_Passives_I/2_6.png)
+![2_6](/source/images/Guides/Conditional_Passives_I/2_6.png)
 
 For *Quick Burn*, we will need to use the closest approximation available. These will be **Dynamic Accuracy component** as the **Hit component** replacement and **Dynamic Avoid component** as the **Avoid component** replacement.
 
-![2_7](../images/Conditional_Passives_I/2_7.png)
+![2_7](/source/images/Guides/Conditional_Passives_I/2_7.png)
 
 We can then add our formula using the elements from steps 3 and 4.
 
@@ -220,10 +220,10 @@ max(0, 16 - game.turncount)
 
 Either one will work. Our skill should end up like this:
 
-![2_8](../images/Conditional_Passives_I/2_8.png)
+![2_8](/source/images/Guides/Conditional_Passives_I/2_8.png)
 
 One important thing to know about **Dynamic Components** is that they won't be displayed in on the **unit information window** when inspected. They are only added once the game calculates the attack. You need to declare an attack in order to see the stats change. There's no need to execute it however.
 
-![2_9](../images/Conditional_Passives_I/2_9.png)
+![2_9](/source/images/Guides/Conditional_Passives_I/2_9.png)
 
 ## Step 5: Test the stat alterations in-game

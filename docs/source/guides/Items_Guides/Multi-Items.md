@@ -16,11 +16,11 @@ Multi-items are items which consist of one or more other items. These inner item
 
 Open the item editor and create a new item. For this example, we will be creating the **Parallel Falchion**, a sword that can also be used as an item to heal the user.
 
-![component](../images/Multi-Items/Multi-Items1.png)
+![component](/source/images/Guides/Multi-Items/Multi-Items1.png)
 
 Once you add the **Multi Item component**, you should add other components that apply to the item as a whole. In this case, a **Weapon Type**, **Uses** and **Price** are appropriate. Specific stats like **Hit Rate** and **Damage** should be left to the sub-items. The multi-item itself is also intentionally not a weapon despite having a **Weapon Type component**, as the weapons that are meant to be **equipped** are the sub-items in this case. It is also perfectly valid to not include the **Weapon Type** at this stage and only have **Weapon Types** associated wtih the sub items.
 
-![skeleton](../images/Multi-Items/Multi-Items2.png)
+![skeleton](/source/images/Guides/Multi-Items/Multi-Items2.png)
 
 When initially added, the **Multi Item component** will be blank. Once sub items are created, they can be added here.
 
@@ -28,11 +28,11 @@ When initially added, the **Multi Item component** will be blank. Once sub items
 
 Sub-items can be created as normal. If the uses of the sub item are meant to be tied to the multi-item, then no uses need to be specified. Other shared information can be omitted as well.
 
-![sword1](../images/Multi-Items/Multi-Items3.png)
+![sword1](/source/images/Guides/Multi-Items/Multi-Items3.png)
 
 As the below example illustrates, the two functions of a multi-item do not necessarily need to be related to each other, as the healing portion of the **Parallel Falchion** would be treated as a usable item rather than a weapon.
 
-![sword2](../images/Multi-Items/Multi-Items4.png)
+![sword2](/source/images/Guides/Multi-Items/Multi-Items4.png)
 
 You may notice that there is a **Chapter Uses component** associated with the healing sub item. You can associate uses to the sub-items to have certain options of a multi-item be usable only a limited number of times. Any time a sub-item is used, one use will be subtracted from the multi-item as well (if the multi-item has uses). However, using one sub-item will not subtract a use from another sub-item. Sub-items also do not need to have their own uses; if a multi-item has **Uses** and a sub-item does not, using that sub-item will still subtract a use from the multi-item.
 
@@ -40,7 +40,7 @@ You may notice that there is a **Chapter Uses component** associated with the he
 
 Return to the multi-item and click the **[+]** above the multi item component to add the sub-items, which will be displayed in a drop down list of all items. Theoretically, any item can be added to multi-item as a sub-item, allowing this component great flexibility.
 
-![swordfinal](../images/Multi-Items/Multi-Items5.png)
+![swordfinal](/source/images/Guides/Multi-Items/Multi-Items5.png)
 
 After this, the **Parallel Falchion** can be used in-game as a multi-item.
 

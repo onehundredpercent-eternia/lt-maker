@@ -6,11 +6,11 @@ First, go to **File** in the top left corner and select the `sacred_stones.ltpro
 
 Your window should now look like this:
 
-![Main Editor](../images/Making_a_Map/Main_Editor.png)
+![Main Editor](/source/images/Guides/Making_a_Map/Main_Editor.png)
 
 Double click on chapter 1 to open the level editor. The right side of the window should now look like this:
 
-![Level Info Tab](../images/Making_a_Map/Level_Info.png)
+![Level Info Tab](/source/images/Guides/Making_a_Map/Level_Info.png)
 
 We'll go through each piece of information, starting from the top.
 
@@ -24,11 +24,11 @@ We'll go through each piece of information, starting from the top.
 
 Now that we've gone through these options, click **Select Tilemap**. That'll open a window that looks like this:
 
- ![Maps Editor](../images/Making_a_Map/Map_Editor.png)
+ ![Maps Editor](/source/images/Guides/Making_a_Map/Map_Editor.png)
 
 Select the image above Chapter 1 and choose **Edit Current Tilemap**. That will open the tilemap editor.
 
-![Tilemap Editor](../images/Making_a_Map/Tilemap_Editor.png)
+![Tilemap Editor](/source/images/Guides/Making_a_Map/Tilemap_Editor.png)
 
 The window on the left side is your map preview. The box in the top right, currently with base highlighted and checked, is your layer selection. The map in the bottom right is your tileset. Left click on a tile in the tileset and then left click on the map. Voila, the map has changed!
 
@@ -38,13 +38,13 @@ Let's run a quick test. Hit **[Ok]** in the **Tilemap Editor**, **[Ok]** in the 
 
 Finally, we'll look at making and placing units. In the top left of the main window, click **Edit** and **Units**. This will bring up the **Unit editor**.
 
-![Unit Editor](../images/Making_a_Map/Unit_Editor.png)
+![Unit Editor](/source/images/Guides/Making_a_Map/Unit_Editor.png)
 
 There's a lot of information here, but most is self explanatory. Try messing around with *Eirika's* stats or class, and maybe give her a few weapons. Remember, both the character and their class must be able to use a weapon type!
 
 Once you're done hit **[Apply]** and go back to the **Level editor**. Click the **Units** tab in the bottom right.
 
-![Unit List](../images/Making_a_Map/Unit_List.png)
+![Unit List](/source/images/Guides/Making_a_Map/Unit_List.png)
 
 You can see a list of unit icons, names, and items. Each unit has a word in parentheses next to their names, which corresponds to their AI typing. Player units always have `None` for **AI**, while units here have a mix of guard and defend. From *Meinerieve*:
 
@@ -57,13 +57,13 @@ Double clicking on one of these units will show information about them, which is
 
 Finally, let's create a unit. Click the **Create Generic Unit** button at the bottom.
 
-![Generic_Unit_Editor](../images/Making_a_Map/Generic_Unit_Editor.png)
+![Generic_Unit_Editor](/source/images/Guides/Making_a_Map/Generic_Unit_Editor.png)
 
 At first glace this looks like a small editor but it has all the important aspects of the **Unit editor**. The major differences in here is that the unit will be able to use any weapon you give them so long as their class can, and that you can't directly change these units' stats. As generics, they will be created using their classes average values at their set level, along the difficulty modifiers applied.
 
 If you click on **Team** you can see four options. Most of them are the standard teams used in **Fire Emblem** games, but there's also **enemy2**. Just as the name implies, it is the same as enemy, but as a new team. The key point is that **enemy** and **enemy2** will fight each other as well. Anyway, go ahead and make a few, placing them down to block *Eirika's* path. You'll notice that it saves your last settings each time you go to make a new generic unit, making placing down a whole lot of enemies quite easy!
 
-![Complete Level!](../images/Making_a_Map/Custom_Level.png)
+![Complete Level!](/source/images/Guides/Making_a_Map/Custom_Level.png)
 
 Mwahaha!
 

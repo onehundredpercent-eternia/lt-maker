@@ -15,7 +15,7 @@ The choice command takes in three required arguments:
 Example:
 `choice;fates;Who do you side with?;Hoshido,Nohr,Smash`
 
-![Choice Screenshot](../images/Choices_and_Battle_Saves/Choice.png)
+![Choice Screenshot](/source/images/Guides/Choices_and_Battle_Saves/Choice.png)
 
 The choice that the player chooses will be saved in the game_vars under the name you gave the choice. The most recent choice made is also saved in game_vars under `_last_choice`. So you can access their choice with `game.game_vars['fates']` or `game.game_vars['_last_choice']`.
 
@@ -31,7 +31,7 @@ end
 
 Battle saves give the player the opportunity to make a save while in the middle of a chapter. You can use this to give the player a save after completing a tough objective. Or perhaps you give the player the opportunity to battle save only at the beginning of every fifth turn. Or you have certain save point regions that when activated allow the player to save the game. There are lots of possibilities.
 
-![Battle Save Screenshot](../images/Choices_and_Battle_Saves/Battle_Save.png)
+![Battle Save Screenshot](/source/images/Guides/Choices_and_Battle_Saves/Battle_Save.png)
 
 The `battle_save` event command tells the engine to create a battle save after the event is complete.
 

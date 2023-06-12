@@ -30,6 +30,4 @@ git stash pop
 Your changes will be saved on `git stash` and restored on `git stash pop`.
 
 Alternatively, you can use `git restore .` to revert all changes made locally.
-
----
 </p></details><br/>

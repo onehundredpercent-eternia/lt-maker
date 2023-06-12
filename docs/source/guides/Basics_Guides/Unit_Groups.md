@@ -21,20 +21,20 @@ There has to be a better way, right?
 
 The solution is to use **Unit Groups**.
 
-![Example Unit Group Menu](../images/Unit_Groups/Unit_Group_Menu.png)
+![Example Unit Group Menu](/source/images/Guides/Unit_Groups/Unit_Group_Menu.png)
 
 When viewing a single Chapter’s tilemap and units, you’ll see four tabs on the bottom left corner of the editor. As the name suggests, the **Groups tab** deals with user-defined groups of units.
 
 A unit group can consist of any units loaded on the map, no matter what team they are on.
 To create a group, click **[Create New Group]** at the bottom of the **Groups list**.
 
-![Example New Unit Group](../images/Unit_Groups/New_Unit_Group.png)
+![Example New Unit Group](/source/images/Guides/Unit_Groups/New_Unit_Group.png)
 
 A blank group should appear on the list. You can rename the group by clicking on the **New Group** text.
 
 You can add a unit by clicking the **[+]** next to the text box. Pressing it will give you this prompt. You can select any unit you have loaded on the map to add them to the group.
 
-![Example Load Unit In Group](../images/Unit_Groups/Load_Unit_in_Group.png)
+![Example Load Unit In Group](/source/images/Guides/Unit_Groups/Load_Unit_in_Group.png)
 
 Placing each unit works much like the **Unit field** in the **Level editor**. Unit positions are allowed to overlap, making them useful for reinforcements and cutscenes.
 

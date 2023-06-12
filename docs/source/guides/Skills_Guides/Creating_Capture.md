@@ -6,11 +6,11 @@ In *Thracia 776*, capture works the following way: An attack is initiated with s
 
 We will implement this in **Lex Talionis**. First, we'll create the capture skill.
 
-![Capture_Skill](../images/Capture/Capture_Skill.png)
+![Capture_Skill](/source/images/Guides/Capture/Capture_Skill.png)
 
 **Combat Art** `CaptureArt` refers to the following skill:
 
-![Screenshot_2022-01-10_153443](../images/Capture/Capture_Art.png)
+![Screenshot_2022-01-10_153443](/source/images/Guides/Capture/Capture_Art.png)
 
 **Event After Initiated Combat** `Global Capture` refers to an **event** named **Capture** in the global section that we'll create later.
 

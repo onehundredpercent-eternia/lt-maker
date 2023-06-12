@@ -3,13 +3,15 @@ Conditionals
 
 Conditionals are perhaps the most powerful tool in the game designer's arsenal. They allow you to further refine how and when certain events will occur, abilities can be activated, or items will behave, and much more.
 
-![ExampleConditionalInSkillEditor](images/Conditionals/Skill_Editor_Conditional.png)
+![ExampleConditionalInSkillEditor](/source/images/Engine/Conditionals/Skill_Editor_Conditional.png)
+
+[Test Link](/source/Guides/index)
 
 All conditionals in the **Lex Talionis** engine are evaluated at runtime by a **Python** evaluation engine. As such, this means that all conditionals must be written in valid Python. At first this may seem to have a strict learning curve, but the minimal Python needed to write conditionals can be learned easily. Having the conditionals evaluated by a real programming language like Python enables them to be much more powerful and expressive than would otherwise be possible.
 
 ## Event Objects
 
-![ExampleConditionalInEventEditor](images/Event_Editor_Condition.png)
+![ExampleConditionalInEventEditor](/source/images/Engine/Event_Editor_Condition.png)
 
 While checking the conditionals for an event (whether that be through the Condition box in the left pane of the Event Editor or through an if statement), the event may expose certain variables with extra information.
 
@@ -24,8 +26,6 @@ You can use `and`, `or`, and `not` to combine or invert conditionals as necessar
 You can do this more than once in a chain. For instance `(A and B) or C` will check whether A and B are both true, or C is true. If C is false and it is not the case that both A and B are true, then it will return false.
 
 Example Use Case: `game.check_alive('Joel') and game.check_alive('Nia')` to check that both characters are alive before giving them a post-battle conversation.
-
-################################
 
 You can use the python functions `len`, `sum`, `any`, and `all` on list comprehensions.
 

@@ -131,7 +131,7 @@ To save time, create all of the listed events in advance, preferably using the s
 
 Here's a simple flowchart on how they will be connected.
 
-![1](../images/Skill_Swap/1.png)
+![1](/source/images/Guides/Skill_Swap/1.png)
 
 As for our variables, most of them will be temporary data managers, and all of them are mandatory.  All of our variables names will be written in upper case and have an underscore between words.
 
@@ -188,7 +188,7 @@ Every non-numeric item in it has to be contained in a pair of apostrophes follow
 
 As said before, the base system won't work with the level of control that we want. In order to use a custom assignment system we need to wipe out all of the skills from the base system.
 
-![2](../images/Skill_Swap/2.png)
+![2](/source/images/Guides/Skill_Swap/2.png)
 
 It is recommended to remove all of the skills, including Flying and Canto, if you plan to have class change and class promotion in your project.
 
@@ -196,7 +196,7 @@ It is recommended to remove all of the skills, including Flying and Canto, if yo
 
 The first step to create or new skill assignment system is to build a replacement for the data we deleted. We can do that by building a **raw data** list, named `ClassData`.
 
-![3](../images/Skill_Swap/3.png)
+![3](/source/images/Guides/Skill_Swap/3.png)
 
 Our table will use the following columns.
 ||nid|class1|class2|skill1|skill2
@@ -221,17 +221,17 @@ Here's a quick example.
 
 The end result should look similar to this:
 
-![4](../images/Skill_Swap/4.png)
+![4](/source/images/Guides/Skill_Swap/4.png)
 
 <small>*This is a simplified table for the units that will be used in the guide, with many skills and classes being replaced by similar. You will run into errors if any data in it is missing or incorrect. Be sure to check and test all of it once the system is complete.*</small>
 
 Just to reinforce an important point. Both `class1` and `class2` must contain only numerical values, as those are indexes that reference other classes in our table. For **Eirika_Great_Lord**, only `class1` is used, and has the value 0 assigned, which is **Eirika_Lord's** index. Meanwhile, **Great_Knight** has two possible classes to be promoted from, and 2 and 3 correspond to **Cavalier** and **Knight** respectively.
 
-![5](../images/Skill_Swap/5.png)
+![5](/source/images/Guides/Skill_Swap/5.png)
 
 Skills also have to be assigned with proper nid's, as shown in the image below.
 
-![6](../images/Skill_Swap/6.png)
+![6](/source/images/Guides/Skill_Swap/6.png)
 
 This base concept can also be used to assign unit exclusive and/or secret skills, though the specifics won't be covered in this guide.
 
@@ -467,13 +467,13 @@ All of the key units have their base classes pre-determined, and that informatio
 
 First, we go back to our raw data table and get the corresponding **index**. We will use Seth as our example unit, as a base Great Knight promoted from Knight.
 
-![7](../images/Skill_Swap/7.png)
+![7](/source/images/Guides/Skill_Swap/7.png)
 
 Great Knight **index** is 9, promoted from indexes 2 and 3. The first one is Cavalier and the Second one is Knight. For this exercise, we'll pretend he was promoted from Knight.
 
 In the unit editor, we'll add the field `BaseClass` and set its value to Knight's index, 3.
 
-![8](../images/Skill_Swap/8.png)
+![8](/source/images/Guides/Skill_Swap/8.png)
 
 Back to the event editor, we need to add a verifier for the `tier` and **field**.
 
@@ -951,7 +951,7 @@ This limitation applies to every single icon based list. Fortunately, it can be 
 
 The first skill will be named `Add_New_Skill`, used for the equipped skills group, and the second one will be named `Empty_Skill_List`, only to be used when all the learned skills are equipped.
 
-![9](../images/Skill_Swap/9.png)
+![9](/source/images/Guides/Skill_Swap/9.png)
 
 You may dismiss the `<grey></>` tag if you want to, but it great visual indicator that our dummy skills aren't real skills.
 

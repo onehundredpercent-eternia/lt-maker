@@ -12,7 +12,7 @@ There are two ways of going about this, both using events. One is on an individu
 
 This solution already exists implemented in `default.ltproj`. This solution involves using an event that is triggered on the death of each unit. The event is as follows:
 
-![Death Quote 1](../images/Death_Quotes/Death_Quotes1.png)
+![Death Quote 1](/source/images/Guides/Death_Quotes/Death_Quotes1.png)
 
 This event is fairly basic.
 
@@ -26,7 +26,7 @@ To sum, at any point in the game, if *Vanessa* dies, this event will play. The e
 
 The vast majority of the death quotes in the game will be much simpler, following the above format - the portrait flashes, the character says their dying line, and finally, the portrait disappears. The following event makes use of **Unit Fields** to reduce event count and simplify the process. It is as follows:
 
-![Screenshot_20210916_195754](../images/Death_Quotes/Death_Quotes2.png)
+![Screenshot_20210916_195754](/source/images/Guides/Death_Quotes/Death_Quotes2.png)
 
 It's pretty much the same, except that there is no condition attached. This will trigger every single time a unit dies.
 
@@ -41,4 +41,4 @@ if;unit.get_field('DeathQuote')
 end
 ```
 
-For those who are unfamiliar with **Unit Fields**, I would recommend reading both the other tutorials and the [eval documentation](../../Engine/Conditionals). To put it simply, however, this will check if the unit that died possesses a **field** called `DeathQuote`, and if so, it will play a scene of the unit appearing, speaking the exact contents of their `DeathQuote`, and then disappearing - exactly the same as the above scene.
+For those who are unfamiliar with **Unit Fields**, I would recommend reading both the other tutorials and the [eval documentation](/source/Engine/Conditionals). To put it simply, however, this will check if the unit that died possesses a **field** called `DeathQuote`, and if so, it will play a scene of the unit appearing, speaking the exact contents of their `DeathQuote`, and then disappearing - exactly the same as the above scene.

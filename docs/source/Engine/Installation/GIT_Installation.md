@@ -35,25 +35,25 @@ Make sure before installing any of these, that you have uninstalled any previous
 * [Mac](https://git-scm.com/download/mac)
 * [Linux](https://git-scm.com/download/win)
 
-Open the file and click **next** until you reach the following screen.
+Open the file and click **[Next >]** until you reach the following screen.
 
-![GIT Options](../images/GIT_Installation/Installation_Git1.png)
+![GIT Options](/source/images/Engine/GIT_Installation/Installation_Git1.png)
 
 This is a recommend setup for first time git users. The **Git Bash** options is extremely convenient and Git GUI is rather useless. There shouldn't be a need Git LFS for this project.
 
-Make sure you change the text editor to your text editor of choice. Sublime Text Editor is a great free option that has coding support.
+Make sure you change the text editor to your text editor of choice. *Sublime Text Editor* is a great free option that has coding support.
 
 Choose the second option under **Adjusting your PATH Environment**, unless you are sure you never want to use git outside of **Git Bash** (if so, choose the first).
 
-![GIT Bash Radio](../images/GIT_Installation/Installation_Git2.png)
+![GIT Bash Radio](/source/images/Engine/GIT_Installation/Installation_Git2.png)
 
 Everything else can use the default settings.
 
 ### Testing Git
 
-Git should be successfully installed installed by this point. Right-click in the File Explorer and open Git Bash by left-clicking "Git Bash"
+Git should be successfully installed installed by this point. Right-click in the File Explorer and open <u>Git Bash</u> by left-clicking **Git Bash**
 
-![GIT Bash Explorer](../images/GIT_Installation/Installation_Git3.png)
+![GIT Bash Explorer](/source/images/Engine/GIT_Installation/Installation_Git3.png)
 
 A command line terminal will pop up. Type `git --version` to make sure git responds.
 
@@ -71,7 +71,7 @@ Run the installer file once the download is complete.
 
 In case you're a new to Python, select the option to add Python 3.7 to PATH. It makes so many of the errors that new users may run into just disappear. Just click **Install Now** and follow through, the default installation options are enough.
 
-![Python Wizard](../images/GIT_Installation/Installation_Python1.png)
+![Python Wizard](/source/images/Engine/GIT_Installation/Installation_Python1.png)
 
 ### Testing Python
 
@@ -87,9 +87,9 @@ Whichever one works of these three will be the command you will use in the futur
 
 At this point, you can type just `python` on the Git Bash command line to get the interactive Python REPL, which allows you to enter in python commands interactively. Typing in "2 + 2" results in the following.
 
-![Python Command Line](../images/GIT_Installation/Installation_Python2.png)
+![Python Command Line](/source/images/Engine/GIT_Installation/Installation_Python2.png)
 
-To run a Python script, just type `python` followed by a space and the script's file name. The script must be in the same folder that you used the **Git Bash**, otherwise you must give Python the relative path to it.
+To run a Python script, just type `python` followed by a space and the script's file name. The script must be in the same folder that you used the <u>Git Bash</u>, otherwise you must give Python the relative path to it.
 
 This means that in order to run python scripts in the lt-maker directory, you should run python from within the lt-maker directory.
 
@@ -103,21 +103,21 @@ If you navigate to there, you should see a python.exe executable. This is the ac
 
 In Windows 10, type "env" in the search bar and click the **Edit the System Environment Variables** option.
 
-![Python Path 1](../images/GIT_Installation/Python_Path1.png)
+![Python Path 1](/source/images/Engine/GIT_Installation/Python_Path1.png)
 
-A dialog box will pop up. **Click Environment Variables...**.
+A dialog box will pop up. Click **[Environment Variables...]**.
 
-![Python Path 2](../images/GIT_Installation/Python_Path2.png)
+![Python Path 2](/source/images/Engine/GIT_Installation/Python_Path2.png)
 
-Under **User Variables** (the top table), click on the **Path** row, then click **Edit...**.
+Under **User Variables** (the top table), click on the **Path** row, then click **[Edit...]**.
 
-![Python Path 3](../images/GIT_Installation/Python_Path3.png)
+![Python Path 3](/source/images/Engine/GIT_Installation/Python_Path3.png)
 
-Click **New** on the right. Type the location of your Python executable, in this case: `C:\Users\{Your User}\AppData\Local\Programs\Python\Python37`, then hit Enter. Click **New** again and type in the path to the associated Scripts directory. `C:\Users\{Your User}\AppData\Local\Programs\Python\Python37\Scripts`.
+Click **New** on the right. Type the location of your Python executable, in this case: `C:\Users\{Your User}\AppData\Local\Programs\Python\Python37`, then hit Enter. Click **[New]** again and type in the path to the associated Scripts directory. `C:\Users\{Your User}\AppData\Local\Programs\Python\Python37\Scripts`.
 
-![Python Path 4](../images/GIT_Installation/Python_Path4.png)
+![Python Path 4](/source/images/Engine/GIT_Installation/Python_Path4.png)
 
-Now click **OK** and close all of the windows opened in this process. Next, go back to the [testing step](#testing-python).
+Now click **[OK]** and close all of the windows opened in this process. Next, go back to the [testing step](#testing-python).
 
 -------
 </p></details><br/>
@@ -126,7 +126,7 @@ Now click **OK** and close all of the windows opened in this process. Next, go b
 
 Pip is the Python package manager. It means from here on out, we don't need to download stuff off random websites to get the rest of our tools. If you install Python with the defaults, pip should come as an extra.
 
-You can check if it is available by typing one of the following in the **Git Bash** terminal.
+You can check if it is available by typing one of the following in the <u>Git Bash</u> terminal.
 
 * `pip --version`
 * `python -m pip --version`
@@ -137,13 +137,13 @@ In case any of the installations demmand administrator privileges to install for
 
 ## Installing the Engine and other Packages
 
-Select the location you want the engine to be in and use **Git Bash**, then type the following.
+Select the location you want the engine to be in and use <u>Git Bash</u>, then type the following.
 
 ``` Text
 git clone --depth=1 https://gitlab.com/rainlash/lt-maker.git
 ```
 
-This command will create a new folder containing all the files from the repository. Git will register the folder as a clone which will make it both associated to the repository and a standalone folder at local level. None of the changes you make in it will affect the others, yet you will be able to use **Git** commands to update and restore files to match the latest version.
+This command will create a new folder containing all the files from the repository. Git will register the folder as a clone which will make it both associated to the repository and a standalone folder at local level. None of the changes you make in it will affect the others, yet you will be able to use <u>Git</u> commands to update and restore files to match the latest version.
 
 You can know if the current folder is associated to git by checking if it has a branch name in cyan.
 
@@ -158,7 +158,7 @@ Next, type one of the following at the terminal.
 - `python -m pip install -r requirements_editor.txt`
 
 <div class="note">
-If you followed the steps in order, you should be at the right folder and be able to see the file <b>requirements_editor.txt</b> in it. If for any reason that isn't the case, use 'Git Bash' in the folder that has that file and run the commands again.
+If you followed the steps in order, you should be at the right folder and be able to see the file <b>requirements_editor.txt</b> in it. If for any reason that isn't the case, use <u>Git Bash</u> in the folder that has that file and run the commands again.
 </div>
 
 <div class="danger">
@@ -171,15 +171,15 @@ The pygame version 1.9.6 seems to be the most stable version available for the e
 
 By now, everything should be done. Last step is to check if everything is working.
 
-**Git Bash** any folder and type `python -m pygame.examples.aliens`.  This should run a space invaders like game.
+<u>Git Bash</u> any folder and type `python -m pygame.examples.aliens`.  This should run a space invaders like game.
 
-Next, **Git Bash** the lt-maker directory and type `python run_engine.py`. This time the **default project** (that uses The Lion Throne start screen) should open and be playable.
+Next, <u>Git Bash</u> the lt-maker directory and type `python run_engine.py`. This time the **default project** (that uses The Lion Throne start screen) should open and be playable.
 
-![Title Screen](../images/GIT_Installation/Title_Screen.png)
+![Title Screen](/source/images/Engine/GIT_Installation/Title_Screen.png)
 
 At last, we can boot the engine by typing `python run_editor.py`. The editor should pop up and you should be able to begin making your own fangame.
 
-![Boot Completed!](../images/Editor_Screen.png)
+![Boot Completed!](/source/images/Engine/Editor_Screen.png)
 
 Be sure to either make a new project or save the default project as a new project before you start working on your game.
 
@@ -187,9 +187,9 @@ Be sure to either make a new project or save the default project as a new projec
 Don't save your project as <b>default</b> or <b>autosave</b>. These projects are already used in the editor.
 </div>
 
-Congratulations, **LexTalionis** has been successfully installed!
+Congratulations, <u>Lex Talionis</u> has been successfully installed!
 
 ## What's next?
 Most of the features in the engine can be self taught by navigation. Along that, the default project has multiple examples on how to implement staples from the **Fire Emblem** series.
 
-In case you need extra assistance, check the other wiki articles at the panel over the left. The best places to start are the [basics guides](../../Guides/Basics_Guides/index) page. You can also join the official [Discord Server](https://discord.gg/dC6VWGh4sw) to learn with other users and get the latest news on updates.
+In case you need extra assistance, check the other wiki articles at the panel over the left. The best places to start are the [basics guides](/source/Guides/Basics_Guides/index) page. You can also join the official [Discord Server](https://discord.gg/dC6VWGh4sw) to learn with other users and get the latest news on updates.

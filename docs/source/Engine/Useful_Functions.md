@@ -89,7 +89,7 @@ has_achievement(nid)
 Returns `True` if the achievement is completed.
 
 **Args**:
-* `nid`: Achievement NID to match.
+* `nid`: Achievement NID.
 
 <details><summary><strong>Examples</strong>:</summary><p>
 
@@ -185,7 +185,7 @@ Returns an item object **instance** owned by an unit through the item NID.
 ---------------------
 
 #### Get Weapon
-Private function from [Unit Object](../Appendix/Objects/Unit_Object#Get-Weapon). Returns the weapon **instance** equipped by the unit object.
+Private function from [Unit Object](/source/Appendix/Objects/Unit_Object#Get-Weapon). Returns the weapon **instance** equipped by the unit object.
 
 ---------------------
 
@@ -464,7 +464,7 @@ Returns `True` if the unit has an instance of a skill.
 
 ## Units
 
-For private functions, check the [Unit Object](../Appendix/Objects/Unit_Object) page.
+For private functions, check the [Unit Object](/source/Appendix/Objects/Unit_Object) page.
 
 ---------------------
 

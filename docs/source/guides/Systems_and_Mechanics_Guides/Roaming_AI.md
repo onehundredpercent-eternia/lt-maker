@@ -12,7 +12,7 @@ In many JRPGs party members will follow the lead unit around the map. We'll impl
 
 First, let's set up an AI for our follower.
 
-![SethAI](../images/Roaming_AI/Seth_AI.png)
+![SethAI](/source/images/Guides/Roaming_AI/Seth_AI.png)
 
 There's nothing too complicated about this. At the top, you'll notice that we've checked **Roam AI?** - this simply tells the game to consider units with this AI during free roam. It does not exclude the AI from function during normal gameplay, however.
 
@@ -26,7 +26,7 @@ Now to assign it. You'll need to have either the **Free Roam?** box checked in t
 
 Delivering the mail is no simple task! Let's create an AI that will have a unit get the mail from one target and give it to a second target.
 
-![Mailman](../images/Roaming_AI/Mailman.png)
+![Mailman](/source/images/Guides/Roaming_AI/Mailman.png)
 
 The settings at the top are just about the same. This mailman is a bit more touchy, but that's it.
 
@@ -42,7 +42,7 @@ While we only have three behaviours here, you can add more using the **[Add Beha
 
 Not everyone wants to be your friend, so let's make an AI that will attempt to flee from the roaming unit.
 
-![Runner](../images/Roaming_AI/Run_Roam.png)
+![Runner](/source/images/Guides/Roaming_AI/Run_Roam.png)
 
 Again, a very simple task. The unit will try to flee if a unit named *Eirika* (who happens to be our roaming unit) tries to get close. Though he's far slower than us currently, we could turn his speed up to make quite the chase!
 

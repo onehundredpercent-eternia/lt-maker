@@ -2,7 +2,7 @@
 
 *last updated 22-01-31*
 
-![Screenshot of GBA arena menu screen created by this tutorial](../images/Arena/Arena_Menu.png)
+![Screenshot of GBA arena menu screen created by this tutorial](/source/images/Guides/Arena/Arena_Menu.png)
 
 This tutorial will explain how to create an arena where your units can fight, earn experience and money, and potentially die. In this guide, an arena based off the **Fire Emblem GBA games** will be created, but the features shown here are powerful enough to create significantly different variants on the base idea.
 
@@ -16,11 +16,11 @@ It is expected that you, the reader, are already familiar with the [Mercenary Sh
 
 First, in your level, create an event **region** with **sub_nid** `Arena`.
 
-![Screenshot of "event" region](../images/Arena/Arena_Region.png)
+![Screenshot of "event" region](/source/images/Guides/Arena/Arena_Region.png)
 
 Now, in the **Event editor**, create a new **Global event** called `Arena`. Set the trigger to `Arena`. You can leave the condition as `True`, since any unit can use the arena.
 
-![Screenshot of event's main attributes in editor](../images/Arena/Arena_Attributes.png)
+![Screenshot of event's main attributes in editor](/source/images/Guides/Arena/Arena_Attributes.png)
 
 You now have an arena event, but nothing happens when you step in the ring. Let's fix that. We need to start by determining the class, weapon, level, and stats of the enemy you will face in the arena. This will be a lot of setting up and saving variables as we slowly narrow down the choice of enemy.
 
@@ -77,7 +77,7 @@ give_item;{created_unit};{var:ArenaItem};no_banner
 
 Finally, we can ask the player whether they actually want to fight. We set up the menus and display boxes now.
 
-![Screenshot of menus and display boxes](../images/Arena/Arena_Menu.png)
+![Screenshot of menus and display boxes](/source/images/Guides/Arena/Arena_Menu.png)
 
 ``` text
 change_background;Arena
@@ -118,7 +118,7 @@ end
 t;close
 ```
 
-![Screenshot of Arena combat](../images/Arena/Arena_Combat.png)
+![Screenshot of Arena combat](/source/images/Guides/Arena/Arena_Combat.png)
 
 Now make sure to clean up after yourself. Remove the created unit from the game. Also remember to remove the overlay sprites and tables you created.
 

@@ -37,11 +37,11 @@ If you haven't changed any of the default project **terrain**, there shouldn't b
 
 The **Terrain Editor** can be found within the **Edit Menu**.
 
-![1](../images/Tile_Passives/1.png)
+![1](/source/images/Guides/Tile_Passives/1.png)
 
 The default project has numbers assigned as the **Unique ID**, with a few exceptions. They are right before the terrain name **(Display Name)**.
 
-![2](../images/Tile_Passives/2.png)
+![2](/source/images/Guides/Tile_Passives/2.png)
 
 In case you haven't done a single change to terrain, you can use the following lists.
 
@@ -68,41 +68,41 @@ By disassociating these properties, we can create special tiles that have a spec
 
 As a downside, it also means that it is possible for **terrain** to unintentionally mismatch. We can fix that in the **Tilemaps Editor**, found within the **Edit Menu**.
 
-![3](../images/Tile_Passives/3.png)
+![3](/source/images/Guides/Tile_Passives/3.png)
 
 Select the **Tilemap** tab and the map that uses the same layout as the test map and click on **Edit Current Tilemap...** We will use DEBUG as our test map in this guide.
 
-![4](../images/Tile_Passives/4.png)
+![4](/source/images/Guides/Tile_Passives/4.png)
 
 Click on the **Terrain Mode** button, represented by the **Mountain icon**.
 
-![5](../images/Tile_Passives/5.png)
+![5](/source/images/Guides/Tile_Passives/5.png)
 
 We can now see the **terrain** version of the map along the tools to modify it.
 
-![6](../images/Tile_Passives/6.png)
+![6](/source/images/Guides/Tile_Passives/6.png)
 
 You can left click on a tile to select that terrain.
 
-![7](../images/Tile_Passives/7.png)
+![7](/source/images/Guides/Tile_Passives/7.png)
 
 And right click a tile to attribute the current terrain to it.
 
-![8](../images/Tile_Passives/8.png)
+![8](/source/images/Guides/Tile_Passives/8.png)
 
 We change the **transparency** by moving the slider at the top left.
 
-![9](../images/Tile_Passives/9.png)
+![9](/source/images/Guides/Tile_Passives/9.png)
 
 With this, we can be sure our tiles are matching their respective terrains. You can run the chapter and move over each tile to see if you get the right caption.
 
-![10](../images/Tile_Passives/10.png)
+![10](/source/images/Guides/Tile_Passives/10.png)
 
 This allows us to test tiles without changing the visual completely.
 
 We can also change the terrain color at the **Terrain Editor**.
 
-![11](../images/Tile_Passives/11.png)
+![11](/source/images/Guides/Tile_Passives/11.png)
 
 Now that our map is set, we can finally create our two skills.
 
@@ -143,6 +143,6 @@ game.tilemap.get_terrain(unit.position) in ('1' , '5', '776', 'Grave', 'Dragon B
 
 The end result should look somewhat similar to this:
 
-![12](../images/Tile_Passives/12.png)
+![12](/source/images/Guides/Tile_Passives/12.png)
 
 ## Step 5: Test the stat alterations in-game

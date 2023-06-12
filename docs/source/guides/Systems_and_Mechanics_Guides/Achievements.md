@@ -10,7 +10,7 @@ The `create_achievement` command creates a new achievement with the given specif
 
 Try it out by putting this line before a base event command in any given level. Test the level and go to **Codex > Achievements**.
 
-![TestAchievement](../images/Achievements/Test_Achievement.png)
+![TestAchievement](/source/images/Guides/Achievements/Test_Achievement.png)
 
 Voila! You have an incomplete achievement listed there. Of course, we'd like to have the player be able to complete that achievement.
 
@@ -32,13 +32,13 @@ Create a new achievement.
 
 `create_achievement;KillGodOrSomething;???;Continue the story to unlock;f;f`
 
-![LockedAchievement](../images/Achievements/Locked_Achievement.png)
+![LockedAchievement](/source/images/Guides/Achievements/Locked_Achievement.png)
 
 Players can see that they haven't unlocked all achievements, but will naturally later on. We can use the update_achievement command to change the details of the displayed achievement.
 
 `update_achievement;KillGodOrSomething;Kill God;You managed to slay a deity.`
 
-![UnlockedAchievement](../images/Achievements/Unlocked_Achievement.png)
+![UnlockedAchievement](/source/images/Guides/Achievements/Unlocked_Achievement.png)
 
 The details of the achievement have been updated.
 

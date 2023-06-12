@@ -11,7 +11,7 @@ Frequently Asked Questions
 <br/>All the basic features you can find in the GBA games. Additionally, it has: Thracia's fog of war, AI affected by fog of war, pair up, Three Houses ammo system, leadership stars, bonus experience, base menu, fatigue, free roam, turnwheel, mana resource, individual unit turns, a 4th team that is hostile to all teams, and more. All of those are native optional features.
 
 **I don't see ... feature anywhere. Will it be added eventually?**
-<br/>It depends on how popular it is, how much time it takes to implement and what other things are in the works. Some of the common requests can already be built through [eventing](Editors/Events_Editor/index), such as [Skill Swap](../Guides/Systems_and_Mechanics_Guides/Skill_Swap) and Avatar units.
+<br/>It depends on how popular it is, how much time it takes to implement and what other things are in the works. Some of the common requests can already be built through [eventing](Editors/Events_Editor/index), such as [Skill Swap](/source/Guides/Systems_and_Mechanics_Guides/Skill_Swap) and Avatar units.
 
 **Is LT-Maker complicated to learn/use?**
 No, it is a simple to use as most other builder engines, such as RPG maker. Of course, there is quite a room for some depth and it can be a bit demanding depending on what you want to make. Many users that experienced romhack said that LT-Maker is *extremely* easy in comparison.
@@ -35,7 +35,7 @@ No, it is a simple to use as most other builder engines, such as RPG maker. Of c
 <br/>Not yet. It's in the works.
 
 **How do I make a playable demo/build of my game?**
-<br/>Follow this [guide](../Guides/Basics_Guides/Build_Engine).
+<br/>Follow this [guide](/source/Guides/Basics_Guides/Build_Engine).
 
 **Does LT-Maker support .tmx map files?**
 <br/>No. It uses **.png** for the graphical component of its maps. Terrain data is stored separately.
@@ -147,7 +147,7 @@ It is recommended to **NOT** assign the **Enter/Return** key as a game key/butto
 <br/>Yes, but you will have to do it through [events](Editors/Events_Editor/index). There's no guide available for it yet, however.
 
 **Can I have my game featured in the wiki?**
-<br/>Of course, but you'll have to add it yourself. Please check the [Projects](../Projects/Projects) page for more information.
+<br/>Of course, but you'll have to add it yourself. Please check the [Projects](/source/Projects/Projects) page for more information.
 
 **Why can't I find any information about ... in the wiki?**
 <br/>The wiki is building itself slowly and steadily so the corresponding article may not exist yet. If that bothered you enough and learned about it, consider writing its article.
