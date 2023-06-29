@@ -62,7 +62,7 @@ def unit_db_to_csv(unit_db: UnitCatalog):
     if not unit_db._list:
         return ""
     first_elem = unit_db._list[0]
-    bases_d, _ = first_elem.get_stat_lists()
+    bases_d = first_elem.get_stat_lists()[0]
     weapons_l = list(first_elem.wexp_gain.keys())
     stats_l = list(bases_d.keys())
     # header

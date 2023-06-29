@@ -74,7 +74,7 @@ class UnitPrefab(Prefab):
             elif value:
                 value = value.copy()  # Should be copy so units don't share lists/dicts
             else:
-                value = []
+                value = {}
         elif name == 'wexp_gain':
             if isinstance(value, list):
                 value = {nid: WexpGain(usable, wexp_gain) for (usable, nid, wexp_gain) in value}
