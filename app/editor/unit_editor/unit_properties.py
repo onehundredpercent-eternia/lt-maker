@@ -319,8 +319,10 @@ class UnitProperties(QWidget):
             stat_nid = DB.stats[index.column()].nid
             if index.row() == 0:
                 class_value = my_klass.bases.get(stat_nid, 0)
-            else:
+            elif index.row() == 1:
                 class_value = my_klass.growths.get(stat_nid, 0)
+            else:
+                class_value = 0
             model.setData(index, class_value, Qt.EditRole)
 
     def display_averages(self):
