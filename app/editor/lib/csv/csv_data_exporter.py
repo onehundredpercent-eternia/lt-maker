@@ -1,5 +1,3 @@
-
-
 from app.data.database.database_validator import DatabaseValidatorEngine
 import logging
 from typing import List
@@ -71,7 +69,7 @@ def unit_db_to_csv(unit_db: UnitCatalog):
     ss = ','.join(headers) + '\n'
     for unit in unit_db:
         data = [unit.name, unit.nid]
-        ubases, ugrowths = unit.get_stat_lists()
+        ubases, ugrowths, ustatcapmodifiers = unit.get_stat_lists()
         wranks = unit.wexp_gain
         data += [ubases[stat] for stat in stats_l] + [ugrowths[stat] for stat in stats_l] + [wranks[weapon].wexp_gain for weapon in weapons_l]
         ss += ','.join([str(dat) for dat in data]) + '\n'
