@@ -191,7 +191,7 @@ class UnitProperties(QWidget):
         self.unit_stat_widget.button.clicked.connect(self.display_averages)
         self.unit_stat_widget.reset_button.clicked.connect(self.reset_stats)
         self.unit_stat_widget.model.dataChanged.connect(self.stat_list_model_data_changed)
-        self.unit_stat_widget.view.setFixedHeight(120)
+        self.unit_stat_widget.view.setFixedHeight(130)
         self.averages_dialog = None
         # self.unit_stat_widget.button.clicked.connect(self.access_stats)
         # Changing of stats done automatically by using model view framework within

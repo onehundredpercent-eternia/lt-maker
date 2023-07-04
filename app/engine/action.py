@@ -1863,14 +1863,14 @@ class ChangeStatCapModifiers(Action):
 
     def do(self):
         for nid, value in self.stat_changes.items():
-            if nid not in unit.stat_cap_modifiers:
-                unit.stat_cap_modifiers[nid] = 0
-            unit.stat_cap_modifiers[nid] += value
+            if nid not in self.unit.stat_cap_modifiers:
+                self.unit.stat_cap_modifiers[nid] = 0
+            self.unit.stat_cap_modifiers[nid] += value
 
     def reverse(self):
         negative_changes = {k: -v for k, v in self.stat_changes.items()}
-        for nid, value in self.stat_changes:
-            unit.stat_cap_modifiers[nid] += value
+        for nid, value in negative_changes.items():
+            self.unit.stat_cap_modifiers[nid] += value
 
 
 class Promote(Action):

@@ -506,7 +506,7 @@ class InfoMenuState(State):
                 icons.draw_growth(surf, stat_nid, self.unit, (47, 16 * idx + 24))
             else:
                 highest_stat = curr_stat.maximum
-                max_stat = unit.get_stat_cap(stat_nid)
+                max_stat = self.unit.get_stat_cap(stat_nid)
                 if max_stat > 0:
                     total_length = int(max_stat / highest_stat * 42)
                     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)

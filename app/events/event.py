@@ -656,7 +656,6 @@ class Event():
         return unit, skill
 
     def _apply_stat_changes(self, unit, stat_changes, flags):
-        klass = DB.classes.get(unit.klass)
         # clamp stat changes
         stat_changes = {k: utils.clamp(v, -unit.stats[k], unit.get_stat_caps(k) - unit.stats[k]) for k, v in stat_changes.items()}
 
