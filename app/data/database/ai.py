@@ -104,3 +104,9 @@ class AIBehaviour(Prefab):
 
 class AICatalog(Data[AIPrefab]):
     datatype = AIPrefab
+
+    def create_new(self):
+        nids = [d.nid for d in self]
+        nid = str_utils.get_next_name("New AI", nids)
+        new_ai = AIPrefab(nid, 20)
+        return new_ai
