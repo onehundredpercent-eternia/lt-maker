@@ -2,7 +2,6 @@ from PyQt5.QtCore import Qt
 
 from app.data.database.database import DB
 
-from app.extensions.custom_gui import DeletionDialog
 from app.editor.custom_widgets import AIBox
 from app.editor.base_database_gui import DragDropCollectionModel
 from app.data.database.ai import AIPrefab
@@ -19,6 +18,7 @@ class AIModel(DragDropCollectionModel):
         return None
 
     def delete(self, idx):
+        from app.extensions.custom_gui import DeletionDialog
         # check to make sure nothing else is using me!!!
         ai = self._data[idx]
         nid = ai.nid
