@@ -36,6 +36,10 @@ class MapView():
         for unit in draw_units:
             unit.sprite.draw(surf, (0, 0))
 
+        if game.tilemap.foreground_layers():
+            foreground_image = game.tilemap.get_full_image(cull_rect, foreground=True)
+            surf.blit(foreground_image, (0, 0))
+
         engine.save_surface(surf, 'screenshots/LT_%s_map_view.png' % current_time)
 
     def draw_units(self, surf, cull_rect, subsurface_rect=None):
@@ -162,6 +166,11 @@ class MapView():
         for weather in game.tilemap.weather:
             weather.update()
             weather.draw(surf, cull_rect[0], cull_rect[1])
+
+        # Should this go above or below weather? What is the use case?
+        if game.tilemap.foreground_layers():
+            foreground_image = game.tilemap.get_foreground_image(cull_rect)
+            surf.blit(foreground_image, (0, 0))
 
         surf = game.ui_view.draw(surf)
         return surf
