@@ -39,7 +39,7 @@ It is possible to force certain data types into different variables if they cert
 
 ## Casting
 
-It is possible to force a type into another by using a casting function, though that is limited to `int()`, `float()` and `str()`.
+It is possible to force a type into another by using a casting function. It is done by setting the value inside the type as if it were a function, as in `int(cast_value)`. The most common structures are `int()`, `float()` and `str()` for simple types and `list()`, `tuple()` and `set()` for iterables.
 
 <details><summary><strong>Examples</strong>:</summary><p>
 

@@ -8,7 +8,7 @@ Frequently Asked Questions
 <br/>LT-Maker is a fully open-source engine and editor designed to make it easy to make Fire Emblem-like SRPG style games. Originally created by **rainlash**, it now receives contributions from the community, and also **mag**.
 
 **What features does LT-Maker have?**
-<br/>All the basic features you can find in the GBA games. Additionally, it has: Thracia's fog of war, AI affected by fog of war, pair up, Three Houses ammo system, leadership stars, bonus experience, base menu, fatigue, free roam, turnwheel, mana resource, individual unit turns, a 4th team that is hostile to all teams, and more. All of those are native optional features.
+<br/>All the basic features you can find in the GBA games. Additionally, it has: Thracia's fog of war, AI affected by fog of war, pair up, Three Houses ammo system, leadership stars, bonus experience, base menu, fatigue, free roam, turnwheel, mana resource, individual unit turns, additional teams with customazible alliances, and more. All of those are native optional features.
 
 **I don't see ... feature anywhere. Will it be added eventually?**
 <br/>It depends on how popular it is, how much time it takes to implement and what other things are in the works. Some of the common requests can already be built through [eventing](Editors/Events_Editor/index), such as [Skill Swap](/source/Guides/Systems_and_Mechanics_Guides/Skill_Swap) and Avatar units.
@@ -97,7 +97,7 @@ It is recommended to **NOT** assign the **Enter/Return** key as a game key/butto
 <br/>Aside team colors, no.
 
 **Can I change the colors of each team?**
-<br/>Not directly. The team colors are hard coded in the engine. It is possible by playing around a few features or by changing the engine code, which also allows more shades. This will be on your own your risk though.
+<br/>Yes.
 
 **Is the engine using the assets from Fire Emblem: The Sacred Stones? Does it has all of it?**
 <br/>Yes and no. It has a lot of its assets but not all of them. Some of the chapter 7+ sprites and animations are there but a few of the chapter 6- are missing.
