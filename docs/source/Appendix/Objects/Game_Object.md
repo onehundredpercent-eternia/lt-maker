@@ -26,7 +26,7 @@ The game object is a very powerful source of information about the state of the 
 |Property|Type|Role/expected value
 |--|--|--
 |`game_vars`|dict|Every game variable and their values.
-|`game_vars`|dict|Every level variable and their values.
+|`level_vars`|dict|Every level variable and their values.
 |`playtime`|float|Save playtime.
 |`turncount`|int|Current turn.
 |`units`|list|Contains all units tracked in the game.
