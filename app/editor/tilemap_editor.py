@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QSplitter, QFrame, QVBoxLayout, QDialogButtonBox, \
     QGraphicsView, QGraphicsScene, QAbstractItemView, QActionGroup, \
     QDesktopWidget, QFileDialog, QMessageBox, QHBoxLayout, QApplication
 from PyQt5.QtCore import Qt, QRect, QDateTime
-from PyQt5.QtGui import QImage, QPainter, QPixmap, QIcon, QColor, QPen
+from PyQt5.QtGui import QImage, QPainter, QPixmap, QIcon, QColor, QPen, QBrush
 from app import dark_theme
 
 from app.constants import TILEWIDTH, TILEHEIGHT
