@@ -37,7 +37,7 @@ class MapView():
             unit.sprite.draw(surf, (0, 0))
 
         if game.tilemap.foreground_layers():
-            foreground_image = game.tilemap.get_full_image(cull_rect, foreground=True)
+            foreground_image = game.tilemap.get_foreground_image(cull_rect)
             surf.blit(foreground_image, (0, 0))
 
         engine.save_surface(surf, 'screenshots/LT_%s_map_view.png' % current_time)
