@@ -10,7 +10,7 @@ It is possible to force certain data types into different variables if they cert
 |--|--|--|--
 |`bool`|`True`, `False`, `0` or `1`|`False`, `True`
 |`int`|Whole numbers, positive or negative|`9`, `0`, `184`
-|`float`|Factionary numbers|`99.9`, `12`, `5`
+|`float`|Non-integer numbers|`99.9`, `12`, `5`
 |`string`|Text, within quotation marks|`"I'm a string value"`, `"Lex Talionis"`
 |`list/tuple`|Collection of items from any other type|`["A","B","C"]`, `[1,2,4,8,16]`, `['Eirika', 'Seth']`
 

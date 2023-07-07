@@ -27,7 +27,7 @@ The game object is a very powerful source of information about the state of the 
 |--|--|--
 |`game_vars`|dict|Every game variable and their values.
 |`level_vars`|dict|Every level variable and their values.
-|`playtime`|float|Save playtime.
+|`playtime`|int|Save playtime, in milliseconds.
 |`turncount`|int|Current turn.
 |`units`|list|Contains all units tracked in the game.
 |`mode`|[DifficultyModeObject]|Current difficulty mode.
@@ -60,8 +60,8 @@ Returns `True` if the unit is alive/dead.
 
 ### Get Unit
 ``` Text
-get_unit()
-  -> '[UnitObject]'
+get_unit(str)
+  -> 'UnitObject'
 ```
 
 Returns a Unit with the given nid.
@@ -79,7 +79,7 @@ Returns a Unit with the given nid.
 ### Get Region
 ``` Text
 get_region()
-  -> '[RegionObject]'
+  -> 'RegionObject'
 ```
 
 Returns the party with the given nid.
@@ -97,7 +97,7 @@ Returns the party with the given nid.
 ### Get Party
 ``` Text
 get_party(str)
-  -> '[PartyObject]'
+  -> 'PartyObject'
 ```
 
 Returns the party with the given nid.
@@ -151,7 +151,7 @@ get_all_units_in_party(str)
 Returns all alive non-generic player units in the given party.
 
 **Args**:
-* **str** <u>Optional</u>: Party NID.
+* **str** <u>(Optional)</u>: Party NID.
 
 <details><summary><strong>Examples</strong>:</summary><p>
 
@@ -164,13 +164,13 @@ Returns all alive non-generic player units in the given party.
 ### Get Units in Party
 ``` Text
 get_units_in_party(str)
-  -> 'list'
+  -> 'List[UnitObject]'
 ```
 
 Returns all alive non-generic player units in the given party.
 
 **Args**:
-* **str** <u>Optional</u>: Party NID.
+* **str** <u>(Optional)</u>: Party NID.
 
 <details><summary><strong>Examples</strong>:</summary><p>
 
