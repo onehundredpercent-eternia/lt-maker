@@ -63,7 +63,7 @@ def handle_command(line, context: GbaSpellScriptContext) -> List[CombatAnimation
         pass
     elif command_id == '53':  # stretch screen based on YY
         context.vertical_stretch_mode = bool(argy)
-
+    return []
 
 class GbaSpellScriptContext():
     vertical_stretch_mode: bool = False
