@@ -1,12 +1,9 @@
-# Takes in unit, returns False if not present
-# All default hooks are exclusive
+from __future__ import annotations
 from typing import Any, Dict
 from app.engine.component_system.utils import ARG_TYPE_MAP, HookInfo, ResolvePolicy
 
-
-formula = ('damage_formula', 'resist_formula', 'accuracy_formula', 'avoid_formula',
-           'crit_accuracy_formula', 'crit_avoid_formula', 'attack_speed_formula', 'defense_speed_formula',
-           'critical_multiplier_formula', 'critical_addition_formula', 'thracia_critical_multiplier_formula')
+# Takes in unit, returns False if not present
+# All default hooks are exclusive
 default_behaviours = (
     'pass_through', 'vantage', 'desperation', 'ignore_terrain', 'crit_anyway',
     'ignore_region_status', 'no_double', 'def_double', 'alternate_splash',
@@ -18,7 +15,6 @@ default_behaviours = (
 exclusive_behaviours = ('can_select', 'no_trade', 'movement_type', 'sight_range', 'empower_splash', 'num_items_offset',
                         'num_accessories_offset', 'change_variant', 'change_animation', 'change_ai', 'change_roam_ai', 'witch_warp')
 
-exclusive_behaviours += formula
 # Takes in unit and item, returns default value
 item_behaviours = ('modify_buy_price', 'modify_sell_price',
                    'limit_maximum_range')
@@ -54,7 +50,24 @@ item_event_hooks = ('on_add_item', 'on_remove_item',
 # Takes in actions, playback, unit
 phase_event_hooks = ('on_upkeep', 'on_endstep')
 
-SKILL_HOOKS: Dict[str, HookInfo] = {
+SKILL_HOOK_TEMPLATES: Dict[str, HookInfo] = {
+    'formula': HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+}
+
+SKILL_HOOKS: Dict[str, HookInfo | str] = {
+    # formula
+    'damage_formula': 'formula',
+    'resist_formula': 'formula',
+    'accuracy_formula': 'formula',
+    'avoid_formula': 'formula',
+    'crit_accuracy_formula': 'formula',
+    'crit_avoid_formula': 'formula',
+    'attack_speed_formula': 'formula',
+    'defense_speed_formula': 'formula',
+    'critical_multiplier_formula': 'formula',
+    'critical_addition_formula': 'formula',
+    'thracia_critical_multiplier_formula': 'formula',
+    # some unique ones
     'usable_wtypes': HookInfo(['unit'], ResolvePolicy.UNION),
     'forbidden_wtypes': HookInfo(['unit'], ResolvePolicy.UNION),
 }
@@ -68,7 +81,7 @@ def generate_skill_hook_str(hook_name: str, hook_info: HookInfo):
     conditional_check = "condition(skill, unit)" if not 'item' in args else 'condition(skill, unit, item)'
     default_handling = "return result"
     if hook_info.has_default_value:
-        default_handling = "return result if values else Defaults.{hook_name}({args})".format(hook_name, ', '.join(args))
+        default_handling = "return result if values else Defaults.{hook_name}({args})".format(hook_name=hook_name, args=', '.join(args))
     func_text = """
 def {hook_name}({func_signature}):
     values = []
@@ -105,9 +118,10 @@ def compile_skill_system():
         compiled_skill_system.write(line)
 
     for hook_name, hook_info in SKILL_HOOKS.items():
+        if isinstance(hook_info, str):
+            hook_info = SKILL_HOOK_TEMPLATES[hook_info]
         func = generate_skill_hook_str(hook_name, hook_info)
         compiled_skill_system.write(func)
-        compiled_skill_system.write('\n')
 
     # compile skill system
     for behaviour in default_behaviours:
