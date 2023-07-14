@@ -100,7 +100,7 @@ def get_formatted_stat_pages() -> List[Tuple[str, List[Column]]]:
         new_weapon_rank_page.append(
             Column('12%', "", uif.HAlignment.LEFT, icons.get_icon(wtype),
                    lambda unit, wtype=wtype: (DB.weapon_ranks.get_rank_from_wexp(unit.wexp[wtype.nid]).rank
-                                              if (DB.weapon_ranks.get_rank_from_wexp(unit.wexp[wtype.nid]) and wtype.nid in unit_funcs.usable_weapons(unit))
+                                              if (DB.weapon_ranks.get_rank_from_wexp(unit.wexp[wtype.nid]) and wtype.nid in unit_funcs.usable_wtypes(unit))
                                               else '-'),
                    None,
                    get_font=(lambda unit, wtype=wtype:

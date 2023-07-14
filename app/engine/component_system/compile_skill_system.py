@@ -50,26 +50,22 @@ item_event_hooks = ('on_add_item', 'on_remove_item',
 # Takes in actions, playback, unit
 phase_event_hooks = ('on_upkeep', 'on_endstep')
 
-SKILL_HOOK_TEMPLATES: Dict[str, HookInfo] = {
-    'formula': HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
-}
-
-SKILL_HOOKS: Dict[str, HookInfo | str] = {
+SKILL_HOOKS: Dict[str, HookInfo] = {
     # formula
-    'damage_formula': 'formula',
-    'resist_formula': 'formula',
-    'accuracy_formula': 'formula',
-    'avoid_formula': 'formula',
-    'crit_accuracy_formula': 'formula',
-    'crit_avoid_formula': 'formula',
-    'attack_speed_formula': 'formula',
-    'defense_speed_formula': 'formula',
-    'critical_multiplier_formula': 'formula',
-    'critical_addition_formula': 'formula',
-    'thracia_critical_multiplier_formula': 'formula',
+    'damage_formula':                       HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'resist_formula':                       HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'accuracy_formula':                     HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'avoid_formula':                        HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'crit_accuracy_formula':                HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'crit_avoid_formula':                   HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'attack_speed_formula':                 HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'defense_speed_formula':                HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'critical_multiplier_formula':          HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'critical_addition_formula':            HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
+    'thracia_critical_multiplier_formula':  HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True),
     # some unique ones
-    'usable_wtypes': HookInfo(['unit'], ResolvePolicy.UNION),
-    'forbidden_wtypes': HookInfo(['unit'], ResolvePolicy.UNION),
+    'usable_wtypes':                        HookInfo(['unit'], ResolvePolicy.UNION),
+    'forbidden_wtypes':                     HookInfo(['unit'], ResolvePolicy.UNION),
 }
 
 def generate_skill_hook_str(hook_name: str, hook_info: HookInfo):
@@ -118,8 +114,6 @@ def compile_skill_system():
         compiled_skill_system.write(line)
 
     for hook_name, hook_info in SKILL_HOOKS.items():
-        if isinstance(hook_info, str):
-            hook_info = SKILL_HOOK_TEMPLATES[hook_info]
         func = generate_skill_hook_str(hook_name, hook_info)
         compiled_skill_system.write(func)
 

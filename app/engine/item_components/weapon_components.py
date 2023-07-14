@@ -23,7 +23,7 @@ class WeaponType(ItemComponent):
         klass = DB.classes.get(unit.klass)
         wexp_gain = klass.wexp_gain.get(self.value)
         if wexp_gain:
-            klass_usable = self.value in unit_funcs.usable_weapons(unit)
+            klass_usable = self.value in unit_funcs.usable_wtypes(unit)
             return unit.wexp[self.value] > 0 and klass_usable
         return False
 

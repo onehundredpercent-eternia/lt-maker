@@ -348,8 +348,8 @@ def wait(unit):
         game.events.trigger(triggers.UnitWait(unit, unit.position, game.get_region_under_pos(unit.position)))
         action.do(action.Wait(unit))
 
-def usable_weapons(unit) -> Set[NID]:
+def usable_wtypes(unit) -> Set[NID]:
     klass = DB.classes.get(unit.klass)
     klass_weapons = klass.wexp_gain
     klass_usable = set([wtype_name for wtype_name, wtype_info in klass_weapons.items() if wtype_info.usable])
-    return (klass_usable | skill_system.usable_wtypes(unit)).difference(skill_system.forbidden_wtypes(unit))
+    return (klass_usable | skill_system.usable_wtypes(unit)) - skill_system.forbidden_wtypes(unit)
