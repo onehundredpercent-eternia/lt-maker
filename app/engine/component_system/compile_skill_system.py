@@ -1,5 +1,9 @@
 # Takes in unit, returns False if not present
 # All default hooks are exclusive
+from typing import Any, Dict
+from app.engine.component_system.utils import ARG_TYPE_MAP, HookInfo, ResolvePolicy
+
+
 formula = ('damage_formula', 'resist_formula', 'accuracy_formula', 'avoid_formula',
            'crit_accuracy_formula', 'crit_avoid_formula', 'attack_speed_formula', 'defense_speed_formula',
            'critical_multiplier_formula', 'critical_addition_formula', 'thracia_critical_multiplier_formula')
@@ -17,7 +21,7 @@ exclusive_behaviours = ('can_select', 'no_trade', 'movement_type', 'sight_range'
 exclusive_behaviours += formula
 # Takes in unit and item, returns default value
 item_behaviours = ('modify_buy_price', 'modify_sell_price',
-                   'limit_maximum_range', 'wexp_usable_skill', 'wexp_unusable_skill')
+                   'limit_maximum_range')
 # Takes in unit and target, returns default value
 targeted_behaviours = ('check_ally', 'check_enemy', 'can_trade', 'exp_multiplier', 'enemy_exp_multiplier',
                        'wexp_multiplier', 'enemy_wexp_multiplier', 'has_canto', 'empower_heal', 'empower_heal_received', 'canto_movement')
@@ -50,6 +54,39 @@ item_event_hooks = ('on_add_item', 'on_remove_item',
 # Takes in actions, playback, unit
 phase_event_hooks = ('on_upkeep', 'on_endstep')
 
+SKILL_HOOKS: Dict[str, HookInfo] = {
+    'usable_wtypes': HookInfo(['unit'], ResolvePolicy.UNION),
+    'forbidden_wtypes': HookInfo(['unit'], ResolvePolicy.UNION),
+}
+
+def generate_skill_hook_str(hook_name: str, hook_info: HookInfo):
+    args = hook_info.args
+    if not 'unit' in args:
+        raise ValueError("Expected 'unit' in args for hook %s" % hook_name)
+    func_signature = ['{arg}: {type}'.format(arg=arg, type=ARG_TYPE_MAP.get(arg, "Any")) for arg in args]
+
+    conditional_check = "condition(skill, unit)" if not 'item' in args else 'condition(skill, unit, item)'
+    default_handling = "return result"
+    if hook_info.has_default_value:
+        default_handling = "return result if values else Defaults.{hook_name}({args})".format(hook_name, ', '.join(args))
+    func_text = """
+def {hook_name}({func_signature}):
+    values = []
+    for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('{hook_name}'):
+                if component.ignore_conditional or {conditional_check}:
+                    values.append(component.{hook_name}({args}))
+    result = utils.{policy_resolution}(values)
+    {default_handling}
+""".format(hook_name=hook_name,
+           func_signature=', '.join(func_signature),
+           conditional_check=conditional_check,
+           args=', '.join(args),
+           policy_resolution=hook_info.policy.value,
+           default_handling=default_handling)
+    return func_text
+
 def compile_skill_system():
     import os
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -66,6 +103,11 @@ def compile_skill_system():
     # copy skill system base
     for line in skill_system_base.readlines():
         compiled_skill_system.write(line)
+
+    for hook_name, hook_info in SKILL_HOOKS.items():
+        func = generate_skill_hook_str(hook_name, hook_info)
+        compiled_skill_system.write(func)
+        compiled_skill_system.write('\n')
 
     # compile skill system
     for behaviour in default_behaviours:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from app.engine.component_system import utils
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
@@ -65,14 +66,6 @@ class Defaults():
     @staticmethod
     def enemy_wexp_multiplier(unit1, unit2) -> float:
         return 1.0
-
-    @staticmethod
-    def wexp_usable_skill(unit1, unit2) -> float:
-        return False
-
-    @staticmethod
-    def wexp_unusable_skill(unit1, unit2) -> float:
-        return False
 
     @staticmethod
     def change_variant(unit) -> str:
