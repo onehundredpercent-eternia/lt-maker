@@ -3,7 +3,7 @@ import sys
 from app.editor.recent_project_dialog import choose_recent_project
 
 from app.editor.editor_locale import init_locale
-from app.engine.component_system_compiler import source_generator
+from app.engine.component_system import source_generator
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QLockFile, QDir, Qt
