@@ -1,9 +1,9 @@
-import unittest
 import logging
+import unittest
+
 
 class ComponentCompilerUnitTests(unittest.TestCase):
     def setUp(self):
-        pass
         # Patch out logging below CRITICAL DAMAGE
         logging.disable(logging.CRITICAL)
 

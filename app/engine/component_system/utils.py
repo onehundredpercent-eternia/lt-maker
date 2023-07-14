@@ -13,7 +13,12 @@ ARG_TYPE_MAP: Dict[str, str] = {
 class ResolvePolicy(Enum):
     UNIQUE = 'unique'
     UNION = 'union'
+
+    ALL_DEFAULT_FALSE = 'all_false_priority'
     NUMERIC_ACCUM = 'numeric_accumulate'
+
+
+    NO_RETURN = 'no_return'
 
 @dataclass
 class HookInfo():
@@ -31,8 +36,16 @@ def unique(vals: List[Any]):
         return None
     return vals[0]
 
+def all_false_priority(vals: List[bool]) -> bool:
+    if not vals:
+        return False
+    return all(vals)
+
 def union(vals: List[Any]):
     return set(vals)
 
 def numeric_accumulate(vals: List[int | float]):
     return sum(vals)
+
+def no_return(_):
+    return None

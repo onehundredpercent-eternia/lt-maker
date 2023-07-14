@@ -300,3 +300,7 @@ def %s(actions, playback, unit) -> tuple:  # actions, playback
             % (hook, hook, hook, hook, hook)
         compiled_skill_system.write(func)
         compiled_skill_system.write('\n')
+
+    skill_system_base.close()
+    compiled_skill_system.close()
+    warning_msg.close()

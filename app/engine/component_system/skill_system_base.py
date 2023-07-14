@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 from app.engine.component_system import utils
 
 if TYPE_CHECKING:
@@ -432,7 +434,7 @@ def ai_priority_multiplier(unit) -> float:
     return ai_priority_multiplier
 
 def get_combat_arts(unit):
-    from app.engine import item_funcs, target_system, action
+    from app.engine import action, item_funcs, target_system
     combat_arts = {}
     unit_skills = unit.skills[:]
     for skill in unit_skills:
