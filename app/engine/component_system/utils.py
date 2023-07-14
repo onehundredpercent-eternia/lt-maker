@@ -36,12 +36,3 @@ def union(vals: List[Any]):
 
 def numeric_accumulate(vals: List[int | float]):
     return sum(vals)
-
-def assert_all_policies_have_resolutions():
-    for policy in ResolvePolicy:
-        try:
-            eval("{policy}([])".format(policy=policy.value))
-        except:
-            raise NotImplementedError("Did not implement ResolvePolicy %s" % policy.name)
-
-assert_all_policies_have_resolutions()
