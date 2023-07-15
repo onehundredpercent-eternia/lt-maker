@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict, List, Tuple
 
 from app.engine import engine, help_menu, menus
 
@@ -11,12 +12,13 @@ class BoundingBox():
     help_box: help_menu.HelpDialog = None
     state: str = None
     first: bool = False
+    bbid: str = ""
 
 class InfoGraph():
     draw_all_bbs: bool = False
 
     def __init__(self):
-        self.registry = {state: [] for state in info_states}
+        self.registry: Dict[str, List[BoundingBox]] = {state: [] for state in info_states}
         self.registry.update({'growths': []})
         self.current_bb = None
         self.last_bb = None
@@ -25,7 +27,7 @@ class InfoGraph():
         self.first_bb = None
 
     def clear(self):
-        self.registry = {state: [] for state in info_states}
+        self.registry: Dict[str, List[BoundingBox]] = {state: [] for state in info_states}
         self.registry.update({'growths': []})
         self.current_bb = None
         self.last_bb = None
@@ -34,17 +36,43 @@ class InfoGraph():
     def set_current_state(self, state):
         self.current_state = state
 
-    def register(self, aabb, help_box, state, first=False):
+    def register(self, aabb: Tuple[int, int, int, int], help_box: help_menu.HelpDialog, state: str, first=False, bb_id=None):
+        """_summary_
+
+        Args:
+            aabb (Tuple[int, int, int, int]): AABB rectangle indicating the size of the object this help box
+                corresponds to
+            help_box (help_menu.HelpDialog): Help box to be displayed when hovering over this object
+            state (str): which states for which this help box will display
+            first (bool, optional): if this is the default help dialog to appear upon entering help mode. Defaults to False.
+            bb_id (_type_, optional): an optional identifier for the box. Used to unregister help boxes. If not provided,
+                an internal ID will be automatically generated (but not returned, and is therefore inaccessible).
+        """
         if isinstance(help_box, str):
             help_box = help_menu.HelpDialog(help_box)
 
         if state == 'all':
             for s in self.registry:
                 idx = len(self.registry[s])
-                self.registry[s].append(BoundingBox(idx, aabb, help_box, s, first))
+                self.registry[s].append(BoundingBox(idx, aabb, help_box, s, first, bb_id or str(idx)))
         else:
             idx = len(self.registry[state])
-            self.registry[state].append(BoundingBox(idx, aabb, help_box, state, first))
+            self.registry[state].append(BoundingBox(idx, aabb, help_box, state, first, bb_id or str(idx)))
+
+    def unregister(self, state: str, bb_id: str):
+        """Removes all info boxes from @param state with id @param bb_id
+
+        Args:
+            state (str): state from which to delete info boxes
+            bb_id (str): identifier to delete
+        """
+        if self.current_bb and self.current_bb.bbid == bb_id:
+            self.current_bb = None
+        if state == 'all':
+            for s in self.registry:
+                self.registry[s] = [bb for bb in self.registry[s] if bb.bbid != bb_id]
+        else:
+            self.registry[state] = [bb for bb in self.registry[state] if bb.bbid != bb_id]
 
     def set_transition_in(self):
         if self.last_bb and self.last_bb.state == self.current_state:

@@ -20,7 +20,6 @@ from app.engine.state import State
 from app.utilities import utils
 from app.utilities.enums import HAlignment
 
-
 class InfoMenuState(State):
     name = 'info_menu'
     in_level = False
