@@ -7,11 +7,10 @@ from app.engine import (background, combat_calcs, engine, equations, gui,
                         help_menu, icons, image_mods, item_funcs, skill_system,
                         text_funcs, unit_funcs)
 from app.engine.fluid_scroll import FluidScroll
-from app.engine.game_menus import menu_options
-from app.engine.game_menus.icon_options import BasicItemOption, ItemOptionModes
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.build_groove import build_groove
 from app.engine.graphics.text.text_renderer import render_text, text_width
+from app.engine.info_menu.equipment_screen import EquipmentScreen
 from app.engine.info_menu.info_graph import InfoGraph, info_states
 from app.engine.input_manager import get_input_manager
 from app.engine.objects.unit import UnitObject
@@ -65,6 +64,8 @@ class InfoMenuState(State):
         self.info_graph = InfoGraph()
         self.info_flag = False
         self.info_graph.set_current_state(self.state)
+
+        self.equipment_screen: EquipmentScreen = EquipmentScreen(self.info_graph, (96, 0))
         self.reset_surfs()
 
         # For transitions between states
@@ -84,10 +85,10 @@ class InfoMenuState(State):
         self.info_graph.clear()
         self.portrait_surf = None
 
+        self.equipment_screen.reset()
         self.personal_data_surf: engine.Surface = None
         self.growths_surf: engine.Surface = None
         self.wexp_surf: engine.Surface = None
-        self.equipment_surf: engine.Surface = None
         self.support_surf: engine.Surface = None
         self.skill_surf: engine.Surface = None
         self.class_skill_surf: engine.Surface = None
@@ -227,7 +228,7 @@ class InfoMenuState(State):
             self.rescuer = None
         elif len(self.scroll_units) > 1:
             index = self.scroll_units.index(self.unit)
-            new_index = (index + 1) % len(self.scroll_units)    
+            new_index = (index + 1) % len(self.scroll_units)
         else:
             return
         self.next_unit = self.scroll_units[new_index]
@@ -245,7 +246,7 @@ class InfoMenuState(State):
             index = self.scroll_units.index(self.unit)
             new_index = (index - 1) % len(self.scroll_units)
         else:
-            return        
+            return
         self.next_unit = self.scroll_units[new_index]
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.next_unit.notes):
             self.state = 'personal_data'
@@ -458,9 +459,9 @@ class InfoMenuState(State):
                 self.draw_fatigue_surf(main_surf)
 
         elif self.state == 'equipment':
-            if not self.equipment_surf:
-                self.equipment_surf = self.create_equipment_surf()
-            self.draw_equipment_surf(main_surf)
+            if not self.equipment_screen.initialized():
+                self.equipment_screen.set_unit(self.unit)
+            self.equipment_screen.draw(main_surf)
 
         elif self.state == 'support_skills':
             main_surf.blit(SPRITES.get('status_logo'), (100, WINHEIGHT - 42))
@@ -620,7 +621,7 @@ class InfoMenuState(State):
                 render_text(surf, ['text'], [gge], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
                 render_text(surf, ['text'], [text_funcs.translate('GAUGE')], ['yellow'], (72, 16 * true_idx + 24))
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'GAUGE_desc', state)
-                
+
             elif stat == 'TALK':
                 if (len([talk for talk in game.talk_options if talk[0] == self.unit.nid]) != 0):
                     talkee = [talk for talk in game.talk_options if talk[0] == self.unit.nid][0][1]
@@ -692,101 +693,6 @@ class InfoMenuState(State):
 
     def draw_wexp_surf(self, surf):
         surf.blit(self.wexp_surf, (96, 24))
-
-    def create_equipment_surf(self):
-        def create_item_option(idx, item):
-            return BasicItemOption.from_item(idx, item, width=120, mode=ItemOptionModes.FULL_USES)
-
-        surf = engine.create_surface((WINWIDTH - 96, WINHEIGHT), transparent=True)
-
-        weapon = self.unit.get_weapon()
-        accessory = self.unit.get_accessory()
-
-        # Blit items
-        for idx, item in enumerate(self.unit.nonaccessories):
-            if item.multi_item and any(subitem is weapon for subitem in item.subitems):
-                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 24 + 8))
-                for subitem in item.subitems:
-                    if subitem is weapon:
-                        item_option = create_item_option(idx, subitem)
-                        break
-                else:  # Shouldn't happen
-                    item_option = create_item_option(idx, item)
-            else:
-                if item is weapon:
-                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 24 + 8))
-                item_option = create_item_option(idx, item)
-            item_option.draw(surf, 8, idx * 16 + 24)
-            self.info_graph.register((96 + 8, idx * 16 + 24, 120, 16), item_option.get_help_box(), 'equipment', first=(idx == 0))
-
-        # Blit accessories
-        for idx, item in enumerate(self.unit.accessories):
-            aidx = item_funcs.get_num_items(self.unit) + idx
-            y_pos = aidx * 16 + 24
-            if item.multi_item and any(subitem is accessory for subitem in item.subitems):
-                surf.blit(SPRITES.get('equipment_highlight'), (8, y_pos + 8))
-                for subitem in item.subitems:
-                    if subitem is accessory:
-                        item_option = create_item_option(aidx, subitem)
-                        break
-                else:  # Shouldn't happen
-                    item_option = create_item_option(aidx, item)
-            else:
-                if item is accessory:
-                    surf.blit(SPRITES.get('equipment_highlight'), (8, y_pos + 8))
-                item_option = create_item_option(aidx, item)
-            item_option.draw(surf, 8, y_pos)
-            first = (idx == 0 and not self.unit.nonaccessories)
-            self.info_graph.register((96 + 8, y_pos, 120, 16), item_option.get_help_box(), 'equipment', first=first)
-
-        # Battle stats
-        battle_surf = SPRITES.get('battle_info')
-        top, left = 104, 12
-        surf.blit(battle_surf, (left, top))
-        # Populate battle info
-        surf.blit(SPRITES.get('equipment_logo'), (14, top + 4))
-        render_text(surf, ['text'], [text_funcs.translate('Rng')], ['yellow'], (78, top))
-        self.info_graph.register((96 + 78, top, 56, 16), 'Rng_desc', 'equipment')
-        render_text(surf, ['text'], [text_funcs.translate('Atk')], ['yellow'], (22, top + 16))
-        self.info_graph.register((96 + 14, top + 16, 64, 16), 'Atk_desc', 'equipment')
-        render_text(surf, ['text'], [text_funcs.translate('Hit')], ['yellow'], (22, top + 32))
-        self.info_graph.register((96 + 14, top + 32, 64, 16), 'Hit_desc', 'equipment')
-        if DB.constants.value('crit'):
-            render_text(surf, ['text'], [text_funcs.translate('Crit')], ['yellow'], (78, top + 16))
-            self.info_graph.register((96 + 78, top + 16, 56, 16), 'Crit_desc', 'equipment')
-        else:
-            render_text(surf, ['text'], [text_funcs.translate('AS')], ['yellow'], (78, top + 16))
-            self.info_graph.register((96 + 78, top + 16, 56, 16), 'AS_desc', 'equipment')
-        render_text(surf, ['text'], [text_funcs.translate('Avoid')], ['yellow'], (78, top + 32))
-        self.info_graph.register((96 + 78, top + 32, 56, 16), 'Avoid_desc', 'equipment')
-
-        if weapon:
-            rng = item_funcs.get_range_string(self.unit, weapon)
-            dam = str(combat_calcs.damage(self.unit, weapon))
-            acc = str(combat_calcs.accuracy(self.unit, weapon))
-            crt = combat_calcs.crit_accuracy(self.unit, weapon)
-            if crt is None:
-                crt = '--'
-            else:
-                crt = str(crt)
-        else:
-            rng, dam, acc, crt = '--', '--', '--', '--'
-
-        avo = str(combat_calcs.avoid(self.unit, weapon))
-        attack_speed = str(combat_calcs.attack_speed(self.unit, weapon))
-        render_text(surf, ['text'], [rng], ['blue'], (127, top), HAlignment.RIGHT)
-        render_text(surf, ['text'], [dam], ['blue'], (71, top + 16), HAlignment.RIGHT)
-        render_text(surf, ['text'], [acc], ['blue'], (71, top + 32), HAlignment.RIGHT)
-        if DB.constants.value('crit'):
-            render_text(surf, ['text'], [crt], ['blue'], (127, top + 16), HAlignment.RIGHT)
-        else:
-            render_text(surf, ['text'], [attack_speed], ['blue'], (127, top + 16), HAlignment.RIGHT)
-        render_text(surf, ['text'], [avo], ['blue'], (127, top + 32), HAlignment.RIGHT)
-
-        return surf
-
-    def draw_equipment_surf(self, surf):
-        surf.blit(self.equipment_surf, (96, 0))
 
     def create_skill_surf(self):
         surf = engine.create_surface((WINWIDTH - 96, 24), transparent=True)
