@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from enum import Enum
+from typing import List, Optional, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
@@ -19,6 +20,11 @@ from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.utilities import utils
 from app.utilities.enums import HAlignment
+
+class InfoMenuMode(Enum):
+    PRIMARY = 1
+    HELP_INFO = 2
+    DISPLAY_CONTROL = 3
 
 class InfoMenuState(State):
     name = 'info_menu'
@@ -61,7 +67,7 @@ class InfoMenuState(State):
         self.switch_logo(self.state)
 
         self.info_graph = InfoGraph()
-        self.info_flag = False
+        self.interaction_mode: InfoMenuMode = InfoMenuMode.PRIMARY
         self.info_graph.set_current_state(self.state)
 
         self.equipment_screen: EquipmentScreen = EquipmentScreen(self.info_graph, (96, 0))
@@ -98,6 +104,11 @@ class InfoMenuState(State):
         self.left_arrow = gui.ScrollArrow('left', (103, 3))
         self.right_arrow = gui.ScrollArrow('right', (217, 3), 0.5)
 
+    def get_displaying_screen(self) -> Optional[EquipmentScreen]:
+        if self.state == 'equipment':
+            return self.equipment_screen
+        return None
+
     def switch_logo(self, name):
         if name == 'personal_data':
             image = SPRITES.get('info_title_personal_data')
@@ -128,11 +139,52 @@ class InfoMenuState(State):
         directions = self.fluid.get_directions()
 
         self.handle_mouse()
-        if self.info_flag:
-            if event == 'INFO' or event == 'BACK':
+        if self.interaction_mode == InfoMenuMode.DISPLAY_CONTROL:
+            current_display = self.get_displaying_screen()
+            if not current_display: # should never happen
+                self.interaction_mode = InfoMenuMode.PRIMARY
+                return
+            if event == 'INFO':
+                current_display.disable_control()
+                get_sound_thread().play_sfx('Info In')
+                self.info_graph.set_transition_in()
+                self.interaction_mode = InfoMenuMode.HELP_INFO
+                return
+            if event == 'BACK':
+                current_display.disable_control()
+                get_sound_thread().play_sfx('Info Out')
+                self.interaction_mode = InfoMenuMode.PRIMARY
+            if current_display:
+                if event == 'SELECT':
+                    get_sound_thread().play_sfx('Select 6')
+                    current_display.select()
+                elif 'RIGHT' in directions:
+                    get_sound_thread().play_sfx('Select 6')
+                    current_display.move_right()
+                elif 'LEFT' in directions:
+                    get_sound_thread().play_sfx('Select 6')
+                    current_display.move_left()
+                elif 'UP' in directions:
+                    get_sound_thread().play_sfx('Select 6')
+                    current_display.move_up()
+                elif 'DOWN' in directions:
+                    get_sound_thread().play_sfx('Select 6')
+                    current_display.move_down()
+        elif self.interaction_mode == InfoMenuMode.HELP_INFO:
+            if event == 'BACK':
                 get_sound_thread().play_sfx('Info Out')
                 self.info_graph.set_transition_out()
-                self.info_flag = False
+                self.interaction_mode = InfoMenuMode.PRIMARY
+                return
+            if event == 'INFO':
+                get_sound_thread().play_sfx('Info Out')
+                self.info_graph.set_transition_out()
+                current_display = self.get_displaying_screen()
+                if current_display and current_display:
+                    self.interaction_mode = InfoMenuMode.DISPLAY_CONTROL
+                    current_display.enable_control()
+                else:
+                    self.interaction_mode = InfoMenuMode.PRIMARY
                 return
 
             if 'RIGHT' in directions:
@@ -149,11 +201,10 @@ class InfoMenuState(State):
                 self.info_graph.move_down()
 
         elif not self.transition:  # Only takes input when not transitioning
-
             if event == 'INFO':
                 get_sound_thread().play_sfx('Info In')
                 self.info_graph.set_transition_in()
-                self.info_flag = True
+                self.interaction_mode = InfoMenuMode.HELP_INFO
                 return
             elif event == 'AUX':
                 if self.state == 'personal_data' and self.unit.team == 'player' and DB.constants.value('growth_info'):
@@ -265,7 +316,7 @@ class InfoMenuState(State):
         mouse_position = get_input_manager().get_mouse_position()
         if not mouse_position:
             return
-        if self.info_flag:
+        if self.interaction_mode == InfoMenuMode.HELP_INFO:
             self.info_graph.handle_mouse(mouse_position)
 
     def update(self):
@@ -337,6 +388,10 @@ class InfoMenuState(State):
                     self.state = self.next_state
                     self.info_graph.set_current_state(self.state)
                     self.transition_counter = 0
+
+        current_display = self.get_displaying_screen()
+        if current_display:
+            current_display.update()
 
     def draw(self, surf):
         if self.bg:
@@ -479,10 +534,12 @@ class InfoMenuState(State):
                 self.notes_surf = self.create_notes_surf()
             self.draw_notes_surf(main_surf)
 
-        # Now put it in the right place
-        offset_x = max(96, 96 - self.scroll_offset_x)
-        main_surf = engine.subsurface(main_surf, (offset_x, 0, main_surf.get_width() - offset_x, WINHEIGHT))
-        surf.blit(main_surf, (max(96, 96 + self.scroll_offset_x), self.scroll_offset_y))
+        if self.transition: # need to trim during transitions to preserve left side's stoicness
+            offset_x = max(96, 96 - self.scroll_offset_x)
+            main_surf = engine.subsurface(main_surf, (offset_x, 0, main_surf.get_width() - offset_x, WINHEIGHT))
+            surf.blit(main_surf, (max(96, 96 + self.scroll_offset_x), self.scroll_offset_y))
+        else:
+            surf.blit(main_surf, (0, 0))
         if self.transparency:
             top_surf = image_mods.make_translucent(top_surf, self.transparency)
         surf.blit(top_surf, (0, self.scroll_offset_y))

@@ -74,8 +74,21 @@ class InfoGraph():
         else:
             self.registry[state] = [bb for bb in self.registry[state] if bb.bbid != bb_id]
 
+    def select_box(self, state: str, bb_id: str):
+        bboxes_with_id = []
+        if state == 'all':
+            for s in self.registry:
+                bboxes_with_id += [bb for bb in self.registry[s] if bb.bbid == bb_id]
+        else:
+            bboxes_with_id += [bb for bb in self.registry[state] if bb.bbid == bb_id]
+        if bboxes_with_id:
+            if self.current_bb: # currently displaying
+                self.current_bb = bboxes_with_id[0]
+            if self.last_bb: # dormant
+                self.last_bb = bboxes_with_id[0]
+
     def set_transition_in(self):
-        if self.last_bb and self.last_bb.state == self.current_state:
+        if self.last_bb and self.last_bb.state == self.current_state and self.last_bb in self.registry[self.current_state]:
             self.current_bb = self.last_bb
             self.current_bb.help_box.set_transition_in()
         elif self.registry:

@@ -38,7 +38,7 @@ class ItemObject():
         # For subitems
         self.subitem_uids = []
         self.subitems = []
-        self.parent_item = None
+        self.parent_item: Optional[ItemObject] = None
 
     @property
     def tags(self) -> set:
