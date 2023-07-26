@@ -421,3 +421,9 @@ def strike_partner_formula(allies: list, attacker, defender, mode, attack_info):
     max_score = max(score)
     max_index = score.index(max_score)
     return allies[max_index]
+
+def get_possible_attack_positions(unit, target, moves, item) -> list:
+    a = find_manhattan_spheres(item_funcs.get_range(unit, item), *target)
+    b = set(moves)
+    positions = list(a & b)
+    return [pos for pos in positions if not game.board.get_unit(pos) or game.board.get_unit(pos) == unit]

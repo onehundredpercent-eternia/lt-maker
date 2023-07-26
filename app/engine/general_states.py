@@ -23,12 +23,14 @@ from app.engine import engine, action, menus, image_mods, \
     text_funcs, equations, evaluate, supports
 from app.engine.combat import interaction
 from app.engine.selection_helper import SelectionHelper
-from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES
+from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, AttackAbility
 from app.engine.input_manager import get_input_manager
 from app.engine.fluid_scroll import FluidScroll
 import threading
 
 import logging
+
+from app.utilities import utils
 
 class LoadingState(State):
     name = 'start_level_asset_loading'
@@ -670,8 +672,10 @@ class MoveState(MapState):
         if cur_unit.has_traded:
             self.valid_moves = target_system.get_valid_moves(cur_unit)
             game.highlight.display_moves(self.valid_moves, light=False)
+            self.valid_targets = []
         else:
             self.valid_moves = game.highlight.display_highlights(cur_unit)
+            self.valid_targets = target_system.get_possible_attacks(cur_unit, self.valid_moves)
 
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:
@@ -737,8 +741,55 @@ class MoveState(MapState):
                         game.get_unit(cur_unit.traveler).current_move = cur_unit.current_move
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
+
+            elif game.cursor.position in self.valid_targets and game.board.get_unit(game.cursor.position):
+
+                # Determine position to move for attack
+                move_pos = None
+                idx = 0
+                while not move_pos and idx < len(cur_unit.items):
+                    move_pos = target_system.get_possible_attack_positions(cur_unit, 
+                            game.cursor.position, self.valid_moves, cur_unit.items[idx])
+                    idx += 1
+
+                if not move_pos:
+                    # Should never happen
+                    get_sound_thread().play_sfx('Error')
+                    return 
+
+                # Figure out a good location nearest to the cursor path
+                if game.cursor.path:
+                    move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]))[0]
+                else:
+                    move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
+                target_pos = game.cursor.position
+                game.cursor.position = move_pos # TODO: expand this later to not move until attack begins
+
+                if not game.board.in_vision(target_pos):
+                    get_sound_thread().play_sfx('Error')
+                else:
+                    normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
+                    witch_warp = set(skill_system.witch_warp(cur_unit))
+                    if cur_unit.has_attacked:
+                        get_sound_thread().play_sfx('Error')
+                    elif move_pos in witch_warp and move_pos not in normal_moves:
+                        cur_unit.current_move = action.Warp(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
+                        self.direct_attack_state_setup(cur_unit)
+                    else:
+                        cur_unit.current_move = action.Move(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
+                        self.direct_attack_state_setup(cur_unit)
+                    if cur_unit.traveler:
+                        game.get_unit(cur_unit.traveler).current_move = cur_unit.current_move
+                    game.state.change('movement')
+                    action.do(cur_unit.current_move)
             else:
                 get_sound_thread().play_sfx('Error')
+
+    def direct_attack_state_setup(self, cur_unit: UnitObject):
+        game.memory['targets'] = AttackAbility.targets(cur_unit)
+        game.memory['ability'] = 'Attack'
+        game.state.change('menu')
+        game.state.change('weapon_choice')
 
     def end(self):
         game.cursor.remove_arrows()
@@ -1478,6 +1529,8 @@ class ItemDiscardState(MapState):
 
 class WeaponChoiceState(MapState):
     name = 'weapon_choice'
+    item_desc_panel = None
+    menu = None
 
     def get_options(self, unit) -> list:
         if game.memory.get('valid_weapons'):
@@ -1603,8 +1656,10 @@ class WeaponChoiceState(MapState):
 
     def draw(self, surf):
         surf = super().draw(surf)
-        surf = self.item_desc_panel.draw(surf)
-        surf = self.menu.draw(surf)
+        if self.item_desc_panel:
+            surf = self.item_desc_panel.draw(surf)
+        if self.menu:
+            surf = self.menu.draw(surf)
         return surf
 
     def end(self):
