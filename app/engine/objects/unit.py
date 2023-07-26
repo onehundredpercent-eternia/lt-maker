@@ -159,7 +159,7 @@ class UnitObject(Prefab):
             # Generics have defualt stat cap modifiers of 0
             self.stat_cap_modifiers = {stat_nid: 0 for stat_nid in DB.stats.keys()}
             weapon_gain = klass_obj.wexp_gain
-            self.wexp = {weapon_nid: weapon_gain.get(weapon_nid, DB.weapons.default()).wexp_gain for weapon_nid in DB.weapons.keys()}
+            self.wexp = {weapon_nid: weapon_gain.get(weapon_nid, DB.weapons.default(DB)).wexp_gain for weapon_nid in DB.weapons.keys()}
         else:
             bases = prefab.bases
             growths = prefab.growths
@@ -172,7 +172,7 @@ class UnitObject(Prefab):
                 self.growths = {stat_nid: self.growths[stat_nid] + klass_obj.growths.get(stat_nid, 0) for stat_nid in DB.stats.keys()}
             self.stat_cap_modifiers = {stat_nid: stat_cap_modifiers.get(stat_nid, 0) for stat_nid in DB.stats.keys()}
             weapon_gain = prefab.wexp_gain
-            self.wexp = {weapon_nid: weapon_gain.get(weapon_nid, DB.weapons.default()).wexp_gain for weapon_nid in DB.weapons.keys()}
+            self.wexp = {weapon_nid: weapon_gain.get(weapon_nid, DB.weapons.default(DB)).wexp_gain for weapon_nid in DB.weapons.keys()}
 
         # status bools
         self.dead = False
