@@ -423,6 +423,8 @@ def strike_partner_formula(allies: list, attacker, defender, mode, attack_info):
     return allies[max_index]
 
 def get_possible_attack_positions(unit, target, moves, item) -> list:
+    '''Copied from AI controller and modified slightly to exclude taken positions
+    Finds all valid squares given a target and possible moves'''
     a = find_manhattan_spheres(item_funcs.get_range(unit, item), *target)
     b = set(moves)
     positions = list(a & b)

@@ -763,7 +763,7 @@ class MoveState(MapState):
                 else:
                     move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
                 target_pos = game.cursor.position
-                game.cursor.position = move_pos # TODO: expand this later to not move until attack begins
+                game.cursor.position = move_pos
 
                 if not game.board.in_vision(target_pos):
                     get_sound_thread().play_sfx('Error')
@@ -786,6 +786,8 @@ class MoveState(MapState):
                 get_sound_thread().play_sfx('Error')
 
     def direct_attack_state_setup(self, cur_unit: UnitObject):
+        '''Adds the states needed for backing out of the attack to 
+        function correctly'''
         game.memory['targets'] = AttackAbility.targets(cur_unit)
         game.memory['ability'] = 'Attack'
         game.state.change('menu')
