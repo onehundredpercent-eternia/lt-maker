@@ -153,7 +153,7 @@ class WeaponCatalog(Data[WeaponType]):
     datatype = WeaponType
 
     def default(self, db):
-        default_cap = DB.weapon_ranks.get_highest_rank().requirement
+        default_cap = db.weapon_ranks.get_highest_rank().requirement
         return WexpGain(False, 0, default_cap)
 
     def create_new(self, db):

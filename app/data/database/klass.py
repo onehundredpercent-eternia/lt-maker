@@ -74,7 +74,7 @@ class Klass(Prefab):
             if isinstance(value, list):
                 value = {nid: WexpGain(usable, wexp_gain) for (usable, nid, wexp_gain) in value}
             else:
-                value = {k: WexpGain(usable, wexp_gain) for (k, (usable, wexp_gain)) in value.items()}
+                value = {k: WexpGain.restore(v) for (k, v) in value.items()}
         elif name == 'fields':
             if value is None:
                 return []
