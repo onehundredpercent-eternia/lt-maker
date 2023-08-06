@@ -2843,6 +2843,22 @@ Displays the game's guide screen.
 
     _flags = ["immediate"]
 
+class OpenUnitManagement(EventCommand):
+    nid = 'open_unit_management'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Displays the unit management screen, as if it were accessed from Base.
+If given, uses the (*Panorama*) as the background image.
+The (*Scroll*) flag determines whether the background image will move.
+1. *immediate* flag skips the transition between screens
+        """
+
+    optional_keywords = ['Panorama']
+    keyword_types = ['Panorama']
+    _flags = ["scroll", "immediate"]
+
 class LocationCard(EventCommand):
     nid = 'location_card'
     tag = Tags.DIALOGUE_TEXT
@@ -3118,6 +3134,14 @@ class SetOverworldMenuOptionVisible(EventCommand):
 
     keywords = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Setting']
     keyword_types = ['OverworldNodeNID', 'OverworldNodeMenuOption', 'Bool']
+
+class EnterLevelFromOverworld(EventCommand):
+    nid = 'enter_level_from_overworld'
+    tag =  Tags.OVERWORLD
+    desc = ('Begin the level with the specified NID. Only intended to work from the Overword')
+
+    keywords = ['LevelNid']
+    keyword_types = ['String']
 
 class CreateAchievement(EventCommand):
     nid = 'create_achievement'

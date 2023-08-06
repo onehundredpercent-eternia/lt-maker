@@ -2498,10 +2498,26 @@ def remove_tag(self: Event, global_unit, tag, flags=None):
         action.do(action.RemoveTag(unit, tag))
 
 def add_talk(self: Event, unit1, unit2, flags=None):
-    action.do(action.AddTalk(unit1, unit2))
+    u1 = self._get_unit(unit1)
+    if not u1:
+        self.logger.error("add_talk: Couldn't find unit %s" % unit1)
+        return
+    u2 = self._get_unit(unit2)
+    if not u2:
+        self.logger.error("add_talk: Couldn't find unit %s" % unit2)
+        return
+    action.do(action.AddTalk(u1.nid, u2.nid))
 
 def remove_talk(self: Event, unit1, unit2, flags=None):
-    action.do(action.RemoveTalk(unit1, unit2))
+    u1 = self._get_unit(unit1)
+    if not u1:
+        self.logger.error("remove_talk: Couldn't find unit %s" % unit1)
+        return
+    u2 = self._get_unit(unit2)
+    if not u2:
+        self.logger.error("remove_talk: Couldn't find unit %s" % unit2)
+        return
+    action.do(action.RemoveTalk(u1.nid, u2.nid))
 
 def add_lore(self: Event, lore, flags=None):
     action.do(action.AddLore(lore))
@@ -3463,6 +3479,21 @@ def open_guide(self: Event, flags=None):
             self.game.state.change('transition_to')
     else:
         self.logger.warning("open_guide: Skipping opening guide because there is no unlocked lore in the guide category")
+
+def open_unit_management(self: Event, panorama=None, flags=None):
+    flags = flags or set() 
+    if 'scroll' in flags:
+        bg = background.create_background(panorama, True)
+    else:
+        bg = background.create_background(panorama, False)
+    self.game.memory['base_bg'] = bg
+    
+    self.state = "paused"
+    if 'immediate' in flags:
+        self.game.state.change('base_manage')
+    else:
+        self.game.memory['next_state'] = 'base_manage'
+        self.game.state.change('transition_to')
 
 def location_card(self: Event, string, flags=None):
     new_location_card = dialog.LocationCard(string)
