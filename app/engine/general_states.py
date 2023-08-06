@@ -821,11 +821,13 @@ class MoveState(MapState):
         if self.is_weapon_target(target_pos, cur_unit):
             game.memory['targets'] = AttackAbility.targets(cur_unit)
             game.memory['ability'] = 'Attack'
+            game.memory['selection'] = target_pos
             game.state.change('menu')
             game.state.change('weapon_choice')
         elif self.is_spell_target(target_pos, cur_unit):
             game.memory['targets'] = SpellAbility.targets(cur_unit)
             game.memory['ability'] = 'Spells'
+            game.memory['selection'] = target_pos
             game.state.change('menu')
             game.state.change('spell_choice')
         elif self.is_ability_target(target_pos, cur_unit):
@@ -833,6 +835,7 @@ class MoveState(MapState):
             targets = target_system.get_valid_targets(cur_unit, item)
             game.memory['targets'] = targets
             game.memory['ability'] = item.name
+            game.memory['selection'] = target_pos
             game.memory['item'] = item
             game.state.change('menu')
             game.state.change('combat_targeting')
@@ -2066,10 +2069,15 @@ class CombatTargetingState(MapState):
 
         self.selection = SelectionHelper(positions)
         self.previous_mouse_pos = None
-        if self.item and item_funcs.is_heal(self.cur_unit, self.item):
-            closest_pos = self.selection.get_least_hp(game.cursor.position)
+        preselect = game.memory.get('selection')
+        if preselect:
+            closest_pos = preselect
+            game.memory['selection'] = None
         else:
-            closest_pos = self.selection.get_closest(game.cursor.position)
+            if self.item and item_funcs.is_heal(self.cur_unit, self.item):
+                closest_pos = self.selection.get_least_hp(game.cursor.position)
+            else:
+                closest_pos = self.selection.get_closest(game.cursor.position)
         game.cursor.set_pos(closest_pos)
 
         # Sets dual strike variables and chooses attacker dual strike
