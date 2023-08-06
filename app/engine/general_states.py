@@ -679,6 +679,8 @@ class MoveState(MapState):
             self.valid_attacks = target_system.get_possible_attacks(cur_unit, self.valid_moves)
             self.valid_spells = target_system.get_possible_spell_attacks(cur_unit, self.valid_moves)
 
+        self.extra_abilities = [item[1] for item in skill_system.get_extra_abilities(cur_unit).items()]
+
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:
             phase.fade_in_phase_music()
@@ -721,14 +723,14 @@ class MoveState(MapState):
                     action.execute(cur_unit.current_move)
                     game.state.change('menu')
 
-            elif self.is_weapon_target(game.cursor.position, cur_unit) \
-                    or self.is_spell_target(game.cursor.position, cur_unit) \
-                    or self.is_pairup_target(game.cursor.position, cur_unit):
-                self.handle_direct_selection(cur_unit)
-
             elif game.cursor.position in self.valid_moves:
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
-                    get_sound_thread().play_sfx('Error')
+                    # If you try and select a tile with an ally
+                    if self.is_direct_selection_target(game.cursor.position, cur_unit):
+                        # You've selected a unit that could be a target
+                        self.handle_direct_selection(cur_unit)
+                    else:
+                        get_sound_thread().play_sfx('Error')
                 else:
                     normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
                     witch_warp = set(skill_system.witch_warp(cur_unit))
@@ -749,6 +751,10 @@ class MoveState(MapState):
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
 
+            elif self.is_direct_selection_target(game.cursor.position, cur_unit):
+                # You've selected a unit that could be a target
+                self.handle_direct_selection(cur_unit)
+
             else:
                 get_sound_thread().play_sfx('Error')
 
@@ -756,9 +762,11 @@ class MoveState(MapState):
         # Determine position to move for attack
         move_pos = None
         idx = 0
-        while not move_pos and idx < len(cur_unit.items):
+        # Includes skill-given abilities such as steal or dance
+        items_and_abilities = cur_unit.items + self.extra_abilities
+        while not move_pos and idx < len(items_and_abilities):
             move_pos = target_system.get_possible_attack_positions(cur_unit, 
-                    game.cursor.position, self.valid_moves, cur_unit.items[idx])
+                    game.cursor.position, self.valid_moves, items_and_abilities[idx])
             idx += 1
 
         if not move_pos:
@@ -791,13 +799,22 @@ class MoveState(MapState):
             game.state.change('movement')
             action.do(cur_unit.current_move)
 
+    def is_direct_selection_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
+        return self.is_weapon_target(pos, cur_unit) \
+                    or self.is_spell_target(pos, cur_unit) \
+                    or self.is_ability_target(pos, cur_unit) \
+                    or self.is_pairup_target(pos, cur_unit)
+
     def is_weapon_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in self.valid_attacks and pos in target_system.get_all_weapon_targets(cur_unit)
+        return pos in self.valid_attacks and pos in target_system.get_all_weapon_targets(cur_unit, ignore_proximity=True)
     
     def is_spell_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in self.valid_spells and pos in target_system.get_all_spell_targets(cur_unit)
+        return pos in self.valid_spells and pos in target_system.get_all_spell_targets(cur_unit, ignore_proximity=True)
+
+    def is_ability_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
+        return pos in target_system.get_all_targets_with_items(cur_unit, self.extra_abilities, ignore_proximity=True)
     
-    def is_pairup_target(self, pos: tuple, cur_unit: UnitObject):
+    def is_pairup_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
         return pos in PairUpAbility.targets_within_movement(cur_unit)
 
     def direct_attack_state_setup(self, cur_unit: UnitObject, target_pos: tuple):
@@ -813,6 +830,14 @@ class MoveState(MapState):
             game.memory['ability'] = 'Spells'
             game.state.change('menu')
             game.state.change('spell_choice')
+        elif self.is_ability_target(target_pos, cur_unit):
+            item = self.extra_abilities[0]
+            targets = target_system.get_valid_targets(cur_unit, item)
+            game.memory['targets'] = targets
+            game.memory['ability'] = item.name
+            game.memory['item'] = item
+            game.state.change('menu')
+            game.state.change('combat_targeting')
         elif self.is_pairup_target(target_pos, cur_unit):
             game.memory['targets'] = PairUpAbility.targets_within_movement(cur_unit)
             game.memory['ability'] = PairUpAbility
@@ -2016,6 +2041,7 @@ class TargetingState(MapState):
 class CombatTargetingState(MapState):
     name = 'combat_targeting'
     pennant = None
+    cur_unit = None
 
     def start(self):
         self.cur_unit = game.cursor.cur_unit

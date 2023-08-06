@@ -277,7 +277,7 @@ def travel_algorithm(path, moves, unit, grid):
         through_path -= 1
     return path[-(through_path + 1)]  # Travel as far as we can
 
-def get_valid_targets(unit, item=None) -> set:
+def get_valid_targets(unit, item=None, ignore_proximity=False) -> set:
     """
     Determines all the valid targets given use of the item
     item_system.valid_targets takes care of range
@@ -301,7 +301,10 @@ def get_valid_targets(unit, item=None) -> set:
             return set()
 
     # Handle regular item targeting
-    all_targets = item_system.valid_targets(unit, item)
+    if ignore_proximity:
+        all_targets = item_system.ai_targets(unit, item) if item_system.ai_priority != -1 else item_system.valid_targets(unit, item)
+    else:
+        all_targets = item_system.valid_targets(unit, item)
     valid_targets = set()
     for position in all_targets:
         splash = item_system.splash(unit, item, position)
@@ -347,15 +350,15 @@ def get_weapons(unit: UnitObject) -> List[ItemObject]:
 def get_all_weapons(unit: UnitObject) -> List[ItemObject]:
     return [item for item in item_funcs.get_all_items(unit) if item_system.is_weapon(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_targets_with_items(unit, items: List[ItemObject]) -> set:
+def get_all_targets_with_items(unit, items: List[ItemObject], ignore_proximity=False) -> set:
     targets = set()
     for item in items:
-        targets |= get_valid_targets(unit, item)
+        targets |= get_valid_targets(unit, item, ignore_proximity)
     return targets
 
-def get_all_weapon_targets(unit) -> set:
+def get_all_weapon_targets(unit, ignore_proximity=False) -> set:
     weapons = get_all_weapons(unit)
-    return get_all_targets_with_items(unit, weapons)
+    return get_all_targets_with_items(unit, weapons, ignore_proximity)
 
 def get_spells(unit: UnitObject) -> List[ItemObject]:
     return [item for item in unit.items if item_funcs.is_spell_recursive(unit, item) and item_funcs.available(unit, item)]
@@ -363,9 +366,9 @@ def get_spells(unit: UnitObject) -> List[ItemObject]:
 def get_all_spells(unit):
     return [item for item in item_funcs.get_all_items(unit) if item_system.is_spell(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_spell_targets(unit) -> set:
+def get_all_spell_targets(unit, ignore_proximity=False) -> set:
     spells = get_all_spells(unit)
-    return get_all_targets_with_items(unit, spells)
+    return get_all_targets_with_items(unit, spells, ignore_proximity)
 
 def find_strike_partners(attacker, defender, item):
     '''Finds and returns a tuple of strike partners for the specified units
