@@ -23,7 +23,7 @@ from app.engine import engine, action, menus, image_mods, \
     text_funcs, equations, evaluate, supports
 from app.engine.combat import interaction
 from app.engine.selection_helper import SelectionHelper
-from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, AttackAbility
+from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, AttackAbility, PairUpAbility, SpellAbility
 from app.engine.input_manager import get_input_manager
 from app.engine.fluid_scroll import FluidScroll
 import threading
@@ -672,10 +672,12 @@ class MoveState(MapState):
         if cur_unit.has_traded:
             self.valid_moves = target_system.get_valid_moves(cur_unit)
             game.highlight.display_moves(self.valid_moves, light=False)
-            self.valid_targets = []
+            self.valid_attacks = []
+            self.valid_spells = []
         else:
             self.valid_moves = game.highlight.display_highlights(cur_unit)
-            self.valid_targets = target_system.get_possible_attacks(cur_unit, self.valid_moves)
+            self.valid_attacks = target_system.get_possible_attacks(cur_unit, self.valid_moves)
+            self.valid_spells = target_system.get_possible_spell_attacks(cur_unit, self.valid_moves)
 
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:
@@ -719,6 +721,11 @@ class MoveState(MapState):
                     action.execute(cur_unit.current_move)
                     game.state.change('menu')
 
+            elif self.is_weapon_target(game.cursor.position, cur_unit) \
+                    or self.is_spell_target(game.cursor.position, cur_unit) \
+                    or self.is_pairup_target(game.cursor.position, cur_unit):
+                self.handle_direct_selection(cur_unit)
+
             elif game.cursor.position in self.valid_moves:
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
                     get_sound_thread().play_sfx('Error')
@@ -742,56 +749,76 @@ class MoveState(MapState):
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
 
-            elif game.cursor.position in self.valid_targets and game.board.get_unit(game.cursor.position):
-
-                # Determine position to move for attack
-                move_pos = None
-                idx = 0
-                while not move_pos and idx < len(cur_unit.items):
-                    move_pos = target_system.get_possible_attack_positions(cur_unit, 
-                            game.cursor.position, self.valid_moves, cur_unit.items[idx])
-                    idx += 1
-
-                if not move_pos:
-                    # Should never happen
-                    get_sound_thread().play_sfx('Error')
-                    return 
-
-                # Figure out a good location nearest to the cursor path
-                if game.cursor.path:
-                    move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]))[0]
-                else:
-                    move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
-                target_pos = game.cursor.position
-                game.cursor.position = move_pos
-
-                if not game.board.in_vision(target_pos):
-                    get_sound_thread().play_sfx('Error')
-                else:
-                    normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
-                    witch_warp = set(skill_system.witch_warp(cur_unit))
-                    if cur_unit.has_attacked:
-                        get_sound_thread().play_sfx('Error')
-                    elif move_pos in witch_warp and move_pos not in normal_moves:
-                        cur_unit.current_move = action.Warp(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
-                        self.direct_attack_state_setup(cur_unit)
-                    else:
-                        cur_unit.current_move = action.Move(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
-                        self.direct_attack_state_setup(cur_unit)
-                    if cur_unit.traveler:
-                        game.get_unit(cur_unit.traveler).current_move = cur_unit.current_move
-                    game.state.change('movement')
-                    action.do(cur_unit.current_move)
             else:
                 get_sound_thread().play_sfx('Error')
 
-    def direct_attack_state_setup(self, cur_unit: UnitObject):
+    def handle_direct_selection(self, cur_unit: UnitObject):
+        # Determine position to move for attack
+        move_pos = None
+        idx = 0
+        while not move_pos and idx < len(cur_unit.items):
+            move_pos = target_system.get_possible_attack_positions(cur_unit, 
+                    game.cursor.position, self.valid_moves, cur_unit.items[idx])
+            idx += 1
+
+        if not move_pos:
+            # Should never happen
+            get_sound_thread().play_sfx('Error')
+            return 
+
+        # Figure out a good location nearest to the cursor path
+        if game.cursor.path:
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]) + utils.calculate_distance(pos, cur_unit.position))[0]
+        else:
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
+
+        target_pos = game.cursor.position
+        game.cursor.position = move_pos
+
+        if not game.board.in_vision(target_pos):
+            get_sound_thread().play_sfx('Error')
+        else:
+            normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
+            witch_warp = set(skill_system.witch_warp(cur_unit))
+            if cur_unit.has_attacked:
+                get_sound_thread().play_sfx('Error')
+            elif move_pos in witch_warp and move_pos not in normal_moves:
+                cur_unit.current_move = action.Warp(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
+                self.direct_attack_state_setup(cur_unit, target_pos)
+            else:
+                cur_unit.current_move = action.Move(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
+                self.direct_attack_state_setup(cur_unit, target_pos)
+            game.state.change('movement')
+            action.do(cur_unit.current_move)
+
+    def is_weapon_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
+        return pos in self.valid_attacks and pos in target_system.get_all_weapon_targets(cur_unit)
+    
+    def is_spell_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
+        return pos in self.valid_spells and pos in target_system.get_all_spell_targets(cur_unit)
+    
+    def is_pairup_target(self, pos: tuple, cur_unit: UnitObject):
+        return pos in PairUpAbility.targets_within_movement(cur_unit)
+
+    def direct_attack_state_setup(self, cur_unit: UnitObject, target_pos: tuple):
         '''Adds the states needed for backing out of the attack to 
         function correctly'''
-        game.memory['targets'] = AttackAbility.targets(cur_unit)
-        game.memory['ability'] = 'Attack'
-        game.state.change('menu')
-        game.state.change('weapon_choice')
+        if self.is_weapon_target(target_pos, cur_unit):
+            game.memory['targets'] = AttackAbility.targets(cur_unit)
+            game.memory['ability'] = 'Attack'
+            game.state.change('menu')
+            game.state.change('weapon_choice')
+        elif self.is_spell_target(target_pos, cur_unit):
+            game.memory['targets'] = SpellAbility.targets(cur_unit)
+            game.memory['ability'] = 'Spells'
+            game.state.change('menu')
+            game.state.change('spell_choice')
+        elif self.is_pairup_target(target_pos, cur_unit):
+            game.memory['targets'] = PairUpAbility.targets_within_movement(cur_unit)
+            game.memory['ability'] = PairUpAbility
+            game.memory['selection'] = target_pos
+            game.state.change('menu')
+            game.state.change('targeting')
 
     def end(self):
         game.cursor.remove_arrows()
@@ -1819,6 +1846,8 @@ class CombatArtChoiceState(MapState):
 
 class TargetingState(MapState):
     name = 'targeting'
+    ability = None
+    pennant = None
 
     def start(self):
         self.cur_unit = game.cursor.cur_unit
@@ -1828,8 +1857,13 @@ class TargetingState(MapState):
         good_pos = self.ability.targets(self.cur_unit)
 
         self.selection = SelectionHelper(good_pos)
-        closest_pos = self.selection.get_closest(self.cur_unit.position)
-        game.cursor.set_pos(closest_pos)
+        preselect = game.memory.get('selection')
+        if preselect:
+            game.cursor.set_pos(preselect)
+            game.memory['selection'] = None
+        else:
+            closest_pos = self.selection.get_closest(self.cur_unit.position)
+            game.cursor.set_pos(closest_pos)
 
         self.pennant = banner.Pennant(self.ability.name + '_desc')
 
@@ -1945,34 +1979,35 @@ class TargetingState(MapState):
 
     def draw(self, surf):
         surf = super().draw(surf)
-        if self.ability.name == 'Rescue':
-            rescuee = game.board.get_unit(game.cursor.position)
-            if rescuee:
-                self.draw_rescue_preview(rescuee, surf)
-        elif self.ability.name == 'Take':
-            holder = game.board.get_unit(game.cursor.position)
-            if holder and holder.traveler:
-                traveler = game.get_unit(holder.traveler)
-                if traveler:
-                    self.draw_rescue_preview(traveler, surf)
-        elif self.ability.name == 'Give':
-            if self.cur_unit.traveler:
-                give_to = game.board.get_unit(game.cursor.position)
-                traveler = game.get_unit(self.cur_unit.traveler)
-                if give_to and traveler:
-                    self.draw_give_preview(traveler, give_to, surf)
-        elif self.ability.name == 'Trade':
-            unit = game.cursor.get_hover()
-            if self.traveler_mode:
-                if unit.traveler:
+        if self.ability:
+            if self.ability.name == 'Rescue':
+                rescuee = game.board.get_unit(game.cursor.position)
+                if rescuee:
+                    self.draw_rescue_preview(rescuee, surf)
+            elif self.ability.name == 'Take':
+                holder = game.board.get_unit(game.cursor.position)
+                if holder and holder.traveler:
+                    traveler = game.get_unit(holder.traveler)
+                    if traveler:
+                        self.draw_rescue_preview(traveler, surf)
+            elif self.ability.name == 'Give':
+                if self.cur_unit.traveler:
+                    give_to = game.board.get_unit(game.cursor.position)
+                    traveler = game.get_unit(self.cur_unit.traveler)
+                    if give_to and traveler:
+                        self.draw_give_preview(traveler, give_to, surf)
+            elif self.ability.name == 'Trade':
+                unit = game.cursor.get_hover()
+                if self.traveler_mode:
+                    if unit.traveler:
+                        game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
+                elif unit != self.cur_unit:
+                    game.ui_view.draw_trade_preview(unit, surf)
+                else:
                     game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
-            elif unit != self.cur_unit:
+            elif self.ability.name == 'Steal':
+                unit = game.cursor.get_hover()
                 game.ui_view.draw_trade_preview(unit, surf)
-            else:
-                game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
-        elif self.ability.name == 'Steal':
-            unit = game.cursor.get_hover()
-            game.ui_view.draw_trade_preview(unit, surf)
         if self.pennant:
             draw_on_top = game.cursor.position[1] >= game.tilemap.height - 1
             self.pennant.draw(surf, draw_on_top)
