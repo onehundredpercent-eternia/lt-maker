@@ -679,7 +679,7 @@ class MoveState(MapState):
             self.valid_attacks = target_system.get_possible_attacks(cur_unit, self.valid_moves)
             self.valid_spells = target_system.get_possible_spell_attacks(cur_unit, self.valid_moves)
 
-        self.extra_abilities = [item[1] for item in skill_system.get_extra_abilities(cur_unit).items()]
+        self.extra_abilities = list(skill_system.get_extra_abilities(cur_unit).values())
 
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:

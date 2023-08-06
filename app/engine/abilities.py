@@ -205,6 +205,7 @@ class PairUpAbility(Ability):
         adj = set([u.position for u in adj_allies if unit.team == u.team and not u.traveler])
         return adj
     
+    @staticmethod
     def targets_within_movement(unit) -> set:
         # Pair up not enabled
         if not DB.constants.value('pairup') or DB.constants.value('attack_stance_only'):
