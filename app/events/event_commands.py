@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import logging
 from enum import Enum
+from operator import eq
 from typing import Callable, List, Dict, Set, Tuple, Type
 
 from app.utilities.data import Prefab
@@ -101,7 +102,12 @@ class EventCommand(Prefab):
     @property
     def flags(self) -> List[str]:
         return self._flags + UNIVERSAL_FLAGS
-
+    
+    def __eq__(self, other: EventCommand):
+        return (self.__class__ == other.__class__
+                and self.parameters == other.parameters
+                and self.chosen_flags == other.chosen_flags)
+    
 class Comment(EventCommand):
     nid = "comment"
     nickname = '#'

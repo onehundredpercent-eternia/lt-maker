@@ -131,7 +131,7 @@ class Preprocessor():
 
         return unsafe_event_function_calls
 
-# python -m app.events.python_engine.syntax_checker
+# python -m app.events.python_engine.pcompiler
 if __name__ == '__main__':
     from pathlib import Path
     script_path = Path(__file__).with_name('example_script.txt')
