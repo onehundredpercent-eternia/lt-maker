@@ -290,9 +290,12 @@ class Event():
         self.state = 'almost_complete'
 
     def process(self):
-        while self.state == 'processing' and not self.parser.finished():
+        while self.state == 'processing':
             if not self.command_queue:
-                self.command_queue.append(self.parser.fetch_next_command())
+                next_command = self.parser.fetch_next_command()
+                if not next_command:
+                    break
+                self.command_queue.append(next_command)
             command = self.command_queue.pop(0)
             self.logger.debug("Run Event Command: %s", command)
             try:
