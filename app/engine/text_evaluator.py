@@ -51,7 +51,7 @@ class TextEvaluator():
             return self._evaluate_skill_db(text)
         elif re.match(r'\{i:[^{}]*\}', text) or re.match(r'\{item:[^{}]*\}', text):
             return self._evaluate_item_db(text)
-        elif re.match(r'\{[^{}]*\}', text):
+        elif re.match(r'\{[^:{}]*\}', text):
             return self._evaluate_locals(text, local_args or {})
         else:
             return text
@@ -72,8 +72,12 @@ class TextEvaluator():
             parsed = str_utils.nested_expr(to_eval, '{', '}')
             evaled = recursive_parse(parsed)
             evaluated.append(evaled)
-        for idx in range(len(to_evaluate)):
-            text = text.replace(to_evaluate[idx], evaluated[idx])
+        evaluated_pairs = zip(to_evaluate, evaluated)
+        # sort by length so we don't accidentally substitute a shorter inside a longer,
+        # e.g. "{e:1} or {e:2 + {e:1}}". which would end up not working
+        evaluated_pairs = sorted(evaluated_pairs, key=lambda pair: len(pair[0]), reverse=True)
+        for to_eval, evaled in evaluated_pairs:
+            text = text.replace(to_eval, evaled)
         return text
 
     def _evaluate_locals(self, text, local_args: Dict[str, str]):

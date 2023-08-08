@@ -209,7 +209,9 @@ class EventParser():
         # normal command
         self.command_pointer += 1
         # evaluate and process command
+        print('1', command)
         parameters, flags = event_commands.convert_parse(command, self._evaluate_all)
+        print('2', parameters)
         # Handle the weird cases where we don't want to handle evaluation
         if command.nid == 'choice':
             unevaled_parameters, _ = event_commands.convert_parse(command, None)
