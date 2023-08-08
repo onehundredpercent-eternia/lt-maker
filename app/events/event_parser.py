@@ -222,6 +222,9 @@ class EventParser():
             parameters['Text'] = unevaled_parameters['Text']
         processed_command = command.__class__(parameters, flags, command.display_values)
         return processed_command
+    
+    def finished(self):
+        return self.command_pointer >= len(self.commands)
 
     def _object_to_str(self, obj) -> str:
         if hasattr(obj, 'uid'):

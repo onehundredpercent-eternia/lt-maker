@@ -161,13 +161,9 @@ class Event():
                     break
 
             elif self.state == 'processing':
-                if not self.command_queue:
-                    next_command = self.parser.fetch_next_command()
-                    if not next_command:
-                        self.end()
-                    else:
-                        self.command_queue.append(next_command)
-                if self.command_queue:
+                if self.parser.finished():
+                    self.end()
+                else:
                     self.process()
                 if self.state == 'paused':
                     break  # Necessary so we don't go right back to processing
@@ -294,7 +290,9 @@ class Event():
         self.state = 'almost_complete'
 
     def process(self):
-        while self.command_queue and self.state == 'processing':
+        while self.state == 'processing' and not self.parser.finished():
+            if not self.command_queue:
+                self.command_queue.append(self.parser.fetch_next_command())
             command = self.command_queue.pop(0)
             self.logger.debug("Run Event Command: %s", command)
             try:
