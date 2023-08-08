@@ -92,24 +92,25 @@ class EventParser():
         return truth
 
     def _jump_conditional(self, index: int) -> int:
-        """Given an index of a conditional command (if, for, while),
-        returns the index of the command to be executed should the
-        conditional be false. This means, e.g., the first `elif` after the
-        current if, or the index immediately following end"""
+        """Given an index of a conditional if,
+        returns the index of the next command,
+        i.e. `end` or `else` if the conditional is false,
+        otherwise the next index."""
         base_conditional = self.commands[index]
-        if base_conditional.nid in ('for', 'else'):
-            return self._find_end(index)
-        if base_conditional.nid in ('if', 'elif'): # seeking an elif, else, or end
-            pass
-        else:
+        if not base_conditional.nid in ('if', 'elif'): # seeking an elif, else, or end
             raise TypeError("%s is not a conditional command" % str(base_conditional))
+
+        truth = self._get_truth(base_conditional)
+        if truth:
+            return index + 1
+        # not true, so seek next clause
         level = 0
         curr_index = index + 1
         while(curr_index) < len(self.commands):
             curr_command = self.commands[curr_index]
             if level == 0:
                 if curr_command.nid in ('elif',):
-                    return curr_index
+                    return self._jump_conditional(curr_index)
                 elif curr_command.nid in ('end', 'else'):
                     return curr_index + 1
             if curr_command.nid == 'if':
@@ -170,18 +171,18 @@ class EventParser():
         self.logger.debug("Processing Event Line: %s", str(command))
 
         # conditional and loop handling
-        if command.nid in ('if', 'elif'):
+        if command.nid in ('if',):
             truth = self._get_truth(command)
             if truth:
                 self.command_pointer += 1
             else:
                 self.command_pointer = self._jump_conditional(self.command_pointer)
             return self.fetch_next_command()
-        elif command.nid == 'else':
-            # if we naturally navigate to else,
+        elif command.nid in ('elif', 'else'):
+            # if we naturally navigate to elif/else,
             # implies we finished an if and should skip to the end
             # (because an if fails, we jump directly into the else)
-            self.command_pointer = self._jump_conditional(self.command_pointer)
+            self.command_pointer = self._find_end(self.command_pointer)
             return self.fetch_next_command()
         elif command.nid == 'end':
             self.command_pointer += 1
@@ -193,7 +194,7 @@ class EventParser():
                 self.iterator_stack[-1].iterator.next()
             if self.iterator_stack[-1].iterator.empty():
                 self.iterator_stack.pop()
-                self.command_pointer = self._jump_conditional(self.command_pointer)
+                self.command_pointer = self._find_end(self.command_pointer)
             else:
                 self.command_pointer += 1
             return self.fetch_next_command()

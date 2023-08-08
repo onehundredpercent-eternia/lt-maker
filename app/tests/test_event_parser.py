@@ -33,19 +33,32 @@ class EventParserUnitTests(unittest.TestCase):
 
         # basic tests
         self.assertEqual(parser._find_end(1), 6)
-        self.assertEqual(parser._jump_conditional(1), 4)
+        self.assertEqual(parser._jump_conditional(1), 2)
         self.assertEqual(parser._find_end(3), 6)
 
         # elif
-        self.assertEqual(parser._jump_conditional(8), 11)
-        self.assertEqual(parser._jump_conditional(9), 11)
-        self.assertEqual(parser._jump_conditional(11), 14)
+        self.assertEqual(parser._jump_conditional(8), 12)
+        self.assertEqual(parser._jump_conditional(9), 10)
+        self.assertEqual(parser._jump_conditional(11), 12)
         self.assertEqual(parser._find_end(11), 15)
 
         # nested for
-        self.assertEqual(parser._jump_conditional(18), 22)
-        self.assertEqual(parser._jump_conditional(19), 21)
+        self.assertEqual(parser._jump_conditional(18), 19)
+        self.assertEqual(parser._find_end(19), 21)
 
+    def test_event_parser_handles_conditionals(self):
+        script_path = Path(__file__).parent / 'data' / 'parser' / 'second_conditional.event'
+        as_commands = [event_commands.parse_text_to_command(line)[0] for line in script_path.read_text().split('\n')]
+        parser = EventParser(as_commands, self.text_evaluator)
+
+        called_commands = []
+        while not parser.finished():
+            next_command = parser.fetch_next_command()
+            if next_command:
+                called_commands.append(next_command)
+        self.assertEqual(len(called_commands), 1)
+        self.assertTrue(isinstance(called_commands[0], event_commands.Speak))
+        self.assertEqual(called_commands[0].parameters['Text'], '2')
 
     def test_parse_events(self):
         script_path = Path(__file__).parent / 'data' / 'parser' / 'test.event'
