@@ -167,7 +167,7 @@ class Event():
                         self.end()
                     else:
                         self.command_queue.append(next_command)
-                else:
+                if self.command_queue:
                     self.process()
                 if self.state == 'paused':
                     break  # Necessary so we don't go right back to processing
