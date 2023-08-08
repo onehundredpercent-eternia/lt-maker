@@ -210,6 +210,7 @@ class PairUpAbility(Ability):
         # Pair up not enabled
         if not DB.constants.value('pairup') or DB.constants.value('attack_stance_only'):
             return set()
+        # Already paired up
         if unit.traveler:
             return set()
         

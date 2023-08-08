@@ -13,6 +13,8 @@ except (ModuleNotFoundError, ImportError):
         return func
     print("You are missing the `typing-extensions` module.\nTry running `pip install -r requirements_editor.txt`")
 
+Position = Tuple[int, int]
+
 Point = Tuple[int, int]
 Segment = Tuple[Point, Point]
 

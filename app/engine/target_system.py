@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import FrozenSet, TYPE_CHECKING, List, Tuple
+from typing import FrozenSet, TYPE_CHECKING, List, Optional, Set, Tuple
 from functools import lru_cache
 
 from app.data.database.database import DB
@@ -9,6 +9,7 @@ from app.engine.movement import movement_funcs
 from app.engine.pathfinding import pathfinding
 from app.engine.game_state import game
 from app.utilities import utils
+from app.utilities.typing import Position
 
 if TYPE_CHECKING:
     from app.engine.objects.unit import UnitObject
@@ -155,7 +156,7 @@ def _get_all_attacks(unit, valid_moves, items) -> (set, int):
                 attacks |= get_shell(valid_moves, item_range, game.board.bounds, manhattan_restriction)
     return (attacks, max_range)
     
-def _get_possible_attacks(unit, valid_moves, items):
+def _get_possible_attacks(unit, valid_moves, items) -> set:
     items_standard, items_ignore_los = [], []
     for item in items:
         (items_standard, items_ignore_los)[item_system.ignore_line_of_sight(unit, item)].append(item)
@@ -277,7 +278,7 @@ def travel_algorithm(path, moves, unit, grid):
         through_path -= 1
     return path[-(through_path + 1)]  # Travel as far as we can
 
-def get_valid_targets(unit, item=None, ignore_proximity=False) -> set:
+def get_valid_targets(unit: UnitObject, item: Optional[ItemObject] = None, ignore_proximity: bool = False) -> set:
     """
     Determines all the valid targets given use of the item
     item_system.valid_targets takes care of range
@@ -334,7 +335,7 @@ def get_valid_targets(unit, item=None, ignore_proximity=False) -> set:
         return set()
     return valid_targets
 
-def get_valid_targets_recursive_with_availability_check(unit, item) -> set:
+def get_valid_targets_recursive_with_availability_check(unit: UnitObject, item: ItemObject) -> Set[Position]:
     if item.multi_item:
         items = [sitem for sitem in item_funcs.get_all_items_from_multi_item(unit, item) if item_funcs.available(unit, sitem)]
     else:
@@ -344,30 +345,30 @@ def get_valid_targets_recursive_with_availability_check(unit, item) -> set:
         valid_targets |= get_valid_targets(unit, sitem)
     return valid_targets
 
+def get_all_targets_with_items(unit: UnitObject, items: List[ItemObject], ignore_proximity: bool = False) -> Set[Position]:
+    targets = set()
+    for item in items:
+        targets |= get_valid_targets(unit, item, ignore_proximity)
+    return targets
+
 def get_weapons(unit: UnitObject) -> List[ItemObject]:
     return [item for item in unit.items if item_funcs.is_weapon_recursive(unit, item) and item_funcs.available(unit, item)]
 
 def get_all_weapons(unit: UnitObject) -> List[ItemObject]:
     return [item for item in item_funcs.get_all_items(unit) if item_system.is_weapon(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_targets_with_items(unit, items: List[ItemObject], ignore_proximity=False) -> set:
-    targets = set()
-    for item in items:
-        targets |= get_valid_targets(unit, item, ignore_proximity)
-    return targets
-
-def get_all_weapon_targets(unit, ignore_proximity=False) -> set:
-    weapons = get_all_weapons(unit)
+def get_all_weapon_targets(unit: UnitObject, ignore_proximity: bool = False) -> Set[Position]:
+    weapons: List[ItemObject] = get_all_weapons(unit)
     return get_all_targets_with_items(unit, weapons, ignore_proximity)
 
 def get_spells(unit: UnitObject) -> List[ItemObject]:
     return [item for item in unit.items if item_funcs.is_spell_recursive(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_spells(unit):
+def get_all_spells(unit: UnitObject) -> List[ItemObject]:
     return [item for item in item_funcs.get_all_items(unit) if item_system.is_spell(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_spell_targets(unit, ignore_proximity=False) -> set:
-    spells = get_all_spells(unit)
+def get_all_spell_targets(unit: UnitObject, ignore_proximity: bool = False) -> Set[Position]:
+    spells: List[ItemObject] = get_all_spells(unit)
     return get_all_targets_with_items(unit, spells, ignore_proximity)
 
 def find_strike_partners(attacker, defender, item):
@@ -425,10 +426,13 @@ def strike_partner_formula(allies: list, attacker, defender, mode, attack_info):
     max_index = score.index(max_score)
     return allies[max_index]
 
-def get_possible_attack_positions(unit, target, moves, item) -> list:
-    '''Copied from AI controller and modified slightly to exclude taken positions
-    Finds all valid squares given a target and possible moves'''
-    a = find_manhattan_spheres(item_funcs.get_range(unit, item), *target)
-    b = set(moves)
-    positions = list(a & b)
+def get_possible_attack_positions(
+        unit: UnitObject, target: Position, 
+        moves: List[Position], item: ItemObject) -> List[Position]:
+    """Finds all valid squares given a target and possible moves"""
+
+    # Copied from AI controller and modified slightly to exclude taken positions
+    a: Set[Position] = find_manhattan_spheres(item_funcs.get_range(unit, item), *target)
+    b: Set[Position] = set(moves)
+    positions: List[Position] = list(a & b)
     return [pos for pos in positions if not game.board.get_unit(pos) or game.board.get_unit(pos) == unit]

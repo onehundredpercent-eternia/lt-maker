@@ -672,8 +672,8 @@ class MoveState(MapState):
         if cur_unit.has_traded:
             self.valid_moves = target_system.get_valid_moves(cur_unit)
             game.highlight.display_moves(self.valid_moves, light=False)
-            self.valid_attacks = []
-            self.valid_spells = []
+            self.valid_attacks = set()
+            self.valid_spells = set()
         else:
             self.valid_moves = game.highlight.display_highlights(cur_unit)
             self.valid_attacks = target_system.get_possible_attacks(cur_unit, self.valid_moves)
@@ -725,7 +725,7 @@ class MoveState(MapState):
 
             elif game.cursor.position in self.valid_moves:
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
-                    # If you try and select a tile with an ally
+                    # If you try and select a tile with a unit on it
                     if self.is_direct_selection_target(game.cursor.position, cur_unit):
                         # You've selected a unit that could be a target
                         self.handle_direct_selection(cur_unit)
@@ -757,24 +757,26 @@ class MoveState(MapState):
                 get_sound_thread().play_sfx('Error')
 
     def handle_direct_selection(self, cur_unit: UnitObject):
-        # Determine position to move for attack
+        # Determine position to move to for direct selection
         move_pos = None
-        idx = 0
         # Includes skill-given abilities such as steal or dance
         items_and_abilities = cur_unit.items + self.extra_abilities
-        while not move_pos and idx < len(items_and_abilities):
-            move_pos = target_system.get_possible_attack_positions(cur_unit, 
-                    game.cursor.position, self.valid_moves, items_and_abilities[idx])
-            idx += 1
-
-        if not move_pos:
+        for ability in items_and_abilities:
+            move_pos = target_system.get_possible_attack_positions(
+                cur_unit, game.cursor.position, self.valid_moves, ability)
+            if move_pos:
+                break
+        else:
             # Should never happen
             get_sound_thread().play_sfx('Error')
             return 
 
         # Figure out a good location nearest to the cursor path
         if game.cursor.path:
-            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]) + utils.calculate_distance(pos, cur_unit.position))[0]
+            near_to_cursor_path = \
+                lambda pos: utils.calculate_distance(pos, game.cursor.path[0]) + \
+                utils.calculate_distance(pos, cur_unit.position)
+            move_pos = sorted(move_pos, key=near_to_cursor_path)[0]
         else:
             move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
 
@@ -783,25 +785,27 @@ class MoveState(MapState):
 
         if not game.board.in_vision(target_pos):
             get_sound_thread().play_sfx('Error')
+            return
+
+        normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
+        witch_warp = set(skill_system.witch_warp(cur_unit))
+        if cur_unit.has_attacked:
+            get_sound_thread().play_sfx('Error')
+            return
+        elif move_pos in witch_warp and move_pos not in normal_moves:
+            cur_unit.current_move = action.Warp(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
+            self.direct_attack_state_setup(cur_unit, target_pos)
         else:
-            normal_moves = target_system.get_valid_moves(cur_unit, witch_warp=False)
-            witch_warp = set(skill_system.witch_warp(cur_unit))
-            if cur_unit.has_attacked:
-                get_sound_thread().play_sfx('Error')
-            elif move_pos in witch_warp and move_pos not in normal_moves:
-                cur_unit.current_move = action.Warp(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
-                self.direct_attack_state_setup(cur_unit, target_pos)
-            else:
-                cur_unit.current_move = action.Move(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
-                self.direct_attack_state_setup(cur_unit, target_pos)
-            game.state.change('movement')
-            action.do(cur_unit.current_move)
+            cur_unit.current_move = action.Move(cur_unit, move_pos, target_system.get_path(cur_unit, move_pos, use_limit=True))
+            self.direct_attack_state_setup(cur_unit, target_pos)
+        game.state.change('movement')
+        action.do(cur_unit.current_move)
 
     def is_direct_selection_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
         return self.is_weapon_target(pos, cur_unit) \
-                    or self.is_spell_target(pos, cur_unit) \
-                    or self.is_ability_target(pos, cur_unit) \
-                    or self.is_pairup_target(pos, cur_unit)
+            or self.is_spell_target(pos, cur_unit) \
+            or self.is_ability_target(pos, cur_unit) \
+            or self.is_pairup_target(pos, cur_unit)
 
     def is_weapon_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
         return pos in self.valid_attacks and pos in target_system.get_all_weapon_targets(cur_unit, ignore_proximity=True)
