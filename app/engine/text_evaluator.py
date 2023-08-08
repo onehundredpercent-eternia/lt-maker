@@ -87,9 +87,9 @@ class TextEvaluator():
         for to_eval in to_evaluate:
             to_eval = to_eval[1:-1]
             if to_eval in local_args:
-                evaluated.append(str(local_args[to_eval]))
+                evaluated.append(self._object_to_str(local_args[to_eval]))
             elif to_eval in self.local_args:
-                evaluated.append(str(self.local_args[to_eval]))
+                evaluated.append(self._object_to_str(self.local_args[to_eval]))
             elif to_eval == 'unit':
                 evaluated.append(self.unit.nid)
             elif to_eval == 'unit2':
