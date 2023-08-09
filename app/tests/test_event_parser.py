@@ -29,7 +29,7 @@ class EventParserUnitTests(unittest.TestCase):
     def test_conditional_handling(self):
         script_path = Path(__file__).parent / 'data' / 'parser' / 'conditionals.event'
         as_commands = [event_commands.parse_text_to_command(line)[0] for line in script_path.read_text().split('\n')]
-        parser = EventParser(as_commands, self.text_evaluator)
+        parser = EventParser('conditionals', as_commands, self.text_evaluator)
 
         # basic tests
         self.assertEqual(parser._find_end(1), 6)
@@ -49,7 +49,7 @@ class EventParserUnitTests(unittest.TestCase):
     def test_event_parser_handles_conditionals(self):
         script_path = Path(__file__).parent / 'data' / 'parser' / 'second_conditional.event'
         as_commands = [event_commands.parse_text_to_command(line)[0] for line in script_path.read_text().split('\n')]
-        parser = EventParser(as_commands, self.text_evaluator)
+        parser = EventParser('conditionals', as_commands, self.text_evaluator)
 
         called_commands = []
         while not parser.finished():
@@ -63,7 +63,7 @@ class EventParserUnitTests(unittest.TestCase):
     def test_parse_events(self):
         script_path = Path(__file__).parent / 'data' / 'parser' / 'test.event'
         as_commands = [event_commands.parse_text_to_command(line)[0] for line in script_path.read_text().split('\n')]
-        parser = EventParser(as_commands, self.text_evaluator)
+        parser = EventParser('test', as_commands, self.text_evaluator)
 
         # normal command
         mu_speak = parser.fetch_next_command()
@@ -117,7 +117,7 @@ class EventParserUnitTests(unittest.TestCase):
     def test_save_restore_parser_state(self):
         script_path = Path(__file__).parent / 'data' / 'parser' / 'test.event'
         as_commands = [event_commands.parse_text_to_command(line)[0] for line in script_path.read_text().split('\n')]
-        parser = EventParser(as_commands, self.text_evaluator)
+        parser = EventParser('test', as_commands, self.text_evaluator)
 
         parser.fetch_next_command()
         parser.fetch_next_command()
@@ -126,6 +126,7 @@ class EventParserUnitTests(unittest.TestCase):
         # parser just returned "speak;MU;A bit ridiculous, isn't it?"
 
         new_parser = EventParser.restore(parser.save(), self.text_evaluator)
+        self.assertEqual(new_parser.nid, 'test')
         next_command = new_parser.fetch_next_command()
         self.assertTrue(isinstance(next_command, event_commands.Speak))
         self.assertEqual(next_command.parameters['Speaker'], 'Eirika')

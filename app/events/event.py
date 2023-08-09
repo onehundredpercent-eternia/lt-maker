@@ -55,7 +55,7 @@ class Event():
         self._generic_setup()
 
         self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.position, self.local_args)
-        self.parser = EventParser(commands.copy(), self.text_evaluator)
+        self.parser = EventParser(nid, commands.copy(), self.text_evaluator)
 
     def _generic_setup(self):
         self.portraits: Dict[str, EventPortrait] = {}
@@ -116,6 +116,7 @@ class Event():
         ser_dict['unit1'] = self.unit.nid if self.unit else None
         ser_dict['unit2'] = self.unit2.nid if self.unit2 else None
         ser_dict['position'] = self.position
+        ser_dict['command_queue'] = self.command_queue
         ser_dict['local_args'] = {k: action.Action.save_obj(v) for k, v in self.local_args.items()}
         ser_dict['parser_state'] = self.parser.save()
         return ser_dict
@@ -127,10 +128,10 @@ class Event():
         position = ser_dict['position']
         local_args = ser_dict.get('local_args', {})
         local_args = {k: action.Action.restore_obj(v) for k, v in local_args.items()}
-        commands = ser_dict['commands']
         nid = ser_dict['nid']
-        self = cls(nid, commands, triggers.GenericTrigger(unit, unit2, position, local_args), game)
-        self.parser = EventParser.restore(ser_dict['parser_state'], commands, self.text_evaluator)
+        self = cls(nid, [], triggers.GenericTrigger(unit, unit2, position, local_args), game)
+        self.command_queue = ser_dict['command_queue']
+        self.parser = EventParser.restore(ser_dict['parser_state'], self.text_evaluator)
         return self
 
     def update(self):

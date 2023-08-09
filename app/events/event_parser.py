@@ -65,7 +65,8 @@ class IteratorInfo():
         return self
 
 class EventParser():
-    def __init__(self, commands: List[event_commands.EventCommand], text_evaluator: TextEvaluator):
+    def __init__(self, nid: NID, commands: List[event_commands.EventCommand], text_evaluator: TextEvaluator):
+        self.nid = nid
         self.commands: List[event_commands.EventCommand] = commands.copy()
         self.command_pointer = 0
 
@@ -99,6 +100,8 @@ class EventParser():
         base_conditional = self.commands[index]
         if not base_conditional.nid in ('if', 'elif'): # seeking an elif, else, or end
             raise TypeError("%s is not a conditional command" % str(base_conditional))
+        # ensure end exists - this will throw if it doesn't
+        self._find_end(index)
 
         truth = self._get_truth(base_conditional)
         if truth:
@@ -120,7 +123,7 @@ class EventParser():
             curr_index += 1
         # have not found end clause
         # maybe throw instead?
-        return len(self.commands)
+        raise SyntaxError("Line %d: %s has no corresponding terminator" % (index, str(base_conditional)))
 
     def _find_end(self, index: int) -> int:
         """given an index of an if, elif, else, for, or while command,
@@ -148,9 +151,7 @@ class EventParser():
                 else:
                     level -= 1
             curr_index += 1
-        # have not found end clause
-        # maybe throw instead?
-        return len(self.commands)
+        raise SyntaxError("Line %d: %s has no corresponding terminator" % (index, str(base_conditional)))
 
     def _build_iterator(self, index: int, command: event_commands.EventCommand) -> IteratorInfo:
         iterator_nid = command.parameters['Nid']
@@ -237,6 +238,7 @@ class EventParser():
         
     def save(self):
         s_dict = {}
+        s_dict['nid'] = self.nid
         s_dict['commands'] = self.commands
         s_dict['iterators'] = [info.save() for info in self.iterator_stack]
         s_dict['command_pointer'] = self.command_pointer
@@ -245,7 +247,8 @@ class EventParser():
     @classmethod
     def restore(cls, s_dict, text_evaluator: TextEvaluator):
         commands = s_dict['commands']
-        self = cls(commands, text_evaluator)
+        nid = s_dict['nid']
+        self = cls(nid, commands, text_evaluator)
         self.command_pointer = s_dict['command_pointer']
         self.iterator_stack = [IteratorInfo.restore(info_dict) for info_dict in s_dict['iterators']]
         return self
