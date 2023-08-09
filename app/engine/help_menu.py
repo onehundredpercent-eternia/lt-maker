@@ -194,7 +194,7 @@ class StatDialog(HelpDialog):
             else:
                 width = text_width(self.font, str(val))
                 desc += '{br}<%s><%s>%s</></>' % (self.font, color, str(val))
-            desc += '{max_speed}' + ('﹘' * (24 - width)) + '{starting_speed}<%s><%s>%s</></>' % (self.font, color, bonus)
+            desc += '{max_speed}' + (' ' * (24 - width)) + '{starting_speed}<%s><%s>%s</></>' % (self.font, color, bonus)
 
         self.dlg = \
             dialog.Dialog.from_style(game.speak_styles.get('__default_help'), desc,
