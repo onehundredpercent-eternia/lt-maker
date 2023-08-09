@@ -324,7 +324,10 @@ def get_valid_targets(unit, item=None, ignore_proximity=False) -> set:
         item_range = item_funcs.get_range(unit, item)
         if item_range:
             max_item_range = max(item_range)
-            valid_targets = set(line_of_sight.line_of_sight([unit.position], valid_targets, max_item_range))
+            valid_moves = [unit.position]
+            if ignore_proximity:
+                valid_moves = get_valid_moves(unit)
+            valid_targets = set(line_of_sight.line_of_sight(valid_moves, valid_targets, max_item_range))
         else: # I think this is impossible to happen, as it is checked in various places above in this function
             valid_targets = set()
     # Make sure we have enough targets to satisfy the item
