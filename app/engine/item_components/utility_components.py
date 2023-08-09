@@ -139,6 +139,9 @@ class UnlockStaff(ItemComponent):
         return region.region_type == RegionType.EVENT and 'can_unlock' in region.condition
 
     def ai_targets(self, unit, item) -> set:
+        return self.all_targets(unit, item)
+    
+    def all_targets(self, unit, item) -> set:
         targets = set()
         for region in game.level.regions:
             if self._valid_region(region):

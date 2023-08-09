@@ -17,6 +17,9 @@ class TargetsAnything(ItemComponent):
     tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item) -> set:
+        return self.all_targets(unit, item)
+    
+    def all_targets(self, unit, item) -> set:
         return {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
 
     def valid_targets(self, unit, item) -> set:
@@ -30,6 +33,9 @@ class TargetsUnits(ItemComponent):
     tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item):
+        return self.all_targets(unit, item)
+    
+    def all_targets(self, unit, item) -> set:
         return {other.position for other in game.units if other.position}
 
     def valid_targets(self, unit, item) -> set:
@@ -42,6 +48,9 @@ class TargetsEnemies(ItemComponent):
     tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item):
+        return self.all_targets(unit, item)
+    
+    def all_targets(self, unit, item) -> set:
         return {other.position for other in game.units if other.position and
                 skill_system.check_enemy(unit, other)}
 
@@ -56,6 +65,9 @@ class TargetsAllies(ItemComponent):
     tag = ItemTags.TARGET
 
     def ai_targets(self, unit, item):
+        return self.all_targets(unit, item)
+    
+    def all_targets(self, unit, item) -> set:
         return {other.position for other in game.units if other.position and
                 skill_system.check_ally(unit, other)}
 
@@ -73,6 +85,9 @@ class TargetsSpecificTiles(ItemComponent):
     value = ''
 
     def ai_targets(self, unit, item) -> set:
+        return self.all_targets(unit, item)
+    
+    def all_targets(self, unit, item) -> set:
         return set(self.resolve_targets(unit, item))
 
     def valid_targets(self, unit, item) -> set:

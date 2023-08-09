@@ -293,7 +293,7 @@ def get_valid_targets(unit, item=None, ignore_proximity=False) -> set:
     if item.sequence_item:
         all_targets = set()
         for subitem in item.subitems:
-            valid_targets = get_valid_targets(unit, subitem)
+            valid_targets = get_valid_targets(unit, subitem, ignore_proximity)
             if not valid_targets:
                 return set()
             all_targets |= valid_targets
@@ -302,7 +302,7 @@ def get_valid_targets(unit, item=None, ignore_proximity=False) -> set:
 
     # Handle regular item targeting
     if ignore_proximity:
-        all_targets = item_system.ai_targets(unit, item) if item_system.ai_priority != -1 else item_system.valid_targets(unit, item)
+        all_targets = item_system.all_targets(unit, item)
     else:
         all_targets = item_system.valid_targets(unit, item)
     valid_targets = set()

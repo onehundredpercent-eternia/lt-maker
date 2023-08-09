@@ -803,6 +803,11 @@ class MoveState(MapState):
                     or self.is_ability_target(pos, cur_unit) \
                     or self.is_pairup_target(pos, cur_unit)
 
+    '''TODO: Fix line of sight breaking direct attack selection
+            Also, figure out sequence item issue - it must be able to only select
+            a target that is valid for item1, but item2+ must have valid targets
+            available to them'''
+
     def is_weapon_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
         return pos in self.valid_attacks and pos in target_system.get_all_weapon_targets(cur_unit, ignore_proximity=True)
     
@@ -813,7 +818,7 @@ class MoveState(MapState):
         return pos in target_system.get_all_targets_with_items(cur_unit, self.extra_abilities, ignore_proximity=True)
     
     def is_pairup_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in PairUpAbility.targets_within_movement(cur_unit)
+        return pos in PairUpAbility.targets_within_movement(cur_unit, self.valid_moves)
 
     def direct_attack_state_setup(self, cur_unit: UnitObject, target_pos: tuple):
         '''Adds the states needed for backing out of the attack to 
@@ -840,7 +845,6 @@ class MoveState(MapState):
             game.state.change('menu')
             game.state.change('combat_targeting')
         elif self.is_pairup_target(target_pos, cur_unit):
-            game.memory['targets'] = PairUpAbility.targets_within_movement(cur_unit)
             game.memory['ability'] = PairUpAbility
             game.memory['selection'] = target_pos
             game.state.change('menu')
@@ -1882,7 +1886,7 @@ class TargetingState(MapState):
 
         self.selection = SelectionHelper(good_pos)
         preselect = game.memory.get('selection')
-        if preselect:
+        if preselect and preselect in good_pos:
             game.cursor.set_pos(preselect)
             game.memory['selection'] = None
         else:
@@ -2070,7 +2074,7 @@ class CombatTargetingState(MapState):
         self.selection = SelectionHelper(positions)
         self.previous_mouse_pos = None
         preselect = game.memory.get('selection')
-        if preselect:
+        if preselect and preselect in positions:
             closest_pos = preselect
             game.memory['selection'] = None
         else:
