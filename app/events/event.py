@@ -133,6 +133,9 @@ class Event():
         self.command_queue = ser_dict['command_queue']
         self.parser = EventParser.restore(ser_dict['parser_state'], self.text_evaluator)
         return self
+    
+    def finished(self):
+        return self.parser.finished() and not self.command_queue
 
     def update(self):
         # update all internal updates, remove the ones that are finished
@@ -162,7 +165,7 @@ class Event():
                     break
 
             elif self.state == 'processing':
-                if self.parser.finished():
+                if self.finished():
                     self.end()
                 else:
                     self.process()
