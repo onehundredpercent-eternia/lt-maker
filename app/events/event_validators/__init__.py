@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type
 
 from app.data.database.database import Database
 from app.editor.event_editor.event_inspector import EventInspectorEngine
-from app.engine.fonts import FONT
+from app.engine.fonts import FONT, NORMAL_FONT_COLORS
 from app.utilities.class_utils import recursive_subclasses
 from app.utilities.enums import HAlignment, VAlignment
 from app.events import event_commands
@@ -525,6 +525,9 @@ class Slide(OptionValidator):
 
 class Font(OptionValidator):
     valid = list(FONT.keys())
+
+class FontColor(OptionValidator):
+    valid = NORMAL_FONT_COLORS
 
 class Direction(OptionValidator):
     valid = ["open", "close"]
