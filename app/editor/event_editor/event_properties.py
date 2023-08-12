@@ -27,11 +27,13 @@ from app.editor.base_database_gui import CollectionModel
 from app.editor.custom_widgets import TilemapBox
 from app.editor.event_editor import event_autocompleter, find_and_replace
 from app.editor.event_editor.event_highlighter import EventHighlighter
+from app.editor.event_editor.py_syntax import PythonHighlighter
 from app.editor.lib.components.validated_line_edit import \
     NoParentheticalLineEdit
 from app.editor.map_view import SimpleMapView
 from app.editor.settings import MainSettingsController
 from app.events import event_commands, event_validators
+from app.events.event_prefab import EventPrefab
 from app.events.mock_event import IfStatementStrategy
 from app.events.regions import RegionType
 from app.events.triggers import ALL_TRIGGERS
@@ -835,18 +837,21 @@ class EventProperties(QWidget):
         self.current.priority = value
 
     def text_changed(self):
-        self.current.commands.clear()
-        lines = []
-        for doc_idx in range(self.text_box.document().blockCount()):
-            line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
-            if line:
-                lines.append(line)
-        for line in lines:
-            command, error_loc = event_commands.parse_text_to_command(line)
-            if command:
-                self.current.commands.append(command)
+        if not self.current.is_python_event:
+            self.current.commands.clear()
+            lines = []
+            for doc_idx in range(self.text_box.document().blockCount()):
+                line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
+                if line:
+                    lines.append(line)
+            for line in lines:
+                command, error_loc = event_commands.parse_text_to_command(line)
+                if command:
+                    self.current.commands.append(command)
+        else:
+            self.current.source = self.text_box.document().toPlainText()
 
-    def set_current(self, current):
+    def set_current(self, current: EventPrefab):
         self.current = current
         self.name_box.edit.setText(current.name)
         # self.trigger_box.edit.clear()
@@ -864,22 +869,26 @@ class EventProperties(QWidget):
         self.only_once_box.edit.setChecked(bool(current.only_once))
         self.priority_box.edit.setValue(current.priority)
 
-        # Convert text
-        text = ''
-        num_tabs = 0
-        for command in current.commands:
-            if command:
-                if command.nid in ('else', 'elif', 'end', 'endf'):
-                    num_tabs -= 1
-                text += '    ' * num_tabs
-                text += command.to_plain_text()
-                text += '\n'
-                if command.nid in ('if', 'elif', 'else', 'for'):
-                    num_tabs += 1
-            else:
-                logging.warning("NoneType in current.commands")
-
-        self.text_box.setPlainText(text)
+        if not self.current.is_python_event:
+            # Convert text
+            text = ''
+            num_tabs = 0
+            for command in current.commands:
+                if command:
+                    if command.nid in ('else', 'elif', 'end', 'endf'):
+                        num_tabs -= 1
+                    text += '    ' * num_tabs
+                    text += command.to_plain_text()
+                    text += '\n'
+                    if command.nid in ('if', 'elif', 'else', 'for'):
+                        num_tabs += 1
+                else:
+                    logging.warning("NoneType in current.commands")
+            self.highlighter = EventHighlighter(self.text_box.document(), self)
+            self.text_box.setPlainText(text)
+        else:
+            self.highlighter = PythonHighlighter(self.text_box.document())
+            self.text_box.setPlainText(self.current.source)
 
     def hideEvent(self, event):
         self.close_map()
