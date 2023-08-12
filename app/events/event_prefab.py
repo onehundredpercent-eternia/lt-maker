@@ -16,6 +16,9 @@ class EventPrefab(Prefab):
         self.only_once = False
         self.priority: int = 20
 
+        self.source: str = ""
+        self.is_python_event = False
+
     @property
     def nid(self):
         if not self.name:
