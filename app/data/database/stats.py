@@ -10,13 +10,21 @@ class StatPrefab(Prefab):
     maximum: int = 30
     desc: str = ""
     position: str = "left"
+    
+    growth_colors: bool = False
 
     def __repr__(self):
         return self.nid
 
+    def save_attr(self, name, value):
+        value = super().save_attr(name, value)
+        return value
+
     def restore_attr(self, name, value):
         if name == 'position' and not value:
             return 'left'
+        else:
+            value = super().restore_attr(name, value)
         return value
 
 class StatCatalog(Data[StatPrefab]):

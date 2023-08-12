@@ -383,9 +383,30 @@ class InfoMenuState(State):
             y_pos = WINHEIGHT - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
+    def hp_growths_color(self):
+        # HP Growths to determine stat text color
+        class_obj = DB.classes.get(self.unit.klass)
+        growth_base_value = self.unit.growths.get('HP', 0)
+        growth_bonus = self.unit.growth_bonus('HP')
+        klass_bonus = class_obj.growth_bonus.get('HP', 0)
+        growth_base_value += growth_bonus + klass_bonus
+        return growth_base_value
+
     def create_portrait(self):
         surf = engine.create_surface((96, WINHEIGHT), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (8, 122))
+        stat_prefab = DB.stats.get('HP')
+        if stat_prefab.growth_colors == True and self.unit.team == 'player':
+            if self.hp_growths_color() == 0:
+                surf.blit(image_mods.make_gray(SPRITES.get('info_unit_hp')), (8, 138))
+            elif self.hp_growths_color() > 0 and self.hp_growths_color() <= 25:
+                surf.blit(image_mods.change_color(SPRITES.get('info_unit_hp'), (175, 0, 50)), (8, 138))
+            elif self.hp_growths_color() > 50 and self.hp_growths_color() <= 75:
+                surf.blit(image_mods.change_color(SPRITES.get('info_unit_hp'), (25, 75, 25)), (8, 138))
+            elif self.hp_growths_color() > 75:
+                surf.blit(image_mods.change_color(SPRITES.get('info_unit_hp'), (50, 125, 50)), (8, 138))
+            else: #25 > and <= 50 HP
+                None
 
         im, offset = icons.get_portrait(self.unit)
         if im:
@@ -526,9 +547,34 @@ class InfoMenuState(State):
                     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
                     build_groove(surf, (27, 16 * idx + 32), total_length, frac)
                 icons.draw_stat(surf, stat_nid, self.unit, (47, 16 * idx + 24))
+
+            # Reference for Left Stat growths to determine stat text color
+            class_obj = DB.classes.get(self.unit.klass)
+            growth_base_value = self.unit.growths.get(stat_nid, 0)
+            growth_bonus = self.unit.growth_bonus(stat_nid)
+            klass_bonus = class_obj.growth_bonus.get(stat_nid, 0)
+            growth_base_value += growth_bonus + klass_bonus
+
             # Name
             name = curr_stat.name
-            render_text(surf, ['text'], [name], ['yellow'], (8, 16 * idx + 24))
+            stat_prefab = DB.stats.get(stat_nid)
+            if stat_prefab.growth_colors == True and self.unit.team == 'player':
+                if growth_base_value == 0:
+                    render_text(surf, ['text'], [name], ['grey'], (8, 16 * idx + 24))
+                elif growth_base_value > 0 and growth_base_value <= 10:
+                    render_text(surf, ['text'], [name], ['red'], (8, 16 * idx + 24))
+                elif growth_base_value > 10 and growth_base_value <= 25:
+                    render_text(surf, ['text'], [name], ['orange'], (8, 16 * idx + 24))
+                elif growth_base_value > 25 and growth_base_value <= 40:
+                    render_text(surf, ['text'], [name], ['peach'], (8, 16 * idx + 24))
+                elif growth_base_value > 50 and growth_base_value <= 60:
+                    render_text(surf, ['text'], [name], ['ygreen'], (8, 16 * idx + 24))
+                elif growth_base_value > 60:
+                    render_text(surf, ['text'], [name], ['green'], (8, 16 * idx + 24))
+                else: #40 > and <= 50 stat
+                    render_text(surf, ['text'], [name], ['yellow'], (8, 16 * idx + 24))
+            else:
+                render_text(surf, ['text'], [name], ['yellow'], (8, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
             base_value += subtle_stat_bonus
@@ -544,9 +590,34 @@ class InfoMenuState(State):
                 icons.draw_growth(surf, stat_nid, self.unit, (111, 16 * idx + 24))
             else:
                 icons.draw_stat(surf, stat_nid, self.unit, (111, 16 * idx + 24))
+
+            # Reference for Right Stat growths to determine stat text color
+            class_obj = DB.classes.get(self.unit.klass)
+            growth_base_value = self.unit.growths.get(stat_nid, 0)
+            growth_bonus = self.unit.growth_bonus(stat_nid)
+            klass_bonus = class_obj.growth_bonus.get(stat_nid, 0)
+            growth_base_value += growth_bonus + klass_bonus
+
             # Name
             name = curr_stat.name
-            render_text(surf, ['text'], [name], ['yellow'], (72, 16 * idx + 24))
+            stat_prefab = DB.stats.get(stat_nid)
+            if stat_prefab.growth_colors == True and self.unit.team == 'player':
+                if growth_base_value == 0:
+                    render_text(surf, ['text'], [name], ['grey'], (72, 16 * idx + 24))
+                elif growth_base_value > 0 and growth_base_value <= 10:
+                    render_text(surf, ['text'], [name], ['red'], (72, 16 * idx + 24))
+                elif growth_base_value > 10 and growth_base_value <= 25:
+                    render_text(surf, ['text'], [name], ['orange'], (72, 16 * idx + 24))
+                elif growth_base_value > 25 and growth_base_value <= 40:
+                    render_text(surf, ['text'], [name], ['peach'], (72, 16 * idx + 24))
+                elif growth_base_value > 50 and growth_base_value <= 60:
+                    render_text(surf, ['text'], [name], ['ygreen'], (72, 16 * idx + 24))
+                elif growth_base_value > 60:
+                    render_text(surf, ['text'], [name], ['green'], (72, 16 * idx + 24))
+                else: #40 > and <= 50 stat
+                    render_text(surf, ['text'], [name], ['yellow'], (72, 16 * idx + 24))
+            else:
+                render_text(surf, ['text'], [name], ['yellow'], (72, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             contribution = self.unit.stat_contribution(stat_nid)
             contribution['Base Value'] = base_value
@@ -584,8 +655,21 @@ class InfoMenuState(State):
             elif stat == 'AID':
                 if growths:
                     icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
-                    render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
-                    self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
+                    stat_prefab = DB.stats.get('HP')
+                    if stat_prefab.growth_colors == True and self.unit.team == 'player':
+                        if self.hp_growths_color() == 0:
+                            render_text(surf, ['text'], [text_funcs.translate('HP')], ['grey'], (72, 16 * true_idx + 24))
+                        elif self.hp_growths_color() > 0 and self.hp_growths_color() <= 25:
+                            render_text(surf, ['text'], [text_funcs.translate('HP')], ['red'], (72, 16 * true_idx + 24))
+                        elif self.hp_growths_color() > 50 and self.hp_growths_color() <= 75:
+                            render_text(surf, ['text'], [text_funcs.translate('HP')], ['ygreen'], (72, 16 * true_idx + 24))
+                        elif self.hp_growths_color() > 75:
+                            render_text(surf, ['text'], [text_funcs.translate('HP')], ['green'], (72, 16 * true_idx + 24))
+                        else: #25 > and <= 50 HP
+                            render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
+                    else:
+                        render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
+                        self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
                 else:
                     aid = equations.parser.rescue_aid(self.unit)
                     render_text(surf, ['text'], [str(aid)], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
