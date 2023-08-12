@@ -5,14 +5,9 @@ import logging
 import math
 import os
 import re
-from dataclasses import dataclass
-from typing import List
 
-from PyQt5.QtCore import (QRect, QRegularExpression, QSize,
-                          QSortFilterProxyModel, Qt,
-                          pyqtSignal)
-from PyQt5.QtGui import (QColor, QFont, QFontMetrics, QIcon, QPainter,
-                         QPalette, QSyntaxHighlighter, QTextCharFormat,
+from PyQt5.QtCore import QRect, QSize, QSortFilterProxyModel, Qt, pyqtSignal
+from PyQt5.QtGui import (QFont, QFontMetrics, QIcon, QPainter, QPalette,
                          QTextCursor)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QCheckBox, QCompleter, QDialog, QFrame,
@@ -21,14 +16,17 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
                              QPlainTextEdit, QPushButton, QSizePolicy,
                              QSpinBox, QSplitter, QStyle, QStyledItemDelegate,
                              QTextEdit, QToolBar, QVBoxLayout, QWidget)
-from app import dark_theme
 
 import app.editor.game_actions.game_actions as GAME_ACTIONS
+from app import dark_theme
 from app.data.database.database import DB
+from app.data.database.levels import LevelPrefab
 from app.data.resources.resources import RESOURCES
 from app.editor import table_model, timer
 from app.editor.base_database_gui import CollectionModel
+from app.editor.custom_widgets import TilemapBox
 from app.editor.event_editor import event_autocompleter, find_and_replace
+from app.editor.event_editor.event_highlighter import EventHighlighter
 from app.editor.lib.components.validated_line_edit import \
     NoParentheticalLineEdit
 from app.editor.map_view import SimpleMapView
@@ -42,156 +40,6 @@ from app.extensions.custom_gui import (ComboBox, PropertyBox, PropertyCheckBox,
 from app.extensions.markdown2 import Markdown
 from app.utilities import str_utils
 
-from app.data.database.levels import LevelPrefab
-from app.editor.custom_widgets import TilemapBox
-
-
-@dataclass
-class Rule():
-    pattern: QRegularExpression
-    _format: QTextCharFormat
-
-@dataclass
-class LineToFormat():
-    start: int
-    length: int
-    _format: QTextCharFormat
-
-class HighlighterState():
-    EVENT_CODE = -1
-    PYTHON_CODE = 0
-    TRIPLE_SINGLE_QUOTES = 1
-    TRIPLE_DOUBLE_QUOTES = 2
-
-class EventSyntaxRuleHighlighter():
-    def __init__(self, window) -> None:
-        self.window = window
-        theme = dark_theme.get_theme()
-        syntax_colors = theme.event_syntax_highlighting()
-        function_match = QRegularExpression("^[^;]*")
-        function_format = self.create_text_format(syntax_colors.func_color, font_weight=QFont.Bold)
-
-        comment_match = QRegularExpression("#[^\n]*")
-        comment_format = self.create_text_format(syntax_colors.comment_color, italic=True)
-
-        self.rules: List[Rule] = [
-            Rule(function_match, function_format),
-            Rule(comment_match, comment_format)
-        ]
-
-        self.lint_format = QTextCharFormat()
-        self.lint_format.setUnderlineStyle(QTextCharFormat.SpellCheckUnderline)
-        self.lint_format.setUnderlineColor(syntax_colors.error_underline_color)
-        self.text_format = self.create_text_format(syntax_colors.text_color)
-        self.special_text_format = self.create_text_format(syntax_colors.special_text_color)
-
-    def create_text_format(self, color: QColor, font_weight=None, italic=False):
-        text_format = QTextCharFormat()
-        text_format.setForeground(color)
-        if font_weight:
-            text_format.setFontWeight(font_weight)
-        text_format.setFontItalic(italic)
-        return text_format
-
-    def match_line(self, line: str) -> List[LineToFormat]:
-        format_lines: List[LineToFormat] = []
-        for rule in self.rules:
-            match_iterator = rule.pattern.globalMatch(line)
-            while match_iterator.hasNext():
-                match = match_iterator.next()
-                format_lines.append(LineToFormat(match.capturedStart(), match.capturedLength(), rule._format))
-        as_tokens = event_commands.get_command_arguments(line)
-        # speak formatting
-        command_type = event_commands.determine_command_type(as_tokens[0].string.strip())
-        if command_type == event_commands.Speak:
-            if len(as_tokens) >= 3:
-                dialog_token = as_tokens[2]
-                format_lines.append(LineToFormat(dialog_token.index, len(dialog_token.string), self.text_format))
-                for idx, char in enumerate(dialog_token.string):
-                    if char in '|':
-                        format_lines.append(LineToFormat(dialog_token.index + idx, 1, self.special_text_format))
-
-        # error checking
-        # error checking happens before brace formatting so that
-        # brace formatting can overwrite the error checking
-        # because if the user is using braces, they probably know what they
-        # are doing (or at least they *should* know what they are doing)
-        broken_args = self.validate_tokens(line)
-        if broken_args == 'all':
-            for token in as_tokens:
-                format_lines.append(LineToFormat(token.index, len(token.string), self.lint_format))
-        else:
-            for idx in broken_args:
-                format_lines.append(LineToFormat(as_tokens[idx].index, len(as_tokens[idx].string), self.lint_format))
-
-        # brace formatting
-        brace_mode = 0
-        special_start = 0
-        for idx, char in enumerate(line):
-            if char == '{':
-                if brace_mode == 0:
-                    special_start = idx
-                brace_mode += 1
-            if char == '}':
-                if brace_mode > 0:
-                    format_lines.append(LineToFormat(special_start, idx - special_start + 1, self.special_text_format))
-                    brace_mode -= 1
-        return format_lines
-
-    def validate_tokens(self, line: str) -> str | List[int]:
-        try:
-            command, error_loc = event_commands.parse_text_to_command(line, strict=True)
-            if command:
-                parameters, flags = event_commands.parse(command)
-                for keyword in command.keywords:
-                    if keyword not in parameters:
-                        return 'all'
-                broken_args = []
-                for keyword, value in parameters.items():
-                    validator = command.get_validator_from_keyword(keyword)
-                    level = DB.levels.get(self.window.current.level_nid if self.window.current else None)
-                    text = event_validators.validate(validator, value, level, DB, RESOURCES)
-                    if text is None:
-                        broken_args.append(command.get_index_from_keyword(keyword) + 1)
-                return broken_args
-            elif error_loc:
-                return [error_loc + 1]  # Integer that points to the first idx that is broken
-            else:
-                return [0]  # First arg is broken
-        except Exception as e:
-            logging.error("Error while validating %s %s", line, e)
-            return 'all'
-
-
-class Highlighter(QSyntaxHighlighter):
-    def __init__(self, parent, window):
-        super().__init__(parent)
-        self.window = window
-        self.highlight_rules = []
-        self.setCurrentBlockState(HighlighterState.EVENT_CODE)
-        self.event_syntax_formatter = EventSyntaxRuleHighlighter(self.window)
-
-    def highlightBlock(self, text: str):
-        if text.startswith("python"):
-            self.setCurrentBlockState(HighlighterState.PYTHON_CODE)
-            self.highlightEventCode(text)
-        elif text.startswith("end_python"):
-            self.setCurrentBlockState(HighlighterState.EVENT_CODE)
-            self.highlightEventCode(text)
-        else:
-            if self.previousBlockState() == HighlighterState.EVENT_CODE:
-                self.highlightEventCode(text)
-            else:
-                self.highlightPython(text)
-            self.setCurrentBlockState(self.previousBlockState())
-
-    def highlightPython(self, text):
-        pass
-
-    def highlightEventCode(self, text):
-        to_format = self.event_syntax_formatter.match_line(text)
-        for piece_to_format in to_format:
-            self.setFormat(piece_to_format.start, piece_to_format.length, piece_to_format._format)
 
 class LineNumberArea(QWidget):
     def __init__(self, parent):
@@ -787,7 +635,7 @@ class EventProperties(QWidget):
         self.code_font.setFixedPitch(True)
         self.code_font.setPointSize(10)
         self.text_box.setFont(self.code_font)
-        self.highlighter = Highlighter(self.text_box.document(), self)
+        self.highlighter = EventHighlighter(self.text_box.document(), self)
 
         main_section = QVBoxLayout()
         self.setLayout(main_section)
