@@ -120,7 +120,6 @@ class StatTypeProperties(QWidget):
     def growth_colors_changed(self, state):
         self.current.growth_colors = bool(state)
 
-
     def set_current(self, current):
         self.current = current
         self.nid_box.edit.setText(current.nid)
