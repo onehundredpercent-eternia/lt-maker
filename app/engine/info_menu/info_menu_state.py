@@ -392,11 +392,11 @@ class InfoMenuState(State):
         elif value > 10 and value <= 25:
             color = 'orange'
         elif value > 25 and value <= 40:
-            color = 'oyellow'
+            color = 'orange-yellow'
         elif value > 40 and value <= 50:
             color = 'yellow'
         elif value > 50 and value <= 60:
-            color = 'ygreen'
+            color = 'yellow-green'
         else: # > 60
             color = 'green'
         return color
@@ -547,10 +547,9 @@ class InfoMenuState(State):
 
             # Name
             name = curr_stat.name
-            stat_prefab = DB.stats.get(stat_nid)
             color = 'yellow'
-            if stat_prefab.growth_colors == True and self.unit.team == 'player':
-                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_prefab.nid))
+            if DB.stats.get(stat_nid).growth_colors == True and self.unit.team == 'player':
+                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
             render_text(surf, ['text'], [name], [color], (8, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
@@ -570,10 +569,9 @@ class InfoMenuState(State):
 
             # Name
             name = curr_stat.name
-            stat_prefab = DB.stats.get(stat_nid)
             color = 'yellow'
-            if stat_prefab.growth_colors == True and self.unit.team == 'player':
-                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_prefab.nid))
+            if DB.stats.get(stat_nid).growth_colors == True and self.unit.team == 'player':
+                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
             render_text(surf, ['text'], [name], [color], (72, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             contribution = self.unit.stat_contribution(stat_nid)
@@ -612,10 +610,9 @@ class InfoMenuState(State):
             elif stat == 'AID':
                 if growths:
                     icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
-                    stat_prefab = DB.stats.get('HP')
                     color = 'yellow'
-                    if stat_prefab.growth_colors == True and self.unit.team == 'player':
-                        color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_prefab.nid))
+                    if DB.stats.get('HP').growth_colors == True and self.unit.team == 'player':
+                        color = self.growth_colors(unit_funcs.growth_rate(self.unit, 'HP'))
                     render_text(surf, ['text'], [text_funcs.translate('HP')], [color], (72, 16 * true_idx + 24))
                     self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
                 else:
