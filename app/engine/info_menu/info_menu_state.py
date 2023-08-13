@@ -383,29 +383,6 @@ class InfoMenuState(State):
             y_pos = WINHEIGHT - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
-    def hp_growths_value(self):
-        # HP Growths to determine stat text color
-        class_obj = DB.classes.get(self.unit.klass)
-        growth_base_value = self.unit.growths.get('HP', 0)
-        growth_bonus = self.unit.growth_bonus('HP')
-        klass_bonus = class_obj.growth_bonus.get('HP', 0)
-        growth_base_value += growth_bonus + klass_bonus
-        return growth_base_value
-
-    def hp_growth_colors(self, value):
-        color = 'yellow'
-        if value == 0:
-            color = 'grey'
-        elif value > 0 and value <= 25:
-            color = 'red'
-        elif value > 50 and value <= 75:
-            color = 'ygreen'
-        elif value > 75:
-            color = 'green'
-        else: # 25 > and <= 50 HP
-            color = 'yellow'
-        return color
-
     def growth_colors(self, value):
         color = 'yellow'
         if value == 0:
@@ -415,30 +392,18 @@ class InfoMenuState(State):
         elif value > 10 and value <= 25:
             color = 'orange'
         elif value > 25 and value <= 40:
-            color = 'peach'
+            color = 'oyellow'
+        elif value > 40 and value <= 50:
+            color = 'yellow'
         elif value > 50 and value <= 60:
             color = 'ygreen'
-        elif value > 60:
+        else: # > 60
             color = 'green'
-        else: # 40 > and <= 50 stat
-            color = 'yellow'
         return color
 
     def create_portrait(self):
         surf = engine.create_surface((96, WINHEIGHT), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (8, 122))
-        stat_prefab = DB.stats.get('HP')
-        if stat_prefab.growth_colors == True and self.unit.team == 'player':
-            if self.hp_growths_value() == 0:
-                surf.blit(image_mods.make_gray(SPRITES.get('info_unit_hp')), (8, 138))
-            elif self.hp_growths_value() > 0 and self.hp_growths_value() <= 25:
-                surf.blit(image_mods.change_color(SPRITES.get('info_unit_hp'), (175, 0, 50)), (8, 138))
-            elif self.hp_growths_value() > 50 and self.hp_growths_value() <= 75:
-                surf.blit(image_mods.change_color(SPRITES.get('info_unit_hp'), (25, 75, 25)), (8, 138))
-            elif self.hp_growths_value() > 75:
-                surf.blit(image_mods.change_color(SPRITES.get('info_unit_hp'), (50, 125, 50)), (8, 138))
-            else: #25 > and <= 50 HP
-                None
 
         im, offset = icons.get_portrait(self.unit)
         if im:
@@ -580,21 +545,13 @@ class InfoMenuState(State):
                     build_groove(surf, (27, 16 * idx + 32), total_length, frac)
                 icons.draw_stat(surf, stat_nid, self.unit, (47, 16 * idx + 24))
 
-            # Reference for Left Stat growths to determine stat text color
-            class_obj = DB.classes.get(self.unit.klass)
-            growth_base_value = self.unit.growths.get(stat_nid, 0)
-            growth_bonus = self.unit.growth_bonus(stat_nid)
-            klass_bonus = class_obj.growth_bonus.get(stat_nid, 0)
-            growth_base_value += growth_bonus + klass_bonus
-
             # Name
             name = curr_stat.name
             stat_prefab = DB.stats.get(stat_nid)
+            color = 'yellow'
             if stat_prefab.growth_colors == True and self.unit.team == 'player':
-                color = self.growth_colors(growth_base_value)
-                render_text(surf, ['text'], [name], [color], (8, 16 * idx + 24))
-            else:
-                render_text(surf, ['text'], [name], ['yellow'], (8, 16 * idx + 24))
+                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_prefab.nid))
+            render_text(surf, ['text'], [name], [color], (8, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
             base_value += subtle_stat_bonus
@@ -611,21 +568,13 @@ class InfoMenuState(State):
             else:
                 icons.draw_stat(surf, stat_nid, self.unit, (111, 16 * idx + 24))
 
-            # Reference for Right Stat growths to determine stat text color
-            class_obj = DB.classes.get(self.unit.klass)
-            growth_base_value = self.unit.growths.get(stat_nid, 0)
-            growth_bonus = self.unit.growth_bonus(stat_nid)
-            klass_bonus = class_obj.growth_bonus.get(stat_nid, 0)
-            growth_base_value += growth_bonus + klass_bonus
-
             # Name
             name = curr_stat.name
             stat_prefab = DB.stats.get(stat_nid)
+            color = 'yellow'
             if stat_prefab.growth_colors == True and self.unit.team == 'player':
-                color = self.growth_colors(growth_base_value)
-                render_text(surf, ['text'], [name], [color], (72, 16 * idx + 24))
-            else:
-                render_text(surf, ['text'], [name], ['yellow'], (72, 16 * idx + 24))
+                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_prefab.nid))
+            render_text(surf, ['text'], [name], [color], (72, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             contribution = self.unit.stat_contribution(stat_nid)
             contribution['Base Value'] = base_value
@@ -664,12 +613,11 @@ class InfoMenuState(State):
                 if growths:
                     icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
                     stat_prefab = DB.stats.get('HP')
+                    color = 'yellow'
                     if stat_prefab.growth_colors == True and self.unit.team == 'player':
-                        color = self.hp_growth_colors(self.hp_growths_value())
-                        render_text(surf, ['text'], [text_funcs.translate('HP')], [color], (72, 16 * true_idx + 24))
-                    else:
-                        render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
-                        self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
+                        color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_prefab.nid))
+                    render_text(surf, ['text'], [text_funcs.translate('HP')], [color], (72, 16 * true_idx + 24))
+                    self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
                 else:
                     aid = equations.parser.rescue_aid(self.unit)
                     render_text(surf, ['text'], [str(aid)], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
