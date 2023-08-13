@@ -50,7 +50,6 @@ class StatTypeProperties(QWidget):
         self.growth_colors_box.setToolTip(_("Select individually which stat growths will change color based on their value"))
         name_section.addWidget(self.growth_colors_box)
 
-
         self.setLayout(name_section)
         name_section.setAlignment(Qt.AlignTop)
 
