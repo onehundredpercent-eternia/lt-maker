@@ -810,7 +810,9 @@ class MoveState(MapState):
             game.state.change('movement')
             action.do(cur_unit.current_move)
 
-    def direct_selection_targets(self, cur_unit: UnitObject) -> bool:
+    def direct_selection_targets(self, cur_unit: UnitObject) -> dict:
+        if not DB.constants.value('direct_attack_selection'):
+            return {}
         return {TargetType.WEAPON: target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, target_system.get_all_weapons(cur_unit)),
                 TargetType.SPELL: target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, target_system.get_all_spells(cur_unit)),
                 TargetType.EXTRAABILITY: target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, self.extra_abilities),
