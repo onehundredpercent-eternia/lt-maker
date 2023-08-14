@@ -154,6 +154,21 @@ def _get_all_attacks(unit, valid_moves, items) -> (set, int):
             else:
                 attacks |= get_shell(valid_moves, item_range, game.board.bounds, manhattan_restriction)
     return (attacks, max_range)
+
+def get_all_attacks_in_range(unit, valid_moves, items) -> set:
+    attacks = _get_all_attacks(unit, valid_moves, items)[0]
+    all_valid_targets = set()
+    for item in items:
+        # A list of positions if the position
+        # 1. Is a valid target
+        # 2. Is not a restricted target
+        # 3. Is not targeting a unit with only restricted items
+        pos_list = {pos for pos in item_system.valid_targets(unit, item) if \
+                        item_system.target_restrict(unit, item, *item_system.splash(unit, item, pos)) and \
+                        (not game.board.get_unit(pos) or \
+                        any([i for i in game.board.get_unit(pos).items if item_system.item_restrict(unit, item, game.board.get_unit(pos), i)]))}
+        all_valid_targets |= pos_list
+    return attacks.intersection(all_valid_targets)
     
 def _get_possible_attacks(unit, valid_moves, items):
     items_standard, items_ignore_los = [], []
@@ -302,7 +317,7 @@ def get_valid_targets(unit, item=None) -> set:
     if item.sequence_item:
         all_targets = set()
         for subitem in item.subitems:
-            valid_targets = get_valid_targets(unit, subitem, ignore_proximity)
+            valid_targets = get_valid_targets(unit, subitem)
             if not valid_targets:
                 return set()
             all_targets |= valid_targets
@@ -331,8 +346,6 @@ def get_valid_targets(unit, item=None) -> set:
         if item_range:
             max_item_range = max(item_range)
             valid_moves = [unit.position]
-            if ignore_proximity:
-                valid_moves = get_valid_moves(unit)
             valid_targets = set(line_of_sight.line_of_sight(valid_moves, valid_targets, max_item_range))
         else: # I think this is impossible to happen, as it is checked in various places above in this function
             valid_targets = set()
@@ -359,15 +372,15 @@ def get_weapons(unit: UnitObject) -> List[ItemObject]:
 def get_all_weapons(unit: UnitObject) -> List[ItemObject]:
     return [item for item in item_funcs.get_all_items(unit) if item_system.is_weapon(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_targets_with_items(unit, items: List[ItemObject], ignore_proximity=False) -> set:
+def get_all_targets_with_items(unit, items: List[ItemObject]) -> set:
     targets = set()
     for item in items:
-        targets |= get_valid_targets(unit, item, ignore_proximity)
+        targets |= get_valid_targets(unit, item)
     return targets
 
-def get_all_weapon_targets(unit, ignore_proximity=False) -> set:
+def get_all_weapon_targets(unit) -> set:
     weapons = get_all_weapons(unit)
-    return get_all_targets_with_items(unit, weapons, ignore_proximity)
+    return get_all_targets_with_items(unit, weapons)
 
 def get_spells(unit: UnitObject) -> List[ItemObject]:
     return [item for item in unit.items if item_funcs.is_spell_recursive(unit, item) and item_funcs.available(unit, item)]
@@ -375,9 +388,9 @@ def get_spells(unit: UnitObject) -> List[ItemObject]:
 def get_all_spells(unit):
     return [item for item in item_funcs.get_all_items(unit) if item_system.is_spell(unit, item) and item_funcs.available(unit, item)]
 
-def get_all_spell_targets(unit, ignore_proximity=False) -> set:
+def get_all_spell_targets(unit) -> set:
     spells = get_all_spells(unit)
-    return get_all_targets_with_items(unit, spells, ignore_proximity)
+    return get_all_targets_with_items(unit, spells)
 
 def find_strike_partners(attacker, defender, item):
     '''Finds and returns a tuple of strike partners for the specified units

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 
 from typing import Callable, List, Optional, Tuple
 from app.editor.event_editor.event_inspector import EventInspectorEngine
@@ -31,6 +32,12 @@ import threading
 import logging
 
 from app.utilities import utils
+
+class TargetType(Enum):
+    WEAPON = 'WeaponTargets'
+    SPELL = 'SpellTargets'
+    EXTRAABILITY = 'ExtraAbilityTargets'
+    PAIRUP = 'PairupTargets'
 
 class LoadingState(State):
     name = 'start_level_asset_loading'
@@ -682,6 +689,11 @@ class MoveState(MapState):
 
         self.extra_abilities = list(skill_system.get_extra_abilities(cur_unit).values())
 
+        self.targets = self.direct_selection_targets(cur_unit)
+        self.all_targets = set()
+        for pos in self.targets.values():
+            self.all_targets |= pos
+
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:
             phase.fade_in_phase_music()
@@ -727,7 +739,7 @@ class MoveState(MapState):
             elif game.cursor.position in self.valid_moves:
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
                     # If you try and select a tile with an ally
-                    if self.is_direct_selection_target(game.cursor.position, cur_unit):
+                    if game.cursor.position in self.all_targets:
                         # You've selected a unit that could be a target
                         self.handle_direct_selection(cur_unit)
                     else:
@@ -750,7 +762,7 @@ class MoveState(MapState):
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
 
-            elif self.is_direct_selection_target(game.cursor.position, cur_unit):
+            elif game.cursor.position in self.all_targets:
                 # You've selected a unit that could be a target
                 self.handle_direct_selection(cur_unit)
 
@@ -798,45 +810,28 @@ class MoveState(MapState):
             game.state.change('movement')
             action.do(cur_unit.current_move)
 
-    def is_direct_selection_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return self.is_weapon_target(pos, cur_unit) \
-                    or self.is_spell_target(pos, cur_unit) \
-                    or self.is_ability_target(pos, cur_unit) \
-                    or self.is_pairup_target(pos, cur_unit)
-
-    '''TODO: Fix line of sight breaking direct attack selection
-            Also, figure out sequence item issue - it must be able to only select
-            a target that is valid for item1, but item2+ must have valid targets
-            available to them'''
-
-    def is_weapon_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in self.valid_attacks and pos in target_system.get_all_weapon_targets(cur_unit, ignore_proximity=True)
-    
-    def is_spell_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in self.valid_spells and pos in target_system.get_all_spell_targets(cur_unit, ignore_proximity=True)
-
-    def is_ability_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in target_system.get_all_targets_with_items(cur_unit, self.extra_abilities, ignore_proximity=True)
-    
-    def is_pairup_target(self, pos: tuple, cur_unit: UnitObject) -> bool:
-        return pos in PairUpAbility.targets_within_movement(cur_unit, self.valid_moves)
+    def direct_selection_targets(self, cur_unit: UnitObject) -> bool:
+        return {TargetType.WEAPON: target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, target_system.get_all_weapons(cur_unit)),
+                TargetType.SPELL: target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, target_system.get_all_spells(cur_unit)),
+                TargetType.EXTRAABILITY: target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, self.extra_abilities),
+                TargetType.PAIRUP: PairUpAbility.targets_within_movement(cur_unit, self.valid_moves)}
 
     def direct_attack_state_setup(self, cur_unit: UnitObject, target_pos: tuple):
         '''Adds the states needed for backing out of the attack to 
         function correctly'''
-        if self.is_weapon_target(target_pos, cur_unit):
+        if target_pos in self.targets[TargetType.WEAPON]:
             game.memory['targets'] = AttackAbility.targets(cur_unit)
             game.memory['ability'] = 'Attack'
             game.memory['selection'] = target_pos
             game.state.change('menu')
             game.state.change('weapon_choice')
-        elif self.is_spell_target(target_pos, cur_unit):
+        elif target_pos in self.targets[TargetType.SPELL]:
             game.memory['targets'] = SpellAbility.targets(cur_unit)
             game.memory['ability'] = 'Spells'
             game.memory['selection'] = target_pos
             game.state.change('menu')
             game.state.change('spell_choice')
-        elif self.is_ability_target(target_pos, cur_unit):
+        elif target_pos in self.targets[TargetType.EXTRAABILITY]:
             item = self.extra_abilities[0]
             targets = target_system.get_valid_targets(cur_unit, item)
             game.memory['targets'] = targets
@@ -845,7 +840,7 @@ class MoveState(MapState):
             game.memory['item'] = item
             game.state.change('menu')
             game.state.change('combat_targeting')
-        elif self.is_pairup_target(target_pos, cur_unit):
+        elif target_pos in self.targets[TargetType.PAIRUP]:
             game.memory['ability'] = PairUpAbility
             game.memory['selection'] = target_pos
             game.state.change('menu')
@@ -2083,6 +2078,9 @@ class CombatTargetingState(MapState):
                 closest_pos = self.selection.get_least_hp(game.cursor.position)
             else:
                 closest_pos = self.selection.get_closest(game.cursor.position)
+        # Prevents a crash if the cursor doesn't have a position
+        if not closest_pos:
+            closest_pos = self.cur_unit.position
         game.cursor.set_pos(closest_pos)
 
         # Sets dual strike variables and chooses attacker dual strike
