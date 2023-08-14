@@ -383,7 +383,7 @@ class InfoMenuState(State):
             y_pos = WINHEIGHT - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
-    def growth_colors(self, value):
+    def growth_colors(self, value: int) -> str:
         color = 'yellow'
         if value == 0:
             color = 'grey'
@@ -548,7 +548,7 @@ class InfoMenuState(State):
             # Name
             name = curr_stat.name
             color = 'yellow'
-            if DB.stats.get(stat_nid).growth_colors == True and self.unit.team == 'player':
+            if DB.stats.get(stat_nid).growth_colors and self.unit.team == 'player':
                 color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
             render_text(surf, ['text'], [name], [color], (8, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
@@ -570,7 +570,7 @@ class InfoMenuState(State):
             # Name
             name = curr_stat.name
             color = 'yellow'
-            if DB.stats.get(stat_nid).growth_colors == True and self.unit.team == 'player':
+            if DB.stats.get(stat_nid).growth_colors and self.unit.team == 'player':
                 color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
             render_text(surf, ['text'], [name], [color], (72, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
@@ -611,7 +611,7 @@ class InfoMenuState(State):
                 if growths:
                     icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
                     color = 'yellow'
-                    if DB.stats.get('HP').growth_colors == True and self.unit.team == 'player':
+                    if DB.stats.get('HP').growth_colors and self.unit.team == 'player':
                         color = self.growth_colors(unit_funcs.growth_rate(self.unit, 'HP'))
                     render_text(surf, ['text'], [text_funcs.translate('HP')], [color], (72, 16 * true_idx + 24))
                     self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)

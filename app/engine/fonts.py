@@ -9,7 +9,7 @@ class FontType():
         self.colors = {}
         self.default = default
 
-NORMAL_FONT_COLORS = ['white', 'blue', 'green', 'yellow-green', 'red', 'orange', 'grey', 'yellow', 'orange-yellow' 'brown']
+NORMAL_FONT_COLORS = ['white', 'blue', 'green', 'yellow-green', 'red', 'orange', 'grey', 'yellow', 'orange-yellow' 'brown', 'purple']
 
 text = FontType('text', 'white')
 text.colors['white'] = ((248, 248, 248, 255), (160, 136, 216, 255), (56, 48, 40, 255))
@@ -26,7 +26,6 @@ text.colors['purple'] = ((199, 155, 232, 255), (147, 61, 212, 255), (62, 37, 82,
 
 narrow = FontType('narrow', 'white')
 narrow.colors = text.colors
-
 
 small = FontType('small', 'white')
 small.colors = text.colors
