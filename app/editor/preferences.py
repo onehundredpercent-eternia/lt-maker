@@ -33,7 +33,6 @@ class PreferencesDialog(Dialog):
         self.saved_preferences['place_button'] = self.settings.get_place_button(Qt.RightButton)
         self.saved_preferences['theme'] = self.settings.get_theme(0)
         self.saved_preferences['event_autocomplete'] = self.settings.get_event_autocomplete(1)
-        self.saved_preferences['event_autocomplete_desc'] = self.settings.get_event_autocomplete_desc(1)
         self.saved_preferences['autocomplete_button'] = self.settings.get_autocomplete_button(Qt.Key_Tab)
         self.saved_preferences['autosave_time'] = self.settings.get_autosave_time()
         self.saved_preferences['crash_logs'] = self.settings.get_should_display_crash_logs()
@@ -185,8 +184,6 @@ class PreferencesDialog(Dialog):
         # resorting to int
         autocomplete = 1 if self.autocomplete.edit.isChecked() else 0
         self.settings.set_event_autocomplete(autocomplete)
-        autocomplete_desc = 1 if self.autocomplete_desc.edit.isChecked() else 0
-        self.settings.set_event_autocomplete_desc(autocomplete_desc)
         crash_log_setting = 1 if self.crashlog.edit.isChecked() else 0
         self.settings.set_should_display_crash_logs(crash_log_setting)
         save_chunks_setting = 1 if self.savechunks.edit.isChecked() else 0

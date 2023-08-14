@@ -537,8 +537,10 @@ class EventProperties(QWidget):
         self.language_mode = lang
         if lang == EditorLanguageMode.PYTHON:
             self.highlighter = PythonHighlighter(self.text_box.document())
+            self.text_box.setCompleter(None)
         else:
             self.highlighter = EventHighlighter(self.text_box.document(), self)
+            self.text_box.setCompleter(event_autocompleter.EventScriptCompleter())
 
     def set_current(self, current: EventPrefab):
         self.current = current
