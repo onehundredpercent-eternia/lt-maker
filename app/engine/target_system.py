@@ -155,7 +155,7 @@ def _get_all_attacks(unit, valid_moves, items) -> (set, int):
                 attacks |= get_shell(valid_moves, item_range, game.board.bounds, manhattan_restriction)
     return (attacks, max_range)
 
-def get_all_attacks_in_range(unit, valid_moves, items) -> set:
+def get_all_attacks_in_range(unit: UnitObject, valid_moves: List[Tuple[int, int]], items: List[ItemObject]) -> set:
     attacks = _get_all_attacks(unit, valid_moves, items)[0]
     all_valid_targets = set()
     for item in items:
@@ -163,10 +163,14 @@ def get_all_attacks_in_range(unit, valid_moves, items) -> set:
         # 1. Is a valid target
         # 2. Is not a restricted target
         # 3. Is not targeting a unit with only restricted items
-        pos_list = {pos for pos in item_system.valid_targets(unit, item) if \
-                        item_system.target_restrict(unit, item, *item_system.splash(unit, item, pos)) and \
-                        (not game.board.get_unit(pos) or \
-                        any([i for i in game.board.get_unit(pos).items if item_system.item_restrict(unit, item, game.board.get_unit(pos), i)]))}
+        pos_list = set()
+        if item.sequence_item and item.subitems:
+            item = item.subitems[0]
+        for pos in item_system.valid_targets(unit, item):
+            target = game.board.get_unit(pos)
+            if item_system.target_restrict(unit, item, *item_system.splash(unit, item, pos)) and \
+                        (not target or any([i for i in target.items if item_system.item_restrict(unit, item, target, i)])):
+                pos_list.add(pos)
         all_valid_targets |= pos_list
     return attacks.intersection(all_valid_targets)
     
