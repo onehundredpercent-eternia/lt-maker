@@ -837,19 +837,21 @@ class EventProperties(QWidget):
         self.current.priority = value
 
     def text_changed(self):
-        if not self.current.is_python_event:
-            self.current.commands.clear()
-            lines = []
-            for doc_idx in range(self.text_box.document().blockCount()):
-                line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
-                if line:
-                    lines.append(line)
-            for line in lines:
-                command, error_loc = event_commands.parse_text_to_command(line)
-                if command:
-                    self.current.commands.append(command)
-        else:
-            self.current.source = self.text_box.document().toPlainText()
+        self.current.commands.clear()
+        lines = []
+        for doc_idx in range(self.text_box.document().blockCount()):
+            line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
+            if line:
+                lines.append(line)
+        for line in lines:
+            command, error_loc = event_commands.parse_text_to_command(line)
+            if command:
+                self.current.commands.append(command)
+        self.current.source = self.text_box.document().toPlainText()
+        if self.current.is_python_event() and not isinstance(self.highlighter, PythonHighlighter):
+            self.highlighter = PythonHighlighter(self.text_box.document())
+        elif not self.current.is_python_event() and not isinstance(self.highlighter, EventHighlighter):
+            self.highlighter = EventHighlighter(self.text_box.document(), self)
 
     def set_current(self, current: EventPrefab):
         self.current = current
@@ -869,7 +871,7 @@ class EventProperties(QWidget):
         self.only_once_box.edit.setChecked(bool(current.only_once))
         self.priority_box.edit.setValue(current.priority)
 
-        if not self.current.is_python_event:
+        if not self.current.is_python_event():
             # Convert text
             text = ''
             num_tabs = 0

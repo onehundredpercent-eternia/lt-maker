@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import List, Optional
 
 from app.events import event_commands
@@ -17,7 +18,6 @@ class EventPrefab(Prefab):
         self.priority: int = 20
 
         self.source: str = ""
-        self.is_python_event = False
 
     @property
     def nid(self):
@@ -27,6 +27,18 @@ class EventPrefab(Prefab):
             return self.level_nid + " " + self.name
         else:
             return "Global " + self.name
+
+    @lru_cache(1)
+    def _is_python_event(self, source: str):
+        lines = source.split('\n')
+        if lines and lines[0].strip() == '#python':
+            return True
+        return False
+
+    def is_python_event(self):
+        if not self.source:
+            return False
+        return self._is_python_event(self.source)
 
     def save_attr(self, name, value):
         if name == 'commands':
