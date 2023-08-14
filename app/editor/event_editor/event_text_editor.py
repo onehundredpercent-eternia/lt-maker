@@ -82,20 +82,8 @@ class EventTextEditor(QPlainTextEdit):
 
     def insertCompletion(self, completion):
         tc = self.textCursor()
-        while not tc.atBlockEnd():
-            tc.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
-            if tc.selectedText() in ";,":
-                break
-            tc.clearSelection()
-        end = tc.position()
-        while not tc.atBlockStart():
+        for i in range(len(self.completer.completionPrefix())):
             tc.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor)
-            if tc.selectedText() in ';,':
-                break
-            tc.clearSelection()
-        start = tc.position()
-        for i in range(start, end):
-            tc.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor)
         tc.removeSelectedText()
         tc.insertText(completion)
         self.setTextCursor(tc)
