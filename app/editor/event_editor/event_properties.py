@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 
 import functools
 import logging
@@ -42,6 +43,10 @@ from app.extensions.custom_gui import (ComboBox, PropertyBox, PropertyCheckBox,
                                        QHLine, TableView)
 from app.extensions.markdown2 import Markdown
 from app.utilities import str_utils
+
+class EditorLanguageMode(Enum):
+    PYTHON = 0
+    EVENT = 1
 
 class EventCollection(QWidget):
     def __init__(self, deletion_criteria, collection_model, parent,
@@ -294,6 +299,7 @@ class EventProperties(QWidget):
         self._data = self.window._data
 
         self.current = current
+        self.language_mode = EditorLanguageMode.EVENT
 
         self.text_box = EventTextEditor(self)
         self.text_box.textChanged.connect(self.text_changed)
@@ -523,9 +529,15 @@ class EventProperties(QWidget):
             if command:
                 self.current.commands.append(command)
         self.current.source = self.text_box.document().toPlainText()
-        if self.current.is_python_event() and not isinstance(self.highlighter, PythonHighlighter):
+        self.set_editor_language(EditorLanguageMode.PYTHON if self.current.is_python_event() else EditorLanguageMode.EVENT)
+
+    def set_editor_language(self, lang: EditorLanguageMode):
+        if lang == self.language_mode:
+            return
+        self.language_mode = lang
+        if lang == EditorLanguageMode.PYTHON:
             self.highlighter = PythonHighlighter(self.text_box.document())
-        elif not self.current.is_python_event() and not isinstance(self.highlighter, EventHighlighter):
+        else:
             self.highlighter = EventHighlighter(self.text_box.document(), self)
 
     def set_current(self, current: EventPrefab):
@@ -561,11 +573,11 @@ class EventProperties(QWidget):
                         num_tabs += 1
                 else:
                     logging.warning("NoneType in current.commands")
-            self.highlighter = EventHighlighter(self.text_box.document(), self)
             self.text_box.setPlainText(text)
+            self.set_editor_language(EditorLanguageMode.EVENT)
         else:
-            self.highlighter = PythonHighlighter(self.text_box.document())
             self.text_box.setPlainText(self.current.source)
+            self.set_editor_language(EditorLanguageMode.PYTHON)
 
     def hideEvent(self, event):
         self.close_map()
