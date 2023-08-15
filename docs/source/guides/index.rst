@@ -1,36 +1,14 @@
 Guides
-========
+====================================
 
-These pages will contain various guides.
+These pages contain guides of all sorts.
 
 .. toctree::
     :maxdepth: 2
     :caption: Contents
 
-    Breakable-Walls
-    Build-Engine
-    Leadership-Stars
-    Overworld
-    Unit-Groups
-    Shop-Portraits
-    Title-Screen
-    Roaming-AI
-    Achievements
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Eventing Tutorials:
-
-    eventing_tutorials/index.rst
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Skill and Item Tutorials:
-
-    skill_item_tutorials/index.rst
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Component Tutorials:
-
-    component_tutorials/index.rst
+    Basics_Guides/index.rst
+    Items_Guides/index.rst
+    Skills_Guides/index.rst
+    Special_Actions_Guides/index.rst
+    Systems_and_Mechanics_Guides/index.rst
