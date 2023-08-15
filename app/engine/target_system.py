@@ -167,9 +167,7 @@ def get_all_attacks_in_range(unit: UnitObject, valid_moves: List[Tuple[int, int]
         if item.sequence_item and item.subitems:
             item = item.subitems[0]
         for pos in item_system.valid_targets(unit, item):
-            target = game.board.get_unit(pos)
-            if item_system.target_restrict(unit, item, *item_system.splash(unit, item, pos)) and \
-                        (not target or any([i for i in target.items if item_system.item_restrict(unit, item, target, i)])):
+            if item_system.target_restrict(unit, item, *item_system.splash(unit, item, pos)):
                 pos_list.add(pos)
         all_valid_targets |= pos_list
     return attacks.intersection(all_valid_targets)
