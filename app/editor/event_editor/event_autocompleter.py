@@ -47,9 +47,9 @@ class EventScriptFunctionHinter():
         if curr_keyword == 'FLAGS':
             hint_desc = 'Must be one of: %s' % ', '.join(command.flags)
         else:
-            validator = event_validators.get(curr_keyword)()
+            validator = event_validators.get(curr_keyword)
             if validator:
-                hint_desc = '<div class="desc_text">' + validator.desc + '</div>'
+                hint_desc = '<div class="desc_text">' + validator().desc + '</div>'
 
         style = """
             <style>

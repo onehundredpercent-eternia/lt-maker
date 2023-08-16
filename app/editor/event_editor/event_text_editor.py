@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import os
+from typing import Optional, Type
 
 from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics, QPainter, QPalette, QTextCursor
@@ -48,13 +49,13 @@ class EventTextEditor(QPlainTextEdit):
         fm = QFontMetrics(self.font())
         self.setTabStopWidth(4 * fm.width(' '))
 
-        self.completer: QCompleter = None
-        self.function_annotator: QLabel = QLabel(self)
-
+        self.completer: Optional[QCompleter] = None
+        self.function_hinter: Optional[Type[event_autocompleter.EventScriptFunctionHinter]] = None
         # completer
         self.textChanged.connect(self.complete)
         self.prev_keyboard_press = None
 
+        self.function_annotator: QLabel = QLabel(self)
         if bool(self.settings.get_event_autocomplete()):
             # function helper
             self.textChanged.connect(self.display_function_hint)
@@ -65,7 +66,7 @@ class EventTextEditor(QPlainTextEdit):
             with open(os.path.join(os.path.dirname(__file__),'event_styles.css'), 'r') as stylecss:
                 self.function_annotator.setStyleSheet(stylecss.read())
 
-    def setCompleter(self, completer):
+    def set_completer(self, completer):
         if not completer:
             self.completer = None
             return
@@ -73,9 +74,12 @@ class EventTextEditor(QPlainTextEdit):
         completer.setCompletionMode(QCompleter.PopupCompletion)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer = completer
-        self.completer.insertText.connect(self.insertCompletion)
+        self.completer.insertText.connect(self.insert_completion)
 
-    def insertCompletion(self, completion):
+    def set_function_hinter(self, function_hinter: Type[event_autocompleter.EventScriptFunctionHinter]):
+        self.function_hinter = function_hinter
+
+    def insert_completion(self, completion):
         tc = self.textCursor()
         for i in range(len(self.completer.completionPrefix())):
             tc.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor)
@@ -91,7 +95,7 @@ class EventTextEditor(QPlainTextEdit):
         line = tc.block().text()
         cursor_pos = tc.positionInBlock()
 
-        hint_text = event_autocompleter.EventScriptFunctionHinter.generate_hint_for_line(line, cursor_pos)
+        hint_text = self.function_hinter.generate_hint_for_line(line, cursor_pos)
         if not hint_text:
             self.hide_function_hint()
             return
@@ -202,6 +206,8 @@ class EventTextEditor(QPlainTextEdit):
 
     def should_show_function_hint(self):
         if not bool(self.settings.get_event_autocomplete()):
+            return False
+        if not self.function_hinter:
             return False
         if not self.document().toPlainText():
             return False
