@@ -5,8 +5,7 @@ from functools import lru_cache
 
 from app.data.database.components import ComponentType
 from app.data.database.item_components import ItemComponent, ItemTags
-from app.engine import item_funcs, skill_system, target_system
-from app.engine.game_state import game
+from app.engine import item_funcs, skill_system
 from app.engine.movement import movement_funcs
 from app.utilities import utils
 
@@ -17,7 +16,7 @@ class TargetsAnything(ItemComponent):
     tag = ItemTags.TARGET
 
     def valid_targets(self, unit, item) -> set:
-        return {(x, y) for x in range(game.tilemap.width) for y in range(game.tilemap.height)}
+        return {(x, y) for x in range(self.game.tilemap.width) for y in range(self.game.tilemap.height)}
 
 class TargetsUnits(ItemComponent):
     nid = 'target_unit'
@@ -25,7 +24,7 @@ class TargetsUnits(ItemComponent):
     tag = ItemTags.TARGET
 
     def valid_targets(self, unit, item) -> set:
-        return {other.position for other in game.units if other.position}
+        return {other.position for other in self.game.units if other.position}
 
 class TargetsEnemies(ItemComponent):
     nid = 'target_enemy'
@@ -33,7 +32,7 @@ class TargetsEnemies(ItemComponent):
     tag = ItemTags.TARGET
 
     def valid_targets(self, unit, item) -> set:
-        return {other.position for other in game.units if other.position and
+        return {other.position for other in self.game.units if other.position and
                    skill_system.check_enemy(unit, other)}
 
 class TargetsAllies(ItemComponent):
@@ -42,7 +41,7 @@ class TargetsAllies(ItemComponent):
     tag = ItemTags.TARGET
 
     def valid_targets(self, unit, item) -> set:
-        return {other.position for other in game.units if other.position and
+        return {other.position for other in self.game.units if other.position and
                    skill_system.check_ally(unit, other)}
 
 class TargetsSpecificTiles(ItemComponent):
@@ -132,13 +131,13 @@ Restricts which units or spaces can be targeted. These properties are accessible
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
         from app.engine import evaluate
         try:
-            target = game.board.get_unit(def_pos)
+            target = self.game.board.get_unit(def_pos)
             unit_pos = unit.position
             target_pos = def_pos
             if evaluate.evaluate(self.value, unit, target, unit_pos, local_args={'target_pos': target_pos, 'item': item}):
                 return True
             for s_pos in splash:
-                target = game.board.get_unit(s_pos)
+                target = self.game.board.get_unit(s_pos)
                 if evaluate.evaluate(self.value, unit, target, unit_pos, local_args={'target_pos': s_pos, 'item': item}):
                     return True
         except Exception as e:
@@ -162,7 +161,7 @@ class EmptyTileTargetRestrict(ItemComponent):
     tag = ItemTags.TARGET
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
-        if not game.board.get_unit(def_pos):
+        if not self.game.board.get_unit(def_pos):
             return True
         return False
 
