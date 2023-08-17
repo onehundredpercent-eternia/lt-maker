@@ -145,7 +145,7 @@ class AllyLifelink(SkillComponent):
         damage = utils.clamp(total_damage_dealt, 0, target.get_hp())
         true_damage = int(damage * self.value)
         if true_damage > 0 and unit.position:
-            adj_positions = target_system.get_adjacent_positions(unit.position)
+            adj_positions = game.target_system.get_adjacent_positions(unit.position)
             did_happen = False
             for adj_pos in adj_positions:
                 other = game.board.get_unit(adj_pos)
@@ -647,7 +647,7 @@ class PostCombatSplashAOE(SkillComponent):
     def end_combat(self, playback, unit, item, target, mode):
         if target and skill_system.check_enemy(unit, target):
             r = set(range(self.value+1))
-            locations = target_system.get_shell(
+            locations = game.target_system.get_shell(
                 {target.position}, r, game.board.bounds)
             damage = get_pc_damage(unit, self.skill)
             if damage > 0:

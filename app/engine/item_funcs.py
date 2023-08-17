@@ -36,7 +36,7 @@ def has_magic(unit) -> bool:
 
 def can_use(unit, item) -> bool:
     if item_system.can_use(unit, item) and available(unit, item):
-        targets = target_system.get_valid_targets(unit, item)
+        targets = game.target_system.get_valid_targets(unit, item)
         if targets:
             return True
     return False

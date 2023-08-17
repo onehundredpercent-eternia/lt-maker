@@ -381,7 +381,7 @@ class Event():
             if unit.position == position:
                 # Don't bother if identical
                 return
-            path = target_system.get_path(unit, position)
+            path = game.target_system.get_path(unit, position)
             action.do(action.Move(unit, position, path, event=True, follow=follow))
         return position
 
@@ -456,13 +456,13 @@ class Event():
             elif placement == 'stack':
                 return position
             elif placement == 'closest':
-                position = target_system.get_nearest_open_tile(unit, position)
+                position = game.target_system.get_nearest_open_tile(unit, position)
                 if not position:
                     self.logger.warning("Somehow wasn't able to find a nearby open tile")
                     return None
                 return position
             elif placement == 'push':
-                new_pos = target_system.get_nearest_open_tile(current_occupant, position)
+                new_pos = game.target_system.get_nearest_open_tile(current_occupant, position)
                 action.do(action.ForcedMovement(current_occupant, new_pos))
                 return position
         else:

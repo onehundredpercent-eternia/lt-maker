@@ -141,7 +141,7 @@ class SpecificWitchWarp(SkillComponent):
             else:
                 continue
             if partner_pos:
-                positions += [pos for pos in target_system.get_adjacent_positions(partner_pos) if movement_funcs.check_weakly_traversable(unit, pos) and not game.board.get_unit(pos)]
+                positions += [pos for pos in game.target_system.get_adjacent_positions(partner_pos) if movement_funcs.check_weakly_traversable(unit, pos) and not game.board.get_unit(pos)]
         return positions
 
 class WitchWarpExpression(SkillComponent):
@@ -159,7 +159,7 @@ class WitchWarpExpression(SkillComponent):
             if target.position:
                 try:
                     if evaluate.evaluate(self.value, target, unit, target.position):
-                        positions += target_system.get_adjacent_positions(target.position)
+                        positions += game.target_system.get_adjacent_positions(target.position)
                 except Exception as e:
                     logging.error("Could not evaluate %s (%s)", self.value, e)
                     return positions

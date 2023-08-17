@@ -28,12 +28,12 @@ class RationalizeMovementComponent(MovementComponent):
             self.goal = self.unit.position
         else:  # Somebody else is occupying your position
             # Find a new nearby position to call home
-            position = target_system.get_nearest_open_tile(self.unit, self.unit.position)
+            position = game.target_system.get_nearest_open_tile(self.unit, self.unit.position)
             if position:
                 self.goal = position
             else:
                 logging.warning("Somehow wasn't able to find a nearby open tile")
-                self.goal = target_system.get_nearest_open_tile(self.unit, (0, 0))
+                self.goal = game.target_system.get_nearest_open_tile(self.unit, (0, 0))
                 if self.goal is None:
                     logging.error("Really couldn't find a valid position to rationalize unit to")
                     self.goal = (0, 0)

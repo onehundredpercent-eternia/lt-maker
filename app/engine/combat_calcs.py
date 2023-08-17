@@ -47,7 +47,7 @@ def get_support_rank_bonus(unit, target=None):
             continue
         if target and target.position:
             # Unit and other unit can both attack target
-            if target.position in target_system.get_attacks(other_unit, force=True):
+            if target.position in game.target_system.get_attacks(other_unit, force=True):
                 pass
             else:
                 continue
@@ -109,7 +109,7 @@ def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
         if item_system.can_be_countered(attacker, aweapon) and \
                 item_system.can_counter(defender, dweapon):
             if not attacker.position or \
-                    attacker.position in target_system.targets_in_range(defender, dweapon) or \
+                    attacker.position in game.target_system.targets_in_range(defender, dweapon) or \
                     skill_system.distant_counter(defender) or \
                     (skill_system.close_counter(defender) and utils.calculate_distance(attacker.position, defender.position) == 1):
                 return True
