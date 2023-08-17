@@ -772,15 +772,13 @@ class MoveState(MapState):
     def handle_direct_selection(self, cur_unit: UnitObject):
         # Determine position to move for attack
         move_pos = None
-        idx = 0
         # Includes skill-given abilities such as steal or dance
         items_and_abilities = cur_unit.items + self.extra_abilities
-        while idx < len(items_and_abilities):
+        for ability in items_and_abilities:
             move_pos = target_system.get_possible_attack_positions(cur_unit, 
-                    game.cursor.position, self.valid_moves, items_and_abilities[idx])
+                    game.cursor.position, self.valid_moves, ability)
             if move_pos:
                 break
-            idx += 1
 
         if not move_pos:
             # Should never happen
