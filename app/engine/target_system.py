@@ -162,7 +162,6 @@ def get_all_attacks_in_range(unit: UnitObject, valid_moves: List[Tuple[int, int]
         # A list of positions if the position
         # 1. Is a valid target
         # 2. Is not a restricted target
-        # 3. Is not targeting a unit with only restricted items
         pos_list = set()
         if item.sequence_item and item.subitems:
             item = item.subitems[0]
