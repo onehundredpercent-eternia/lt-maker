@@ -680,12 +680,8 @@ class MoveState(MapState):
         if cur_unit.has_traded:
             self.valid_moves = game.target_system.get_valid_moves(cur_unit)
             game.highlight.display_moves(self.valid_moves, light=False)
-            self.valid_attacks = []
-            self.valid_spells = []
         else:
             self.valid_moves = game.highlight.display_highlights(cur_unit)
-            self.valid_attacks = game.target_system.get_possible_attacks(cur_unit, self.valid_moves)
-            self.valid_spells = game.target_system.get_possible_spell_attacks(cur_unit, self.valid_moves)
 
         self.extra_abilities = list(skill_system.get_extra_abilities(cur_unit).values())
 
@@ -834,7 +830,9 @@ class MoveState(MapState):
             game.state.change('menu')
             game.state.change('spell_choice')
         elif target_pos in self.targets[TargetType.EXTRAABILITY]:
-            item = self.extra_abilities[0]
+            item = [a for a in self.extra_abilities if target_pos in \
+                    item_system.valid_targets(cur_unit, a) and \
+                    item_system.target_restrict(cur_unit, a, *item_system.splash(cur_unit, a, target_pos))][0]
             targets = game.target_system.get_valid_targets(cur_unit, item)
             game.memory['targets'] = targets
             game.memory['ability'] = item.name
