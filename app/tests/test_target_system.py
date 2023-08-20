@@ -31,8 +31,8 @@ class TargetSystemUnitTests(unittest.TestCase):
             targeting_component.valid_targets = Mock(return_value=set([target_pos]))
         else:
             targeting_component.valid_targets = Mock(return_value=set())
-        min_range_component = MinimumRange(value=1)
-        max_range_component = MaximumRange(value=1)
+        min_range_component = MinimumRange(value=min_range)
+        max_range_component = MaximumRange(value=max_range)
         sword.components = [targeting_component, min_range_component, max_range_component]
         return sword
 
