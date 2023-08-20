@@ -56,16 +56,10 @@ class Component():
     paired_with: list = []
     tag: Enum
     value = None
-    game = None
 
-    def __init__(self, value=None, game=None):
+    def __init__(self, value=None):
         if value is not None:
             self.value = value
-        if game:
-            self.game = game
-        else:
-            from app.engine.game_state import game
-            self.game = game
 
     @property
     def name(self):
