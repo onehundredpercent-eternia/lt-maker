@@ -3,7 +3,6 @@ from typing import Type
 from app.engine.codegen.codegen_utils import get_codegen_header
 from app.events.event_commands import ALL_EVENT_COMMANDS, EventCommand, Tags
 
-
 def create_wrapper_func(command_t: Type[EventCommand]):
     command_name = command_t.__name__
 

@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
 from PyQt5.QtCore import QStringListModel, Qt, pyqtSignal
 from PyQt5.QtWidgets import QCompleter
@@ -69,7 +69,6 @@ class EventScriptFunctionHinter():
         param = detect_param_under_cursor(command, line, cursor_pos)
         return EventScriptFunctionHinter._generate_hint_for_command(command, param)
 
-
 class EventScriptCompleter(QCompleter):
     insertText = pyqtSignal(str)
     def __init__(self, parent=None):
@@ -101,6 +100,47 @@ class EventScriptCompleter(QCompleter):
     def setTextToComplete(self, line: str, cursor_pos: int, level_nid: NID):
         # line is of the form, e.g.:
         # "remove_unit;E" -> User is in the middle of typing "Eirika"
+        def arg_text_under_cursor(text: str, cursor_pos):
+            before_text = text[0:cursor_pos]
+            after_text = text[cursor_pos:]
+            idx = before_text.rfind(';')
+            before_arg = before_text[idx + 1:]
+            idx = after_text.find(';')
+            after_arg = after_text[0:idx]
+            return (before_arg + after_arg)
+        arg_under_cursor = arg_text_under_cursor(line, cursor_pos)
+        # determine what dictionary to use for completion
+        validator, flags = detect_type_under_cursor(line, cursor_pos, arg_under_cursor)
+        autofill_dict = generate_wordlist_from_validator_type(validator, level_nid, arg_under_cursor, DB, RESOURCES)
+        if flags:
+            autofill_dict = autofill_dict + generate_flags_wordlist(flags)
+        if len(autofill_dict) == 0:
+            try:
+                if self.popup().isVisible():
+                    self.popup().hide()
+            except: # popup doesn't exist?
+                pass
+            return False
+        self.setModel(QStringListModel(autofill_dict, self))
+        trimmed_line = line[0:cursor_pos]
+        start_last_arg = max(max([trimmed_line.rfind(c) for c in ';,']), -1)
+        completionPrefix = trimmed_line[start_last_arg + 1:]
+        self.setCompletionPrefix(completionPrefix)
+        self.popup().setCurrentIndex(self.completionModel().index(0, 0))
+        return True
+
+class PythonScriptCompleter(EventScriptCompleter):
+    def type_and_text_under_cursor(self, line: str) -> Tuple[Optional[event_validators.Validator], str]:
+        line = line.strip()
+        if not line.startswith('$'): # normal python code
+            return None, None
+        return None, None
+
+
+    def setTextToComplete(self, line: str, cursor_pos: int, level_nid: NID):
+        atype, text = self.type_under_cursor(line[:cursor_pos])
+        if not atype:
+            return False
         def arg_text_under_cursor(text: str, cursor_pos):
             before_text = text[0:cursor_pos]
             after_text = text[cursor_pos:]
