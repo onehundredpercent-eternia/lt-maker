@@ -107,7 +107,7 @@ class TargetSystemUnitTests(unittest.TestCase):
         valid_moves = self._setup_board()
 
         weapon = self.mock_weapon(self.enemy_unit.position, 1, 1)
-        eval_special_range = EvalSpecialRange(value='y == 0')
+        eval_special_range = EvalSpecialRange(value='y > 0')
         weapon.components.append(eval_special_range)
 
         self.assertEqual(len(self.target_system.get_possible_attack_positions(self.player_unit, (0, 1), valid_moves, weapon)), 1)
