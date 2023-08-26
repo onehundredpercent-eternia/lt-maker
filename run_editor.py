@@ -3,6 +3,7 @@ import sys
 from app.editor.recent_project_dialog import choose_recent_project
 
 from app.editor.editor_locale import init_locale
+from app.editor.settings.main_settings_controller import MainSettingsController
 from app.engine.component_system import source_generator
 
 from PyQt5.QtWidgets import QApplication
@@ -50,6 +51,8 @@ if __name__ == '__main__':
         theme = dark_theme.get_theme()
         dark_theme.set(ap, theme)
         selected_path = choose_recent_project()
+        settings = MainSettingsController()
+        settings.session_settings_controller.reset()
         if selected_path:
             from app.editor.main_editor import MainEditor
             window = MainEditor(selected_path)

@@ -2,11 +2,14 @@ import json
 import os
 from typing import List, Tuple
 
-from PyQt5.QtCore import QSettings, QDir
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QDir, QSettings, Qt
 
-from .project_history_controller import ProjectHistoryController, ProjectHistoryEntry
+from app.editor.settings.session_settings_controller import \
+    SessionSettingsController
+
 from .component_settings_controller import ComponentSettingsController
+from .project_history_controller import (ProjectHistoryController,
+                                         ProjectHistoryEntry)
 
 
 class MainSettingsController():
@@ -23,6 +26,7 @@ class MainSettingsController():
             company, product)
         self.project_history_controller = ProjectHistoryController(
             company, product)
+        self.session_settings_controller = SessionSettingsController(company, product)
 
     def fileName(self):
         return self.state.fileName()

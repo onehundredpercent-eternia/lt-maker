@@ -5,19 +5,21 @@ import logging
 import os
 import shutil
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from PyQt5.QtCore import QDir, Qt
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QCheckBox
 
 from app.constants import VERSION
 from app.data.database.database import DB, Database
 from app.data.resources.resources import RESOURCES
+from app.data.validation.errors import DBError, ErrorLevel
 from app.editor import timer
 from app.editor.file_manager.project_initializer import ProjectInitializer
 from app.editor.lib.csv import csv_data_exporter, text_data_exporter
 from app.editor.recent_project_dialog import choose_recent_project
 from app.editor.settings import MainSettingsController
+from app.engine.turnwheel import TurnwheelDisplay
 from app.utilities import exceptions
 
 RESERVED_PROJECT_PATHS = ("default.ltproj", 'autosave.ltproj', 'autosave', 'default')
@@ -133,6 +135,8 @@ class ProjectFileBackend():
             return False
         self.save_progress.setValue(85)
 
+        validation_errors: List[DBError] = self.validate_db(DB)
+
         # Save metadata
         self.save_metadata(self.current_proj)
         self.save_progress.setValue(87)
@@ -164,6 +168,20 @@ class ProjectFileBackend():
             os.rename(self.tmp_proj, self.current_proj)
         self.save_progress.setValue(100)
 
+        if validation_errors:
+            fatal_errors = [error for error in validation_errors if error.level == ErrorLevel.FATAL]
+            warnings = [error for error in validation_errors if error.level == ErrorLevel.WARNING]
+            if len(fatal_errors) > 0 or self.settings.session_settings_controller.should_show_validation_error_on_save():
+                error_msg = QMessageBox()
+                dont_show_again = QCheckBox("Do not show if no fatal errors.")
+                error_msg.setIcon(QMessageBox.Warning)
+                error_msg.setText("Action required: Detected %d fatal errors and %d warnings in database. "
+                                "Game will not launch if fatal errors are non-zero. Error details can be viewed "
+                                "in the ErrorViewer." % (len(fatal_errors), len(warnings)))
+                error_msg.setCheckBox(dont_show_again)
+                dont_show_again.clicked.connect(lambda b: self.settings.session_settings_controller.set_show_validation_error_on_save(int(not b)))
+                error_msg.setWindowTitle("Data errors detected")
+                error_msg.exec_()
         return True
 
     def new(self):
@@ -312,6 +330,9 @@ class ProjectFileBackend():
 
     def clean(self):
         RESOURCES.clean(self.current_proj)
+
+    def validate_db(self, db: Database) -> List[DBError]:
+        return []
 
     def dump_csv(self, db: Database):
         starting_path = self.current_proj or QDir.currentPath()
