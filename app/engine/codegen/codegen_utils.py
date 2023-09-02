@@ -1,6 +1,8 @@
-import os
+WARNING_MSG = """
+###############################################################################################################################
+# This code was generated using `source_generator.py`. DO NOT MAKE ANY EDITS TO THIS FILE - YOUR CHANGES WILL BE OVERWRITTEN. #
+###############################################################################################################################
+"""
 
 def get_codegen_header() -> str:
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(dir_path, 'warning_msg.txt'), 'r') as warning_msg:
-        return warning_msg.readlines()
+    return WARNING_MSG

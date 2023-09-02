@@ -65,8 +65,6 @@ class PreferencesDialog(Dialog):
 
         self.autocomplete = PropertyCheckBox('Event Autocomplete', QCheckBox, self)
         self.autocomplete.edit.setChecked(bool(self.saved_preferences['event_autocomplete']))
-        self.autocomplete_desc = PropertyCheckBox('Show Event Command Description?', QCheckBox, self)
-        self.autocomplete_desc.edit.setChecked(bool(self.saved_preferences['event_autocomplete_desc']))
 
         self.crashlog = PropertyCheckBox('Show Error Logs on Crash?', QCheckBox, self)
         self.crashlog.edit.setChecked(bool(self.saved_preferences['crash_logs']))
@@ -114,7 +112,6 @@ class PreferencesDialog(Dialog):
         self.layout.addWidget(self.autocomplete_button)
         self.layout.addLayout(self.editor_close_button_layout)
         self.layout.addWidget(self.autocomplete)
-        self.layout.addWidget(self.autocomplete_desc)
         self.layout.addWidget(self.crashlog)
         self.layout.addWidget(self.savebackup)
         self.layout.addWidget(self.savechunks)
