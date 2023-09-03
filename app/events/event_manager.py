@@ -66,8 +66,8 @@ class EventManager():
             action.do(action.OnlyOnceEvent(event_prefab.nid))
         return True
     
-    def _add_event_from_commands(self, commands: List[EventCommand], trigger: EventTrigger):
-        dummy_prefab = EventPrefab('DummyEvent')
+    def _add_event_from_commands(self, nid, commands: List[EventCommand], trigger: EventTrigger):
+        dummy_prefab = EventPrefab(nid)
         dummy_prefab.commands = commands
         self._add_event(dummy_prefab, trigger)
 
