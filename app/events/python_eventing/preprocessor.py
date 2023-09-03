@@ -51,7 +51,8 @@ def check_safe_event_function_call(node: ast.stmt, parents: List[Type[ast.stmt]]
       and not args to a Function call, not values in e.g. a BinOp, and not part of the for loop's iterator
       or while loop's test.
     """
-    if check_valid_event_function_call(node):
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \
+      isinstance(node.func.value, ast.Name) and node.func.value.id == EVENT_INSTANCE:
         if not parents[-1] == ast.Expr:
             return False
         elif ast.FunctionDef in parents:
