@@ -6,22 +6,24 @@ from app.events.event_prefab import EventCatalog
 
 from app.events.python_eventing.compilation import ast_preprocess
 from app.utilities.typing import NID
-from ..event_commands import ALL_EVENT_COMMANDS, EventCommand, BattleSave, Prep, Base, TriggerScript, TriggerScriptWithArgs
+from .. import event_commands
 
 EVENT_INSTANCE = "EC"
-FORBIDDEN_PYTHON_COMMANDS: List[str] = []
-SAVE_COMMANDS: List[EventCommand] = [BattleSave, Prep, Base]
+FORBIDDEN_PYTHON_COMMANDS: List[event_commands.EventCommand] = [event_commands.Comment, event_commands.If, event_commands.Elif, event_commands.Else,
+                                                                event_commands.End, event_commands.For, event_commands.Endf, event_commands.LoopUnits]
+FORBIDDEN_PYTHON_COMMAND_NIDS: List[str] = [cmd.nid for cmd in FORBIDDEN_PYTHON_COMMANDS] + [cmd.nickname for cmd in FORBIDDEN_PYTHON_COMMANDS]
+SAVE_COMMANDS: List[event_commands.EventCommand] = [event_commands.BattleSave, event_commands.Prep, event_commands.Base]
 SAVE_COMMAND_NIDS: Set[str] = set([cmd.nid for cmd in SAVE_COMMANDS] + [cmd.nickname for cmd in SAVE_COMMANDS])
-EVENT_CALL_COMMANDS: List[EventCommand] = [TriggerScript, TriggerScriptWithArgs]
+EVENT_CALL_COMMANDS: List[event_commands.EventCommand] = [event_commands.TriggerScript, event_commands.TriggerScriptWithArgs]
 EVENT_CALL_COMMAND_NIDS: Set[str] = set([cmd.nid for cmd in EVENT_CALL_COMMANDS] + [cmd.nickname for cmd in EVENT_CALL_COMMANDS])
 
 def check_valid_event_function_call(node: ast.stmt):
     if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \
         isinstance(node.func.value, ast.Name) and node.func.value.id == EVENT_INSTANCE:
         event_command_nid = node.func.attr
-        if not event_command_nid in ALL_EVENT_COMMANDS:
+        if not event_command_nid in event_commands.ALL_EVENT_COMMANDS:
             return False
-        if event_command_nid in FORBIDDEN_PYTHON_COMMANDS:
+        if event_command_nid in FORBIDDEN_PYTHON_COMMAND_NIDS:
             return False
     return True
 
