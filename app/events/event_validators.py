@@ -8,7 +8,7 @@ import re
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type
 
 from app.data.database.database import Database
-from app.engine.fonts import FONT, convo
+from app.engine.fonts import FONT, convo, font_types
 from app.utilities.class_utils import recursive_subclasses
 from app.utilities.enums import HAlignment, VAlignment
 from app.events import event_commands
@@ -535,7 +535,7 @@ class Slide(OptionValidator):
     valid = ["normal", "left", "right"]
 
 class Font(OptionValidator):
-    valid = list(FONT.keys())
+    valid = [ftype.name for ftype in font_types]
 
 class FontColor(OptionValidator):
     valid = list(convo.colors.keys())
