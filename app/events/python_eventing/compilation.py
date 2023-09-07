@@ -1,9 +1,13 @@
 from __future__ import annotations
-from logging import getLogger
-import re
-from typing import TYPE_CHECKING, Generator
-from unittest import mock
+
 import ast
+from functools import lru_cache
+import re
+import traceback
+import sys
+from logging import getLogger
+from typing import TYPE_CHECKING, Generator
+from app.events.python_eventing.errors import InvalidPythonError
 
 from app.events.python_eventing.utils import EVENT_INSTANCE
 
@@ -92,7 +96,9 @@ def insert_header(script: str):
 
 class Compiler():
     @staticmethod
-    def compile(script: str, game: GameState, command_pointer: int = 0) -> Generator:
+    def compile(event_name: str, script: str, game: GameState, command_pointer: int = 0) -> Generator:
+        original_script = script
+        original_script_as_lines = original_script.split('\n')
         script = insert_yields_and_command_pointer(script)
         script = insert_command_pointer_conditional_skips(script)
         script = wrap_generator(script, "g", command_pointer)
@@ -100,14 +106,38 @@ class Compiler():
         exec_context = {'game': game}
         exec_context.update(game.query_engine.func_dict)
         exec(script, exec_context)
-        return exec_context['g']()
+        # possibility that there are some errors in python script
+        try:
+            gen = exec_context['g']()
+        except Exception as e:
+            _, _, exc_tb = sys.exc_info()
+            exception_lineno = traceback.extract_tb(exc_tb)[-1][1]
+            diff_lines = Compiler.num_diff_lines()
+            true_lineno = exception_lineno - diff_lines
+            failing_line = original_script_as_lines[true_lineno - 1]
+            exc = InvalidPythonError(event_name, true_lineno, failing_line)
+            exc.what = str(e)
+            raise exc from e
+        return gen
+    
+    @staticmethod
+    @lru_cache()
+    def num_diff_lines():
+        script = 'pass'
+        script = insert_yields_and_command_pointer(script)
+        script = insert_command_pointer_conditional_skips(script)
+        script = wrap_generator(script, "g", 0)
+        script = insert_header(script)
+        return script.count('\n')
 
 # python -m app.events.python_eventing.compilation
 if __name__ == '__main__':
     from pathlib import Path
     from unittest.mock import MagicMock
-    from app.engine.query_engine import GameQueryEngine
+
     import astpretty
+
+    from app.engine.query_engine import GameQueryEngine
     script_path = Path(__file__).with_name('example_script_no_errors.txt')
     script = script_path.read_text()
 
@@ -119,7 +149,7 @@ if __name__ == '__main__':
     dunit.name = 'MU_NAME'
     dummy_game.get_unit = lambda x: dunit
 
-    generator = Compiler.compile(script, dummy_game)
+    generator = Compiler.compile('', script, dummy_game)
     while True:
         print(next(generator))
     yielded = insert_yields_and_command_pointer(script)

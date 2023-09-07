@@ -7,19 +7,41 @@ from app.editor.settings import MainSettingsController
 from app.engine import driver, engine, game_state
 from PyQt5.QtWidgets import QMessageBox
 
+from app.events.python_eventing.errors import PreprocessorError
 
-def handle_exception(e: Exception):
+
+def handle_normal_exception(e: Exception):
     settings = MainSettingsController()
     logging.error("Engine crashed with a fatal error!")
     logging.exception(e)
     if settings.get_should_display_crash_logs():
         error_msg = QMessageBox()
         error_msg.setIcon(QMessageBox.Critical)
-        error_msg.setText("Engine crashed. \nFor more detailed logs, please read debug.log.1 in the saves/ directory.\n\n" + traceback.format_exc())
+        error_msg.setText("Engine crashed. \nFor more detailed logs, please read debug.log.1 in the saves/ directory.\n" + traceback.format_exc())
         error_msg.setWindowTitle("Engine Fatal Error")
         error_msg.exec_()
     # Required to close window (reason: Unknown)
     engine.terminate(True)
+
+def handle_python_scripting_exception(e: PreprocessorError):
+    settings = MainSettingsController()
+    logging.error("Engine crashed with a fatal error!")
+    logging.exception(e)
+    if settings.get_should_display_crash_logs():
+        error_msg = QMessageBox()
+        error_msg.setIcon(QMessageBox.Critical)
+        error_msg.setText("Engine crashed. \nException occurred during event execution:\n" + str(e))
+        error_msg.setWindowTitle("Engine Fatal Error")
+        error_msg.exec_()
+    # Required to close window (reason: Unknown)
+    engine.terminate(True)
+
+def handle_exception(e: Exception):
+    if isinstance(e, PreprocessorError):
+        # error in python eventing
+        return handle_python_scripting_exception(e)
+    else:
+        return handle_normal_exception(e)
 
 def test_play():
     title = DB.constants.value('title')

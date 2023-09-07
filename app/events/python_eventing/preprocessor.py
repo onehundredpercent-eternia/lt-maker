@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple, Type
 
 from app.events.event_prefab import EventCatalog
 from app.events.python_eventing.compilation import ast_preprocess
+from app.events.python_eventing.errors import CannotUseYieldError, InvalidCommandError, InvalidPythonError, MalformedTriggerScriptCall, NestedEventError, NoSaveInLoopError, PreprocessorError
 from app.events.python_eventing.utils import EVENT_CALL_COMMAND_NIDS, EVENT_INSTANCE, FORBIDDEN_PYTHON_COMMAND_NIDS, SAVE_COMMAND_NIDS
 from app.utilities.typing import NID
 
@@ -83,53 +84,6 @@ def get_script_from_trigger_script_call(node: ast.Call) -> str:
     except:
         raise ValueError("Not a valid TriggerScript call")
 
-ERROR_TEMPLATE = \
-"""
-    Event "{event_name}", Line {lnum}:
-        {line}
-    {error_name}: {what}"""
-
-STACK_ERROR_TEMPLATE = \
-"""
-    From event "{event_name}", Line {lnum}:
-        {line}"""
-
-@dataclass
-class PreprocessorError():
-    event_name: str | List[str]
-    line_num: int | List[int]
-    line: str | List[str]
-    what = "generic preprocessor error"
-
-    def __str__(self) -> str:
-        if isinstance(self.event_name, list):
-            # all three should be list
-            msg = ''
-            for i in range(len(self.event_name) - 1):
-                msg += STACK_ERROR_TEMPLATE.format(event_name=self.event_name[i], lnum=self.line_num[i], line=self.line[i].strip())
-            msg += ERROR_TEMPLATE.format(event_name=self.event_name[-1], lnum=self.line_num[-1], line=self.line[-1].strip(),
-                                         error_name=self.__class__.__name__, what=self.what)
-            return msg
-        else:
-            msg = ERROR_TEMPLATE.format(event_name=self.event_name, lnum=self.line_num, line=self.line.strip(),
-                                        error_name=self.__class__.__name__, what=self.what)
-            return msg
-
-class NestedEventError(PreprocessorError):
-    what = "all event function calls must be alone and outside function def"
-
-class InvalidCommandError(PreprocessorError):
-    what = "unknown event command"
-
-class NoSaveInLoopError(PreprocessorError):
-    what = "cannot use save event commands in for loops"
-
-class MalformedTriggerScriptCall(PreprocessorError):
-    what = 'trigger script must have non-variable valid event target'
-
-class CannotUseYieldError(PreprocessorError):
-    what = 'cannot use yield in python event scripting'
-
 @dataclass
 class EventContext():
     event_name: NID
@@ -148,23 +102,41 @@ class Preprocessor():
         self._parsed_events: Dict[NID, EventContext] = {}
 
     def get_event_info(self, event_name: str) -> Optional[EventContext]:
-        if not event_name in self._parsed_events and self._catalog and event_name in self._catalog.keys():
-            self._parsed_events[event_name] = EventContext.from_event(event_name, self._catalog.get_from_nid(event_name).source)
-        return self._parsed_events.get(event_name)
+        try:
+            if not event_name in self._parsed_events and self._catalog and event_name in self._catalog.keys():
+                self._parsed_events[event_name] = EventContext.from_event(event_name, self._catalog.get_from_nid(event_name).source)
+            return self._parsed_events.get(event_name)
+        except:
+            return None
 
     def verify_event(self, event_name: str, event_script: str = None) -> List[PreprocessorError]:
         self._parsed_events.clear() # no reason to load all events simultaneously in memory
         event_info = None
         if not event_script:
-            event_info = self.get_event_info(event_name)
-        else:
-            event_info = EventContext.from_event(event_name, event_script)
-            self._parsed_events[event_name] = event_info
+            event_script = self._catalog.get_from_nid(event_name).source
+
+        is_invalid_python_error = self.verify_valid_python(event_name, event_script)
+        if is_invalid_python_error:
+            return [is_invalid_python_error]
+        
+        event_info = EventContext.from_event(event_name, event_script)
+        self._parsed_events[event_name] = event_info
 
         event_command_call_errors = self.verify_event_calls(event_info)
         loop_save_errors = self.verify_no_loop_save(event_info)
         yield_errors = self.verify_no_yields(event_info)
         return event_command_call_errors + loop_save_errors + yield_errors
+    
+    def verify_valid_python(self, event_name: str, event_script: str) -> Optional[InvalidPythonError]:
+        preprocessed = ast_preprocess(event_script)
+        try:
+            ast.parse(preprocessed)
+            return None
+        except Exception as e:
+            as_lines = event_script.split('\n')
+            error = InvalidPythonError(event_name, e.lineno, as_lines[e.lineno - 1])
+            error.what = e.msg
+            return error
     
     def verify_no_yields(self, event: EventContext) -> List[CannotUseYieldError]:
         """Since the event engine uses yields as its primary mode of extracting EventCommands,
