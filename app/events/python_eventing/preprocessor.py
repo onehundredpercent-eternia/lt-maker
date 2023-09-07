@@ -1,21 +1,15 @@
 from __future__ import annotations
+
 import ast
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple, Type
+
 from app.events.event_prefab import EventCatalog
-
 from app.events.python_eventing.compilation import ast_preprocess
+from app.events.python_eventing.utils import EVENT_CALL_COMMAND_NIDS, EVENT_INSTANCE, FORBIDDEN_PYTHON_COMMAND_NIDS, SAVE_COMMAND_NIDS
 from app.utilities.typing import NID
-from .. import event_commands
 
-EVENT_INSTANCE = "EC"
-FORBIDDEN_PYTHON_COMMANDS: List[event_commands.EventCommand] = [event_commands.Comment, event_commands.If, event_commands.Elif, event_commands.Else,
-                                                                event_commands.End, event_commands.For, event_commands.Endf, event_commands.LoopUnits]
-FORBIDDEN_PYTHON_COMMAND_NIDS: List[str] = [cmd.nid for cmd in FORBIDDEN_PYTHON_COMMANDS] + [cmd.nickname for cmd in FORBIDDEN_PYTHON_COMMANDS]
-SAVE_COMMANDS: List[event_commands.EventCommand] = [event_commands.BattleSave, event_commands.Prep, event_commands.Base]
-SAVE_COMMAND_NIDS: Set[str] = set([cmd.nid for cmd in SAVE_COMMANDS] + [cmd.nickname for cmd in SAVE_COMMANDS])
-EVENT_CALL_COMMANDS: List[event_commands.EventCommand] = [event_commands.TriggerScript, event_commands.TriggerScriptWithArgs]
-EVENT_CALL_COMMAND_NIDS: Set[str] = set([cmd.nid for cmd in EVENT_CALL_COMMANDS] + [cmd.nickname for cmd in EVENT_CALL_COMMANDS])
+from .. import event_commands
 
 def check_valid_event_function_call(node: ast.stmt):
     if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \

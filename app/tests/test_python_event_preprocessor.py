@@ -17,7 +17,6 @@ class PreprocessorUnitTests(unittest.TestCase):
         script_source = script_path.read_text()
         ppsr = Preprocessor()
 
-        # errors on lines 18, 20, 21
         errors = ppsr.verify_event('preprocessor_test', script_source)
         error_lines = set([e.line_num for e in errors])
         self.assertIn(18, error_lines)
@@ -54,7 +53,6 @@ class PreprocessorUnitTests(unittest.TestCase):
         script_source = script_path.read_text()
         ppsr = Preprocessor()
 
-        # errors on lines 18, 20, 21
         errors = ppsr.verify_event('preprocessor_test', script_source)
         error_lines = set([e.line_num for e in errors])
         self.assertIn(4, error_lines)

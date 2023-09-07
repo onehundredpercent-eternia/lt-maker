@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Generator
 from unittest import mock
 import ast
 
+from app.events.python_eventing.utils import EVENT_INSTANCE
+
 if TYPE_CHECKING:
     from app.engine.game_state import GameState
 
@@ -17,7 +19,8 @@ def ast_preprocess(script: str):
         match = COMMAND_REGEX.match(line.strip())
         if match:
             matched = match.groups() # length 2 because of the COMMAND_REGEX
-            line = line.replace('$%s(' % matched[0], 'EC.%s(' % matched[0])
+            command = matched[0]
+            line = line.replace(f'${command}(', f'{EVENT_INSTANCE}.{matched[0]}(')
             as_lines[idx] = line
     return '\n'.join(as_lines)
 
@@ -28,7 +31,8 @@ def insert_yields_and_command_pointer(script: str):
         match = COMMAND_REGEX.match(line.strip())
         if match:
             matched = match.groups()
-            line = line.replace('$%s(' % matched[0], 'yield DO_NOT_EXECUTE_SENTINEL if (_PTR >= %d and RESUME_CHECK.check_set_caught_up(%d)) else %d, EC.%s(' % (idx, idx, idx, matched[0]))
+            command = matched[0]
+            line = line.replace('$%s(' % matched[0], f'yield DO_NOT_EXECUTE_SENTINEL if (_PTR >= {idx} and RESUME_CHECK.check_set_caught_up({idx})) else {idx}, {EVENT_INSTANCE}.{command}(')
             as_lines[idx] = line
     return '\n'.join(as_lines)
 
@@ -51,17 +55,18 @@ def insert_command_pointer_conditional_skips(script_with_yields: str):
         return [line_pointer for cnode in starting_nodes for line_pointer in recursive_fetch_yields(cnode)]
 
     as_lines = script_with_yields.split('\n')
-    # inefficient algorithm with no memoization - i don't expect this to be a huge bottleneck
+    # inefficient algorithm with no memoization - i don't expect this to be a huge bottleneck, but could be improved
     for cnode in ast.walk(parsed):
         if isinstance(cnode, ast.If) or isinstance(cnode, ast.While):
             pointers_in_conditional = fetch_pointers_under_conditional(cnode)
             line = as_lines[cnode.lineno - 1]
+            pointers_as_str = ', '.join([str(i) for i in pointers_in_conditional])
             if isinstance(cnode, ast.If):
                 # line starts with if or elif
-                line = line.replace('if', 'if _PTR in [%s] or' % ', '.join([str(i) for i in pointers_in_conditional]), 1)
+                line = line.replace('if', f'if _PTR in [{pointers_as_str}] or', 1)
                 as_lines[cnode.lineno - 1] = line
             else:
-                line = line.replace('while', 'while (_PTR in [%s] and RESUME_CHECK.catching_up) or' % ', '.join([str(i) for i in pointers_in_conditional]), 1)
+                line = line.replace('while', f'while (_PTR in [{pointers_as_str}] and RESUME_CHECK.catching_up) or', 1)
                 as_lines[cnode.lineno - 1] = line
 
     return '\n'.join(as_lines)
@@ -69,14 +74,15 @@ def insert_command_pointer_conditional_skips(script_with_yields: str):
 def wrap_generator(script: str, generator_func_name: str, resume_command_pointer = -1):
     # wraps the entire script in a generator
     as_lines = script.split("\n")
-    as_lines = ["\t%s" % line for line in as_lines]
-    as_lines = ["_PTR = %d" % resume_command_pointer, "def %s():" % generator_func_name] + as_lines
+    as_lines = [f"\t{line}" for line in as_lines]
+    as_lines = [f"_PTR = {resume_command_pointer}", 
+                f"def {generator_func_name}():"] + as_lines
     if resume_command_pointer:
-        as_lines = ['RESUME_CHECK = ResumeCheck(%d)' % resume_command_pointer] + as_lines
+        as_lines = [f'RESUME_CHECK = ResumeCheck({resume_command_pointer})'] + as_lines
     return '\n'.join(as_lines)
 
-HEADER_IMPORT = """
-import app.events.python_eventing.python_event_command_wrappers as EC
+HEADER_IMPORT = f"""
+import app.events.python_eventing.python_event_command_wrappers as {EVENT_INSTANCE}
 from app.events.python_eventing.utils import DO_NOT_EXECUTE_SENTINEL, ResumeCheck
 """
 def insert_header(script: str):
