@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from functools import lru_cache
-from typing import List, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
 from PyQt5.QtCore import QStringListModel, Qt, pyqtSignal
 from PyQt5.QtWidgets import QCompleter
@@ -72,7 +73,7 @@ class EventScriptFunctionHinter():
 
 class EventScriptCompleter(QCompleter):
     insertText = pyqtSignal(str)
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.settings = MainSettingsController()
@@ -130,11 +131,17 @@ class EventScriptCompleter(QCompleter):
         self.setCompletionPrefix(completionPrefix)
         self.popup().setCurrentIndex(self.completionModel().index(0, 0))
         return True
-    
+
+@dataclass
+class ParseInfo():
+    command: Optional[Type[event_commands.EventCommand]]
+    arg_under_cursor: str
+    type_under_cursor: Optional[Type[event_validators.Validator]]
+
 class PythonEventScriptCompleter(EventScriptCompleter):
-    def setTextToComplete(self, line: str, cursor_pos: int, level_nid: NID):
+    def get_line_info(self, line: str, cursor_pos: int) -> Optional[ParseInfo]:
         if not line.startswith('$'):
-            return False
+            return None
         mode = 'COMMAND'
         command = ''
         curr_arg = ''
@@ -147,7 +154,7 @@ class PythonEventScriptCompleter(EventScriptCompleter):
                     continue
                 elif c == '(':
                     mode = 'ARGS'
-                else: 
+                else:
                     command += c
             elif mode == 'ARGS':
                 if c == ',':
@@ -171,9 +178,55 @@ class PythonEventScriptCompleter(EventScriptCompleter):
                     if paren_depth == 0:
                         mode = 'ARGS'
                 curr_arg += c
+        if mode == 'COMMAND': # not finished typing the command:
+            return ParseInfo(None, command, event_validators.EventFunction)
+        if mode == 'FINISHED':
+            return None
+        command_t = event_commands.ALL_EVENT_COMMANDS.get(command)
+        if not command_t:
+            return None
+        validator_nid = None
         if '=' in curr_arg:
-            maybe_keyword = curr_arg.split('=')[0]
-        return False
+            maybe_keyword, arg_text = curr_arg.split('=', 1)
+            validator_nid = command_t.get_validator_from_keyword(maybe_keyword)
+        else:
+            arg_text = curr_arg
+            arg_idx = len(arg_list)
+            if arg_idx < len(command_t.get_keyword_types()):
+                validator_nid = command_t.get_keyword_types()[arg_idx]
+        validator = event_validators.get(validator_nid)
+        arg_text = arg_text.strip()
+        if arg_text.startswith(('"', "'")):
+            quote = arg_text[0]
+            arg_text.replace(quote, '')
+        return ParseInfo(command_t, arg_text, validator)
+
+    def setTextToComplete(self, line: str, cursor_pos: int, level_nid: NID):
+        line_info = self.get_line_info(line, cursor_pos)
+        if not line_info:
+            return False
+        validator = line_info.type_under_cursor
+        flags = None
+        if line_info.command:
+            flags = line_info.command().flags
+
+        autofill_dict = generate_wordlist_from_validator_type(validator, level_nid, line_info.arg_under_cursor, DB, RESOURCES)
+        if flags:
+            autofill_dict = autofill_dict + generate_flags_wordlist(flags)
+        # wrap in quotes bc python. specifically don't do this for command names since they aren't string args
+        if line_info.command:
+            autofill_dict = [f'"{arg}"' for arg in autofill_dict]
+        if len(autofill_dict) == 0:
+            try:
+                if self.popup().isVisible():
+                    self.popup().hide()
+            except: # popup doesn't exist?
+                pass
+            return False
+        self.setModel(QStringListModel(autofill_dict, self))
+        self.setCompletionPrefix(line_info.arg_under_cursor)
+        self.popup().setCurrentIndex(self.completionModel().index(0, 0))
+        return True
 
 def generate_wordlist_from_validator_type(validator: Type[event_validators.Validator], level: NID = None, arg: str = None,
                                           db: Database = None, resources: Resources = None) -> List[str]:
@@ -190,7 +243,6 @@ def generate_wordlist_from_validator_type(validator: Type[event_validators.Valid
             autofill_dict.append('{name} ({nid})'.format(
                 name=entry[0], nid=entry[1]))
     return autofill_dict
-
 
 def generate_flags_wordlist(flags: List[str] = []) -> List[str]:
     flaglist = []
