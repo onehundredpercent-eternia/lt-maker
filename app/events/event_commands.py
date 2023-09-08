@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import logging
 from enum import Enum
-from typing import Callable, List, Dict, Set, Tuple, Type
+from typing import Callable, List, Dict, Optional, Set, Tuple, Type
 
 from app.utilities.data import Prefab
 from app.utilities.typing import NID
@@ -76,7 +76,7 @@ class EventCommand(Prefab):
         else:
             return self.keywords + self.optional_keywords
 
-    def get_validator_from_keyword(self, keyword: str) -> str:
+    def get_validator_from_keyword(self, keyword: str) -> Optional[str]:
         if keyword in self.keywords:
             i = self.keywords.index(keyword)
             return self.get_keyword_types()[i]

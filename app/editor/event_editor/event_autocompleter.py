@@ -130,6 +130,50 @@ class EventScriptCompleter(QCompleter):
         self.setCompletionPrefix(completionPrefix)
         self.popup().setCurrentIndex(self.completionModel().index(0, 0))
         return True
+    
+class PythonEventScriptCompleter(EventScriptCompleter):
+    def setTextToComplete(self, line: str, cursor_pos: int, level_nid: NID):
+        if not line.startswith('$'):
+            return False
+        mode = 'COMMAND'
+        command = ''
+        curr_arg = ''
+        arg_list = []
+        paren_depth = 0
+        for i in range(cursor_pos):
+            c = line[i]
+            if mode == 'COMMAND':
+                if c == '$':
+                    continue
+                elif c == '(':
+                    mode = 'ARGS'
+                else: 
+                    command += c
+            elif mode == 'ARGS':
+                if c == ',':
+                    arg_list.append(curr_arg.strip())
+                    curr_arg = ''
+                    continue
+                elif c == '(':
+                    mode = 'NESTED_ARG'
+                    curr_arg += c
+                    paren_depth += 1
+                elif c == ')':
+                    mode = 'FINISHED'
+                    break
+                else:
+                    curr_arg += c
+            elif mode == 'NESTED_ARG':
+                if c == '(':
+                    paren_depth += 1
+                elif c == ')':
+                    paren_depth -= 1
+                    if paren_depth == 0:
+                        mode = 'ARGS'
+                curr_arg += c
+        if '=' in curr_arg:
+            maybe_keyword = curr_arg.split('=')[0]
+        return False
 
 def generate_wordlist_from_validator_type(validator: Type[event_validators.Validator], level: NID = None, arg: str = None,
                                           db: Database = None, resources: Resources = None) -> List[str]:
