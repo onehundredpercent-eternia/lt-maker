@@ -9,39 +9,23 @@ from PyQt5.QtWidgets import QMessageBox
 
 from app.events.python_eventing.errors import PreprocessorError
 
-
-def handle_normal_exception(e: Exception):
-    settings = MainSettingsController()
-    logging.error("Engine crashed with a fatal error!")
-    logging.exception(e)
-    if settings.get_should_display_crash_logs():
-        error_msg = QMessageBox()
-        error_msg.setIcon(QMessageBox.Critical)
-        error_msg.setText("Engine crashed. \nFor more detailed logs, please read debug.log.1 in the saves/ directory.\n" + traceback.format_exc())
-        error_msg.setWindowTitle("Engine Fatal Error")
-        error_msg.exec_()
-    # Required to close window (reason: Unknown)
-    engine.terminate(True)
-
-def handle_python_scripting_exception(e: PreprocessorError):
-    settings = MainSettingsController()
-    logging.error("Engine crashed with a fatal error!")
-    logging.exception(e)
-    if settings.get_should_display_crash_logs():
-        error_msg = QMessageBox()
-        error_msg.setIcon(QMessageBox.Critical)
-        error_msg.setText("Engine crashed. \nException occurred during event execution:\n" + str(e))
-        error_msg.setWindowTitle("Engine Fatal Error")
-        error_msg.exec_()
-    # Required to close window (reason: Unknown)
-    engine.terminate(True)
-
 def handle_exception(e: Exception):
+    logging.error("Engine crashed with a fatal error!")
+    logging.exception(e)
     if isinstance(e, PreprocessorError):
         # error in python eventing
-        return handle_python_scripting_exception(e)
+        msg = "Engine crashed. \nException occurred during event execution:\n" + str(e)
     else:
-        return handle_normal_exception(e)
+        msg = "Engine crashed. \nFor more detailed logs, please read debug.log.1 in the saves/ directory.\n" + traceback.format_exc()
+    settings = MainSettingsController()
+    if settings.get_should_display_crash_logs():
+        error_msg = QMessageBox()
+        error_msg.setIcon(QMessageBox.Critical)
+        error_msg.setText(msg)
+        error_msg.setWindowTitle("Engine Fatal Error")
+        error_msg.exec_()
+    # Required to close window (reason: Unknown)
+    engine.terminate(True)
 
 def test_play():
     title = DB.constants.value('title')
@@ -59,7 +43,7 @@ def test_play_current(level_nid):
         game = game_state.start_level(level_nid)
         game.game_vars['_chapter_test'] = True
         from app.events import triggers
-        game.events.trigger(triggers.OnStartup()) 
+        game.events.trigger(triggers.OnStartup())
         driver.run(game)
     except Exception as e:
         handle_exception(e)
@@ -77,7 +61,7 @@ def test_play_load(level_nid, save_loc=None):
         else:
             game = game_state.start_level(level_nid)
         from app.events import triggers
-        game.events.trigger(triggers.OnStartup()) 
+        game.events.trigger(triggers.OnStartup())
         driver.run(game)
     except Exception as e:
         handle_exception(e)

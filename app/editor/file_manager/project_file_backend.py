@@ -46,13 +46,13 @@ class FatalErrorDialog(SimpleDialog):
         button_box.accepted.connect(self.accept)
 
         self.on_accept_do_not_show_callback = on_accept_do_not_show_callback
-        self.do_not_show_again = QCheckBox("Don't show again")
+        self.do_not_show_again = QCheckBox("Don't show for several minutes")
 
         layout.addWidget(message_label)
         layout.addWidget(self.do_not_show_again)
         layout.addWidget(button_box)
         self.setMinimumWidth(300)
-    
+
     def accept(self):
         self.on_accept_do_not_show_callback(self.do_not_show_again.isChecked())
         self.close()
@@ -89,6 +89,10 @@ class ProjectFileBackend():
         timer.get_timer().autosave_timer.timeout.connect(self.autosave)
 
         self._do_not_show_fatal_errors = False
+        timer.get_timer().autosave_timer.timeout.connect(self.refresh_do_not_show)
+
+    def refresh_do_not_show(self):
+        self._do_not_show_fatal_errors = False
 
     def display_fatal_errors(self):
         if self._do_not_show_fatal_errors:
@@ -99,7 +103,7 @@ class ProjectFileBackend():
             self._do_not_show_fatal_errors = do_not_show_again
         dlg = FatalErrorDialog(self.parent, set_do_not_show_again)
         dlg.exec_()
-        
+
     def maybe_save(self):
         # if not self.undo_stack.isClean():
         if True:  # For now, since undo stack is not being used

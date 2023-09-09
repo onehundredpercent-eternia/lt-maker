@@ -24,7 +24,7 @@ def ast_preprocess(script: str):
         if match:
             matched = match.groups() # length 2 because of the COMMAND_REGEX
             command = matched[0]
-            line = line.replace(f'${command}(', f'{EVENT_INSTANCE}.{matched[0]}(')
+            line = line.replace(f'${command}(', f'{EVENT_INSTANCE}.{command}(')
             as_lines[idx] = line
     return '\n'.join(as_lines)
 
@@ -36,7 +36,7 @@ def insert_yields_and_command_pointer(script: str):
         if match:
             matched = match.groups()
             command = matched[0]
-            line = line.replace('$%s(' % matched[0], f'yield DO_NOT_EXECUTE_SENTINEL if (_PTR >= {idx} and RESUME_CHECK.check_set_caught_up({idx})) else {idx}, {EVENT_INSTANCE}.{command}(')
+            line = line.replace('$%s(' % command, f'yield DO_NOT_EXECUTE_SENTINEL if (_PTR >= {idx} and RESUME_CHECK.check_set_caught_up({idx})) else {idx}, {EVENT_INSTANCE}.{command}(')
             as_lines[idx] = line
     return '\n'.join(as_lines)
 
@@ -79,7 +79,7 @@ def wrap_generator(script: str, generator_func_name: str, resume_command_pointer
     # wraps the entire script in a generator
     as_lines = script.split("\n")
     as_lines = [f"\t{line}" for line in as_lines]
-    as_lines = [f"_PTR = {resume_command_pointer}", 
+    as_lines = [f"_PTR = {resume_command_pointer}",
                 f"def {generator_func_name}():"] + as_lines
     if resume_command_pointer:
         as_lines = [f'RESUME_CHECK = ResumeCheck({resume_command_pointer})'] + as_lines
@@ -119,7 +119,7 @@ class Compiler():
             exc.what = str(e)
             raise exc from e
         return gen
-    
+
     @staticmethod
     @lru_cache()
     def num_diff_lines():
