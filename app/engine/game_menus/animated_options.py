@@ -25,13 +25,13 @@ class MapSpriteOptionUtils():
         surf.blit(map_sprite, (x - 20, y - 24 - 1))
 
 
-class BasicUnitOption(BaseOption[UnitObject]):
-    def __init__(self, idx: int, unit: UnitObject, display_value: str | None = None,  width: int = 0,
+class BasicUnitOption(BaseOption[Optional[UnitObject]]):
+    def __init__(self, idx: int, unit: Optional[UnitObject] = None, display_value: str | None = None,  width: int = 0,
                  height: int = 0, ignore: bool = False, font: NID = 'text', text_color: NID = 'white',
                  align: HAlignment = HAlignment.LEFT):
         super().__init__(idx, unit, display_value, width, height, ignore)
         self._disp_value = text_funcs.translate(
-            display_value or self._value.name)
+            display_value or (self._value.name if self._value else "None"))
         self._align = align
         self._color = text_color
         self._font = font
@@ -57,9 +57,10 @@ class BasicUnitOption(BaseOption[UnitObject]):
     def width(self):
         return self._width or 104
 
-    def set(self, val: UnitObject, disp_val: Optional[str] = None):
+    def set(self, val: Optional[UnitObject], disp_val: Optional[str] = None):
         self._value = val
-        self._disp_value = text_funcs.translate(disp_val or self._value.name)
+        self._disp_value = text_funcs.translate(
+            disp_val or (self._value.name if self._value else "None"))
 
     def get_color(self):
         if self.get_ignore():
@@ -77,8 +78,12 @@ class BasicUnitOption(BaseOption[UnitObject]):
         return self._help_box
 
     def draw_option(self, surf, x, y, active=False):
-        display_text = self._disp_value or self._value.name
+        display_text = self._disp_value
         font = self._font
+        if not self._value:
+            blit_loc = anchor_align(x, self.width(), self._align, (5, 5)), y
+            render_text(surf, [self._font], [self._disp_value], [color], blit_loc, self._align)
+            return
         if text_width(font, display_text) > self.width() - 20:
             font = 'narrow'
         blit_loc = anchor_align(x, self.width(), self._align, (20, 5)), y

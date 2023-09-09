@@ -206,13 +206,13 @@ class BasicItemOption(BaseOption[Optional[ItemObject]]):
                 surf, x, y, self._value, self._font, main_color, uses_color, self.width(), self._align, self._disp_value)
 
 
-class BasicSkillOption(BaseOption[SkillObject]):
-    def __init__(self, idx: int, skill: SkillObject, display_value: str | None = None,  width: int = 0,
+class BasicSkillOption(BaseOption[Optional[SkillObject]]):
+    def __init__(self, idx: int, skill: Optional[SkillObject] = None, display_value: str | None = None,  width: int = 0,
                  height: int = 0, ignore: bool = False, font: NID = 'text', text_color: Optional[NID] = None,
                  align: HAlignment = HAlignment.LEFT):
         super().__init__(idx, skill, display_value, width, height, ignore)
         self._disp_value = text_funcs.translate(
-            display_value or self._value.name)
+            display_value or (self._value.name if self._value else "None"))
         self._align = align
         self._color = text_color
         self._font = font
@@ -247,9 +247,12 @@ class BasicSkillOption(BaseOption[SkillObject]):
 
     def set(self, val: SkillObject, disp_val: Optional[str] = None):
         self._value = val
-        self._disp_value = text_funcs.translate(disp_val or self._value.name)
+        self._disp_value = text_funcs.translate(
+            disp_val or (self._value.name if self._value else "None"))
 
     def get_color(self):
+        if not self._value:
+            return 'grey'
         if self.get_ignore():
             return 'grey'
         return 'white'
@@ -261,6 +264,11 @@ class BasicSkillOption(BaseOption[SkillObject]):
         return self._help_box
 
     def draw(self, surf, x, y):
+        color = self.get_color()
+        if not self._value:
+            blit_loc = anchor_align(x, self.width(), self._align, (5, 5)), y
+            render_text(surf, [self._font], [self._disp_value], [color], blit_loc, self._align)
+            return
         icon = icons.get_icon(self._value)
         if icon:
             surf.blit(icon, (x + 2, y))
@@ -269,7 +277,6 @@ class BasicSkillOption(BaseOption[SkillObject]):
         if text_width(font, display_text) > self.width() - 20:
             font = 'narrow'
         blit_loc = anchor_align(x, self.width(), self._align, (20, 5)), y
-        color = self.get_color()
         render_text(surf, [font], [display_text], [color], blit_loc)
 
 
