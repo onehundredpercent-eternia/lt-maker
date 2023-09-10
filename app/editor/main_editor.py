@@ -4,7 +4,7 @@ import sys
 import functools
 from typing import Optional
 
-from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, \
+from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, QApplication, \
     QDesktopWidget, \
     QToolButton, QWidgetAction, QStackedWidget
 from PyQt5.QtGui import QIcon
@@ -16,7 +16,7 @@ from app.editor.settings import MainSettingsController
 from app.constants import VERSION
 from app.data.database.database import DB
 
-from app.editor import timer
+from app.editor import log_viewer, timer, error_viewer
 
 # components
 from app.editor.lib.components.menubar import MenuBar
@@ -29,7 +29,7 @@ from app.editor.lib.state_editor.editor_state_manager import EditorStateManager
 from app.editor.lib.state_editor.state_enums import MainEditorScreenStates
 
 # Saving/Loading Project
-from app.editor.file_manager.project_file_backend import ProjectFileBackend
+from app.editor.file_manager.project_file_backend import ProjectFileBackend, DEFAULT_PROJECT
 
 # Editors
 from app.editor.global_editor.global_editor import GlobalEditor
@@ -41,6 +41,7 @@ import app.editor.game_actions.game_actions as GAME_ACTIONS
 
 # Databases
 from app.editor.unit_editor.unit_tab import UnitDatabase
+from app.editor.team_editor.team_tab import TeamDatabase
 from app.editor.faction_editor.faction_tab import FactionDatabase
 from app.editor.party_editor.party_tab import PartyDatabase
 from app.editor.class_editor.class_tab import ClassDatabase
@@ -74,12 +75,13 @@ from app.editor.map_animation_editor.map_animation_tab import MapAnimationDataba
 
 __version__ = VERSION
 
+
 class MainEditor(QMainWindow):
     def initialize_state_subscriptions(self):
         self.app_state_manager.subscribe_to_key(
             MainEditor.__name__, 'main_editor_mode', self.render_editor)
 
-    def __init__(self):
+    def __init__(self, project_path: Optional[str] = None):
         super().__init__()
         self.window_title = _('LT Maker')
         self.setWindowTitle(self.window_title)
@@ -133,20 +135,15 @@ class MainEditor(QMainWindow):
         self.render_editor(MainEditorScreenStates.GLOBAL_EDITOR)
 
         # Actually load data
-        # DB.deserialize()
-        # DB.init_load()
-
-        self.auto_open()
-        # if not result:
-        #     DB.load('default.ltproj')
-        #     self.set_window_title('default.ltproj')
+        self.auto_open(project_path)
 
         if len(DB.levels) == 0:
             self.level_menu.create_initial_level()
 
         # initialize to first level
         first_level_nid = DB.levels[0].nid
-        self.app_state_manager.change_and_broadcast('selected_level', first_level_nid)
+        self.app_state_manager.change_and_broadcast(
+            'selected_level', first_level_nid)
 
     def on_clean_changed(self, clean):
         # Change Title
@@ -185,11 +182,11 @@ class MainEditor(QMainWindow):
 
     # === Create Menu ===
     def create_actions(self):
-        self.new_act = QAction(_("&New Project..."), self,
+        self.new_act = QAction(_("New Project..."), self,
                                shortcut="Ctrl+N", triggered=self.new)
-        self.open_act = QAction(_("&Open Project..."), self,
+        self.open_act = QAction(_("Open Project..."), self,
                                 shortcut="Ctrl+O", triggered=self.open)
-        self.save_act = QAction(_("&Save Project"), self,
+        self.save_act = QAction(_("Save Project"), self,
                                 shortcut="Ctrl+S", triggered=self.save)
         self.save_as_act = QAction(
             _("Save Project As..."), self, shortcut="Ctrl+Shift+S", triggered=self.save_as)
@@ -209,6 +206,10 @@ class MainEditor(QMainWindow):
             _("Remove Unused Resources"), self, triggered=self.remove_unused_resources)
         self.check_for_updates_act = QAction(
             _("Check for updates..."), self, triggered=self.check_for_updates)
+        self.view_logs_act = QAction(
+            _("View logs..."), self, triggered=self.show_logs)
+        self.view_errors_act = QAction(
+            _("View Error Report..."), self, triggered=self.show_errors)
 
         # Test actions
         self.test_current_act = QAction(
@@ -224,6 +225,7 @@ class MainEditor(QMainWindow):
 
         # Database actions
         database_actions = {_("Units"): UnitDatabase.edit,
+                            _("Teams"): TeamDatabase.edit,
                             _("Factions"): FactionDatabase.edit,
                             _("Parties"): PartyDatabase.edit,
                             _("Classes"): ClassDatabase.edit,
@@ -308,6 +310,8 @@ class MainEditor(QMainWindow):
         help_menu.addAction(self.preferences_act)
         help_menu.addAction(self.remove_unused_resources_act)
         help_menu.addAction(self.check_for_updates_act)
+        help_menu.addAction(self.view_logs_act)
+        help_menu.addAction(self.view_errors_act)
         self.menubar = MenuBar(self.menuBar())
         self.menubar.addMenu(file_menu)
         self.menubar.addMenu(edit_menu)
@@ -383,13 +387,15 @@ class MainEditor(QMainWindow):
             event.ignore()
         self.settings.component_controller.set_geometry(
             self.__class__.__name__, self.saveGeometry())
+        for window in QApplication.topLevelWidgets():
+            window.close()
 
     def test_play_current(self):
         self.test_current_act.setEnabled(False)
         self.test_load_act.setEnabled(False)
         self.test_full_act.setEnabled(False)
         # Make a save before playing if not on default
-        if os.path.basename(self.settings.get_current_project()) != 'default.ltproj':
+        if os.path.basename(self.settings.get_current_project()) != DEFAULT_PROJECT:
             self.save()
         timer.get_timer().stop()  # Don't need these while running game
         GAME_ACTIONS.test_play_current(
@@ -404,7 +410,7 @@ class MainEditor(QMainWindow):
         self.test_load_act.setEnabled(False)
         self.test_full_act.setEnabled(False)
         # Make a save before playing if not on default
-        if os.path.basename(self.settings.get_current_project()) != 'default.ltproj':
+        if os.path.basename(self.settings.get_current_project()) != DEFAULT_PROJECT:
             self.save()
         timer.get_timer().stop()  # Don't need these while running game
         GAME_ACTIONS.test_play()
@@ -425,7 +431,7 @@ class MainEditor(QMainWindow):
         self.test_load_act.setEnabled(False)
         self.test_full_act.setEnabled(False)
         # Make a save before playing if not on default
-        if os.path.basename(self.settings.get_current_project()) != 'default.ltproj':
+        if os.path.basename(self.settings.get_current_project()) != DEFAULT_PROJECT:
             self.save()
         timer.get_timer().stop()  # Don't need these while running game
         GAME_ACTIONS.test_play_load(
@@ -451,25 +457,7 @@ class MainEditor(QMainWindow):
             self.app_state_manager.change_and_broadcast(
                 'ui_refresh_signal', None)
 
-    def open(self):
-        if self.project_save_load_handler.open():
-            title = os.path.split(self.settings.get_current_project())[-1]
-            self.set_window_title(title)
-            logging.info("Loaded project from %s" %
-                         self.settings.get_current_project())
-            self.status_bar.showMessage(
-                "Loaded project from %s" % self.settings.get_current_project())
-            # Return to global
-            if not self.mode.GLOBAL_EDITOR:
-                self.app_state_manager.change_and_broadcast(
-                    'main_editor_mode', MainEditorScreenStates.GLOBAL_EDITOR)
-            self.app_state_manager.change_and_broadcast(
-                'selected_level', DB.levels[0].nid)  # Needed in order to update map view
-            self.app_state_manager.change_and_broadcast(
-                'ui_refresh_signal', None)
-
-    def auto_open(self):
-        self.project_save_load_handler.auto_open()
+    def _open(self):
         title = os.path.split(self.settings.get_current_project())[-1]
         self.set_window_title(title)
         logging.info("Loaded project from %s" %
@@ -485,34 +473,41 @@ class MainEditor(QMainWindow):
         self.app_state_manager.change_and_broadcast(
             'ui_refresh_signal', None)
 
+    def open(self):
+        if self.project_save_load_handler.open():
+            self._open()
+
+    def auto_open(self, project_path: Optional[str]):
+        self.project_save_load_handler.auto_open(project_path)
+        self._open()
+
+    def _save(self):
+        current_proj = self.settings.get_current_project()
+        title = os.path.split(current_proj)[-1]
+        self.set_window_title(title)
+        # Remove asterisk on window title
+        if self.window_title.startswith('*'):
+            self.window_title = self.window_title[1:]
+        self.status_bar.showMessage('Saved project to %s' % current_proj)
+
     def save(self):
         if self.project_save_load_handler.save():
-            current_proj = self.settings.get_current_project()
-            title = os.path.split(current_proj)[-1]
-            self.set_window_title(title)
-            # Remove asterisk on window title
-            if self.window_title.startswith('*'):
-                self.window_title = self.window_title[1:]
-            self.status_bar.showMessage('Saved project to %s' % current_proj)
+            self._save()
 
     def save_as(self):
         if self.project_save_load_handler.save(True):
-            current_proj = self.settings.get_current_project()
-            title = os.path.split(current_proj)[-1]
-            self.set_window_title(title)
-            # Remove asterisk on window title
-            if self.window_title.startswith('*'):
-                self.window_title = self.window_title[1:]
-            self.status_bar.showMessage('Saved project to %s' % current_proj)
+            self._save()
 
     def remove_unused_resources(self):
         # Need to save first before cleaning
         if self.project_save_load_handler.save():
             self.project_save_load_handler.clean()
             current_proj = self.settings.get_current_project()
-            self.status_bar.showMessage('All unused resources removed from %s' % current_proj)
+            self.status_bar.showMessage(
+                'All unused resources removed from %s' % current_proj)
         else:
-            QMessageBox.warning(self, "Save Error", "Must save project before removing unused resources!")
+            QMessageBox.warning(
+                self, "Save Error", "Must save project before removing unused resources!")
 
     def edit_tags(self, parent=None):
         dialog = TagDialog.create()
@@ -606,12 +601,18 @@ class MainEditor(QMainWindow):
             QMessageBox.warning(self, "Update unavailable", "<p>This is a standard python version of LT-maker.</p>"
                                       "<p>Use <b>git fetch</b> and <b>git pull</b> to download the latest git repo updates instead.</p>")
 
+    def show_logs(self):
+        # reference to keep sub window alive
+        self._log_window_ref = log_viewer.show_logs()
+
+    def show_errors(self):
+        # reference to keep sub window alive
+        self._error_window_ref = error_viewer.show_error_report()
 
 # Testing
 # Run "python -m app.editor.main_editor" from main directory
 if __name__ == '__main__':
     import sys
-    from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
     window = MainEditor()
     window.show()

@@ -330,8 +330,13 @@ class UIView():
                 shimmer = SPRITES.get('menu_shimmer1')
             else:
                 shimmer = SPRITES.get('menu_shimmer2')
-            bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 5))
-            surf = image_mods.make_translucent(bg_surf, .1)
+
+            bg_surf.blit(shimmer, (bg_surf.get_width() - 1 - shimmer.get_width(), 4 + 16 * max(len(text_lines) - 2, 0)))
+            surf = engine.create_surface((bg_surf.get_width(), bg_surf.get_height() + 3), transparent=True)
+            surf.blit(bg_surf, (0, 3))
+            gem = SPRITES.get('combat_gem_blue')
+            surf.blit(gem, (bg_surf.get_width()//2 - gem.get_width()//2, 0))
+            surf = image_mods.make_translucent(surf, .1)
 
             for idx, line in enumerate(text_lines):
                 pos = (surf.get_width()//2 - text_width('text', line)//2, 16 * idx + 6)
@@ -377,11 +382,12 @@ class UIView():
 
     def create_attack_info(self, attacker, weapon, defender, a_assist=None, d_assist=None):
         def blit_num(surf, num, x_pos, y_pos):
-            if num is None:
-                FONT['text-blue'].blit_right('--', surf, (x_pos, y_pos))
+            if num is None or num == '--':
+                # x_pos - 1 to center -- with general center of 2 digit numbers
+                FONT['text-blue'].blit_right('--', surf, (x_pos - 1, y_pos))
                 return
             if not isinstance(num, str) and num >= 100:
-                surf.blit(SPRITES.get('blue_100'), (x_pos - 16, y_pos))
+                surf.blit(SPRITES.get('blue_100'), (x_pos - 15, y_pos))
             else:
                 FONT['text-blue'].blit_right(str(num), surf, (x_pos, y_pos))
 
@@ -398,11 +404,11 @@ class UIView():
             infix = 'crit'
         else:
             infix = ''
-        color = utils.get_team_color(defender.team)
-        if color not in ('red', 'purple'):
-            color = 'red'
+
+        color = DB.teams.get(defender.team).combat_color
         final = prefix + infix + ('_' if infix else '') + color
-        surf = SPRITES.get(final).copy()
+        fallback_final = prefix + infix + ('_' if infix else '') + 'red'
+        surf = SPRITES.get(final, fallback_final).copy()
 
         if DB.constants.value('pairup') and \
                 (a_assist or d_assist) and not (attacker.traveler or defender.traveler):
@@ -415,9 +421,10 @@ class UIView():
                     infix = 'crit'
                 else:
                     infix = ''
-                color = utils.get_team_color(attacker.team)
+                color = DB.teams.get(attacker.team).combat_color
                 final = prefix + infix + ('_' if infix else '') + color
-                surf.blit(SPRITES.get(final).copy(), (92, 35))
+                fallback_final = prefix + infix + ('_' if infix else '') + 'red'
+                surf.blit(SPRITES.get(final, fallback_final).copy(), (92, 35))
                 
                 mt = combat_calcs.compute_assist_damage(a_assist, defender, a_assist.get_weapon(), defender.get_weapon(), 'attack', (0, 0))
                 if grandmaster:
@@ -442,9 +449,10 @@ class UIView():
                     infix = 'crit'
                 else:
                     infix = ''
-                color = utils.get_team_color(defender.team)
+                color = DB.teams.get(defender.team).combat_color
                 final = prefix + infix + ('_' if infix else '') + color
-                surf.blit(SPRITES.get(final).copy(), (1, 35))
+                fallback_final = prefix + infix + ('_' if infix else '') + 'red'
+                surf.blit(SPRITES.get(final, fallback_final).copy(), (1, 35))
 
                 mt = combat_calcs.compute_assist_damage(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
                 if grandmaster:
@@ -458,6 +466,8 @@ class UIView():
                     if crit_flag:
                         c = combat_calcs.compute_crit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
                         blit_num(surf, c, 21, 67)
+        # Now make everything translucent
+        surf = image_mods.make_translucent(surf, .1)
 
         # Name
         width = text_width('text', attacker.name)
@@ -545,6 +555,16 @@ class UIView():
         skill_system.test_on([], attacker, weapon, defender, 'attack')
         skill_system.test_on([], defender, defender.get_weapon(), attacker, 'defense')
 
+        def has_attacker_strike_partner() -> bool:
+            return DB.constants.value('pairup') and \
+                a_assist and not (attacker.traveler or defender.traveler)
+
+        def has_defender_strike_partner() -> bool:
+            return DB.constants.value('pairup') and \
+                d_assist and not (attacker.traveler or defender.traveler) and \
+                defender.get_weapon() and \
+                combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon())
+
         if not self.attack_info_disp:
             self.attack_info_disp = self.create_attack_info(attacker, weapon, defender, a_assist, d_assist)
 
@@ -554,14 +574,12 @@ class UIView():
             crit_flag = False
 
         if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
-            if DB.constants.value('pairup') and \
-                    (a_assist or d_assist) and not (attacker.traveler or defender.traveler):
-                topleft = (8 - self.attack_info_offset, 4)
+            if has_defender_strike_partner():
+                topleft = (5 - self.attack_info_offset, 4)
             else:
-                topleft = (17 - self.attack_info_offset, 4)
+                topleft = (-19 - self.attack_info_offset, 4)
         else:
-            if DB.constants.value('pairup') and \
-                    (a_assist or d_assist) and not (attacker.traveler or defender.traveler):
+            if has_attacker_strike_partner():
                 topleft = (WINWIDTH - 122 + self.attack_info_offset, 4)
             else:
                 topleft = (WINWIDTH - 97 + self.attack_info_offset, 4)

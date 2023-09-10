@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
+from app.data.database.database import DB
+
 from app.engine.game_state import game
 from app.engine import action
 from app.engine.movement.movement_component import MovementComponent
@@ -14,6 +16,8 @@ class RoamPlayerMovementComponent(MovementComponent):
     """
     # Used for moving the player's roaming unit according to the player's inputs
     """
+    grid_move = False
+    
     min_speed = 0.48  # Unit must have a velocity above this to actually move (tiles per second)
     base_max_speed = 6.0  # maximum speed allowed (tiles per second)
     base_accel = 30.0  # normal acceleration to maximum speed (tiles per second^2)
@@ -27,6 +31,9 @@ class RoamPlayerMovementComponent(MovementComponent):
         self.sprint = False
 
         self.start()
+
+    def reset_position(self):
+        self.position = self.unit.position
 
     def set_sprint(self, b: bool):
         self.sprint = b
@@ -59,6 +66,7 @@ class RoamPlayerMovementComponent(MovementComponent):
         self.x_vel, self.y_vel = 0.0, 0.0
         # What the player is inputting
         self.x_mag, self.y_mag = 0.0, 0.0
+        self.active = True
 
     def finish(self, surprise=False):
         self.unit.sprite.change_state('normal')
@@ -141,9 +149,16 @@ class RoamPlayerMovementComponent(MovementComponent):
             return False
         if game.board.get_unit(pos):
             other_team = game.board.get_team(pos)
-            if not other_team or utils.compare_teams(self.unit.team, other_team):
+            if not other_team or self.unit.team in DB.teams.get_allies(other_team):
                 return True # Allies, this is fine
             else:  # Enemies
+                return False
+        # If diagonal, also check the diagonal spots
+        if pos[0] != self.unit.position[0] and pos[1] != self.unit.position[1]:
+            pos_h = (pos[0], self.unit.position[1])
+            pos_v = (self.unit.position[0], pos[1])
+            # Check that not both are impassable
+            if not self._can_move(pos_h) and not self._can_move(pos_v):
                 return False
         return True
 

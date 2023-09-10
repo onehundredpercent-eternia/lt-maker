@@ -9,7 +9,6 @@ from typing import Tuple, TYPE_CHECKING
 from app.data.database.database import DB
 from app.engine import equations, skill_system
 from app.engine.game_state import game
-from app.utilities import utils
 
 if TYPE_CHECKING:
     from app.engine.objects.unit import UnitObject
@@ -62,9 +61,11 @@ def check_position(unit: UnitObject, new_position: Tuple[int, int],
     # Returns True if position is OK
     """
     # Interruption regions take precedence, even over event movements
-    interrupted = check_region_interrupt(new_position)
-    if interrupted:
-        return False
+    # Only applies if there's not already a unit standing on the position
+    if not game.board.get_unit(unit.position):
+        interrupted = check_region_interrupt(unit.position)
+        if interrupted:
+            return False
     # Event movement is nearly always valid
     if event:
         return True
@@ -76,7 +77,7 @@ def check_position(unit: UnitObject, new_position: Tuple[int, int],
             return True
     else:
         other_team = game.board.get_team(new_position)
-        if not other_team or utils.compare_teams(unit.team, other_team):
+        if not other_team or unit.team in DB.teams.get_allies(other_team):
             return True # Allies, this is fine
         else:  # Enemies
             return False

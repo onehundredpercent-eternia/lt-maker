@@ -277,6 +277,15 @@ def travel_algorithm(path, moves, unit, grid):
         through_path -= 1
     return path[-(through_path + 1)]  # Travel as far as we can
 
+def targets_in_range(unit: UnitObject, item: ItemObject) -> set:
+    '''
+    Taking a unit and an item, finds a set of
+    positions that are within range
+    '''
+    possible_targets = item_system.valid_targets(unit, item)
+    item_range = item_funcs.get_range(unit, item)
+    return {t for t in possible_targets if utils.calculate_distance(unit.position, t) in item_range}
+
 def get_valid_targets(unit, item=None) -> set:
     """
     Determines all the valid targets given use of the item
@@ -301,7 +310,7 @@ def get_valid_targets(unit, item=None) -> set:
             return set()
 
     # Handle regular item targeting
-    all_targets = item_system.valid_targets(unit, item)
+    all_targets = targets_in_range(unit, item)
     valid_targets = set()
     for position in all_targets:
         splash = item_system.splash(unit, item, position)
@@ -309,8 +318,13 @@ def get_valid_targets(unit, item=None) -> set:
         if valid:
             valid_targets.add(position)
     # Fog of War
-    if unit.team == 'player' or DB.constants.value('ai_fog_of_war'):
-        valid_targets = {position for position in valid_targets if game.board.in_vision(position, unit.team)}
+    if (unit.team == 'player' or DB.constants.value('ai_fog_of_war')) and not item_system.ignore_fog_of_war(unit, item):
+        valid_targets = {
+            position for position in valid_targets if
+            game.board.in_vision(position, unit.team) or 
+            unit.position == position or  # Can always target self
+            (game.board.get_unit(position) and 'Tile' in game.board.get_unit(position).tags) # Can always targets Tiles
+        }
     # Line of Sight
     if DB.constants.value('line_of_sight') and not item_system.ignore_line_of_sight(unit, item):
         item_range = item_funcs.get_range(unit, item)

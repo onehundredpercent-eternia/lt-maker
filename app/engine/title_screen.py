@@ -78,7 +78,9 @@ class TitleStartState(State):
             game.memory['title_intro_already_played'] = True
 
         get_sound_thread().clear()
-        if DB.constants.value('music_main'):
+        if RECORDS.get('_music_title_screen'):
+            get_sound_thread().fade_in(RECORDS.get('_music_title_screen'), fade_in=50)
+        elif DB.constants.value('music_main'):
             get_sound_thread().fade_in(DB.constants.value('music_main'), fade_in=50)
 
         return 'repeat'
@@ -772,7 +774,7 @@ class TitleExtrasState(TitleLoadState):
                 game.sweep()  # Set up event manager
                 event_prefab = DB.events.get_from_nid('Global Credits')
                 if event_prefab:
-                    event = Event(event_prefab.nid, event_prefab.commands, triggers.GenericTrigger())
+                    event = Event(event_prefab, triggers.GenericTrigger())
                     game.events.append(event)
                     game.memory['next_state'] = 'event'
                     game.state.change('transition_to')
@@ -862,7 +864,10 @@ class TitleSaveState(State):
     def start(self):
         if game.memory.get('_skip_save', False):
             game.memory['_skip_save'] = False
-            self.go_to_next_level(False)
+            if game.game_vars['_should_go_to_overworld']:
+                self.go_to_overworld(make_save=False)
+            else:
+                self.go_to_next_level(make_save=False)
             return 'repeat'
 
         self.fluid = FluidScroll(128)

@@ -9,9 +9,11 @@ from app.engine.game_state import game
 from app.engine.sound import get_sound_thread
 from app.engine.state import MapState
 from app.utilities.enums import Orientation
+from app.utilities.typing import NID
 
 from app.engine import item_funcs, help_menu, item_system
 from app.constants import WINWIDTH, WINHEIGHT
+
 
 class PlayerChoiceState(MapState):
     name = 'player_choice'
@@ -31,7 +33,7 @@ class PlayerChoiceState(MapState):
             self._resolved_data = options_list
 
         if not self.size:
-            if self.orientation == 'horizontal':
+            if self.orientation == Orientation.HORIZONTAL:
                 ncols = len(self._resolved_data)
                 self.size = (ncols, 1)
             else:
@@ -50,8 +52,9 @@ class PlayerChoiceState(MapState):
 
         self.made_choice = False
 
-        self.info_flag = False   # For now putting info stuff here because innards of UIF are too arcane.
-        self.create_help_boxes(self._resolved_data)
+        # For now putting info stuff here because innards of UIF are too arcane.
+        self.info_flag = False
+        self.create_help_boxes(values)
 
     def process_data(self, data: List[str]) -> Tuple[List[str], List[str]]:
         data = list(map(str, data))
@@ -68,7 +71,7 @@ class PlayerChoiceState(MapState):
                 display_values.append(spl[1])
         return values, display_values
 
-    def create_help_boxes(self, options_list):
+    def create_help_boxes(self, options_list: List[NID]):
         self.help_boxes = []
         if self.data_type == 'type_base_item':
             items = item_funcs.create_items(None, options_list)
@@ -77,6 +80,10 @@ class PlayerChoiceState(MapState):
                     self.help_boxes.append(help_menu.ItemHelpDialog(item))
                 else:
                     self.help_boxes.append(help_menu.HelpDialog(item.desc))
+        elif self.data_type == 'type_skill':
+            for skill_nid in options_list:
+                skill = DB.skills.get(skill_nid)
+                self.help_boxes.append(help_menu.HelpDialog(skill.desc))
 
     def choose(self, selection):
         action.do(action.SetGameVar(self.nid, selection))
@@ -98,7 +105,7 @@ class PlayerChoiceState(MapState):
         elif ('LEFT' in directions and (self.orientation == Orientation.HORIZONTAL or self.size[0] > 1)):
             get_sound_thread().play_sfx('Select 6')
             self.menu.move_left(first_push)
-        elif('UP' in directions and (self.orientation == Orientation.VERTICAL or self.size[1] > 1)):
+        elif ('UP' in directions and (self.orientation == Orientation.VERTICAL or self.size[1] > 1)):
             get_sound_thread().play_sfx('Select 6')
             self.menu.move_up(first_push)
 
@@ -116,12 +123,15 @@ class PlayerChoiceState(MapState):
             selection = self.menu.get_selected()
             self.choose(selection)
             if self.event_on_choose:
-                valid_events = DB.events.get_by_nid_or_name(self.event_on_choose, game.level.nid)
+                valid_events = DB.events.get_by_nid_or_name(
+                    self.event_on_choose, game.level.nid)
                 for event_prefab in valid_events:
-                    game.events.trigger_specific_event(event_prefab.nid, **self.event_context)
+                    game.events.trigger_specific_event(
+                        event_prefab.nid, **self.event_context)
                     game.memory[self.nid + '_unchoice'] = self.unchoose
                 if not valid_events:
-                    logging.error("Couldn't find any valid events matching name %s" % self.event_on_choose)
+                    logging.error(
+                        "Couldn't find any valid events matching name %s" % self.event_on_choose)
             return 'repeat'
 
         elif event == 'INFO':
@@ -142,7 +152,7 @@ class PlayerChoiceState(MapState):
                 self._resolved_data = data
                 values, display_values = self.process_data(self._resolved_data)
                 self.menu.set_data(values, display_values)
-                self.create_help_boxes(self._resolved_data)
+                self.create_help_boxes(values)
 
         self.menu.update()
         if self.made_choice and not self.should_persist:
@@ -152,7 +162,8 @@ class PlayerChoiceState(MapState):
     def draw(self, surf):
         draw_mode = CursorDrawMode.NO_DRAW
         if not self.no_cursor:
-            draw_mode = CursorDrawMode.DRAW if game.state.current_state() == self else CursorDrawMode.DRAW_STATIC
+            draw_mode = CursorDrawMode.DRAW if game.state.current_state(
+            ) == self else CursorDrawMode.DRAW_STATIC
         self.menu.set_cursor_mode(draw_mode)
         self.menu.draw(surf)
 
@@ -163,6 +174,7 @@ class PlayerChoiceState(MapState):
                 pass
             else:
                 half = len(self.help_boxes) / 2
-                help_box.draw(surf, (WINWIDTH//4, int(WINHEIGHT//2 + (idx - half) * 16)))
+                help_box.draw(
+                    surf, (WINWIDTH//4, int(WINHEIGHT//2 + (idx - half) * 16)))
 
         return surf

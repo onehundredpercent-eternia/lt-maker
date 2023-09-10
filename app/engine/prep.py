@@ -40,14 +40,15 @@ class PrepMainState(MapState):
 
         # initialize custom options and events
         events = [None for option in options]
-        additional_options = game.game_vars.get('_prep_additional_options')
-        additional_ignore = [not enabled for enabled in game.game_vars.get('_prep_options_enabled')]
-        additional_events = game.game_vars.get('_prep_options_events')
+        additional_options = game.game_vars.get('_prep_additional_options', [])
+        additional_ignore = [not enabled for enabled in game.game_vars.get('_prep_options_enabled', [])]
+        additional_events = game.game_vars.get('_prep_options_events', [])
 
-        options = options + additional_options if additional_options else options
-        ignore = ignore + additional_ignore if additional_options else ignore
-        events = events + additional_events if additional_events else events
+        option_idx = options.index('Options')
 
+        options = options[:option_idx] + additional_options + options[option_idx:]
+        ignore = ignore[:option_idx] + additional_ignore + ignore[option_idx:]
+        events = events[:option_idx] + additional_events + events[option_idx:]
         return options, ignore, events
 
     def start(self):
@@ -63,7 +64,9 @@ class PrepMainState(MapState):
         options, ignore, events_on_options = self.populate_options()
         self.events_on_option_select = events_on_options
 
+        max_num_options = 8
         self.menu = menus.Choice(None, options, topleft='center')
+        self.menu.set_limit(max_num_options)
         self.menu.set_ignore(ignore)
 
         # Force place any required units
@@ -79,6 +82,11 @@ class PrepMainState(MapState):
         self.last_update = 0
 
         game.events.trigger(triggers.OnPrepStart())
+
+    def begin(self):
+        prep_music = game.game_vars.get('_prep_music')
+        if prep_music:
+            get_sound_thread().fade_in(prep_music)
 
     def create_background(self):
         img = SPRITES.get('focus_fade').convert_alpha()
@@ -117,6 +125,7 @@ class PrepMainState(MapState):
                 game.state.change('transition_to')
             elif selection == 'Formation':
                 self.bg.fade_out()
+                game.memory['_prep_outline'] = self.bg
                 game.state.change('prep_formation')
             elif selection == 'Options':
                 game.memory['next_state'] = 'settings_menu'
@@ -393,7 +402,8 @@ class PrepFormationState(MapState):
                     game.state.change('prep_formation_select')
                 else:
                     get_sound_thread().play_sfx('Select 2')
-                    if cur_unit.team == 'enemy' or cur_unit.team == 'enemy2':
+                    player_team_enemies = DB.teams.enemies
+                    if cur_unit.team in player_team_enemies:
                         get_sound_thread().play_sfx('Select 3')
                         game.boundary.toggle_unit(cur_unit)
                     else:
@@ -401,6 +411,8 @@ class PrepFormationState(MapState):
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 1')
+            if game.memory.get('_prep_outline'):
+                game.memory['_prep_outline'].fade_in()
             game.state.back()
 
         elif event == 'START':
@@ -413,6 +425,12 @@ class PrepFormationState(MapState):
     def update(self):
         super().update()
         game.highlight.handle_hover()
+
+    def draw(self, surf):
+        surf = super().draw(surf)
+        if game.memory.get('_prep_outline'):
+            game.memory['_prep_outline'].draw(surf)
+        return surf
 
     def finish(self):
         game.ui_view.remove_unit_display()
@@ -857,7 +875,8 @@ class PrepItemsState(State):
         if not self.bg:
             self.bg = background.create_background('rune_background')
         self.unit = game.memory['current_unit']
-        include_other_units_items = (self.name != 'supply_items')
+        include_other_units_items = game.memory.get('include_other_units', False) or (self.name != 'supply_items')
+        game.memory['include_other_units'] = False  # Reset
         self.menu = menus.Convoy(self.unit, (WINWIDTH - 116, 40), include_other_units_items)
 
         self.state = 'free'
@@ -1112,7 +1131,8 @@ class PrepRestockState(State):
 
         topleft = (6, 72)
         self.menu = menus.Inventory(self.unit, self.unit.items, topleft)
-        ignore = [not convoy_funcs.can_restock(item) for item in self.unit.items]
+        # ignore = [not convoy_funcs.can_restock(item) for item in self.unit.items]
+        ignore = [not convoy_funcs.can_restock(option.get()) if option.get() else True for option in self.menu.options]
         self.menu.set_ignore(ignore)
 
     def take_input(self, event):
@@ -1131,8 +1151,9 @@ class PrepRestockState(State):
             get_sound_thread().play_sfx('Select 1')
             item = self.menu.get_current()
             convoy_funcs.restock(item)
-            ignore = [not convoy_funcs.can_restock(item) for item in self.unit.items]
-            if all(ignore):
+            true_ignore = [not convoy_funcs.can_restock(item) for item in self.unit.items]
+            ignore = [not convoy_funcs.can_restock(option.get()) if option.get() else True for option in self.menu.options]
+            if all(true_ignore):
                 self.menu.set_ignore(ignore)
                 game.state.back()
             else:

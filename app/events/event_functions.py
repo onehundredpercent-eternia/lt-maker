@@ -77,6 +77,11 @@ def music(self: Event, music, fade_in=400, flags=None):
     else:
         get_sound_thread().fade_in(music, fade_in=fade_in)
 
+def music_fade_back(self: Event, fade_out=400, flags=None):
+    if self.do_skip:
+        fade_out = 0
+    get_sound_thread().fade_back(fade_out=fade_out)
+
 def music_clear(self: Event, fade_out=0, flags=None):
     if self.do_skip:
         fade_out = 0
@@ -93,6 +98,17 @@ def change_music(self: Event, phase, music, flags=None):
         action.do(action.ChangePhaseMusic(phase, None))
     else:
         action.do(action.ChangePhaseMusic(phase, music))
+
+def change_special_music(self: Event, special_music_type: str, music: str, flags=None):
+    if special_music_type == 'title_screen':
+        # title screen must persist past the current game
+        RECORDS.replace('_music_title_screen', music)
+    elif special_music_type == 'promotion':
+        action.do(action.SetGameVar('_music_promotion', music))
+    elif special_music_type == 'class_change':
+        action.do(action.SetGameVar('_music_class_change', music))
+    elif special_music_type == 'game_over':
+        action.do(action.SetGameVar('_music_game_over', music))
 
 def add_portrait(self: Event, portrait, screen_position, slide=None, expression_list=None, speed_mult=None, flags=None):
     flags = flags or set()
@@ -162,9 +178,7 @@ def multi_add_portrait(self: Event, portrait1, screen_position1, portrait2, scre
         commands.append(event_commands.AddPortrait({'Portrait': portrait3, 'ScreenPosition': screen_position3}, flags))
     if portrait4:
         commands.append(event_commands.AddPortrait({'Portrait': portrait4, 'ScreenPosition': screen_position4}, set()))
-    for command in reversed(commands):
-        # Done backwards to preserve order upon insertion
-        self.commands.insert(self.command_idx + 1, command)
+    self.command_queue += commands
 
 def remove_portrait(self: Event, portrait, speed_mult=1, flags=None):
     flags = flags or set()
@@ -200,10 +214,7 @@ def multi_remove_portrait(self: Event, portrait1, portrait2, portrait3=None, por
         commands.append(event_commands.RemovePortrait({'Portrait': portrait3}, flags))
     if portrait4:
         commands.append(event_commands.RemovePortrait({'Portrait': portrait4}, set()))
-
-    for command in reversed(commands):
-        # Done backwards to preserve order upon insertion
-        self.commands.insert(self.command_idx + 1, command)
+    self.command_queue += commands
 
 def move_portrait(self: Event, portrait, screen_position, speed_mult=1, flags=None):
     flags = flags or set()
@@ -244,10 +255,12 @@ def mirror_portrait(self: Event, portrait, flags=None):
 
     flipped_portrait = \
         EventPortrait(
-            self.portraits[name].portrait,
-            self.portraits[name].position,
-            self.portraits[name].priority,
-            False, None, not self.portraits[name].mirror, name)
+            portrait.portrait,
+            portrait.position,
+            portrait.priority,
+            False, None, not portrait.mirror, name)
+    if self.text_boxes and self.text_boxes[-1].portrait == portrait:
+        self.text_boxes[-1].portrait = flipped_portrait
 
     if self.do_skip:
         self.portraits[name] = flipped_portrait
@@ -262,9 +275,7 @@ def mirror_portrait(self: Event, portrait, flags=None):
             if 'no_block' in flags:
                 command_flags.add("no_block")
             commands.append(event_commands.AddPortrait({'Portrait': name, 'ScreenPosition': str(self.portraits[name].position)}, command_flags))
-            for command in reversed(commands):
-                # Done backwards to preserve order upon insertion
-                self.commands.insert(self.command_idx + 1, command)
+            self.command_queue += commands
         else:
             # Immediate removal followed by a transition in
             self.portraits[name] = flipped_portrait
@@ -368,7 +379,7 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
 
     # Process text for commands
     blocks = str_utils.matched_block_expr(text, '{', '}')
-    for block in reversed(blocks):  # reversed to preserve order upon insertion
+    for block in blocks:
         if block.startswith('{command:') and block.endswith('}'):
             event_command_str = block[len('{command:'):-1]
         elif block.startswith('{c:') and block.endswith('}'):
@@ -376,12 +387,11 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
         else:
             continue
         text = text.replace(block, '{p}', 1)  # Replace first instance
-        # Done backwards to preserve order
+        self._queue_command(event_command_str)
         if speaker:
             self._queue_command('unpause;%s' % speaker)
         else:
             self._queue_command('unpause')
-        self._queue_command(event_command_str)
 
     # Determine whether this should be skipped
     # Hold speaks are not skipped
@@ -528,7 +538,7 @@ def unpause(self: Event, nid=None, flags=None):
     else:
         self.state = 'dialog'
 
-def transition(self: Event, direction=None, speed=None, color3=None, flags=None):
+def transition(self: Event, direction=None, speed=None, color3=None, panorama=None, flags=None):
     flags = flags or set()
     current_time = engine.get_time()
     if direction:
@@ -539,6 +549,11 @@ def transition(self: Event, direction=None, speed=None, color3=None, flags=None)
         self.transition_state = 'close'
     self.transition_speed = max(1, int(speed)) if speed else self._transition_speed
     self.transition_color = tuple(int(_) for _ in color3.split(',')) if color3 else self._transition_color
+    self.transition_background = None
+    if panorama:
+        panorama = RESOURCES.panoramas.get(panorama)
+        if panorama:
+            self.transition_background = background.PanoramaBackground(panorama)
 
     if not self.do_skip:
         self.transition_update = current_time
@@ -634,11 +649,12 @@ def flicker_cursor(self: Event, position, flags=None):
     disp_cursor_command1 = event_commands.DispCursor({'ShowCursor': '1'})
     wait_command = event_commands.Wait({'Time': '1000'})
     disp_cursor_command2 = event_commands.DispCursor({'ShowCursor': '0'})
-    # Done backwards to presever order upon insertion
-    self.commands.insert(self.command_idx + 1, disp_cursor_command2)
-    self.commands.insert(self.command_idx + 1, wait_command)
-    self.commands.insert(self.command_idx + 1, disp_cursor_command1)
-    self.commands.insert(self.command_idx + 1, move_cursor_command)
+    self.command_queue += [
+        move_cursor_command,
+        disp_cursor_command1,
+        wait_command,
+        disp_cursor_command2
+    ]
 
 def screen_shake(self: Event, duration, shake_type=None, flags=None):
     flags = flags or set()
@@ -758,6 +774,28 @@ def set_fog_of_war(self: Event, fog_of_war_type, radius, ai_radius=None, other_r
         other_radius = int(ai_radius)
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', other_radius))
 
+def end_turn(self: Event, team: NID = None, flags=None):
+    self.logger.info('Force end of turn.')
+    if team is not None:
+        if team not in DB.teams.keys():
+            self.logger.error("end_turn: %s is not a valid team team nid" % team)
+            return
+        if not any(unit.team == team for unit in self.game.units if unit.position and 'Tile' not in unit.tags):
+            self.logger.error("end_turn: %s has no units on the team" % team)
+            return
+        # Skip turns until the next team is the one we want
+        while self.game.phase.get_next() != team:
+            self.game.phase.next()
+
+    if self.game.phase.get_next() == 'player':
+        self.game.state.change('turn_change')
+        self.game.state.change('status_endstep')
+    else:
+        self.game.state.change('turn_change')
+        self.game.state.change('status_endstep')
+        self.game.state.change('ai')
+        self.game.ui_view.remove_unit_display()
+
 def win_game(self: Event, flags=None):
     self.game.level_vars['_win_game'] = True
 
@@ -781,6 +819,13 @@ def activate_turnwheel(self: Event, force=None, flags=None):
         self.turnwheel_flag = 2
 
 def battle_save(self: Event, flags=None):
+    flags = flags or set()
+    if 'immediately' in flags:
+        self.state = 'paused'
+        self.game.memory['save_kind'] = 'battle'
+        self.game.memory['next_state'] = 'in_chapter_save'
+        self.game.state.change('transition_to')
+    else:  # Wait until after this event to make the save
     self.battle_save_flag = True
 
 def clear_turnwheel(self: Event, flags=None):
@@ -1100,6 +1145,11 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
         self.logger.error("move_unit: Couldn't get a good position %s %s %s" % (position, movement_type, placement))
         return None
 
+    # In case the unit is currently still moving
+    if self.game.movement.is_moving(unit):
+        self.game.movement.stop(unit)
+        unit.sprite.reset()
+
     if movement_type == 'immediate':
         action.do(action.Teleport(unit, position))
     elif movement_type == 'warp':
@@ -1112,10 +1162,6 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
         path = target_system.get_path(unit, position)
         if path:
             if self.do_skip:
-                # In case the unit is currently still moving
-                if self.game.movement.is_moving(unit):
-                    self.game.movement.stop(unit)
-                    unit.sprite.reset()
                 action.do(action.Teleport(unit, position))
             elif speed:
                 action.do(action.Move(unit, position, path, event=True, follow=follow, speed=speed))
@@ -1190,7 +1236,7 @@ def remove_all_units(self: Event, flags=None):
 
 def remove_all_enemies(self: Event, flags=None):
     for unit in self.game.units:
-        if unit.position and unit.team.startswith('enemy'):
+        if unit.position and unit.team in DB.teams.enemies:
             action.do(action.FadeOut(unit))
 
 def interact_unit(self: Event, unit, position, combat_script=None, ability=None, rounds=None, flags=None):
@@ -1474,7 +1520,7 @@ def remove_group(self: Event, group, remove_type=None, flags=None):
             else:  # immediate
                 action.do(action.LeaveMap(unit))
 
-def give_item(self: Event, global_unit_or_convoy, item, flags=None):
+def give_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
     flags = flags or set()
     global_unit = global_unit_or_convoy
 
@@ -1520,7 +1566,7 @@ def give_item(self: Event, global_unit_or_convoy, item, flags=None):
                 self.game.state.change('alert')
                 self.state = 'paused'
     else:
-        action.do(action.PutItemInConvoy(item))
+        action.do(action.PutItemInConvoy(item, party))
         if banner_flag:
             self.game.alerts.append(banner.SentToConvoy(item))
             self.game.state.change('alert')
@@ -1551,7 +1597,7 @@ def equip_item(self: Event, global_unit, item, flags=None):
     else:
         self.logger.error("equip_item: %s is not an item that can be equipped" % item.nid)
 
-def remove_item(self: Event, global_unit_or_convoy, item, flags=None):
+def remove_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
     flags = flags or set()
     global_unit = global_unit_or_convoy
 
@@ -1562,7 +1608,7 @@ def remove_item(self: Event, global_unit_or_convoy, item, flags=None):
     banner_flag = 'no_banner' not in flags
 
     if global_unit.lower() == 'convoy':
-        action.do(action.RemoveItemFromConvoy(item))
+        action.do(action.RemoveItemFromConvoy(item, party))
     else:
         action.do(action.RemoveItem(unit, item))
         if banner_flag:
@@ -1647,6 +1693,19 @@ def move_item_between_convoys(self: Event, item, party1, party2, flags=None):
     action.do(action.RemoveItemFromConvoy(item, party1))
     action.do(action.PutItemInConvoy(item, party2))
 
+def open_convoy(self: Event, global_unit, flags=None):
+    flags = flags or set()
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("open_convoy: Couldn't find unit with nid %s" % global_unit)
+        return
+
+    self.state = "paused"
+    self.game.memory['current_unit'] = unit
+    self.game.memory['next_state'] = 'supply_items'
+    self.game.memory['include_other_units'] = 'include_other_units' in flags
+    self.game.state.change('transition_to')
+
 def set_item_uses(self: Event, global_unit_or_convoy, item, uses, flags=None):
     flags = flags or set()
     global_unit = global_unit_or_convoy
@@ -1705,7 +1764,8 @@ def break_item(self: Event, global_unit_or_convoy, item, flags=None):
         self.logger.error("break_item: Item %s does not have uses!" % item.nid)
         return
 
-    alert = item_system.on_broken(unit, item)
+    item_system.on_broken(unit, item)
+    alert = item_system.broken_alert(unit, item)
     if alert and unit.team == 'player' and banner_flag:
         self.game.alerts.append(banner.BrokenItem(unit, item))
         self.game.state.change('alert')
@@ -1832,8 +1892,8 @@ def add_item_component(self: Event, global_unit_or_convoy, item, item_component,
     flags = flags or set()
     global_unit = global_unit_or_convoy
     component_nid = item_component
-
-    unit, item = self._get_item_in_inventory(global_unit, item)
+    recursive_flag = 'recursive' in flags
+    unit, item = self._get_item_in_inventory(global_unit, item, recursive=recursive_flag)
     if not unit or not item:
         self.logger.error("add_item_component: Either unit or item was invalid, see above")
         return
@@ -1854,8 +1914,8 @@ def modify_item_component(self: Event, global_unit_or_convoy, item, item_compone
     global_unit = global_unit_or_convoy
     component_nid = item_component
     is_additive = 'additive' in flags
-
-    unit, item = self._get_item_in_inventory(global_unit, item)
+    recursive_flag = 'recursive' in flags
+    unit, item = self._get_item_in_inventory(global_unit, item, recursive=recursive_flag)
     if not unit or not item:
         self.logger.error("modify_item_component: Either unit or item was invalid, see above")
         return
@@ -1872,8 +1932,8 @@ def remove_item_component(self: Event, global_unit_or_convoy, item, item_compone
     flags = flags or set()
     global_unit = global_unit_or_convoy
     component_nid = item_component
-
-    unit, item = self._get_item_in_inventory(global_unit, item)
+    recursive_flag = 'recursive' in flags
+    unit, item = self._get_item_in_inventory(global_unit, item, recursive=recursive_flag)
     if not unit or not item:
         self.logger.error("remove_item_component: Either unit or item was invalid, see above")
         return
@@ -1984,7 +2044,12 @@ def give_exp(self: Event, global_unit, experience, flags=None):
         if old_exp + exp >= 100:
             if unit.level < DB.classes.get(unit.klass).max_level:
                 action.do(action.GainExp(unit, exp))
+                # Since autolevel also fills current hp and current mana to max
+                # We keep track of HP to reset back
+                old_hp, old_mana = unit.get_hp(), unit.get_mana()
                 autolevel_to(self, global_unit, unit.level + 1)
+                action.do(action.SetHP(unit, old_hp))
+                action.do(action.SetMana(unit, old_mana))
             else:
                 action.do(action.SetExp(unit, 99))
         elif old_exp + exp < 0:
@@ -2008,18 +2073,32 @@ def set_exp(self: Event, global_unit, experience, flags=None):
     exp = utils.clamp(int(experience), 0, 100)
     action.do(action.SetExp(unit, exp))
 
-def give_wexp(self: Event, global_unit, weapon_type, positive_integer, flags=None):
+def give_wexp(self: Event, global_unit, weapon_type, integer, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("give_wexp: Couldn't find unit with nid %s" % global_unit)
         return
-    wexp = int(positive_integer)
+    wexp = int(integer)
     if 'no_banner' in flags:
         action.execute(action.AddWexp(unit, weapon_type, wexp))
     else:
         action.do(action.AddWexp(unit, weapon_type, wexp))
+        self.state = 'paused'
+
+def set_wexp(self: Event, global_unit, weapon_type, whole_number, flags=None):
+    flags = flags or set()
+
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("set_wexp: Couldn't find unit with nid %s" % global_unit)
+        return
+    wexp = int(whole_number)
+    if 'no_banner' in flags:
+        action.execute(action.SetWexp(unit, weapon_type, wexp))
+    else:
+        action.do(action.SetWexp(unit, weapon_type, wexp))
         self.state = 'paused'
 
 def give_skill(self: Event, global_unit, skill, initiator=None, flags=None):
@@ -2099,6 +2178,24 @@ def change_ai(self: Event, global_unit, ai, flags=None):
         self.logger.error("change_ai: Couldn't find AI %s" % ai)
         return
 
+def change_roam_ai(self: Event, global_unit, ai, flags=None):
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("change_roam_ai: Couldn't find unit %s" % global_unit)
+        return
+    if ai in DB.ai.keys():
+        action.do(action.ChangeRoamAI(unit, ai))
+    else:
+        self.logger.error("change_roam_ai: Couldn't find AI %s" % ai)
+        return
+
+def change_ai_group(self: Event, global_unit, ai_group, flags=None):
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("change_ai_group: Couldn't find unit %s" % global_unit)
+        return
+    action.do(action.ChangeAIGroup(unit, ai_group))
+
 def change_party(self: Event, global_unit, party, flags=None):
     unit = self._get_unit(global_unit)
     if not unit:
@@ -2126,7 +2223,7 @@ def change_team(self: Event, global_unit, team, flags=None):
     if not unit:
         self.logger.error("change_team: Couldn't find unit %s" % global_unit)
         return
-    if team in DB.teams:
+    if team in DB.teams.keys():
         action.do(action.ChangeTeam(unit, team))
     else:
         self.logger.error("change_team: Not a valid team: %s" % team)
@@ -2149,6 +2246,13 @@ def change_unit_desc(self: Event, global_unit, string, flags=None):
         self.logger.error("change_unit_desc: Couldn't find unit %s" % global_unit)
         return
     action.do(action.ChangeUnitDesc(unit, string))
+
+def change_affinity(self: Event, global_unit, affinity, flags=None):
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("change_affinity: Couldn't find unit %s" % global_unit)
+        return
+    action.do(action.ChangeAffinity(unit, affinity))
 
 def change_stats(self: Event, global_unit, stat_list, flags=None):
     flags = flags or set()
@@ -2218,6 +2322,37 @@ def set_growths(self: Event, global_unit, stat_list, flags=None):
 
     self._apply_growth_changes(unit, growth_changes)
 
+def change_stat_cap_modifiers(self: Event, global_unit, stat_list, flags=None):
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("change_stat_cap_modifiers: Couldn't find unit %s" % global_unit)
+        return
+
+    s_list = stat_list.split(',')
+    stat_cap_changes = {}
+    for idx in range(len(s_list)//2):
+        stat_nid = s_list[idx*2]
+        stat_value = int(s_list[idx*2 + 1])
+        stat_cap_changes[stat_nid] = stat_value
+
+    action.do(action.ChangeStatCapModifiers(unit, stat_cap_changes))
+
+def set_stat_cap_modifiers(self: Event, global_unit, stat_list, flags=None):
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("set_stat_cap_modifiers: Couldn't find unit %s" % global_unit)
+        return
+
+    s_list = stat_list.split(',')
+    stat_cap_changes = {}
+    for idx in range(len(s_list)//2):
+        stat_nid = s_list[idx*2]
+        stat_value = int(s_list[idx*2 + 1])
+        current = unit.stat_cap_modifiers.get(stat_nid, 0)
+        stat_cap_changes[stat_nid] = stat_value - current
+
+    action.do(action.ChangeStatCapModifiers(unit, stat_cap_changes))
+
 def set_unit_level(self: Event, global_unit, level, flags=None):
     unit = self._get_unit(global_unit)
     if not unit:
@@ -2249,10 +2384,10 @@ def autolevel_to(self: Event, global_unit, level, growth_method=None, flags=None
         action.do(action.SetLevel(unit, max(1, final_level)))
     if not unit.generic and DB.units.get(unit.nid):
         unit_prefab = DB.units.get(unit.nid)
-        personal_skills = unit_funcs.get_personal_skills(unit, unit_prefab)
+        personal_skills = unit_funcs.get_personal_skills(unit, unit_prefab, current_level)
         for personal_skill in personal_skills:
             action.do(action.AddSkill(unit, personal_skill))
-    class_skills = unit_funcs.get_starting_skills(unit)
+    class_skills = unit_funcs.get_starting_skills(unit, current_level)
     for class_skill in class_skills:
         action.do(action.AddSkill(unit, class_skill))
 
@@ -2416,10 +2551,26 @@ def remove_tag(self: Event, global_unit, tag, flags=None):
         action.do(action.RemoveTag(unit, tag))
 
 def add_talk(self: Event, unit1, unit2, flags=None):
-    action.do(action.AddTalk(unit1, unit2))
+    u1 = self._get_unit(unit1)
+    if not u1:
+        self.logger.error("add_talk: Couldn't find unit %s" % unit1)
+        return
+    u2 = self._get_unit(unit2)
+    if not u2:
+        self.logger.error("add_talk: Couldn't find unit %s" % unit2)
+        return
+    action.do(action.AddTalk(u1.nid, u2.nid))
 
 def remove_talk(self: Event, unit1, unit2, flags=None):
-    action.do(action.RemoveTalk(unit1, unit2))
+    u1 = self._get_unit(unit1)
+    if not u1:
+        self.logger.error("remove_talk: Couldn't find unit %s" % unit1)
+        return
+    u2 = self._get_unit(unit2)
+    if not u2:
+        self.logger.error("remove_talk: Couldn't find unit %s" % unit2)
+        return
+    action.do(action.RemoveTalk(u1.nid, u2.nid))
 
 def add_lore(self: Event, lore, flags=None):
     action.do(action.AddLore(lore))
@@ -2490,6 +2641,32 @@ def unlock_support_rank(self: Event, unit1, unit2, support_rank, flags=None):
     else:
         self.logger.error("unlock_support_rank: Couldn't find prefab for units %s and %s" % (_unit1.nid, _unit2.nid))
         return
+
+def disable_support_rank(self: Event, unit1, unit2, support_rank, flags=None):
+    _unit1 = self._get_unit(unit1)
+    if not _unit1:
+        _unit1 = DB.units.get(unit1)
+    if not _unit1:
+        self.logger.error("disable_support_rank: Couldn't find unit %s" % unit1)
+        return
+    _unit2 = self._get_unit(unit2)
+    if not _unit2:
+        _unit2 = DB.units.get(unit2)
+    if not _unit2:
+        self.logger.error("disable_support_rank: Couldn't find unit %s" % unit2)
+        return
+    rank = support_rank
+    if rank not in DB.support_ranks.keys():
+        self.logger.error("disable_support_rank: Support rank %s not a valid rank!" % rank)
+        return
+    prefabs = DB.support_pairs.get_pairs(_unit1.nid, _unit2.nid)
+    if prefabs:
+        prefab = prefabs[0]
+        action.do(action.DisableSupportRank(prefab.nid, rank))
+    else:
+        self.logger.error("disable_support_rank: Couldn't find prefab for units %s and %s" % (_unit1.nid, _unit2.nid))
+        return
+
 
 def add_market_item(self: Event, item, stock=None, flags=None):
     if item not in DB.items.keys():
@@ -2822,7 +2999,6 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
         action.do(action.SetGameVar('_base_options_events', []))
         action.do(action.SetGameVar('_base_additional_options', []))
 
-
     if 'show_map' in flags:
         action.do(action.SetGameVar('_base_transparent', True))
     else:
@@ -2831,12 +3007,52 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
     self.game.state.change('base_main')
     self.state = 'paused'
 
-def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, flags=None):
+def set_custom_options(self: Event, custom_options: str, custom_options_enabled: str = None,
+                       custom_options_desc: str = None, custom_options_on_select: str = None, flags=None):
+    flags = flags or set()
+
+    options_list = custom_options.split(',')
+    options_enabled = [True for option in options_list]
+    options_desc = [option + '_desc' for option in options_list]
+    options_events = [None for option in options_list]
+
+    enabled_strs = custom_options_enabled.split(',') if custom_options_enabled else []
+    if len(enabled_strs) <= len(options_enabled):
+        for idx, is_enabled in enumerate(enabled_strs):
+            if is_enabled not in self.true_vals:
+                options_enabled[idx] = False
+        action.do(action.SetGameVar('_custom_options_disabled', [not enabled for enabled in options_enabled]))
+    else:
+        self.logger.error("set_custom_options: too many bools in option enabled list: ", custom_options_enabled)
+        return
+
+    info_descs = custom_options_desc.split(',') if custom_options_desc else []
+    if len(info_descs) <= len(options_events):
+        for idx, desc in enumerate(info_descs):
+            options_desc[idx] = desc
+        action.do(action.SetGameVar('_custom_info_desc', options_desc))
+    else:
+        self.logger.error("set_custom_options: too many descriptions in option description list: ", custom_options_desc)
+        return
+
+    event_nids = custom_options_on_select.split(',') if custom_options_on_select else []
+    if len(event_nids) <= len(options_events):
+        for idx, event_nid in enumerate(event_nids):
+            options_events[idx] = event_nid
+        action.do(action.SetGameVar('_custom_options_events', options_events))
+    else:
+        self.logger.error("set_custom_options: too many events in option event list: ", custom_options_on_select)
+        return
+
+    action.do(action.SetGameVar('_custom_additional_options', options_list))
+
+def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, shop_id=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("shop: Must have a unit visit the shop!")
         return
     unit = new_unit
+    if shop_id is None:
     shop_id = self.nid
     self.game.memory['shop_id'] = shop_id
     self.game.memory['current_unit'] = unit
@@ -2855,8 +3071,8 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, flags=
         # Remember which items have already been bought for this shop...
         for idx, item in enumerate(item_list):
             item_history = '__shop_%s_%s' % (shop_id, item)
-            if item_history in self.game.level_vars:
-                stock_list[idx] -= self.game.level_vars[item_history]
+            if item_history in self.game.game_vars:
+                stock_list[idx] -= self.game.game_vars[item_history]
         self.game.memory['shop_stock'] = stock_list
     else:
         self.game.memory['shop_stock'] = None
@@ -2885,6 +3101,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         dtype = entry_type
 
     # figure out function or list of NIDs
+    data = []
     if 'expression' in flags:
         try:
             ast.parse(choices)
@@ -2892,7 +3109,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
                 try:
                     val = self.text_evaluator.direct_eval(self.text_evaluator._evaluate_all(callback_expr))
                     if isinstance(val, list):
-                        return val
+                        return val or ['']
                     else:
                         return [self._object_to_str(val)]
                 except Exception as e:
@@ -2905,6 +3122,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         choices = self.text_evaluator._evaluate_all(choices)
         data = choices.split(',')
         data = [s.strip().replace('{comma}', ',') for s in data]
+    data = data or ['']
 
     row_width = int(row_width)
 
@@ -2946,7 +3164,6 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         'position': self.position,
         'local_args': self.local_args
     }
-
     self.game.memory['player_choice'] = (nid, header, data, row_width,
                                     actual_orientation, dtype, should_persist,
                                     align, bg, event_nid, size, no_cursor,
@@ -3096,6 +3313,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         dtype = entry_type
 
     # figure out function or list of NIDs
+    data = []
     if 'expression' in flags:
         try:
             # eval once to make sure it's eval-able
@@ -3104,7 +3322,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
                 try:
                     val = self.text_evaluator.direct_eval(self.text_evaluator._evaluate_all(callback_expr))
                     if isinstance(val, list):
-                        return val
+                        return val or ['']
                     else:
                         return [self._object_to_str(val)]
                 except:
@@ -3117,6 +3335,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         table_data = self.text_evaluator._evaluate_all(table_data)
         data = table_data.split(',')
         data = [s.strip().replace('{comma}', ',') for s in data]
+    data = data or [""]
 
     align = Alignments.TOP_LEFT
     if alignment:
@@ -3282,13 +3501,55 @@ def alert(self: Event, string, item=None, skill=None, icon=None, flags=None):
     self.game.state.change('alert')
     self.state = 'paused'
 
-def victory_screen(self: Event, flags=None):
+def victory_screen(self: Event, sound=None, flags=None):
+    self.game.memory['victory_screen_sound'] = sound
     self.game.state.change('victory')
     self.state = 'paused'
 
 def records_screen(self: Event, flags=None):
     self.game.state.change('base_records')
     self.state = 'paused'
+
+def open_library(self: Event, flags=None):
+    flags = flags or set()
+    unlocked_lore = [lore for lore in DB.lore if lore.nid in self.game.unlocked_lore and lore.category != 'Guide']
+    if unlocked_lore:
+        self.state = "paused"
+        if 'immediate' in flags:
+            self.game.state.change('base_library')
+        else:
+            self.game.memory['next_state'] = 'base_library'
+            self.game.state.change('transition_to')
+    else:
+        self.logger.warning("open_library: Skipping opening library because there is no unlocked lore")
+
+def open_guide(self: Event, flags=None):
+    flags = flags or set()
+    unlocked_lore = [lore for lore in DB.lore if lore.nid in self.game.unlocked_lore and lore.category == 'Guide']
+    if unlocked_lore:
+        self.state = "paused"
+        if 'immediate' in flags:
+            self.game.state.change('base_guide')
+        else:
+            self.game.memory['next_state'] = 'base_guide'
+            self.game.state.change('transition_to')
+    else:
+        self.logger.warning("open_guide: Skipping opening guide because there is no unlocked lore in the guide category")
+
+def open_unit_management(self: Event, panorama=None, flags=None):
+    flags = flags or set()
+    if 'scroll' in flags:
+        bg = background.create_background(panorama, True)
+    else:
+        bg = background.create_background(panorama, False)
+    self.game.memory['base_bg'] = bg
+
+    self.state = "paused"
+    if 'immediate' in flags:
+        self.game.state.change('base_manage')
+    else:
+        self.game.memory['next_state'] = 'base_manage'
+        self.game.state.change('transition_to')
 
 def location_card(self: Event, string, flags=None):
     new_location_card = dialog.LocationCard(string)
@@ -3333,9 +3594,8 @@ def unlock(self: Event, unit, flags=None):
     # This is a macro that just adds new commands to command list
     find_unlock_command = event_commands.FindUnlock({'Unit': unit})
     spend_unlock_command = event_commands.SpendUnlock({'Unit': unit})
-    # Done backwards to preseve order upon insertion
-    self.commands.insert(self.command_idx + 1, spend_unlock_command)
-    self.commands.insert(self.command_idx + 1, find_unlock_command)
+    self.command_queue.append(find_unlock_command)
+    self.command_queue.append(spend_unlock_command)
 
 def find_unlock(self: Event, unit, flags=None):
     new_unit = self._get_unit(unit)
@@ -3382,11 +3642,11 @@ def spend_unlock(self: Event, unit, flags=None):
 
     actions, playback = [], []
     # In order to proc uses, c_uses etc.
-    item_system.start_combat(playback, unit, chosen_item, None, None)
-    item_system.on_hit(actions, playback, unit, chosen_item, None, self.position, None, (0, 0), True)
+    item_system.start_combat(playback, unit, chosen_item, unit, None)
+    item_system.on_hit(actions, playback, unit, chosen_item, unit, self.position, None, (0, 0), True)
     for act in actions:
         action.do(act)
-    item_system.end_combat(playback, unit, chosen_item, None, None)
+    item_system.end_combat(playback, unit, chosen_item, unit, None)
 
     if unit.get_hp() <= 0:
         # Force can't die unlocking stuff, because I don't want to deal with that nonsense
@@ -3394,7 +3654,8 @@ def spend_unlock(self: Event, unit, flags=None):
 
     # Check to see if we broke the item we were using
     if item_system.is_broken(unit, chosen_item):
-        alert = item_system.on_broken(unit, chosen_item)
+        alert = item_system.broken_alert(unit, chosen_item)
+        item_system.on_broken(unit, chosen_item)
         if alert and unit.team == 'player':
             self.game.alerts.append(banner.BrokenItem(unit, chosen_item))
             self.game.state.change('alert')
@@ -3410,7 +3671,8 @@ def trigger_script(self: Event, event, unit1=None, unit2=None, flags=None):
     else:
         unit2 = self.unit2
 
-    valid_events = DB.events.get_by_nid_or_name(event, self.game.level.nid)
+    level_nid = self.game.level.nid if self.game.level else None
+    valid_events = DB.events.get_by_nid_or_name(event, level_nid)
     for event_prefab in valid_events:
         self.game.events.trigger_specific_event(event_prefab.nid, unit, unit2, self.position, self.local_args)
         self.state = 'paused'
@@ -3450,11 +3712,11 @@ def loop_units(self: Event, expression, event, flags=None):
     if not all((isinstance(unit_nid, str) or isinstance(unit_nid, UnitObject)) for unit_nid in unit_list):
         self.logger.error("loop_units: %s: could not evaluate to NID list {%s}" % ('loop_units', unit_list_str))
         return
-    for unit_nid in reversed(unit_list):
+    for unit_nid in unit_list:
         if not isinstance(unit_nid, str):
             unit_nid = unit_nid.nid  # Try this!
         macro_command = event_commands.TriggerScript({'Event': event, 'Unit1': unit_nid})
-        self.commands.insert(self.command_idx + 1, macro_command)
+        self.command_queue.append(macro_command)
 
 def change_roaming(self: Event, free_roam_enabled, flags=None):
     val = free_roam_enabled.lower()
@@ -3588,7 +3850,7 @@ def complete_achievement(self: Event, achievement: str, completed: str, flags=No
             self.wait_time = engine.get_time() + 2000
             self.state = 'waiting'
             remove_overlay_sprite_command = event_commands.RemoveOverlaySprite({'Nid': anim_nid}, flags={'foreground'})
-            self.commands.insert(self.command_idx + 1, remove_overlay_sprite_command)
+            self.command_queue.append(remove_overlay_sprite_command)
     
 def clear_achievements(self: Event, flags=None):
     ACHIEVEMENTS.clear_achievements()

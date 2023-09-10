@@ -1,8 +1,9 @@
 import logging
 
-from app.engine import action, evaluate
+from app.engine import action, evaluate, phase
 from app.engine.game_state import game
 from app.engine.input_manager import get_input_manager
+from app.engine.objects.unit import UnitObject
 from app.engine.roam import free_roam_ai
 from app.engine.movement.roam_player_movement_component import RoamPlayerMovementComponent
 from app.engine.movement import movement_funcs
@@ -23,8 +24,22 @@ class FreeRoamState(MapState):
 
         self.ai_handler = free_roam_ai.FreeRoamAIHandler()
 
+    def add_ai_unit(self, unit: UnitObject):
+        self.ai_handler.add_unit(unit)
+
+    def remove_ai_unit(self, unit: UnitObject):
+        self.ai_handler.remove_unit(unit)
+
+    def contains_ai_unit(self, unit: UnitObject):
+        return self.ai_handler.contains_unit(unit)
+
     def begin(self):
         game.cursor.hide()
+        phase.fade_in_phase_music()
+        if not self.ai_handler.active:
+            self.ai_handler.start_all_units()
+
+        self.ai_handler.reset_all_units()
 
         if game.is_roam() and game.get_roam_unit():
             roam_unit = game.get_roam_unit()
@@ -164,6 +179,26 @@ class FreeRoamState(MapState):
             game.memory['current_unit'] = self.roam_unit
             game.state.change('transition_to')
 
+    def check_aux(self):
+        """
+        # Called whenever the player presses AUX
+        """
+        other_unit = self.get_closest_unit()
+        self.rationalize_all_units()
+        did_trigger = game.events.trigger(triggers.RoamPressAux(self.roam_unit, other_unit))
+        if not did_trigger:
+            game.state.change('option_menu')
+    
+    def check_start(self):
+        """
+        # Called whenever the player presses START
+        """
+        other_unit = self.get_closest_unit()
+        self.rationalize_all_units()
+        did_trigger = game.events.trigger(triggers.RoamPressStart(self.roam_unit, other_unit))
+        if not did_trigger:
+            game.state.change('option_menu')
+    
     def take_input(self, event):
         if not self.roam_unit:
             return
@@ -197,22 +232,16 @@ class FreeRoamState(MapState):
             self.check_select()
 
         elif event == 'AUX':
-            game.state.change('option_menu')
-            self.rationalize_all_units()
+            self.check_aux()
 
         elif event == 'INFO':
             self.check_info()
 
         elif event == 'START':
-            did_trigger = game.events.trigger(triggers.RoamPressStart(self.roam_unit))
-            if did_trigger:
-                get_sound_thread().play_sfx('Select 2')
-                self.rationalize_all_units()
-            else:
-                get_sound_thread().play_sfx('Error')
+            self.check_start()
 
     def update(self):
         super().update()
-        game.movement.update()
         self.ai_handler.update()
+        game.movement.update()
         self.check_region_interrupt()

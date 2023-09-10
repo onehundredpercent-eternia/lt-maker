@@ -1,18 +1,28 @@
+import json
+import os
+from typing import List, Tuple
+
 from PyQt5.QtCore import QSettings, QDir
 from PyQt5.QtCore import Qt
+
+from .project_history_controller import ProjectHistoryController, ProjectHistoryEntry
 from .component_settings_controller import ComponentSettingsController
+
 
 class MainSettingsController():
     """
-    # Provides an interface for interacting with editor settings.
-    # Contains general application-wide settings. Also contains
-    # specific setting controllers for more tailored settings.
+    Provides an interface for interacting with editor settings.
+    Contains general application-wide settings. Also contains
+    specific setting controllers for more tailored settings.
     """
 
     def __init__(self, company='rainlash', product='Lex Talionis'):
         QSettings.setDefaultFormat(QSettings.IniFormat)
         self.state = QSettings(company, product)
-        self.component_controller = ComponentSettingsController()
+        self.component_controller = ComponentSettingsController(
+            company, product)
+        self.project_history_controller = ProjectHistoryController(
+            company, product)
 
     def fileName(self):
         return self.state.fileName()
@@ -33,6 +43,13 @@ class MainSettingsController():
             fallback = QDir.currentPath()
         return str(self.state.value("last_open_path", fallback, type=str))
 
+    def append_or_bump_project(self, project_name: str, project_path: str):
+        self.project_history_controller.append_or_bump_project(
+            project_name, project_path)
+
+    def get_last_ten_projects(self) -> List[ProjectHistoryEntry]:
+        return self.project_history_controller.get_last_ten_projects()
+
     """========== General UI Settings =========="""
 
     def set_theme(self, value):
@@ -46,12 +63,6 @@ class MainSettingsController():
 
     def get_event_autocomplete(self, fallback=True):
         return self.state.value("event_autocomplete", fallback, type=bool)
-
-    def set_event_autocomplete_desc(self, value):
-        self.state.setValue("event_autocomplete_desc", value)
-
-    def get_event_autocomplete_desc(self, fallback=True):
-        return self.state.value("event_autocomplete_desc", fallback, type=bool)
 
     def set_autosave_time(self, value):
         self.state.setValue("autosave_time", value)
@@ -76,6 +87,12 @@ class MainSettingsController():
 
     def get_should_save_as_chunks(self, fallback=True):
         return self.state.value("should_save_as_chunks", fallback)
+
+    def set_auto_open(self, value):
+        self.state.setValue('auto_open', value)
+
+    def get_auto_open(self, fallback=False):
+        return self.state.value('auto_open', fallback)
 
     """========== General Control Settings =========="""
 

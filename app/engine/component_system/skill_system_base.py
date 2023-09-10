@@ -1,5 +1,8 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
+from app.engine.component_system import utils
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
@@ -12,29 +15,27 @@ class Defaults():
 
     @staticmethod
     def check_ally(unit1, unit2) -> bool:
+        from app.data.database.database import DB
         if unit1 is unit2:
             return True
-        elif unit1.team == 'player' or unit1.team == 'other':
-            return unit2.team == 'player' or unit2.team == 'other'
+        elif unit2.team in DB.teams.get_allies(unit1.team):
+            return True
         else:
             return unit2.team == unit1.team
         return False
 
     @staticmethod
     def check_enemy(unit1, unit2) -> bool:
-        if unit1.team == 'player' or unit1.team == 'other':
-            return not (unit2.team == 'player' or unit2.team == 'other')
+        from app.data.database.database import DB
+        if unit2.team in DB.teams.get_allies(unit1.team):
+            return False
         else:
-            return not unit2.team == unit1.team
+            return unit2.team != unit1.team
         return True
 
     @staticmethod
     def can_trade(unit1, unit2) -> bool:
         return unit1.team == unit2.team and check_ally(unit1, unit2) and not no_trade(unit1) and not no_trade(unit2)
-
-    @staticmethod
-    def no_trade(unit) -> bool:
-        return False
 
     @staticmethod
     def num_items_offset(unit) -> int:
@@ -65,14 +66,6 @@ class Defaults():
         return 1.0
 
     @staticmethod
-    def wexp_usable_skill(unit1, unit2) -> float:
-        return False
-
-    @staticmethod
-    def wexp_unusable_skill(unit1, unit2) -> float:
-        return False
-
-    @staticmethod
     def change_variant(unit) -> str:
         return unit.variant
 
@@ -89,7 +82,7 @@ class Defaults():
         return unit.roam_ai
 
     @staticmethod
-    def has_canto(unit1, unit2) -> bool:
+    def has_canto(unit1, target) -> bool:
         return False
 
     @staticmethod
@@ -187,18 +180,6 @@ def is_grey(skill, unit) -> bool:
 def hidden(skill, unit) -> bool:
     return skill.hidden or skill.is_terrain or (skill.hidden_if_inactive and not condition(skill, unit))
 
-def available(unit, item) -> bool:
-    """
-    If any hook reports false, then it is false
-    """
-    for skill in unit.skills:
-        for component in skill.components:
-            if component.defines('available'):
-                if component.ignore_conditional or condition(skill, unit):
-                    if not component.available(unit, item):
-                        return False
-    return True
-
 def stat_change(unit, stat_nid) -> int:
     bonus = 0
     for skill in unit.skills:
@@ -279,63 +260,19 @@ def additional_tags(unit) -> set:
             new_tags = new_tags | set(skill.has_tags.value)
     return new_tags
 
-def mana(playback, unit, item, target) -> int:
-    mana = 0
-    for skill in unit.skills:
-        for component in skill.components:
-            if component.defines('mana'):
-                if component.ignore_conditional or condition(skill, unit):
-                    d = component.mana(playback, unit, item, target)
-                    mana += d
-    return mana
-
-def can_unlock(unit, region) -> bool:
-    for skill in unit.skills:
-        for component in skill.components:
-            if component.defines('can_unlock'):
-                if component.ignore_conditional or condition(skill, unit):
-                    if component.can_unlock(unit, region):
-                        return True
-    return False
-
-def target_icon(cur_unit, displaying_unit) -> list:
-    markers = []
-    for skill in cur_unit.skills:
-        for component in skill.components:
-            if component.defines('target_icon'):
-                if component.ignore_conditional or condition(skill, cur_unit):
-                    marker = component.target_icon(cur_unit, displaying_unit)
-                    if marker:
-                        markers.append(marker)
-    return markers
-
 def before_crit(actions, playback, attacker, item, defender, mode, attack_info) -> bool:
     for skill in attacker.skills:
         for component in skill.components:
             if component.defines('before_crit'):
                 component.before_crit(actions, playback, attacker, item, defender, mode, attack_info)
 
-def on_upkeep(actions, playback, unit) -> tuple:  # actions, playback
-    for skill in unit.skills:
-        for component in skill.components:
-            if component.defines('on_upkeep'):
-                if component.ignore_conditional or condition(skill, unit):
-                    component.on_upkeep(actions, playback, unit)
-    return actions, playback
-
-def on_endstep(actions, playback, unit) -> tuple:  # actions, playback
-    for skill in unit.skills:
-        for component in skill.components:
-            if component.defines('on_endstep'):
-                if component.ignore_conditional or condition(skill, unit):
-                    component.on_endstep(actions, playback, unit)
-    return actions, playback
-
 def on_end_chapter(unit, skill):
     for component in skill.components:
         if component.defines('on_end_chapter'):
             if component.ignore_conditional or condition(skill, unit):
                 component.on_end_chapter(unit, skill)
+        if component.defines('on_end_chapter_unconditional'):
+            component.on_end_chapter_unconditional(unit, skill)
 
 def init(skill):
     """
@@ -414,7 +351,7 @@ def get_hide_skill_icon(unit, skill) -> bool:
     # Check if we should be hiding this skill
     for component in skill.components:
         if component.defines('hide_skill_icon') and \
-                component.hide_skill_icon(unit, skill):
+                component.hide_skill_icon(unit):
             return True
     return False
 
@@ -442,10 +379,19 @@ def get_extra_abilities(unit):
                     abilities[ability_name] = new_item
     return abilities
 
-def get_combat_arts(unit):
-    from app.engine import item_funcs, target_system, action
-    combat_arts = {}
+def ai_priority_multiplier(unit) -> float:
+    ai_priority_multiplier = 1
     for skill in unit.skills:
+        for component in skill.components:
+            if component.defines('ai_priority_multiplier'):
+                ai_priority_multiplier *= component.ai_priority_multiplier(unit)
+    return ai_priority_multiplier
+
+def get_combat_arts(unit):
+    from app.engine import action, item_funcs, target_system
+    combat_arts = {}
+    unit_skills = unit.skills[:]
+    for skill in unit_skills:
         if not condition(skill, unit):
             continue
         combat_art = None

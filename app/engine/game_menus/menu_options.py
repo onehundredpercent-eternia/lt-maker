@@ -395,7 +395,6 @@ class FullItemOption(ItemOption):
         elif self.item.data.get('cooldown') is not None:
             uses_string_a = str(self.item.data['cooldown'])
             uses_string_b = str(self.item.data['starting_cooldown'])
-
         if not (uses_string_a == '--' and uses_string_b == '--'):
             render_text(surf, [uses_font], [uses_string_a], [uses_color], (x + 96, y), HAlignment.RIGHT)
             render_text(surf, [uses_font], ["/"], [], (x + 98, y))

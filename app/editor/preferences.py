@@ -33,13 +33,13 @@ class PreferencesDialog(Dialog):
         self.saved_preferences['place_button'] = self.settings.get_place_button(Qt.RightButton)
         self.saved_preferences['theme'] = self.settings.get_theme(0)
         self.saved_preferences['event_autocomplete'] = self.settings.get_event_autocomplete(1)
-        self.saved_preferences['event_autocomplete_desc'] = self.settings.get_event_autocomplete_desc(1)
         self.saved_preferences['autocomplete_button'] = self.settings.get_autocomplete_button(Qt.Key_Tab)
         self.saved_preferences['autosave_time'] = self.settings.get_autosave_time()
         self.saved_preferences['crash_logs'] = self.settings.get_should_display_crash_logs()
         self.saved_preferences['save_backup'] = self.settings.get_should_make_backup_save()
         self.saved_preferences['editor_close_button'] = self.settings.get_editor_close_button(Qt.Key_Escape)
         self.saved_preferences['save_chunks'] = self.settings.get_should_save_as_chunks()
+        self.saved_preferences['auto_open_last'] = self.settings.get_auto_open()
 
         self.available_options = name_to_button.keys()
         self.autocomplete_options = key_to_button.keys()
@@ -65,8 +65,6 @@ class PreferencesDialog(Dialog):
 
         self.autocomplete = PropertyCheckBox('Event Autocomplete', QCheckBox, self)
         self.autocomplete.edit.setChecked(bool(self.saved_preferences['event_autocomplete']))
-        self.autocomplete_desc = PropertyCheckBox('Show Event Command Description?', QCheckBox, self)
-        self.autocomplete_desc.edit.setChecked(bool(self.saved_preferences['event_autocomplete_desc']))
 
         self.crashlog = PropertyCheckBox('Show Error Logs on Crash?', QCheckBox, self)
         self.crashlog.edit.setChecked(bool(self.saved_preferences['crash_logs']))
@@ -75,6 +73,9 @@ class PreferencesDialog(Dialog):
         self.savechunks = PropertyCheckBox('Save data in chunks?', QCheckBox, self)
         self.savechunks.setToolTip("Saving data in chunks makes it easier to collaborate with others, but also makes saving slower.")
         self.savechunks.edit.setChecked(bool(self.saved_preferences['save_chunks']))
+        self.autoopen = PropertyCheckBox('Automatically open most recent project?', QCheckBox, self)
+        self.autoopen.setToolTip("Skips the recent project dialog.")
+        self.autoopen.edit.setChecked(bool(self.saved_preferences['auto_open_last']))
 
         self.autocomplete_button = PropertyBox('Autocomplete Button', ComboBox, self)
         for option in self.autocomplete_options:
@@ -111,10 +112,10 @@ class PreferencesDialog(Dialog):
         self.layout.addWidget(self.autocomplete_button)
         self.layout.addLayout(self.editor_close_button_layout)
         self.layout.addWidget(self.autocomplete)
-        self.layout.addWidget(self.autocomplete_desc)
         self.layout.addWidget(self.crashlog)
         self.layout.addWidget(self.savebackup)
         self.layout.addWidget(self.savechunks)
+        self.layout.addWidget(self.autoopen)
         self.layout.addWidget(self.autosave)
         self.layout.addWidget(self.buttonbox)
 
@@ -180,12 +181,12 @@ class PreferencesDialog(Dialog):
         # resorting to int
         autocomplete = 1 if self.autocomplete.edit.isChecked() else 0
         self.settings.set_event_autocomplete(autocomplete)
-        autocomplete_desc = 1 if self.autocomplete_desc.edit.isChecked() else 0
-        self.settings.set_event_autocomplete_desc(autocomplete_desc)
         crash_log_setting = 1 if self.crashlog.edit.isChecked() else 0
         self.settings.set_should_display_crash_logs(crash_log_setting)
         save_chunks_setting = 1 if self.savechunks.edit.isChecked() else 0
         self.settings.set_should_save_as_chunks(save_chunks_setting)
+        auto_open_setting = 1 if self.autoopen.edit.isChecked() else 0
+        self.settings.set_auto_open(auto_open_setting)
         save_backup_setting = 1 if self.savebackup.edit.isChecked() else 0
         self.settings.set_should_make_backup_save(save_backup_setting)
         autosave = float(self.autosave.edit.value())

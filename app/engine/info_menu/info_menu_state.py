@@ -5,7 +5,7 @@ from app.data.database.database import DB
 from app.data.resources.resources import RESOURCES
 from app.engine import (background, combat_calcs, engine, equations, gui,
                         help_menu, icons, image_mods, item_funcs, skill_system,
-                        text_funcs)
+                        text_funcs, unit_funcs)
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_menus.icon_options import BasicItemOption, ItemOptionModes
 from app.engine.game_state import game
@@ -117,7 +117,8 @@ class InfoMenuState(State):
         get_sound_thread().play_sfx('Select 4')
         game.memory['info_menu_state'] = self.state
         game.memory['current_unit'] = self.unit
-        if self.unit.position:
+        if self.unit.position and not game.is_roam():
+            # Move camera to the new character unless it's a free roam, in which case we just stay on the free roamer
             game.cursor.set_pos(self.unit.position)
         game.state.change('transition_pop')
 
@@ -152,6 +153,7 @@ class InfoMenuState(State):
                 get_sound_thread().play_sfx('Info In')
                 self.info_graph.set_transition_in()
                 self.info_flag = True
+                return
             elif event == 'AUX':
                 if self.state == 'personal_data' and self.unit.team == 'player' and DB.constants.value('growth_info'):
                     get_sound_thread().play_sfx('Select 3')
@@ -219,13 +221,14 @@ class InfoMenuState(State):
 
     def move_down(self):
         get_sound_thread().play_sfx('Status_Character')
-        if len(self.scroll_units) > 1:
             if self.rescuer:
                 new_index = self.scroll_units.index(self.rescuer)
                 self.rescuer = None
-            else:
+        elif len(self.scroll_units) > 1:
                 index = self.scroll_units.index(self.unit)
                 new_index = (index + 1) % len(self.scroll_units)
+        else:
+            return
             self.next_unit = self.scroll_units[new_index]
 
             if self.state == 'extra' and self.next_unit.generic:
@@ -239,13 +242,14 @@ class InfoMenuState(State):
 
     def move_up(self):
         get_sound_thread().play_sfx('Status_Character')
-        if len(self.scroll_units) > 1:
             if self.rescuer:
                 new_index = self.scroll_units.index(self.rescuer)
                 self.rescuer = None
-            else:
+        elif len(self.scroll_units) > 1:
                 index = self.scroll_units.index(self.unit)
                 new_index = (index - 1) % len(self.scroll_units)
+        else:
+            return        
             self.next_unit = self.scroll_units[new_index]
 
             if self.state == 'extra' and self.next_unit.generic:
@@ -402,6 +406,28 @@ class InfoMenuState(State):
             y_pos = WINHEIGHT - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
+    def growth_colors(self, value):
+        color = 'yellow'
+        if value >= 0 and value <= 20:
+            color = 'red-orange'
+        elif value > 20 and value <= 30:
+            color = 'light-red'
+        elif value > 30 and value <= 40:
+            color = 'pink-orange'
+        elif value > 40 and value <= 50:
+            color = 'light-orange'
+        elif value > 50 and value <= 60:
+            color = 'corn-yellow'
+        elif value > 60 and value <= 70:
+            color = 'light-green'
+        elif value > 70 and value <= 80:
+            color = 'olive-green'
+        elif value > 80 and value <= 90:
+            color = 'soft-green'
+        else: # > 90
+            color = 'yellow-green'
+        return color
+
     def create_portrait(self):
         surf = engine.create_surface((96, WINHEIGHT), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (8, 122))
@@ -518,13 +544,20 @@ class InfoMenuState(State):
         menu_size = WINWIDTH - 96, WINHEIGHT
         surf = engine.create_surface(menu_size, transparent=True)
 
-        class_obj = DB.classes.get(self.unit.klass)
-        max_stats = class_obj.max_stats
-
         left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
-        right_stats = left_stats[6:]  # Only first six get to be on the left
+        if len(left_stats) >= 7:
+            self._extra_stat_row = True
+            # If we have 7 or more left stats, use 7 rows
+            right_stats = left_stats[7:]
+        else:  # Otherwise, just use the 6 rows
+            self._extra_stat_row = False
+            right_stats = left_stats[6:]
         right_stats += [stat.nid for stat in DB.stats if stat.position == 'right']
-        # Make sure we only display up to 6 on each
+        # Make sure we only display up to 6 or 7 on each
+        if self._extra_stat_row:
+            left_stats = left_stats[:7]
+            right_stats = right_stats[:7]
+        else:
         left_stats = left_stats[:6]
         right_stats = right_stats[:6]
 
@@ -535,15 +568,19 @@ class InfoMenuState(State):
                 icons.draw_growth(surf, stat_nid, self.unit, (47, 16 * idx + 24))
             else:
                 highest_stat = curr_stat.maximum
-                max_stat = max_stats.get(stat_nid, 30)
+                max_stat = self.unit.get_stat_cap(stat_nid)
                 if max_stat > 0:
                     total_length = int(max_stat / highest_stat * 42)
                     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
                     build_groove(surf, (27, 16 * idx + 32), total_length, frac)
                 icons.draw_stat(surf, stat_nid, self.unit, (47, 16 * idx + 24))
+
             # Name
             name = curr_stat.name
-            render_text(surf, ['text'], [name], ['yellow'], (8, 16 * idx + 24))
+            color = 'yellow'
+            if DB.stats.get(stat_nid).growth_colors and self.unit.team == 'player':
+                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
+            render_text(surf, ['text'], [name], [color], (8, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
             base_value += subtle_stat_bonus
@@ -559,9 +596,13 @@ class InfoMenuState(State):
                 icons.draw_growth(surf, stat_nid, self.unit, (111, 16 * idx + 24))
             else:
                 icons.draw_stat(surf, stat_nid, self.unit, (111, 16 * idx + 24))
+
             # Name
             name = curr_stat.name
-            render_text(surf, ['text'], [name], ['yellow'], (72, 16 * idx + 24))
+            color = 'yellow'
+            if DB.stats.get(stat_nid).growth_colors and self.unit.team == 'player':
+                color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
+            render_text(surf, ['text'], [name], [color], (72, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             contribution = self.unit.stat_contribution(stat_nid)
             contribution['Base Value'] = base_value
@@ -570,6 +611,8 @@ class InfoMenuState(State):
             self.info_graph.register((96 + 72, 16 * idx + 24, 64, 16), help_box, state)
 
         other_stats = ['RAT']
+        if DB.constants.value('talk_display'):
+            other_stats.insert(0, 'TALK')
         if DB.constants.value('pairup') and DB.constants.value('attack_stance_only'):
             pass
         else:
@@ -579,6 +622,7 @@ class InfoMenuState(State):
             other_stats.insert(0, 'MANA')
         if DB.constants.value('pairup') and not DB.constants.value('attack_stance_only'):
             other_stats.insert(2, 'GAUGE')
+
         other_stats = other_stats[:6 - len(right_stats)]
 
         for idx, stat in enumerate(other_stats):
@@ -596,7 +640,10 @@ class InfoMenuState(State):
         elif stat == 'AID':
             if growths:
                 icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
-                render_text(surf, ['text'], [text_funcs.translate('HP')], ['yellow'], (72, 16 * true_idx + 24))
+                    color = 'yellow'
+                    if DB.stats.get('HP').growth_colors and self.unit.team == 'player':
+                        color = self.growth_colors(unit_funcs.growth_rate(self.unit, 'HP'))
+                    render_text(surf, ['text'], [text_funcs.translate('HP')], [color], (72, 16 * true_idx + 24))
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'HP_desc', state)
             else:
                 aid = equations.parser.rescue_aid(self.unit)
@@ -633,6 +680,15 @@ class InfoMenuState(State):
             render_text(surf, ['text'], [text_funcs.translate('GAUGE')], ['yellow'], (72, 16 * true_idx + 24))
             self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'GAUGE_desc', state)
 
+            elif stat == 'TALK':
+                if (len([talk for talk in game.talk_options if talk[0] == self.unit.nid]) != 0):
+                    talkee = [talk for talk in game.talk_options if talk[0] == self.unit.nid][0][1]
+                    render_text(surf, ['text'], [game.get_unit(talkee).name], ['blue'], (96, 16 * true_idx + 24))
+                else:
+                    render_text(surf, ['text'], ['--'], ['blue'], (98, 16 * true_idx + 24))
+                render_text(surf, ['text'], [text_funcs.translate('Talk')], ['yellow'], (72, 16 * true_idx + 24))
+                self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), 'Talk_desc', state)
+
         if DB.constants.value('lead'):
             render_text(surf, ['text'], [text_funcs.translate('Lead')], ['yellow'], (72, 120))
             self.info_graph.register((96 + 72, 120, 64, 16), 'Lead_desc', state)
@@ -653,11 +709,9 @@ class InfoMenuState(State):
         surf.blit(self.growths_surf, (96, 0))
 
     def create_wexp_surf(self):
-        class_obj = DB.classes.get(self.unit.klass)
         wexp_to_draw: List[Tuple[str, int]] = []
         for weapon, wexp in self.unit.wexp.items():
-            if wexp > 0 and (class_obj.wexp_gain.get(weapon).usable or skill_system.wexp_usable_skill(self.unit, weapon)) \
-                    and not skill_system.wexp_unusable_skill(self.unit, weapon):
+            if wexp > 0 and weapon in unit_funcs.usable_wtypes(self.unit):
                 wexp_to_draw.append((weapon, wexp))
         width = (WINWIDTH - 102) // 2
         height = 16 * 2 + 4
@@ -843,12 +897,19 @@ class InfoMenuState(State):
                 charge = ' %d / %d' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
+            if self._extra_stat_row:
+                self.info_graph.register((96 + left_pos + 8, WINHEIGHT - 22, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'personal_data')
+                self.info_graph.register((96 + left_pos + 8, WINHEIGHT - 22, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'growths')
+            else:
             self.info_graph.register((96 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'personal_data')
             self.info_graph.register((96 + left_pos + 8, WINHEIGHT - 32, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'growths')
 
         return surf
 
     def draw_class_skill_surf(self, surf):
+        if self._extra_stat_row:
+            surf.blit(self.class_skill_surf, (96, WINHEIGHT - 26))
+        else:
         surf.blit(self.class_skill_surf, (96, WINHEIGHT - 36))
 
     def create_support_surf(self):

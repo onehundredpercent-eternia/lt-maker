@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from app.engine.objects.skill import SkillObject
     from app.engine.objects.unit import UnitObject
     from app.engine.objects.region import RegionObject
+    from app.engine.objects.ai_group import AIGroupObject
     from app.engine.dialog_log import DialogLog
     from app.events.event_manager import EventManager
     from app.utilities.typing import NID, UID
@@ -126,6 +127,7 @@ class GameState():
         self.cursor = None
         self.camera = None
         self.boundary = None
+        self.movement = None
 
         self.current_save_slot = None
         self.current_level = None
@@ -323,7 +325,7 @@ class GameState():
         self.register_unit(unit)
         for item in unit.items:
             self.register_item(item)
-        for skill in unit.skills:
+        for skill in unit.all_skills:
             self.register_skill(skill)
 
     def set_up_game_board(self, tilemap, bounds=None):
@@ -334,7 +336,6 @@ class GameState():
         self.boundary = boundary.BoundaryInterface(tilemap.width, tilemap.height)
 
     def save(self):
-
         s_dict = {'units': [unit.save() for unit in self.unit_registry.values()],
                   'items': [item.save() for item in self.item_registry.values()],
                   'skills': [skill.save() for skill in self.skill_registry.values()],
@@ -362,7 +363,7 @@ class GameState():
                   'talk_options': self.talk_options,
                   'base_convos': self.base_convos,
                   'current_random_state': static_random.get_combat_random_state(),
-                  'bounds': self.board.bounds,
+                  'bounds': self.board.bounds if self.board else None,
                   'roam_info': self.roam_info,
                   }
         meta_dict = {'playtime': self.playtime,
@@ -490,7 +491,7 @@ class GameState():
             for unit in self.units:
                 if unit.position:
                     self.board.set_unit(unit.position, unit)
-                    for skill in unit.skills:
+                    for skill in unit.all_skills:
                         if skill.aura:
                             aura_funcs.repopulate_aura(unit, skill, self)
                     self.boundary.arrive(unit)
@@ -529,13 +530,14 @@ class GameState():
             # Unit cleanup
             unit.is_dying = False
             if unit.traveler:
+                droppee = self.get_unit(unit.traveler)
                 if full:
                     unit.traveler = None
                     action.RemoveSkill(unit, 'Rescue').execute()
                 else:
-                    droppee = self.get_unit(unit.traveler)
                     pos = target_system.get_nearest_open_tile(droppee, unit.position)
                     action.Drop(unit, droppee, pos).execute()
+                skill_system.on_separate(droppee, unit)
             unit.set_hp(1000)  # Set to full health
             unit.set_guard_gauge(0) # Remove all guard gauge
             if DB.constants.value('reset_mana'):
@@ -794,6 +796,20 @@ class GameState():
                 if (not region_type or region.region_type == region_type) and region.contains(pos):
                     return region
 
+    def get_ai_group(self, ai_group_nid: NID) -> Optional[AIGroupObject]:
+        if self.level:
+            return self.level.ai_groups.get(ai_group_nid)
+        return None
+
+    def ai_group_active(self, ai_group_nid: NID) -> bool:
+        group = self.get_ai_group(ai_group_nid)
+        if group:
+            return group.active
+        return False
+
+    def get_units_in_ai_group(self, ai_group_nid: NID) -> List[UnitObject]:
+        return [unit for unit in self.get_all_units() if unit.ai_group == ai_group_nid]
+
     def get_all_units(self) -> List[UnitObject]:
         return [unit for unit in self.units if unit.position and not unit.dead and not unit.is_dying and 'Tile' not in unit.tags]
 
@@ -801,7 +817,7 @@ class GameState():
         return [unit for unit in self.get_all_units() if unit.team == 'player']
 
     def get_enemy_units(self) -> List[UnitObject]:
-        return [unit for unit in self.get_all_units() if unit.team.startswith('enemy')]
+        return [unit for unit in self.get_all_units() if unit.team in DB.teams.enemies]
 
     def get_enemy1_units(self) -> List[UnitObject]:
         return [unit for unit in self.get_all_units() if unit.team == 'enemy']
@@ -812,7 +828,7 @@ class GameState():
     def get_other_units(self) -> List[UnitObject]:
         return [unit for unit in self.get_all_units() if unit.team == 'other']
 
-    def get_team_units(self, team) -> List[UnitObject]:
+    def get_team_units(self, team: str) -> List[UnitObject]:
         return [unit for unit in self.get_all_units() if unit.team == team]
 
     def get_travelers(self) -> List[UnitObject]:
@@ -820,6 +836,12 @@ class GameState():
 
     def get_player_units_and_travelers(self) -> List[UnitObject]:
         return self.get_player_units() + [unit for unit in self.get_travelers() if unit.team == 'player']
+
+    def get_rescuers_position(self, unit):
+        for rescuer in self.units:
+            if rescuer.traveler == unit.nid:
+                return rescuer.position
+        return None
 
     def get_all_units_in_party(self, party=None) -> List[UnitObject]:
         if party is None:
@@ -834,6 +856,12 @@ class GameState():
         party_units = [unit for unit in game.get_all_units_in_party(party) if not unit.dead]
         party_units = sorted(party_units, key=lambda unit: party_order.index(unit.nid) if unit.nid in party_order else 999999)
         return party_units
+
+    def get_all_player_units(self) -> List[UnitObject]:
+        """
+        # Return all units who are currently player team and persistent
+        """
+        return [unit for unit in self.units if unit.team == 'player' and unit.persistent]
 
     # For working with roaming
     def is_roam(self) -> bool:
@@ -890,7 +918,7 @@ class GameState():
                 child_skill = self.get_skill(child_aura_uid)
                 aura_funcs.remove_aura(unit, child_skill, test)
             if not test:
-                for skill in unit.skills:
+                for skill in unit.all_skills:
                     if skill.aura:
                         aura_funcs.release_aura(unit, skill, self)
                 self.boundary.unregister_unit_auras(unit)
@@ -899,9 +927,9 @@ class GameState():
                 if region.region_type == RegionType.STATUS and region.contains(unit.position):
                     skill_uid = self.get_terrain_status((*region.position, region.sub_nid))
                     skill_obj = self.get_skill(skill_uid)
-                    if skill_obj and skill_obj in unit.skills:
+                    if skill_obj and skill_obj in unit.all_skills:
                         if test:
-                            unit.skills.remove(skill_obj)
+                            unit.remove_skill(skill_obj)
                         else:
                             act = action.RemoveSkill(unit, skill_obj)
                             action.do(act)
@@ -912,9 +940,9 @@ class GameState():
 
             skill_uid = self.get_terrain_status(terrain_key)
             skill_obj = self.get_skill(skill_uid)
-            if skill_obj and skill_obj in unit.skills:
+            if skill_obj and skill_obj in unit.all_skills:
                 if test:
-                    unit.skills.remove(skill_obj)
+                    unit.remove_skill(skill_obj)
                 else:
                     act = action.RemoveSkill(unit, skill_obj)
                     action.do(act)
@@ -956,7 +984,7 @@ class GameState():
             # Auras
             aura_funcs.pull_auras(unit, self, test)
             if not test:
-                for skill in unit.skills:
+                for skill in unit.all_skills:
                     if skill.aura:
                         aura_funcs.propagate_aura(unit, skill, self)
                 self.boundary.register_unit_auras(unit)
@@ -985,10 +1013,10 @@ class GameState():
 
         if skill_obj:
             # Only bother adding if not already present
-            if skill_obj not in unit.skills:
+            if skill_obj not in unit.all_skills:
                 if test:
                     # Don't need to use action for test
-                    unit.skills.append(skill_obj)
+                    unit.add_skill(skill_obj)
                 else:
                     act = action.AddSkill(unit, skill_obj)
                     action.do(act)
@@ -1006,10 +1034,10 @@ class GameState():
 
         if skill_obj:
             # Only bother adding if not already present
-            if skill_obj not in unit.skills:
+            if skill_obj not in unit.all_skills:
                 if test:
                     # Don't need to use action for test
-                    unit.skills.append(skill_obj)
+                    unit.add_skill(skill_obj)
                 else:
                     act = action.AddSkill(unit, skill_obj)
                     action.do(act)

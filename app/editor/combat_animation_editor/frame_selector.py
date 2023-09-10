@@ -141,6 +141,7 @@ class FrameSelector(Dialog):
             self.draw()
 
     def delete_frame(self):
+        if self.current:
         idx = self.frames.index(self.current.nid)
         new_idx = self.model.delete(idx)
         if new_idx:

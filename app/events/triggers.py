@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
@@ -83,6 +83,14 @@ class LevelSelect(EventTrigger):
     nid: ClassVar[NID] = 'level_select'
 
 @dataclass(init=True)
+class PhaseChange(EventTrigger):
+    """
+    Occurs whenever the phase changes. Check `team` to figure out whose phase it is now.
+    """
+    nid: ClassVar[NID] = 'phase_change'
+    team: NID
+
+@dataclass(init=True)
 class TurnChange(EventTrigger):
     """
     Occurs immediately before turn changes to Player Phase. Useful for dialogue or reinforcements.
@@ -149,11 +157,13 @@ class UnitWait(EventTrigger):
         unit1: the unit that waited.
         position: the position they waited at.
         region: region under the unit (can be None)
+        actively_chosen: boolean for whether the player actively selected Wait
     """
     nid: ClassVar[NID] = 'unit_wait'
     unit1: UnitObject
     position: Tuple[int, int]
     region: Optional[RegionObject]
+    actively_chosen: bool
 
 @dataclass(init=True)
 class UnitSelect(EventTrigger):
@@ -347,9 +357,11 @@ class RoamPressStart(EventTrigger):
     Occurs when the `start` key is pressed in Free Roam.
 
         unit1: The current roam unit.
+        unit2: the closest nearby other unit.
     """
     nid: ClassVar[NID] = 'roam_press_start'
     unit1: UnitObject
+    unit2: UnitObject
 
 @dataclass(init=True)
 class RoamPressInfo(EventTrigger):
@@ -360,6 +372,18 @@ class RoamPressInfo(EventTrigger):
         unit2: the closest nearby other unit.
     """
     nid: ClassVar[NID] = 'roam_press_info'
+    unit1: UnitObject
+    unit2: UnitObject
+
+@dataclass(init=True)
+class RoamPressAux(EventTrigger):
+    """
+    Occurs when the `aux` key is pressed in Free Roam.
+
+        unit1: The current roam unit.
+        unit2: the closest nearby other unit.
+    """
+    nid: ClassVar[NID] = 'roam_press_aux'
     unit1: UnitObject
     unit2: UnitObject
 

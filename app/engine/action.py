@@ -1,5 +1,6 @@
 from __future__ import annotations
 from app.data.database.item_components import ItemComponent
+from app.data.database.supports import SupportPair
 from app.utilities.typing import NID
 
 import functools
@@ -427,7 +428,7 @@ class RegisterUnit(Action):
 
     def reverse(self):
         logging.debug("Unregistering unit %s and it's items and skills", self.unit.nid)
-        for skill in reversed(self.unit.skills):
+        for skill in reversed(self.unit.all_skills):
             game.unregister_skill(skill)
         for item in reversed(self.unit.items):
             game.unregister_item(item)
@@ -820,7 +821,7 @@ class Take(Action):
 
 # === PAIR UP ACTIONS =======================================================
 class PairUp(Action):
-    def __init__(self, unit, target):
+    def __init__(self, unit: UnitObject, target: UnitObject):
         self.unit = unit
         self.target = target
         self.old_pos = self.unit.position
@@ -833,7 +834,9 @@ class PairUp(Action):
         self.subactions.clear()
         self.target.traveler = self.unit.nid
 
+        move_left = self.unit.movement_left
         self.subactions.append(Reset(self.unit))
+        self.subactions.append(SetMovementLeft(self.unit, move_left))
         skill_system.on_pairup(self.unit, self.target)
         game.leave(self.unit)
         self.unit.position = None
@@ -886,7 +889,7 @@ class PairUp(Action):
         self.unit.sprite.change_state('normal')
 
 
-class SwapPaired(Action):
+class SwitchPaired(Action):
     def __init__(self, leader, follower):
         self.leader = leader
         self.follower = follower
@@ -903,7 +906,7 @@ class SwapPaired(Action):
         self.follower.set_guard_gauge(self.orig_guard_gauge)
         self.leader.set_guard_gauge(0)
 
-        logging.info(self.leader.nid + " and " + self.follower.nid + " swapped. The first was leader but is now follower, and vice versa.")
+        logging.info(self.leader.nid + " and " + self.follower.nid + " switched. The first was leader but is now follower, and vice versa.")
 
         game.leave(self.leader)
         self.leader.position = None
@@ -921,7 +924,7 @@ class SwapPaired(Action):
         self.leader.set_guard_gauge(self.orig_guard_gauge)
         self.follower.set_guard_gauge(0)
 
-        logging.info(self.leader.nid + " and " + self.follower.nid + " reversed their earlier swap")
+        logging.info(self.leader.nid + " and " + self.follower.nid + " reversed their earlier switch")
 
         skill_system.on_separate(self.leader, self.follower)
         skill_system.on_pairup(self.follower, self.leader)
@@ -1391,24 +1394,24 @@ class TradeItem(Action):
         self.equip_items(self.unit1)
         self.equip_items(self.unit2)
 
+        for act in self.subactions:
+            act.do()
+
         if self.unit1.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit1)
         if self.unit2.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit2)
-
-        for act in self.subactions:
-            act.do()
 
     def reverse(self):
         self.swap(self.unit1, self.unit2, self.item2, self.item1, self.item_index2, self.item_index1)
 
+        for act in self.subactions:
+            act.reverse()
+
         if self.unit1.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit1)
         if self.unit2.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.unit2)
-
-        for act in self.subactions:
-            act.reverse()
 
 
 class RepairItem(Action):
@@ -1853,6 +1856,24 @@ class ApplyGrowthChanges(Action):
         negative_changes = {k: -v for k, v in self.stat_changes.items()}
         unit_funcs.apply_growth_changes(self.unit, negative_changes)
 
+
+class ChangeStatCapModifiers(Action):
+    def __init__(self, unit, stat_changes):
+        self.unit = unit
+        self.stat_changes = stat_changes
+
+    def do(self):
+        for nid, value in self.stat_changes.items():
+            if nid not in self.unit.stat_cap_modifiers:
+                self.unit.stat_cap_modifiers[nid] = 0
+            self.unit.stat_cap_modifiers[nid] += value
+
+    def reverse(self):
+        negative_changes = {k: -v for k, v in self.stat_changes.items()}
+        for nid, value in negative_changes.items():
+            self.unit.stat_cap_modifiers[nid] += value
+
+
 class Promote(Action):
     def __init__(self, unit, new_class_nid):
         self.unit = unit
@@ -1877,7 +1898,7 @@ class Promote(Action):
             elif stat_value == -98:  # Use the new klass base only if it's bigger
                 self.stat_changes[stat_nid] = max(0, new_klass_bases.get(stat_nid, 0) - current_stats[stat_nid])
             else:
-                max_gain_possible = new_klass_maxes.get(stat_nid, 0) - current_stats[stat_nid]
+                max_gain_possible = new_klass_maxes.get(stat_nid, 0) + unit.stat_cap_modifiers.get(stat_nid, 0) - current_stats[stat_nid]
                 self.stat_changes[stat_nid] = min(stat_value, max_gain_possible)
 
         wexp_gain = DB.classes.get(self.new_klass).wexp_gain
@@ -1941,13 +1962,13 @@ class ClassChange(Action):
         for stat_nid in self.stat_changes.keys():
             change = new_klass_bases.get(stat_nid, 0) - old_klass_bases.get(stat_nid, 0)
             current_stat = current_stats.get(stat_nid)
-            new_value = utils.clamp(change, -current_stat, new_klass_maxes.get(stat_nid, 0) - current_stat)
+            new_value = utils.clamp(change, -current_stat, new_klass_maxes.get(stat_nid, 0) + unit.stat_cap_modifiers.get(stat_nid, 0) - current_stat)
             self.stat_changes[stat_nid] = new_value
 
         wexp_gain = DB.classes.get(self.new_klass).wexp_gain
         self.new_wexp = {nid: 0 for nid in DB.weapons.keys()}
         for weapon_nid in self.new_wexp.keys():
-            weapon_info = wexp_gain.get(weapon_nid, DB.weapons.default())
+            weapon_info = wexp_gain.get(weapon_nid, DB.weapons.default(DB))
             self.new_wexp[weapon_nid] = weapon_info.wexp_gain
 
         self.subactions = []
@@ -1986,20 +2007,27 @@ class ClassChange(Action):
         self.subactions.clear()
 
 class GainWexp(Action):
+    """
+    # Given a unit and an item, gain some of amount of weapon experience for that item's weapon type
+    """
     def __init__(self, unit, item, wexp_gain):
         self.unit = unit
         self.item = item
         self.wexp_gain = wexp_gain
 
-    def increase_wexp(self):
+    def increase_wexp(self) -> Tuple[int, int]:
         weapon_type = item_system.weapon_type(self.unit, self.item)
         if not weapon_type:
             return 0, 0
+        wexp_cap = unit_funcs.get_weapon_cap(self.unit, weapon_type)
+        old_value = self.unit.wexp[weapon_type]
         self.unit.wexp[weapon_type] += self.wexp_gain
-        return self.unit.wexp[weapon_type] - self.wexp_gain, self.unit.wexp[weapon_type]
+        self.unit.wexp[weapon_type] = utils.clamp(self.unit.wexp[weapon_type], 0, wexp_cap)
+        return old_value, self.unit.wexp[weapon_type]
 
     def do(self):
         self.old_value, self.current_value = self.increase_wexp()
+        if self.current_value > self.old_value:
         for weapon_rank in reversed(DB.weapon_ranks):
             if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
                 weapon_type = item_system.weapon_type(self.unit, self.item)
@@ -2018,19 +2046,24 @@ class GainWexp(Action):
 
 
 class AddWexp(Action):
+    """
+    # Given a unit and a weapon type, gain some of amount of weapon experience
+    """
     def __init__(self, unit, weapon_type, wexp_gain):
         self.unit = unit
         self.weapon_type = weapon_type
         self.wexp_gain = wexp_gain
 
     def increase_wexp(self):
+        wexp_cap = unit_funcs.get_weapon_cap(self.unit, self.weapon_type)
         old_value = self.unit.wexp[self.weapon_type]
         self.unit.wexp[self.weapon_type] += self.wexp_gain
-        self.unit.wexp[self.weapon_type] = max(0, self.unit.wexp[self.weapon_type])  # Can't be less than 0
+        self.unit.wexp[self.weapon_type] = utils.clamp(self.unit.wexp[self.weapon_type], 0, wexp_cap)
         return old_value, self.unit.wexp[self.weapon_type]
 
     def do(self):
         self.old_value, self.current_value = self.increase_wexp()
+        if self.current_value > self.old_value:
         for weapon_rank in reversed(DB.weapon_ranks):
             if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
                 game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, self.weapon_type))
@@ -2042,6 +2075,33 @@ class AddWexp(Action):
 
     def reverse(self):
         self.unit.wexp[self.weapon_type] = self.old_value
+
+
+class SetWexp(Action):
+    """
+    # Given a unit and a weapon type, set their wexp to a certain value
+    """
+    def __init__(self, unit, weapon_type, wexp):
+        self.unit = unit
+        self.weapon_type = weapon_type
+        self.old_wexp = self.unit.wexp[self.weapon_type]
+        wexp_cap = unit_funcs.get_weapon_cap(self.unit, self.weapon_type)
+        self.wexp = utils.clamp(wexp, 0, wexp_cap)
+
+    def do(self):
+        self.unit.wexp[self.weapon_type] = self.wexp
+        if self.wexp > self.old_wexp:
+            for weapon_rank in reversed(DB.weapon_ranks):
+                if self.old_wexp < weapon_rank.requirement and self.wexp >= weapon_rank.requirement:
+                    game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, self.weapon_type))
+                    game.state.change('alert')
+                    break
+
+    def execute(self):
+        self.unit.wexp[self.weapon_type] = self.wexp
+
+    def reverse(self):
+        self.unit.wexp[self.weapon_type] = self.old_wexp
 
 
 class ChangeHP(Action):
@@ -2334,6 +2394,30 @@ class UnlockSupportRank(Action):
             pair.locked_ranks.append(self.rank)
 
 
+class DisableSupportRank(Action):
+    def __init__(self, nid, rank):
+        self.nid = nid
+        self.rank = rank
+        self.was_unlocked: bool = False
+        if self.nid not in game.supports.support_pairs:
+            game.supports.create_pair(self.nid)
+        pair = game.supports.support_pairs[self.nid]
+        self.locked_ranks = pair.locked_ranks[:]
+        self.unlocked_ranks = pair.unlocked_ranks[:]
+
+    def do(self):
+        pair = game.supports.support_pairs[self.nid]
+        if self.rank in pair.unlocked_ranks:
+            pair.unlocked_ranks.remove(self.rank)
+        if self.rank in pair.locked_ranks:
+            pair.locked_ranks.remove(self.rank)
+
+    def reverse(self):
+        pair = game.supports.support_pairs[self.nid]
+        pair.locked_ranks = self.locked_ranks
+        pair.unlocked_ranks = self.unlocked_ranks
+
+
 class LockAllSupportRanks(Action):
     """
     Done on death of a unit in the pair
@@ -2376,6 +2460,31 @@ class ChangeAI(Action):
         self.unit.ai = self.old_ai
 
 
+class ChangeRoamAI(Action):
+    def __init__(self, unit, ai):
+        self.unit = unit
+        self.roam_ai = ai
+        self.old_ai = self.unit.roam_ai
+        self._added_to_roam_ai = False
+
+    @recalculate_unit
+    def do(self):
+        self.unit.roam_ai = self.roam_ai
+        for s in game.state.state:
+            if s.name == 'free_roam' and not s.contains_ai_unit(self.unit):
+                s.add_ai_unit(self.unit)
+                self._added_to_roam_ai = True
+
+    @recalculate_unit
+    def reverse(self):
+        self.unit.roam_ai = self.old_ai
+        if self._added_to_roam_ai:
+            for s in game.state.state:
+                if s.name == 'free_roam' and s.contains_ai_unit(self.unit):
+                    s.remove_ai_unit(self.unit)
+        self._added_to_roam_ai = False  # Reset for later
+
+
 class ChangeAIGroup(Action):
     def __init__(self, unit, ai_group):
         self.unit = unit
@@ -2390,15 +2499,17 @@ class ChangeAIGroup(Action):
 
 
 class AIGroupPing(Action):
-    def __init__(self, unit):
-        self.unit = unit
-        self.old_ai_group_state = unit.ai_group_active
+    def __init__(self, ai_group: NID):
+        self.ai_group = ai_group
+        self.old_active = game.ai_group_active(self.ai_group)
 
     def do(self):
-        self.unit.ai_group_active = True
+        ai_group = game.get_ai_group(self.ai_group)
+        ai_group.active = True
 
     def reverse(self):
-        self.unit.ai_group_active = self.old_ai_group_state
+        ai_group = game.get_ai_group(self.ai_group)
+        ai_group.active = self.old_active
 
 
 class ChangeParty(Action):
@@ -2505,6 +2616,18 @@ class ChangeUnitDesc(Action):
 
     def reverse(self):
         self.unit.desc = self.old_desc
+
+class ChangeAffinity(Action):
+    def __init__(self, unit, affinity):
+        self.unit = unit
+        self.old_affinity = unit.affinity
+        self.new_affinity = affinity
+        
+    def do(self):
+        self.unit.affinity = self.new_affinity
+    
+    def reverse(self):
+        self.unit.affinity = self.old_affinity
 
 class AddTag(Action):
     def __init__(self, unit, tag):
@@ -2744,7 +2867,8 @@ class RemoveRegion(Action):
 
             # Reset movement and opacity grids
             if self.region.region_type == RegionType.TERRAIN:
-                game.board.reset_grid(game.level.tilemap)
+                for position in self.region.get_all_positions():
+                    game.board.reset_pos(game.level.tilemap, position)
                 game.boundary.reset()
                 _region_arrive(self.region)
         else:
@@ -2763,7 +2887,8 @@ class RemoveRegion(Action):
 
             # Reset movement and opacity girds
             if self.region.region_type == RegionType.TERRAIN:
-                game.board.reset_grid(game.level.tilemap)
+                for position in self.region.get_all_positions():
+                    game.board.reset_pos(game.level.tilemap, position)
                 game.boundary.reset()
                 _region_arrive(self.region)
 
@@ -3182,37 +3307,21 @@ class AddSkill(Action):
             if skill_obj.uid not in game.skill_registry:
                 game.register_skill(skill_obj)
         self.skill_obj: SkillObject = skill_obj
-        self.subactions = []
         self.reset_action = ResetUnitVars(self.unit)
 
     @recalculate_unit
     def do(self):
-        self.subactions.clear()
         if not self.skill_obj:
             return
-        # Remove any skills with previous name
-        if not self.skill_obj.stack and self.skill_obj.nid in [skill.nid for skill in self.unit.skills]:
-            logging.info("Skill %s already present" % self.skill_obj.nid)
-            for skill in self.unit.skills:
-                if skill.nid == self.skill_obj.nid:
-                    self.subactions.append(RemoveSkill(self.unit, skill))
-        # if it's a stackable skill but it's at max, refresh the oldest stack
-        elif self.skill_obj.stack and item_funcs.num_stacks(self.unit, self.skill_obj.nid) >= self.skill_obj.stack.value:
-            logging.info("Skill %s at max stacks" % self.skill_obj.nid)
-            for skill in self.unit.skills:
-                if skill.nid == self.skill_obj.nid:
-                    self.subactions.append(RemoveSkill(self.unit, skill))
-                    break
-        for action in self.subactions:
-            action.execute()
         
         # Actually add skill
         skill_system.before_add(self.unit, self.skill_obj)
         self.skill_obj.owner_nid = self.unit.nid
-        self.unit.skills.append(self.skill_obj)
+        self.unit.add_skill(self.skill_obj)
 
-        if self.skill_obj.aura and self.skill_obj in self.unit.skills and \
+        if self.skill_obj.aura and self.skill_obj in self.unit.all_skills and \
                 self.unit.position and game.board and game.tilemap:
+            game.boundary.unregister_unit_auras(self.unit)
             aura_funcs.propagate_aura(self.unit, self.skill_obj, game)
             game.boundary.register_unit_auras(self.unit)
 
@@ -3226,19 +3335,20 @@ class AddSkill(Action):
         self.reset_action.reverse()
         if not self.skill_obj:
             return
-        game.boundary.unregister_unit_auras(self.unit)
-        if self.skill_obj in self.unit.skills:
+        if self.skill_obj in self.unit.all_skills:
             # Actually remove skill
             skill_system.before_remove(self.unit, self.skill_obj)
-            self.unit.skills.remove(self.skill_obj)
+            self.unit.remove_skill(self.skill_obj)
             self.skill_obj.owner_nid = None
+
             if self.skill_obj.aura and self.unit.position and game.board and game.tilemap:
+                game.boundary.unregister_unit_auras(self.unit)
                 aura_funcs.release_aura(self.unit, self.skill_obj, game)
+                game.boundary.register_unit_auras(self.unit)
+
             skill_system.after_remove(self.unit, self.skill_obj)
         else:
             logging.error("Skill %s not in %s's skills", self.skill_obj.nid, self.unit)
-        for action in self.subactions:
-            action.reverse()
 
 class RemoveSkill(Action):
     def __init__(self, unit, skill, count=-1):
@@ -3255,9 +3365,13 @@ class RemoveSkill(Action):
             skill_system.before_true_remove(self.unit, skill)
         skill.owner_nid = None
         self.removed_skills.append(skill)
+        self.unit.remove_skill(skill)
+
         if skill.aura and self.unit.position and game.board and game.tilemap:
+            game.boundary.unregister_unit_auras(self.unit)
             aura_funcs.release_aura(self.unit, skill, game)
-        self.unit.skills.remove(skill)
+            game.boundary.register_unit_auras(self.unit)
+
         skill_system.after_remove(self.unit, skill)
         if true_remove:
             skill_system.after_true_remove(self.unit, skill)
@@ -3266,14 +3380,14 @@ class RemoveSkill(Action):
         self.removed_skills.clear()
         to_remove = self.count
         if isinstance(self.skill, str):
-            for skill in self.unit.skills[:]:
+            for skill in self.unit.all_skills[:]:
                 if skill.nid == self.skill and to_remove != 0:
                     self._remove_skill(skill, true_remove)
                     to_remove -= 1
             if to_remove > 0:
                 logging.warning("%d instances of Skill %s not found in %s's skills", to_remove, self.skill, self.unit)
         else:
-            if self.skill in self.unit.skills:
+            if self.skill in self.unit.all_skills:
                 self._remove_skill(self.skill, true_remove)
             else:
                 logging.warning("Skill %s not in %s's skills", self.skill.nid, self.unit)
@@ -3297,9 +3411,13 @@ class RemoveSkill(Action):
         for skill in self.removed_skills:
             skill_system.before_add(self.unit, skill)
             skill.owner_nid = self.unit.nid
-            self.unit.skills.append(skill)
+            self.unit.add_skill(skill)
+
             if skill.aura and self.unit.position and game.board and game.tilemap:
+                game.boundary.unregister_unit_auras(self.unit)
                 aura_funcs.propagate_aura(self.unit, skill, game)
+                game.boundary.register_unit_auras(self.unit)
+                
             skill_system.after_add(self.unit, skill)
 
 

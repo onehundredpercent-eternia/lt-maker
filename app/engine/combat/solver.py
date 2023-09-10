@@ -1,10 +1,13 @@
-from typing import Callable
+from __future__ import annotations
+
+from typing import Callable, List
 
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import RNGOption
 from app.engine import action, combat_calcs, item_funcs, item_system, skill_system
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
+from app.engine.combat.playback import PlaybackBrush
 from app.utilities import static_random
 from app.utilities.enums import Strike
 
@@ -111,7 +114,7 @@ class AttackerState(SolverState):
             if defender:
                 skill_system.start_sub_combat(actions, playback, defender, defender.get_weapon(), solver.attacker, 'defense', attack_info)
                 if solver.update_stats:
-                    solver.update_stats()
+                    solver.update_stats(playback)
                 solver.process(actions, playback, solver.attacker, defender, target_pos, item, defender.get_weapon(), 'attack', attack_info)
                 skill_system.end_sub_combat(actions, playback, defender, defender.get_weapon(), solver.attacker, 'defense', attack_info)
             for target in splash:
@@ -125,6 +128,11 @@ class AttackerState(SolverState):
         solver.num_subattacks += 1
         self.num_multiattacks = combat_calcs.compute_multiattacks(solver.attacker, solver.defender, solver.main_item, 'attack', attack_info)
         if solver.num_subattacks >= self.num_multiattacks:
+            solver.num_attacks += 1
+        # If we are trying to go for a subattack, but there is no defender and we don't do double splash
+        # just skip the remaining attacks
+        elif not DB.constants.value('double_splash') and all(defender is None for defender in solver.defenders):
+            solver.num_subattacks = self.num_multiattacks
             solver.num_attacks += 1
 
         # End check attack proc
@@ -186,7 +194,7 @@ class AttackerPartnerState(SolverState):
             if defender:
                 skill_system.start_sub_combat(actions, playback, defender, defender.get_weapon(), atk_p, 'defense', attack_info)
                 if solver.update_stats:
-                    solver.update_stats()
+                    solver.update_stats(playback)
                 solver.process(actions, playback, atk_p, defender, target_pos, item, defender.get_weapon(), 'attack', attack_info, assist=True)
                 skill_system.end_sub_combat(actions, playback, defender, defender.get_weapon(), atk_p, 'defense', attack_info)
             for target in splash:
@@ -254,7 +262,7 @@ class DefenderState(SolverState):
         skill_system.start_sub_combat(actions, playback, solver.attacker, solver.main_item, solver.defender, 'defense', attack_info)
 
         if solver.update_stats:
-            solver.update_stats()
+            solver.update_stats(playback)
         solver.process(actions, playback, solver.defender, solver.attacker, solver.attacker.position, solver.def_item, solver.main_item, 'defense', attack_info)
 
         # Remove defending unit's proc skills (which is solver.attacker)
@@ -316,7 +324,7 @@ class DefenderPartnerState(SolverState):
         skill_system.start_sub_combat(actions, playback, solver.attacker, solver.main_item, def_p, 'defense', attack_info)
 
         if solver.update_stats:
-            solver.update_stats()
+            solver.update_stats(playback)
         solver.process(actions, playback, def_p, solver.attacker, solver.attacker.position, solver.def_item, solver.main_item, 'defense', attack_info, assist=True)
 
         # Remove defending unit's proc skills (which is solver.attacker)
@@ -334,7 +342,7 @@ class CombatPhaseSolver():
 
     def __init__(self, attacker, main_item, items, defenders,
                  splashes, target_positions, defender, def_item,
-                 script=None, total_rounds=1, update_stats: Callable = None):
+                 script=None, total_rounds=1, update_stats: Callable[List[PlaybackBrush]] = None):
         self.attacker = attacker
         self.main_item = main_item
         self.items = items
@@ -356,7 +364,7 @@ class CombatPhaseSolver():
         self.current_command = '--'
 
         # Used to update the Combat's GUI at just the right time!
-        self.update_stats: Callable = update_stats
+        self.update_stats: Callable[List[PlaybackBrush]] = update_stats
 
     def reset(self):
         self.num_attacks, self.num_defends = 0, 0

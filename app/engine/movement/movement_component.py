@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Tuple
 
 class MovementComponent:
+    grid_move = True
+    
     def __init__(self, unit, follow=True, muted=False):
         self.active = True
         self._unit = unit
@@ -14,6 +16,11 @@ class MovementComponent:
     @property
     def unit(self):
         return self._unit  
+
+    def reset_position(self):
+        # Used to reset the internal movement component position
+        # Called when the free roam state begins
+        pass
 
     def start(self):
         raise NotImplementedError

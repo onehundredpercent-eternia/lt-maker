@@ -29,7 +29,7 @@ from app.engine.objects.unit import UnitObject
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.str_utils import is_int
 from app.utilities.typing import NID
-from app.utilities.utils import clamp, sign, tuple_add, tuple_sub
+from app.utilities.utils import clamp, sign, tuple_add, tuple_sub, calculate_distance
 
 CHOICE_TYPES: Dict[str, Type[IMenuOption]] = {
     'type_skill': BasicSkillOption,
@@ -42,6 +42,10 @@ CHOICE_TYPES: Dict[str, Type[IMenuOption]] = {
     'type_chibi': BasicChibiOption
 }
 
+def cast_value(data_type: str, val: str):
+    if data_type == 'type_game_item':
+        return int(val)
+    return val
 
 class ChoiceMenuOptionFactory():
     @staticmethod
@@ -49,26 +53,26 @@ class ChoiceMenuOptionFactory():
         if option_type == TextOption:
             return TextOption(idx, value, disp_value, row_width, align=text_align)
         elif option_type == BasicItemOption:
+            if not value:
+                return BasicItemOption.empty_option(idx, value or disp_value, row_width, align=text_align)
             if isinstance(value, ItemObject):
                 return BasicItemOption.from_item(idx, value, disp_value, row_width, align=text_align)
-            elif is_int(value):
-                return BasicItemOption.from_uid(idx, int(value), disp_value, row_width, align=text_align)
+            elif isinstance(value, int):
+                return BasicItemOption.from_uid(idx, value, disp_value, row_width, align=text_align)
             elif isinstance(value, str):
                 return BasicItemOption.from_nid(idx, value, disp_value, row_width, align=text_align)
             raise ValueError("Unknown item: " + str(value))
         elif option_type == BasicSkillOption:
             if isinstance(value, SkillObject):
                 return BasicSkillOption.from_skill(idx, value, disp_value, row_width, align=text_align)
-            elif is_int(value):
-                return BasicSkillOption.from_uid(idx, int(value), disp_value, row_width, align=text_align)
+            elif isinstance(value, int):
+                return BasicSkillOption.from_uid(idx, value, disp_value, row_width, align=text_align)
             elif isinstance(value, str):
                 return BasicSkillOption.from_nid(idx, value, disp_value, row_width, align=text_align)
             raise ValueError("Unknown skill: " + value)
         elif option_type == BasicUnitOption:
             if isinstance(value, UnitObject):
                 return BasicUnitOption.from_unit(idx, value, disp_value, row_width, align=text_align)
-            elif is_int(value):
-                return BasicUnitOption.from_uid(idx, int(value), disp_value, row_width, align=text_align)
             elif isinstance(value, str):
                 return BasicUnitOption.from_nid(idx, value, disp_value, row_width, align=text_align)
             raise ValueError("Unknown unit: " + value)
@@ -169,7 +173,7 @@ class GridChoiceMenu():
             'left', (left + h_offset, top + arrow_height))
         self.rscroll_arrow = ScrollArrow(
             'right', (left + width + h_offset, top + arrow_height))
-        if self.num_rows() == 1:
+        if self.num_rows() == 1 and self.num_cols() > self._total_grid_size()[0]:
             self._should_draw_arrows = True
 
     def num_rows(self):
@@ -246,20 +250,31 @@ class GridChoiceMenu():
 
     def move_cursor(self, idx):
         idx = clamp(idx, 0, len(self._option_data) - 1)
+        old_coord = self._get_coord_of_option_idx(self._cursor_idx)
+        new_coord = self._get_coord_of_option_idx(idx)
         self._cursor_idx = idx
-        as_coord = self._get_coord_of_option_idx(idx)
         scroll_to = self._identify_minimum_scroll_to_loc(
-            tuple(map(int, self._scroll)), tuple(map(float, as_coord)))
+            tuple(map(int, self._scroll)), tuple(map(float, new_coord)))
         self.scroll_to(scroll_to)
+        if new_coord[1] > old_coord[1]:
+            self.cursor_hand.y_offset_down()
+        # Only if no scrolling
+        elif new_coord[1] < old_coord[1]:
+            self.cursor_hand.y_offset_up()
 
     def scroll_to(self, coord: Tuple[float, float]):
-        self._scroll_to = coord
+        # If it's really far away, don't bother even scrolling, just jump
+        if calculate_distance(self._scroll, coord) > 4:
+            self._scroll_to = coord
+            self._scroll = coord
+        else:
+            self._scroll_to = coord
 
     def _total_grid_size(self) -> Tuple[int, int]:
         if self._orientation == Orientation.VERTICAL:
             # constraint on num_cols
             num_cols = self.num_cols()
-            return num_cols, (len(self._option_data) - 1 // num_cols) + 1
+            return num_cols, ((len(self._option_data) - 1) // num_cols) + 1
         else:
             # constraint on num_rols
             num_rows = self.num_rows()
@@ -297,7 +312,7 @@ class GridChoiceMenu():
         item_width, item_height = self._item_size
         total_height = self.num_rows() * item_height + title_height
         total_width = max(self.num_cols() * item_width, title_width)
-        return total_width, total_height
+        return total_width + 16, total_height + 8
 
     def _get_screen_position(self) -> Tuple[int, int]:
         if isinstance(self._alignment, Alignments):
@@ -327,7 +342,7 @@ class GridChoiceMenu():
         tw, th = self._get_pixel_size()
         if self._should_draw_scrollbar:
             tw += 16
-        bg_surf = create_base_surf(tw, th + 8, self._bg_name)
+        bg_surf = create_base_surf(tw, th, self._bg_name)
         return bg_surf
 
     def _build_data(self, data: List[Any], display_values: Optional[List[Any]], data_type: str, row_width: int) -> List[IMenuOption]:
@@ -338,7 +353,7 @@ class GridChoiceMenu():
             value = data[i]
             disp_value = display_values[i]
             new_option = ChoiceMenuOptionFactory.create_option(self._resolve_data_type(
-                data_type), i, value, disp_value, row_width, self._text_align)
+                data_type), i, cast_value(data_type, value), disp_value, row_width, self._text_align)
             options.append(new_option)
             max_width = max(max_width, new_option.width())
         # normalize option width
@@ -370,6 +385,10 @@ class GridChoiceMenu():
         for option in option_data:
             max_width = max(max_width, option.width())
             max_height = max(max_height, option.height())
+        if self._title:
+            title_width = text_width('text', self._title)
+            per_col_width = title_width // self.num_cols()
+            max_width = max(per_col_width, max_width)
         return (row_width or max_width), max_height
 
     def _identify_minimum_scroll_to_loc(self, scroll: Tuple[float, float], loc: Tuple[float, float]) -> Tuple[float, float]:
@@ -394,16 +413,17 @@ class GridChoiceMenu():
         return fx, fy
 
     def _handle_scrolling(self):
-        EPSILON = 0.2
+        EPSILON = 0.25
+        SCROLL_SPEED = 0.25
         sx, sy = self._scroll
         goal_sx, goal_sy = self._scroll_to
         if not float_eq(sx, goal_sx, EPSILON):
-            sx += EPSILON * sign(goal_sx - sx)
+            sx += SCROLL_SPEED * sign(goal_sx - sx)
         else:
             sx = goal_sx
 
         if not float_eq(sy, goal_sy, EPSILON):
-            sy += EPSILON * sign(goal_sy - sy)
+            sy += SCROLL_SPEED * sign(goal_sy - sy)
         else:
             sy = goal_sy
 
@@ -487,7 +507,7 @@ class GridChoiceMenu():
         bw, bh = self._get_pixel_size()
         # minor adjustments for visuals
         ox, oy = options_top_left
-        if py < 0 or py > bh - (16 if self._title else 0):
+        if py < -16 or py > bh - (16 if self._title else 0):
             return
         if px < 0 or px > bw:
             return

@@ -364,6 +364,9 @@ class PhaseMusic(OptionValidator):
     valid = ['player_phase', 'enemy_phase', 'other_phase', 'enemy2_phase',
              'player_battle', 'enemy_battle', 'other_battle', 'enemy2_battle']
 
+class SpecialMusicType(OptionValidator):
+    valid = ['title_screen', 'promotion', 'class_change', 'game_over']
+
 class Volume(Validator):
     desc = "A number between greater than 0 (0 is muted, 1 is current volume)"
 
@@ -405,20 +408,34 @@ class Portrait(Validator):
         valids.append((None, "{unit2}"))
         return valids + other_valids
 
+class Affinity(Validator):
+    def validate(self, affinity, level):
+        if affinity in self._db.affinities.keys():
+            return affinity
+        return None
+    
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        valids = [(None, affinity.nid) for affinity in self._db.affinities]
+        return valids
+
 class AI(Validator):
     def validate(self, text, level):
         if text in self._db.ai.keys():
             return text
         return None
 
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        valids = [(None, ai_nid) for ai_nid in self._db.ai.keys()]
+        return valids
+
 class Team(Validator):
     def validate(self, text, level):
-        if text in self._db.teams:
+        if text in self._db.teams.keys():
             return text
         return None
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
-        valids = [(None, team_nid) for team_nid in self._db.teams]
+        valids = [(None, team_nid) for team_nid in self._db.teams.keys()]
         return valids
 
 class Tag(Validator):

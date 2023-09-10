@@ -139,7 +139,7 @@ class Channel():
         return False
 
     def _play(self):
-        # logging.debug('%s _Play: %s %s', self.nid, self.last_state, self.num_plays)
+        logging.debug('%s _Play: %s %s', self.nid, self.last_state, self.num_plays)
         self.last_play = engine.get_time()
         if self.num_plays == 0:
             self.last_state = "stopped"
@@ -197,6 +197,15 @@ class Channel():
 
     def fade_out(self):
         logging.debug("%s Fade Out: %s", self.nid, self.last_state)
+        # Immediately finish crossfading
+        if self.state == 'crossfade_out':
+            self.crossfade_volume = 0
+            self.reset_volume()
+            self.last_state = "playing"
+        elif self.state == 'crossfade_in':
+            self.crossfade_volume = 1
+            self.reset_volume()
+            self.last_state = "playing"
         self.state = "fade_out"
         self.last_update = engine.get_time()
 
@@ -495,6 +504,7 @@ class SoundController():
             return None
 
         # Determine what state we should be going to next
+        logging.debug("Currently playing on channel %s? %s", self.current_channel.nid, any_music_is_playing)
         if any_music_is_playing:
             self.current_channel.set_fade_out_time(fade_in)
             self.current_channel.fade_out()
@@ -534,9 +544,15 @@ class SoundController():
         else: # Song is not in stack
             logging.info("New song %s" % next_song)
             self.song_stack.append(next_song)
-            # Clear the oldest channel and use it
-            self._set_next_song(next_song, num_plays, fade_in)
             logging.debug("Any music is playing? %s", any_music_is_playing)
+            # Clear the oldest channel and use it
+            # If the oldest channel is the one that is originally fading out
+            # set any_music_is_playing to false
+            oldest_channel = self.channel_stack[0]
+            if oldest_channel.is_fading_out():
+                logging.debug("Oldest Channel %s is fading out" % oldest_channel.nid)
+                any_music_is_playing = False
+            self._set_next_song(next_song, num_plays, fade_in)            
             if any_music_is_playing:
                 pass
             else:

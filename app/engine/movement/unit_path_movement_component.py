@@ -16,6 +16,8 @@ class UnitPathMovementComponent(MovementComponent):
     """
     # Used for moving a unit along a path
     """
+    grid_move = True
+    
     def __init__(self, unit, path: List[Tuple[int, int]], event=False, 
                  follow=True, muted=False, speed: int = 0):
         super().__init__(unit, follow, muted)
@@ -28,6 +30,9 @@ class UnitPathMovementComponent(MovementComponent):
 
     def get_camera_position(self):
         return self.unit.position
+
+    def should_camera_center(self) -> bool:
+        return self.follow and self.event
 
     def get_end_goal(self):
         return self.goal
@@ -105,6 +110,7 @@ class UnitPathMovementComponent(MovementComponent):
             get_sound_thread().play_sfx('Surprise')
             self.unit.sprite.change_state('normal')
             self.unit.sprite.reset()
+            self.unit.sprite.add_animation('MapSurprise', loop=False)
             action.do(action.HasAttacked(self.unit))
             if self.unit.team == 'player':
                 game.state.clear()
