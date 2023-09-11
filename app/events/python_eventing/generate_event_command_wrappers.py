@@ -11,6 +11,8 @@ def create_wrapper_func(command_name: str, command_t: Type[EventCommand]):
     if command_params:
         command_params += ', '
 
+    command_params_list = '[' + ', '.join([f'"{param}"' for param in command_param_names]) + ']'
+
     command_optional_param_names = command_t.optional_keywords
     command_optional_params = ', '.join(["%s=None" % param for param in command_optional_param_names])
     if command_optional_params:
@@ -25,8 +27,10 @@ def {command_name}({command_params}{command_optional_params}flags=None):
         raise SyntaxError("Flags must be a list")
     if not flags:
         flags = []
-    return event_commands.{command_type}(parameters={command_param_dict}, flags=set(flags))
-""".format(command_name=command_name, command_type=command_t.__name__,
+    parameters = {command_param_dict}
+    parameters = dict(filter(optional_value_filter({command_params_list}), parameters.items()))
+    return event_commands.{command_type}(parameters=parameters, flags=set(flags))
+""".format(command_name=command_name, command_type=command_t.__name__, command_params_list=command_params_list,
            command_params=command_params, command_optional_params=command_optional_params,
            command_param_dict=command_param_dict_str)
     return func
