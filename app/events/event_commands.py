@@ -61,6 +61,10 @@ class EventCommand(Prefab):
             else:
                 self.display_values = []
 
+    def FLAGS(self, *args) -> EventCommand:
+        self.chosen_flags = set(args)
+        return self
+
     def save(self):
         return self.nid, self.display_values
 
@@ -3250,7 +3254,7 @@ ALL_EVENT_COMMANDS: Dict[NID, Type[EventCommand]] = {
     command.nid: command for command in EventCommand.__subclasses__()
 }
 ALL_EVENT_COMMANDS.update({
-    command.nickname: command for command in EventCommand.__subclasses__()
+    command.nickname: command for command in EventCommand.__subclasses__() if command.nickname
 })
 
 @dataclass
