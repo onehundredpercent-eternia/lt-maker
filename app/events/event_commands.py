@@ -57,7 +57,7 @@ class EventCommand(Prefab):
         self.display_values = display_values
         if not self.display_values:
             if self.parameters:
-                self.display_values = [self.parameters.get(kwd) or "" for kwd in (self.keywords + self.optional_keywords)]
+                self.display_values = [str(self.parameters.get(kwd)) or "" for kwd in (self.keywords + self.optional_keywords)]
             else:
                 self.display_values = []
 

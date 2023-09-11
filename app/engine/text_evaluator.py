@@ -18,7 +18,15 @@ class TextEvaluator():
         self.local_args = local_args or {}
 
     def direct_eval(self, to_eval):
-        return evaluate.evaluate(to_eval, self.unit, self.unit2, self.position, self.local_args, self.game)
+        """
+        Only evaluate strings
+        If non-strings get passed in here, assume they are the products of evaluation
+        from the Python interpreter and just pass them back
+        """
+        if isinstance(to_eval, str):
+            return evaluate.evaluate(to_eval, self.unit, self.unit2, self.position, self.local_args, self.game)
+        else:
+            return to_eval
 
     @property
     def created_unit(self):
@@ -261,7 +269,7 @@ class TextEvaluator():
             text = text.replace(to_evaluate[idx], evaluated[idx])
         return text
 
-    def _evaluate_evals(self, text) -> str:
+    def _evaluate_evals(self, text: str) -> str:
         # Set up variables so evals work well
         to_evaluate = re.findall(r'\{e:[^{}]*\}', text) + re.findall(r'\{eval:[^{}]*\}', text)
         evaluated = []
