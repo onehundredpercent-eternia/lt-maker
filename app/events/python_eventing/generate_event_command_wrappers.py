@@ -22,14 +22,10 @@ def create_wrapper_func(command_name: str, command_t: Type[EventCommand]):
     command_param_dict_str = '{' + command_param_dict_str + '}'
     func = \
 """
-def {command_name}({command_params}{command_optional_params}flags=None):
-    if flags and not isinstance(flags, list):
-        raise SyntaxError("Flags must be a list")
-    if not flags:
-        flags = []
+def {command_name}({command_params}{command_optional_params}):
     parameters = {command_param_dict}
     parameters = dict(filter(optional_value_filter({command_params_list}), parameters.items()))
-    return event_commands.{command_type}(parameters=parameters, flags=set(flags))
+    return event_commands.{command_type}(parameters=parameters)
 """.format(command_name=command_name, command_type=command_t.__name__, command_params_list=command_params_list,
            command_params=command_params, command_optional_params=command_optional_params,
            command_param_dict=command_param_dict_str)
