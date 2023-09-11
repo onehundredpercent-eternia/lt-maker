@@ -297,7 +297,7 @@ class Event():
                 self.transition_background.draw(s)
                 s = image_mods.make_translucent(s, 1 - self.transition_progress)
             else:
-            s.fill((*self.transition_color, int(255 * self.transition_progress)))
+                s.fill((*self.transition_color, int(255 * self.transition_progress)))
             surf.blit(s, (0, 0))
 
         # draw all achievements
@@ -320,9 +320,9 @@ class Event():
             self.logger.debug("Run Event Command: %s", command)
             try:
                 if self.do_skip and command.nid in self.skippable:
-                        pass
-                    else:
-                        self.run_command(command)
+                    pass
+                else:
+                    self.run_command(command)
             except Exception as e:
                 raise Exception("Event execution failed with error in command %s" % command) from e
 

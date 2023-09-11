@@ -682,7 +682,7 @@ class BaseCodexChildState(State):
             options.append('Map')
         if len(game.records.get_levels()) > 1:
             # Ignore current level. Only appears if there's been at least one level
-        options.append('Records')
+            options.append('Records')
         if DB.constants.value('sound_room_in_codex'):
             options.append('Sound Room')
         if ACHIEVEMENTS:
@@ -858,7 +858,7 @@ class BaseLibraryState(State):
 
     def start(self):
         if 'base_bg' in game.memory:
-        self.bg = game.memory['base_bg']
+            self.bg = game.memory['base_bg']
         else:
             self.bg = base_background()
 

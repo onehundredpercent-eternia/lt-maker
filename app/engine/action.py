@@ -2028,12 +2028,12 @@ class GainWexp(Action):
     def do(self):
         self.old_value, self.current_value = self.increase_wexp()
         if self.current_value > self.old_value:
-        for weapon_rank in reversed(DB.weapon_ranks):
-            if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
-                weapon_type = item_system.weapon_type(self.unit, self.item)
-                game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, weapon_type))
-                game.state.change('alert')
-                break
+            for weapon_rank in reversed(DB.weapon_ranks):
+                if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
+                    weapon_type = item_system.weapon_type(self.unit, self.item)
+                    game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, weapon_type))
+                    game.state.change('alert')
+                    break
 
     def execute(self):
         self.old_value, self.current_value = self.increase_wexp()
@@ -2064,11 +2064,11 @@ class AddWexp(Action):
     def do(self):
         self.old_value, self.current_value = self.increase_wexp()
         if self.current_value > self.old_value:
-        for weapon_rank in reversed(DB.weapon_ranks):
-            if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
-                game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, self.weapon_type))
-                game.state.change('alert')
-                break
+            for weapon_rank in reversed(DB.weapon_ranks):
+                if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
+                    game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, self.weapon_type))
+                    game.state.change('alert')
+                    break
 
     def execute(self):
         self.old_value, self.current_value = self.increase_wexp()

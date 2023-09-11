@@ -826,7 +826,7 @@ def battle_save(self: Event, flags=None):
         self.game.memory['next_state'] = 'in_chapter_save'
         self.game.state.change('transition_to')
     else:  # Wait until after this event to make the save
-    self.battle_save_flag = True
+        self.battle_save_flag = True
 
 def clear_turnwheel(self: Event, flags=None):
     self.game.action_log.set_first_free_action()
@@ -3053,7 +3053,7 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, shop_i
         return
     unit = new_unit
     if shop_id is None:
-    shop_id = self.nid
+        shop_id = self.nid
     self.game.memory['shop_id'] = shop_id
     self.game.memory['current_unit'] = unit
     item_list = item_list.split(',') if item_list else []

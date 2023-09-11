@@ -230,7 +230,7 @@ class GameBoard(object):
                 for team_nid in DB.teams.get_allies(team):
                     team_grid = self.fog_of_war_grids[team_nid]
                     if team_grid[idx]:
-                    return True
+                        return True
             else:
                 if DB.constants.value('fog_los'):
                     fog_of_war_radius = self.get_fog_of_war_radius(team)

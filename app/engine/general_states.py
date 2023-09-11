@@ -1346,7 +1346,7 @@ class ItemChildState(MapState):
                     targets: set = target_system.get_valid_targets(self.cur_unit, item)
                     # No need to select when only target is yourself
                     if len(targets) == 1 and next(iter(targets)) == self.cur_unit.position:
-                    interaction.start_combat(self.cur_unit, self.cur_unit.position, item)
+                        interaction.start_combat(self.cur_unit, self.cur_unit.position, item)
                     else:
                         game.memory['item'] = item
                         game.state.change('combat_targeting')

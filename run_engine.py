@@ -69,7 +69,8 @@ if __name__ == '__main__':
         # main('lion_throne')
         # main('../west_march/west_march')
         # test_play('lion_throne'{pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == 'Floor'})
-        test_play('../west_march/west_march')
+        # test_play('../west_march/west_march')
+        test_play('default_test')
     except Exception as e:
         logging.exception(e)
         inform_error()
