@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from functools import lru_cache
 from typing import List, Optional, Tuple, Type
 
@@ -132,56 +133,77 @@ class EventScriptCompleter(QCompleter):
         self.popup().setCurrentIndex(self.completionModel().index(0, 0))
         return True
 
+class ParseMode(Enum):
+    COMMAND = 1
+    ARGS = 2
+    NESTED_ARG = 3
+    FINISHED_ARGS = 4
+    FLAGS = 5
+    FINISHED = 6
+
 @dataclass
 class ParseInfo():
     command: Optional[Type[event_commands.EventCommand]]
     arg_under_cursor: str
     type_under_cursor: Optional[Type[event_validators.Validator]]
+    final_mode: ParseMode = ParseMode.FINISHED
 
 class PythonEventScriptCompleter(EventScriptCompleter):
-    def get_line_info(self, line: str, cursor_pos: int) -> Optional[ParseInfo]:
+    def get_parse_info(self, line: str, cursor_pos: int) -> Optional[ParseInfo]:
         if not line.startswith('$'):
             return None
-        mode = 'COMMAND'
+        mode = ParseMode.COMMAND
         command = ''
         curr_arg = ''
         arg_list = []
         paren_depth = 0
         for i in range(cursor_pos):
             c = line[i]
-            if mode == 'COMMAND':
+            if mode == ParseMode.COMMAND:
                 if c == '$':
                     continue
                 elif c == '(':
-                    mode = 'ARGS'
+                    mode = ParseMode.ARGS
                 else:
                     command += c
-            elif mode == 'ARGS':
+            elif mode == ParseMode.ARGS:
                 if c == ',':
                     arg_list.append(curr_arg.strip())
                     curr_arg = ''
                     continue
                 elif c == '(':
-                    mode = 'NESTED_ARG'
+                    mode = ParseMode.NESTED_ARG
                     curr_arg += c
                     paren_depth += 1
                 elif c == ')':
-                    mode = 'FINISHED'
-                    break
+                    mode = ParseMode.FINISHED_ARGS
+                    curr_arg = ''
                 else:
                     curr_arg += c
-            elif mode == 'NESTED_ARG':
+            elif mode == ParseMode.NESTED_ARG:
                 if c == '(':
                     paren_depth += 1
                 elif c == ')':
                     paren_depth -= 1
                     if paren_depth == 0:
-                        mode = 'ARGS'
+                        mode = ParseMode.ARGS
                 curr_arg += c
-        if mode == 'COMMAND': # not finished typing the command:
-            return ParseInfo(None, command, event_validators.EventFunction)
-        if mode == 'FINISHED':
-            return None
+            elif mode == ParseMode.FINISHED_ARGS:
+                if curr_arg == '.FLAGS':
+                    curr_arg = ''
+                    mode = ParseMode.FLAGS
+                    continue
+                elif not '.FLAGS'.startswith(curr_arg):
+                    mode = ParseMode.FINISHED
+                    break
+                curr_arg += c
+            elif mode == ParseMode.FLAGS:
+                if c == ',':
+                    curr_arg = ''
+                    continue
+                curr_arg += c
+        if mode == ParseMode.COMMAND: # not finished typing the command:
+            return ParseInfo(None, command, event_validators.EventFunction, mode)
         command_t = event_commands.ALL_EVENT_COMMANDS.get(command)
         if not command_t:
             return None
@@ -199,23 +221,25 @@ class PythonEventScriptCompleter(EventScriptCompleter):
         if arg_text.startswith(('"', "'")):
             quote = arg_text[0]
             arg_text.replace(quote, '')
-        return ParseInfo(command_t, arg_text, validator)
+        return ParseInfo(command_t, arg_text, validator, mode)
 
     def setTextToComplete(self, line: str, cursor_pos: int, level_nid: NID):
-        line_info = self.get_line_info(line, cursor_pos)
+        line_info = self.get_parse_info(line, cursor_pos)
         if not line_info:
             return False
-        validator = line_info.type_under_cursor
-        flags = None
-        if line_info.command:
-            flags = line_info.command().flags
-
-        autofill_dict = generate_wordlist_from_validator_type(validator, level_nid, line_info.arg_under_cursor, DB, RESOURCES)
-        if flags:
-            autofill_dict = autofill_dict + generate_flags_wordlist(flags)
-        # wrap in quotes bc python. specifically don't do this for command names since they aren't string args
-        if line_info.command:
+        if line_info.final_mode == ParseMode.FLAGS:
+            autofill_dict = line_info.command().flags
             autofill_dict = [f'"{arg}"' for arg in autofill_dict]
+        elif line_info.final_mode == ParseMode.FINISHED_ARGS:
+            autofill_dict = ['.FLAGS']
+        elif line_info.final_mode == ParseMode.FINISHED:
+            return False
+        else:
+            validator = line_info.type_under_cursor
+            autofill_dict = generate_wordlist_from_validator_type(validator, level_nid, line_info.arg_under_cursor, DB, RESOURCES)
+            # wrap in quotes bc python. specifically don't do this for command names since they aren't string args
+            if line_info.final_mode != ParseMode.COMMAND:
+                autofill_dict = [f'"{arg}"' for arg in autofill_dict]
         if len(autofill_dict) == 0:
             try:
                 if self.popup().isVisible():

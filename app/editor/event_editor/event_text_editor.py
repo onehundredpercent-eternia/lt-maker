@@ -1,9 +1,8 @@
 from __future__ import annotations
-from ast import Tuple
 
 import math
 import os
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional, Tuple, Type
 
 from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics, QPainter, QPalette, QTextCursor
@@ -13,6 +12,7 @@ from app import dark_theme
 from app.editor.event_editor import event_autocompleter
 from app.editor.event_editor.utils import EditorLanguageMode
 from app.editor.settings import MainSettingsController
+
 if TYPE_CHECKING:
     from app.editor.event_editor.event_properties import EventProperties
 
