@@ -3248,7 +3248,7 @@ ALL_EVENT_COMMANDS: Dict[NID, EventCommand] = {
     command.nid: command for command in EventCommand.__subclasses__()
 }
 ALL_EVENT_COMMANDS.update({
-    command.nickname: command for command in EventCommand.__subclasses__()
+    command.nickname: command for command in EventCommand.__subclasses__() if command.nickname
 })
 
 @dataclass
