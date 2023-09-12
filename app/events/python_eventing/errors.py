@@ -15,7 +15,7 @@ STACK_ERROR_TEMPLATE = \
         {line}"""
 
 @dataclass
-class PreprocessorError(Exception):
+class EventError(Exception):
     event_name: str | List[str]
     line_num: int | List[int]
     line: str | List[str]
@@ -35,20 +35,20 @@ class PreprocessorError(Exception):
                                         error_name=self.__class__.__name__, what=self.what)
             return msg
 
-class NestedEventError(PreprocessorError):
+class NestedEventError(EventError):
     what = "all event function calls must be alone and outside function def"
 
-class InvalidCommandError(PreprocessorError):
+class InvalidCommandError(EventError):
     what = "unknown event command"
 
-class NoSaveInLoopError(PreprocessorError):
+class NoSaveInLoopError(EventError):
     what = "cannot use save event commands in for loops"
 
-class MalformedTriggerScriptCall(PreprocessorError):
+class MalformedTriggerScriptCall(EventError):
     what = 'trigger script must have non-variable valid event target'
 
-class CannotUseYieldError(PreprocessorError):
+class CannotUseYieldError(EventError):
     what = 'cannot use yield in python event scripting'
 
-class InvalidPythonError(PreprocessorError):
+class InvalidPythonError(EventError):
     what = None

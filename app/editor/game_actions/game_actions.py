@@ -7,12 +7,12 @@ from app.editor.settings import MainSettingsController
 from app.engine import driver, engine, game_state
 from PyQt5.QtWidgets import QMessageBox
 
-from app.events.python_eventing.errors import PreprocessorError
+from app.events.python_eventing.errors import EventError
 
 def handle_exception(e: Exception):
     logging.error("Engine crashed with a fatal error!")
     logging.exception(e)
-    if isinstance(e, PreprocessorError):
+    if isinstance(e, EventError):
         # error in python eventing
         msg = "Engine crashed. \nException occurred during event execution:\n" + str(e)
     else:
