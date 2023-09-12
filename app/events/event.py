@@ -355,7 +355,9 @@ class Event():
         else:
             return str(obj)
 
-    def _eval_expr(self, expr: str) -> Any:
+    def _eval_expr(self, expr: str, from_python: bool) -> Any:
+        if from_python:
+            return expr
         try:
             return self.text_evaluator.direct_eval(expr)
         except Exception as e:
