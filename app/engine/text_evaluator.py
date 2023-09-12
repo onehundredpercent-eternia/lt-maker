@@ -18,15 +18,7 @@ class TextEvaluator():
         self.local_args = local_args or {}
 
     def direct_eval(self, to_eval):
-        """
-        Only evaluate strings
-        If non-strings get passed in here, assume they are the products of evaluation
-        from the Python interpreter and just pass them back
-        """
-        if isinstance(to_eval, str):
-            return evaluate.evaluate(to_eval, self.unit, self.unit2, self.position, self.local_args, self.game)
-        else:
-            return to_eval
+        return evaluate.evaluate(to_eval, self.unit, self.unit2, self.position, self.local_args, self.game)
 
     @property
     def created_unit(self):
