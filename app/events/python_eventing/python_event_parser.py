@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 
 import sys
 import traceback
@@ -20,6 +21,14 @@ class PythonEventParser():
         self.is_finished = False
         self._script = Compiler.compile(nid, source, game, 0)
 
+    @lru_cache()
+    def get_source_line(self, line: int) -> str:
+        as_lines = self.source.split('\n')
+        return as_lines[line]
+
+    def get_current_line(self) -> int:
+        return self.curr_cmd_idx
+
     def fetch_next_command(self) -> Optional[event_commands.EventCommand]:
         try:
             command_idx, next_command = next(self._script)
@@ -32,12 +41,11 @@ class PythonEventParser():
             return None
         except Exception as e:
             # exception occured in python script
-            as_lines = self.source.split('\n')
             _, _, exc_tb = sys.exc_info()
             exception_lineno = traceback.extract_tb(exc_tb)[-1][1]
             diff_lines = Compiler.num_diff_lines()
             true_lineno = exception_lineno - diff_lines
-            failing_line = as_lines[true_lineno - 1]
+            failing_line = self.get_source_line(true_lineno - 1)
             exc = InvalidPythonError(self.nid, true_lineno, failing_line)
             exc.what = str(e)
             raise exc from e

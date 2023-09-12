@@ -19,7 +19,7 @@ class EventError(Exception):
     event_name: str | List[str]
     line_num: int | List[int]
     line: str | List[str]
-    what = "generic preprocessor error"
+    what = "generic event error"
 
     def __str__(self) -> str:
         if isinstance(self.event_name, list):

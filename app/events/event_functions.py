@@ -670,14 +670,11 @@ def screen_shake_end(self: Event, flags=None):
         self.background.reset_shake()
 
 def game_var(self: Event, nid, expression, flags=None):
-    try:
-        val = self.text_evaluator.direct_eval(expression)
-        if check_valid_type(val):
-            action.do(action.SetGameVar(nid, val))
-        else:
-            self.logger.error("game_var: %s is not a valid variable", val)
-    except Exception as e:
-        self.logger.error("game_var: Could not evaluate %s (%s)" % (expression, e))
+    val = self._eval_expr(expression)
+    if check_valid_type(val):
+        action.do(action.SetGameVar(nid, val))
+    else:
+        self.logger.error("game_var: %s is not a valid variable", val)
 
 def inc_game_var(self: Event, nid, expression=None, flags=None):
     if expression:
