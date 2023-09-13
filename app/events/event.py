@@ -363,7 +363,7 @@ class Event():
         except Exception as e:
             line = self.parser.get_current_line()
             exc = EvaluateException(self.nid, line, self.parser.get_source_line(line))
-            self.logger.error("'%s' Line %d: Could not evaluate %s (%s)" % (self.nid, line, expr, e))
+            self.logger.error("'%s' Line %d: Could not evaluate %s (%s)" % (self.nid, line + 1, expr, e))
             exc.what = str(e)
             raise exc
 

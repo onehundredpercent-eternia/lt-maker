@@ -229,7 +229,7 @@ class EventParser():
         return self.command_pointer >= len(self.commands)
 
     def get_source_line(self, line: int) -> str:
-        return str(self.commands[line - 1])
+        return str(self.commands[line])
 
     def get_current_line(self) -> int:
         return self.command_pointer - 1
