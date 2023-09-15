@@ -42,13 +42,24 @@ class PythonEventParser():
         except Exception as e:
             # exception occured in python script
             _, _, exc_tb = sys.exc_info()
-            exception_lineno = traceback.extract_tb(exc_tb)[-1][1]
-            diff_lines = Compiler.num_diff_lines()
-            true_lineno = exception_lineno - diff_lines
-            failing_line = self.get_source_line(true_lineno - 1)
-            exc = InvalidPythonError(self.nid, true_lineno, failing_line)
-            exc.what = str(e)
-            raise exc from e
+            tbs = traceback.extract_tb(exc_tb)
+            # Proceed backwards through the stack trace until we find a "<string>"
+            for tb in reversed(tbs):
+                exception_fname, exception_lineno = tb[:2]
+                if exception_fname == "<string>":
+                    # This means that we failed in the python script itself and 
+                    # can therefore figure out exactly what line in the python script is wrong
+                    diff_lines = Compiler.num_diff_lines()
+                    true_lineno = exception_lineno - diff_lines
+                    failing_line = self.get_source_line(true_lineno - 1)
+                    exc = InvalidPythonError(self.nid, true_lineno, failing_line)
+                    exc.what = str(e)
+                    exc.original_exception = e
+                    raise exc from e
+                    break
+            else:
+                # Unable to handle the error correctly, so just raise it up
+                raise e
 
     def finished(self):
         return self.is_finished
