@@ -447,10 +447,9 @@ class EventProperties(QWidget):
 
     def test_event(self, strategy):
         if self.current:
-            commands = self.current.commands
             cursor_position = 0
             timer.get_timer().stop()
-            GAME_ACTIONS.test_event(commands, cursor_position, strategy)
+            GAME_ACTIONS.test_event(self.current.source, cursor_position, strategy)
             timer.get_timer().start()
 
     def name_changed(self, text):
@@ -515,15 +514,6 @@ class EventProperties(QWidget):
         self.current.priority = value
 
     def text_changed(self):
-        self.current.commands.clear()
-        lines = []
-        for doc_idx in range(self.text_box.document().blockCount()):
-            line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
-            lines.append(line)
-        for line in lines:
-            command, error_loc = event_commands.parse_text_to_command(line)
-            if command:
-                self.current.commands.append(command)
         self.current.source = self.text_box.document().toPlainText()
         self.set_editor_language(EditorLanguageMode.PYTHON if self.current.is_python_event() else EditorLanguageMode.EVENT)
 

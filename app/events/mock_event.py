@@ -36,7 +36,7 @@ class MockEvent(Event):
 
     loop_commands = {'for', 'endf'}
 
-    def __init__(self, nid, commands, command_idx=0, if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE):
+    def __init__(self, nid, script, command_idx=0, if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE):
         self._transition_speed = 250
         self._transition_color = (0, 0, 0)
 
@@ -50,7 +50,7 @@ class MockEvent(Event):
         self._generic_setup()
 
         self.text_evaluator = TextEvaluator(self.logger, None)
-        self.parser = MockEventParser('Mock', '\n'.join([str(cmd) for cmd in commands]), self.text_evaluator, if_statement_strategy)
+        self.parser = MockEventParser('Mock', script, self.text_evaluator, if_statement_strategy)
 
     def update(self):
         # update all internal updates, remove the ones that are finished
