@@ -3041,6 +3041,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         dtype = entry_type
 
     # figure out function or list of NIDs
+    data = []
     if 'expression' in flags:
         try:
             ast.parse(choices)
@@ -3048,7 +3049,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
                 try:
                     val = self.text_evaluator.direct_eval(self.text_evaluator._evaluate_all(callback_expr))
                     if isinstance(val, list):
-                        return val
+                        return val or ['']
                     else:
                         return [self._object_to_str(val)]
                 except Exception as e:
@@ -3061,6 +3062,7 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         choices = self.text_evaluator._evaluate_all(choices)
         data = choices.split(',')
         data = [s.strip().replace('{comma}', ',') for s in data]
+    data = data or ['']
 
     row_width = int(row_width)
 
@@ -3102,7 +3104,6 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         'position': self.position,
         'local_args': self.local_args
     }
-
     self.game.memory['player_choice'] = (nid, header, data, row_width,
                                     actual_orientation, dtype, should_persist,
                                     align, bg, event_nid, size, no_cursor,
@@ -3252,6 +3253,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         dtype = entry_type
 
     # figure out function or list of NIDs
+    data = []
     if 'expression' in flags:
         try:
             # eval once to make sure it's eval-able
@@ -3260,7 +3262,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
                 try:
                     val = self.text_evaluator.direct_eval(self.text_evaluator._evaluate_all(callback_expr))
                     if isinstance(val, list):
-                        return val
+                        return val or ['']
                     else:
                         return [self._object_to_str(val)]
                 except:
@@ -3273,6 +3275,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         table_data = self.text_evaluator._evaluate_all(table_data)
         data = table_data.split(',')
         data = [s.strip().replace('{comma}', ',') for s in data]
+    data = data or [""]
 
     align = Alignments.TOP_LEFT
     if alignment:
