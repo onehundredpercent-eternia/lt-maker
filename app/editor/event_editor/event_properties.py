@@ -559,21 +559,9 @@ class EventProperties(QWidget):
         self.priority_box.edit.setValue(current.priority)
 
         if not self.current.is_python_event():
-            # Convert text
-            text = ''
-            num_tabs = 0
-            for command in current.commands:
-                if command:
-                    if command.nid in ('else', 'elif', 'end', 'endf'):
-                        num_tabs -= 1
-                    text += '    ' * num_tabs
-                    text += command.to_plain_text()
-                    text += '\n'
-                    if command.nid in ('if', 'elif', 'else', 'for'):
-                        num_tabs += 1
-                else:
-                    logging.warning("NoneType in current.commands")
-            self.text_box.setPlainText(text)
+            if not self.current.source:
+                self.current.source = '\n'.join([str(cmd) for cmd in self.current.commands])
+            self.text_box.setPlainText(self.current.source)
             self.set_editor_language(EditorLanguageMode.EVENT)
         else:
             self.text_box.setPlainText(self.current.source)
