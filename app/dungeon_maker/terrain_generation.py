@@ -1,4 +1,9 @@
 """
+# References:
+https://pokemon-dungeoneer.vercel.app/
+https://github.com/EpicYoshiMaster/dungeon-mystery
+https://www.youtube.com/watch?v=fudOO713qYo
+
 Types of terrain:
 Walls
 Upper floor
@@ -27,10 +32,10 @@ Encounter generation:
 1. For each room, choose an encounter from the encounter list
 2. Place appropriate enemies in each room
 """
-
+from __future__ import annotations
 from enum import Enum
 import random
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 class Terrain(Enum):
     VOID = 0
@@ -42,9 +47,14 @@ class Terrain(Enum):
     PILLAR = 6
     FOREST = 7
 
-Pos = Tuple[int, int]
+class Direction(Enum):
+    NONE = 0
+    NORTH = 1
+    EAST = 2
+    SOUTH = 4
+    WEST = 8
 
-# Magic numbers
+Pos = Tuple[int, int]
 
 def generate_terrain(theme: str, size: Pos, seed=-1):
     random.seed(seed)
@@ -81,6 +91,7 @@ class DungeonTileMap:
         self.terrain_grid: Dict[Pos, Terrain] = {}
         self.start: Pos = None
         self.end: Pos = None
+        self.grid_size: Pos = None
         self.sections: Dict[Pos, DungeonSection] = {}
 
     def reset_grid(self, terrain: Terrain):
@@ -89,6 +100,7 @@ class DungeonTileMap:
                 self.terrain_grid[(x, y)] = terrain
 
     def set_sections(self, x: int, y: int):
+        self.grid_size = (x, y)
         xwidth = self.width // x
         ywidth = self.height // y 
         for xi in range(x):
@@ -105,6 +117,29 @@ class DungeonTileMap:
                 section.generate_hallway_node()
             # else generate nothing is blank
 
+    def connect_rooms(self):
+        complete: Set[Tuple[Pos, Pos]] = set()
+        for coord, section in self.sections.items():
+            if not section.room:
+                # Skip empty rooms
+                continue
+            x, y = coord
+            # Only need to support these two directions
+            directions = [
+                # ((x - 1, y), Direction.WEST), 
+                ((x + 1, y), Direction.EAST),
+                # ((x, y - 1), Direction.NORTH),
+                ((x, y + 1), Direction.SOUTH),
+            ]
+            for adj, direction in directions:
+                # Don't do it twice
+                if (coord, adj) in complete or (adj, coord) in complete:
+                    continue
+                adj_section = self.sections.get(adj)
+                if adj_section and adj_section.room:
+                    section.connect(adj_section, direction)
+                    complete.add((coord, adj))
+
 class DungeonSection:
     min_room_x = 3
     min_room_y = 3
@@ -114,6 +149,7 @@ class DungeonSection:
         self.offset = offset
         self.tilemap = tilemap
         self.room: Optional[DungeonRoom] = None
+        self.hallways: List[List[Pos]] = []  # True positions
 
     def generate_room(self):
         width = random.randint(self.min_room_x, self.width - 1)
@@ -129,10 +165,44 @@ class DungeonSection:
 
         self.room = DungeonRoom((1, 1), (offset_x, offset_y), self, self.tilemap)
 
+    def connect(self, other: DungeonSection, direction: Direction):
+        hallway_width = random.randchoice([1, 2])
+        hallway = []
+        if direction == Direction.EAST:
+            # Find where to start on the right wall of me and the left wall of them
+            start_on_wall = random.randrange(self.room.height) + self.offset[1] + self.room.offset[1]
+            other_start_on_wall = random.randrange(other.room.height) + other.offset[1] + other.room.offset[1]
+            # Find x starting point
+            start: int = self.offset[0] + self.room.offset[0] + self.room.width
+            end: int = other.offset[0] + other.room.offset[0]
+            midpoint: int = other.offset[0]
+            for x in range(start, midpoint):
+                hallway.append((x, start_on_wall))
+            for y in range(start_on_wall, other_start_on_wall):
+                hallway.append(midpoint, y)
+            for x in range(midpoint, end):
+                hallway.append((x, other_start_on_wall))
+        elif direction == Direction.SOUTH:
+            # Find where to start on the bottom wall of me and the top wall of them
+            start_on_wall = random.randrange(self.room.width) + self.offset[0] + self.room.offset[0]
+            other_start_on_wall = random.randrange(other.room.width) + other.offset[0] + other.room.offset[0]
+            # Find y starting point
+            start: int = self.offset[1] + self.room.offset[1] + self.room.height
+            end: int = other.offset[1] + other.room.offset[1]
+            midpoint: int = other.offset[1]
+            for y in range(start, midpoint):
+                hallway.append((start_on_wall, y))
+            for x in range(start_on_wall, other_start_on_wall):
+                hallway.append(x, midpoint)
+            for y in range(midpoint, end):
+                hallway.append((x, other_start_on_wall))
+
+        self.hallways.append(hallway)
+                
 class DungeonRoom:
     def __init__(self, size: Pos, offset: Pos, section: DungeonSection, tilemap: DungeonTileMap):
         self.width, self.height = size
-        self.offet = offset
+        self.offset = offset
         self.section = section
         self.tilemap = tilemap
 
