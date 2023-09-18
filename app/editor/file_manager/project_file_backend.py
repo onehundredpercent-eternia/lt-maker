@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QVBoxLayo
 
 from app.constants import VERSION
 from app.data.database.database import DB, Database
+from app.data.database.game_flags import SERIALIZATION_VERSION
 from app.data.resources.resources import RESOURCES
 from app.data.validation.db_validation import validate_all
 from app.editor import timer
@@ -185,6 +186,7 @@ class ProjectFileBackend():
         # any_errors = self.validate(DB)
         any_errors = validate_all(DB, RESOURCES)
         DB.game_flags.has_fatal_errors = False if not any_errors else True
+        DB.game_flags.serialization_version = SERIALIZATION_VERSION
 
         success = DB.serialize(self.current_proj)
         if not success:
