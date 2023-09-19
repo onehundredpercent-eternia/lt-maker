@@ -37,8 +37,8 @@ class EventPrefab(Prefab):
         self._source = value.split('\n')
 
     @lru_cache(1)
-    def _is_python_event(self, source: str):
-        if source.strip() == '#python':
+    def _is_python_event(self, first_line: str):
+        if first_line.strip() == '#python':
             return True
         return False
 
@@ -49,7 +49,7 @@ class EventPrefab(Prefab):
 
     def save_attr(self, name, value):
         if name == 'commands':
-            value = [c.save() for c in value if c]
+            value = []
         elif name == '_source':
             if not self._source and self.commands:
                 self._source = [str(cmd) for cmd in self.commands]
