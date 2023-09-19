@@ -402,7 +402,7 @@ def speak(self: Event, speaker_or_style, text, text_position=None, width=None, s
             dialog.Dialog(text, portrait, style.background, style.position, style.width, speaker=speaker,
                           style_nid=style_nid, autosize=autosize, speed=style.speed,
                           font_color=style.font_color, font_type=style.font_type, num_lines=style.num_lines,
-                          draw_cursor=cursor, message_tail=style.message_tail, transparency=style.transparency,
+                          draw_cursor=style.draw_cursor, message_tail=style.message_tail, transparency=style.transparency,
                           name_tag_bg=style.name_tag_bg, flags=flags)
         self.text_boxes.append(new_dialog)
 
