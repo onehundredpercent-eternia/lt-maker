@@ -343,7 +343,7 @@ def speak_style(self: Event, style, speaker=None, position=None, width=None, spe
         style.flags = flags
     self.game.speak_styles[style.nid] = style
 
-def speak(self: Event, speaker_or_style, text, text_position=None, width=None, style_nid=None, text_speed=None,
+def speak(self: Event, speaker_or_style: str, text, text_position=None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
           message_tail=None, transparency=None, name_tag_bg=None, flags=None):
     flags = flags or set()
@@ -369,6 +369,8 @@ def speak(self: Event, speaker_or_style, text, text_position=None, width=None, s
 
     style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
     speaker = style.speaker or speaker_or_style
+    if speaker.startswith('"') and speaker.endswith('"'):
+        speaker = speaker[1:-1]
     unit = self._get_unit(speaker)
     if unit:
         speaker = unit.nid
