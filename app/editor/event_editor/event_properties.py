@@ -382,8 +382,12 @@ class EventProperties(QWidget):
         test_menu.addAction(QAction("with If Statements always True", self, triggered=functools.partial(self.test_event, IfStatementStrategy.ALWAYS_TRUE)))
         test_menu.addAction(QAction("with If Statements always False", self, triggered=functools.partial(self.test_event, IfStatementStrategy.ALWAYS_FALSE)))
         self.test_event_button.setMenu(test_menu)
-        # self.test_event_button.clicked.connect(self.test_event)
         bottom_section.addWidget(self.test_event_button)
+
+        self.test_python_event_button = QPushButton("Test Python Event")
+        self.test_python_event_button.clicked.connect(self.test_python_event)
+        bottom_section.addWidget(self.test_python_event_button)
+        self.set_test_event_button_visible()
 
     def setEnabled(self, val):
         super().setEnabled(val)
@@ -449,7 +453,14 @@ class EventProperties(QWidget):
         if self.current:
             cursor_position = 0
             timer.get_timer().stop()
-            GAME_ACTIONS.test_event(self.current.source, cursor_position, strategy)
+            GAME_ACTIONS.test_event(self.current, cursor_position, strategy)
+            timer.get_timer().start()
+
+    def test_python_event(self):
+        if self.current:
+            cursor_position = 0
+            timer.get_timer().stop()
+            GAME_ACTIONS.test_event(self.current, cursor_position)
             timer.get_timer().start()
 
     def name_changed(self, text):
@@ -516,6 +527,15 @@ class EventProperties(QWidget):
     def text_changed(self):
         self.current.source = self.text_box.document().toPlainText()
         self.set_editor_language(EditorLanguageMode.PYTHON if self.current.is_python_event() else EditorLanguageMode.EVENT)
+        self.set_test_event_button_visible()
+
+    def set_test_event_button_visible(self):
+        if self.current and self.current.is_python_event():
+            self.test_event_button.hide()
+            self.test_python_event_button.show()
+        else:
+            self.test_event_button.show()
+            self.test_python_event_button.hide()
 
     def set_editor_language(self, lang: EditorLanguageMode):
         if lang == self.language_mode:
@@ -556,6 +576,7 @@ class EventProperties(QWidget):
         else:
             self.text_box.setPlainText(self.current.source)
             self.set_editor_language(EditorLanguageMode.PYTHON)
+        self.set_test_event_button_visible()
 
     def hideEvent(self, event):
         self.close_map()
