@@ -6,7 +6,7 @@ from app.utilities.typing import NID
 
 from app.data.database.database import DB
 from app.engine.game_state import game
-from app.engine import action, ai_controller, engine, equations, evaluate, target_system
+from app.engine import action, ai_controller, engine, equations, evaluate
 from app.engine.roam import roam_ai_action
 from app.engine.movement.roam_ai_movement_component import RoamAIMovementComponent
 from app.engine.objects.region import RegionObject

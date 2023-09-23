@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Tuple
 
-from app.engine import target_system
 from app.engine.game_state import game
 from app.engine.movement.movement_component import MovementComponent
 from app.utilities import utils

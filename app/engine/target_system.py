@@ -166,35 +166,20 @@ class TargetSystem():
     def get_all_attacks_in_range(self, unit: UnitObject, valid_moves: List[Tuple[int, int]], items: List[ItemObject]) -> set:
         attacks = self._get_all_attacks(unit, valid_moves, items)[0]
         all_valid_targets = set()
-        
         for item in items:
+            # A list of positions if the position
+            # 1. Is a valid target
+            # 2. Is not a restricted target
+            pos_list = set()
             if item.sequence_item and item.subitems:
-                invalid_subitem = False
-                for move in valid_moves:
-                    for subitem in item.subitems:
-                        targets = self.targets_in_range(unit, subitem, move)
-                        valid_targets = set()
-                        for t in targets:
-                            if not item_system.target_restrict(unit, subitem, *item_system.splash(unit, item, t)):
-                                valid_targets.add(t)
-                        if not valid_targets:
-                            invalid_subitem = True
-                            break
-                if not invalid_subitem:
-                    all_valid_targets |= self.check_targets_from_position(unit, item.subitems[0])
-            else:
-                all_valid_targets |= self.check_targets_from_position(unit, item)
-                
+                item = item.subitems[0]
+            for pos in item_system.valid_targets(unit, item):
+                splash = item_system.splash(unit, item, pos)
+                if item_system.target_restrict(unit, item, *splash):
+                    pos_list.add(pos)
+            all_valid_targets |= pos_list
         return attacks.intersection(all_valid_targets)
-    
-    def check_targets_from_position(self, unit, item):
-        pos_list = set()
-        for pos in item_system.valid_targets(unit, item):
-            splash = item_system.splash(unit, item, pos)
-            if item_system.target_restrict(unit, item, *splash):
-                pos_list.add(pos)
-        return pos_list
-                
+        
     def _get_possible_attacks(self, unit, valid_moves, items):
         items_standard, items_ignore_los = [], []
         for item in items:
@@ -317,21 +302,19 @@ class TargetSystem():
             through_path -= 1
         return path[-(through_path + 1)]  # Travel as far as we can
 
-    def targets_in_range(self, unit: UnitObject, item: ItemObject, position: Tuple[int, int]=None) -> set:
+    def targets_in_range(self, unit: UnitObject, item: ItemObject) -> set:
         '''
         Taking a unit and an item, finds a set of
         positions that are within range
         '''
-        if not position:
-            position = unit.position
         possible_targets = item_system.valid_targets(unit, item)
         item_range = item_funcs.get_range(unit, item)
-        return {t for t in possible_targets if utils.calculate_distance(position, t) in item_range}
+        return {t for t in possible_targets if utils.calculate_distance(unit.position, t) in item_range}
 
     def get_valid_targets(self, unit, item=None) -> set:
         """
         Determines all the valid targets given use of the item
-        targets_in_range() takes care of range
+        item_system.valid_targets takes care of range
         """
         if not item:
             item = unit.get_weapon()
@@ -479,9 +462,17 @@ class TargetSystem():
         Finds all valid squares given a target and possible moves'''
         restriction = item_system.range_restrict(unit, item)
         if restriction:
-            a = self.restricted_manhattan_spheres(item_funcs.get_range(unit, item), *target, restriction)
-        else:
-            a = self.find_manhattan_spheres(item_funcs.get_range(unit, item), *target)
+            return self._get_possible_attack_positions_restriction(unit, target, moves, item, restriction)
+        
+        a = self.find_manhattan_spheres(item_funcs.get_range(unit, item), *target)
         b = set(moves)
         positions = list(a & b)
         return [pos for pos in positions if not self.game.board.get_unit(pos) or self.game.board.get_unit(pos) == unit]
+    
+    def _get_possible_attack_positions_restriction(self, unit, target, moves, item, restriction) -> list:
+        positions = set()
+        for move in moves:
+            a = self.restricted_manhattan_spheres(item_funcs.get_range(unit, item), *move, restriction)
+            if target in a:
+                positions.add(move)
+        return list(positions)

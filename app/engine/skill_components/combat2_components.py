@@ -3,7 +3,7 @@ from app.data.database.components import ComponentType
 
 from app.utilities import utils
 from app.utilities.enums import Strike
-from app.engine import action, item_system, skill_system, target_system
+from app.engine import action, item_system, skill_system
 from app.engine.game_state import game
 from app.engine.combat import playback as pb
 

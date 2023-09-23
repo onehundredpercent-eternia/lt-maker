@@ -4,7 +4,7 @@ from app.utilities.typing import Color3, NID
 from app.engine.objects.unit import UnitObject
 from app.data.database.database import DB
 
-from app.engine import action, skill_system, target_system, line_of_sight
+from app.engine import action, skill_system, line_of_sight
 
 import logging
 

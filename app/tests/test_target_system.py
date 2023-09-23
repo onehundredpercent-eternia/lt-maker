@@ -10,10 +10,13 @@ from app.engine.objects.unit import UnitObject
 
 class TargetSystemUnitTests(unittest.TestCase):
     def setUp(self):
+        from app.data.database.database import DB
+        DB.load('testing_proj.ltproj')
         self.game = get_mock_game()
         self.target_system = self.create_target_system()
 
         self.game.board = GameBoard(MagicMock())
+        self.game.units = []
 
         self.player_unit = UnitObject('player')         
         self.player_unit.team = 'player'
@@ -80,7 +83,6 @@ class TargetSystemUnitTests(unittest.TestCase):
 
     def _setup_board(self) -> list:
         valid_moves = [(0, 2), (1, 1), (0, 1), (0, 0)]
-        self.game.board.height
         self.game.board.unit_grid = [[self.player_unit], [self.enemy_unit], [], [], [], []]
         self.game.board.team_grid = [['player'], ['enemy'], [], [], [], []]
         self.game.board.height = 3
@@ -96,7 +98,8 @@ class TargetSystemUnitTests(unittest.TestCase):
 
         weapon = self.mock_weapon(self.enemy_unit.position, 1, 1)
 
-        self.assertEqual(len(self.target_system.get_possible_attack_positions(self.player_unit, (0, 1), valid_moves, weapon)), 3)
+        expected_positions = [(0, 2), (0, 0), (1, 1)]
+        self.assertEqual(self.target_system.get_possible_attack_positions(self.player_unit, (0, 1), valid_moves, weapon), expected_positions)
 
     def test_get_possible_attack_positions_range_restrict(self):
         self.player_unit.position = (0, 0)
@@ -110,7 +113,8 @@ class TargetSystemUnitTests(unittest.TestCase):
         eval_special_range = EvalSpecialRange(value='y > 0')
         weapon.components.append(eval_special_range)
 
-        self.assertEqual(len(self.target_system.get_possible_attack_positions(self.player_unit, (0, 1), valid_moves, weapon)), 1)
+        expected_positions = [(0, 0)]
+        self.assertEqual(self.target_system.get_possible_attack_positions(self.player_unit, (0, 1), valid_moves, weapon), expected_positions)
 
 
 if __name__ == '__main__':

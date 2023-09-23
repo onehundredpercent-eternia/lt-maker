@@ -5,7 +5,7 @@ from app.data.database.database import DB
 
 from app.utilities import utils
 
-from app.engine import action, target_system
+from app.engine import action
 from app.engine.game_state import game
 
 import logging

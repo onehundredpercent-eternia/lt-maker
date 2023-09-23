@@ -111,6 +111,8 @@ class GameState():
         self.overworld_controller: OverworldManager = None
         self.target_system: TargetSystem = None
 
+        self.target_system: TargetSystem = None
+
         self.clear()
 
     def is_displaying_overworld(self) -> bool:
@@ -214,6 +216,7 @@ class GameState():
         from app.engine import (ai_controller, camera, death, highlight,
                                 map_view, phase, ui_view, target_system)
         from app.engine.movement import movement_system
+        from app.engine.target_system import TargetSystem
 
         # Systems
         self.camera = camera.Camera(self)
@@ -227,7 +230,7 @@ class GameState():
         self.exp_instance = []
         self.mana_instance = []
         self.ai = ai_controller.AIController()
-        self.target_system = target_system.TargetSystem()
+        self.target_system = TargetSystem()
 
         self.alerts.clear()
 
@@ -519,7 +522,7 @@ class GameState():
         '''
 
         from app.engine import (action, item_funcs, item_system, skill_system,
-                                supports, target_system)
+                                supports)
 
         supports.increment_end_chapter_supports()
 
@@ -538,7 +541,7 @@ class GameState():
                     unit.traveler = None
                     action.RemoveSkill(unit, 'Rescue').execute()
                 else:
-                    pos = game.target_system.get_nearest_open_tile(droppee, unit.position)
+                    pos = self.target_system.get_nearest_open_tile(droppee, unit.position)
                     action.Drop(unit, droppee, pos).execute()
                 skill_system.on_separate(droppee, unit)
             unit.set_hp(1000)  # Set to full health

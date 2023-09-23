@@ -6,7 +6,7 @@ from app.engine.objects.unit import UnitObject
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.counters import generic3counter
 from app.data.database.database import DB
-from app.engine import engine, image_mods, skill_system, target_system
+from app.engine import engine, image_mods, skill_system
 from app.engine.cursor import BaseCursor
 from app.engine.game_state import GameState
 from app.engine.input_manager import get_input_manager

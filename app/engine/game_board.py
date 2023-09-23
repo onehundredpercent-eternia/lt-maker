@@ -2,7 +2,7 @@ from app.engine.objects.unit import UnitObject
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.data.database.database import DB
-from app.engine import line_of_sight, target_system
+from app.engine import line_of_sight
 from app.engine.pathfinding.node import Node
 from app.engine.game_state import game
 from app.utilities.typing import NID
@@ -109,8 +109,9 @@ class GameBoard(object):
 
     def set_unit(self, pos: Tuple[int, int], unit: UnitObject):
         idx = pos[0] * self.height + pos[1]
-        self.unit_grid[idx].append(unit)
-        self.team_grid[idx].append(unit.team)
+        if unit not in self.unit_grid[idx]:
+            self.unit_grid[idx].append(unit)
+            self.team_grid[idx].append(unit.team)
 
     def remove_unit(self, pos: Tuple[int, int], unit: UnitObject):
         idx = pos[0] * self.height + pos[1]

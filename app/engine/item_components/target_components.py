@@ -6,6 +6,7 @@ from functools import lru_cache
 from app.data.database.components import ComponentType
 from app.data.database.item_components import ItemComponent, ItemTags
 from app.engine import item_funcs, skill_system
+from app.engine.game_state import game
 from app.engine.movement import movement_funcs
 from app.engine.game_state import game
 from app.utilities import utils

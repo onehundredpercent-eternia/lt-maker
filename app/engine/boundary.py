@@ -4,7 +4,7 @@ from app.constants import TILEWIDTH, TILEHEIGHT
 
 from app.data.database.database import DB
 from app.engine.sprites import SPRITES
-from app.engine import engine, target_system, equations, image_mods, aura_funcs
+from app.engine import engine, equations, image_mods, aura_funcs
 from app.engine.game_state import game
 
 class BoundaryInterface():

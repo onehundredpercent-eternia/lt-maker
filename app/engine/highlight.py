@@ -3,7 +3,7 @@ from app.data.database.database import DB
 from app.events.regions import RegionType
 
 from app.engine.sprites import SPRITES
-from app.engine import engine, target_system, line_of_sight
+from app.engine import engine, line_of_sight
 from app.engine.game_state import game
 
 import logging

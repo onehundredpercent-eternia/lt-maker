@@ -2,7 +2,7 @@ from typing import Set, Tuple
 from app.data.database.skill_components import SkillComponent, SkillTags
 from app.data.database.components import ComponentType
 
-from app.engine import equations, target_system, action
+from app.engine import equations, action
 from app.engine.game_state import game
 from app.engine.movement import movement_funcs
 from app.engine.objects.unit import UnitObject

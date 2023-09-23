@@ -1,5 +1,5 @@
 from app.data.database.database import DB
-from app.engine import target_system, skill_system, action, equations
+from app.engine import skill_system, action, equations
 from app.engine.movement import movement_funcs
 from app.engine.game_state import game
 from app.events import triggers
