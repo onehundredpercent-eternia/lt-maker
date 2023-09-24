@@ -62,7 +62,7 @@ class EventCommand(Prefab):
                 self.display_values = []
 
     def FLAGS(self, *args) -> EventCommand:
-        self.chosen_flags = set(args)
+        self.chosen_flags |= set(args)
         return self
 
     def save(self):
@@ -128,11 +128,13 @@ class Comment(EventCommand):
         """
 
     def to_plain_text(self) -> str:
-        if self.display_values and not self.display_values[0].startswith('#'):
+        if not self.display_values:
+            return ''
+        if not self.display_values[0]:
+            return ''
+        if not self.display_values[0].startswith('#'):
             self.display_values[0] = '#' + self.display_values[0]
-        if self.display_values:
-            return self.display_values[0]
-        return ''
+        return self.display_values[0]
 
 class If(EventCommand):
     nid = "if"
@@ -545,7 +547,7 @@ Extra flags:
 7. *no_sound*: The normal boop sound of dialog will be turned off
         """
 
-    keywords = ['Speaker', 'Text']
+    keywords = ['SpeakerOrStyle', 'Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg']
     keyword_types = ['Speaker', 'Text', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'PositiveInteger', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound']
@@ -1232,13 +1234,13 @@ A *CombatScript* can optionally be provided to ensure a pre-set outcome to the b
 *Ability* can be used to specify which item or ability the attacker will use.
 *PositiveInteger* can be set to determine the number of rounds the combat will go on for. Defaults to 1. Useful for arena combats (set to 20+).
 The *arena* flag should be set when you want to allow the player to be able to press B and leave the combat between rounds. It also sets the combat background to the arena.
-The *force_animation* flag tells the engine to ignore the player's settings and forcibly display a combat animation. Useful for arena combats.
+The *force_animation* and *force_no_animation* flags tell the engine whether to ignore the player's settings when choosing to display a combat animation. Useful for arena combats.
         """
 
     keywords = ["Unit", "Position"]
     optional_keywords = ["CombatScript", "Ability", "Rounds"]
     keyword_types = ["Unit", "Position", "CombatScript", "Ability", "PositiveInteger"]
-    _flags = ["arena", "force_animation"]
+    _flags = ["arena", "force_animation", "force_no_animation"]
 
 class SetName(EventCommand):
     nid = 'set_name'
@@ -3317,6 +3319,10 @@ def determine_command_type(text: str) -> Type[EventCommand]:
     command_nid = arguments[0]
     return ALL_EVENT_COMMANDS.get(command_nid, Comment)
 
+def parse_script_to_commands(text: str) -> List[EventCommand]:
+    lines = text.split('\n')
+    return [parse_text_to_command(line)[0] for line in lines]
+
 def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand, int]:
     """parses a line into a command
 
@@ -3397,8 +3403,10 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
 
     # Main function starts here
     if not text:
-        return None, None
+        return Comment(), None
     text = text.lstrip()
+    if not text:
+        return Comment(), None
     if text.startswith('#'):
         return Comment(display_values=[text]), None
     if text.startswith('comment;'):

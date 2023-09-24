@@ -566,17 +566,16 @@ class DialogVariant(Validator):
 
     def validate(self, text, level):
         slots = self.built_in.copy()
-        predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
-        slots += list(set([variant.parameters['Style'] for variant in predefined_variants.values()]))
+        # predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
+        # slots += list(set([variant.parameters['Style'] for variant in predefined_variants.values()]))
         if text in slots:
             return text
         return None
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         slots = [(None, style) for style in self.built_in]
-        text = text.split(',')
-        predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
-        slots += [(None, style) for style in list(set([variant.parameters['Style'] for variant in predefined_variants.values()]))]
+        # predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
+        # slots += [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values()])]
         return slots
 
 class StringList(Validator):
@@ -625,7 +624,10 @@ class PointList(Validator):
             return text
 
 class Speaker(Validator):
-    pass  # Any text will do
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        # predefined_variants = EventInspectorEngine(self._db.events).find_all_calls_of_command(event_commands.SpeakStyle())
+        # slots = [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values()])]
+        return []
 
 class Panorama(Validator):
     def validate(self, text, level):
@@ -1105,7 +1107,7 @@ class KlassList(Validator):
         return text
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
-        valids = [(None, klass.nid) for klass in self._db.classes.values()]
+        valids = [(klass.name, klass.nid) for klass in self._db.classes.values()]
         return valids
 
 class ArgList(Validator):

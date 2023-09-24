@@ -382,8 +382,12 @@ class EventProperties(QWidget):
         test_menu.addAction(QAction("with If Statements always True", self, triggered=functools.partial(self.test_event, IfStatementStrategy.ALWAYS_TRUE)))
         test_menu.addAction(QAction("with If Statements always False", self, triggered=functools.partial(self.test_event, IfStatementStrategy.ALWAYS_FALSE)))
         self.test_event_button.setMenu(test_menu)
-        # self.test_event_button.clicked.connect(self.test_event)
         bottom_section.addWidget(self.test_event_button)
+
+        self.test_python_event_button = QPushButton("Test Python Event")
+        self.test_python_event_button.clicked.connect(self.test_python_event)
+        bottom_section.addWidget(self.test_python_event_button)
+        self.set_test_event_button_visible()
 
     def setEnabled(self, val):
         super().setEnabled(val)
@@ -447,10 +451,16 @@ class EventProperties(QWidget):
 
     def test_event(self, strategy):
         if self.current:
-            commands = self.current.commands
             cursor_position = 0
             timer.get_timer().stop()
-            GAME_ACTIONS.test_event(commands, cursor_position, strategy)
+            GAME_ACTIONS.test_event(self.current, cursor_position, strategy)
+            timer.get_timer().start()
+
+    def test_python_event(self):
+        if self.current:
+            cursor_position = 0
+            timer.get_timer().stop()
+            GAME_ACTIONS.test_event(self.current, cursor_position)
             timer.get_timer().start()
 
     def name_changed(self, text):
@@ -515,18 +525,17 @@ class EventProperties(QWidget):
         self.current.priority = value
 
     def text_changed(self):
-        self.current.commands.clear()
-        lines = []
-        for doc_idx in range(self.text_box.document().blockCount()):
-            line = self.text_box.document().findBlockByNumber(doc_idx).text().strip()
-            if line:
-                lines.append(line)
-        for line in lines:
-            command, error_loc = event_commands.parse_text_to_command(line)
-            if command:
-                self.current.commands.append(command)
-        self.current.source = self.text_box.document().toPlainText()
+        self.current.source = self.text_box.document().toRawText()
         self.set_editor_language(EditorLanguageMode.PYTHON if self.current.is_python_event() else EditorLanguageMode.EVENT)
+        self.set_test_event_button_visible()
+
+    def set_test_event_button_visible(self):
+        if self.current and self.current.is_python_event():
+            self.test_event_button.hide()
+            self.test_python_event_button.show()
+        else:
+            self.test_event_button.show()
+            self.test_python_event_button.hide()
 
     def set_editor_language(self, lang: EditorLanguageMode):
         if lang == self.language_mode:
@@ -560,25 +569,14 @@ class EventProperties(QWidget):
         self.priority_box.edit.setValue(current.priority)
 
         if not self.current.is_python_event():
-            # Convert text
-            text = ''
-            num_tabs = 0
-            for command in current.commands:
-                if command:
-                    if command.nid in ('else', 'elif', 'end', 'endf'):
-                        num_tabs -= 1
-                    text += '    ' * num_tabs
-                    text += command.to_plain_text()
-                    text += '\n'
-                    if command.nid in ('if', 'elif', 'else', 'for'):
-                        num_tabs += 1
-                else:
-                    logging.warning("NoneType in current.commands")
-            self.text_box.setPlainText(text)
+            if not self.current.source:
+                self.current.source = '\n'.join([str(cmd) for cmd in self.current.commands])
+            self.text_box.setPlainText(self.current.source)
             self.set_editor_language(EditorLanguageMode.EVENT)
         else:
             self.text_box.setPlainText(self.current.source)
             self.set_editor_language(EditorLanguageMode.PYTHON)
+        self.set_test_event_button_visible()
 
     def hideEvent(self, event):
         self.close_map()

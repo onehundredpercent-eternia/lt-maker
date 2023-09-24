@@ -10,7 +10,7 @@ from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.resources.resources import RESOURCES
 from app.engine import (action, background, banner, base_surf, dialog, engine, 
                         evaluate, icons, image_mods, item_funcs, item_system,
-                        skill_system, target_system, unit_funcs)
+                        skill_system, unit_funcs)
 from app.engine.achievements import ACHIEVEMENTS
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -356,7 +356,7 @@ def speak_style(self: Event, style, speaker=None, position=None, width=None, spe
         style.flags = flags
     self.game.speak_styles[style.nid] = style
 
-def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=None, text_speed=None,
+def speak(self: Event, speaker_or_style: str, text, text_position=None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
           message_tail=None, transparency=None, name_tag_bg=None, flags=None):
     flags = flags or set()
@@ -365,13 +365,25 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
     if 'no_block' in flags:
         text += '{no_wait}'
 
-    speak_style = None
-    if style_nid and style_nid in self.game.speak_styles:
-        speak_style = self.game.speak_styles[style_nid]
-    default_speak_style = self.game.speak_styles['__default']
+    if text_position:
+        try:
+            position = Alignments(text_position)
+        except:
+            position = self._parse_pos(text_position)
+    else:
+        position = None
+    if draw_cursor:
+        cursor = draw_cursor.lower() in self.true_vals
+    else:
+        cursor = None
 
-    if not speaker and speak_style:
-        speaker = speak_style.speaker
+    manual_style = SpeakStyle(None, None, position, int(width) if width else None, float(text_speed) if text_speed else None, font_color,
+                              font_type, dialog_box, int(num_lines) if num_lines else None, cursor, message_tail, float(transparency) if transparency else None, name_tag_bg, flags)
+
+    style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
+    speaker = style.speaker or speaker_or_style or ''
+    if speaker.startswith('"') and speaker.endswith('"'):
+        speaker = speaker[1:-1]
     unit = self._get_unit(speaker)
     if unit:
         speaker = unit.nid
@@ -393,110 +405,29 @@ def speak(self: Event, speaker, text, text_position=None, width=None, style_nid=
         else:
             self._queue_command('unpause')
 
+    flags = style.flags
+
     # Determine whether this should be skipped
     # Hold speaks are not skipped
     if self.do_skip and 'hold' not in flags:
         pass  # Skip me!
     else:
-        if text_position:
-            try:
-                position = Alignments(text_position)
-            except:
-                position = self._parse_pos(text_position)
-        elif speak_style and speak_style.position:
-            position = speak_style.position
-        else:
-            position = default_speak_style.position
-
-        if width:
-            box_width = int(width)
-        elif speak_style and speak_style.width:
-            box_width = speak_style.width
-        else:
-            box_width = default_speak_style.width
-
-        if text_speed:
-            speed = float(text_speed)
-        elif speak_style and speak_style.speed:
-            speed = speak_style.speed
-        else:
-            speed = default_speak_style.speed
-
-        if font_color:
-            fcolor = font_color
-        elif speak_style and speak_style.font_color:
-            fcolor = speak_style.font_color
-        else:
-            fcolor = default_speak_style.font_color
-
-        if font_type:
-            ftype = font_type
-        elif speak_style and speak_style.font_type:
-            ftype = speak_style.font_type
-        else:
-            ftype = default_speak_style.font_type
-
-        if dialog_box:
-            bg = dialog_box
-        elif speak_style and speak_style.background:
-            bg = speak_style.background
-        else:
-            bg = default_speak_style.background
-
-        if num_lines:
-            lines = int(num_lines)
-        elif speak_style and speak_style.num_lines:
-            lines = speak_style.num_lines
-        else:
-            lines = default_speak_style.num_lines
-
-        if draw_cursor:
-            cursor = draw_cursor.lower() in self.true_vals
-        elif speak_style and speak_style.draw_cursor is not None:
-            cursor = speak_style.draw_cursor
-        else:
-            cursor = default_speak_style.draw_cursor
-
-        if message_tail:
-            tail = message_tail
-        elif speak_style and speak_style.message_tail:
-            tail = speak_style.message_tail
-        else:
-            tail = default_speak_style.message_tail
-
-        if transparency:
-            transparency = float(transparency)
-        elif speak_style and speak_style.transparency is not None:
-            transparency = speak_style.transparency
-        else:
-            transparency = 0.05
-
-        if name_tag_bg:
-            nametag = name_tag_bg
-        elif speak_style and speak_style.name_tag_bg:
-            nametag = speak_style.name_tag_bg
-        else:
-            nametag = default_speak_style.name_tag_bg
-
-        if speak_style and speak_style.flags:
-            flags = speak_style.flags.union(flags)
-
         if FANCY_DIALOG_MODE:
             new_dialog = \
                 fancy_dialog.FancyDialog(text, portrait, self.dialog_background,
                                          speaker=portrait.name if portrait else speaker, 
-                                         style_nid=style_nid, speed=speed,
-                                         font_color=fcolor, font_type=ftype)
+                                         style_nid=style_nid, speed=style.speed,
+                                         font_color=style.font_color, font_type=style.font_type)
             if portrait:
                 self._saturate_portrait(portrait)
         else:
             autosize = 'fit' in flags
             new_dialog = \
-                dialog.Dialog(text, portrait, bg, position, box_width, speaker=speaker,
-                              style_nid=style_nid, autosize=autosize, speed=speed,
-                              font_color=fcolor, font_type=ftype, num_lines=lines,
-                              draw_cursor=cursor, message_tail=tail, transparency=transparency, 
-                              name_tag_bg=nametag, flags=flags)
+                dialog.Dialog(text, portrait, style.background, style.position, style.width, speaker=speaker,
+                              style_nid=style_nid, autosize=autosize, speed=style.speed,
+                              font_color=style.font_color, font_type=style.font_type, num_lines=style.num_lines,
+                              draw_cursor=style.draw_cursor, message_tail=style.message_tail, transparency=style.transparency,
+                              name_tag_bg=style.name_tag_bg, flags=flags)
         self.text_boxes.append(new_dialog)
 
         if self.do_skip:
@@ -692,49 +623,36 @@ def screen_shake_end(self: Event, flags=None):
         self.background.reset_shake()
 
 def game_var(self: Event, nid, expression, flags=None):
-    try:
-        val = self.text_evaluator.direct_eval(expression)
-        if check_valid_type(val):
-            action.do(action.SetGameVar(nid, val))
-        else:
-            self.logger.error("game_var: %s is not a valid variable", val)
-    except Exception as e:
-        self.logger.error("game_var: Could not evaluate %s (%s)" % (expression, e))
+    val = self._eval_expr(expression, 'from_python' in flags)
+    if check_valid_type(val):
+        action.do(action.SetGameVar(nid, val))
+    else:
+        self.logger.error("game_var: %s is not a valid variable", val)
 
 def inc_game_var(self: Event, nid, expression=None, flags=None):
     if expression:
-        try:
-            val = self.text_evaluator.direct_eval(expression)
-            if check_valid_type(val):
-                action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
-            else:
-                self.logger.error("inc_game_var: %s is not a valid variable", val)
-        except Exception as e:
-            self.logger.error("inc_game_var: Could not evaluate %s (%s)" % (expression, e))
+        val = self._eval_expr(expression, 'from_python' in flags)
+        if check_valid_type(val):
+            action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
+        else:
+            self.logger.error("inc_game_var: %s is not a valid variable", val)
     else:
         action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + 1))
 
 def level_var(self: Event, nid, expression, flags=None):
-    try:
-        val = self.text_evaluator.direct_eval(expression)
-        if check_valid_type(val):
-            action.do(action.SetLevelVar(nid, val))
-        else:
-            self.logger.error("level_var: %s is not a valid variable", val)
-    except Exception as e:
-        self.logger.error("level_var: Could not evaluate %s (%s)" % (expression, e))
-        return
+    val = self._eval_expr(expression, 'from_python' in flags)
+    if check_valid_type(val):
+        action.do(action.SetLevelVar(nid, val))
+    else:
+        self.logger.error("level_var: %s is not a valid variable", val)
 
 def inc_level_var(self: Event, nid, expression=None, flags=None):
     if expression:
-        try:
-            val = self.text_evaluator.direct_eval(expression)
-            if check_valid_type(val):
-                action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
-            else:
-                self.logger.error("inc_level_var: %s is not a valid variable", val)
-        except Exception as e:
-            self.logger.error("inc_level_var: Could not evaluate %s (%s)" % (expression, e))
+        val = self._eval_expr(expression, 'from_python' in flags)
+        if check_valid_type(val):
+            action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
+        else:
+            self.logger.error("inc_level_var: %s is not a valid variable", val)
     else:
         action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + 1))
 
@@ -1159,7 +1077,7 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
     elif movement_type == 'fade':
         action.do(action.FadeMove(unit, position))
     elif movement_type == 'normal':
-        path = target_system.get_path(unit, position)
+        path = self.game.target_system.get_path(unit, position)
         if path:
             if self.do_skip:
                 action.do(action.Teleport(unit, position))
@@ -1290,7 +1208,7 @@ def interact_unit(self: Event, unit, position, combat_script=None, ability=None,
 
     interaction.start_combat(
         actor, target, item, event_combat=True, script=script, total_rounds=total_rounds,
-        arena='arena' in flags, force_animation='force_animation' in flags)
+        arena='arena' in flags, force_animation='force_animation' in flags, force_no_animation='force_no_animation' in flags)
     self.state = "paused"
 
 def recruit_generic(self: Event, unit, nid, name, flags=None):
@@ -1737,12 +1655,7 @@ def set_item_data(self: Event, global_unit_or_convoy, item, nid, expression, fla
         self.logger.error("set_item_data: Either unit or item was invalid, see above")
         return
 
-    try:
-        data_value = self.text_evaluator.direct_eval(expression)
-    except Exception as e:
-        self.logger.error("set_item_data: %s: Could not evaluate {%s}" % (e, expression))
-        return
-
+    data_value = self._eval_expr(expression, 'from_python' in flags)
     action.do(action.SetObjData(item, nid, data_value))
 
 def break_item(self: Event, global_unit_or_convoy, item, flags=None):
@@ -1899,11 +1812,7 @@ def add_item_component(self: Event, global_unit_or_convoy, item, item_component,
         return
 
     if expression is not None:
-        try:
-            component_value = self.text_evaluator.direct_eval(expression)
-        except Exception as e:
-            self.logger.error("add_item_component: %s: Could not evalute {%s}" % (e, expression))
-            return
+        component_value = self._eval_expr(expression, 'from_python' in flags)
     else:
         component_value = None
 
@@ -1920,12 +1829,7 @@ def modify_item_component(self: Event, global_unit_or_convoy, item, item_compone
         self.logger.error("modify_item_component: Either unit or item was invalid, see above")
         return
 
-    try:
-        component_value = self.text_evaluator.direct_eval(expression)
-    except Exception as e:
-        self.logger.error("modify_item_component: %s: Could not evalute {%s}" % (e, expression))
-        return
-
+    component_value = self._eval_expr(expression, 'from_python' in flags)
     action.do(action.ModifyItemComponent(item, component_nid, component_value, component_property, is_additive))
 
 def remove_item_component(self: Event, global_unit_or_convoy, item, item_component, flags=None):
@@ -1950,11 +1854,7 @@ def add_skill_component(self: Event, global_unit, skill, skill_component, expres
         return
 
     if expression is not None:
-        try:
-            component_value = self.text_evaluator.direct_eval(expression)
-        except Exception as e:
-            self.logger.error("add_skill_component: %s: Could not evalute {%s}" % (e, expression))
-            return
+        component_value = self._eval_expr(expression, 'from_python' in flags)
     else:
         component_value = None
 
@@ -1970,12 +1870,7 @@ def modify_skill_component(self: Event, global_unit, skill, skill_component, exp
         self.logger.error("modify_skill_component: Either unit or skill was invalid, see above")
         return
 
-    try:
-        component_value = self.text_evaluator.direct_eval(expression)
-    except Exception as e:
-        self.logger.error("modify_skill_component: %s: Could not evalute {%s}" % (e, expression))
-        return
-
+    component_value = self._eval_expr(expression, 'from_python' in flags)
     action.do(action.ModifySkillComponent(skill, component_nid, component_value, component_property, is_additive))
     
 def remove_skill_component(self: Event, global_unit, skill, skill_component, flags=None):
@@ -2159,11 +2054,7 @@ def set_skill_data(self: Event, global_unit, skill, nid, expression, flags=None)
     if not found_skill:
         self.logger.error("set_skill_data: Couldn't find skill with nid %s on unit selected" % skill)
         return
-    try:
-        data_value = self.text_evaluator.direct_eval(expression)
-    except Exception as e:
-        self.logger.error("set_skill_data: %s: Could not evaluate {%s}" % (e, expression))
-        return
+    data_value = self._eval_expr(expression, 'from_python' in flags)
 
     action.do(action.SetObjData(found_skill, nid, data_value))
 
