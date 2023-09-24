@@ -781,13 +781,16 @@ class MoveState(MapState):
             get_sound_thread().play_sfx('Error')
             return 
 
+        target_pos = game.cursor.position
+
         # Figure out a good location nearest to the cursor path
-        if game.cursor.path:
+        if target_pos in self.targets[TargetType.PAIRUP]:
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, target_pos))[0]
+        elif game.cursor.path:
             move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]) + utils.calculate_distance(pos, cur_unit.position))[0]
         else:
             move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
 
-        target_pos = game.cursor.position
         game.cursor.position = move_pos
 
         if not game.board.in_vision(target_pos):
