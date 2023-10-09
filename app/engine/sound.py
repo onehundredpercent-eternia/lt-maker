@@ -18,6 +18,9 @@ class Song():
 
         self.channel = None
 
+    def __str__(self) -> str:
+        return self.nid
+
 class MusicDict(dict):
     def preload(self, nids):
         for nid in nids:
@@ -158,7 +161,7 @@ class Channel():
                 self._channel.play(self.current_song.intro, 0)
                 self.played_intro = True
             else:
-                # logging.debug("Playing %s", self.current_song.song)
+                logging.debug("Playing %s", self.current_song.song)
                 self._channel.play(self.current_song.song, 0)
             self.reset_volume()
 
@@ -628,6 +631,19 @@ class SoundController():
                 sfx.play()
             return sfx
         return None
+    
+    def play_raw_music(self, song, loop=False, volume=1):
+        song = MUSIC.get(song)
+        if song:
+            sound = song.song
+            vol = utils.clamp(self.global_sfx_volume * volume, 0, 1)
+            sound.set_volume(vol)
+            if loop:
+                sound.play(-1)
+            else:
+                sound.play()
+            return sound
+        return None
 
     def stop_sfx(self, sound):
         sfx = SFX.get(sound)
@@ -635,6 +651,14 @@ class SoundController():
             sfx.stop()
             return sfx
         return None
+    
+    def stop_raw_music(self, song):
+        song = MUSIC.get(song)
+        if song:
+            song.song.stop()
+            return song.song
+        return None
+
 
     def load_songs(self, nids: Set[NID]):
         MUSIC.preload(nids)
@@ -650,7 +674,6 @@ class SoundController():
         if not should_interrupt_current_song:
             current_song = self.get_current_song()
             if current_song:
-                print(current_song.nid)
                 current_song_nid = current_song.nid
         MUSIC.clear(current_song_nid)
         SFX.clear()
@@ -675,3 +698,10 @@ def get_sound_thread():
     if not _soundthread:
         _soundthread = SoundController()
     return _soundthread
+
+def init_sound():
+    # used if we only need to init sound module (for editor sound playing)
+    # otherwise, use app/engine/engine.py::init
+    from app.engine import config as cf
+    pygame.mixer.pre_init(44100, -16, 2, 128 * 2**cf.SETTINGS['sound_buffer_size'])
+    pygame.mixer.init()

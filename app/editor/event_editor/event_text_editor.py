@@ -10,9 +10,11 @@ from PyQt5.QtWidgets import QCompleter, QLabel, QPlainTextEdit, QWidget, QAction
 
 from app import dark_theme
 from app.editor.event_editor import event_autocompleter, event_formatter
+from app.editor.event_editor.event_object_viewer import EventObjectViewer
 from app.editor.event_editor.utils import EditorLanguageMode
 from app.editor.settings import MainSettingsController
 from app.utilities import str_utils
+from app.events import event_validators
 
 if TYPE_CHECKING:
     from app.editor.event_editor.event_properties import EventProperties
@@ -72,6 +74,44 @@ class EventTextEditor(QPlainTextEdit):
             self.function_annotator.setWordWrap(True)
             with open(os.path.join(os.path.dirname(__file__),'event_styles.css'), 'r') as stylecss:
                 self.function_annotator.setStyleSheet(stylecss.read())
+
+        self.object_viewer = EventObjectViewer(self)
+        self.object_viewer.hide()
+        self.selectionChanged.connect(self.on_highlight)
+
+    def mouseDoubleClickEvent(self, evt):
+        tc = self.textCursor()
+        if self.event_properties.language_mode == EditorLanguageMode.EVENT:
+            lc = self.document().characterAt(tc.position() - 1)
+            while len(repr(lc)) == 3 and lc != ';':
+                tc.movePosition(QTextCursor.MoveOperation.WordLeft)
+                lc = self.document().characterAt(tc.position() - 1)
+            # tc is now at beginning of line, or semicolon
+            rc = self.document().characterAt(tc.position())
+            while len(repr(rc)) == 3 and rc != ';':
+                tc.movePosition(QTextCursor.MoveOperation.WordRight, QTextCursor.MoveMode.KeepAnchor)
+                rc = self.document().characterAt(tc.position())
+            self.setTextCursor(tc)
+        else:
+            super().mouseDoubleClickEvent(evt)
+
+    def on_highlight(self):
+        selected_text = self.textCursor().selectedText()
+        if not selected_text:
+            self.object_viewer.hide()
+            return
+        tc_top_right = self.mapTo(self.parent(), self.cursorRect(self.textCursor()).topRight())
+        y = tc_top_right.y()
+        x = tc_top_right.x()
+        line, cursor_pos = self.get_event_command_context()
+        dtype = event_autocompleter.detect_type_under_cursor(line, cursor_pos)[0]
+        self.object_viewer.set_data(selected_text, dtype)
+        self.object_viewer.move(x + 5, y + 10)
+        if self.object_viewer.displaying_data():
+            self.object_viewer.show()
+            self.function_annotator.hide()
+        else:
+            self.object_viewer.hide()
 
     def autoformat(self):
         if self.event_properties.language_mode == EditorLanguageMode.EVENT:

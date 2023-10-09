@@ -4,6 +4,7 @@ from app.editor.recent_project_dialog import choose_recent_project
 
 from app.editor.editor_locale import init_locale
 from app.engine.codegen import source_generator
+from app.engine.sound import init_sound
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QLockFile, QDir, Qt
@@ -32,11 +33,15 @@ def initialize_logger():
     if not success:
         sys.exit()
 
+def initialize_sound():
+    init_sound()
+
 if __name__ == '__main__':
     initialize_translations()
     initialize_icon()
     code_gen()
     initialize_logger()
+    initialize_sound()
 
     lockfile = QLockFile(QDir.tempPath() + '/lt-maker.lock')
     if lockfile.tryLock(100):
