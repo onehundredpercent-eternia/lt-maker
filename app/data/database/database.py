@@ -115,7 +115,7 @@ class Database(object):
             return full_data
         else:   # data type is a singular file
             save_loc = Path(data_dir, key + '.json')
-            if not os.path.exists(save_loc):
+            if not save_loc.exists():
                 raise Exception("%s does not exist!" % save_loc)
             return load_json(save_loc)
 
