@@ -311,11 +311,15 @@ class Event():
                     break
                 self.command_queue.append(next_command)
             command = self.command_queue.pop(0)
-            while command.nid in SAVE_COMMAND_NIDS and self.command_queue: # we cannot save while there are commands on the queue. this should never happen.
-                if all([c.nid in SAVE_COMMAND_NIDS for c in self.command_queue]): # avoid infinite loop. This should NEVER happen.
+            
+            # This shunts all SAVE COMMANDS to the back of the command queue, so that we never save the game while there are still commands on the queue.
+            # This is unlikely to happen unless you used a macro to put multiple commands on the queue at once (and one of them is a save).
+            while command.nid in SAVE_COMMAND_NIDS and self.command_queue: # if we have a save command but there are still more commands in the queue. We cannot save while there are commands on the queue. This should never happen
+                if all([c.nid in SAVE_COMMAND_NIDS for c in self.command_queue]): # avoid infinite loop. This should NEVER happen (will happen if multiple save commands were queued).
                     raise Exception("Queued multiple save commands in event %s, line %d" % (self.nid, self.parser.get_current_line()))
-                self.command_queue.append(command)
+                self.command_queue.append(command)  # Move the save command to the back of the queue
                 command = self.command_queue.pop(0)
+
             self.logger.debug("Run Event Command: %s", command)
             try:
                 if self.do_skip and command.nid in self.skippable:
