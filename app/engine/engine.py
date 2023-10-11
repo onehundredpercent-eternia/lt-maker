@@ -29,7 +29,7 @@ def get_system_font():
 
 def write_system_msg(surf, msg: str):
     """Writes a message to the screen.
-    Use exclamation points like !!this!! in order
+    Use asterisks like **this** in order
     to emphasize a word.
     """
     fill(surf, (0, 0, 0))
