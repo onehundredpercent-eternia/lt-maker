@@ -19,6 +19,47 @@ constants = {'current_time': 0,
 
 fast_quit = False
 
+_SYSTEM_FONT = None
+SYSTEM_FONT_SIZE = 14
+def get_system_font():
+    global _SYSTEM_FONT
+    if not _SYSTEM_FONT:
+        _SYSTEM_FONT = pygame.font.Font(None, SYSTEM_FONT_SIZE)
+    return _SYSTEM_FONT
+
+def write_system_msg(surf, msg: str):
+    """Writes a message to the screen.
+    Use exclamation points like !!this!! in order
+    to emphasize a word.
+    """
+    fill(surf, (0, 0, 0))
+    width = surf.get_width()
+    font = get_system_font()
+    x = 0
+    y = 0
+    lines = msg.splitlines()
+    emphasis = False
+    for line in lines:
+        for word in line.split(' '):
+            tmp = word
+            if word.startswith('**'):
+                emphasis = True
+            tmp = word.strip('*')
+            tmp += ' '
+            wwidth = font.size(tmp)[0]
+            if x + wwidth > width:
+                x = 0
+                y += SYSTEM_FONT_SIZE
+            color = (0, 255, 0) if emphasis else (255, 255, 255) # green for emphasis
+            wsurf = font.render(tmp, True, color)
+            surf.blit(wsurf, (x, y))
+            x += wwidth
+            if word.endswith('**'):
+                emphasis = False
+        y += SYSTEM_FONT_SIZE
+        x = 0
+    return surf
+
 # === engine functions ===
 def init():
     pygame.mixer.pre_init(44100, -16, 2, 128 * 2**cf.SETTINGS['sound_buffer_size'])
