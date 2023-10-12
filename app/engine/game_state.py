@@ -114,6 +114,10 @@ class GameState():
 
         self.clear()
 
+    def on_alter_game_state(self):
+        from app.engine import skill_system
+        skill_system.reset_cache()
+
     def is_displaying_overworld(self) -> bool:
         from app.engine.overworld.overworld_map_view import OverworldMapView
         return isinstance(self.map_view, OverworldMapView)
@@ -957,6 +961,7 @@ class GameState():
             # Board
             if not test:
                 self.board.remove_unit(unit.position, unit)
+        self.on_alter_game_state()
 
     def arrive(self, unit, test=False):
         """
@@ -996,6 +1001,7 @@ class GameState():
             # Boundary
             if not test:
                 self.boundary.arrive(unit)
+        self.on_alter_game_state()
 
     def add_terrain_status(self, unit, test):
         from app.engine import action, item_funcs
