@@ -300,6 +300,25 @@ class FadeMove(SimpleMove):
         game.arrive(self.unit)
         self.update_fow_action.do()
 
+class PutUnitDown(Action):
+    def __init__(self, unit):
+        self.unit = unit
+
+    def do(self):
+        game.arrive(self.unit)
+
+    def reverse(self):
+        game.leave(self.unit)
+
+class PickUnitUp(Action):
+    def __init__(self, unit):
+        self.unit = unit
+
+    def do(self):
+        game.leave(self.unit)
+
+    def reverse(self):
+        game.arrive(self.unit)
 
 class ArriveOnMap(Action):
     def __init__(self, unit, pos):
@@ -313,7 +332,6 @@ class ArriveOnMap(Action):
     def reverse(self):
         game.leave(self.unit)
         self.place_on_map.reverse()
-
 
 class WarpIn(ArriveOnMap):
     def do(self):
