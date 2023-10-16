@@ -64,6 +64,10 @@ def draw_fps(surf, fps_records):
     FONT['small-white'].blit(str(fps), surf, (surf.get_width() - 20, 0))
     FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
 
+def check_soft_reset(game, inp) -> bool:
+    return game.state.current() != 'title_start' and \
+        inp.is_pressed('SELECT') and inp.is_pressed('BACK') and \
+        inp.is_pressed('START')
 
 def run(game):
     from app.engine.sound import get_sound_thread
@@ -98,9 +102,7 @@ def run(game):
         event = inp.process_input(raw_events)
 
         # Handle soft reset
-        if game.state.current() != 'title_start' and \
-                inp.is_pressed('SELECT') and inp.is_pressed('BACK') and \
-                inp.is_pressed('START'):
+        if check_soft_reset(game, inp):
             _error_mode = False
             game.state.change('title_start')
             game.state.update([], surf)
@@ -128,9 +130,9 @@ def run(game):
                 log_file_loc = lt_log.get_log_dir() or ''
                 _error_msg = "Game crashed with exception:\n%s\nPlease press either the **SELECT** or **BACK** keys to open the log file. Please send the contents of the log file to the game developer to resolve this issue.\nLogs can be found in **%s**" % (str(e).strip(), str(log_file_loc))
                 _error_mode = True
-                if cf.SETTINGS['debug']: # if we're in editor/debug mode, just throw the error normally
+                # If we're in editor/debug mode, just throw the error normally
+                if cf.SETTINGS['debug']:
                     raise e
-
 
         get_sound_thread().update(raw_events)
 
