@@ -301,24 +301,26 @@ class FadeMove(SimpleMove):
         self.update_fow_action.do()
 
 class PutUnitDown(Action):
-    def __init__(self, unit):
+    def __init__(self, unit, test=False):
         self.unit = unit
+        self.test = test
 
     def do(self):
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.test)
 
     def reverse(self):
-        game.leave(self.unit)
+        game.leave(self.unit, self.test)
 
 class PickUnitUp(Action):
-    def __init__(self, unit):
+    def __init__(self, unit, test=False):
         self.unit = unit
+        self.test = test
 
     def do(self):
-        game.leave(self.unit)
+        game.leave(self.unit, self.test)
 
     def reverse(self):
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.test)
 
 class ArriveOnMap(Action):
     def __init__(self, unit, pos):

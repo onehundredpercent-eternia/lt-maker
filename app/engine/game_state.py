@@ -626,6 +626,7 @@ class GameState():
         else:
             self.turncount = 1
             self.action_log.set_first_free_action()
+        self.on_alter_game_state()
 
     @property
     def level(self):
@@ -961,7 +962,6 @@ class GameState():
             # Board
             if not test:
                 self.board.remove_unit(unit.position, unit)
-        self.on_alter_game_state()
 
     def arrive(self, unit, test=False):
         """
@@ -1001,7 +1001,6 @@ class GameState():
             # Boundary
             if not test:
                 self.boundary.arrive(unit)
-        self.on_alter_game_state()
 
     def add_terrain_status(self, unit, test):
         from app.engine import action, item_funcs
