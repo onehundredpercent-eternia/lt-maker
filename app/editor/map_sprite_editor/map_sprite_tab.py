@@ -25,7 +25,7 @@ class MapSpriteDatabase(DatabaseTab):
     @classmethod
     def edit(cls, parent=None):
         window = SingleResourceEditor(MapSpriteDatabase, ['map_sprites'], parent)
-        window.exec_()
+        return window
 
 def get():
     window = SingleResourceEditor(MapSpriteDatabase, ['map_sprites'])

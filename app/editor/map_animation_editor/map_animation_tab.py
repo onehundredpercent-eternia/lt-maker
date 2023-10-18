@@ -23,7 +23,7 @@ class MapAnimationDatabase(DatabaseTab):
     @classmethod
     def edit(cls, parent=None):
         window = SingleResourceEditor(MapAnimationDatabase, ['animations'], parent)
-        window.exec_()
+        return window
 
 # Testing
 # Run "python -m app.editor.map_animation_editor.map_animation_tab" from main directory

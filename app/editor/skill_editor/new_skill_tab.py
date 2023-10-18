@@ -27,13 +27,6 @@ class NewSkillDatabase(ComponentObjectEditor):
     catalog_type = SkillCatalog
     properties_type = NewSkillProperties
 
-    @classmethod
-    def edit(cls, parent=None):
-        timer.get_timer().stop_for_editor()  # Don't need these while running game
-        window = SingleDatabaseEditor(NewSkillDatabase, parent)
-        window.exec_()
-        timer.get_timer().start_for_editor()
-
     @property
     def data(self):
         return self._db.skills

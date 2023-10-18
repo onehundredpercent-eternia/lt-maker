@@ -41,11 +41,6 @@ class ClassDatabase(DatabaseTab):
                 self._data.append(unit)
             self.update_list()
 
-    @classmethod
-    def edit(cls, parent=None):
-        window = SingleDatabaseEditor(cls, parent)
-        window.exec_()
-
 # Testing
 # Run "python -m app.editor.unit_editor.unit_tab" from main directory
 if __name__ == '__main__':

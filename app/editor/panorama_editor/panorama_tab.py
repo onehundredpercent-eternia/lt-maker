@@ -89,7 +89,7 @@ class PanoramaDatabase(PanoramaTab):
     @classmethod
     def edit(cls, parent=None):
         window = SingleResourceEditor(PanoramaDatabase, ['panoramas'], parent)
-        window.exec_()
+        return window
 
 # Run "python -m app.editor.panorama_editor.panorama_tab" from main directory
 if __name__ == '__main__':

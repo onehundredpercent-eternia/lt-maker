@@ -27,7 +27,7 @@ class PortraitDatabase(DatabaseTab):
     @classmethod
     def edit(cls, parent=None):
         window = SingleResourceEditor(PortraitDatabase, ['portraits'], parent)
-        window.exec_()
+        return window
 
 def get():
     timer.get_timer().start_for_editor()

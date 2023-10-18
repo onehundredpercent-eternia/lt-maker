@@ -26,13 +26,6 @@ class NewItemDatabase(ComponentObjectEditor):
     catalog_type = ItemCatalog
     properties_type = NewItemProperties
 
-    @classmethod
-    def edit(cls, parent=None):
-        timer.get_timer().stop_for_editor()  # Don't need these while running game
-        window = SingleDatabaseEditor(NewItemDatabase, parent)
-        window.exec_()
-        timer.get_timer().start_for_editor()
-
     @property
     def data(self):
         return self._db.items

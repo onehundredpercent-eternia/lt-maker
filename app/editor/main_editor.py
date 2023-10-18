@@ -2,14 +2,17 @@ import logging
 import os
 import sys
 import functools
-from typing import Optional
+from typing import Callable, Dict, Optional, Type
 
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, QApplication, \
-    QDesktopWidget, \
+    QDesktopWidget, QWidget, \
     QToolButton, QWidgetAction, QStackedWidget
 from PyQt5.QtGui import QIcon
 
 from app import autoupdate, dark_theme
+from app.data.database import translations
+from app.editor.base_database_gui import DatabaseTab
+from app.editor.data_editor import SingleDatabaseEditor
 
 from app.editor.settings import MainSettingsController
 
@@ -145,6 +148,9 @@ class MainEditor(QMainWindow):
         self.app_state_manager.change_and_broadcast(
             'selected_level', first_level_nid)
 
+        # holds onto references to all spawned child windows
+        self._windows: Dict[str, QWidget] = {}
+
     def on_clean_changed(self, clean):
         # Change Title
         if clean:
@@ -180,8 +186,31 @@ class MainEditor(QMainWindow):
 
         self.global_editor.set_icons(force_theme)
 
+    def open_widget(self, wtype: Type[QWidget]):
+        return self.open_child_window(wtype, wtype.__name__)
+
+    def open_child_window(self, create_fun: Callable[[], QWidget], window_id: str):
+        if window_id not in self._windows:
+            nw = create_fun()
+            self._windows[window_id] = nw
+        editor = self._windows[window_id]
+
+        # recreate if we've already closed it - this is to update potentially stale lists
+        if not editor.isVisible():
+            editor = create_fun()
+            self._windows[window_id] = editor
+        editor.show()
+        editor.raise_()
+
     # === Create Menu ===
     def create_actions(self):
+        def open_window_func(editor_cls: Type[DatabaseTab]):
+            return lambda _: self.open_child_window(lambda: editor_cls.edit(self), editor_cls.__name__)
+        def open_window_generic_func(create_fun, window_id):
+            return lambda _: self.open_child_window(create_fun, window_id)
+        def open_widget_func(wtype):
+            return lambda _: self.open_widget(wtype)
+
         self.new_act = QAction(_("New Project..."), self,
                                shortcut="Ctrl+N", triggered=self.new)
         self.open_act = QAction(_("Open Project..."), self,
@@ -200,16 +229,16 @@ class MainEditor(QMainWindow):
             "Dump script", self, triggered=lambda: self.project_save_load_handler.dump_script(DB))
 
         self.preferences_act = QAction(
-            _("&Preferences..."), self, triggered=self.edit_preferences)
+            _("&Preferences..."), self, triggered=open_widget_func(PreferencesDialog))
         self.about_act = QAction(_("&About"), self, triggered=self.about)
         self.remove_unused_resources_act = QAction(
             _("Remove Unused Resources"), self, triggered=self.remove_unused_resources)
         self.check_for_updates_act = QAction(
             _("Check for updates..."), self, triggered=self.check_for_updates)
         self.view_logs_act = QAction(
-            _("View logs..."), self, triggered=self.show_logs)
+            _("View logs..."), self, triggered=open_widget_func(log_viewer.LogViewer))
         self.view_errors_act = QAction(
-            _("View Error Report..."), self, triggered=self.show_errors)
+            _("View Error Report..."), self, triggered=open_widget_func(error_viewer.ErrorViewer))
 
         # Test actions
         self.test_current_act = QAction(
@@ -224,41 +253,41 @@ class MainEditor(QMainWindow):
         #     "Preload Units...", self, triggered=self.edit_preload_units)
 
         # Database actions
-        database_actions = {_("Units"): UnitDatabase.edit,
-                            _("Teams"): TeamDatabase.edit,
-                            _("Factions"): FactionDatabase.edit,
-                            _("Parties"): PartyDatabase.edit,
-                            _("Classes"): ClassDatabase.edit,
-                            _("Tags"): self.edit_tags,
-                            _("Game Vars"): self.edit_game_vars,
-                            _("Weapon Types"): WeaponDatabase.edit,
-                            _("Items"): NewItemDatabase.edit,
-                            _("Skills"): NewSkillDatabase.edit,
-                            "AI": AIDatabase.edit,
-                            _("Terrain"): TerrainDatabase.edit,
-                            _("Movement Costs"): self.edit_mcost,
-                            _("Stats"): StatTypeDatabase.edit,
-                            _("Equations"): self.edit_equations,
-                            _("Constants"): ConstantDatabase.edit,
-                            _("Difficulty Modes"): DifficultyModeDatabase.edit,
-                            _("Supports"): self.edit_supports,
-                            _("Lore"): LoreDatabase.edit,
-                            _("Raw Data"): RawDataDatabase.edit,
-                            _("Translations"): self.edit_translations
+        database_actions = {_("Units"): open_window_func(UnitDatabase),
+                            _("Teams"): open_window_func(TeamDatabase),
+                            _("Factions"): open_window_func(FactionDatabase),
+                            _("Parties"): open_window_func(PartyDatabase),
+                            _("Classes"): open_window_func(ClassDatabase),
+                            _("Tags"): open_window_generic_func(TagDialog.create, 'tags'),
+                            _("Game Vars"): open_window_generic_func(GameVarSlotDialog.create, 'gvars'),
+                            _("Weapon Types"): open_window_func(WeaponDatabase),
+                            _("Items"): open_window_func(NewItemDatabase),
+                            _("Skills"): open_window_func(NewSkillDatabase),
+                            "AI": open_window_func(AIDatabase),
+                            _("Terrain"): open_window_func(TerrainDatabase),
+                            _("Movement Costs"): open_widget_func(McostDialog),
+                            _("Stats"): open_window_func(StatTypeDatabase),
+                            _("Equations"): open_window_generic_func(EquationDialog.create, 'equations'),
+                            _("Constants"): open_window_func(ConstantDatabase),
+                            _("Difficulty Modes"): open_window_func(DifficultyModeDatabase),
+                            _("Supports"): open_window_generic_func(support_pair_tab.get_full_editor, 'supports'),
+                            _("Lore"): open_window_func(LoreDatabase),
+                            _("Raw Data"): open_window_func(RawDataDatabase),
+                            _("Translations"): open_window_generic_func(TranslationDialog.create, 'translations')
                             }
         self.database_actions = {}
         for name, func in database_actions.items():
             self.database_actions[name] = QAction(
                 "%s..." % name, self, triggered=functools.partial(func, self))
 
-        resource_actions = {"Icons": self.edit_icons,
-                            "Portraits": PortraitDatabase.edit,
-                            "Map Animations": MapAnimationDatabase.edit,
-                            "Backgrounds": PanoramaDatabase.edit,
-                            "Map Sprites": MapSpriteDatabase.edit,
-                            "Combat Animations": self.edit_combat_animations,
-                            "Tilemaps": self.edit_tilemaps,
-                            "Sounds": self.edit_sounds
+        resource_actions = {"Icons": open_window_generic_func(icon_tab.get_full_editor, 'icons'),
+                            "Portraits": open_window_func(PortraitDatabase),
+                            "Map Animations": open_window_func(MapAnimationDatabase),
+                            "Backgrounds": open_window_func(PanoramaDatabase),
+                            "Map Sprites": open_window_func(MapSpriteDatabase),
+                            "Combat Animations": open_window_generic_func(combat_animation_tab.get_full_editor, 'combat_anims'),
+                            "Tilemaps": open_window_generic_func(tile_tab.get_full_editor, 'tiles'),
+                            "Sounds": open_window_generic_func(sound_tab.get_full_editor, 'sounds')
                             }
         self.resource_actions = {}
         for name, func in resource_actions.items():
@@ -510,49 +539,6 @@ class MainEditor(QMainWindow):
             QMessageBox.warning(
                 self, "Save Error", "Must save project before removing unused resources!")
 
-    def edit_tags(self, parent=None):
-        dialog = TagDialog.create()
-        dialog.exec_()
-
-    def edit_game_vars(self, parent=None):
-        dialog = GameVarSlotDialog.create()
-        dialog.exec_()
-
-    def edit_supports(self, parent=None):
-        dialog = support_pair_tab.get_full_editor()
-        dialog.exec_()
-
-    def edit_mcost(self, parent=None):
-        dialog = McostDialog(self)
-        dialog.exec_()
-
-    def edit_equations(self, parent=None):
-        dialog = EquationDialog.create()
-        dialog.exec_()
-
-    def edit_translations(self, parent=None):
-        dialog = TranslationDialog.create()
-        dialog.exec_()
-
-    def edit_icons(self, parent=None):
-        dialog = icon_tab.get_full_editor()
-        dialog.exec_()
-
-    def edit_combat_animations(self, parent=None):
-        dialog = combat_animation_tab.get_full_editor()
-        dialog.exec_()
-
-    def edit_tilemaps(self, parent=None):
-        dialog = tile_tab.get_full_editor()
-        dialog.exec_()
-
-    def edit_sounds(self, parent=None):
-        dialog = sound_tab.get_full_editor()
-        dialog.exec_()
-
-    def edit_preferences(self):
-        dialog = PreferencesDialog(self)
-        dialog.exec_()
 
     def render_editor(self, main_editor_mode):
         self.mode = main_editor_mode
@@ -601,14 +587,6 @@ class MainEditor(QMainWindow):
         else:
             QMessageBox.warning(self, "Update unavailable", "<p>This is a standard python version of LT-maker.</p>"
                                       "<p>Use <b>git fetch</b> and <b>git pull</b> to download the latest git repo updates instead.</p>")
-
-    def show_logs(self):
-        # reference to keep sub window alive
-        self._log_window_ref = log_viewer.show_logs()
-
-    def show_errors(self):
-        # reference to keep sub window alive
-        self._error_window_ref = error_viewer.show_error_report()
 
 # Testing
 # Run "python -m app.editor.main_editor" from main directory

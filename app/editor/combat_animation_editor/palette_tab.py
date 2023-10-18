@@ -24,7 +24,7 @@ class PaletteDatabase(DatabaseTab):
     @classmethod
     def edit(cls, parent=None):
         window = SingleResourceEditor(PaletteDatabase, ['combat_palettes'], parent)
-        window.exec_()
+        return window
 
 def get():
     window = SingleResourceEditor(PaletteDatabase, ['combat_palettes'])

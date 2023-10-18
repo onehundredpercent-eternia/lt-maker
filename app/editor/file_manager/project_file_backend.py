@@ -15,6 +15,7 @@ from app.data.database.database import DB, Database
 from app.data.resources.resources import RESOURCES
 from app.data.validation.db_validation import validate_all
 from app.editor import timer
+from app.editor import error_viewer
 from app.editor.error_viewer import show_error_report
 from app.editor.file_manager.project_initializer import ProjectInitializer
 from app.editor.lib.csv import csv_data_exporter, text_data_exporter
@@ -58,7 +59,7 @@ class FatalErrorDialog(SimpleDialog):
         self.close()
 
     def open_error_viewer(self):
-        self.main_window_ref._error_window_ref = show_error_report()
+        self.main_window_ref.open_widget(error_viewer.ErrorViewer)
         self.close()
 
 class ProjectFileBackend():

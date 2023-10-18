@@ -1,15 +1,23 @@
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QDialog, QGridLayout, QDialogButtonBox, QTabWidget, \
-    QSizePolicy
-from PyQt5.QtCore import Qt
+from __future__ import annotations
 
-from app.data.resources.resources import RESOURCES
+from typing import TYPE_CHECKING, Type
+
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QGridLayout,
+                             QSizePolicy, QTabWidget)
+
 from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
+
+if TYPE_CHECKING:
+    from app.editor.base_database_gui import DatabaseTab
 
 from app.editor.settings import MainSettingsController
 
+
 class SingleDatabaseEditor(QDialog):
-    def __init__(self, tab, parent=None):
+    def __init__(self, tab: Type[DatabaseTab], parent=None):
         super().__init__(parent)
         self.window = parent
         self.main_editor = self.window
@@ -217,7 +225,7 @@ class SingleResourceEditor(QDialog):
     def accept(self):
         current_proj = self.settings.get_current_project()
         # RESOURCES must be saved here because if we grabbed a file from somewhere else
-        # on our computer not under the project tree, we must transfer it under the project 
+        # on our computer not under the project tree, we must transfer it under the project
         # tree. The project does not and should not know the absolute path of every one of its
         # resources, just where the resources should be.
         if current_proj and current_proj != 'default.ltproj':

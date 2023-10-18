@@ -187,6 +187,10 @@ class DatabaseTab(QWidget):
     def tick(self):
         pass
 
+    @classmethod
+    def create(cls, parent=None) -> DatabaseTab:
+        pass
+
     def reset(self):
         """
         Whenever the tab is changed, make sure to update the tab display
@@ -203,10 +207,8 @@ class DatabaseTab(QWidget):
 
     @classmethod
     def edit(cls, parent=None):
-        timer.get_timer().stop_for_editor()  # Don't need these while running game
         window = SingleDatabaseEditor(cls, parent)
-        window.exec_()
-        timer.get_timer().start_for_editor()
+        return window
 
     def copy_data(self):
         clipboard = QApplication.clipboard()
