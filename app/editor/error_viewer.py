@@ -1,12 +1,13 @@
 import sys
+from typing import Callable
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QTextEdit, QVBoxLayout, QWidget, QPushButton
-from app.data.database.database import DB
-from app.data.resources.resources import RESOURCES
+from app.data.database.database import DB, Database
+from app.data.resources.resources import RESOURCES, Resources
 
-from app.data.validation.db_validation import validate_events, validate_items_and_skills, validate_levels
+from app.data.validation.db_validation import ValidationResult, validate_events, validate_items_and_skills, validate_levels
 from app.editor.settings.main_settings_controller import MainSettingsController
 
 MAX_NUM_CHARS = 100000
@@ -42,12 +43,16 @@ class ErrorViewer(QWidget):
     def regenerate_errors(self):
         text_body = ""
 
-        def create_error_log(category_name, validation_func):
+        def create_error_log(category_name, validation_func: Callable[[Database, Resources], ValidationResult]):
             errors = validation_func(DB, RESOURCES)
-            if errors:
-                errors_as_str = '\n'.join(str(error) for error in errors)
-                return generate_header(f"{category_name} ERRORS") + errors_as_str
-            return ''
+            log = ''
+            if errors.errors:
+                errors_as_str = '\n'.join(str(error) for error in errors.errors)
+                log += generate_header(f"{category_name} ERRORS") + errors_as_str + '\n'
+            if errors.warnings:
+                warnings_as_str = '\n'.join(str(warn) for warn in errors.warnings)
+                log += generate_header(f"{category_name} WARNINGS") + warnings_as_str + '\n'
+            return log
 
         text_body += create_error_log('EVENT', validate_events)
         text_body += create_error_log('SKILL AND ITEM', validate_items_and_skills)

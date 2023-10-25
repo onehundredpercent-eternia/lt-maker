@@ -1,37 +1,108 @@
 from __future__ import annotations
 from ast import Tuple
-from typing import Any, List
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set
 
 from app.data.database.components import ComponentType
 from app.data.database.database import Database
 from app.data.database.database_types import DatabaseType
 from app.data.database.database_validator import DatabaseValidatorEngine
+from app.data.database.level_units import GenericUnit, UniqueUnit
+from app.data.database.levels import OBJECTIVE_KEYS, LevelPrefab
 from app.data.resources.resource_types import ResourceType
 from app.data.resources.resources import Resources
+from app.data.resources.tiles import TileMapPrefab
 from app.data.validation.validation_errors import (
     ComponentValidationError, ItemComponentValidationError, LevelValidationError, SkillComponentValidationError)
 from app.events.event_prefab import EventVersion
-from app.events.python_eventing.preprocessor import Preprocessor
 from app.events import event_commands
+from app.data.validation.validation_warnings import LevelNoneFieldWarning, RegionWarning
+from app.events.python_eventing.preprocessor import Preprocessor
+from app.events.regions import Region
+from app.utilities.typing import NID
 
+@dataclass
+class ValidationResult():
+    errors: List = field(default_factory=list)
+    warnings: List = field(default_factory=list)
 
-def validate_levels(database: Database, resources: Resources) -> List:
+def _validate_unique_unit(database: Database, resources: Resources, unique_unit: UniqueUnit, level: LevelPrefab, level_units: Set[NID], travelers: Dict[NID, NID]) -> ValidationResult:
+    # @TODO(sigmaraven)
+    # in addition to checking each field, checking for traveler mishaps (e.g. duplicated travelers, make sure traveler is an actual other unit that doesn't exist)
+    return ValidationResult()
+
+def _validate_generic_unit(database: Database, resources: Resources, generic_unit: GenericUnit, level: LevelPrefab, level_units: Set[NID], travelers: Dict[NID, NID]) -> ValidationResult:
+    # @TODO(sigmaraven)
+    # in addition to checking each field, checking for traveler mishaps (e.g. duplicated travelers, make sure traveler is an actual other unit that doesn't exist)
+    return ValidationResult()
+
+def _validate_region(database: Database, resources: Resources, region: Region, level_tilemap: Optional[TileMapPrefab], level_nid: NID) -> ValidationResult:
+    all_errors = []
+    all_warnings = []
+    if not level_tilemap:
+        all_warnings.append(RegionWarning(level_nid, region.nid, 'Region exists but no tilemap exists in level.'))
+    # @TODO(mag): determine if all regions should have positions/it's warning-worthy
+    # if not region.position: append "Region has no position"
+    if region.position:
+        rx, ry = region.position
+        rxb, ryb = rx + region.size[0], ry + region.size[1]
+        if rx < 0 or ry < 0 or rxb > level_tilemap.width or ryb > level_tilemap.height:
+            all_warnings.append(RegionWarning(level_nid, region.nid, 'Region bounds exceed tilemap size or region not in tilemap'))
+    return ValidationResult(all_errors, all_warnings)
+
+def validate_levels(database: Database, resources: Resources) -> ValidationResult:
     validator = DatabaseValidatorEngine(database, resources)
     all_errors = []
+    all_warnings = []
     for level in database.levels:
-        def _validate(dtype, attr, can_be_null=True):
+        def _validate_attr(dtype, attr, optional=True):
             val = getattr(level, attr)
-            if not val and can_be_null:
+            if val is None and optional:
                 return
             if not validator.validate(dtype, val):
                 all_errors.append(LevelValidationError(level.nid, attr, val, dtype))
-        # _validate(ResourceType.TILEMAPS, 'tilemap')
-        # _validate(ResourceType.TILEMAPS, 'bg_tilemap')
-        # _validate(DatabaseType.PARTIES, 'party')
-    return all_errors
 
+        _validate_attr(ResourceType.TILEMAPS, 'tilemap')
+        _validate_attr(ResourceType.TILEMAPS, 'bg_tilemap')
+        _validate_attr(DatabaseType.PARTIES, 'party')
 
-def validate_items_and_skills(database: Database, resources: Resources) -> List:
+        # music
+        for music_key in database.music_keys:
+            track = level.music.get(music_key)
+            if track is None:
+                continue
+            if not validator.validate(ResourceType.MUSIC, track):
+                all_errors.append(LevelValidationError(level.nid, 'music:%s' % music_key, track, ResourceType.MUSIC))
+
+        # objective, warning only
+        for objtv in OBJECTIVE_KEYS:
+            if not level.objective.get(objtv):
+                all_warnings.append(LevelNoneFieldWarning(level.nid, 'objective:%s' % objtv))
+
+        _validate_attr(DatabaseType.UNITS, 'roam_unit', not level.roam)
+
+        all_level_units = set(level.units.keys())
+        travelers: Dict[NID, NID] = {unit.nid: unit.starting_traveler for unit in level.units}
+        for unit in level.units:
+            if isinstance(unit, UniqueUnit):
+                vres = _validate_unique_unit(database, resources, unit, level, all_level_units, travelers)
+            elif isinstance(unit, GenericUnit):
+                vres = _validate_generic_unit(database, resources, unit, level, all_level_units, travelers)
+            all_errors += vres.errors
+            all_warnings += vres.warnings
+
+        for region in level.regions:
+            vres = _validate_region(database, resources, region, resources.tilemaps.get(level.tilemap), level.nid)
+            all_errors += vres.errors
+            all_warnings += vres.warnings
+
+        # level.groups: if any warnings or errors pop up, we can add them here; can't think of any right now
+        # level.ai_groups: ditto to the above
+    return ValidationResult(all_errors, all_warnings)
+
+# in short, iterates through every component on the item, and verifies that
+# the component's value matches its type.
+def validate_items_and_skills(database: Database, resources: Resources) -> ValidationResult:
     validator = DatabaseValidatorEngine(database, resources)
     def _validate_component_type(obj_name: str, component_name: str, ctype: ComponentType | Tuple[ComponentType, ComponentType], cval, is_item=False) -> List[ComponentValidationError]:
         if is_item:
@@ -83,9 +154,9 @@ def validate_items_and_skills(database: Database, resources: Resources) -> List:
                     all_errors += _validate_component_type(item.nid, component.name, component.options[option], component.value[option], True)
             else:
                 all_errors += _validate_component_type(item.nid, component.name, component.expose, component.value, True)
-    return all_errors
+    return ValidationResult(all_errors)
 
-def validate_events(database: Database, resources: Resources) -> List:
+def validate_events(database: Database, resources: Resources) -> ValidationResult:
     ppsr = Preprocessor(database.events)
     all_errors = []
     for event in database.events:
@@ -109,11 +180,10 @@ def validate_events(database: Database, resources: Resources) -> List:
                     new_source.append(line)
             event.source = '\n'.join(new_source)
             # END
-    return all_errors
+    return ValidationResult(all_errors)
 
-def validate_all(database: Database, resources: Resources) -> List:
-    event_errors = validate_events(database, resources)
-    skill_errors = validate_items_and_skills(database, resources)
-    level_errors = validate_levels(database, resources)
-    all_errors = event_errors + skill_errors + level_errors
+def validate_for_errors(database: Database, resources: Resources) -> List:
+    all_errors = validate_events(database, resources).errors
+    all_errors += validate_items_and_skills(database, resources).errors
+    all_errors += validate_levels(database, resources).errors
     return all_errors
