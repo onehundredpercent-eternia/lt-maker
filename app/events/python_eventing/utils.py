@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Optional, Set, Tuple, Type
 
 from .. import event_commands
-    
+
 EVENT_INSTANCE = "EC"
+EVENT_GEN_NAME = "_lt_event_gen"
 
 FORBIDDEN_PYTHON_COMMANDS: List[event_commands.EventCommand] = [event_commands.Comment, event_commands.If, event_commands.Elif, event_commands.Else,
                                                                 event_commands.End, event_commands.For, event_commands.Endf, event_commands.LoopUnits]

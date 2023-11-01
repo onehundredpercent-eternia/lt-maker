@@ -4,8 +4,14 @@ import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher as SM
 from functools import lru_cache
+<<<<<<< HEAD
 from typing import List, Optional, Type
 from PyQt5 import QtCore
+=======
+import re
+from sys import flags
+from typing import Any, Dict, List, Optional, Tuple, Type
+>>>>>>> f2b24e01 (wip)
 
 from PyQt5.QtCore import (QAbstractListModel, QLocale, QModelIndex, QSize, Qt,
                           pyqtSignal)
@@ -19,6 +25,7 @@ from app.data.resources.resources import RESOURCES
 from app.editor.settings import MainSettingsController
 from app.events import event_commands, event_validators
 from app.events.event_structs import ParseMode
+from app.events.python_eventing.swscomp.comp_utils import ParseMode
 from app.utilities.typing import NID
 
 

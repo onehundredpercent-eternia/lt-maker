@@ -11,8 +11,8 @@ from app.data.resources.resources import Resources
 from app.data.validation.validation_errors import (
     ComponentValidationError, ItemComponentValidationError, LevelValidationError, SkillComponentValidationError)
 from app.events.event_prefab import EventVersion
-from app.events.python_eventing.preprocessor import Preprocessor
 from app.events import event_commands
+from app.events.python_eventing.analyzer import PyEventAnalyzer
 
 
 def validate_levels(database: Database, resources: Resources) -> List:
@@ -86,7 +86,7 @@ def validate_items_and_skills(database: Database, resources: Resources) -> List:
     return all_errors
 
 def validate_events(database: Database, resources: Resources) -> List:
-    ppsr = Preprocessor(database.events)
+    ppsr = PyEventAnalyzer(database.events)
     all_errors = []
     for event in database.events:
         if event.version() != EventVersion.EVENT:

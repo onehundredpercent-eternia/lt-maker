@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Dict, List, Tuple
 from PyQt5 import QtCore, QtGui
 from app import dark_theme
+from app.events.event_prefab import EventVersion, get_event_version
 
 # from https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
 # with some modification
 
-def format(color: QtGui.QColor, style: str=''):
+def format(color: QtGui.QColor, style: str='') -> QtGui.QTextCharFormat:
     """Return a QTextCharFormat with the given attributes.
     """
     _format = QtGui.QTextCharFormat()
@@ -16,6 +18,15 @@ def format(color: QtGui.QColor, style: str=''):
     if 'italic' in style:
         _format.setFontItalic(True)
     return _format
+
+
+def get_pyev_ver_rules(styles: dark_theme.PythonSyntaxHighlightingPalette, version: EventVersion) -> List[Tuple[str, int, QtGui.QTextCharFormat]]:
+    if version == EventVersion.PYEV1:
+        return [
+                (r'(\$[^\( ]*) ', 0, format(styles.command, 'italic')),
+                (r'\$.*,(.*)', 1, format(styles.flag))
+        ]
+    return []
 
 class PythonHighlighter(QtGui.QSyntaxHighlighter):
     """Syntax highlighter for the Python language.
@@ -36,12 +47,13 @@ class PythonHighlighter(QtGui.QSyntaxHighlighter):
 
     def __init__(self, parent: QtGui.QTextDocument) -> None:
         super().__init__(parent)
+        self.doc = parent
         theme = dark_theme.get_theme()
         styles = theme.python_syntax_highlighting()
         # Multi-line strings (expression, flag, style)
         self.tri_single = (QtCore.QRegExp("'''"), 1, format(styles.string2))
         self.tri_double = (QtCore.QRegExp('"""'), 2, format(styles.string2))
-
+        version = get_event_version(self.doc.toPlainText())
         rules = []
 
         # Keyword, operator, and brace rules
@@ -52,7 +64,7 @@ class PythonHighlighter(QtGui.QSyntaxHighlighter):
         rules += [(r'%s' % b, 0, format(styles.brace))
             for b in PythonHighlighter.braces]
 
-        # All other rules
+        # low priority python rules
         rules += [
             # 'def' followed by an identifier
             (r'\bdef\b\s*(\w+)', 1, format(styles.deffunc)),
@@ -62,11 +74,13 @@ class PythonHighlighter(QtGui.QSyntaxHighlighter):
             # Numeric literals
             (r'\b[+-]?[0-9]+[lL]?\b', 0, format(styles.numbers)),
             (r'\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b', 0, format(styles.numbers)),
-            (r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b', 0, format(styles.numbers)),
+            (r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b', 0, format(styles.numbers))
+        ]
+        # event syntax highlighting rules
+        rules += get_pyev_ver_rules(styles, version)
 
-            # event command
-            (r'(\$[^\(]*)\(?', 1, format(styles.command, 'italic')),
-            (r'FLAGS', 0, format(styles.command)),
+        # high priority python rules
+        rules += [
             # Double-quoted string, possibly containing escape sequences
             (r'"[^"\\]*(\\.[^"\\]*)*"', 0, format(styles.string)),
             # Single-quoted string, possibly containing escape sequences

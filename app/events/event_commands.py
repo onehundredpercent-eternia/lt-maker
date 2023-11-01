@@ -63,7 +63,7 @@ class EventCommand(Prefab):
             else:
                 self.display_values = []
 
-    def FLAGS(self, *args) -> EventCommand:
+    def set_flags(self, *args) -> EventCommand:
         self.chosen_flags |= set(args)
         return self
 

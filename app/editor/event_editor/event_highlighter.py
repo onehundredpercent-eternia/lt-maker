@@ -125,7 +125,6 @@ class EventSyntaxRuleHighlighter():
             logging.error("Error while validating %s %s", line, e)
             return 'all'
 
-
 class EventHighlighter(QSyntaxHighlighter):
     def __init__(self, parent, window):
         super().__init__(parent)
