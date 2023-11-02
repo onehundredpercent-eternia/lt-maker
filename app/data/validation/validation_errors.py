@@ -51,6 +51,25 @@ class ObjectFieldValidationError():
         return self.error_template.format(type=self.object_type, nid=self.nid,
                                           field_name=self.field_name, field_value=str(self.field_value),
                                           field_type=self.field_type.name)
+                                          
 
 class LevelValidationError(ObjectFieldValidationError):
     object_type = "Level"
+    
+class UnitValidationError(ObjectFieldValidationError):
+    object_type = "Unit"
+    
+@dataclass
+class LevelUnitValidationError():
+    level_nid: NID
+    unit_nid: NID
+    message: str
+    error_template = \
+"""
+    In Level "{level_nid}":
+        Error with Unit "{unit_nid}":
+    {message}
+"""
+
+    def __str__(self) -> str:
+        return self.error_template.format(level_nid=self.level_nid, unit_nid=self.unit_nid, message=self.message)    

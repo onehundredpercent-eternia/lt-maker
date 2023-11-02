@@ -13,7 +13,7 @@ from app.data.resources.resource_types import ResourceType
 from app.data.resources.resources import Resources
 from app.data.resources.tiles import TileMapPrefab
 from app.data.validation.validation_errors import (
-    ComponentValidationError, ItemComponentValidationError, LevelValidationError, SkillComponentValidationError)
+    ComponentValidationError, ItemComponentValidationError, LevelValidationError, SkillComponentValidationError, LevelUnitValidationError, UnitValidationError)
 from app.events.event_prefab import EventVersion
 from app.events import event_commands
 from app.data.validation.validation_warnings import LevelNoneFieldWarning, RegionWarning
@@ -26,15 +26,77 @@ class ValidationResult():
     errors: List = field(default_factory=list)
     warnings: List = field(default_factory=list)
 
+def _validate_unit_object_list(database: Database, resources: Resources, object_nids: List[NID], field_name: str, db_type: DatabaseType, unit_nid: NID, level_nid=None):
+    validator = DatabaseValidatorEngine(database, resources)
+    all_errors = []
+    all_warnings = []
+
+    for obj_nid in object_nids:
+        if not validator.validate(db_type, obj_nid):
+            if level_nid:
+                all_errors.append(LevelUnitValidationError(level_nid, unit_nid, "Error in %s: No %s with name '%s'" % (field_name, db_type.name, obj_nid)))
+            else:
+                all_errors.append(UnitValidationError(unit_nid, field_name, obj_nid, db_type))
+
+    return all_errors, all_warnings
+
+
 def _validate_unique_unit(database: Database, resources: Resources, unique_unit: UniqueUnit, level: LevelPrefab, level_units: Set[NID], travelers: Dict[NID, NID]) -> ValidationResult:
-    # @TODO(sigmaraven)
-    # in addition to checking each field, checking for traveler mishaps (e.g. duplicated travelers, make sure traveler is an actual other unit that doesn't exist)
-    return ValidationResult()
+    validator = DatabaseValidatorEngine(database, resources)
+    all_errors = []
+    all_warnings = []
+
+    if unique_unit.ai and not validator.validate(DatabaseType.AI, unique_unit.ai):
+        all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "AI %s does not exist" % unique_unit.ai))
+
+    if unique_unit.roam_ai and not validator.validate(DatabaseType.AI, unique_unit.roam_ai):
+        all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "Roam AI %s does not exist" % unique_unit.roam_ai))
+
+    if unique_unit.starting_position and not resources.tilemaps.get(level.tilemap).check_bounds(unique_unit.starting_position):
+        all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "Starting Position %s is out of bounds" % unique_unit.starting_position))
+
+    if travelers.get(unique_unit.nid):
+        traveler = travelers.get(unique_unit.nid)
+        if traveler not in level_units:
+            all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "Traveler %s is not loaded into level" % traveler))
+        elif traveler == unique_unit.nid:
+            all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "Unit is its own traveler"))
+        elif level.units.get(traveler).starting_position:
+            all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "Traveler %s already has position on map" % traveler))
+        elif traveler in [v for k, v in travelers.items() if k != unique_unit.nid]:
+            all_errors.append(LevelUnitValidationError(level.nid, unique_unit.nid, "Multiple units have identical traveler %s" % traveler))
+
+    return ValidationResult(all_errors, all_warnings)
 
 def _validate_generic_unit(database: Database, resources: Resources, generic_unit: GenericUnit, level: LevelPrefab, level_units: Set[NID], travelers: Dict[NID, NID]) -> ValidationResult:
-    # @TODO(sigmaraven)
-    # in addition to checking each field, checking for traveler mishaps (e.g. duplicated travelers, make sure traveler is an actual other unit that doesn't exist)
-    return ValidationResult()
+    validator = DatabaseValidatorEngine(database, resources)
+    all_item_errors, all_item_warnings = _validate_unit_object_list(database, resources, [i[0] for i in generic_unit.starting_items], 'Items', DatabaseType.ITEMS, generic_unit.nid, level.nid)
+    all_skill_errors, all_skill_warnings = _validate_unit_object_list(database, resources, generic_unit.starting_skills, 'Skills', DatabaseType.SKILLS, generic_unit.nid, level.nid)
+
+    all_errors = all_item_errors + all_skill_errors
+    all_warnings = all_item_warnings + all_skill_warnings
+
+    if generic_unit.ai and not validator.validate(DatabaseType.AI, generic_unit.ai):
+        all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "AI %s does not exist" % generic_unit.ai))
+
+    if generic_unit.roam_ai and not validator.validate(DatabaseType.AI, generic_unit.roam_ai):
+        all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "Roam AI %s does not exist" % generic_unit.roam_ai))
+
+    if generic_unit.starting_position and not resources.tilemaps.get(level.tilemap).check_bounds(generic_unit.starting_position):
+        all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "Starting Position %s is out of bounds" % generic_unit.starting_position))
+
+    if travelers.get(generic_unit.nid):
+        traveler = travelers.get(generic_unit.nid)
+        if traveler not in level_units:
+            all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "Traveler %s is not loaded into level" % traveler))
+        elif traveler == generic_unit.nid:
+            all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "Unit is its own traveler"))
+        elif level.units.get(traveler).starting_position:
+            all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "Traveler %s already has position on map" % traveler))
+        elif traveler in [v for k, v in travelers.items() if k != generic_unit.nid]:
+            all_errors.append(LevelUnitValidationError(level.nid, generic_unit.nid, "Multiple units have identical traveler %s" % traveler))
+
+    return ValidationResult(all_errors, all_warnings)
 
 def _validate_region(database: Database, resources: Resources, region: Region, level_tilemap: Optional[TileMapPrefab], level_nid: NID) -> ValidationResult:
     all_errors = []
@@ -156,6 +218,26 @@ def validate_items_and_skills(database: Database, resources: Resources) -> Valid
                 all_errors += _validate_component_type(item.nid, component.name, component.expose, component.value, True)
     return ValidationResult(all_errors)
 
+def validate_units(database: Database, resources: Resources) -> ValidationResult:
+    validator = DatabaseValidatorEngine(database, resources)
+    all_errors = []
+    all_warnings = []
+    for unit in database.units:
+        all_item_errors, all_item_warnings = _validate_unit_object_list(database, resources, [i[0] for i in unit.starting_items], 'Starting Items', DatabaseType.ITEMS, unit.nid)
+        all_skill_errors, all_skill_warnings = _validate_unit_object_list(database, resources, [i[1] for i in unit.learned_skills], 'Learned Skills', DatabaseType.SKILLS, unit.nid)
+
+        if not validator.validate(DatabaseType.CLASSES, unit.klass):
+            all_errors.append(UnitValidationError(unit.nid, 'Class', unit.klass, DatabaseType.CLASSES))
+
+        for k in unit.alternate_classes:
+            if not validator.validate(DatabaseType.CLASSES, k):
+                all_errors.append(UnitValidationError(unit.nid, 'Alternate Classes', k, DatabaseType.CLASSES))
+
+        all_errors = all_errors + all_item_errors + all_skill_errors
+        all_warnings = all_warnings + all_item_warnings + all_skill_warnings
+
+    return ValidationResult(all_errors, all_warnings)
+
 def validate_events(database: Database, resources: Resources) -> ValidationResult:
     ppsr = Preprocessor(database.events)
     all_errors = []
@@ -186,4 +268,5 @@ def validate_for_errors(database: Database, resources: Resources) -> List:
     all_errors = validate_events(database, resources).errors
     all_errors += validate_items_and_skills(database, resources).errors
     all_errors += validate_levels(database, resources).errors
+    all_errors += validate_units(database, resources).errors
     return all_errors

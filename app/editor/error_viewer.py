@@ -2,12 +2,11 @@ import sys
 from typing import Callable
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QTextEdit, QVBoxLayout, QWidget, QPushButton
 from app.data.database.database import DB, Database
 from app.data.resources.resources import RESOURCES, Resources
 
-from app.data.validation.db_validation import ValidationResult, validate_events, validate_items_and_skills, validate_levels
+from app.data.validation.db_validation import ValidationResult, validate_events, validate_items_and_skills, validate_levels, validate_units
 from app.editor.settings.main_settings_controller import MainSettingsController
 
 MAX_NUM_CHARS = 100000
@@ -55,6 +54,7 @@ class ErrorViewer(QWidget):
             return log
 
         text_body += create_error_log('EVENT', validate_events)
+        text_body += create_error_log('UNIT', validate_units)
         text_body += create_error_log('SKILL AND ITEM', validate_items_and_skills)
         text_body += create_error_log('LEVEL', validate_levels)
 
