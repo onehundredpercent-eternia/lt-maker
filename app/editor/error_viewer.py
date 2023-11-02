@@ -13,7 +13,7 @@ MAX_NUM_CHARS = 100000
 
 def generate_header(title: str):
     bars = '=' * len(title)
-    return f"{bars}\n{title}\n{bars}"
+    return f"{bars}\n{title}\n{bars}\n"
 
 class ErrorViewer(QWidget):
     def __init__(self, parent=None):
@@ -48,11 +48,11 @@ class ErrorViewer(QWidget):
             errors = validation_func()
             log = ''
             if errors.errors:
-                errors_as_str = '\n'.join(str(error) for error in errors.errors)
-                log += generate_header(f"{category_name} ERRORS") + errors_as_str + '\n'
+                errors_as_str = '\n\n'.join(str(error) for error in errors.errors)
+                log += generate_header(f"{category_name} ERRORS") + errors_as_str + '\n\n'
             if errors.warnings:
-                warnings_as_str = '\n'.join(str(warn) for warn in errors.warnings)
-                log += generate_header(f"{category_name} WARNINGS") + warnings_as_str + '\n'
+                warnings_as_str = '\n\n'.join(str(warn) for warn in errors.warnings)
+                log += generate_header(f"{category_name} WARNINGS") + warnings_as_str + '\n\n'
             return log
 
         text_body += create_error_log('EVENT', dbchecker.validate_events)
