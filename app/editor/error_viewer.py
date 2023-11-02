@@ -3,10 +3,10 @@ from typing import Callable
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QTextEdit, QVBoxLayout, QWidget, QPushButton
-from app.data.database.database import DB, Database
-from app.data.resources.resources import RESOURCES, Resources
+from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
 
-from app.data.validation.db_validation import ValidationResult, validate_events, validate_items_and_skills, validate_levels, validate_units
+from app.data.validation.db_validation import DBChecker, ValidationResult
 from app.editor.settings.main_settings_controller import MainSettingsController
 
 MAX_NUM_CHARS = 100000
@@ -42,8 +42,10 @@ class ErrorViewer(QWidget):
     def regenerate_errors(self):
         text_body = ""
 
-        def create_error_log(category_name, validation_func: Callable[[Database, Resources], ValidationResult]):
-            errors = validation_func(DB, RESOURCES)
+        dbchecker = DBChecker(DB, RESOURCES)
+
+        def create_error_log(category_name, validation_func: Callable[[], ValidationResult]):
+            errors = validation_func()
             log = ''
             if errors.errors:
                 errors_as_str = '\n'.join(str(error) for error in errors.errors)
@@ -53,10 +55,10 @@ class ErrorViewer(QWidget):
                 log += generate_header(f"{category_name} WARNINGS") + warnings_as_str + '\n'
             return log
 
-        text_body += create_error_log('EVENT', validate_events)
-        text_body += create_error_log('UNIT', validate_units)
-        text_body += create_error_log('SKILL AND ITEM', validate_items_and_skills)
-        text_body += create_error_log('LEVEL', validate_levels)
+        text_body += create_error_log('EVENT', dbchecker.validate_events)
+        text_body += create_error_log('UNIT', dbchecker.validate_units)
+        text_body += create_error_log('SKILL AND ITEM', dbchecker.validate_items_and_skills)
+        text_body += create_error_log('LEVEL', dbchecker.validate_levels)
 
         if not text_body:
             text_body = generate_header("No errors in project!")
