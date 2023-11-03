@@ -432,7 +432,7 @@ class UnitProperties(QWidget):
             else:
                 self.affinity_box.edit.setValue("None")
 
-            self.icon_edit.change_icon(current.portrait_nid)
+            self.icon_edit.set_current(current.portrait_nid)
 
     def hideEvent(self, event):
         self.close_averages()
