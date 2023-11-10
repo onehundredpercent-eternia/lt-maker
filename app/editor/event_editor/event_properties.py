@@ -558,7 +558,7 @@ class EventProperties(QWidget):
         self.language_mode = lang
         if lang == EditorLanguageMode.PYTHON:
             self.highlighter = PythonHighlighter(self.text_box.document())
-            self.text_box.set_completer(event_autocompleter.PythonEventScriptCompleter)
+            self.text_box.set_completer(None)
             self.text_box.set_function_hinter(None)
         else:
             self.highlighter = EventHighlighter(self.text_box.document(), self)
