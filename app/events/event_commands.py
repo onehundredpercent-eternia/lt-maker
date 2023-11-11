@@ -3304,45 +3304,8 @@ ALL_EVENT_COMMANDS.update({
     command.nickname: command for command in EventCommand.__subclasses__() if command.nickname
 })
 
-@dataclass
-class ArgToken():
-    string: str
-    index: int
-
-def get_command_arguments(text: str) -> List[ArgToken]:
-    # Replacement for text.split(';')
-    # that ignores any semicolons
-    # found within '{}' brackets
-    # in addition, returns the string location
-    # that the arg begins
-    arguments = []
-    curr = ""
-    level = 0
-    curr_idx = 0
-    for idx, t in enumerate(text):
-        if t == ';' and level == 0:
-            arguments.append(ArgToken(curr, curr_idx))
-            curr = ""
-            curr_idx = idx + 1
-        elif t == '{':
-            level += 1
-            curr += t
-        elif t == '}':
-            level -= 1
-            curr += t
-        else:
-            curr += t
-    arguments.append(ArgToken(curr, curr_idx))
-    return arguments
-
 def determine_command_type(text: str) -> Type[EventCommand]:
-    text = text.lstrip()
-    if text.startswith('#'):
-        return Comment
-    if text.startswith('comment;'):
-        return Comment
-    arguments = [arg.string for arg in get_command_arguments(text)]
-    command_nid = arguments[0]
+    command_nid = parse_event_line(text).command()
     return ALL_EVENT_COMMANDS.get(command_nid, Comment)
 
 def parse_script_to_commands(text: str) -> List[EventCommand]:
@@ -3449,13 +3412,13 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
     if text.endswith(';'):
         text = text[:-1]
 
-    arguments = [arg.string for arg in get_command_arguments(text)]
+    as_tokens = parse_event_line(text)
 
-    command_nid = arguments[0]
+    command_nid = as_tokens.command()
     bad_idx = None
     if command_nid in ALL_EVENT_COMMANDS:
         command_type = ALL_EVENT_COMMANDS[command_nid]
-        output, bad_idx = _parse_command(command_type, arguments)
+        output, bad_idx = _parse_command(command_type, as_tokens.tokens)
         if output:
             return output, None
     # Only gets here if it couldn't find a good match
@@ -3556,3 +3519,15 @@ def parse_event_line(line: str) -> EventCommandTokens:
             ectoks._flag_idx = idx
             break
     return ectoks
+
+def get_arg_name(command_t: Type[EventCommand], arg_text: str, arg_idx: int) -> Optional[str]:
+    # is this a keyword arg?
+    if '=' in arg_text:
+        maybe_keyword, _ = arg_text.split('=', 1)
+        if command_t.get_validator_from_keyword(maybe_keyword):
+            return maybe_keyword
+
+    # not a keyword arg
+    if not arg_idx < len(command_t.get_keywords()):
+        return None
+    return command_t.get_keywords()[arg_idx]

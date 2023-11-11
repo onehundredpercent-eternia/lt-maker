@@ -150,7 +150,7 @@ def generate_completions(line: str, level_nid: NID) -> List[CompletionEntry]:
         return []
 
     if as_tokens.mode() == ParseMode.ARGS:
-        arg_name = get_arg_name(command_t, arg, len(as_tokens.tokens) - 2)
+        arg_name = event_commands.get_arg_name(command_t, arg, len(as_tokens.tokens) - 2)
         arg_validator = event_validators.get(command_t.get_validator_from_keyword(arg_name))
         if arg_validator:
             valids = arg_validator(DB, RESOURCES).valid_entries()
@@ -170,18 +170,6 @@ def get_arg_info(line: str, end_idx: int) -> CompletionLocation:
     full_arg = as_tokens.tokens[-1]
     arg = trim_arg_text(full_arg)
     return CompletionLocation(arg, end_idx - len(arg))
-
-def get_arg_name(command_t: Type[event_commands.EventCommand], arg_text: str, arg_idx: int) -> Optional[str]:
-    # is this a keyword arg?
-    if '=' in arg_text:
-        maybe_keyword, _ = arg_text.split('=', 1)
-        if command_t.get_validator_from_keyword(maybe_keyword):
-            return maybe_keyword
-
-    # not a keyword arg
-    if not arg_idx < len(command_t.get_keywords()):
-        return None
-    return command_t.get_keywords()[arg_idx]
 
 def trim_arg_text(arg_text: str) -> str:
     return re.split('[^a-zA-Z0-9_"\'\{]', arg_text)[-1]
@@ -248,5 +236,5 @@ class EventScriptFunctionHinter():
         command_t = event_commands.ALL_EVENT_COMMANDS.get(command, None)
         if not command_t:
             return None
-        param = get_arg_name(command_t, arg, len(as_tokens.tokens) - 2)
+        param = event_commands.get_arg_name(command_t, arg, len(as_tokens.tokens) - 2)
         return EventScriptFunctionHinter._generate_hint_for_command(command_t, param or 'FLAGS')

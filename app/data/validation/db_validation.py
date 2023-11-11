@@ -96,7 +96,7 @@ def validate_events(database: Database, resources: Resources) -> List:
             for line in event._source:
                 as_command, _ = event_commands.parse_text_to_command(line)
                 if as_command:
-                    nid_or_nickname = event_commands.get_command_arguments(line)[0].string
+                    nid_or_nickname = event_commands.parse_event_line(line).command()
                     text = as_command.to_plain_text()
                     s = text.split(';', 1)
                     if len(s) == 1: # only command

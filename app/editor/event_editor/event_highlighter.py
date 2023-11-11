@@ -60,16 +60,18 @@ class EventSyntaxRuleHighlighter():
             while match_iterator.hasNext():
                 match = match_iterator.next()
                 format_lines.append(LineToFormat(match.capturedStart(), match.capturedLength(), rule._format))
-        as_tokens = event_commands.get_command_arguments(line)
+        parsed = event_commands.parse_event_line(line)
+        as_tokens = parsed.tokens
         # speak formatting
-        command_type = event_commands.determine_command_type(as_tokens[0].string.strip())
+        command_type = event_commands.ALL_EVENT_COMMANDS.get(parsed.command(), event_commands.Comment)
         if command_type == event_commands.Speak:
             if len(as_tokens) >= 3:
                 dialog_token = as_tokens[2]
-                format_lines.append(LineToFormat(dialog_token.index, len(dialog_token.string), self.text_format))
-                for idx, char in enumerate(dialog_token.string):
+                dialog_idx = parsed.token_idx[2]
+                format_lines.append(LineToFormat(dialog_idx, len(dialog_token), self.text_format))
+                for idx, char in enumerate(dialog_token):
                     if char in '|':
-                        format_lines.append(LineToFormat(dialog_token.index + idx, 1, self.special_text_format))
+                        format_lines.append(LineToFormat(dialog_idx + idx, 1, self.special_text_format))
 
         # error checking
         # error checking happens before brace formatting so that
@@ -78,11 +80,11 @@ class EventSyntaxRuleHighlighter():
         # are doing (or at least they *should* know what they are doing)
         broken_args = self.validate_tokens(line)
         if broken_args == 'all':
-            for token in as_tokens:
-                format_lines.append(LineToFormat(token.index, len(token.string), self.lint_format))
+            for idx, token in enumerate(as_tokens):
+                format_lines.append(LineToFormat(parsed.token_idx[idx], len(token), self.lint_format))
         else:
             for idx in broken_args:
-                format_lines.append(LineToFormat(as_tokens[idx].index, len(as_tokens[idx].string), self.lint_format))
+                format_lines.append(LineToFormat(parsed.token_idx[idx], len(as_tokens[idx]), self.lint_format))
 
         # brace formatting
         brace_mode = 0
