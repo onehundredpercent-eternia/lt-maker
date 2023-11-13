@@ -43,9 +43,9 @@ class GenericUnit(Prefab):
                 item[0] = new_nid
 
     def replace_skill_nid(self, old_nid, new_nid):
-        for skill in self.starting_skills:
+        for i, skill in enumerate(self.starting_skills):
             if skill == old_nid:
-                skill = new_nid
+                self.starting_skills[i] = new_nid
 
     def restore_attr(self, name, value):
         if name == 'starting_items':

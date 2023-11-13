@@ -26,6 +26,7 @@ class ComponentObjectEditor(QWidget, Generic[T]):
 
     def __init__(self, parent, database: Database) -> None:
         QWidget.__init__(self, parent)
+        self.window = parent
         self._db = database
         self.categories = self.data.categories
 

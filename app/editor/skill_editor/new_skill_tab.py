@@ -75,7 +75,7 @@ class NewSkillDatabase(ComponentObjectEditor):
             msg = "Deleting Skill <b>%s</b> would affect these objects." % nid
             swap, ok = DeletionDialog.get_swap(affected, model, msg, SkillBox(self.window, exclude=skill), self.window)
             if ok:
-                self.on_nid_changed(swap.nid, nid)
+                self._on_nid_changed(nid, swap.nid)
             else:
                 return False
         return True
