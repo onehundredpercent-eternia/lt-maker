@@ -51,7 +51,7 @@ def convert_type_from_string(tstr: str, ttype: ComponentType):
         return tstr
 
 
-def get_objs_using(objs: list, expose: ComponentType + Tuple[ComponentType, ComponentType], 
+def get_objs_using(objs: list, expose: ComponentType | Tuple[ComponentType, ComponentType], 
                    value: Any) -> list:
     affected_items = []
 
