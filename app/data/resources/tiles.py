@@ -10,7 +10,7 @@ from app.constants import AUTOTILE_FRAMES, TILEHEIGHT, TILEWIDTH, TILEX, TILEY
 from app.data.resources.base_catalog import ManifestCatalog
 from app.utilities import str_utils
 from app.utilities.data import Data, Prefab
-from app.utilities.data_order import parse_order_keys_file
+from app.utilities.data_order import parse_order_keys_file, rchop
 
 
 class TileMapPrefab(Prefab):
@@ -303,7 +303,7 @@ class TileMapCatalog(ManifestCatalog[TileMapPrefab]):
                         save_data.append(data)
             if '.orderkeys' in data_fnames: # using order key file
                 ordering = parse_order_keys_file(Path(multi_loc, '.orderkeys'))
-                save_data = sorted(save_data, key=lambda data: ordering.index(data['fname']) if data['fname'] in ordering else 99999)
+                save_data = sorted(save_data, key=lambda data: ordering.index(rchop(data['fname'], '.json')) if rchop(data['fname'], '.json') in ordering else 99999)
             else: # using order keys per object
                 save_data = sorted(save_data, key=lambda obj: obj['_orderkey'])
             for s_dict in save_data:

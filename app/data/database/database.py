@@ -108,7 +108,7 @@ class Database(object):
             if '.orderkeys' in data_fnames:
                 ordering = parse_order_keys_file(Path(data_dir, key, '.orderkeys'))
             data_fnames: List[Path] = [Path(data_dir, key, fname) for fname in data_fnames if fname.endswith('.json')]
-            data_fnames = sorted(data_fnames, key=lambda fname: ordering.index(fname.name) if fname.name in ordering else 99999)
+            data_fnames = sorted(data_fnames, key=lambda fname: ordering.index(fname.stem) if fname.stem in ordering else 99999)
             full_data = []
             for fname in data_fnames:
                 full_data += load_json(fname)
@@ -174,8 +174,7 @@ class Database(object):
                             name = str(idx).zfill(6)
                         name = re.sub(r'[\\/*?:"<>|]', "", name)
                         name = name.replace(' ', '_')
-                        fname = name + '.json'
-                        orderkeys.append(fname)
+                        orderkeys.append(name)
                         save_loc = Path(save_dir, name + '.json')
                         # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
                         save_json(save_loc, [subvalue])
