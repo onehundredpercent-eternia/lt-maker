@@ -1,4 +1,7 @@
 from __future__ import annotations
+from app.data.database.units import UnitPrefab
+from app.data.resources.portraits import Portrait
+from app.data.resources.resources import RESOURCES
 from app.engine.movement.unit_path_movement_component import UnitPathMovementComponent
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
@@ -638,3 +641,14 @@ class Event():
         for port in self.portraits.values():
             port.desaturate()
         portrait.saturate()
+
+    def _get_portrait(self, obj: UnitObject | UnitPrefab | Portrait | NID) -> Tuple[Optional[Portrait], str]:
+        if isinstance(obj, Portrait):
+            return obj, obj.nid
+        elif isinstance(obj, UnitObject) or isinstance(obj, UnitPrefab):
+            return RESOURCES.portraits.get(obj.portrait_nid), obj.nid
+        else:
+            nid = obj
+            as_obj: UnitObject | UnitPrefab | Portrait = \
+                 self._get_unit(nid) or DB.units.get(nid) or RESOURCES.portraits.get(nid)
+            return self._get_portrait(as_obj)

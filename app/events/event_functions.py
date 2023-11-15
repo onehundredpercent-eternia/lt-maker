@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import ast
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit, UniqueUnit
+from app.data.database.units import UnitPrefab
+from app.data.resources.portraits import Portrait
 from app.data.resources.resources import RESOURCES
+from app.data.resources.sounds import SFXPrefab, SongPrefab
 from app.engine import (action, background, banner, base_surf, dialog, engine,
                         icons, image_mods, item_funcs, item_system,
                         save, skill_system, unit_funcs)
@@ -30,13 +33,14 @@ from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.persistent_records import RECORDS
-from app.engine.sound import get_sound_thread
+from app.engine.sound import SongObject, get_sound_thread
 from app.events import event_commands, regions, triggers
 from app.events.event_portrait import EventPortrait
 from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
+from app.utilities.data import resolve_nid
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import check_valid_type
 from app.utilities.typing import NID
@@ -51,16 +55,17 @@ def comment(self: Event, flags=None):
 def finish(self: Event, flags=None):
     self.end()
 
-def wait(self: Event, time, flags=None):
+def wait(self: Event, time: int, flags=None):
     current_time = engine.get_time()
-    self.wait_time = current_time + int(time)
+    self.wait_time = current_time + time
     self.state = 'waiting'
 
 def end_skip(self: Event, flags=None):
     if not self.super_skip:
         self.do_skip = False
 
-def music(self: Event, music, fade_in=400, flags=None):
+def music(self: Event, music: SongPrefab | SongObject | NID, fade_in=400, flags=None):
+    music = resolve_nid(music)
     if self.do_skip:
         fade_in = 0
     if music == 'None':
@@ -81,19 +86,23 @@ def music_clear(self: Event, fade_out=0, flags=None):
     else:
         get_sound_thread().clear()
 
-def sound(self: Event, sound, volume=1.0, flags=None):
-    get_sound_thread().play_sfx(sound, volume=float(volume))
+def sound(self: Event, sound: SFXPrefab | NID, volume=1.0, flags=None):
+    sound = resolve_nid(sound)
+    get_sound_thread().play_sfx(sound, volume=volume)
 
-def stop_sound(self: Event, sound, flags=None):
+def stop_sound(self: Event, sound: SFXPrefab | NID, flags=None):
+    sound = resolve_nid(sound)
     get_sound_thread().stop_sfx(sound)
 
-def change_music(self: Event, phase, music, flags=None):
+def change_music(self: Event, phase: str, music: SongPrefab | SongObject | NID, flags=None):
+    music = resolve_nid(music)
     if music == 'None':
         action.do(action.ChangePhaseMusic(phase, None))
     else:
         action.do(action.ChangePhaseMusic(phase, music))
 
-def change_special_music(self: Event, special_music_type: str, music: str, flags=None):
+def change_special_music(self: Event, special_music_type: str, music: SongPrefab | SongObject | NID, flags=None):
+    music = resolve_nid(music)
     if special_music_type == 'title_screen':
         # title screen must persist past the current game
         RECORDS.replace('_music_title_screen', music)
@@ -104,19 +113,12 @@ def change_special_music(self: Event, special_music_type: str, music: str, flags
     elif special_music_type == 'game_over':
         action.do(action.SetGameVar('_music_game_over', music))
 
-def add_portrait(self: Event, portrait, screen_position, slide=None, expression_list=None, speed_mult=None, flags=None):
+def add_portrait(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID,
+                 screen_position: Tuple[int | str, int | str] | str | int,
+                 slide='normal', expression_list: List[str]=None, speed_mult=1, flags=None):
     flags = flags or set()
 
-    name = portrait
-    unit = self._get_unit(name)
-    if unit:
-        name = unit.nid
-    if unit and unit.portrait_nid:
-        portrait = RESOURCES.portraits.get(unit.portrait_nid)
-    elif name in DB.units.keys():
-        portrait = RESOURCES.portraits.get(DB.units.get(name).portrait_nid)
-    else:
-        portrait = RESOURCES.portraits.get(name)
+    portrait, name = self._get_portrait(portrait)
     if not portrait:
         self.logger.error("add_portrait: Couldn't find portrait %s" % name)
         return False
@@ -137,16 +139,13 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
     transition = True
     if 'immediate' in flags or self.do_skip:
         transition = False
-    speed_mult = speed_mult or 1
-    speed_mult = 1 / max(float(speed_mult), 0.001)
+    speed_mult = 1 / max(speed_mult, 0.001)
 
     new_portrait = EventPortrait(portrait, position, priority, transition,
                                  slide, mirror, name, speed_mult=speed_mult)
     self.portraits[name] = new_portrait
 
-    if expression_list:
-        expression_list = expression_list.split(',')
-        new_portrait.set_expression(expression_list)
+    new_portrait.set_expression(expression_list or {})
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
         pass
@@ -156,8 +155,12 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
 
     return True
 
-def multi_add_portrait(self: Event, portrait1, screen_position1, portrait2, screen_position2,
-                       portrait3=None, screen_position3=None, portrait4=None, screen_position4=None, flags=None):
+def multi_add_portrait(self: Event,
+                       portrait1: UnitObject | UnitPrefab | Portrait | NID, screen_position1: Tuple[int | str, int | str] | str | int,
+                       portrait2: UnitObject | UnitPrefab | Portrait | NID, screen_position2: Tuple[int | str, int | str] | str | int,
+                       portrait3: UnitObject | UnitPrefab | Portrait | NID | None=None, screen_position3: Tuple[int | str, int | str] | str | int | None=None,
+                       portrait4: UnitObject | UnitPrefab | Portrait | NID | None=None, screen_position4: Tuple[int | str, int | str] | str | int | None=None,
+                       flags=None):
     commands = []
     # Portrait1
     commands.append(event_commands.AddPortrait({'Portrait': portrait1, 'ScreenPosition': screen_position1}, {'no_block'}))
@@ -171,31 +174,31 @@ def multi_add_portrait(self: Event, portrait1, screen_position1, portrait2, scre
         commands.append(event_commands.AddPortrait({'Portrait': portrait4, 'ScreenPosition': screen_position4}, set()))
     self.command_queue += commands
 
-def remove_portrait(self: Event, portrait, speed_mult=1, flags=None):
+def remove_portrait(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID, speed_mult=1, flags=None):
     flags = flags or set()
 
-    name = portrait
-    unit = self._get_unit(name)
-    if unit:
-        name = unit.nid
+    _, name = self._get_portrait(portrait)
     if name not in self.portraits:
         return False
 
-    speed_mult = 1 / max(float(speed_mult), 0.001)
+    speed_mult = 1 / max(speed_mult, 0.001)
 
     if 'immediate' in flags or self.do_skip:
-        portrait = self.portraits.pop(name)
+        event_portrait = self.portraits.pop(name)
     else:
-        portrait = self.portraits[name]
-        portrait.end(speed_mult)
+        event_portrait = self.portraits[name]
+        event_portrait.end(speed_mult)
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
         pass
     else:
-        self.wait_time = engine.get_time() + portrait.transition_speed + 33
+        self.wait_time = engine.get_time() + event_portrait.transition_speed + 33
         self.state = 'waiting'
 
-def multi_remove_portrait(self: Event, portrait1, portrait2, portrait3=None, portrait4=None, flags=None):
+def multi_remove_portrait(self: Event, portrait1: UnitObject | UnitPrefab | Portrait | NID,
+                          portrait2: UnitObject | UnitPrefab | Portrait | NID,
+                          portrait3: UnitObject | UnitPrefab | Portrait | NID | None=None,
+                          portrait4: UnitObject | UnitPrefab | Portrait | NID | None=None, flags=None):
     commands = []
     commands.append(event_commands.RemovePortrait({'Portrait': portrait1}, {'no_block'}))
     flags = {'no_block'} if portrait3 else set()
@@ -207,50 +210,46 @@ def multi_remove_portrait(self: Event, portrait1, portrait2, portrait3=None, por
         commands.append(event_commands.RemovePortrait({'Portrait': portrait4}, set()))
     self.command_queue += commands
 
-def move_portrait(self: Event, portrait, screen_position, speed_mult=1, flags=None):
+def move_portrait(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID,
+                  screen_position: Tuple[int | str, int | str] | str | int,
+                  speed_mult=1, flags=None):
     flags = flags or set()
 
-    name = portrait
-    unit = self._get_unit(name)
-    if unit:
-        name = unit.nid
-    portrait = self.portraits.get(name)
-    if not portrait:
+    _, name = self._get_portrait(portrait)
+    event_portrait = self.portraits.get(name)
+    if not event_portrait:
         return False
 
     position, _ = parse_screen_position(screen_position)
 
     if 'immediate' in flags or self.do_skip:
-        portrait.quick_move(position)
+        event_portrait.quick_move(position)
     else:
         if not speed_mult:
             speed_mult = 1
-        portrait.move(position, float(speed_mult))
+        event_portrait.move(position, float(speed_mult))
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
         pass
     else:
-        self.wait_time = engine.get_time() + portrait.travel_time + 66
+        self.wait_time = engine.get_time() + event_portrait.travel_time + 66
         self.state = 'waiting'
 
-def mirror_portrait(self: Event, portrait, flags=None):
+def mirror_portrait(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID, flags=None):
     flags = flags or set()
 
-    name = portrait
-    unit = self._get_unit(name)
-    if unit:
-        name = unit.nid
-    portrait = self.portraits.get(name)
-    if not portrait:
+    _, name = self._get_portrait(portrait)
+    event_portrait = self.portraits.get(name)
+    if not event_portrait:
         return False
 
     flipped_portrait = \
         EventPortrait(
-            portrait.portrait,
-            portrait.position,
-            portrait.priority,
-            False, None, not portrait.mirror, name)
-    if self.text_boxes and self.text_boxes[-1].portrait == portrait:
+            event_portrait.portrait,
+            event_portrait.position,
+            event_portrait.priority,
+            False, None, not event_portrait.mirror, name)
+    if self.text_boxes and self.text_boxes[-1].portrait == event_portrait:
         self.text_boxes[-1].portrait = flipped_portrait
 
     if self.do_skip:
@@ -276,33 +275,26 @@ def mirror_portrait(self: Event, portrait, flags=None):
                 self.wait_time = engine.get_time() + portrait.transition_speed + 33
                 self.state = 'waiting'
 
-def bop_portrait(self: Event, portrait, flags=None):
+def bop_portrait(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID, flags=None):
     flags = flags or set()
 
-    name = portrait
-    unit = self._get_unit(name)
-    if unit:
-        name = unit.nid
-    _portrait = self.portraits.get(name)
-    if not _portrait:
+    _, name = self._get_portrait(portrait)
+    event_portrait = self.portraits.get(name)
+    if not event_portrait:
         return False
-    _portrait.bop()
+    event_portrait.bop()
     if 'no_block' in flags:
         pass
     else:
         self.wait_time = engine.get_time() + 666
         self.state = 'waiting'
 
-def expression(self: Event, portrait, expression_list, flags=None):
-    name = portrait
-    unit = self._get_unit(name)
-    if unit:
-        name = unit.nid
-    _portrait = self.portraits.get(name)
-    if not _portrait:
+def expression(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID, expression_list: List[str], flags=None):
+    _, name = self._get_portrait(portrait)
+    event_portrait = self.portraits.get(name)
+    if not event_portrait:
         return False
-    expression_list = expression_list.split(',')
-    _portrait.set_expression(expression_list)
+    event_portrait.set_expression(expression_list)
 
 def speak_style(self: Event, style, speaker=None, position=None, width=None, speed=None,
                 font_color=None, font_type=None, background=None, num_lines=None, draw_cursor=None,

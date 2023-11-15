@@ -494,29 +494,43 @@ it will be facing right, and vice versa.
 """
 
     def validate(self, text: str, level: Optional[NID]):
-        if text in horizontal_screen_positions:
-            return text
-        elif text in vertical_screen_positions:
-            return text
-        elif str_utils.is_int(text):
-            return text
-        elif ',' in text and len(text.split(',')) == 2:
-            horiz_comp = False
-            vert_comp = False
-            splittext = text.split(',')
-            horiz_comp = splittext[0] in horizontal_screen_positions or str_utils.is_int(splittext[0])
-            vert_comp = splittext[0] in vertical_screen_positions
-            if horiz_comp and splittext[1] in horizontal_screen_positions:
+        converted = self.convert(text)
+        if not converted:
+            return None
+        if isinstance(converted, tuple):
+            x, y = converted
+            if (not isinstance(x, int)
+                and not x in horizontal_screen_positions):
                 return None
-            if vert_comp and splittext[1] in vertical_screen_positions:
+            if (not isinstance(y, int)
+                and not y in vertical_screen_positions):
                 return None
-            return text
-        return None
+        else:
+            if (not isinstance(converted, int)
+                and not converted in horizontal_screen_positions
+                and not converted in vertical_screen_positions):
+                return None
+        return text
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(None, option) for option in horizontal_screen_positions]
         valids += [(None, option) for option in vertical_screen_positions]
         return valids
+
+    def convert(self, text: str) -> Tuple[int | str, int | str] | str | int | None:
+        maybe_tuple = text.replace(')', '').replace('(', '')
+        if ',' in maybe_tuple:
+            spl = maybe_tuple.split(',')
+            if not len(spl) == 2:
+                return None
+            x, y = spl
+            x = int(x) if str_utils.is_int(x) else x
+            y = int(y) if str_utils.is_int(y) else y
+            return (x, y)
+        else:
+            position = maybe_tuple
+            position = int(position) if str_utils.is_int(position) else position
+            return position
 
 class Slide(OptionValidator):
     valid = ["normal", "left", "right"]
@@ -535,8 +549,8 @@ class ExpressionList(Validator):
     desc = "expects a comma-delimited list of expressions. Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `OpenEyes`, `OpenMouth`). Example: `Smile,CloseEyes`"
 
     def validate(self, text, level):
-        text = text.split(',')
-        for t in text:
+        as_list = self.convert(text)
+        for t in as_list:
             if t not in self.valid_expressions:
                 return None
         return text
@@ -544,6 +558,9 @@ class ExpressionList(Validator):
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(None, option) for option in self.valid_expressions]
         return valids
+
+    def convert(self, text):
+        return text.split(',')
 
 class IllegalCharacterList(Validator):
     valid_sets = ["uppercase", "lowercase", "uppercase_UTF8", "lowercase_UTF8", "numbers_and_punctuation"]

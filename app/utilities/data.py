@@ -188,3 +188,9 @@ class Prefab():
     @classmethod
     def default(cls):
         return cls()
+
+def resolve_nid(obj: HasNid | NID) -> NID:
+    try:
+        return obj.nid
+    except:
+        return obj
