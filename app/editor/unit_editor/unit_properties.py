@@ -2,7 +2,6 @@ from app.editor.lib.components.database_delegate import DBNamesDelegate, UnitFie
 from app.extensions.key_value_delegate import KeyValueDelegate, KeyValueDoubleListModel
 from app.data.database.database import DB
 from app.editor.custom_widgets import AffinityBox, ClassBox
-from app.editor.component_editor_properties import T, HasComponents
 from app.editor.icons import UnitPortrait
 from app.editor.item_list_widget import ItemListWidget
 from app.editor.learned_skill_delegate import LearnedSkillDelegate
@@ -17,7 +16,6 @@ from app.extensions.list_widgets import (AppendMultiListWidget,
                                          BasicSingleListWidget)
 from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.utilities import str_utils
-from app.utilities.typing import NID
 
 from PyQt5.QtCore import QItemSelection, QItemSelectionModel, Qt
 from PyQt5.QtGui import QFontMetrics, QIcon
@@ -26,10 +24,6 @@ from PyQt5.QtWidgets import (QDialog, QGridLayout, QHBoxLayout, QLineEdit,
                              QStyledItemDelegate, QTableView, QTextEdit,
                              QVBoxLayout, QWidget)
 
-from typing import (Callable, Dict, Generic, List, Optional, Tuple, Type,
-                    TypeVar)
-
-T = TypeVar('T', bound=HasComponents)
 
 class WexpModel(VirtualListModel):
     def __init__(self, columns, data, parent=None):
@@ -125,18 +119,13 @@ class HorizWeaponListDelegate(QStyledItemDelegate):
         return editor
 
 class UnitProperties(QWidget):
-    def __init__(self, parent, current: Optional[T] = None,
-                 attempt_change_nid: Optional[Callable[[NID, NID], bool]] = None,
-                 on_icon_change: Optional[Callable] = None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.window = parent
-        self._data = self.window.data
+        self.view = self.window.left_frame.view
+        self.model = self.window.left_frame.model
+        self._data = self.window._data
         self.current = None
-
-        self.current: Optional[T] = current
-        self.cached_nid: Optional[NID] = self.current.nid if self.current else None
-        self.attempt_change_nid = attempt_change_nid
-        self.on_icon_change = on_icon_change
 
         top_section = QHBoxLayout()
 
@@ -274,30 +263,22 @@ class UnitProperties(QWidget):
         self.setLayout(final_section)
         final_section.addWidget(self.splitter)
 
-    def on_icon_changed(self, nid, x, y):
-        if self.current:
-            self.current.icon_nid = nid
-            self.current.icon_index = (x, y)
-            if self.on_icon_change:
-                self.on_icon_change()
-
     def nid_changed(self, text):
-        if self.current:
-            # Also change name if they are identical
-            if self.current.name == self.current.nid.replace('_', ' '):
-                self.name_box.edit.setText(text.replace('_', ' '))
-            self.current.nid = text
+        # Also change name if they are identical
+        if self.current.name == self.current.nid.replace('_', ' '):
+            self.name_box.edit.setText(text.replace('_', ' '))
+        self.current.nid = text
+        self.window.update_list()
 
     def nid_done_editing(self):
-        if self.current and self.cached_nid:
-            self.nid_box.edit.blockSignals(True)  # message box causes focus loss which double triggers nid_done_editing
-            # Check validity of nid!
-            if self.attempt_change_nid and self.attempt_change_nid(self.cached_nid, self.current.nid):
-                self.cached_nid = self.current.nid
-            else:
-                self.current.nid = self.cached_nid
-                self.nid_box.edit.setText(self.cached_nid)
-            self.nid_box.edit.blockSignals(False)
+        # Check validity of nid!
+        other_nids = [d.nid for d in self._data.values() if d is not self.current]
+        if self.current.nid in other_nids:
+            QMessageBox.warning(self.window, 'Warning', 'Unit ID %s already in use' % self.current.nid)
+            self.current.nid = str_utils.get_next_name(self.current.nid, other_nids)
+        self.model.on_nid_changed(self._data.find_key(self.current), self.current.nid)
+        self._data.update_nid(self.current, self.current.nid)
+        self.window.update_list()
 
     def name_changed(self, text):
         self.current.name = text
@@ -390,49 +371,45 @@ class UnitProperties(QWidget):
         self.current.affinity = self.affinity_box.edit.currentText()
 
     def set_current(self, current):
-        if not current:
-            self.setEnabled(False)
+        self.current = current
+        self.nid_box.edit.setText(current.nid)
+        self.name_box.edit.setText(current.name)
+        self.desc_box.edit.setText(current.desc)
+        self.level_box.edit.setValue(int(current.level))
+        self.class_box.edit.setValue(current.klass)
+        tags = current.tags[:]
+        self.tag_box.edit.clear()
+        self.tag_box.edit.addItems(DB.tags.keys())
+        self.tag_box.edit.setCurrentTexts(tags)
+
+        self.unit_stat_widget.update_stats()
+        self.unit_stat_widget.set_new_obj(current)
+        if self.averages_dialog:
+            self.averages_dialog.set_current(current)
+
+        self.personal_skill_widget.set_current(current.learned_skills)
+        self.unit_notes_widget.set_current(current.unit_notes)
+        self.unit_fields_widget.set_current(current.fields)
+        self.wexp_gain_widget.set_current(current.wexp_gain)
+        self.item_widget.set_current(current.starting_items)
+
+        if current.variant:
+            self.variant_box.edit.setText(current.variant)
         else:
-            self.setEnabled(True)
-            self.current = current
-            self.cached_nid = current.nid
-            self.nid_box.edit.setText(current.nid)
-            self.name_box.edit.setText(current.name)
-            self.desc_box.edit.setText(current.desc)
-            self.level_box.edit.setValue(int(current.level))
-            self.class_box.edit.setValue(current.klass)
-            tags = current.tags[:]
-            self.tag_box.edit.clear()
-            self.tag_box.edit.addItems(DB.tags.keys())
-            self.tag_box.edit.setCurrentTexts(tags)
+            self.variant_box.edit.clear()
 
-            self.unit_stat_widget.update_stats()
-            self.unit_stat_widget.set_new_obj(current)
-            if self.averages_dialog:
-                self.averages_dialog.set_current(current)
+        self.alternate_class_box.edit.clear()
+        self.alternate_class_box.edit.addItems(DB.classes.keys())
+        if current.alternate_classes:
+            alternate_classes = current.alternate_classes[:]
+            self.alternate_class_box.edit.setCurrentTexts(alternate_classes)
+        if current.affinity:
+            self.affinity_box.edit.setValue(current.affinity)
+        else:
+            self.affinity_box.edit.setValue("None")
 
-            self.personal_skill_widget.set_current(current.learned_skills)
-            self.unit_notes_widget.set_current(current.unit_notes)
-            self.unit_fields_widget.set_current(current.fields)
-            self.wexp_gain_widget.set_current(current.wexp_gain)
-            self.item_widget.set_current(current.starting_items)
-
-            if current.variant:
-                self.variant_box.edit.setText(current.variant)
-            else:
-                self.variant_box.edit.clear()
-
-            self.alternate_class_box.edit.clear()
-            self.alternate_class_box.edit.addItems(DB.classes.keys())
-            if current.alternate_classes:
-                alternate_classes = current.alternate_classes[:]
-                self.alternate_class_box.edit.setCurrentTexts(alternate_classes)
-            if current.affinity:
-                self.affinity_box.edit.setValue(current.affinity)
-            else:
-                self.affinity_box.edit.setValue("None")
-
-            self.icon_edit.set_current(current.portrait_nid)
+        self.icon_edit.set_current(current.portrait_nid)
 
     def hideEvent(self, event):
         self.close_averages()
+

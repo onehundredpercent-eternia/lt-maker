@@ -145,7 +145,7 @@ class UnitPortrait(QPushButton):
     def on_icon_changed(self, nid):
         if self.window.current:
             self.window.current.portrait_nid = nid
-            # self.window.window.update_list()
+            self.window.window.update()
 
     def onIconSourcePicker(self):
         from app.editor.portrait_editor import portrait_tab
