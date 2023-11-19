@@ -70,7 +70,7 @@ class WeaponModel(DragDropCollectionModel):
             model = UnitModel
             msg = "Deleting WeaponType <b>%s</b> would affect these units." % nid
             deletion_tabs.append(DeletionTab(affected_units, model, msg, "Units"))
-        elif affected_weapons:
+        if affected_weapons:
             model = WeaponModel
             msg = "Deleting WeaponType <b>%s</b> would affect these weapons." % nid
             deletion_tabs.append(DeletionTab(affected_weapons, model, msg, "Weapons"))

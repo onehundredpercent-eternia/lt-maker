@@ -77,7 +77,7 @@ class ClassModel(DragDropCollectionModel):
         if affected_classes:
             model = ClassModel
             msg = "Deleting Class <b>%s</b> would affect these classes" % nid
-            deletion_tabs.append(DeletionTab(affected_units, model, msg, "Classes"))
+            deletion_tabs.append(DeletionTab(affected_classes, model, msg, "Classes"))
         if affected_ais:
             from app.editor.ai_editor.ai_model import AIModel
             model = AIModel

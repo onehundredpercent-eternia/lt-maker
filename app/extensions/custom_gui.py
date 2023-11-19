@@ -69,8 +69,8 @@ class DeletionDialog(Dialog):
         self.layout.addWidget(self.tab_bar)
         self.swap_box = swap_box
         if self.swap_box:
-            layout.addWidget(QLabel("Swap these references to:"))
-            layout.addWidget(self.swap_box)
+            self.layout.addWidget(QLabel("Swap these references to:"))
+            self.layout.addWidget(self.swap_box)
         self.layout.addWidget(self.buttonbox)
 
     @staticmethod

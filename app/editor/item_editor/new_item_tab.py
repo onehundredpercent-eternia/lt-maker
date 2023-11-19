@@ -59,8 +59,8 @@ class NewItemDatabase(ComponentObjectEditor):
         item = self.data.get(nid)
         affected_units = [unit for unit in self._db.units if nid in unit.get_items()]
         affected_levels = [level for level in self._db.levels if any(nid in unit.get_items() for unit in level.units)]
-        affected_items = item_components.get_items_using(ComponentType.Item, nid, DB)
-        affected_skills = skill_components.get_skills_using(ComponentType.Item, nid, DB)
+        affected_items = item_components.get_items_using(ComponentType.Item, nid, self._db)
+        affected_skills = skill_components.get_skills_using(ComponentType.Item, nid, self._db)
 
         deletion_tabs = []
         if affected_units:

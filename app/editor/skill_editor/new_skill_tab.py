@@ -60,8 +60,8 @@ class NewSkillDatabase(ComponentObjectEditor):
         affected_units = [unit for unit in self._db.units if nid in unit.get_items()]
         affected_classes = [k for k in self._db.classes if nid in k.get_skills()]
         affected_levels = [level for level in self._db.levels if any(nid in unit.get_skills() for unit in level.units)]
-        affected_items = item_components.get_items_using(ComponentType.Skill, nid, DB)
-        affected_skills = skill_components.get_skills_using(ComponentType.Skill, nid, DB)
+        affected_items = item_components.get_items_using(ComponentType.Skill, nid, self._db)
+        affected_skills = skill_components.get_skills_using(ComponentType.Skill, nid, self._db)
         
         deletion_tabs = []
         if affected_units:
@@ -85,7 +85,7 @@ class NewSkillDatabase(ComponentObjectEditor):
             msg = "Deleting Skill <b>%s</b> would affect these items" % nid
             deletion_tabs.append(DeletionTab(affected_items, model, msg, "Items"))
         if affected_skills:
-            from app.editor.item_editor.item_model import SkillModel
+            from app.editor.skill_editor.skill_model import SkillModel
             model = SkillModel
             msg = "Deleting Skill <b>%s</b> would affect these skills" % nid
             deletion_tabs.append(DeletionTab(affected_skills, model, msg, "Skills"))
