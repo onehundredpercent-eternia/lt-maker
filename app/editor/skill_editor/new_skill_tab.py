@@ -82,12 +82,12 @@ class NewSkillDatabase(ComponentObjectEditor):
         if affected_items:
             from app.editor.item_editor.item_model import ItemModel
             model = ItemModel
-            msg = "Deleting Item <b>%s</b> would affect these items" % nid
+            msg = "Deleting Skill <b>%s</b> would affect these items" % nid
             deletion_tabs.append(DeletionTab(affected_items, model, msg, "Items"))
         if affected_skills:
             from app.editor.item_editor.item_model import SkillModel
             model = SkillModel
-            msg = "Deleting Item <b>%s</b> would affect these skills" % nid
+            msg = "Deleting Skill <b>%s</b> would affect these skills" % nid
             deletion_tabs.append(DeletionTab(affected_skills, model, msg, "Skills"))
 
         if deletion_tabs:

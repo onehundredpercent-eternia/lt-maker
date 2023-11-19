@@ -64,7 +64,7 @@ class PaletteModel(DragDropCollectionModel):
             model = CombatAnimationModel
             msg = "Deleting Palette <b>%s</b> would affect these combat animations."
             deletion_tab = DeletionTab(affected_combat_anims, model, msg, "Combat Animations")
-            ok = DeletionDialog.inform(deletion_tab, self.window)
+            ok = DeletionDialog.inform([deletion_tab], self.window)
             if ok:
                 pass
             else:

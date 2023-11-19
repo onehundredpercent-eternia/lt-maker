@@ -98,7 +98,7 @@ class CombatAnimModel(ResourceCollectionModel):
             model = ClassModel
             msg = "Deleting Combat Animation <b>%s</b> would affect these classes" % nid
             deletion_tab = DeletionTab(affected_classes, model, msg, "Classes")
-            ok = DeletionDialog.inform(deletion_tab, self.window)
+            ok = DeletionDialog.inform([deletion_tab], self.window)
             if ok:
                 for klass in affected_classes:
                     klass.combat_anim_nid = None
