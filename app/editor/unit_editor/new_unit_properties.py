@@ -129,9 +129,6 @@ class NewUnitProperties(QWidget):
                  attempt_change_nid: Optional[Callable[[NID, NID], bool]] = None,
                  on_icon_change: Optional[Callable] = None):
         super().__init__(parent)
-        self.window = parent
-        self._data = self.window.data
-        self.current = None
 
         self.current: Optional[T] = current
         self.cached_nid: Optional[NID] = self.current.nid if self.current else None
@@ -143,14 +140,8 @@ class NewUnitProperties(QWidget):
         main_section = QGridLayout()
 
         self.icon_edit = UnitPortrait(self)
-        main_section.addWidget(self.icon_edit, 0, 0, 2, 1, Qt.AlignHCenter)
         self.icon_edit.sourceChanged.connect(self.on_icon_changed)
-        # top_section.addWidget(self.icon_edit)
-        #
-        # horiz_spacer = QSpacerItem(40, 10, QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # top_section.addSpacerItem(horiz_spacer)
-        #
-        # name_section = QVBoxLayout()
+        main_section.addWidget(self.icon_edit, 0, 0, 2, 1, Qt.AlignHCenter)
 
         self.nid_box = PropertyBox(_("Unique ID"), NidLineEdit, self)
         self.nid_box.edit.textChanged.connect(self.nid_changed)
@@ -161,8 +152,6 @@ class NewUnitProperties(QWidget):
 
         self.name_box.edit.textChanged.connect(self.name_changed)
         main_section.addWidget(self.name_box, 0, 2)
-
-        # top_section.addLayout(name_section)
 
         self.variant_box = PropertyBox("Animation Variant", QLineEdit, self)
         self.variant_box.edit.textChanged.connect(self.variant_changed)
@@ -205,14 +194,11 @@ class NewUnitProperties(QWidget):
         self.unit_stat_widget.model.dataChanged.connect(self.stat_list_model_data_changed)
         self.unit_stat_widget.view.setFixedHeight(130)
         self.averages_dialog = None
-        # self.unit_stat_widget.button.clicked.connect(self.access_stats)
         # Changing of stats done automatically by using model view framework within
 
         attrs = ("level", "skill_nid")
         self.personal_skill_widget = AppendMultiListWidget([], _("Personal Skills"), attrs, LearnedSkillDelegate, self, model=ReverseDoubleListModel)
         self.personal_skill_widget.view.setMaximumHeight(120)
-        # Changing of Personal skills done automatically also
-        # self.personal_skill_widget.activated.connect(self.learned_skills_changed)
 
         noteAttrs = ("Category", "Entries")
         self.unit_notes_widget = AppendMultiListWidget([], "Unit Notes", noteAttrs, KeyValueDelegate, self, model=KeyValueDoubleListModel)
@@ -227,13 +213,10 @@ class NewUnitProperties(QWidget):
         default_weapons = {weapon_nid: DB.weapons.default(DB) for weapon_nid in DB.weapons.keys()}
         self.wexp_gain_widget = HorizWeaponListWidget(
             default_weapons, "Starting Weapon Experience", HorizWeaponListDelegate, self)
-        # Changing of Weapon Gain done automatically
-        # self.wexp_gain_widget.activated.connect(self.wexp_gain_changed)
 
         item_section = QHBoxLayout()
         self.item_widget = ItemListWidget(_("Starting Items"), self)
         self.item_widget.items_updated.connect(self.items_changed)
-        # self.item_widget.setMaximumHeight(200)
         item_section.addWidget(self.item_widget)
 
         self.alternate_class_box = PropertyBox("Alternate Classes", MultiSelectComboBox, self)
@@ -279,6 +262,7 @@ class NewUnitProperties(QWidget):
 
     def on_icon_changed(self, nid):
         if self.current:
+            self.current.portrait_nid = nid
             self.current.icon_nid = nid
             if self.on_icon_change:
                 self.on_icon_change()
@@ -306,7 +290,6 @@ class NewUnitProperties(QWidget):
 
     def desc_changed(self, text=None):
         self.current.desc = self.desc_box.edit.toPlainText()
-        # self.current.desc = text
 
     def level_changed(self, val):
         self.current.level = int(val)
@@ -315,7 +298,6 @@ class NewUnitProperties(QWidget):
 
     def class_changed(self, index):
         self.current.klass = self.class_box.edit.currentText()
-        # self.level_box.edit.setMaximum(DB.classes.get(self.current.klass).max_level)
         if self.averages_dialog:
             self.averages_dialog.update()
 
@@ -362,12 +344,6 @@ class NewUnitProperties(QWidget):
     def stat_list_model_data_changed(self, index1, index2):
         if self.averages_dialog:
             self.averages_dialog.update()
-
-    # def learned_skills_changed(self):
-    #     pass
-
-    # def wexp_gain_changed(self):
-    #     pass
 
     def items_changed(self):
         self.current.starting_items = self.item_widget.get_items()
