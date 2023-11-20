@@ -117,8 +117,6 @@ class UnitPortrait(QPushButton):
         self.setStyleSheet("QPushButton {qproperty-iconSize: %dpx %dpx;}" % (self.width, self.height))
         self.pressed.connect(self.onIconSourcePicker)
 
-        # self.sourceChanged.connect(self.on_icon_changed)
-
     def render(self):
         if self._nid:
             res = self.database.get(self._nid)
