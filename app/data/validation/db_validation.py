@@ -7,13 +7,17 @@ from app.data.database.components import Component, ComponentType
 from app.data.database.database import Database
 from app.data.database.database_types import DatabaseType as DType
 from app.data.database.database_validator import DatabaseValidatorEngine
+from app.data.database.item_components import ItemTags
 from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.database.levels import OBJECTIVE_KEYS, LevelPrefab
+from app.data.database.skill_components import SkillTags
 from app.data.resources.resource_types import ResourceType
 from app.data.resources.resources import Resources
 from app.data.resources.tiles import TileMapPrefab
 from app.data.validation.utils import LTType
 import app.data.validation.validation_errors as ltdb
+from app.events.event_prefab import EventVersion
+from app.events import event_commands
 from app.events.python_eventing.preprocessor import Preprocessor
 from app.events.regions import Region
 from app.utilities.typing import NID
@@ -32,13 +36,6 @@ class DBChecker():
         self.resources = resources
         self.dve = DatabaseValidatorEngine(db, resources)
 
-    def _val_or_err(self, nids: List[NID] | NID, dtype: LTType, parent_error: ltdb.Error, optional=True) -> List[ltdb.Error]:
-        if not isinstance(nids, list):
-            nids = [nids]
-        if optional:
-            nids = [nid for nid in nids if nid]
-        return [parent_error.tmplt.not_type(dtype, nid) for nid in nids if not self.dve.validate(dtype, nid)]
-
     def _validate_level_unit(self, unit: UniqueUnit | GenericUnit, level: LevelPrefab, level_units: Set[NID], travelers: Dict[NID, NID], l_err: ltdb.Error) -> ValidationResult:
         res = ValidationResult()
         u_err = l_err.field("Units").prop(DType.UNITS, unit.nid)
@@ -46,7 +43,8 @@ class DBChecker():
         res.errors += self._val_or_err(unit.ai, DType.AI, u_err.field("AI"))
         res.errors += self._val_or_err(unit.roam_ai, DType.AI, u_err.field("Roam AI"))
 
-        if unit.starting_position and not self.resources.tilemaps.get(level.tilemap).check_bounds(unit.starting_position):
+        tilemap_prefab = self.resources.tilemaps.get(level.tilemap)
+        if unit.starting_position and tilemap_prefab and not tilemap_prefab.check_bounds(unit.starting_position):
             res.errors.append(u_err.msg("Starting Position %s is out of bounds" % unit.starting_position))
 
         if travelers.get(unit.nid):
@@ -146,27 +144,31 @@ class DBChecker():
                 errors += self._val_or_err(cvalue, cctype, c_err)
             return errors
 
-        def _val_comp(component: Component, s_err: ltdb.Error) -> List[ltdb.Error]:
+        def _val_comp(component: Component, s_err: ltdb.Error) -> ValidationResult:
             c_err = s_err.prop("Component", component.nid)
+            c_warn = c_err.to_warn()
             errors: List[ltdb.Error] = []
+            warnings: List[ltdb.Warning] = []
             if not component.expose:
-                return []
+                return ValidationResult()
             if component.expose == ComponentType.NewMultipleOptions:
                 for option in component.options.keys():
                     errors += _val_comp_t(component.options[option], component.value[option], c_err)
             else:
-                errors = _val_comp_t(component.expose, component.value, c_err)
-            return errors
+                errors += _val_comp_t(component.expose, component.value, c_err)
+            if component.tag in (SkillTags.DEPRECATED, ItemTags.DEPRECATED):
+                warnings.append(c_warn.msg("Deprecated Component. Consider using a newer version of this component. Engine updates may cause this to break."))
+            return ValidationResult(errors, warnings)
 
         res = ValidationResult()
         for skill in self.db.skills:
             s_err = ltdb.Error(DType.SKILLS, skill.nid)
             for component in skill.components:
-                res.errors += _val_comp(component, s_err)
+                res += _val_comp(component, s_err)
         for item in self.db.items:
             i_err = ltdb.Error(DType.ITEMS, item.nid)
             for component in item.components:
-                res.errors += _val_comp(component, i_err)
+                res += _val_comp(component, i_err)
         return res
 
     def validate_units(self) -> ValidationResult:
@@ -183,9 +185,34 @@ class DBChecker():
         ppsr = Preprocessor(self.db.events)
         all_errors = []
         for event in self.db.events:
-            if event.is_python_event():
+            if event.version() != EventVersion.EVENT:
                 all_errors += ppsr.verify_event(event.nid, event.source)
+            else:
+                # TODO(mag): delete this on 1/1/2024, temporary measure to correctly format projects, deleting parens
+                new_source = []
+                for line in event._source:
+                    as_command, _ = event_commands.parse_text_to_command(line)
+                    if as_command:
+                        nid_or_nickname = event_commands.get_command_arguments(line)[0].string
+                        text = as_command.to_plain_text()
+                        s = text.split(';', 1)
+                        if len(s) == 1: # only command
+                            reconstituted = nid_or_nickname
+                        else:
+                            reconstituted = nid_or_nickname + ';' + s[1]
+                        new_source.append(reconstituted)
+                    else:
+                        new_source.append(line)
+                event.source = '\n'.join(new_source)
+                # END
         return ValidationResult(all_errors)
+
+    def _val_or_err(self, nids: List[NID] | NID, dtype: LTType, parent_error: ltdb.Error, optional=True) -> List[ltdb.Error]:
+        if not isinstance(nids, list):
+            nids = [nids]
+        if optional:
+            nids = [nid for nid in nids if nid]
+        return [parent_error.tmplt.not_type(dtype, nid) for nid in nids if not self.dve.validate(dtype, nid)]
 
     def validate_for_errors(self) -> List:
         all_errors = self.validate_events().errors

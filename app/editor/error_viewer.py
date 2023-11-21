@@ -26,8 +26,8 @@ class ErrorViewer(QWidget):
         self.textEdit = QTextEdit()
         self.textEdit.setReadOnly(True)
         self.textEdit.setFontFamily(self.settings.get_code_font())
-        self.textEdit.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.textEdit.setLineWrapMode(QTextEdit.NoWrap)
+        self.textEdit.setFontPointSize(12)
+        self.textEdit.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
 
         self.refresh_errors_button = QPushButton("Regenerate Error Report")
         self.refresh_errors_button.clicked.connect(self.regenerate_errors)

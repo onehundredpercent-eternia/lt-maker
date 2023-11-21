@@ -19,6 +19,7 @@ class Error():
         copy = Error(*self._origin)
         copy._props = self._props.copy()
         copy._msg = self._msg
+        copy._type = self._type
         return copy
 
     def concat(self, err: Error) -> Error:
@@ -46,7 +47,7 @@ class Error():
         return self.concat(other)
 
     def __str__(self) -> str:
-        def in_(prop: Tuple[LTType | str, str]):
+        def in_(prop: Tuple[LTType | str, str], origin=False):
             dtype, value = prop
             if isinstance(dtype, str):
                 dstr = dtype
@@ -54,10 +55,12 @@ class Error():
                 dstr = dtype.name.lower().capitalize()
                 if dstr.endswith('s'):
                     dstr = dstr[:-1]
-            return "In %s '%s':" % (dstr, value)
+            if not origin:
+                return "In %s '%s':" % (dstr, value)
+            return "In [%s:'%s']:" % (dstr, value)
         msgs = []
         if self._origin:
-            origin_msg = "%s: %s" % (self._type, in_(self._origin))
+            origin_msg = "%s: %s" % (self._type, in_(self._origin, True))
             msgs.append(origin_msg)
         msgs += [in_(prop) for prop in self._props]
         msgs.append(self._msg[1])
