@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ast
 import random
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
@@ -43,7 +43,7 @@ from app.utilities import str_utils, utils
 from app.utilities.data import resolve_nid
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import check_valid_type
-from app.utilities.typing import NID
+from app.utilities.typing import NID, Point
 from app.engine.source_type import SourceType
 
 if TYPE_CHECKING:
@@ -296,48 +296,16 @@ def expression(self: Event, portrait: UnitObject | UnitPrefab | Portrait | NID, 
         return False
     event_portrait.set_expression(expression_list)
 
-def speak_style(self: Event, style, speaker=None, position=None, width=None, speed=None,
-                font_color=None, font_type=None, background=None, num_lines=None, draw_cursor=None,
-                message_tail=None, transparency=None, name_tag_bg=None, flags=None):
+def speak_style(self: Event, style: NID, speaker: NID=None, position: Alignments | Point=None,
+                width: int=None, speed: float=None, font_color: NID=None, font_type: NID=None,
+                background: NID=None, num_lines: int=None, draw_cursor: bool=None,
+                message_tail: NID=None, transparency: float=None, name_tag_bg: NID=None, flags=None):
     flags = flags or set()
-    style_nid = style
-    if style_nid in self.game.speak_styles:
-        style = self.game.speak_styles[style_nid]
-    else:
-        style = SpeakStyle(nid=style_nid)
-    # parse everything
-    if speaker:
-        style.speaker = speaker
-    if position:
-        try:
-            align = Alignments(position)
-            style.position = align
-        except:
-            style.position = self._parse_pos(position)
-
-    if width:
-        style.width = int(width)
-    if speed:
-        style.speed = float(speed)
-    if font_color:
-        style.font_color = font_color
-    if font_type:
-        style.font_type = font_type
-    if background:
-        style.background = background
-    if num_lines:
-        style.num_lines = int(num_lines)
-    if draw_cursor:
-        style.draw_cursor = draw_cursor.lower() in self.true_vals
-    if message_tail:
-        style.message_tail = message_tail
-    if transparency is not None:
-        style.transparency = transparency
-    if name_tag_bg:
-        style.name_tag_bg = name_tag_bg
-    if flags:
-        style.flags = flags
-    self.game.speak_styles[style.nid] = style
+    style_obj = SpeakStyle(style, speaker, position, width, speed, font_color, font_type, background,
+                           num_lines, draw_cursor, message_tail, transparency, name_tag_bg, flags)
+    if style in self.game.speak_styles:
+        style_obj = self.game.speak_styles[style].update(style_obj)
+    self.game.speak_styles[style] = style_obj
 
 def speak(self: Event, speaker_or_style: str, text, text_position=None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,

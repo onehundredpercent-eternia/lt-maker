@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type
 
 from app.data.database.database import Database
 from app.engine.fonts import FONT
+from app.utilities import typing
 from app.utilities.enums import HAlignment, VAlignment
 from app.events import event_commands
 from app.events.screen_positions import horizontal_screen_positions, vertical_screen_positions
@@ -304,6 +305,9 @@ class PositiveInteger(Validator):
             return int(text)
         return None
 
+    def convert(self, text: str) -> int:
+        return int(text)
+
 class IntegerList(Validator):
     desc = "must be a comma-delimited list of integers (ie, `5,7,12`)"
 
@@ -314,6 +318,9 @@ class IntegerList(Validator):
                 return None
         return text
 
+    def convert(self, text: str) -> int:
+        return [int(i) for i in text.split(',')]
+
 class WholeNumber(Validator):
     desc = "must be a whole number"
 
@@ -321,6 +328,9 @@ class WholeNumber(Validator):
         if str_utils.is_int(text) and int(text) >= 0:
             return int(text)
         return None
+
+    def convert(self, text: str) -> int:
+        return int(text)
 
 class String(Validator):
     """
@@ -663,6 +673,9 @@ class Width(Validator):
             return 8 * round(int(text) / 8)
         return None
 
+    def convert(self, text: str) -> int:
+        return int(text)
+
 class Speed(Validator):
     desc = "is measured in milliseconds"
 
@@ -670,6 +683,9 @@ class Speed(Validator):
         if str_utils.is_int(text) and int(text) > 0:
             return text
         return None
+
+    def convert(self, text: str) -> int:
+        return int(text)
 
 class Color3(Validator):
     desc = "uses 0-255 for color channels. Example: `128,160,136`"
@@ -684,8 +700,16 @@ class Color3(Validator):
             return text
         return None
 
+    def convert(self, text: str) -> typing.Color3:
+        r, g, b = text.split(',')
+        return int(r), int(g), int(b)
+
 class Bool(OptionValidator):
     valid = ['t', 'true', '1', 'y', 'yes', 'f', 'false', '0', 'n', 'no']
+
+    def convert(self, text: str) -> bool:
+        true_values = self.valid[:5]
+        return text in true_values
 
 class ShopFlavor(Validator):
     # Any string will do
@@ -983,6 +1007,12 @@ class AlignOrPosition(OptionValidator):
         elif text and ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
             return text
         return None
+
+    def convert(self, text: str) -> Alignments | Point:
+        if ',' in text:
+            x, y = text.split(',')
+            return int(x), int(y)
+        return Alignments[text]
 
 class HAlign(OptionValidator):
     valid = [align.value for align in HAlignment]
