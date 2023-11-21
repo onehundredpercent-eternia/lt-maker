@@ -307,30 +307,19 @@ def speak_style(self: Event, style: NID, speaker: NID=None, position: Alignments
         style_obj = self.game.speak_styles[style].update(style_obj)
     self.game.speak_styles[style] = style_obj
 
-def speak(self: Event, speaker_or_style: str, text, text_position=None, width=None, style_nid=None, text_speed=None,
-          font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
-          message_tail=None, transparency=None, name_tag_bg=None, flags=None):
+def speak(self: Event, speaker_or_style: str | SpeakStyle, text, text_position: Alignments | Point=None,
+          width: int=None, style_nid: str | SpeakStyle=None, text_speed: float=None,
+          font_color: NID=None, font_type: NID=None, dialog_box: NID=None, num_lines: int=None,
+          draw_cursor: bool=None, message_tail: NID=None, transparency: float=None, name_tag_bg: NID=None,
+          flags=None):
     flags = flags or set()
     text = dialog.process_dialog_shorthand(text)
 
     if 'no_block' in flags:
         text += '{no_wait}'
 
-    if text_position:
-        try:
-            position = Alignments(text_position)
-        except:
-            position = self._parse_pos(text_position)
-    else:
-        position = None
-    if draw_cursor:
-        cursor = draw_cursor.lower() in self.true_vals
-    else:
-        cursor = None
-
-    manual_style = SpeakStyle(None, None, position, int(width) if width else None, float(text_speed) if text_speed else None, font_color,
-                              font_type, dialog_box, int(num_lines) if num_lines else None, cursor, message_tail, float(transparency) if transparency else None, name_tag_bg, flags)
-
+    manual_style = SpeakStyle(None, None, text_position, int(width) if width else None, float(text_speed) if text_speed else None, font_color,
+                              font_type, dialog_box, int(num_lines) if num_lines else None, draw_cursor, message_tail, float(transparency) if transparency else None, name_tag_bg, flags)
     style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
     speaker = style.speaker or ''
     if speaker == 'None':
@@ -394,7 +383,7 @@ def speak(self: Event, speaker_or_style: str, text, text_position=None, width=No
         portrait.priority = self.priority_counter
         self.priority_counter += 1
 
-def unhold(self: Event, nid, flags=None):
+def unhold(self: Event, nid: NID, flags=None):
     for box in self.text_boxes:
         if box.style_nid == nid:
             box.hold = False

@@ -709,7 +709,7 @@ class Bool(OptionValidator):
 
     def convert(self, text: str) -> bool:
         true_values = self.valid[:5]
-        return text in true_values
+        return text.lower() in true_values
 
 class ShopFlavor(Validator):
     # Any string will do

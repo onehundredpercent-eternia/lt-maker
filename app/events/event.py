@@ -564,7 +564,10 @@ class Event():
     def _resolve_speak_style(self, speaker_or_style, *styles) -> SpeakStyle:
         curr_style = self.game.speak_styles['__default'].copy()
         styles = list(styles)
-        o_style = self.game.speak_styles.get(speaker_or_style)
+        if isinstance(speaker_or_style, SpeakStyle):
+            o_style = speaker_or_style
+        else:
+            o_style = self.game.speak_styles.get(speaker_or_style)
         if o_style:
             styles.append(o_style)
         for style in styles:
