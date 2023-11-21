@@ -611,6 +611,17 @@ class StringList(Validator):
         text = text.split(',')
         return text
 
+class BoolList(Validator):
+    desc = "a list of truthy or falsy values delimited by commas. E.g. `True, False, True`"
+
+    def validate(self, text, level):
+        as_list = text.split(',')
+        return all([t in Bool.valid for t in as_list])
+
+    def convert(self, text: str) -> List[Optional[bool]]:
+        as_list = text.split(',')
+        return [Bool().convert(t) for t in as_list]
+
 class DashList(Validator):
     desc = "similar to a StringList, but delimited by dashes. For example: `Water-Earth-Fire-Air`"
 
@@ -707,7 +718,9 @@ class Color3(Validator):
 class Bool(OptionValidator):
     valid = ['t', 'true', '1', 'y', 'yes', 'f', 'false', '0', 'n', 'no']
 
-    def convert(self, text: str) -> bool:
+    def convert(self, text: str) -> Optional[bool]:
+        if not text:
+            return None
         true_values = self.valid[:5]
         return text.lower() in true_values
 

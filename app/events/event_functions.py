@@ -43,7 +43,7 @@ from app.utilities import str_utils, utils
 from app.utilities.data import resolve_nid
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import check_valid_type
-from app.utilities.typing import NID, Point
+from app.utilities.typing import NID, Color3, Point
 from app.engine.source_type import SourceType
 
 if TYPE_CHECKING:
@@ -388,12 +388,11 @@ def unhold(self: Event, nid: NID, flags=None):
         if box.style_nid == nid:
             box.hold = False
 
-def unpause(self: Event, nid=None, flags=None):
+def unpause(self: Event, nid: NID=None, flags=None):
     if nid is None and self.text_boxes:
         # Just unpause the most recent text box
         box = self.text_boxes[-1]
         box.command_unpause()
-
     else:
         for box in reversed(self.text_boxes):
             if box.speaker == nid:
@@ -407,7 +406,8 @@ def unpause(self: Event, nid=None, flags=None):
     else:
         self.state = 'dialog'
 
-def transition(self: Event, direction=None, speed=None, color3=None, panorama=None, flags=None):
+def transition(self: Event, direction: str=None, speed: int=None, color3: Color3=None,
+               panorama: NID=None, flags=None):
     flags = flags or set()
     current_time = engine.get_time()
     if direction:
@@ -432,7 +432,7 @@ def transition(self: Event, direction=None, speed=None, color3=None, panorama=No
             self.wait_time = current_time + int(self.transition_speed * 1.33)
             self.state = 'waiting'
 
-def change_background(self: Event, panorama=None, flags=None):
+def change_background(self: Event, panorama: NID=None, flags=None):
     flags = flags or set()
     if panorama:
         panorama = RESOURCES.panoramas.get(panorama)
@@ -446,7 +446,7 @@ def change_background(self: Event, panorama=None, flags=None):
     else:
         self.portraits.clear()
 
-def pause_background(self: Event, pause_at=None, flags=None):
+def pause_background(self: Event, pause_at: int=None, flags=None):
     if not self.background:
         self.logger.warning("No current background to pause!")
         return
@@ -458,8 +458,8 @@ def unpause_background(self: Event, flags=None):
         return
     self.background.unpause()
 
-def disp_cursor(self: Event, show_cursor, flags=None):
-    if show_cursor.lower() in self.true_vals:
+def disp_cursor(self: Event, show_cursor: bool, flags=None):
+    if show_cursor:
         self.game.cursor.show()
     else:
         self.game.cursor.hide()
@@ -600,17 +600,14 @@ def set_next_chapter(self: Event, chapter, flags=None):
         return
     action.do(action.SetGameVar("_goto_level", chapter))
 
-def enable_supports(self: Event, activated: str, flags=None):
-    state = activated.lower() in self.true_vals
-    action.do(action.SetGameVar("_supports", state))
+def enable_supports(self: Event, activated: bool, flags=None):
+    action.do(action.SetGameVar("_supports", activated))
 
-def enable_turnwheel(self: Event, activated: str, flags=None):
-    state = activated.lower() in self.true_vals
-    action.do(action.SetGameVar("_turnwheel", state))
+def enable_turnwheel(self: Event, activated: bool, flags=None):
+    action.do(action.SetGameVar("_turnwheel", activated))
 
-def enable_fog_of_war(self: Event, activated: str, flags=None):
-    state = activated.lower() in self.true_vals
-    action.do(action.SetLevelVar("_fog_of_war", state))
+def enable_fog_of_war(self: Event, activated: bool, flags=None):
+    action.do(action.SetLevelVar("_fog_of_war", activated))
 
 def set_fog_of_war(self: Event, fog_of_war_type, radius, ai_radius=None, other_radius=None, flags=None):
     fowt = fog_of_war_type.lower()
@@ -665,14 +662,10 @@ def force_chapter_clean_up(self: Event, flags=None):
     self.game.clean_up(full=False)
 
 def skip_save(self: Event, true_or_false: str, flags=None):
-    state = true_or_false.lower() in self.true_vals
-    action.do(action.SetLevelVar('_skip_save', state))
+    action.do(action.SetLevelVar('_skip_save', true_or_false))
 
-def activate_turnwheel(self: Event, force=None, flags=None):
-    if force and force.lower() not in self.true_vals:
-        self.turnwheel_flag = 1
-    else:
-        self.turnwheel_flag = 2
+def activate_turnwheel(self: Event, force: bool=True, flags=None):
+    self.turnwheel_flag = 2 if force else 1
 
 def battle_save(self: Event, flags=None):
     flags = flags or set()
@@ -2408,12 +2401,8 @@ def remove_lore(self: Event, lore, flags=None):
 def add_base_convo(self: Event, nid, flags=None):
     self.game.base_convos[nid] = False
 
-def ignore_base_convo(self: Event, nid, ignore=None, flags=None):
+def ignore_base_convo(self: Event, nid, ignore: bool=True, flags=None):
     if nid in self.game.base_convos:
-        if ignore is not None:
-            ignore = ignore.lower() in self.true_vals
-        else:
-            ignore = True
         self.game.base_convos[nid] = ignore
 
 def remove_base_convo(self: Event, nid, flags=None):
@@ -2746,35 +2735,26 @@ def arrange_formation(self: Event, flags=None):
             action.execute(action.ArriveOnMap(unit, position))
             action.execute(action.Reset(unit))
 
-def prep(self: Event, pick_units_enabled: str = None, music: str = None, other_options: str = None,
-         other_options_enabled: str = None, other_options_on_select: str = None, flags=None):
-    if pick_units_enabled and pick_units_enabled.lower() in self.true_vals:
-        b = True
-    else:
-        b = False
-    action.do(action.SetLevelVar('_prep_pick', b))
+def prep(self: Event, pick_units_enabled: bool = False, music: str = None, other_options: List[str] = None,
+         other_options_enabled: List[Optional[bool]] = None, other_options_on_select: List[Optional[bool]] = None, flags=None):
+    action.do(action.SetLevelVar('_prep_pick', pick_units_enabled))
     if music:
         action.do(action.SetGameVar('_prep_music', music))
 
     if other_options:
-        options_list = other_options.split(',')
-        options_enabled = [False for option in options_list]
-        options_events = [None for option in options_list]
+        options_list = other_options or []
+        options_enabled = other_options_enabled or []
+        options_events = other_options_on_select or []
 
-        enabled_strs = other_options_enabled.split(',') if other_options_enabled else []
-        if len(enabled_strs) <= len(options_enabled):
-            for idx, is_enabled in enumerate(enabled_strs):
-                if is_enabled in self.true_vals:
-                    options_enabled[idx] = True
+        if len(options_enabled) <= len(options_list):
+            options_enabled += [False] * len(options_list) - len(options_enabled)
             action.do(action.SetGameVar('_prep_options_enabled', options_enabled))
         else:
             self.logger.error("prep: too many bools in option enabled list: ", other_options_enabled)
             return
 
-        event_nids = other_options_on_select.split(',') if other_options_on_select else []
-        if len(event_nids) <= len(options_events):
-            for idx, event_nid in enumerate(event_nids):
-                options_events[idx] = event_nid
+        if len(options_events) <= len(options_list):
+            options_events += [None] * len(options_list) - len(options_events)
             action.do(action.SetGameVar('_prep_options_events', options_events))
         else:
             self.logger.error("prep: too many events in option event list: ", other_options_on_select)
@@ -2788,8 +2768,8 @@ def prep(self: Event, pick_units_enabled: str = None, music: str = None, other_o
     self.game.state.change('prep_main')
     self.state = 'paused'  # So that the message will leave the update loop
 
-def base(self: Event, background: str, music: str = None, other_options: str = None,
-         other_options_enabled: str = None, other_options_on_select: str = None, flags=None):
+def base(self: Event, background: str, music: str = None, other_options: List[str] = None,
+         other_options_enabled: List[Optional[bool]] = None, other_options_on_select: List[Optional[bool]] = None, flags=None):
     flags = flags or set()
 
     # set panorama
@@ -2799,24 +2779,19 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
         action.do(action.SetGameVar('_base_music', music))
 
     if other_options:
-        options_list = other_options.split(',')
-        options_enabled = [False for option in options_list]
-        options_events = [None for option in options_list]
+        options_list = other_options or []
+        options_enabled = other_options_enabled or []
+        options_events = other_options_on_select or []
 
-        enabled_strs = other_options_enabled.split(',') if other_options_enabled else []
-        if len(enabled_strs) <= len(options_enabled):
-            for idx, is_enabled in enumerate(enabled_strs):
-                if is_enabled in self.true_vals:
-                    options_enabled[idx] = True
-            action.do(action.SetGameVar('_base_options_disabled', [not enabled for enabled in options_enabled]))
+        if len(options_enabled) <= len(options_list):
+            options_enabled += [False] * len(options_list) - len(options_enabled)
+            action.do(action.SetGameVar('_base_options_disabled', options_enabled))
         else:
             self.logger.error("base: too many bools in option enabled list: ", other_options_enabled)
             return
 
-        event_nids = other_options_on_select.split(',') if other_options_on_select else []
-        if len(event_nids) <= len(options_events):
-            for idx, event_nid in enumerate(event_nids):
-                options_events[idx] = event_nid
+        if len(options_events) <= len(options_list):
+            options_events += [None] * len(options_list) - len(options_events)
             action.do(action.SetGameVar('_base_options_events', options_events))
         else:
             self.logger.error("base: too many events in option event list: ", other_options_on_select)
@@ -2835,38 +2810,32 @@ def base(self: Event, background: str, music: str = None, other_options: str = N
     self.game.state.change('base_main')
     self.state = 'paused'
 
-def set_custom_options(self: Event, custom_options: str, custom_options_enabled: str = None,
-                       custom_options_desc: str = None, custom_options_on_select: str = None, flags=None):
+def set_custom_options(self: Event, custom_options: List[str], custom_options_enabled: List[bool] = None,
+                       custom_options_desc: List[str] = None, custom_options_on_select: List[str] = None, flags=None):
     flags = flags or set()
 
-    options_list = custom_options.split(',')
-    options_enabled = [True for option in options_list]
+    options_list = custom_options or []
+    options_enabled = custom_options_enabled or []
     options_desc = [option + '_desc' for option in options_list]
-    options_events = [None for option in options_list]
+    options_events = custom_options_on_select or []
 
-    enabled_strs = custom_options_enabled.split(',') if custom_options_enabled else []
-    if len(enabled_strs) <= len(options_enabled):
-        for idx, is_enabled in enumerate(enabled_strs):
-            if is_enabled not in self.true_vals:
-                options_enabled[idx] = False
-        action.do(action.SetGameVar('_custom_options_disabled', [not enabled for enabled in options_enabled]))
+    if len(options_enabled) <= len(options_list):
+        options_enabled += [False] * len(options_list) - len(options_enabled)
+        action.do(action.SetGameVar('_custom_options_disabled', options_enabled))
     else:
         self.logger.error("set_custom_options: too many bools in option enabled list: ", custom_options_enabled)
         return
 
-    info_descs = custom_options_desc.split(',') if custom_options_desc else []
-    if len(info_descs) <= len(options_events):
-        for idx, desc in enumerate(info_descs):
+    if len(custom_options_desc) <= len(options_events):
+        for idx, desc in enumerate(custom_options_desc):
             options_desc[idx] = desc
         action.do(action.SetGameVar('_custom_info_desc', options_desc))
     else:
         self.logger.error("set_custom_options: too many descriptions in option description list: ", custom_options_desc)
         return
 
-    event_nids = custom_options_on_select.split(',') if custom_options_on_select else []
-    if len(event_nids) <= len(options_events):
-        for idx, event_nid in enumerate(event_nids):
-            options_events[idx] = event_nid
+    if len(options_events) <= len(options_list):
+        options_events += [None] * len(options_list) - len(options_events)
         action.do(action.SetGameVar('_custom_options_events', options_events))
     else:
         self.logger.error("set_custom_options: too many events in option event list: ", custom_options_on_select)
@@ -3546,10 +3515,9 @@ def loop_units(self: Event, expression, event, flags=None):
         macro_command = event_commands.TriggerScript({'Event': event, 'Unit1': unit_nid})
         self.command_queue.append(macro_command)
 
-def change_roaming(self: Event, free_roam_enabled, flags=None):
-    val = free_roam_enabled.lower()
+def change_roaming(self: Event, free_roam_enabled: bool, flags=None):
     self.game.action_log.set_first_free_action()
-    self.game.set_roam(val in self.true_vals)
+    self.game.set_roam(free_roam_enabled)
 
 def change_roaming_unit(self: Event, unit, flags=None):
     unit = self._get_unit(unit)
@@ -3626,11 +3594,10 @@ def update_achievement(self: Event, achievement: str, name: str, description:str
     hidden = 'hidden' in flags
     ACHIEVEMENTS.update_achievement(achievement, name, description, hidden)
 
-def complete_achievement(self: Event, achievement: str, completed: str, flags=None):
+def complete_achievement(self: Event, achievement: str, completed: bool, flags=None):
     flags = flags or set()
     nid = achievement
 
-    completed = completed.lower() in self.true_vals
     banner = 'banner' in flags
 
     complete = ACHIEVEMENTS.complete_achievement(nid, completed, banner)
