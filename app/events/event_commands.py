@@ -1111,7 +1111,7 @@ class MakeGeneric(EventCommand):
         """
 Fabricates a new generic unit from scratch. This does not place instances of the new unit on the map.
 
-**If the NID field is left empty, then the event's `{created_unit}` will be overwritten to refer to the result of CreateUnit.**
+**If the NID field is left empty, then the event's `{created_unit}` will be overwritten to refer to the result of MakeGeneric.**
 
 Several optional keywords can also be provided to further modify the new unit:
 *AI* defines an AI preset to be given to the unit, *Faction* assignes the unit
@@ -3488,7 +3488,8 @@ def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = Non
             logging.error("Could not find %s in %s or %s", keyword, command.keywords, command.optional_keywords)
             continue
         keyword_type = command.get_keyword_types()[idx]
-        parameters[keyword] = convert(keyword_type, value)
+        if keyword in command.optional_keywords and value:
+            parameters[keyword] = convert(keyword_type, value)
 
     return parameters, command.chosen_flags
 

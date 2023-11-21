@@ -718,9 +718,7 @@ class Color3(Validator):
 class Bool(OptionValidator):
     valid = ['t', 'true', '1', 'y', 'yes', 'f', 'false', '0', 'n', 'no']
 
-    def convert(self, text: str) -> Optional[bool]:
-        if not text:
-            return None
+    def convert(self, text: str) -> bool:
         true_values = self.valid[:5]
         return text.lower() in true_values
 
@@ -798,6 +796,19 @@ class Position(Validator):
             return valids
         return []
 
+    def convert(self, text: str) -> Tuple[int, int] | NID:
+        maybe_tuple = text.replace(')', '').replace('(', '')
+        if ',' in maybe_tuple:
+            spl = maybe_tuple.split(',')
+            if not len(spl) == 2:
+                return None
+            x, y = spl
+            x = int(x)
+            y = int(y)
+            return (x, y)
+        else: # not point
+            return text
+
 class FloatPosition(Position, Validator):
     desc = """accepts a valid `(x, y)` position, but also allows fractional positions,
     such as (1.5, 2.6). You use a unit's nid to use their position.
@@ -827,6 +838,19 @@ class FloatPosition(Position, Validator):
         else:
             return text
 
+    def convert(self, text: str) -> Tuple[float, float] | NID:
+        maybe_tuple = text.replace(')', '').replace('(', '')
+        if ',' in maybe_tuple:
+            spl = maybe_tuple.split(',')
+            if not len(spl) == 2:
+                return None
+            x, y = spl
+            x = float(x)
+            y = float(y)
+            return (x, y)
+        else: # not point
+            return text
+
 class PositionOffset(Validator):
     desc = "accepts a valid `(x, y)` position offset."
 
@@ -837,6 +861,9 @@ class PositionOffset(Validator):
         if not all(str_utils.is_int(t) for t in text):
             return None
         return text
+
+    def convert(self, text: str) -> Tuple[float, float] | NID:
+        return tuple([int(i) for i in text.replace(')', '').replace('(', '').split(',')])
 
 class Size(Validator):
     desc = "must be in the format `x,y`. Example: `64,32`"
@@ -1050,6 +1077,9 @@ class CombatScript(Validator):
         valids = [(None, option) for option in self.valid_commands]
         return valids
 
+    def convert(self, text: str) -> List[str]:
+        return [t.strip() for t in text.split(',')]
+
 class Ability(Validator):
     def validate(self, text, level):
         if text in self._db.items.keys():
@@ -1087,6 +1117,9 @@ class ItemList(Validator):
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(None, item.nid) for item in self._db.items.values()]
         return valids
+
+    def convert(self, text: str) -> List[str]:
+        return [nid.strip for nid in text.split(',')]
 
 class ItemComponent(Validator):
     desc = "accepts an item component."

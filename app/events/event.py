@@ -30,7 +30,8 @@ from app.events.python_eventing.python_event_processor import PythonEventProcess
 from app.events.python_eventing.utils import SAVE_COMMAND_NIDS
 from app.events.speak_style import SpeakStyle
 from app.utilities import str_utils, utils, static_random
-from app.utilities.typing import NID, Color3
+from app.utilities.data import resolve_nid
+from app.utilities.typing import NID, Color3, Point
 
 class EvaluateException(EventError):
     what = "Could not evaluate expression."
@@ -595,24 +596,41 @@ class Event():
     def _apply_growth_changes(self, unit, growth_changes):
         action.do(action.ApplyGrowthChanges(unit, growth_changes))
 
-    def _parse_pos(self, text: str, is_float=False):
+    def _parse_pos(self, obj_or_position: Point | NID | Any, is_float=False) -> Optional[Point]:
+        # TODO(mag): this code is horrible. please fix this.
         position = None
-        if ',' in text:
-            text = text.replace(')', '').replace('(', '').replace('[', '').replace(']', '')
-            if is_float:
-                position = tuple(float(_) for _ in text.split(','))
-            else:
-                position = tuple(int(_) for _ in text.split(','))
-        elif not self.game.is_displaying_overworld() and self._get_unit(text):
+        # is a point
+        if isinstance(obj_or_position, tuple):
+            return obj_or_position
+        # not a point, maybe a complex object?
+        if hasattr(obj_or_position, 'position'):
+            position = obj_or_position.position
+            if position:
+                return position
+        # does not have position in an immediate sense;
+        # maybe we can get its position from it using its name?
+        if hasattr(obj_or_position, 'nid'):
+            text = obj_or_position.nid
+        # or maybe it's already just the name?
+        elif isinstance(obj_or_position, str):
+            text = obj_or_position
+        else:
+            return None
+
+        # maybe it's a unit
+        if not self.game.is_displaying_overworld() and self._get_unit(text):
             unit = self._get_unit(text)
             if unit.position:
                 position = unit.position
             else:
                 position = self.game.get_rescuers_position(unit)
+        # an overworld unit/object
         elif self.game.is_displaying_overworld() and self._get_overworld_location_of_object(text):
             position = self._get_overworld_location_of_object(text).position
+        # a region!
         elif text in self.game.level.regions.keys():
             return self.game.level.regions.get(text).position
+        # one of many regions!
         else:
             valid_regions = \
                 [tuple(region.position) for region in self.game.level.regions
@@ -622,8 +640,10 @@ class Event():
                 position = static_random.shuffle(valid_regions)[0]
         return position
 
-    def _get_unit(self, text) -> UnitObject:
-        return self.game.get_unit(text)
+    def _get_unit(self, unit: UnitObject | NID | Any) -> UnitObject:
+        if isinstance(unit, UnitObject):
+            return unit
+        return self.game.get_unit(resolve_nid(unit))
 
     def _get_overworld_location_of_object(self, text, entity_only=False, node_only=False) -> OverworldNodeObject:
         if self.game.overworld_controller:

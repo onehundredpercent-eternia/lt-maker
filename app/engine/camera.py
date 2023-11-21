@@ -187,7 +187,7 @@ class Camera():
         elif self.current_y > tilemap.height - TILEY:
             self.current_y = max(0, tilemap.height - TILEY)
 
-    def do_slow_pan(self, duration):
+    def do_slow_pan(self, duration: int):
         # queues up a slower algorithm for the next pan
         self.pan_algorithm = lambda a, b, t: tcubic_easing(a, b, t/duration)
 
