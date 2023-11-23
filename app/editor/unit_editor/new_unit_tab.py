@@ -86,17 +86,18 @@ def get(unit_nid=None):
     unit = DB.units.get(unit_nid)
     if unit:
         window.on_select(unit_nid)
+
     try:
-        NewUnitDatabase.edit()
+        true_window = NewUnitDatabase.edit().tab
         result = True
     except Exception as err:
         logging.warning(f"Failed to open Unit Window due to {err}")
         result = False
     if result:
-        selected_unit = window.right_frame.current
-        return selected_unit, True
-    else:
-        return None, False
+        selected_unit = true_window.right_frame.current
+        if selected_unit:
+            return selected_unit, True
+    return None, False
 
 # Testing
 # Run "python -m app.editor.unit_editor.new_unit_tab" from main directory

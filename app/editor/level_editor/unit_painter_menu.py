@@ -485,7 +485,7 @@ class LoadUnitDialog(Dialog):
     def access_units(self):
         unit, ok = new_unit_tab.get(self.current.nid)
         if ok:
-            self.nid_changed(unit.nid)
+            self.unit_box.edit.setValue(unit.nid)
 
     def nid_changed(self, nid):
         old_nid = self.current.nid

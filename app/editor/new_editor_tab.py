@@ -87,6 +87,7 @@ class NewEditorTab(QWidget, Generic[T]):
         window = SingleDatabaseEditor(cls, parent)
         window.exec_()
         timer.get_timer().start_for_editor()
+        return window
 
     def reset(self):
         self.tree_list.reset(self.data.keys(), self.categories)
