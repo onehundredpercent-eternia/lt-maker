@@ -74,6 +74,7 @@ class DBChecker():
         r_warn = r_err.to_warn()
         if not level_tilemap:
             res.warnings.append(r_warn.msg("Region exists but no tilemap exists in level"))
+            return res
         # @TODO(mag): determine if all regions should have positions/it's warning-worthy
         # if not region.position: append "Region has no position"
         if region.position:
