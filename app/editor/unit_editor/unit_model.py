@@ -39,7 +39,7 @@ def check_delete(nid: NID, window) -> bool:
         deletion_tabs.append(DeletionTab(affected_levels, model, msg, "Levels"))
 
     if deletion_tabs:
-        ok = DeletionDialog.inform(deletion_tabs, self.window)
+        ok = DeletionDialog.inform(deletion_tabs, window)
         return ok
     return True
 
