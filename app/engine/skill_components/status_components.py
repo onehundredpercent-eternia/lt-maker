@@ -177,7 +177,7 @@ class ResistStatus(SkillComponent):
 
 class ImmuneStatus(SkillComponent):
     nid = 'immune_status'
-    desc = "Unit does not receive negative statuses"
+    desc = "Unit does not receive negative statuses and is not affected by existing negative statuses"
     tag = SkillTags.STATUS
 
     def additional_tags(self, unit, skill):
