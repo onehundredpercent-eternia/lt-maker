@@ -167,14 +167,8 @@ class GBAPoison(SkillComponent):
 
 class ResistStatus(SkillComponent):
     nid = 'resist_status'
-    desc = "Unit is only affected by statuses for a turn"
+    desc = "Unit is only affected by new statuses for a turn"
     tag = SkillTags.STATUS
-
-    def before_add(self, unit, skill):
-        for other_skill in unit.all_skills:
-            if other_skill.time or other_skill.end_time or other_skill.combined_time:
-                if skill_system.condition(self.skill, unit):
-                    action.do(action.SetObjData(other_skill, 'turns', min(other_skill.data['turns'], 1)))
 
     def before_gain_skill(self, unit, other_skill):
         if other_skill.time or other_skill.end_time or other_skill.combined_time:
@@ -183,13 +177,11 @@ class ResistStatus(SkillComponent):
 
 class ImmuneStatus(SkillComponent):
     nid = 'immune_status'
-    desc = "Unit is not affected by negative statuses"
+    desc = "Unit does not receive negative statuses"
     tag = SkillTags.STATUS
 
-    def after_add(self, unit, skill):
-        for other_skill in unit.all_skills:
-            if other_skill.negative and skill_system.condition(self.skill, unit):
-                action.do(action.RemoveSkill(unit, other_skill))
+    def additional_tags(self, unit, skill):
+        return ['Immune']
 
     def after_gain_skill(self, unit, other_skill):
         if other_skill.negative and skill_system.condition(self.skill, unit):
