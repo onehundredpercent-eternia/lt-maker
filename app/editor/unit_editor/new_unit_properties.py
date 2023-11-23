@@ -1,8 +1,8 @@
-from app.editor.lib.components.database_delegate import DBNamesDelegate, UnitFieldDelegate
+from app.editor.lib.components.database_delegate import UnitFieldDelegate
 from app.extensions.key_value_delegate import KeyValueDelegate, KeyValueDoubleListModel
 from app.data.database.database import DB
 from app.editor.custom_widgets import AffinityBox, ClassBox
-from app.editor.component_editor_properties import T, HasComponents
+from app.editor.component_editor_properties import T
 from app.editor.icons import UnitPortrait
 from app.editor.item_list_widget import ItemListWidget
 from app.editor.learned_skill_delegate import LearnedSkillDelegate
@@ -22,14 +22,11 @@ from app.utilities.typing import NID
 from PyQt5.QtCore import QItemSelection, QItemSelectionModel, Qt
 from PyQt5.QtGui import QFontMetrics, QIcon
 from PyQt5.QtWidgets import (QDialog, QGridLayout, QHBoxLayout, QLineEdit,
-                             QMessageBox, QPushButton, QSpinBox, QSplitter,
+                             QPushButton, QSpinBox, QSplitter,
                              QStyledItemDelegate, QTableView, QTextEdit,
                              QVBoxLayout, QWidget)
 
-from typing import (Callable, Dict, Generic, List, Optional, Tuple, Type,
-                    TypeVar)
-
-T = TypeVar('T', bound=HasComponents)
+from typing import (Callable, Optional)
 
 class WexpModel(VirtualListModel):
     def __init__(self, columns, data, parent=None):
@@ -125,6 +122,8 @@ class HorizWeaponListDelegate(QStyledItemDelegate):
         return editor
 
 class NewUnitProperties(QWidget):
+    title = "Unit"
+    
     def __init__(self, parent, current: Optional[T] = None,
                  attempt_change_nid: Optional[Callable[[NID, NID], bool]] = None,
                  on_icon_change: Optional[Callable] = None):
@@ -263,7 +262,6 @@ class NewUnitProperties(QWidget):
     def on_icon_changed(self, nid):
         if self.current:
             self.current.portrait_nid = nid
-            self.current.icon_nid = nid
             if self.on_icon_change:
                 self.on_icon_change()
 

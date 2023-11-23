@@ -11,6 +11,8 @@ from app.extensions.custom_gui import DeletionDialog
 from app.editor.base_database_gui import DragDropCollectionModel
 import app.editor.utilities as editor_utilities
 
+from app.utilities.typing import NID
+
 def get_chibi(unit):
     res = RESOURCES.portraits.get(unit.portrait_nid)
     if not res:
@@ -20,6 +22,60 @@ def get_chibi(unit):
     pixmap = res.pixmap.copy(res.pixmap.width() - 32, 16, 32, 32)
     pixmap = QPixmap.fromImage(editor_utilities.convert_colorkey(pixmap.toImage()))
     return pixmap
+
+def check_delete(nid: NID, window) -> bool:
+    affected = None
+    affected_ais = [ai for ai in DB.ai if ai.has_unit_spec("ID", nid)]
+    affected_levels = [level for level in DB.levels if any(isinstance(unit, UniqueUnit) and unit.nid == nid for unit in level.units)]
+    if affected_ais:
+        affected = Data(affected_ais)
+        from app.editor.ai_editor.ai_model import AIModel
+        model = AIModel
+    elif affected_levels:
+        affected = Data(affected_levels)
+        from app.editor.global_editor.level_menu import LevelModel
+        model = LevelModel
+    if affected:
+        msg = "Deleting Unit <b>%s</b> would affect these objects" % nid
+        ok = DeletionDialog.inform(affected, model, msg, window)
+        return ok
+    return True
+
+def on_delete(old_nid: NID):
+    new_nid = None
+    for unit in DB.units:
+        if unit.nid != old_nid:
+            new_nid = unit.nid
+            break
+    for ai in DB.ai:
+        ai.change_unit_spec("ID", old_nid, new_nid)
+    for level in DB.levels:
+        if old_nid in level.units.keys():
+            level.units.remove_key(old_nid)
+        for unit_group in level.unit_groups:
+            unit_group.remove(old_nid)
+        for unit in level.units:
+            if unit.starting_traveler == old_nid:
+                unit.starting_traveler = None
+    for party in DB.parties:
+        if party.leader == old_nid:
+            party.leader = new_nid
+
+def on_nid_changed(old_nid: NID, new_nid: NID):
+    for ai in DB.ai:
+        ai.change_unit_spec("ID", old_nid, new_nid)
+    for level in DB.levels:
+        for unit in level.units:
+            if isinstance(unit, UniqueUnit) and unit.nid == old_nid:
+                level.units.update_nid(unit, new_nid)
+        for unit_group in level.unit_groups:
+            unit_group.swap(old_nid, new_nid)
+        for unit in level.units:
+            if old_nid and unit.starting_traveler == old_nid:
+                unit.starting_traveler = new_nid
+    for party in DB.parties:
+        if party.leader == old_nid:
+            party.leader = new_nid
 
 class UnitModel(DragDropCollectionModel):
     def data(self, index, role):
@@ -47,61 +103,18 @@ class UnitModel(DragDropCollectionModel):
         # check to make sure nothing else is using me!!!
         unit = self._data[idx]
         nid = unit.nid
-        affected = None
-        affected_ais = [ai for ai in DB.ai if ai.has_unit_spec("ID", nid)]
-        affected_levels = [level for level in DB.levels if any(isinstance(unit, UniqueUnit) and unit.nid == nid for unit in level.units)]
-        if affected_ais:
-            affected = Data(affected_ais)
-            from app.editor.ai_editor.ai_model import AIModel
-            model = AIModel
-        elif affected_levels:
-            affected = Data(affected_levels)
-            from app.editor.global_editor.level_menu import LevelModel
-            model = LevelModel
-        if affected:
-            msg = "Deleting Unit <b>%s</b> would affect these objects" % nid
-            ok = DeletionDialog.inform(affected, model, msg, self.window)
-            if ok:
-                self.on_delete(nid)
-            else:
-                return
+        ok = check_delete(nid)
+        if ok:
+            on_delete(nid)
+        else:
+            return
         super().delete(idx)
 
     def on_delete(self, old_nid):
-        new_nid = None
-        for unit in DB.units:
-            if unit.nid != old_nid:
-                new_nid = unit.nid
-                break
-        for ai in DB.ai:
-            ai.change_unit_spec("ID", old_nid, new_nid)
-        for level in DB.levels:
-            if old_nid in level.units.keys():
-                level.units.remove_key(old_nid)
-            for unit_group in level.unit_groups:
-                unit_group.remove(old_nid)
-            for unit in level.units:
-                if unit.starting_traveler == old_nid:
-                    unit.starting_traveler = None
-        for party in DB.parties:
-            if party.leader == old_nid:
-                party.leader = new_nid
+        on_delete(old_nid)
 
     def on_nid_changed(self, old_nid, new_nid):
-        for ai in DB.ai:
-            ai.change_unit_spec("ID", old_nid, new_nid)
-        for level in DB.levels:
-            for unit in level.units:
-                if isinstance(unit, UniqueUnit) and unit.nid == old_nid:
-                    level.units.update_nid(unit, new_nid)
-            for unit_group in level.unit_groups:
-                unit_group.swap(old_nid, new_nid)
-            for unit in level.units:
-                if old_nid and unit.starting_traveler == old_nid:
-                    unit.starting_traveler = new_nid
-        for party in DB.parties:
-            if party.leader == old_nid:
-                party.leader = new_nid
+        on_nid_changed(old_nid, new_nid)
 
     def create_new(self):
         new_unit = self._data.create_new(DB)
