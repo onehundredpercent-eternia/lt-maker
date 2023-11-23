@@ -19,11 +19,11 @@ from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, triggers
-from app.events.event_parser import EventParser
+from app.events.event_processor import EventProcessor
 from app.events.event_portrait import EventPortrait
-from app.events.event_prefab import EventPrefab
+from app.events.event_prefab import EventPrefab, EventVersion
 from app.events.python_eventing.errors import EventError
-from app.events.python_eventing.python_event_parser import PythonEventParser
+from app.events.python_eventing.python_event_processor import PythonEventProcessor
 from app.events.python_eventing.utils import SAVE_COMMAND_NIDS
 from app.events.speak_style import SpeakStyle
 from app.utilities import str_utils, utils, static_random
@@ -49,6 +49,9 @@ class Event():
 
         self.trigger = trigger
         event_args = trigger.to_args()
+        # alias
+        if 'unit1' in event_args:
+            event_args['unit'] = event_args['unit1']
         self.unit = event_args.get('unit1', None)
         self.unit2 = event_args.get('unit2', None)
         self.created_unit = None
@@ -63,10 +66,10 @@ class Event():
         self._generic_setup()
 
         self.text_evaluator = TextEvaluator(self.logger, self.game, self.unit, self.unit2, self.position, self.local_args)
-        if event_prefab.is_python_event():
-            self.parser = PythonEventParser(self.nid, event_prefab.source, self.game)
+        if event_prefab.version() != EventVersion.EVENT:
+            self.processor = PythonEventProcessor(self.nid, event_prefab.source, self.game)
         else:
-            self.parser = EventParser(self.nid, event_prefab.source, self.text_evaluator)
+            self.processor = EventProcessor(self.nid, event_prefab.source, self.text_evaluator)
 
     def _generic_setup(self):
         self.portraits: Dict[str, EventPortrait] = {}
@@ -128,7 +131,7 @@ class Event():
         ser_dict['unit2'] = self.unit2.nid if self.unit2 else None
         ser_dict['position'] = self.position
         ser_dict['local_args'] = {k: action.Action.save_obj(v) for k, v in self.local_args.items()}
-        ser_dict['parser_state'] = self.parser.save()
+        ser_dict['processor_state'] = self.processor.save()
         return ser_dict
 
     @classmethod
@@ -141,11 +144,11 @@ class Event():
         nid = ser_dict['nid']
         prefab = DB.events.get_by_nid_or_name(nid)[0]
         self = cls(prefab, triggers.GenericTrigger(unit, unit2, position, local_args), game)
-        self.parser = EventParser.restore(ser_dict['parser_state'], self.text_evaluator)
+        self.processor = EventProcessor.restore(ser_dict['processor_state'], self.text_evaluator)
         return self
 
     def finished(self):
-        return self.parser.finished() and not self.command_queue
+        return self.processor.finished() and not self.command_queue
 
     def update(self):
         # update all internal updates, remove the ones that are finished
@@ -306,7 +309,7 @@ class Event():
     def process(self):
         while self.state == 'processing':
             if not self.command_queue:
-                next_command = self.parser.fetch_next_command()
+                next_command = self.processor.fetch_next_command()
                 if not next_command:
                     break
                 self.command_queue.append(next_command)
@@ -316,7 +319,7 @@ class Event():
             # This is unlikely to happen unless you used a macro to put multiple commands on the queue at once (and one of them is a save).
             while command.nid in SAVE_COMMAND_NIDS and self.command_queue: # if we have a save command but there are still more commands in the queue. We cannot save while there are commands on the queue. This should never happen
                 if all([c.nid in SAVE_COMMAND_NIDS for c in self.command_queue]): # avoid infinite loop. This should NEVER happen (will happen if multiple save commands were queued).
-                    raise Exception("Queued multiple save commands in event %s, line %d" % (self.nid, self.parser.get_current_line()))
+                    raise Exception("Queued multiple save commands in event %s, line %d" % (self.nid, self.processor.get_current_line()))
                 self.command_queue.append(command)  # Move the save command to the back of the queue
                 command = self.command_queue.pop(0)
 
@@ -370,8 +373,8 @@ class Event():
         try:
             return self.text_evaluator.direct_eval(expr)
         except Exception as e:
-            line = self.parser.get_current_line()
-            exc = EvaluateException(self.nid, line + 1, self.parser.get_source_line(line))
+            line = self.processor.get_current_line()
+            exc = EvaluateException(self.nid, line + 1, self.processor.get_source_line(line))
             self.logger.error("'%s' Line %d: Could not evaluate %s (%s)" % (self.nid, line + 1, expr, e))
             exc.what = str(e)
             raise exc
@@ -414,7 +417,7 @@ class Event():
             if unit.position == position:
                 # Don't bother if identical
                 return
-            path = self.game.target_system.get_path(unit, position)
+            path = self.game.path_system.get_path(unit, position)
             action.do(action.Move(unit, position, path, event=True, follow=follow))
         return position
 
@@ -594,8 +597,6 @@ class Event():
                 position = tuple(float(_) for _ in text.split(','))
             else:
                 position = tuple(int(_) for _ in text.split(','))
-        elif text == '{position}':
-            position = self.position
         elif not self.game.is_displaying_overworld() and self._get_unit(text):
             unit = self._get_unit(text)
             if unit.position:
@@ -616,14 +617,7 @@ class Event():
         return position
 
     def _get_unit(self, text) -> UnitObject:
-        if text in ('{unit}', '{unit1}'):
-            return self.unit
-        elif text == '{unit2}':
-            return self.unit2
-        elif text == '{created_unit}':
-            return self.created_unit
-        else:
-            return self.game.get_unit(text)
+        return self.game.get_unit(text)
 
     def _get_overworld_location_of_object(self, text, entity_only=False, node_only=False) -> OverworldNodeObject:
         if self.game.overworld_controller:

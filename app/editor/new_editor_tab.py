@@ -99,10 +99,10 @@ class NewEditorTab(QWidget, Generic[T]):
         if self.data.get(new_nid):
             QMessageBox.warning(self, 'Warning', 'ID %s already in use' % new_nid)
             return False
+        self._on_nid_changed(old_nid, new_nid)
         self.data.change_key(old_nid, new_nid)
         self.tree_list.update_nid(old_nid, new_nid)
         self.tree_list.on_filter_changed(self.tree_list.search_box.text())
-        self.on_nid_changed(old_nid, new_nid)
         return True
 
     def on_select(self, entry_nid: Optional[NID]):
@@ -116,6 +116,14 @@ class NewEditorTab(QWidget, Generic[T]):
     def resort_db(self, entries: List[str], categories: Categories):
         self.data.categories = categories
         self.data.sort(lambda x: entries.index(x.nid) if x.nid in entries else -1)
+
+    def delete_from_db(self, nid):
+        if len(self.data) == 1:
+            return False
+        if self._on_delete(nid):
+            self.data.remove_key(nid)
+            return True
+        return False
 
     def create_new(self, nid):
         if self.data.get(nid):
@@ -183,10 +191,19 @@ class NewEditorTab(QWidget, Generic[T]):
     def import_csv(self):
         raise NotImplementedError
 
-    def on_nid_changed(self, old_nid: NID, new_nid: NID):
+    def _on_nid_changed(self, old_nid: NID, new_nid: NID):
+        """
+        Handles updating other objects in the engine with this nid change
+        Should be implemented in the child class
+        """
         raise NotImplementedError
 
-    def delete_from_db(self, nid: NID):
+    def _on_delete(self, nid: NID) -> bool:
+        """
+        Handles updating other objects in the engine with this deletion
+        Returns whether the user wants to proceed with the deletion
+        Should be implemented in the child class
+        """
         raise NotImplementedError
 
     # @todo(mag) fix the unit tab (which is the only time this callback is used forcibly in data_editor.py) and remove this

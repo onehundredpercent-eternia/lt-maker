@@ -84,6 +84,9 @@ def music_clear(self: Event, fade_out=0, flags=None):
 def sound(self: Event, sound, volume=1.0, flags=None):
     get_sound_thread().play_sfx(sound, volume=float(volume))
 
+def stop_sound(self: Event, sound, flags=None):
+    get_sound_thread().stop_sfx(sound)
+
 def change_music(self: Event, phase, music, flags=None):
     if music == 'None':
         action.do(action.ChangePhaseMusic(phase, None))
@@ -928,7 +931,7 @@ def make_generic(self: Event, nid, klass, level, team, ai=None, faction=None, an
 
     if assign_unit:
         self.created_unit = new_unit
-        self.text_evaluator.created_unit = new_unit
+        self.text_evaluator.local_args['created_unit'] = new_unit
 
 def create_unit(self: Event, unit, nid=None, level=None, position=None, entry_type=None, placement=None, flags=None):
     flags = flags or set()
@@ -1069,7 +1072,7 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
     elif movement_type == 'fade':
         action.do(action.FadeMove(unit, position))
     elif movement_type == 'normal':
-        path = self.game.target_system.get_path(unit, position)
+        path = self.game.path_system.get_path(unit, position)
         if path:
             if self.do_skip:
                 action.do(action.Teleport(unit, position))
@@ -1671,8 +1674,8 @@ def break_item(self: Event, global_unit_or_convoy, item, flags=None):
         return
 
     item_system.on_broken(unit, item)
-    alert = item_system.broken_alert(unit, item)
-    if alert and unit.team == 'player' and banner_flag:
+    should_alert = item_system.alerts_when_broken(unit, item)
+    if should_alert and unit.team == 'player' and banner_flag:
         self.game.alerts.append(banner.BrokenItem(unit, item))
         self.game.state.change('alert')
         self.state = 'paused'
@@ -3526,9 +3529,9 @@ def spend_unlock(self: Event, unit, flags=None):
 
     # Check to see if we broke the item we were using
     if item_system.is_broken(unit, chosen_item):
-        alert = item_system.broken_alert(unit, chosen_item)
+        should_alert = item_system.alerts_when_broken(unit, chosen_item)
         item_system.on_broken(unit, chosen_item)
-        if alert and unit.team == 'player':
+        if should_alert and unit.team == 'player':
             self.game.alerts.append(banner.BrokenItem(unit, chosen_item))
             self.game.state.change('alert')
             self.state = 'paused'
@@ -3638,13 +3641,16 @@ def pair_up(self: Event, unit1, unit2, flags=None):
     if not new_unit1:
         self.logger.error("pair_up: Couldn't find unit with nid %s" % unit1)
         return
-    unit1 = new_unit1
+    follower = new_unit1
     new_unit2 = self._get_unit(unit2)
     if not new_unit2:
         self.logger.error("pair_up: Couldn't find unit with nid %s" % unit2)
         return
-    unit2 = new_unit2
-    action.do(action.PairUp(unit1, unit2))
+    leader = new_unit2
+    if unit_funcs.can_pairup(leader, follower):
+        action.do(action.PairUp(follower, leader))
+    else:
+        action.do(action.Rescue(leader, follower))
 
 def separate(self: Event, unit, flags=None):
     new_unit = self._get_unit(unit)

@@ -6,8 +6,9 @@ from app.events import speak_style, event_commands
 from app.events.event import Event
 from app.engine.sprites import SPRITES
 from app.engine.text_evaluator import TextEvaluator
-from app.events.event_parser import EventParser
-from app.events.python_eventing.python_event_parser import PythonEventParser
+from app.events.event_processor import EventProcessor
+from app.events.event_prefab import EventPrefab, EventVersion
+from app.events.python_eventing.python_event_processor import PythonEventProcessor
 
 from app.utilities.typing import NID
 
@@ -26,7 +27,7 @@ class MockGame():
 class MockEvent(Event):
     # These are the only commands that will be processed by this event
     available = {"finish", "wait", "end_skip", "music", "music_clear",
-                 "sound", "add_portrait", "multi_add_portrait",
+                 "sound", "stop_sound", "add_portrait", "multi_add_portrait",
                  "remove_portrait", "multi_remove_portrait",
                  "move_portrait", "mirror_portrait", "bop_portrait",
                  "expression", "speak_style", "speak", "unhold",
@@ -35,7 +36,7 @@ class MockEvent(Event):
                  "remove_overlay_sprite", "location_card", "credits",
                  "ending", "pop_dialog", "unpause"}
 
-    def __init__(self, nid, event_prefab, command_idx=0, if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE):
+    def __init__(self, nid, event_prefab: EventPrefab, command_idx=0, if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE):
         self._transition_speed = 250
         self._transition_color = (0, 0, 0)
 
@@ -49,10 +50,10 @@ class MockEvent(Event):
         self._generic_setup()
 
         self.text_evaluator = TextEvaluator(self.logger, None)
-        if event_prefab.is_python_event():
-            self.parser = MockPythonEventParser('Mock', event_prefab.source)
+        if event_prefab.version() != EventVersion.EVENT:
+            self.processor = MockPythonEventProcessor('Mock', event_prefab.source)
         else:
-            self.parser = MockEventParser('Mock', event_prefab.source, self.text_evaluator, if_statement_strategy)
+            self.processor = MockEventProcessor('Mock', event_prefab.source, self.text_evaluator, if_statement_strategy)
 
     def update(self):
         # update all internal updates, remove the ones that are finished
@@ -76,7 +77,7 @@ class MockEvent(Event):
     def _get_unit(self, text):
         return None
 
-class MockEventParser(EventParser):
+class MockEventProcessor(EventProcessor):
     def __init__(self, nid: NID, script: str,
                  text_evaluator: TextEvaluator, if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE):
         self.if_statement_strategy = if_statement_strategy
@@ -90,6 +91,6 @@ class MockEventParser(EventParser):
         self.logger.info("Result: %s" % truth)
         return truth
 
-class MockPythonEventParser(PythonEventParser):
+class MockPythonEventProcessor(PythonEventProcessor):
     def __init__(self, nid: NID, source: str):
         super().__init__(nid, source, None)

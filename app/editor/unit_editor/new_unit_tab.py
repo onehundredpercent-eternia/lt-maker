@@ -56,20 +56,16 @@ class NewUnitDatabase(NewEditorTab):
             unit_import.update_db_from_csv(self._db, fn)
             self.reset()
 
-    def on_nid_changed(self, old_nid: NID, new_nid: NID):
+    def _on_nid_changed(self, old_nid: NID, new_nid: NID):
         unit_model.on_nid_changed(old_nid, new_nid)
 
-    def delete_from_db(self, nid: NID):
-        if len(self.data) == 1:
-            # We must always have at least one unit in the database.
-            return False
+    def _on_delete(self, nid: NID) -> bool:
         ok = unit_model.check_delete(nid, self)
         if ok:
             unit_model.on_delete(nid)
+            return True
         else:
             return False
-        self.data.remove_key(nid)
-        return True
 
     def on_tab_close(self):
         # Checking to see if any levels need to be changed
