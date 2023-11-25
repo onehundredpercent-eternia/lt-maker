@@ -72,9 +72,6 @@ class RawDataValidator(EvalValidator):
     desc = "must be a correct reference to raw data"
     tags = ['d', 'data']
 
-    def validate(self, text, level):
-        return text
-
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         if not text:
             return []
@@ -116,9 +113,6 @@ class UnitFieldValidator(EvalValidator):
     desc = "must be a correct reference to fields on units"
     tags = ['f', 'field']
 
-    def validate(self, text, level):
-        return text
-
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         text = self.process_arg_text(text)
         nlevel = text.count('.')
@@ -151,9 +145,6 @@ class UnitFieldValidator(EvalValidator):
 class VarValidator(EvalValidator):
     desc = "must be a correct reference to an existing game_var or level_var"
     tags = ['v', 'var']
-
-    def validate(self, text, level):
-        return text
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         vars_in_level = set(self._db.game_var_slots.keys())
@@ -226,9 +217,6 @@ class ItemAttrValidator(EvalValidator):
 class UnitField(Validator):
     desc = "can be nid of any unit field, including new ones"
 
-    def validate(self, text, level):
-        return text
-
     def valid_entries(self, level: NID, text: str) -> List[Tuple[Optional[str], NID]]:
         all_keys = set()
         for unit in self._db.units:
@@ -238,9 +226,6 @@ class UnitField(Validator):
 class Achievement(Validator):
     desc = "can be any nid of an achievement"
 
-    def validate(self, text, level):
-        return text
-
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         achs = self._db.events.inspector.find_all_calls_of_command(event_commands.CreateAchievement())
         slots = [(None, command.parameters['Nid']) for command in achs.values()]
@@ -248,9 +233,6 @@ class Achievement(Validator):
 
 class GeneralVar(Validator):
     desc = "can be any nid"
-
-    def validate(self, text, level):
-        return text
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         vars_in_level = set(self._db.game_var_slots.keys())
@@ -921,9 +903,6 @@ class GlobalUnitOrConvoy(Validator):
 class Region(Validator):
     desc = "accepts a region nid."
 
-    def validate(self, text, level):
-        return text
-
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = []
         level_obj = self._db.levels.get(level)
@@ -1320,9 +1299,6 @@ class OverworldNodeMenuOption(Validator):
 
 class OverworldEntity(Validator):
     desc = "accepts the nid of an overworld entity. By default, all parties have associated overworld entities."
-
-    def validate(self, text, level):
-        return text
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(party.name, party.nid) for party in self._db.parties.values()]
