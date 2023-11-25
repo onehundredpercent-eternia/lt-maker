@@ -33,8 +33,6 @@ class EvaluateException(EventError):
     what = "Could not evaluate expression."
 
 class Event():
-    true_vals = ('t', 'true', 'True', '1', 'y', 'yes')
-
     skippable = {"wait", "bop_portrait", "sound",
                  "location_card", "credits", "ending"}
 

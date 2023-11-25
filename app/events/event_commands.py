@@ -2540,7 +2540,7 @@ Optional args:
         """
 
     optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect']
-    keyword_types = ["Bool", "Music", "StringList", "StringList", "StringList"]
+    keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList"]
 
 
 class Base(EventCommand):
@@ -2563,7 +2563,7 @@ Flags:
 
     keywords = ["Background"]
     optional_keywords = ["Music", 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect']
-    keyword_types = ['Panorama', 'Music', "StringList", "StringList", "StringList"]
+    keyword_types = ['Panorama', 'Music', "StringList", "BoolList", "StringList"]
     _flags = ["show_map"]
 
 class SetCustomOptions(EventCommand):
@@ -2584,7 +2584,7 @@ Args:
 
     keywords = ["CustomOptions"]
     optional_keywords = ["CustomOptionsEnabled", "CustomOptionsDesc", "CustomOptionsOnSelect"]
-    keyword_types = ["StringList", "StringList", "StringList", "StringList"]
+    keyword_types = ["StringList", "BoolList", "StringList", "StringList"]
 
 
 class Shop(EventCommand):
