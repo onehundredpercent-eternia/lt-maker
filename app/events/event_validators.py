@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type
 
 from app.data.database.database import Database
 from app.engine.fonts import FONT
+from app.utilities.class_utils import recursive_subclasses
 from app.utilities.enums import HAlignment, VAlignment
 from app.events import event_commands
 from app.events.screen_positions import horizontal_screen_positions, vertical_screen_positions
@@ -1381,24 +1382,13 @@ class SaveSlot(Validator):
         valids.append((None, "suspend"))
         return valids
 
-validators: Dict[str, Type[Validator]]= {validator.__name__: validator for validator in Validator.__subclasses__()}
-option_validators: Dict[str, Type[OptionValidator]] = {validator.__name__: validator for validator in OptionValidator.__subclasses__()}
-eval_validators: Dict[str, Type[EvalValidator]] = {}
+validators: Dict[str, Type[Validator]]=  {validator.__name__: validator for validator in recursive_subclasses(Validator)}
 for validator in EvalValidator.__subclasses__():
     for tag in validator.tags:
-        eval_validators[tag] = validator
+        validators[tag] = validator
 
 def validate(var_type, text, level, db: Database = None, resources: Resources = None):
-    if text and text[0] == '{' and text[-1] == '}': # eval validator
-        validator = eval_validators.get(var_type)
-        if validator:
-            v = validator(db, resources)
-            return v.validate(text, level)
     validator = validators.get(var_type)
-    if validator:
-        v = validator(db, resources)
-        return v.validate(text, level)
-    validator = option_validators.get(var_type)
     if validator:
         v = validator(db, resources)
         return v.validate(text, level)
@@ -1413,10 +1403,6 @@ def convert(var_type, text):
         if validator:
             v = validator()
             return v.convert(text)
-        validator = option_validators.get(var_type)
-        if validator:
-            v = validator()
-            return v.convert(text)
         else:
             return text
     except:
@@ -1425,8 +1411,4 @@ def convert(var_type, text):
 def get(keyword) -> Type[Validator]:
     if keyword in validators:
         return validators[keyword]
-    elif keyword in option_validators:
-        return option_validators[keyword]
-    elif keyword in eval_validators:
-        return eval_validators[keyword]
     return None
