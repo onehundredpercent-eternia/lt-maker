@@ -2474,12 +2474,11 @@ def disable_support_rank(self: Event, unit1, unit2, support_rank, flags=None):
         self.logger.error("disable_support_rank: Couldn't find prefab for units %s and %s" % (_unit1.nid, _unit2.nid))
         return
 
-def add_market_item(self: Event, item, stock=0, flags=None):
+def add_market_item(self: Event, item, stock=-1, flags=None):
     if item not in DB.items.keys():
         self.logger.warning("add_market_item: %s is not a legal item nid", item)
         return
-    # @TODO(rainlash): should stock default to -1?
-    if stock:
+    if stock > -1:
         if item in self.game.market_items:
             self.game.market_items[item] += stock
         else:
