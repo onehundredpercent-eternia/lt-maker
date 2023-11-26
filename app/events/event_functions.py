@@ -965,10 +965,7 @@ def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, 
             self.logger.error("add_unit: Unit is already traveling with %s", u.nid)
             return
 
-    if position:
-        position = self._parse_pos(position)
-    else:
-        position = unit.starting_position
+    position = self._parse_pos(position) if position else unit.starting_position
     if not position:
         self.logger.error("add_unit: No position found!")
         return
@@ -1002,10 +999,7 @@ def move_unit(self: Event, unit, position=None, movement_type=None, placement=No
         self.logger.error("move_unit: Unit not on map!")
         return
 
-    if position:
-        position = self._parse_pos(position)
-    else:
-        position = unit.starting_position
+    position = self._parse_pos(position) if position else unit.starting_position
     if not position:
         self.logger.error("move_unit: No position found!")
         return
@@ -2564,18 +2558,12 @@ def hide_layer(self: Event, layer, layer_transition=None, flags=None):
 
 def add_weather(self: Event, weather, position=None, flags=None):
     nid = weather.lower()
-    if position:
-        pos = self._parse_pos(position)
-    else:
-        pos = None
+    pos = self._parse_pos(position) if position else None
     action.do(action.AddWeather(nid, pos))
 
 def remove_weather(self: Event, weather, position=None, flags=None):
     nid = weather.lower()
-    if position:
-        pos = self._parse_pos(position)
-    else:
-        pos = None
+    pos = self._parse_pos(position) if position else None
     action.do(action.RemoveWeather(nid, pos))
 
 def change_objective_simple(self: Event, string, flags=None):
@@ -2839,7 +2827,7 @@ def shop(self: Event, unit, item_list: List[str], shop_flavor=None, stock_list: 
     self.game.state.change('shop')
     self.state = 'paused'
 
-def choice(self: Event, nid: NID, title: str, choices: str, row_width: int = 0, orientation: str = None,
+def choice(self: Event, nid: NID, title: str, choices: str, row_width: int = 0, orientation: Orientation = Orientation.VERTICAL,
            alignment: Alignments = Alignments.CENTER, bg: str = 'menu_bg_base', event_nid: str = None, entry_type: str = 'str',
            dimensions: Optional[Tuple[str, str]] = None, text_align: HAlignment = HAlignment.LEFT, flags=None):
     flags = flags or set()
