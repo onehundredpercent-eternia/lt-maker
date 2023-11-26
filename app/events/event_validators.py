@@ -959,7 +959,7 @@ class AlignOrPosition(OptionValidator):
         if ',' in text:
             x, y = text.split(',')
             return int(x), int(y)
-        return Alignments[text]
+        return Alignments(text)
 
 class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]

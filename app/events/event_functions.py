@@ -312,11 +312,7 @@ def speak_style(self: Event, style, speaker=None, position: Point | Alignments=N
     # parse everything
     if speaker:
         style.speaker = speaker
-    if position:
-        if isinstance(position, Alignments):
-            style.position = Alignments(position)
-        else:
-            style.position = position
+    style.position = position
 
     if width:
         style.width = width
@@ -351,19 +347,12 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
     if 'no_block' in flags:
         text += '{no_wait}'
 
-    if text_position:
-        if isinstance(text_position, Alignments):
-            position = Alignments(text_position)
-        else:
-            position = text_position
-    else:
-        position = None
     if draw_cursor:
         cursor = draw_cursor.lower() in self.true_vals
     else:
         cursor = None
 
-    manual_style = SpeakStyle(None, None, position, width, text_speed, font_color,
+    manual_style = SpeakStyle(None, None, text_position, width, text_speed, font_color,
                               font_type, dialog_box, num_lines, cursor, message_tail, transparency, name_tag_bg, flags)
 
     style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
@@ -2939,10 +2928,7 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
     default_textbox_style = self.game.speak_styles['__default_text']
 
     if box_position:
-        if isinstance(box_position, Alignments):
-            position = Alignments(box_position)
-        else:
-            position = box_position
+        position = box_position
     elif textbox_style and textbox_style.position:
         position = textbox_style.position
     else:
