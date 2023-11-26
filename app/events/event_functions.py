@@ -39,7 +39,7 @@ from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import check_valid_type
-from app.utilities.typing import NID
+from app.utilities.typing import NID, Point
 from app.engine.source_type import SourceType
 
 if TYPE_CHECKING:
@@ -104,7 +104,7 @@ def change_special_music(self: Event, special_music_type: str, music: str, flags
     elif special_music_type == 'game_over':
         action.do(action.SetGameVar('_music_game_over', music))
 
-def add_portrait(self: Event, portrait, screen_position, slide=None, expression_list=None, speed_mult: float=1.0, flags=None):
+def add_portrait(self: Event, portrait, screen_position: Tuple, slide=None, expression_list: Optional[List[str]]=None, speed_mult: float=1.0, flags=None):
     flags = flags or set()
 
     name = portrait
@@ -143,8 +143,8 @@ def add_portrait(self: Event, portrait, screen_position, slide=None, expression_
                                  slide, mirror, name, speed_mult=speed_mult)
     self.portraits[name] = new_portrait
 
+
     if expression_list:
-        expression_list = expression_list.split(',')
         new_portrait.set_expression(expression_list)
 
     if 'immediate' in flags or 'no_block' in flags or self.do_skip:
@@ -206,7 +206,7 @@ def multi_remove_portrait(self: Event, portrait1, portrait2, portrait3=None, por
         commands.append(event_commands.RemovePortrait({'Portrait': portrait4}, set()))
     self.command_queue += commands
 
-def move_portrait(self: Event, portrait, screen_position, speed_mult: float=1.0, flags=None):
+def move_portrait(self: Event, portrait, screen_position: Tuple, speed_mult: float=1.0, flags=None):
     flags = flags or set()
 
     name = portrait
@@ -290,7 +290,7 @@ def bop_portrait(self: Event, portrait, flags=None):
         self.wait_time = engine.get_time() + 666
         self.state = 'waiting'
 
-def expression(self: Event, portrait, expression_list, flags=None):
+def expression(self: Event, portrait, expression_list: List[str], flags=None):
     name = portrait
     unit = self._get_unit(name)
     if unit:
@@ -298,7 +298,6 @@ def expression(self: Event, portrait, expression_list, flags=None):
     _portrait = self.portraits.get(name)
     if not _portrait:
         return False
-    expression_list = expression_list.split(',')
     _portrait.set_expression(expression_list)
 
 def speak_style(self: Event, style, speaker=None, position=None, width=None, speed=None,
@@ -344,7 +343,7 @@ def speak_style(self: Event, style, speaker=None, position=None, width=None, spe
         style.flags = flags
     self.game.speak_styles[style.nid] = style
 
-def speak(self: Event, speaker_or_style: str, text, text_position=None, width=None, style_nid=None, text_speed=None,
+def speak(self: Event, speaker_or_style: str, text, text_position: Point | Alignments=None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
           message_tail=None, transparency=None, name_tag_bg=None, flags=None):
     flags = flags or set()
@@ -354,10 +353,10 @@ def speak(self: Event, speaker_or_style: str, text, text_position=None, width=No
         text += '{no_wait}'
 
     if text_position:
-        try:
+        if isinstance(text_position, Alignments):
             position = Alignments(text_position)
-        except:
-            position = self._parse_pos(text_position)
+        else:
+            position = text_position
     else:
         position = None
     if draw_cursor:
@@ -881,7 +880,7 @@ def load_unit(self: Event, unique_unit, team=None, ai=None, flags=None):
     new_unit.party = self.game.current_party
     self.game.full_register(new_unit)
 
-def make_generic(self: Event, nid, klass, level: int, team, ai=None, faction=None, animation_variant=None, item_list=None, flags=None):
+def make_generic(self: Event, nid, klass, level: int, team, ai=None, faction=None, animation_variant=None, item_list: Optional[List[str]]=None, flags=None):
     assign_unit = False
     # Get input
     unit_nid = nid
@@ -899,11 +898,7 @@ def make_generic(self: Event, nid, klass, level: int, team, ai=None, faction=Non
         ai = 'None'
     if not faction:
         faction = DB.factions[0].nid
-    if item_list:
-        starting_items = item_list.split(',')
-        item_list = [item_nid.strip() for item_nid in item_list]
-    else:
-        starting_items = []
+    starting_items = item_list or []
     level_unit_prefab = GenericUnit(unit_nid, animation_variant, level, klass, faction, starting_items, [], team, ai)
     new_unit = UnitObject.from_prefab(level_unit_prefab, self.game.current_mode)
     new_unit.party = self.game.current_party
@@ -1133,7 +1128,7 @@ def remove_all_enemies(self: Event, flags=None):
         if unit.position and unit.team in DB.teams.enemies:
             action.do(action.FadeOut(unit))
 
-def interact_unit(self: Event, unit, position, combat_script=None, ability=None, rounds=1, flags=None):
+def interact_unit(self: Event, unit, position, combat_script: Optional[List[str]]=None, ability=None, rounds=1, flags=None):
     flags = flags or set()
 
     actor = self._get_unit(unit)
@@ -1145,10 +1140,7 @@ def interact_unit(self: Event, unit, position, combat_script=None, ability=None,
         self.logger.error("interact_unit: Couldn't find target %s" % position)
         return
 
-    if combat_script:
-        script = combat_script.split(',')
-    else:
-        script = None
+    script = combat_script
 
     total_rounds = utils.clamp(rounds, 1, 99)
 
@@ -2227,18 +2219,17 @@ def set_mode_autolevels(self: Event, level: int, flags=None):
         else:
             self.game.current_mode.enemy_truelevels = autolevel
 
-def promote(self: Event, global_unit, klass_list=None, flags=None):
+def promote(self: Event, global_unit, klass_list: Optional[List[NID]]=None, flags=None):
     flags = flags or set()
     unit = self._get_unit(global_unit)
     if not unit:
         self.logger.error("promote: Couldn't find unit %s" % global_unit)
         return
     if klass_list:
-        s_klass = klass_list.split(',')
-        if len(s_klass) == 1:
-            new_klass = s_klass[0]
+        if len(klass_list) == 1:
+            new_klass = klass_list[0]
         else:
-            self.game.memory['promo_options'] = s_klass
+            self.game.memory['promo_options'] = klass_list
             new_klass = None
     else:
         klass = DB.classes.get(unit.klass)
@@ -2290,7 +2281,7 @@ def promote(self: Event, global_unit, klass_list=None, flags=None):
         self.game.state.change('transition_out')
         self.state = 'paused'
 
-def change_class(self: Event, global_unit, klass_list=None, flags=None):
+def change_class(self: Event, global_unit, klass_list: Optional[List[NID]]=None, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
@@ -2298,11 +2289,10 @@ def change_class(self: Event, global_unit, klass_list=None, flags=None):
         self.logger.error("change_class: Couldn't find unit %s" % global_unit)
         return
     if klass_list:
-        s_klass = klass_list.split(',')
-        if len(s_klass) == 1:
-            new_klass = s_klass[0]
+        if len(klass_list) == 1:
+            new_klass = klass_list[0]
         else:
-            self.game.memory['promo_options'] = s_klass
+            self.game.memory['promo_options'] = klass_list
             new_klass = None
     elif not unit.generic:
         unit_prefab = DB.units.get(unit.nid)
@@ -2616,24 +2606,22 @@ def set_position(self: Event, position, flags=None):
     self.position = pos
     self.text_evaluator.position = pos
 
-def map_anim(self: Event, map_anim, float_position, speed: float=1.0, flags=None):
+def map_anim(self: Event, map_anim, float_position: Tuple[float, float], speed: float=1.0, flags=None):
     flags = flags or set()
 
     if map_anim not in RESOURCES.animations.keys():
         self.logger.error("map_anim: Could not find map animation %s" % map_anim)
         return
-    pos = tuple(self._parse_pos(float_position, True))
-    assert pos is not None, float_position
     mode = engine.BlendMode.NONE
     if 'blend' in flags:
         mode = engine.BlendMode.BLEND_RGB_ADD
     elif 'multiply' in flags:
         mode = engine.BlendMode.BLEND_RGB_MULT
     if 'permanent' in flags:
-        action.do(action.AddMapAnim(map_anim, pos, speed, mode, 'overlay' in flags))
+        action.do(action.AddMapAnim(map_anim, float_position, speed, mode, 'overlay' in flags))
     else:
         anim = RESOURCES.animations.get(map_anim)
-        anim = MapAnimation(anim, pos, speed_adj=speed)
+        anim = MapAnimation(anim, float_position, speed_adj=speed)
         anim.set_tint(mode)
         self.animations.append(anim)
 
@@ -2834,7 +2822,7 @@ def set_custom_options(self: Event, custom_options: List[str], custom_options_en
 
     action.do(action.SetGameVar('_custom_additional_options', options_list))
 
-def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, shop_id=None, flags=None):
+def shop(self: Event, unit, item_list: List[str], shop_flavor=None, stock_list: List[int]=None, shop_id=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("shop: Must have a unit visit the shop!")
@@ -2844,8 +2832,6 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, shop_i
         shop_id = self.nid
     self.game.memory['shop_id'] = shop_id
     self.game.memory['current_unit'] = unit
-    item_list = item_list.split(',') if item_list else []
-    item_list = [item_nid.strip() for item_nid in item_list]
     shop_items = item_funcs.create_items(unit, item_list)
     self.game.memory['shop_items'] = shop_items
 
@@ -2855,7 +2841,6 @@ def shop(self: Event, unit, item_list, shop_flavor=None, stock_list=None, shop_i
         self.game.memory['shop_flavor'] = 'armory'
 
     if stock_list:
-        stock_list = str_utils.intify(stock_list)
         # Remember which items have already been bought for this shop...
         for idx, item in enumerate(item_list):
             item_history = '__shop_%s_%s' % (shop_id, item)
@@ -3139,17 +3124,14 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
-def text_entry(self: Event, nid, string, positive_integer: int=16, illegal_character_list=None, flags=None):
+def text_entry(self: Event, nid, string, positive_integer: int=16, illegal_character_list: Optional[List[str]]=None, flags=None):
     flags = flags or set()
 
     header = string
     limit = positive_integer
-    illegal_characters = []
-    if illegal_character_list:
-        illegal_characters = illegal_character_list.split(',')
     force_entry = 'force_entry' in flags
 
-    self.game.memory['text_entry'] = (nid, header, limit, illegal_characters, force_entry)
+    self.game.memory['text_entry'] = (nid, header, limit, illegal_character_list or [], force_entry)
     self.game.state.change('text_entry')
     self.state = 'paused'
 

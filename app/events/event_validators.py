@@ -41,14 +41,15 @@ class Validator():
     def convert(self, text: str):
         return text
 
-class ListValidator(Validator):
+class SequenceValidator(Validator):
     delim = ','
+    as_type = list
 
     def convert_element(self, element: str):
         return element
 
     def convert(self, text: str):
-        return [self.convert_element(t.strip()) for t in text.split(self.delim)]
+        return self.as_type([self.convert_element(t.strip()) for t in text.split(self.delim)])
 
 class DictValidator(Validator):
     delim = ','
@@ -322,7 +323,7 @@ class PositiveInteger(Integer):
             return int(text)
         return None
 
-class IntegerList(ListValidator):
+class IntegerList(SequenceValidator):
     desc = "must be a comma-delimited list of integers (ie, `5,7,12`)"
 
     def validate(self, text, level):
@@ -335,7 +336,7 @@ class IntegerList(ListValidator):
     def convert_element(self, element: str):
         return int(element)
 
-class BoolList(ListValidator):
+class BoolList(SequenceValidator):
     desc = "a list of truthy or falsy values delimited by commas. E.g. `True, False, True`"
 
     def validate(self, text, level):
@@ -463,45 +464,7 @@ class Tag(Validator):
         valids = [(None, tag.nid) for tag in self._db.tags.values()]
         return valids
 
-class TagList(ListValidator):
-    desc = "must be a comma-delimited list of tags (ie, `Armor,Dragon,Boss`)"
-
-    def validate(self, text, level):
-        tex = text.split(',')
-        for t in tex:
-            if t not in self._db.tags.keys():
-                return None
-        return text
-
-    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
-        valids = [(None, tag.nid) for tag in self._db.tags.values()]
-        return valids
-
-class TextPosition(ListValidator):
-    valid_positions = ['center']
-
-    desc = """
-Determines position to place text. Supports either pixels (`x,y`) or the `center` position.
-"""
-
-    def validate(self, text, level):
-        if text in self.valid_positions:
-            return text
-        elif text and ',' in text and len(text.split(',')) == 2 and all(str_utils.is_int(t) for t in text.split(',')):
-            return text
-        return None
-
-    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
-        valids = [(None, option) for option in self.valid_positions]
-        return valids
-
-    def convert_element(self, element: str):
-        element = element.replace('(').replace(')')
-        if str_utils.is_int(element):
-            return int(element)
-        return element
-
-class ScreenPosition(ListValidator):
+class ScreenPosition(SequenceValidator):
     desc = """
 Determines where to add the portrait to the screen.
 Available options are (`OffscreenLeft`,
@@ -513,6 +476,7 @@ Can combine horizontal and vertical positions like so: `Left,Bottom`.
 If the portrait is placed on the left side of the screen to start,
 it will be facing right, and vice versa.
 """
+    as_type = tuple
 
     def validate(self, text: str, level: Optional[NID]):
         if text in horizontal_screen_positions:
@@ -540,7 +504,7 @@ it will be facing right, and vice versa.
         return valids
 
     def convert_element(self, element: str):
-        element = element.replace('(').replace(')')
+        element = element.replace('(', '').replace(')', '')
         if str_utils.is_int(element):
             return int(element)
         return element
@@ -557,7 +521,7 @@ class Direction(OptionValidator):
 class Orientation(OptionValidator):
     valid = ["h", "horiz", "horizontal", "v", "vert", "vertical"]
 
-class ExpressionList(ListValidator):
+class ExpressionList(SequenceValidator):
     valid_expressions = ["NoSmile", "Smile", "NormalBlink", "CloseEyes", "HalfCloseEyes", "OpenEyes", "OpenMouth"]
     desc = "expects a comma-delimited list of expressions. Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `OpenEyes`, `OpenMouth`). Example: `Smile,CloseEyes`"
 
@@ -572,7 +536,7 @@ class ExpressionList(ListValidator):
         valids = [(None, option) for option in self.valid_expressions]
         return valids
 
-class IllegalCharacterList(ListValidator):
+class IllegalCharacterList(SequenceValidator):
     valid_sets = ["uppercase", "lowercase", "uppercase_UTF8", "lowercase_UTF8", "numbers_and_punctuation"]
     desc = "expects a comma-delimited list of character sets to ban. Valid options are: ('uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'). Example: `uppercase,lowercase`"
 
@@ -604,16 +568,12 @@ class DialogVariant(Validator):
         slots += [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values()])]
         return slots
 
-class StringList(ListValidator):
+class StringList(SequenceValidator):
     desc = "must be delimited by commas. For example: `Water,Earth,Fire,Air`"
 
-class DashList(ListValidator):
-    desc = "similar to a StringList, but delimited by dashes. For example: `Water-Earth-Fire-Air`"
-    delim = '-'
-
-class PointList(Validator):
+class PointList(SequenceValidator):
     desc = "A list of points separated by dashes. E.g. (1, 1)-(3.5, 3)-(24,-6)"
-    decimal_converter = re.compile(r'[^\d.]+')
+    delim = '-'
 
     def validate(self, value, level):
         if isinstance(value, list):
@@ -621,19 +581,10 @@ class PointList(Validator):
                 return value
         return None
 
-    def convert(self, text: str) -> List[Point]:
-        try:
-            text.replace(' ', '')
-            tlist = text.split(')-(')
-            parsed_list = []
-            for pstring in tlist:
-                coords = pstring.split(',')
-                x = float(self.decimal_converter.sub('', coords[0]))
-                y = float(self.decimal_converter.sub('', coords[1]))
-                parsed_list.append((x, y))
-            return parsed_list
-        except:
-            return text
+    def convert_element(self, element: str):
+        element = element.replace('(', '').replace(')', '')
+        x, y = element.split(',')
+        return float(x), float(y)
 
 class Speaker(Validator):
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
@@ -748,10 +699,11 @@ class Position(Validator):
             return valids
         return []
 
-class FloatPosition(ListValidator):
+class FloatPosition(SequenceValidator):
     desc = """accepts a valid `(x, y)` position, but also allows fractional positions,
     such as (1.5, 2.6). You use a unit's nid to use their position.
     Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`, `{position}`)"""
+    as_type = tuple
 
     def validate(self, text, level):
         text = text.split(',')
@@ -986,7 +938,7 @@ class VAlign(OptionValidator):
 class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
 
-class CombatScript(ListValidator):
+class CombatScript(SequenceValidator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
     desc = "specifies the order and type of actions in combat. Valid actions: (`hit1`, `hit2`, `crit1`, `crit2`, `miss1`, `miss2`, `--`, `end`)."
 
@@ -1025,7 +977,7 @@ class Item(Validator):
         valids = [(item.name, item.nid) for item in self._db.items.values()]
         return valids
 
-class ItemList(ListValidator):
+class ItemList(SequenceValidator):
     desc = "accepts a comma-delimited list of item nids. Example: `Iron Sword,Iron Lance,Iron Bow`"
 
     def validate(self, text, level):
@@ -1089,7 +1041,7 @@ class StatList(DictValidator):
         valids = [(None, stat.nid) for stat in self._db.stats.values()]
         return valids
 
-class KlassList(ListValidator):
+class KlassList(SequenceValidator):
     desc = "accepts a comma-delimited list of klass nids."
 
     def validate(self, text, level):
