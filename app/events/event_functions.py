@@ -300,7 +300,7 @@ def expression(self: Event, portrait, expression_list: List[str], flags=None):
         return False
     _portrait.set_expression(expression_list)
 
-def speak_style(self: Event, style, speaker=None, position=None, width=None, speed=None,
+def speak_style(self: Event, style, speaker=None, position: Point | Alignments=None, width=None, speed=None,
                 font_color=None, font_type=None, background=None, num_lines=None, draw_cursor=None,
                 message_tail=None, transparency=None, name_tag_bg=None, flags=None):
     flags = flags or set()
@@ -313,11 +313,10 @@ def speak_style(self: Event, style, speaker=None, position=None, width=None, spe
     if speaker:
         style.speaker = speaker
     if position:
-        try:
-            align = Alignments(position)
-            style.position = align
-        except:
-            style.position = self._parse_pos(position)
+        if isinstance(position, Alignments):
+            style.position = Alignments(position)
+        else:
+            style.position = position
 
     if width:
         style.width = width
@@ -2605,7 +2604,7 @@ def set_position(self: Event, position, flags=None):
     self.position = pos
     self.text_evaluator.position = pos
 
-def map_anim(self: Event, map_anim, float_position: Tuple[float, float], speed: float=1.0, flags=None):
+def map_anim(self: Event, map_anim, float_position: Tuple[float, float] | NID, speed: float=1.0, flags=None):
     flags = flags or set()
 
     if map_anim not in RESOURCES.animations.keys():
@@ -2952,7 +2951,7 @@ def unchoice(self: Event, flags=None):
     except Exception as e:
         self.logger.error("unchoice: Unchoice failed: " + str(e))
 
-def textbox(self: Event, nid: str, text: str, box_position=None,
+def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=None,
             width=None, num_lines=None, style_nid=None, text_speed=None,
             font_color=None, font_type=None, bg=None, flags=None):
     flags = flags or set()
@@ -2963,10 +2962,10 @@ def textbox(self: Event, nid: str, text: str, box_position=None,
     default_textbox_style = self.game.speak_styles['__default_text']
 
     if box_position:
-        try:
+        if isinstance(box_position, Alignments):
             position = Alignments(box_position)
-        except:
-            position = self._parse_pos(box_position)
+        else:
+            position = box_position
     elif textbox_style and textbox_style.position:
         position = textbox_style.position
     else:

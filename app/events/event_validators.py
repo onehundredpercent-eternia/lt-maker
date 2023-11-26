@@ -699,11 +699,16 @@ class Position(Validator):
             return valids
         return []
 
-class FloatPosition(SequenceValidator):
+    def convert(self, text: str):
+        if ',' in text:
+            return tuple([int(i) for i in text.split(',')])
+        else:
+            return text
+
+class FloatPosition(Validator):
     desc = """accepts a valid `(x, y)` position, but also allows fractional positions,
     such as (1.5, 2.6). You use a unit's nid to use their position.
     Alternatively, you can use one of (`{unit}`, `{unit1}`, `{unit2}`, `{position}`)"""
-    as_type = tuple
 
     def validate(self, text, level):
         text = text.split(',')
@@ -729,8 +734,11 @@ class FloatPosition(SequenceValidator):
         else:
             return text
 
-    def convert_element(self, element: str):
-        return float(element)
+    def convert(self, text: str):
+        if ',' in text:
+            return tuple([float(i) for i in text.split(',')])
+        else:
+            return text
 
 class PositionOffset(IntegerList):
     desc = "accepts a valid `(x, y)` position offset."
