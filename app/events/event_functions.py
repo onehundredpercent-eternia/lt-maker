@@ -2499,14 +2499,13 @@ def remove_market_item(self: Event, item, stock: int=0, flags=None):
 def clear_market_items(self: Event, flags=None):
     self.game.market_items.clear()
 
-def add_region(self: Event, region, position, size, region_type, string=None, time_left=None, flags=None):
+def add_region(self: Event, region, position, size: Tuple, region_type, string=None, time_left=None, flags=None):
     flags = flags or set()
 
     if region in self.game.level.regions.keys():
         self.logger.error("add_region: RegionObject nid %s already present!" % region)
         return
     position = self._parse_pos(position)
-    size = self._parse_pos(size)
     if not size:
         size = (1, 1)
     region_type = region_type.lower()
@@ -2851,25 +2850,16 @@ def shop(self: Event, unit, item_list: List[str], shop_flavor=None, stock_list: 
     self.game.state.change('shop')
     self.state = 'paused'
 
-def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = None, orientation: str = None,
-           alignment: str = None, bg: str = None, event_nid: str = None, entry_type: str = None,
-           dimensions: str = None, text_align: str = None, flags=None):
+def choice(self: Event, nid: NID, title: str, choices: str, row_width: int = 0, orientation: str = None,
+           alignment: Alignments = Alignments.CENTER, bg: str = 'menu_bg_base', event_nid: str = None, entry_type: str = 'str',
+           dimensions: Optional[Tuple[str, str]] = None, text_align: HAlignment = HAlignment.LEFT, flags=None):
     flags = flags or set()
 
     nid = nid or ""
     header = title
 
-    if not row_width:
-        row_width = '0'
-    if not bg:
-        bg = 'menu_bg_base'
     if 'no_bg' in flags:
         bg = None
-
-    # determine data type
-    dtype = 'str'
-    if entry_type:
-        dtype = entry_type
 
     # figure out function or list of NIDs
     data = []
@@ -2894,19 +2884,6 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         data = choices.split(',')
         data = [s.strip().replace('{comma}', ',') for s in data]
     data = data or ['']
-
-    actual_orientation = Orientation.VERTICAL
-    if orientation and orientation in ('h', 'horiz', 'horizontal'):
-        actual_orientation = Orientation.HORIZONTAL
-
-    if not alignment:
-        align = Alignments.CENTER
-    else:
-        align = Alignments(alignment)
-
-    talign = HAlignment.LEFT
-    if text_align:
-        talign = HAlignment(text_align)
 
     size = None
     if dimensions:
@@ -2934,9 +2911,9 @@ def choice(self: Event, nid: NID, title: str, choices: str, row_width: str = Non
         'local_args': self.local_args
     }
     self.game.memory['player_choice'] = (nid, header, data, row_width,
-                                    actual_orientation, dtype, should_persist,
-                                    align, bg, event_nid, size, no_cursor,
-                                    arrows, scroll_bar, talign, backable, event_context)
+                                    orientation, entry_type, should_persist,
+                                    alignment, bg, event_nid, size, no_cursor,
+                                    arrows, scroll_bar, text_align, backable, event_context)
     self.game.state.change('player_choice')
     self.state = 'paused'
 
@@ -3054,31 +3031,18 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
     self.other_boxes.append((nid, textbox))
 
 def table(self: Event, nid: NID, table_data: str, title: str = None,
-          dimensions: Tuple[int, int] = None, row_width: str = None, alignment: str = None,
-          bg: str = None, entry_type: str = None, text_align: str = None, flags=None):
+          dimensions: Tuple[int, int] = (0, 1), row_width: int = -1, alignment: Alignments = Alignments.TOP_LEFT,
+          bg: str = 'menu_bg_base', entry_type: str = 'str', text_align: HAlignment = HAlignment.LEFT, flags=None):
     flags = flags or set()
+    if 'no_bg' in flags:
+        bg = None
 
     box_nids = [nid for nid, _ in self.other_boxes]
     if nid in box_nids:
         self.logger.error("table: UI element with nid %s already exists" % nid)
         return
 
-    # default args
-    if not dimensions:
-        dimensions = "0, 1"
-    if not row_width:
-        row_width = '-1'
-    if not bg:
-        bg = 'menu_bg_base'
-    if 'no_bg' in flags:
-        bg = None
-
     rows, cols = dimensions
-
-    # determine data type
-    dtype = 'str'
-    if entry_type:
-        dtype = entry_type
 
     # figure out function or list of NIDs
     data = []
@@ -3105,18 +3069,10 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         data = [s.strip().replace('{comma}', ',') for s in data]
     data = data or [""]
 
-    align = Alignments.TOP_LEFT
-    if alignment:
-        align = Alignments(alignment)
-
-    talign = HAlignment.LEFT
-    if text_align:
-        talign = HAlignment(text_align)
-
     table_ui = SimpleMenuUI(
-        data, dtype, title=title, rows=rows, cols=cols,
-        row_width=row_width, alignment=align, bg=bg,
-        text_align=talign)
+        data, entry_type, title=title, rows=rows, cols=cols,
+        row_width=row_width, alignment=alignment, bg=bg,
+        text_align=text_align)
     self.other_boxes.append((nid, table_ui))
 
 def remove_table(self: Event, nid, flags=None):
@@ -3436,17 +3392,12 @@ def trigger_script(self: Event, event, unit1=None, unit2=None, flags=None):
     if not valid_events:
         self.logger.error("trigger_script: Couldn't find any valid events matching name %s" % event)
 
-def trigger_script_with_args(self: Event, event: str, arg_list: str = None, flags=None):
+def trigger_script_with_args(self: Event, event: str, arg_list: Dict[str, str] = None, flags=None):
     trigger_script = event
     valid_events = DB.events.get_by_nid_or_name(trigger_script, self.game.level.nid)
 
     # Process Arg List into local args directory
-    a_list = arg_list.split(',')
-    local_args = {}
-    for idx in range(len(a_list)//2):
-        arg_nid = a_list[idx*2]
-        arg_value = a_list[idx*2 + 1]
-        local_args[arg_nid] = arg_value
+    local_args = arg_list
 
     for event_prefab in valid_events:
         self.game.events.trigger_specific_event(event_prefab.nid, local_args=local_args)

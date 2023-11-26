@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 from app.data.database.items import ItemPrefab
 from app.data.database.levels import LevelPrefab
 from app.data.database.skills import SkillPrefab
@@ -88,6 +89,16 @@ class OptionValidator(Validator):
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         return [(None, option) for option in self.valid]
+
+class EnumValidator(OptionValidator):
+    enum_type: Type[Enum]
+
+    @property
+    def valid(self) -> List[str]:
+        return [e.value for e in self.enum_type]
+
+    def convert(self, text: str):
+        return self.enum_type(text)
 
 class EvalValidator(Validator):
     """exists as a special subclass of validators"""
@@ -518,8 +529,14 @@ class Font(OptionValidator):
 class Direction(OptionValidator):
     valid = ["open", "close"]
 
+from app.utilities.enums import Orientation as o
 class Orientation(OptionValidator):
     valid = ["h", "horiz", "horizontal", "v", "vert", "vertical"]
+
+    def convert(self, text: str):
+        if text in self.valid[:3]:
+            return o.HORIZONTAL
+        return o.VERTICAL
 
 class ExpressionList(SequenceValidator):
     valid_expressions = ["NoSmile", "Smile", "NormalBlink", "CloseEyes", "HalfCloseEyes", "OpenEyes", "OpenMouth"]
@@ -753,6 +770,7 @@ class PositionOffset(IntegerList):
 
 class Size(IntegerList):
     desc = "must be in the format `x,y`. Example: `64,32`"
+    as_type = tuple
 
     def validate(self, text, level):
         as_list = self.convert(text)
@@ -918,8 +936,14 @@ class RegionType(OptionValidator):
 class Weather(OptionValidator):
     valid = ["rain", "sand", "snow", "fire", "light", "purple", "dark", "smoke", "night", "sunset", "event_tile", "switch_tile"]
 
-class Align(OptionValidator):
-    valid = [align.value for align in Alignments]
+class Align(EnumValidator):
+    enum_type = Alignments
+
+class HAlign(EnumValidator):
+    enum_type = HAlignment
+
+class VAlign(EnumValidator):
+    enum_type = VAlignment
 
 class AlignOrPosition(OptionValidator):
     valid = [align.value for align in Alignments]
@@ -936,12 +960,6 @@ class AlignOrPosition(OptionValidator):
             x, y = text.split(',')
             return int(x), int(y)
         return Alignments[text]
-
-class HAlign(OptionValidator):
-    valid = [align.value for align in HAlignment]
-
-class VAlign(OptionValidator):
-    valid = [align.value for align in VAlignment]
 
 class GrowthMethod(OptionValidator):
     valid = ["random", "fixed", "dynamic"]
