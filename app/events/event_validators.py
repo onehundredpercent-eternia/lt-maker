@@ -98,7 +98,8 @@ class EnumValidator(OptionValidator):
         return [e.value for e in self.enum_type]
 
     def convert(self, text: str):
-        return self.enum_type(text)
+        if text:
+            return self.enum_type(text)
 
 class EvalValidator(Validator):
     """exists as a special subclass of validators"""

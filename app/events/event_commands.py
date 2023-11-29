@@ -3488,6 +3488,7 @@ def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = Non
             continue
         keyword_type = command.get_keyword_types()[idx]
         parameters[keyword] = convert(keyword_type, value)
+    parameters = {k: v for k, v in parameters.items() if (v is not None or k in command.keywords)}
     return parameters, command.chosen_flags
 
 def parse_event_line(line: str) -> EventCommandTokens:
