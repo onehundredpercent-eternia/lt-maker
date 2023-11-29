@@ -3042,7 +3042,6 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
         data = table_data.split(',')
         data = [s.strip().replace('{comma}', ',') for s in data]
     data = data or [""]
-
     table_ui = SimpleMenuUI(
         data, entry_type, title=title, rows=rows, cols=cols,
         row_width=row_width, alignment=alignment, bg=bg,
