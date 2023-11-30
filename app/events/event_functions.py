@@ -550,9 +550,9 @@ def center_cursor(self: Event, position, speed=None, flags=None):
 def flicker_cursor(self: Event, position, flags=None):
     # This is a macro that just adds new commands to command list
     move_cursor_command = event_commands.MoveCursor({'Position': position}, flags)
-    disp_cursor_command1 = event_commands.DispCursor({'ShowCursor': '1'})
-    wait_command = event_commands.Wait({'Time': '1000'})
-    disp_cursor_command2 = event_commands.DispCursor({'ShowCursor': '0'})
+    disp_cursor_command1 = event_commands.DispCursor({'ShowCursor': True})
+    wait_command = event_commands.Wait({'Time': 1000})
+    disp_cursor_command2 = event_commands.DispCursor({'ShowCursor': False})
     self.command_queue += [
         move_cursor_command,
         disp_cursor_command1,
