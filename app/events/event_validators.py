@@ -754,7 +754,8 @@ class FloatPosition(Validator):
 
     def convert(self, text: str):
         if ',' in text:
-            return tuple([float(i) for i in text.split(',')])
+            x = tuple([float(i.replace('(', '').replace(')', '')) for i in text.split(',')])
+            return x
         else:
             return text
 
