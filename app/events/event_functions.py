@@ -2737,8 +2737,8 @@ def base(self: Event, background: str, music: str = None, other_options: List[st
         options_events = other_options_on_select or []
 
         if len(options_enabled) <= len(options_list):
-            options_enabled += [False] * (len(options_list) - len(options_events))
-            action.do(action.SetGameVar('_base_options_disabled', options_enabled))
+            options_enabled += [True] * (len(options_list) - len(options_events))
+            action.do(action.SetGameVar('_base_options_disabled', [not b for b in options_enabled]))
         else:
             self.logger.error("base: too many bools in option enabled list: ", other_options_enabled)
             return
@@ -2773,8 +2773,8 @@ def set_custom_options(self: Event, custom_options: List[str], custom_options_en
     options_events = custom_options_on_select or []
 
     if len(options_enabled) <= len(options_list):
-        options_enabled += [False] * (len(options_list) - len(options_events))
-        action.do(action.SetGameVar('_custom_options_disabled', options_enabled))
+        options_enabled += [True] * (len(options_list) - len(options_events))
+        action.do(action.SetGameVar('_custom_options_disabled', [not b for b in options_enabled]))
     else:
         self.logger.error("set_custom_options: too many bools in option enabled list: ", custom_options_enabled)
         return
