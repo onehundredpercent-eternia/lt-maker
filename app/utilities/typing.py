@@ -1,10 +1,4 @@
-from typing import Tuple
-
-try:
-    from typing_extensions import Protocol
-except (ModuleNotFoundError, ImportError):
-    Protocol = object
-    print("You are missing the `typing-extensions` module.\nTry running `pip install -r requirements_editor.txt`")
+from typing import Protocol, Tuple
 
 try:
     from typing_extensions import override
