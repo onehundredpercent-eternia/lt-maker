@@ -1,7 +1,10 @@
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
+from typing import List
+
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
 
 from app.data.resources.icons import Icon, IconSheet
+
 
 class IconView(QGraphicsView):
     min_scale = 0.5
@@ -44,7 +47,7 @@ class IconView(QGraphicsView):
             self.screen_scale -= 1
             self.scale(0.5, 0.5)
 
-def icon_slice(resource: IconSheet, base_width: int, base_height: int, vertical: bool = False) -> list:
+def icon_slice(resource: IconSheet, base_width: int, base_height: int, vertical: bool = False) -> List[Icon]:
     if not resource.pixmap:
         resource.pixmap = QPixmap(resource.full_path)
     sheet = resource.pixmap

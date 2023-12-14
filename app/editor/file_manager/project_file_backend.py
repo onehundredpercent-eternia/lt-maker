@@ -4,12 +4,13 @@ import json
 import logging
 import os
 import shutil
-from datetime import datetime
 import traceback
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from PyQt5.QtCore import QDir, Qt
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QVBoxLayout, QLabel, QDialogButtonBox, QCheckBox
+from PyQt5.QtWidgets import (QCheckBox, QDialogButtonBox, QFileDialog, QLabel,
+                             QMessageBox, QProgressDialog, QVBoxLayout)
 
 from app.constants import VERSION
 from app.data.database.database import DB, Database
@@ -17,6 +18,7 @@ from app.data.resources.resources import RESOURCES, Resources
 from app.data.validation.db_validation import DBChecker
 from app.editor import timer
 from app.editor.error_viewer import show_error_report
+from app.editor.file_manager.migration import maybe_migrate_db_and_resources
 from app.editor.file_manager.project_initializer import ProjectInitializer
 from app.editor.lib.csv import csv_data_exporter, text_data_exporter
 from app.editor.recent_project_dialog import choose_recent_project
@@ -301,6 +303,7 @@ class ProjectFileBackend():
             DB.load(self.current_proj)
             self.settings.append_or_bump_project(
                 DB.constants.value('title') or os.path.basename(self.current_proj), self.current_proj)
+            maybe_migrate_db_and_resources(RESOURCES, DB, self.settings)
 
     def autosave(self):
         project_nid = DB.constants.value('game_nid').replace(' ', '_')

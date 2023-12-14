@@ -1,7 +1,12 @@
-from typing import Dict, Tuple
+from __future__ import annotations
+import os
+from pathlib import Path
+from typing import ClassVar, Dict, Tuple, Type
 from app.data.resources.base_catalog import ManifestCatalog
 
 class IconSheet():
+    size: ClassVar[Tuple[int, int]] = None
+
     def __init__(self, nid, full_path=None, subicon_dict = None):
         self.nid = nid
         self.full_path = full_path
@@ -9,6 +14,7 @@ class IconSheet():
         self.pixmap = None
         self._subicon_dict: Dict[str, Tuple[int, int]] = subicon_dict or {}
         self._index_to_name: Dict[Tuple[int, int], str] = {tuple(index): name for name, index in self._subicon_dict.items()}
+        self._categories: Dict[str, str] = {}
 
     def set_alias(self, name, index):
         self._subicon_dict[name] = index
@@ -18,7 +24,7 @@ class IconSheet():
         return self._subicon_dict.get(name, None)
 
     def get_alias(self, index):
-        return self._index_to_name.get(index, None) or "%s %d, %d" % (self.nid, index[0], index[1])
+        return self._index_to_name.get(tuple(index), None) or "%s_%d_%d" % (self.nid, index[0], index[1])
 
     def set_full_path(self, full_path):
         self.full_path = full_path
@@ -30,7 +36,7 @@ class IconSheet():
         }
 
     @classmethod
-    def restore(cls, s_dict):
+    def restore(cls: Type[IconSheet], s_dict):
         if isinstance(s_dict, str): # old version where we only saved the nid
             self = cls(s_dict)
         else:
@@ -39,6 +45,13 @@ class IconSheet():
                 subicon_dict=s_dict.get('subicon_dict')
             )
         return self
+
+class IconSheet16(IconSheet):
+    size = (16, 16)
+class IconSheet32(IconSheet):
+    size = (32, 32)
+class IconSheet80(IconSheet):
+    size = (80, 72)
 
 class Icon():
     def __init__(self, nid, icon_index, parent_nid):
@@ -53,13 +66,26 @@ class IconCatalog(ManifestCatalog[IconSheet]):
     manifest = 'icons.json'
     title = 'icons'
     filetype = '.png'
-    datatype = IconSheet
+    datatype = IconSheet16
+
+    def load(self, loc):
+        if '__icons.png' in list(os.walk(loc)):
+            resource_dict = self.read_manifest(os.path.join(loc, self.manifest))
+            for s_dict in resource_dict:
+                new_resource = self.datatype.restore(s_dict)
+                new_resource.set_full_path(os.path.join(loc, '__icons' + self.filetype))
+                self.append(new_resource)
+        else:
+            super().load(loc)
 
 class Icon16Catalog(IconCatalog):
     manifest = 'icons16.json'
+    datatype = IconSheet16
 
 class Icon32Catalog(IconCatalog):
     manifest = 'icons32.json'
+    datatype = IconSheet32
 
 class Icon80Catalog(IconCatalog):
     manifest = 'icons80.json'
+    datatype = IconSheet80

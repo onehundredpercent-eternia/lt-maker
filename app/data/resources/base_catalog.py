@@ -2,7 +2,7 @@ import os
 import shutil
 import filecmp
 import json
-from typing import TypeVar
+from typing import ClassVar, Type, TypeVar
 
 from app.utilities.data import Data
 
@@ -19,12 +19,12 @@ class BaseResourceCatalog(Data[B]):
                     new_resource = self.datatype(nid, full_path)
                     self.append(new_resource)
 
-M = TypeVar('M')
+M = TypeVar('M', bound="ManifestCatalog")
 class ManifestCatalog(Data[M]):
     filetype = '.png'
-    manifest = None  # To be implemented
-    title = ''  # To be implemented
-    datatype = None  # To be implemented
+    manifest: ClassVar[str] = None  # To be implemented
+    title: ClassVar[str] = ''  # To be implemented
+    datatype: ClassVar[Type[M]] = None  # To be implemented
 
     def load(self, loc):
         resource_dict = self.read_manifest(os.path.join(loc, self.manifest))
@@ -76,5 +76,5 @@ class ManifestCatalog(Data[M]):
                 bad_files.append(full_fn)
                 logging.warning("Unused file: %s" % full_fn)
         for fn in bad_files:
-            logging.warning("Removing %s..." % fn) 
+            logging.warning("Removing %s..." % fn)
             os.remove(fn)

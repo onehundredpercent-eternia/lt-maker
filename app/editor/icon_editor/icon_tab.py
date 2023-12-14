@@ -15,8 +15,6 @@ from PyQt5.QtWidgets import (QCheckBox, QDialog, QGridLayout, QLineEdit,
 
 
 class IconTab(QWidget):
-    side_menu_enabled: bool = False
-
     def __init__(self, data, title, model, parent=None, initial_icon_nid=None):
         super().__init__(parent)
         self.window = parent
@@ -42,35 +40,13 @@ class IconTab(QWidget):
         self.view.setMovement(QListView.Static)
         self.view.setGridSize(QSize(80, 80))
 
-        if self.side_menu_enabled:
-            self.model.setFilterRole(CustomQtRoles.FilterRole)
-            left_layout = QVBoxLayout()
-
-            self.icon_sheet_search = QLineEdit()
-            self.icon_sheet_search.setPlaceholderText('Filter by Icon Sheet...')
-            self.icon_sheet_search.textChanged.connect(self.filter_icon_sheet_list)
-
-            left_layout.addWidget(self.icon_sheet_search)
-
-            self.icon_sheet_list = QListWidget()
-            for i, icon_sheet in enumerate(data):
-                self.icon_sheet_list.insertItem(i, icon_sheet.nid)
-            self.icon_sheet_list.clicked.connect(self.on_icon_sheet_click)
-            left_layout.addWidget(self.icon_sheet_list)
-
-            self.layout.addLayout(left_layout, 0, 0, 1, 2)
-            self.layout.addWidget(self.view, 0, 2, 1, 1)
-        else:
-            self.layout.addWidget(self.view, 0, 0, 1, 1)
+        self.layout.addWidget(self.view, 0, 0, 1, 1)
 
         self.button = QPushButton("Add New Icon Sheet...")
         self.button.clicked.connect(self.full_model.append)
         self.layout.addWidget(self.button, 1, 0, 1, 1)
 
         self.display = None
-
-        if initial_icon_nid and self.side_menu_enabled:
-            self.model.setFilterRegularExpression(re.escape(initial_icon_nid))
 
     def on_icon_sheet_click(self, index):
         item = self.icon_sheet_list.currentItem()
@@ -91,10 +67,6 @@ class IconTab(QWidget):
     def update_list(self):
         # self.model.dataChanged.emit(self.model.index(0), self.model.index(self.model.rowCount()))
         self.full_model.layoutChanged.emit()
-        if self.side_menu_enabled:
-            self.icon_sheet_list.clear()
-            for i, icon_sheet in enumerate(self._data):
-                self.icon_sheet_list.insertItem(i, icon_sheet.nid)
 
     def reset(self):
         pass
@@ -127,7 +99,6 @@ class IconListView(QListView):
                 self.delete(index)
 
 class Icon16Database(IconTab):
-    side_menu_enabled = True
     @classmethod
     def create(cls, parent=None, selected_icon_nid=None):
         data = RESOURCES.icons16
@@ -139,7 +110,6 @@ class Icon16Database(IconTab):
         return dialog
 
 class Icon32Database(Icon16Database):
-    side_menu_enabled = False
     @classmethod
     def create(cls, parent=None, selected_icon_nid=None):
         data = RESOURCES.icons32
@@ -151,7 +121,6 @@ class Icon32Database(Icon16Database):
         return dialog
 
 class Icon80Database(Icon16Database):
-    side_menu_enabled = False
     @classmethod
     def create(cls, parent=None, selected_icon_nid=None):
         data = RESOURCES.icons80
