@@ -30,7 +30,7 @@ def test_play(name: str = 'testing_proj'):
     DB.load(name + '.ltproj')
     title = DB.constants.value('title')
     driver.start(title, from_editor=True)
-    if 'DEBUG' in DB.levels:
+    if 'DEBUG' in DB.levels.keys():
         game = game_state.start_level('DEBUG')
     else:
         first_level_nid = DB.levels[0].nid
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         source_generator.generate_all()
 
     try:
-        # find_and_run_project()
+        find_and_run_project()
         # main('lion_throne')
         # main('../west_march/west_march')
         # test_play('lion_throne'{pos for pos in tilemap.terrain_grid.keys() if tilemap.get_terrain(pos) == 'Floor'})

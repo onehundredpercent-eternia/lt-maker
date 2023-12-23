@@ -40,7 +40,7 @@ from app.editor.overworld_editor.overworld_editor import OverworldEditor
 import app.editor.game_actions.game_actions as GAME_ACTIONS
 
 # Databases
-from app.editor.unit_editor.unit_tab import UnitDatabase
+from app.editor.unit_editor.new_unit_tab import NewUnitDatabase
 from app.editor.team_editor.team_tab import TeamDatabase
 from app.editor.faction_editor.faction_tab import FactionDatabase
 from app.editor.party_editor.party_tab import PartyDatabase
@@ -81,7 +81,7 @@ class MainEditor(QMainWindow):
         self.app_state_manager.subscribe_to_key(
             MainEditor.__name__, 'main_editor_mode', self.render_editor)
 
-    def __init__(self, project_path: Optional[str] = None):
+    def __init__(self, project_path: str):
         super().__init__()
         self.window_title = _('LT Maker')
         self.setWindowTitle(self.window_title)
@@ -91,7 +91,7 @@ class MainEditor(QMainWindow):
         main_screen_size = desktop.availableGeometry(desktop.primaryScreen())
 
         # Use setFixedSize to make it permanent and unchangeable
-        default_size = main_screen_size.width()*0.7, main_screen_size.height()*0.7
+        default_size = int(main_screen_size.width()*0.7), int(main_screen_size.height()*0.7)
         self.resize(*default_size)
 
         geometry = self.settings.component_controller.get_geometry(
@@ -224,7 +224,7 @@ class MainEditor(QMainWindow):
         #     "Preload Units...", self, triggered=self.edit_preload_units)
 
         # Database actions
-        database_actions = {_("Units"): UnitDatabase.edit,
+        database_actions = {_("Units"): NewUnitDatabase.edit,
                             _("Teams"): TeamDatabase.edit,
                             _("Factions"): FactionDatabase.edit,
                             _("Parties"): PartyDatabase.edit,
@@ -420,7 +420,7 @@ class MainEditor(QMainWindow):
         self.test_full_act.setEnabled(True)
 
     def test_play_load(self):
-        saved_games = GAME_ACTIONS.get_saved_games()
+        saved_games = GAME_ACTIONS.get_preloaded_games()
         if saved_games:
             save_loc = SaveViewer.get(saved_games, self)
             if not save_loc:
@@ -478,7 +478,8 @@ class MainEditor(QMainWindow):
             self._open()
 
     def auto_open(self, project_path: Optional[str]):
-        self.project_save_load_handler.auto_open(project_path)
+        if not self.project_save_load_handler.auto_open(project_path):
+            self.project_save_load_handler.auto_open(DEFAULT_PROJECT)
         self._open()
 
     def _save(self):
@@ -587,7 +588,7 @@ class MainEditor(QMainWindow):
 
     def check_for_updates(self):
         # Only check for updates in frozen version
-        if hasattr(sys, 'frozen') or True:
+        if hasattr(sys, 'frozen'):
             if autoupdate.check_for_update():
                 link = r"https://gitlab.com/rainlash/lt-maker/-/releases/permalink/latest/downloads/lex_talionis_maker"
                 QMessageBox.information(self, "Update Available", "A new update to LT-maker is available!\n"
@@ -614,6 +615,6 @@ class MainEditor(QMainWindow):
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
-    window = MainEditor()
+    window = MainEditor('default.ltproj')
     window.show()
     app.exec_()

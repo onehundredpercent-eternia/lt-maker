@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 
 from typing import TYPE_CHECKING
 
@@ -165,6 +166,10 @@ class Defaults():
     def thracia_critical_multiplier_formula(unit) -> str:
         return 'THRACIA_CRIT'
 
+def reset_cache():
+    condition.cache_clear()
+
+@lru_cache(65535)
 def condition(skill, unit: UnitObject, item=None) -> bool:
     if not item:
         item = unit.equipped_weapon
@@ -256,8 +261,10 @@ def should_draw_anim(unit) -> list:
 def additional_tags(unit) -> set:
     new_tags = set()
     for skill in unit.skills:
-        if skill.has_tags and skill.has_tags.value and condition(skill, unit):
-            new_tags = new_tags | set(skill.has_tags.value)
+        for component in skill.components:
+            if component.defines('additional_tags'):
+                if component.ignore_conditional or condition(skill, unit):
+                    new_tags = new_tags | set(component.additional_tags(unit, skill))
     return new_tags
 
 def before_crit(actions, playback, attacker, item, defender, mode, attack_info) -> bool:

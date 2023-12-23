@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from app.data.database.skill_components import SkillComponent, SkillTags
 from app.data.database.components import ComponentType
 
@@ -267,14 +269,45 @@ class ModifyMaximumRange(SkillComponent):
         return self.value
 
 
+class ModifyMinimumRange(SkillComponent):
+    nid = 'modify_minimum_range'
+    desc = "modifies unit's minimum allowed range"
+    tag = SkillTags.COMBAT2
+
+    expose = ComponentType.Int
+    value = 1
+
+    def modify_minimum_range(self, unit, item):
+        return self.value
+
+
 class EvalMaximumRange(SkillComponent):
-    nid = 'eval_range'
-    desc = "Gives +X range solved using evaluate"
+    nid = 'eval_max_range'
+    desc = "Gives +X range to the maximum solved using evaluate"
     tag = SkillTags.COMBAT2
 
     expose = ComponentType.String
 
     def modify_maximum_range(self, unit, item):
+        from app.engine import evaluate
+        try:
+            return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
+        except:
+            logging.error("Couldn't evaluate %s conditional" % self.value)
+        return 0
+
+    def has_dynamic_range(sellf, unit):
+        return True
+
+
+class EvalMinimumRange(SkillComponent):
+    nid = 'eval_min_range'
+    desc = "Adds +X range to the minimum solved using evaluate"
+    tag = SkillTags.COMBAT2
+
+    expose = ComponentType.String
+
+    def modify_minimum_range(self, unit, item):
         from app.engine import evaluate
         try:
             return int(evaluate.evaluate(self.value, unit, local_args={'item': item}))
@@ -460,13 +493,15 @@ class SkillBeforeCombat(SkillComponent):
     def get_skill_nid(self):
         return self.value['skill']
 
-    def _resolve_targets(self, unit, target):
+    def _resolve_targets(self, unit, target) -> list:
         recipient = self.value['recipient']
         allegiance = self.value['allegiance']
-        is_ally = skill_system.check_ally(unit, target)
         if recipient == 'self':
             return [unit]
         if recipient == 'target':
+            if not target:
+                return []
+            is_ally = skill_system.check_ally(unit, target)
             if allegiance == 'enemy' and is_ally:
                 return []
             if allegiance == 'ally' and not is_ally:

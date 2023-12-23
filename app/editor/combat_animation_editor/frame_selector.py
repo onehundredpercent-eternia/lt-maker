@@ -196,7 +196,7 @@ class FrameSelector(Dialog):
             my_palette = None
             for palette_name, palette_nid in self.combat_anim.palettes:
                 palette = RESOURCES.combat_palettes.get(palette_nid)
-                if palette.is_similar(all_palette_colors):
+                if palette and palette.is_similar(all_palette_colors):
                     my_palette = palette
                     print("Found similar palette %s..." % palette_nid)
                     break

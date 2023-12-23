@@ -4,8 +4,10 @@ from dataclasses import dataclass
 import logging
 from enum import Enum
 from typing import Callable, List, Dict, Optional, Set, Tuple, Type
+from app.events.event_structs import EOL, EventCommandTokens, ParseMode
 
 from app.utilities.data import Prefab
+from app.utilities.str_utils import mirror_bracket
 from app.utilities.typing import NID
 
 
@@ -73,6 +75,10 @@ class EventCommand(Prefab):
 
     def __repr__(self):
         return self.to_plain_text()
+
+    @classmethod
+    def get_keywords(cls) -> list:
+        return cls.keywords + cls.optional_keywords
 
     @classmethod
     def get_keyword_types(cls) -> list:
@@ -340,6 +346,17 @@ Plays the *Sound* once.
     keywords = ['Sound']
     optional_keywords = ['Volume']
 
+class StopSound(EventCommand):
+    nid = "stop_sound"
+    tag = Tags.MUSIC_SOUND
+
+    desc = \
+        """
+Stops the currently playing *Sound* immediately.
+        """
+
+    keywords = ['Sound']
+
 class ChangeMusic(EventCommand):
     nid = 'change_music'
     tag = Tags.MUSIC_SOUND
@@ -509,7 +526,7 @@ NOTE: You can set the `__default` speak style, which will automatically apply to
 
     keywords = ['Style']
     optional_keywords = ['Speaker', 'Position', 'Width', 'Speed', 'FontColor', 'FontType', 'Background', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg']
-    keyword_types = ['Nid', 'Speaker', 'AlignOrPosition', 'Width', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'PositiveInteger', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite']
+    keyword_types = ['Nid', 'Speaker', 'AlignOrPosition', 'Width', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_talk', 'no_sound']
 
 class Speak(EventCommand):
@@ -549,7 +566,7 @@ Extra flags:
 
     keywords = ['SpeakerOrStyle', 'Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg']
-    keyword_types = ['Speaker', 'Text', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'PositiveInteger', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite']
+    keyword_types = ['Speaker', 'Text', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite']
     _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound']
 
 class Unhold(EventCommand):
@@ -972,6 +989,17 @@ The optional flag *immediately* will cause the prompt to appear immediately.
         """
 
     _flags = ["immediately"]
+
+class DeleteSave(EventCommand):
+    nid = 'delete_save'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Delete the save at the current *SaveSlot*. If *SaveSlot* is not provided, deletes the current save.
+        """
+
+    optional_keywords = ['SaveSlot']
 
 class ClearTurnwheel(EventCommand):
     nid = 'clear_turnwheel'
@@ -1710,11 +1738,14 @@ class AddSkillComponent(EventCommand):
     desc = \
         """
 Adds a *SkillComponent* with optional value of *Expression* to *Skill* belonging to *GlobalUnit*.
+If the *stack* flag is set, all stacks of the *Skill* will be affected.
         """
 
     keywords = ["GlobalUnit", "Skill", "SkillComponent"]
     optional_keywords = ["Expression"]
-    
+
+    _flags = ['stack']
+
 class ModifySkillComponent(EventCommand):
     nid = 'modify_skill_component'
     tag = Tags.MODIFY_SKILL_PROPERTIES
@@ -1724,15 +1755,16 @@ class ModifySkillComponent(EventCommand):
 Sets the value of an *SkillComponent* to *Expression* for a *Skill* belonging to *GlobalUnit*.
 
 Use **ComponentProperty* to change a specific value if the SkillComponent has more than one option available.
-
+If the *stack* flag is set, all stacks of the *Skill* will be affected.
 Use the *additive* flag to add rather than set the value.
         """
 
     keywords = ["GlobalUnit", "Skill", "SkillComponent", "Expression"]
     optional_keywords = ["ComponentProperty"]
     keyword_types = ["GlobalUnit", "Skill", "SkillComponent", "Expression", "String"]
-    _flags = ['additive']
-    
+
+    _flags = ['additive', 'stack']
+
 class RemoveSkillComponent(EventCommand):
     nid = 'remove_skill_component'
     tag = Tags.MODIFY_SKILL_PROPERTIES
@@ -1740,9 +1772,11 @@ class RemoveSkillComponent(EventCommand):
     desc = \
         """
 Removes *SkillComponent* from *Skill* in the inventory of *GlobalUnit*.
+If the *stack* flag is set, all stacks of the *Skill* will be affected.
         """
 
     keywords = ["GlobalUnit", "Skill", "SkillComponent"]
+    _flags = ['stack']
 
 class GiveMoney(EventCommand):
     nid = 'give_money'
@@ -1784,7 +1818,7 @@ class GiveExp(EventCommand):
 
     desc = \
         """
-Gives *Experience* to *GlobalUnit*.
+Gives *Experience* to *GlobalUnit*. Can only give between -100 and 100 experience at a time.
         """
 
     keywords = ["GlobalUnit", "Experience"]
@@ -1836,12 +1870,14 @@ class GiveSkill(EventCommand):
         """
 *GlobalUnit* gains *Skill*. If the *no_banner* flag is set, the player will not be informed of this.
 Optional *Initiator* global unit can be given to give the skill an initiator.
-        """
+
+Use the persistent flag to have the skill be treated as a personal skill rather than a temporary status.
+         """
 
     keywords = ["GlobalUnit", "Skill"]
     optional_keywords = ["Initiator"]
     keyword_types = ["GlobalUnit", "Skill", "GlobalUnit"]
-    _flags = ['no_banner']
+    _flags = ['no_banner', 'persistent']
 
 class RemoveSkill(EventCommand):
     nid = 'remove_skill'
@@ -2461,7 +2497,7 @@ class RemoveMapAnim(EventCommand):
     nid = 'remove_map_anim'
     tag = Tags.TILEMAP
     desc = ('Removes a map animation denoted by the nid *MapAnim* at *Position*. Only removes MapAnims that were created using'
-            ' the "permanent" flag')
+            ' the "permanent" flag. Must include "overlay" flag to remove an overlaid map animation.')
     keywords = ["MapAnim", "Position"]
     _flags = ['overlay']
 
@@ -2526,8 +2562,8 @@ Optional args:
         """
 
     optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect']
-    keyword_types = ["Bool", "Music", "StringList", "StringList", "StringList"]
-    
+    keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList"]
+
 
 class Base(EventCommand):
     nid = 'base'
@@ -2549,7 +2585,7 @@ Flags:
 
     keywords = ["Background"]
     optional_keywords = ["Music", 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect']
-    keyword_types = ['Panorama', 'Music', "StringList", "StringList", "StringList"]
+    keyword_types = ['Panorama', 'Music', "StringList", "BoolList", "StringList"]
     _flags = ["show_map"]
 
 class SetCustomOptions(EventCommand):
@@ -2570,7 +2606,7 @@ Args:
 
     keywords = ["CustomOptions"]
     optional_keywords = ["CustomOptionsEnabled", "CustomOptionsDesc", "CustomOptionsOnSelect"]
-    keyword_types = ["StringList", "StringList", "StringList", "StringList"]
+    keyword_types = ["StringList", "BoolList", "StringList", "StringList"]
 
 
 class Shop(EventCommand):
@@ -3066,6 +3102,7 @@ class MoveInInitiative(EventCommand):
 
 class PairUp(EventCommand):
     nid = 'pair_up'
+    nickname = 'rescue'
     tag = Tags.MISCELLANEOUS
     desc = "Pairs the first unit into the second"
 
@@ -3074,6 +3111,7 @@ class PairUp(EventCommand):
 
 class Separate(EventCommand):
     nid = 'separate'
+    nickname = 'drop'
     tag = Tags.MISCELLANEOUS
     desc = "Sets the unit's traveler to none. Does not place that partner on the map."
 
@@ -3156,6 +3194,16 @@ class ToggleNarrationMode(EventCommand):
 
     keywords = ['Direction']
     optional_keywords = ['Speed']
+
+class HideCombatUI(EventCommand):
+    nid = 'hide_combat_ui'
+    tag = Tags.DIALOGUE_TEXT
+    desc = ('Hides the combat ui. Combat UI will remain hidden until Show Combat UI command is called.')
+
+class ShowCombatUI(EventCommand):
+    nid = 'show_combat_ui'
+    tag = Tags.DIALOGUE_TEXT
+    desc = ('Shows the combat ui. Usually only called after hide_combat_ui has been called. Also usually caleld at the end of the boss conversation.')
 
 class SetOverworldMenuOptionEnabled(EventCommand):
     nid = 'set_overworld_menu_option_enabled'
@@ -3269,7 +3317,7 @@ def restore_command(dat) -> EventCommand:
     else:
         return Comment(display_values=[nid + ';' + str.join(';', display_values)])
 
-evaluables = ('Expression', 'String', 'StringList', 'PointList', 'DashList', 'Nid')
+evaluables = ('Expression', 'String', 'StringList', 'PointList', 'Nid', 'Text')
 
 ALL_EVENT_COMMANDS: Dict[NID, Type[EventCommand]] = {
     command.nid: command for command in EventCommand.__subclasses__()
@@ -3345,7 +3393,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
             return arg[arg.find("(") + 1 : arg.rfind(")")]
         return arg
 
-    def _parse_command(command: EventCommand, arguments: List[str]) -> Tuple:
+    def _parse_command(command: EventCommand, arguments: List[str]) -> Tuple[Optional[EventCommand], Optional[int]]:
         # Start parsing
         keyword_argument_mode: bool = False
         cmd_args = arguments[1:]
@@ -3362,6 +3410,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
             # Check for flag first
             if _process_arg(None, arg) in command_info.flags:
                 flags.add(_process_arg(None, arg))
+                cmd_args[idx] = _process_arg(None, arg)
 
             # Handle Python style keyword arguments
             # For example `s;Speaker=Eirika;Text=Hi!;Nid=normal`
@@ -3370,7 +3419,9 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                 cmd_keyword, arg = arg.split('=', 1)
                 cmd_validator = command_info.get_validator_from_keyword(cmd_keyword)
                 if cmd_validator:
-                    parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
+                    arg = _process_arg(cmd_validator, arg)
+                    parameters[cmd_keyword] = arg
+                    cmd_args[idx] = '%s=%s' % (cmd_keyword, arg)
                 else:
                     logging.debug("Keyword argument %s not found", cmd_keyword)
                     return None, idx
@@ -3383,11 +3434,15 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
                 if idx < len(command_info.keywords):
                     cmd_keyword = command_info.keywords[idx]
                     cmd_validator = command_info.get_keyword_types()[idx]
-                    parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
+                    arg = _process_arg(cmd_validator, arg)
+                    parameters[cmd_keyword] = arg
+                    cmd_args[idx] = arg
                 elif idx - len(command_info.keywords) < len(command_info.optional_keywords):
                     cmd_keyword = command_info.optional_keywords[idx - len(command_info.keywords)]
                     cmd_validator = command_info.get_keyword_types()[idx]
-                    parameters[cmd_keyword] = _process_arg(cmd_validator, arg)
+                    arg = _process_arg(cmd_validator, arg)
+                    parameters[cmd_keyword] = arg
+                    cmd_args[idx] = arg
                 else:
                     logging.debug("too many arguments: %s, %s", arg, arguments)
                     return None, idx
@@ -3395,7 +3450,7 @@ def parse_text_to_command(text: str, strict: bool = False) -> Tuple[EventCommand
         # Check that we have all the required keywords
         for keyword in command_info.keywords:
             if keyword not in parameters:
-                logging.debug("Missing required parameter: %s in %s", keyword, parameters)
+                logging.debug("Missing required parameter: %s in %s for command %s", keyword, parameters, command_info.nid)
                 return None, len(cmd_args) - 1
 
         copy = command(parameters, flags, cmd_args)
@@ -3445,7 +3500,6 @@ def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = Non
     parameters = command.parameters
     if _eval_evals:
         parameters = {k: _eval_evals(v) if isinstance(v, str) else v for k, v in parameters.items()}
-
     for keyword, value in parameters.items():
         if keyword in command.keywords:
             idx = command.keywords.index(keyword)
@@ -3456,5 +3510,59 @@ def convert_parse(command: EventCommand, _eval_evals: Callable[[str], str] = Non
             continue
         keyword_type = command.get_keyword_types()[idx]
         parameters[keyword] = convert(keyword_type, value)
-
+    parameters = {k: v for k, v in parameters.items() if (v is not None or k in command.keywords)}
     return parameters, command.chosen_flags
+
+def parse_event_line(line: str) -> EventCommandTokens:
+    sline = line.lstrip()
+    lpad = len(line) - len(sline)
+
+    tokens = ['']
+    token_idxs = [lpad]
+
+    bracket_nest = 0
+    bracket = ''
+
+    idx = 0
+    EOF = 'EOF'
+    def peek():
+        if idx >= len(sline) - 1:
+            return EOF
+        return sline[idx + 1]
+
+    while idx < len(sline):
+        c = sline[idx]
+        if c == bracket:
+            bracket_nest += 1
+        elif c == mirror_bracket(bracket):
+            bracket_nest -= 1
+        elif c in '({[':
+            bracket_nest += 1
+            bracket = c
+        elif bracket_nest == 0 and c == ';':
+            tokens.append('')
+            token_idxs.append(idx + lpad + 1)
+            idx += 1
+            # do not save semicolons
+            continue
+        elif bracket_nest == 0 and c == '#':
+            # stop parsing if we hit a comment
+            tokens.append(EOL)
+            break
+        tokens[-1] += c
+        idx += 1
+    ectoks = EventCommandTokens(tokens, line, token_idxs)
+
+    # sort out flags vs args
+    command_t = ALL_EVENT_COMMANDS.get(ectoks.command())
+    if not command_t:
+        # nonexistent command, just return as if all args
+        return ectoks
+    flags = command_t().flags
+    # by default, the flag idx is the end of the args, plus 1 for the command
+    ectoks._flag_idx = len(command_t.get_keyword_types()) + 1
+    for idx, tok in enumerate(ectoks.tokens):
+        if tok in flags: # found a flag; assume we're in the flag zone
+            ectoks._flag_idx = idx
+            break
+    return ectoks
