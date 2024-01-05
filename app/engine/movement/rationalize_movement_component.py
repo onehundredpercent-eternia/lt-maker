@@ -94,7 +94,13 @@ class RationalizeMovementComponent(MovementComponent):
             next_y = min(y + dy, self.goal[1])
         elif dy < 0 and y + dy < self.goal[1]:
             next_y = max(y + dy, self.goal[1])
+
+        noticeable_movement = 0.01
+        if abs(x - next_x) < noticeable_movement and abs(y - next_y) < noticeable_movement:
+            next_x = self.goal[0]
+            next_y = self.goal[1]
         self.position = (next_x, next_y)
+
 
         # Assign the position to the image
         self.unit.sprite.set_roam_position(self.position)
