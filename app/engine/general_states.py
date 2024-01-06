@@ -787,7 +787,7 @@ class MoveState(MapState):
         if target_pos in self.targets[TargetType.PAIRUP]:
             move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, target_pos))[0]
         elif game.cursor.path:
-            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]) + utils.calculate_distance(pos, cur_unit.position))[0]
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]))[0]
         else:
             move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
 
