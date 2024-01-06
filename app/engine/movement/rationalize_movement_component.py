@@ -101,7 +101,6 @@ class RationalizeMovementComponent(MovementComponent):
             next_y = self.goal[1]
         self.position = (next_x, next_y)
 
-
         # Assign the position to the image
         self.unit.sprite.set_roam_position(self.position)
 
