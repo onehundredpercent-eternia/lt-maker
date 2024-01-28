@@ -19,7 +19,7 @@ def determine_all_defenders(playback: list, attacker) -> set:
     for mark in marks + damage_marks:
         if 'Tile' in mark.defender.tags:
             continue  # Don't count tiles
-        all_defenders.add(mark.defender) 
+        all_defenders.add(mark.defender)
     return all_defenders
 
 def determine_all_damaged_defenders(playback: list, attacker) -> set:
@@ -31,14 +31,14 @@ def determine_all_damaged_defenders(playback: list, attacker) -> set:
                     mark.true_damage != 0]
     all_defenders = set()
     for mark in damage_marks:
-        if 'Tile' in mark.defender.tags: 
+        if 'Tile' in mark.defender.tags:
             continue  # Don't count tiles
         all_defenders.add(mark.defender)
     return all_defenders
 
 def determine_all_healed_defenders(playback: list, attacker) -> set:
     healing_marks = [mark for mark in playback if mark.nid == 'heal_hit' and mark.attacker == attacker]
-    healing_marks = [mark for mark in healing_marks if 
+    healing_marks = [mark for mark in healing_marks if
                      skill_system.check_ally(attacker, mark.defender) and
                      mark.true_damage > 0]
     all_defenders = set()
@@ -58,7 +58,7 @@ def modify_exp(exp, attacker, defender):
     exp *= enemy_mult
     if not defender.is_dying:
         return exp
-        
+
     exp *= float(DB.constants.value('kill_multiplier'))
     if 'Boss' in defender.tags:
         exp += int(DB.constants.value('boss_bonus') * self_mult * enemy_mult)

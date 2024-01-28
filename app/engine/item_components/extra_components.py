@@ -11,6 +11,7 @@ class EffectiveDamage(ItemComponent):
     nid = 'effective_damage'
     desc = 'If this item is effective against an enemy, its damage value will be multiplied and increased'
     tag = ItemTags.EXTRA
+    can_stack = True
 
     expose = ComponentType.NewMultipleOptions
 

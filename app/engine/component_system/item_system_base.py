@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Set, Tuple
+from typing import TYPE_CHECKING, List, Set, Tuple
+from app.data.database.item_components import ItemComponent
 
 from app.engine.component_system import utils
 
@@ -110,14 +111,22 @@ class Defaults():
     def text_color(unit, item) -> str:
         return None
 
-def get_all_components(unit, item) -> list:
+def get_all_components(unit, item) -> List[ItemComponent]:
     from app.engine import skill_system
     override_components = skill_system.item_override(unit, item)
-    override_component_nids = [c.nid for c in override_components]
     if not item:
         return override_components
-    all_components = [c for c in item.components] + override_components
-    return all_components
+    all_components: List[ItemComponent] = [c for c in item.components] + override_components
+    # remove duplicate components
+    pruned_components: List[ItemComponent] = []
+    seen = set()
+    for comp in reversed(all_components):
+        if not comp.can_stack and comp.nid in seen:
+            continue
+        pruned_components.append(comp)
+        seen.add(comp.nid)
+    pruned_components.reverse()
+    return pruned_components
 
 def available(unit, item) -> bool:
     """

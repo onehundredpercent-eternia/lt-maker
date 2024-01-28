@@ -88,7 +88,7 @@ def compute_advantage(unit1, unit2, item1, item2, advantage=True):
     # bonus is a CombatBonusList
     highest_requirement_met = -1
     new_adv = None
-    for adv in bonus:  
+    for adv in bonus:
         if adv.weapon_type == 'All' or adv.weapon_type == item2_weapontype:
             if adv.weapon_rank == 'All':
                 new_adv = weapons.CombatBonus.copy(adv)
@@ -114,7 +114,7 @@ def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
     if DB.constants.value('line_of_sight'):
         if not item_system.ignore_line_of_sight(defender, dweapon) and len(line_of_sight.line_of_sight([defender.position], [attacker.position], 99)) == 0:
             return False
-    
+
     if not attacker.position:
         return True
     valid_targets = game.target_system.targets_in_range(defender, dweapon)
@@ -328,7 +328,7 @@ def defense_speed(unit, item, item_to_avoid=None):
 
     if not DB.constants.value('allow_negative_as') and speed < 0:
         speed = 0
-        
+
     return speed
 
 def compute_hit(unit, target, item, def_item, mode, attack_info):
@@ -502,7 +502,6 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
 
     might *= skill_system.damage_multiplier(unit, item, target, mode, attack_info, might)
     might *= skill_system.resist_multiplier(target, item, unit, mode, attack_info, might)
-
     return int(max(DB.constants.get('min_damage').value, might))
 
 def compute_assist_damage(unit, target, item, def_item, mode, attack_info, crit=False):

@@ -1,13 +1,14 @@
 from __future__ import annotations
 from functools import lru_cache
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from app.engine.component_system import utils
 
 if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
     from app.engine.objects.unit import UnitObject
+    from app.data.database.item_components import ItemComponent
 
 class Defaults():
     @staticmethod
@@ -456,9 +457,8 @@ def on_separate(unit, leader):
                 component.on_separate(unit, leader)
 
 item_override_recursion_stack = set()
-def item_override(unit, item: ItemObject):
+def item_override(unit, item: ItemObject) -> List[ItemComponent]:
     all_override_components = []
-    components_so_far = set()
     if not unit or not item:
         return all_override_components
     for skill in reversed(unit.skills):
@@ -472,10 +472,7 @@ def item_override(unit, item: ItemObject):
                 if skill.nid not in item_override_recursion_stack:
                     item_override_recursion_stack.add(skill.nid)
                     if condition(skill, unit):
-                        new_override_components = list(component.get_components(unit))
-                        new_override_components = [comp for comp in new_override_components if comp.nid not in components_so_far]
-                        components_so_far |= set([comp.nid for comp in new_override_components])
-                        all_override_components += new_override_components
+                        all_override_components += list(component.get_components(unit))
                     item_override_recursion_stack.remove(skill.nid)
                 break
     return all_override_components
