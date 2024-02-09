@@ -7,25 +7,39 @@ from app.data.database.game_flags import dataclass_from_dict
 
 from app.data.resources.base_catalog import ManifestCatalog
 
-class FontType(str, Enum):
-    TTF = 'ttf'
-    IMAGE = 'image'
-
 @dataclass
 class Font():
     nid: str                                                                             #: NID of the font.
     file_name: str = None                                                                #: Root path without file ending, e.g. `project.ltproj/resources/convo`.
-    font_type: FontType = FontType.IMAGE                                                 #: Type of font this is. One of IMAGE or TTF.
-    default_color: Optional[str] = None                                                  #: IMAGE only. The key of the default color in the palette, if any.
-    palettes: Dict[str, List[Tuple[int, int, int]]] = field(default_factory=dict)        #: IMAGE only. A dictionary of color names to the palette of the font color.
+    fallback_ttf: str = None                                                             #: name of the .ttf file (in this directory) to be used as a fallback if the main font cannot render anything
+    fallback_size: int = 16                                                              #: what size the fallback font should be rendered at. This may well differ depending on the font, especially at these lower resolutions!
+    default_color: Optional[str] = None                                                  #: The key of the default color in the palette, if any.
+    outline_font: bool = False                                                           #: whether this font has an outline
+    palettes: Dict[str, List[Tuple[int, int, int]]] = field(default_factory=dict)        #: A dictionary of color names to the palette of the font color.
 
     def image_path(self):
-        if self.font_type == FontType.IMAGE:
-            return self.file_name + '.png'
+        return self.file_name + '.png'
 
     def index_path(self):
-        if self.font_type == FontType.IMAGE:
-            return self.file_name + '.idx'
+        return self.file_name + '.idx'
+
+    def ttf_path(self):
+        if self.fallback_ttf:
+            return Path(self.file_name).parent / self.fallback_ttf
+
+    def primary_color(self, color):
+        palette = self.palettes.get(color)
+        if palette:
+            return palette[0]
+        return None
+
+    def secondary_color(self, color):
+        palette = self.palettes.get(color)
+        if palette:
+            if len(palette) > 1:
+                return palette[1]
+            return palette[0]
+        return None
 
     def save(self):
         s_dict = asdict(self)
@@ -49,8 +63,7 @@ class FontCatalog(ManifestCatalog[Font]):
             return
         for s_dict in resource_dict:
             new_resource = self.datatype.restore(s_dict)
-            if new_resource.font_type == FontType.IMAGE:
-                new_resource.file_name = os.path.join(loc, new_resource.nid)
+            new_resource.file_name = os.path.join(loc, new_resource.nid)
             self.append(new_resource)
 
     def save(self, loc):
@@ -61,5 +74,9 @@ class FontCatalog(ManifestCatalog[Font]):
             new_image_path = os.path.join(loc, datum.nid + '.png')
             if os.path.abspath(datum.image_path()) != os.path.abspath(new_image_path):
                 self.make_copy(datum.image_path(), new_image_path)
+            if(datum.ttf_path()):
+                new_ttf_path = os.path.join(loc, datum.fallback_ttf)
+                if os.path.abspath(datum.ttf_path()) != os.path.abspath(new_ttf_path):
+                    self.make_copy(datum.ttf_path(), new_ttf_path)
             datum.file_name = os.path.join(loc, datum.nid)
         self.dump(loc)

@@ -95,7 +95,7 @@ def load_fonts():
     global FONT
     FONT.clear()
     for font in RESOURCES.fonts.values():
-        bmp_font = bmpfont.BmpFont(font.image_path(), font.index_path())
+        bmp_font = bmpfont.BmpFont(font, font.image_path(), font.index_path())
         FONT[font.nid] = bmp_font
         base_surf = bmp_font.get_base_surf()
         for color_name, palette in font.palettes.items():
@@ -108,5 +108,6 @@ def load_fonts():
 
             # for ease of access
             font_name_with_color = '%s-%s' % (font.nid, color_name)
-            FONT[font_name_with_color] = bmpfont.BmpFont(font.image_path(), font.index_path())
-            FONT[font_name_with_color].surfaces['default'] = paletted_surf
+            FONT[font_name_with_color] = bmpfont.BmpFont(font, font.image_path(), font.index_path())
+            FONT[font_name_with_color].default_color = color_name
+            FONT[font_name_with_color].surfaces[color_name] = paletted_surf

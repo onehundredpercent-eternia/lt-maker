@@ -208,7 +208,6 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
             color_stack.append(tag_color)
         # actually render font
         if curr_font != 'icon':
-            print('rendering', curr_font, curr_text, curr_color)
             FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color)
             tx += FONT[curr_font].width(curr_text)
         else:
