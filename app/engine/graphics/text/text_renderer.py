@@ -142,8 +142,8 @@ def remove_tags(text_block: List[str]) -> List[str]:
         new_text_block.append(new_line)
     return new_text_block
 
-def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str], 
-                colors: List[NID | None], topleft: Tuple[int, int], 
+def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
+                colors: List[NID | None], topleft: Tuple[int, int],
                 align: HAlignment = HAlignment.LEFT) -> engine.Surface:
     """An enhanced text render layer wrapper around BmpFont.
     Supports multiple fonts and multiple text sections, as well as
@@ -208,6 +208,7 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
             color_stack.append(tag_color)
         # actually render font
         if curr_font != 'icon':
+            print('rendering', curr_font, curr_text, curr_color)
             FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color)
             tx += FONT[curr_font].width(curr_text)
         else:

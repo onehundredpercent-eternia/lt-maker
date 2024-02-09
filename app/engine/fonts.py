@@ -90,27 +90,23 @@ font_types = [text, narrow, small, info, nconvo, convo, iconvo, bconvo, chapter,
 
 # Load in default, uncolored fonts
 FONT: Dict[NID, bmpfont.BmpFont] = {}
-for font in RESOURCES.fonts.values():
-    title = font.nid.split('-')[0]
-    idx_path = font.full_path.replace(font.nid, title).replace('.png', '.idx')
-    FONT[font.nid] = bmpfont.BmpFont(font.full_path, idx_path)
-    # new, general font objects
-    FONT[title] = bmpfont.BmpFont(font.full_path, idx_path)
 
-# Convert colors
-for font_type in font_types:
-    FONT[font_type.name].surfaces[font_type.default] = FONT[font_type.name].surfaces['default']
-    for color, value in font_type.colors.items():
-        if color == font_type.default:
-            continue
-        text = FONT[font_type.name + '-' + font_type.default]
-        new_text = font_type.name + '-' + color
-        FONT[new_text] = bmpfont.BmpFont(text.png_path, text.idx_path)
-        dic = {a: b for a, b in zip(font_type.colors[font_type.default], font_type.colors[color])}
-        color_surf = image_mods.color_convert_alpha(FONT[new_text].surfaces['default'], dic)
-        FONT[new_text].surfaces['default'] = color_surf
+def load_fonts():
+    global FONT
+    FONT.clear()
+    for font in RESOURCES.fonts.values():
+        bmp_font = bmpfont.BmpFont(font.image_path(), font.index_path())
+        FONT[font.nid] = bmp_font
+        base_surf = bmp_font.get_base_surf()
+        for color_name, palette in font.palettes.items():
+            if color_name == font.default_color:
+                paletted_surf = base_surf
+            else:
+                palette_map = {orig: new for orig, new in zip(map(tuple, font.palettes[font.default_color]), map(tuple, palette))}
+                paletted_surf = image_mods.color_convert_alpha(base_surf.copy(), palette_map)
+            bmp_font.surfaces[color_name] = paletted_surf
 
-        # new: add colors to new, generalized font objects
-        # the above code is left intact for legacy purposes
-        title = font_type.name
-        FONT[title].surfaces[color] = color_surf
+            # for ease of access
+            font_name_with_color = '%s-%s' % (font.nid, color_name)
+            FONT[font_name_with_color] = bmpfont.BmpFont(font.image_path(), font.index_path())
+            FONT[font_name_with_color].surfaces['default'] = paletted_surf

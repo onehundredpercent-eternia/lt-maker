@@ -571,6 +571,7 @@ class InfoMenuState(State):
             color = 'yellow'
             if DB.stats.get(stat_nid).growth_colors and self.unit.team == 'player':
                 color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
+            print(name, color, "STAT")
             render_text(surf, ['text'], [name], [color], (8, 16 * idx + 24))
             base_value = self.unit.stats.get(stat_nid, 0)
             subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)

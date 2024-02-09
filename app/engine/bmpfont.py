@@ -55,6 +55,9 @@ class BmpFont():
         self.surfaces[default_color] = engine.image_load(self.png_path)
         # engine.set_colorkey(self.surface, (0, 0, 0), rleaccel=True)
 
+    def get_base_surf(self) -> engine.Surface:
+        return self.surfaces[self.default_color]
+
     def modify_string(self, string: str) -> str:
         if self.all_uppercase:
             string = string.upper()
@@ -73,7 +76,7 @@ class BmpFont():
         else:
             c_info = self.chartable[c]
             cx, cy, cwidth = c_info.x, c_info.y, c_info.char_width
-        base_surf = self.surfaces.get(color, self.surfaces['default'])
+        base_surf = self.surfaces.get(color)
         char_surf = engine.subsurface(base_surf, (cx, cy, self._width, self.height))
         return (char_surf, cwidth)
 
@@ -87,7 +90,7 @@ class BmpFont():
         else:
             c_info = self.chartable[c]
             cx, cy, cwidth = c_info.x, c_info.y, c_info.char_width
-        base_surf = self.surfaces.get(color, self.surfaces['default'])
+        base_surf = self.surfaces.get(color)
         high_surf = engine.subsurface(base_surf, (cx, cy, self._width, self.height))
         lowsurf = engine.subsurface(base_surf, (cx, cy + self.height, self._width, self.height))
         return (high_surf, lowsurf, cwidth)
@@ -95,7 +98,6 @@ class BmpFont():
     def blit(self, string, surf, pos=(0, 0), color: Optional[str] = None, no_process=False):
         if not color:
             color = self.default_color
-
         def normal_render(left, top, string: str, bcolor):
             for c in string:
                 c_surf, char_width = self._get_char_from_surf(c, bcolor)
