@@ -99,13 +99,13 @@ class BmpFont():
 
     @lru_cache()
     def _get_char_width(self, c: str) -> int:
+        if c in self.chartable:
+            return self.chartable[c].char_width
         if self.fallback_font:
             if self.font_info.outline_font:
                 return default_render_with_outline(self.fallback_font, c, self.height, (0, 0, 0), (0, 0, 0))[1]
             else:
                 return default_render(self.fallback_font, c, self.height, (0, 0, 0))[1]
-        if c in self.chartable:
-            return self.chartable[c].char_width
         return 8
 
     @lru_cache()
