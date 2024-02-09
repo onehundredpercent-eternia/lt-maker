@@ -1,11 +1,11 @@
 from dataclasses import asdict, dataclass, field
-from enum import Enum
-import os, shutil
+import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from app.data.database.game_flags import dataclass_from_dict
 
 from app.data.resources.base_catalog import ManifestCatalog
+from app.utilities.typing import Color4
 
 @dataclass
 class Font():
@@ -15,7 +15,7 @@ class Font():
     fallback_size: int = 16                                                              #: what size the fallback font should be rendered at. This may well differ depending on the font, especially at these lower resolutions!
     default_color: Optional[str] = None                                                  #: The key of the default color in the palette, if any.
     outline_font: bool = False                                                           #: whether this font has an outline
-    palettes: Dict[str, List[Tuple[int, int, int]]] = field(default_factory=dict)        #: A dictionary of color names to the palette of the font color.
+    palettes: Dict[str, List[Color4]] = field(default_factory=dict)                      #: A dictionary of color names to the palette of the font color.
 
     def image_path(self):
         return self.file_name + '.png'

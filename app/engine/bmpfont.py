@@ -6,10 +6,12 @@ from app.data.resources.fonts import Font
 from app.engine import engine
 import pygame
 
+from app.utilities.typing import Color4
+
 OUTLINE_WIDTH = 1
 
 @lru_cache()
-def default_render_with_outline(font: pygame.font.Font, char: str, height: int, internal_color: Tuple[int, int, int], outline_color: Tuple[int, int, int]) -> Tuple[engine.Surface, int]:
+def default_render_with_outline(font: pygame.font.Font, char: str, height: int, internal_color: Color4, outline_color: Color4) -> Tuple[engine.Surface, int]:
     text_width, _ = font.size(char)
     surf = engine.create_surface((text_width + 2 * OUTLINE_WIDTH, height), True)
     internal = font.render(char, False, internal_color)
@@ -21,7 +23,7 @@ def default_render_with_outline(font: pygame.font.Font, char: str, height: int, 
     return surf, text_width
 
 @lru_cache()
-def default_render(font: pygame.font.Font, char: str, height: int, color: Tuple[int, int, int]) -> Tuple[engine.Surface, int]:
+def default_render(font: pygame.font.Font, char: str, height: int, color: Color4) -> Tuple[engine.Surface, int]:
     text_width, _ = font.size(char)
     surf = engine.create_surface((text_width, height), True)
     black = font.render(char, False, color)
