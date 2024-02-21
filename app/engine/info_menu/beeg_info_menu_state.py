@@ -4,6 +4,7 @@ from app.constants import WINWIDTH, WINHEIGHT
 from app.utilities import utils
 
 from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
 
 from app.engine.sprites import SPRITES
 from app.engine.state import State
@@ -12,6 +13,7 @@ from app.engine import engine, help_menu, gui, \
     combat_calcs, skill_system
 from app.engine.game_menus import menu_options
 from app.engine.game_state import game
+from app.engine.info_menu.info_menu_portrait import InfoMenuPortrait
 from app.utilities.enums import Alignments
 
 from app.engine.info_menu import info_graph, info_menu_state
@@ -49,14 +51,33 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
     def draw_portrait(self, surf):
         # Only create if we don't have one in memory
         if not self.portrait_surf:
-            self.portrait_surf = self.create_portrait()
+            self.portrait_surf = self.create_portrait_section()
+        portrait_surf = self.portrait_surf.copy()
+
+        # If no portrait for this unit, either create one or default to class card using icons.get_portrait
+        if not self.current_portrait:
+            portrait = RESOURCES.portraits.get(self.unit.portrait_nid)
+            if portrait:
+                self.current_portrait = InfoMenuPortrait(portrait, DB.constants.value('info_menu_blink'))
+            else:
+                im, offset = icons.get_portrait(self.unit)
+        # We do have a portrait, so update...
+        if self.current_portrait:
+            self.current_portrait.update()
+            im = self.current_portrait.create_image()
+            offset = self.current_portrait.portrait.info_offset
+        # Draw portrait onto the portrait surf
+        if im:
+            rect = (0, offset//2, im.get_width(), 76)
+            portrait_surf = engine.subsurface(im, rect)
+            surf.blit(portrait_surf, (100 + max((96 - im.get_width())//2, 0), 4))
 
         # Stick it on the surface
         if self.transparency:
-            im = image_mods.make_translucent(self.portrait_surf, self.transparency)
+            im = image_mods.make_translucent(portrait_surf, self.transparency)
             surf.blit(im, (0, self.scroll_offset_y))
         else:
-            surf.blit(self.portrait_surf, (0, self.scroll_offset_y))
+            surf.blit(portrait_surf, (0, self.scroll_offset_y))
 
         # Blit the unit's active/focus map sprite
         if not self.transparency:
@@ -65,15 +86,9 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
             y_pos = self.portrait_section_height - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
-    def create_portrait(self):
+    def create_portrait_section(self):
         surf = engine.create_surface((WINWIDTH, 80), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (10, 44))
-
-        im, offset = icons.get_portrait(self.unit)
-        if im:
-            rect = (0, offset//2, im.get_width(), 76)
-            portrait_surf = engine.subsurface(im, rect)
-            surf.blit(portrait_surf, (100 + max((96 - im.get_width())//2, 0), 4))
 
         x_offset = 4
         render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), Alignments.CENTER)

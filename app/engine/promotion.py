@@ -8,7 +8,7 @@ from app.engine.fonts import FONT
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
 from app.engine.state import State
-from app.engine import background, menus, engine, dialog, text_funcs, icons, \
+from app.engine import background, menus, engine, dialog, icons, \
     action, item_system, battle_animation
 from app.engine.combat.mock_combat import MockCombat
 from app.engine.game_state import game
@@ -186,7 +186,7 @@ class PromotionChoiceState(State):
             anim.draw(surf, (self.anim_offset + 12, 0))
 
         # Class Reel
-        FONT['class-purple'].blit(self.menu.get_current(), surf, (114, 5))
+        FONT['class'].blit(self.menu.get_current(), surf, (114, 5))
 
         # Weapon Icons
         for idx, weapon in enumerate(self.weapon_icons[self.menu.get_current_index()]):

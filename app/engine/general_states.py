@@ -105,9 +105,9 @@ class TurnChangeState(MapState):
                     action.do(action.IncGauge(unit, -unit.get_gauge_inc()))
                 # Apply pair up bonuses to units starting with a traveler on the first turn
                 if game.turncount - 1 <= 0:
-                    skill_system.on_pairup(game.get_unit(unit.traveler), unit) 
-            if unit.built_guard: # Switch built_guard to false for all units
-                action.do(action.BuiltGuard(unit))                     
+                    skill_system.on_pairup(game.get_unit(unit.traveler), unit)
+            if unit.built_guard:  # Switch built_guard to false for all units
+                action.do(action.BuiltGuard(unit))
 
     def end(self):
         if DB.constants.value('initiative'):
@@ -363,11 +363,11 @@ class FreeState(MapState):
     def _select_next_available_unit(self):
         avail_units = [
             u for u in game.units
-            if u.team == 'player' and
-            u.position and
-            not u.finished and
-            skill_system.can_select(u) and
-            'Tile' not in u.tags]
+            if u.team == 'player' 
+            and u.position 
+            and not u.finished 
+            and skill_system.can_select(u)
+            and 'Tile' not in u.tags]
 
         if avail_units:
             cur_unit = game.cursor.get_hover()
@@ -883,7 +883,7 @@ class MenuState(MapState):
                     # No duplicates
                     if truth and region.sub_nid not in options:
                         options.append(region.sub_nid)
-                        info_descs.append(None) # Could add actual descriptions later, somehow
+                        info_descs.append(None)  # Could add actual descriptions later, somehow
                         self.valid_regions.append(region)
                 except:
                     logging.error("Region condition {%s} could not be evaluated" % region.condition)
@@ -894,7 +894,7 @@ class MenuState(MapState):
             self.target_dict[ability.name] = ability
             if t:
                 options.append(ability.name)
-                info_descs.append(ability.name + '_desc') # Could add actual descriptions later
+                info_descs.append(ability.name + '_desc')  # Could add actual descriptions later
 
         options.append("Wait")
         info_descs.append("Wait_desc")
@@ -1035,7 +1035,7 @@ class MenuState(MapState):
                 for region in self.valid_regions:
                     if region.sub_nid == selection:
                         did_trigger = game.events.trigger(triggers.RegionTrigger(selection, self.cur_unit, self.cur_unit.position, region))
-                        if not did_trigger: # maybe this uses the more dynamic region trigger
+                        if not did_trigger:  # maybe this uses the more dynamic region trigger
                             did_trigger = game.events.trigger(triggers.OnRegionInteract(self.cur_unit, self.cur_unit.position, region))
                         if did_trigger:
                             self.menu = None  # Remove menu for a little (Don't worry, it will come back)
@@ -1060,7 +1060,7 @@ class MenuState(MapState):
                         else:
                             game.memory['valid_weapons'] = all_weapons
                         game.state.change('weapon_choice')
-                    else: # multi item of spells?
+                    else:  # multi item of spells?
                         all_spells = [subitem for subitem in item.subitems if item_funcs.is_spell_recursive(self.cur_unit, subitem) and
                                       game.target_system.get_valid_targets_recursive_with_availability_check(self.cur_unit, subitem)]
                         if item.multi_item_hides_unavailable:
@@ -1395,7 +1395,7 @@ class ItemDiscardState(MapState):
 
     def start(self):
         game.cursor.hide()
-        self.cur_unit = game.cursor.cur_unit
+        self.cur_unit = game.memory['item_discard_current_unit']
         options = self.cur_unit.items
         self.menu = menus.Choice(self.cur_unit, options)
         ignore = [bool(item_system.locked(self.cur_unit, item)) for item in options]
@@ -1785,8 +1785,8 @@ class TargetingState(MapState):
         self.pennant = banner.Pennant(self.ability.name + '_desc')
 
         # Only used for Trade ability, to enable trading
-        # with rescued units
-        self.traveler_mode = False  # Should we be targeting the traveler?
+        # with rescued units of other units
+        self.traveler_mode = False  # Should we be targeting the travelers?
 
     def begin(self):
         game.cursor.combat_show()
@@ -1799,13 +1799,10 @@ class TargetingState(MapState):
         def _handle_direction(next_func: Callable):
             if self.ability.name == 'Trade':
                 current_target = game.cursor.get_hover()
-                traveler = current_target.traveler
-                if traveler and game.get_unit(traveler).team == self.cur_unit.team:
-                    self.traveler_mode = not self.traveler_mode
-                else:
-                    new_position = next_func(game.cursor.position)
-                    game.cursor.set_pos(new_position)
-                    return
+                if current_target and current_target is not self.cur_unit:
+                    traveler = current_target.traveler
+                    if traveler and game.get_unit(traveler).team == self.cur_unit.team:
+                        self.traveler_mode = not self.traveler_mode
             if not self.traveler_mode:
                 new_position = next_func(game.cursor.position)
                 game.cursor.set_pos(new_position)
@@ -1833,7 +1830,7 @@ class TargetingState(MapState):
 
         elif event == 'SELECT':
             get_sound_thread().play_sfx('Select 1')
-            unit = game.cursor.get_hover()
+            unit = game.cursor.get_hover() or self.cur_unit
             if self.traveler_mode:
                 if unit.traveler:
                     game.memory['trade_partner'] = game.get_unit(unit.traveler)
@@ -1913,14 +1910,15 @@ class TargetingState(MapState):
                 if give_to and traveler:
                     self.draw_give_preview(traveler, give_to, surf)
         elif self.ability.name == 'Trade':
-            unit = game.cursor.get_hover()
-            if self.traveler_mode:
-                if unit.traveler:
+            unit = game.cursor.get_hover() or self.cur_unit
+            if unit != self.cur_unit:
+                if self.traveler_mode:
                     game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
-            elif unit != self.cur_unit:
-                game.ui_view.draw_trade_preview(unit, surf)
-            else:
+                else:
+                    game.ui_view.draw_trade_preview(unit, surf)
+            elif unit and unit.traveler:
                 game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
+
         elif self.ability.name == 'Steal':
             unit = game.cursor.get_hover()
             game.ui_view.draw_trade_preview(unit, surf)

@@ -521,7 +521,7 @@ class GameState():
         a chapter in preparation for the next.
         A non-full cleanup does not
             - Remove any units from the field
-            - Remove all generic units from memory
+            - Remove all non-persistent units from memory
             - Remove all now unused items and skills from memory
             - Remove any regions or terrain statuses
             - Reset level vars
@@ -559,6 +559,7 @@ class GameState():
             if full:
                 unit.position = None
             unit.sprite.change_state('normal')
+            unit.sprite.reset()
             unit.reset()
 
         for item in list(self.item_registry.values()):
@@ -580,7 +581,7 @@ class GameState():
             self.terrain_status_registry.clear()
             self.region_registry.clear()
 
-            # Remove all generics
+            # Remove all non-persistent units
             self.unit_registry = {k: v for (k, v) in self.unit_registry.items() if v.persistent}
 
             # Remove any skill that's not on a unit and does not have a parent_skill
@@ -855,6 +856,12 @@ class GameState():
     def get_player_units_and_travelers(self) -> List[UnitObject]:
         return self.get_player_units() + [unit for unit in self.get_travelers() if unit.team == 'player']
 
+    def get_rescuer(self, unit):
+        for rescuer in self.units:
+            if rescuer.traveler == unit.nid:
+                return rescuer
+        return None
+
     def get_rescuers_position(self, unit):
         for rescuer in self.units:
             if rescuer.traveler == unit.nid:
@@ -951,25 +958,29 @@ class GameState():
                         else:
                             act = action.RemoveSkill(unit, skill_obj, source=region.nid, source_type=SourceType.REGION)
                             action.do(act)
-            # Tiles and terrain regions
-            terrain_nid = self.get_terrain_nid(self.tilemap, unit.position)
-            terrain = DB.terrain.get(terrain_nid)
-            terrain_key = (*unit.position, terrain.status)
-
-            skill_uid = self.get_terrain_status(terrain_key)
-            skill_obj = self.get_skill(skill_uid)
-            if skill_obj and skill_obj in unit.all_skills:
-                if test:
-                    unit.remove_skill(skill_obj, source=unit.position, source_type=SourceType.TERRAIN)
-                else:
-                    act = action.RemoveSkill(unit, skill_obj, source=unit.position, source_type=SourceType.TERRAIN)
-                    action.do(act)
+            self.remove_terrain_skills(unit, test)
             # Boundary
             if not test:
                 self.boundary.leave(unit)
             # Board
             if not test:
                 self.board.remove_unit(unit.position, unit)
+
+    def remove_terrain_skills(self, unit, test=False):
+        from app.engine import action
+        # Tiles and terrain regions
+        terrain_nid = self.get_terrain_nid(self.tilemap, unit.position)
+        terrain = DB.terrain.get(terrain_nid)
+        terrain_key = (*unit.position, terrain.status)
+
+        skill_uid = self.get_terrain_status(terrain_key)
+        skill_obj = self.get_skill(skill_uid)
+        if skill_obj and skill_obj in unit.all_skills:
+            if test:
+                unit.remove_skill(skill_obj, source=unit.position, source_type=SourceType.TERRAIN)
+            else:
+                act = action.RemoveSkill(unit, skill_obj, source=unit.position, source_type=SourceType.TERRAIN)
+                action.do(act)
 
     def arrive(self, unit, test=False):
         """

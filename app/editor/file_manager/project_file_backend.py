@@ -1,4 +1,5 @@
 from __future__ import annotations
+import functools
 
 import json
 import logging
@@ -6,7 +7,7 @@ import os
 import shutil
 from datetime import datetime
 import traceback
-from typing import TYPE_CHECKING, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 from PyQt5.QtCore import QDir, Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QVBoxLayout, QLabel, QDialogButtonBox, QCheckBox
@@ -68,6 +69,7 @@ class ProjectFileBackend():
         self.app_state_manager = app_state_manager
         self.settings = MainSettingsController()
         self.current_proj = self.settings.get_current_project()
+        self.is_saving = False
 
         self.save_progress = QProgressDialog(
             "Saving project to %s" % self.current_proj, None, 0, 100, self.parent)
@@ -118,6 +120,25 @@ class ProjectFileBackend():
                 return False
         return True
 
+    def save_mutex(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # If we're currently saving, we don't want to save again! So gate operations in the save mutex! 
+            if not self.is_saving:
+                # If we're saving the game, we want to ensure autosave doesn't show up and mess with our stuff! Stop it. 
+                timer.get_timer().autosave_timer.stop()
+                self.is_saving = True
+
+                # ... Then, actually save. 
+                result = func(self, *args, *kwargs)
+                self.is_saving = False
+
+                # ... Then start it again! Problem solved! (except this resets the timer, but close enough)
+                timer.get_timer().autosave_timer.start()
+                return result
+        return wrapper
+
+    @save_mutex
     def save(self, new=False) -> bool:
         # make sure no errors in DB exist
         # if we make a mistake in validation,
@@ -132,9 +153,7 @@ class ProjectFileBackend():
 
         # Returns whether we successfully saved
         # check if we're editing default, if so, prompt to save as
-        if self.current_proj and os.path.basename(self.current_proj) == DEFAULT_PROJECT:
-            self.current_proj = None
-        if new or not self.current_proj:
+        if new or not self.current_proj or os.path.basename(self.current_proj) == DEFAULT_PROJECT:
             starting_path = self.current_proj or QDir.currentPath()
             fn, ok = QFileDialog.getSaveFileName(self.parent, "Save Project", starting_path,
                                                  "All Files (*)")
@@ -302,6 +321,7 @@ class ProjectFileBackend():
             self.settings.append_or_bump_project(
                 DB.constants.value('title') or os.path.basename(self.current_proj), self.current_proj)
 
+    @save_mutex
     def autosave(self):
         project_nid = DB.constants.value('game_nid').replace(' ', '_')
         autosave_path = os.path.abspath('autosave_%s.ltproj' % project_nid)
@@ -346,8 +366,11 @@ class ProjectFileBackend():
         with open(metadata_loc, 'w') as serialize_file:
             json.dump(metadata, serialize_file, indent=4)
 
-    def clean(self):
-        RESOURCES.clean(self.current_proj)
+    def get_unused_files(self) -> Dict[str, List[str]]:
+        return RESOURCES.get_unused_files(self.current_proj)
+
+    def clean(self, unused_files: Dict[str, List[str]]):
+        RESOURCES.clean(unused_files)
 
     def dump_csv(self, db: Database):
         starting_path = self.current_proj or QDir.currentPath()

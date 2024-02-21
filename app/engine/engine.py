@@ -23,7 +23,7 @@ fast_quit = False
 def init():
     pygame.mixer.pre_init(44100, -16, 2, 128 * 2**cf.SETTINGS['sound_buffer_size'])
     pygame.init()
-    pygame.mixer.init()
+    pygame.font.init()
     logging.info("Engine Init Completed")
 
 def simple_init():
@@ -140,8 +140,8 @@ def save_surface(surf, fn):
 
 def subsurface(surf, rect) -> pygame.Surface:
     x, y, width, height = rect
-    twidth = min(surf.get_width() - x, width)
-    theight = min(surf.get_height() - y, height)
+    twidth = max(0, min(surf.get_width() - x, width))
+    theight = max(0, min(surf.get_height() - y, height))
     tx = max(0, x)
     ty = max(0, y)
     return surf.subsurface(tx, ty, twidth, theight)
