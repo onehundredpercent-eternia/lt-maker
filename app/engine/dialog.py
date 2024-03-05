@@ -516,6 +516,8 @@ class Dialog():
             x_pos = 0
             y_pos = -16 + self.y_offset
             line = processed_text_lines[-self.num_lines - 1]
+            print(f"disappearing line {line}")
+            input()
             width = text_width(self.font_type, line)
             render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_pos))
             x_pos += width
@@ -528,7 +530,9 @@ class Dialog():
                 y_set = y_pos + self.y_offset
             else:
                 y_set = y_pos
+            print(f"display line {line}")
             width = text_width(self.font_type, line)
+            print(f"calling render_text with args {[line], [self.font_color]}")
             render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_set))
             x_pos += width
 

@@ -6,6 +6,7 @@ from typing import List, Tuple
 from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.icons import draw_icon_by_alias
+from app.engine.graphics.text.text_jitter import TextJitter, JitterXY
 from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
 
@@ -144,6 +145,7 @@ def remove_tags(text_block: List[str]) -> List[str]:
 
 def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
                 colors: List[NID | None], topleft: Tuple[int, int],
+                jitter: List[JitterXY] = [JitterXY(0, 0)],
                 align: HAlignment = HAlignment.LEFT) -> engine.Surface:
     """An enhanced text render layer wrapper around BmpFont.
     Supports multiple fonts and multiple text sections, as well as
@@ -167,9 +169,12 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
         fonts += [fonts[-1] for i in range(len(texts) - len(fonts))]
     if len(colors) < len(texts):
         colors += [colors[-1] for i in range(len(texts) - len(colors))]
+    if len(jitter) < len(texts):
+        jitter += [jitter[-1] for i in range (len(texts) - len(colors))]
     font_stack = list(reversed(fonts))
     text_stack = list(reversed(texts))
     color_stack = list(reversed(colors))
+    jitter_stack = list(reversed(jitter))
 
     # for non-left alignments
     if align == HAlignment.CENTER or align == HAlignment.RIGHT:
@@ -188,16 +193,24 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
         curr_text = text_stack.pop()
         curr_font = font_stack.pop()
         curr_color = color_stack.pop() if color_stack else None
+        curr_jitter = jitter_stack.pop() if jitter_stack else None
         # process text for tags and push them onto stack for later processing
         any_tags = MATCH_TAG_RE.search(curr_text)
         if any_tags:
             tag_start, tag_end = any_tags.span()
             tag_font = any_tags.group().strip("<>")
+            tag_color = curr_color
+            tag_jitter = JitterXY(0, 0)
             if '/' in tag_font:
+                print("getting font and color from stack")
                 tag_font, tag_color = font_history_stack.pop() if font_history_stack else (base_font, None)
             else:
+                print("getting font and color from tag")
                 if tag_font in FONT or tag_font == 'icon':
-                    tag_color = curr_color
+                    pass
+                elif tag_font == 'j':
+                    tag_jitter = TextJitter().get_jitter()
+                    tag_font = curr_font
                 else:
                     tag_color = tag_font
                     tag_font = curr_font
@@ -206,9 +219,11 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
             curr_text = curr_text[:tag_start]
             font_stack.append(tag_font)
             color_stack.append(tag_color)
+            jitter_stack.append(tag_jitter)
         # actually render font
         if curr_font != 'icon':
-            FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color)
+            print(f"blitting with {curr_text}, ({tx},{ty}), {curr_color}, ({curr_jitter.x},{curr_jitter.y})")
+            FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color, curr_jitter)
             tx += FONT[curr_font].width(curr_text)
         else:
             draw_icon_by_alias(surf, curr_text.strip(), (tx, ty))

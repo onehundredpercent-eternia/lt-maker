@@ -143,7 +143,7 @@ class BmpFont():
         lowsurf = engine.subsurface(base_surf, (cx, cy + self.height, self._width, self.height))
         return (high_surf, lowsurf, cwidth)
 
-    def blit(self, string, surf, pos=(0, 0), color: Optional[str] = None, no_process=False):
+    def blit(self, string, surf, pos=(0, 0), color: Optional[str] = None, jitter = None, no_process=False):
         if not color:
             color = self.default_color
         def normal_render(left, top, string: str, bcolor):
@@ -160,6 +160,9 @@ class BmpFont():
                 left += char_width + self.space_offset
 
         x, y = pos
+        if jitter:
+            x += jitter.x
+            y += jitter.y
 
         string = self.modify_string(string)
 
