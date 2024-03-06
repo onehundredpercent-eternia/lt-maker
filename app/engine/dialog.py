@@ -11,7 +11,7 @@ from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.ui_funcs import calc_align
 from app.engine.graphics.text.text_renderer import (MATCH_CAPTURE_TAG_RE,
-                                                    fix_tags, render_text,
+                                                    fix_tags, render_text, parse_text_and_render,
                                                     text_width)
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
@@ -81,7 +81,7 @@ class Dialog():
         self._state = DialogState.TRANSITION_IN
 
         self.no_wait = False
-        self.text_commands = self.format_text(text)
+        self.text_commands = self._tokenize_plain_text()
         self.text_lines = []
 
         # Size
@@ -90,9 +90,9 @@ class Dialog():
             if self.width % 8:
                 self.width += 8 - self.width%8
             self.text_width = max(8, self.width - 16)
-            self.determine_height()
+            self._determine_height()
         elif self.portrait or self.autosize:
-            self.determine_size()
+            self._determine_size()
         else:
             self.text_width, self.text_height = (WINWIDTH - 24, self.num_lines * 16)
             self.width, self.height = self.text_width + 16, self.text_height + 16
@@ -105,7 +105,7 @@ class Dialog():
                 pos_x = position[0]
                 pos_y = position[1]
         elif self.portrait:
-            desired_center = self.determine_desired_center(self.portrait)
+            desired_center = self._determine_desired_center()
             pos_x = utils.clamp(desired_center - self.width//2, 8, WINWIDTH - 8 - self.width)
             if pos_x % 8 != 0:
                 pos_x += 4
@@ -167,8 +167,8 @@ class Dialog():
     def state(self, value: DialogState):
         self._state = value
 
-    def format_text(self, text):
-        text = process_dialog_shorthand(text)
+    def _tokenize_plain_text(self):
+        text = process_dialog_shorthand(self.plain_text)
         if text.endswith('{no_wait}'):
             text = text[:-len('{no_wait}')]
             self.no_wait = True
@@ -191,11 +191,11 @@ class Dialog():
                 processed_text += list(block)
         return processed_text
 
-    def determine_desired_center(self, portrait):
+    def _determine_desired_center(self):
         x = self.portrait.position[0] + self.portrait.get_width()//2
         return screen_positions.get_desired_center(x)
 
-    def determine_width(self):
+    def _determine_width(self):
         width = 0
         current_line = ''
         preceded_by_wait: bool = False
@@ -231,18 +231,18 @@ class Dialog():
                 width += 16
         return width
 
-    def determine_height(self):
+    def _determine_height(self):
         self.text_height = self.font.height * self.num_lines
         self.text_height = max(self.text_height, 16)
         self.height = self.text_height + 16
 
-    def determine_size(self):
-        self.text_width = self.determine_width()
+    def _determine_size(self):
+        self.text_width = self._determine_width()
         self.text_width = utils.clamp(self.text_width, 48, WINWIDTH - 32)
         self.width = self.text_width + 24 - self.text_width%8
         if self.width <= WINWIDTH - 16:
             self.width += 8
-        self.determine_height()
+        self._determine_height()
 
     def make_background(self, background):
         surf = create_base_surf(self.width, self.height, background)
@@ -275,15 +275,18 @@ class Dialog():
     def _add_letter(self, letter):
         self.text_lines[-1] += letter
 
+    def _done_processing(self):
+        return self.text_index >= len(self.text_commands)
+
     def _next_char(self, sound=True):  # Add the next character to the text_lines list
-        if self.text_index >= len(self.text_commands):
-            self.pause_before_wait()
+        if self._done_processing():
+            self._pause_before_wait()
             return
         command = self.text_commands[self.text_index]
         if command in ('{br}', '{break}', '{sub_break}'):
             self._next_line()
         elif command == '{w}' or command == '{wait}':
-            self.pause_before_wait()
+            self._pause_before_wait()
         elif command == '{clear}':
             self.text_lines.clear()
             self._next_line()
@@ -318,14 +321,14 @@ class Dialog():
             else:
                 self._add_letter(' ')
                 if sound:
-                    self.play_talk_boop(self.boop_sound)
+                    self._play_talk_boop(self.boop_sound)
         elif command in ('.', ',', ';', '!', '?'):
             self._add_letter(command)
-            self.pause()
+            self._pause()
         else:
             self._add_letter(command)
             if sound:
-                self.play_talk_boop(self.boop_sound)
+                self._play_talk_boop(self.boop_sound)
         self.text_index += 1
 
     def _get_next_word(self, text_index):
@@ -364,13 +367,13 @@ class Dialog():
         """
         return self.state == DialogState.COMMAND_PAUSE
 
-    def pause(self):
+    def _pause(self):
         if self.portrait:
             self.portrait.stop_talking()
         self.state = DialogState.PAUSE
         self.last_update = engine.get_time()
 
-    def pause_before_wait(self):
+    def _pause_before_wait(self):
         if self.portrait:
             self.portrait.stop_talking()
         self.state = DialogState.PAUSE_BEFORE_WAIT
@@ -387,7 +390,7 @@ class Dialog():
             if self.portrait and self.should_move_mouth:
                 self.portrait.talk()
 
-    def start_processing(self):
+    def _start_processing(self):
         if self.state == DialogState.TRANSITION_IN:
             self.state = DialogState.PROCESS
             self._next_line()
@@ -400,7 +403,7 @@ class Dialog():
                 if self.state == DialogState.PAUSE:
                     self.state = DialogState.PROCESS
         elif self.state == DialogState.WAIT:
-            if self.text_index >= len(self.text_commands):
+            if self._done_processing():
                 self.state = DialogState.DONE
             else:
                 self.state = DialogState.PROCESS
@@ -410,7 +413,7 @@ class Dialog():
                     else:
                         self.portrait.stop_talking()
 
-    def play_talk_boop(self, boop = None):
+    def _play_talk_boop(self, boop = None):
         if cf.SETTINGS['talk_boop'] and engine.get_true_time() - self.last_sound_update > 32 and self.should_speak_sound:
             self.last_sound_update = engine.get_true_time()
             if boop:
@@ -442,7 +445,7 @@ class Dialog():
                     # Skip regular pauses because we want MAXIMUM VELOCITY of characters
                     if self.state == DialogState.PAUSE:
                         self.state = DialogState.PROCESS
-                self.play_talk_boop(self.boop_sound)
+                self._play_talk_boop(self.boop_sound)
 
         elif self.state == DialogState.PAUSE_BEFORE_WAIT:
             if current_time - self.last_update > self.pause_before_wait_time:
@@ -480,7 +483,7 @@ class Dialog():
         # We just want to get to the end
         # Essentially a simplified version of update()
         """
-        self.start_processing()
+        self._start_processing()
         while self.state != DialogState.DONE:
             if self.state == DialogState.PROCESS:
                 while self.state == DialogState.PROCESS:
@@ -493,7 +496,7 @@ class Dialog():
                 self.state = DialogState.WAIT
 
             elif self.state == DialogState.WAIT:
-                if self.text_index >= len(self.text_commands):
+                if self._done_processing():
                     self.state = DialogState.DONE
                 else:
                     self.state = DialogState.PROCESS
@@ -506,7 +509,7 @@ class Dialog():
                 self.state = DialogState.PROCESS
         return True
 
-    def draw_text(self, surf):
+    def _draw_text(self, surf):
         end_x_pos, end_y_pos = 0, 0
         text_surf = engine.create_surface((self.text_width, self.text_height), transparent=True)
 
@@ -516,10 +519,8 @@ class Dialog():
             x_pos = 0
             y_pos = -16 + self.y_offset
             line = processed_text_lines[-self.num_lines - 1]
-            print(f"disappearing line {line}")
-            input()
             width = text_width(self.font_type, line)
-            render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_pos))
+            parse_text_and_render(text_surf, line, self.font_type, self.font_color, (x_pos, y_pos))
             x_pos += width
 
         display_lines = processed_text_lines[-self.num_lines:]
@@ -530,10 +531,8 @@ class Dialog():
                 y_set = y_pos + self.y_offset
             else:
                 y_set = y_pos
-            print(f"display line {line}")
             width = text_width(self.font_type, line)
-            print(f"calling render_text with args {[line], [self.font_color]}")
-            render_text(text_surf, [self.font_type], [line], [self.font_color], (x_pos, y_set))
+            parse_text_and_render(text_surf, line, self.font_type, self.font_color, (x_pos, y_set))
             x_pos += width
 
             end_x_pos = self.position[0] + 8 + x_pos
@@ -542,7 +541,7 @@ class Dialog():
         surf.blit(text_surf, (self.position[0] + 8, self.position[1] + 8))
         return end_x_pos, end_y_pos
 
-    def draw_tail(self, surf, portrait: event_portrait.EventPortrait):
+    def _draw_tail(self, surf, portrait: event_portrait.EventPortrait):
         portrait_x = portrait.position[0] + portrait.get_width()//2
         portrait_y = portrait.position[1] + portrait.get_height()//2
         mirror_x = portrait_x < WINWIDTH//2
@@ -566,7 +565,7 @@ class Dialog():
         tail_surf = image_mods.make_translucent(tail_surf, self.dialog_transparency)
         surf.blit(tail_surf, (x_pos, y_pos))
 
-    def draw_nametag(self, surf, name):
+    def _draw_nametag(self, surf, name):
         if self.position[1] < 10: # if it would get cut off
             y_pos = self.position[1] + self.height - 6
         else:
@@ -595,12 +594,12 @@ class Dialog():
         if self.state != DialogState.TRANSITION_IN:
             # Draw message tail
             if self.portrait and self.tail:
-                self.draw_tail(surf, self.portrait)
+                self._draw_tail(surf, self.portrait)
             # Draw nametag
             if not self.portrait and self.speaker and self.speaker != 'Narrator':
-                self.draw_nametag(surf, self.speaker)
+                self._draw_nametag(surf, self.speaker)
             # Draw text
-            end_pos = self.draw_text(surf)
+            end_pos = self._draw_text(surf)
 
             if self.state == DialogState.WAIT and self.draw_cursor_flag:
                 cursor_pos = 4 + end_pos[0], \

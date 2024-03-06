@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.icons import draw_icon_by_alias
-from app.engine.graphics.text.text_jitter import TextJitter, JitterXY
+from app.engine.jitter import get_jitter
 from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
 
@@ -143,9 +143,116 @@ def remove_tags(text_block: List[str]) -> List[str]:
         new_text_block.append(new_line)
     return new_text_block
 
+class TextEffect():
+    def __init__(self):
+        raise "TextEffect should not be directly instantiated"
+    def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
+        pass
+
+class NullEffect(TextEffect):
+    def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
+        return curr_color, curr_offset
+    def __repr__(self):
+        return "NullEffect"
+
+class ColorEffect(TextEffect):
+    def __init__(self, color: NID):
+        self._color = color
+    def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
+        return self._color, curr_offset
+    def __repr__(self):
+        return f"{self._color}"
+
+class JitterEffect(TextEffect):
+    def __init__(self):
+        self._jitter = get_jitter()
+    def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
+        return curr_color, tuple(map(sum, zip(curr_offset, self._jitter)))
+    def __repr__(self):
+        return f"({self._jitter[0]:.2f},{self._jitter[1]:.2f})"
+
+def _parse_text(text: str, default_font: NID, default_color: NID) -> Tuple[List[str], List[NID], List[List[TextEffect]]]:
+    # process text for tags and push them onto stack for later processing
+    print(f"input is: {text}, {default_font}, {default_color}")
+    texts = []
+    fonts = []
+    effects = []
+    tag_history_stack = []
+    keep_processing_tags = True
+    while keep_processing_tags:
+        any_tags = MATCH_TAG_RE.search(text)
+        if any_tags:
+            tag_start, tag_end = any_tags.span()
+            tag = any_tags.group().strip("<>")
+            curr_text = text[:tag_start]
+            text = text[tag_end:]
+            default_settings =  tag_history_stack[-1] if tag_history_stack else (default_font, [ColorEffect(default_color)])
+            curr_font = default_settings[0]
+            curr_effect_list = list.copy(default_settings[1])
+            if '/' in tag: # ending tag
+                tag_history_stack.pop()
+            else: # starting tag
+                tag_font = curr_font
+                tag_effect_list = list.copy(curr_effect_list)
+                if tag in FONT or tag == 'icon': # special handling for fonts and icons
+                    tag_font = tag
+                elif tag == 'j':
+                    tag_effect_list.append(JitterEffect())
+                else: # we have a color tag
+                    tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
+                tag_history_stack.append((tag_font, tag_effect_list))
+            texts.append(curr_text)
+            fonts.append(curr_font)
+            effects.append(curr_effect_list)
+        else: # no more tags to process
+            texts.append(text)
+            fonts.append(default_font)
+            effects.append([ColorEffect(default_color)])
+            keep_processing_tags = False
+
+    print(f"output is: {texts}, {fonts}, {effects}")
+    return texts, fonts, effects # texts, fonts, effects
+
+def _render_text2(surf: engine.Surface, texts: List[str], fonts: List[NID],
+                  effects: List[List[TextEffect]], topleft: Tuple[int, int],
+                  align: HAlignment = HAlignment.LEFT) -> engine.Surface:
+    if len(texts) != len(fonts) or len(texts) != len(effects):
+        raise f"mismatched argument sizes in {__name__}"
+
+    # for non-left alignments
+    if align == HAlignment.CENTER or align == HAlignment.RIGHT:
+        width = rendered_text_width(fonts, texts)
+        tx, ty = topleft
+        if align == HAlignment.CENTER:
+            tx -= width//2
+        elif align == HAlignment.RIGHT:
+            tx -= width
+    else:
+        tx, ty = topleft
+
+    for text, font, effect_list in zip(texts, fonts, effects):
+        if font == 'icon':
+            draw_icon_by_alias(surf, text.strip(), (tx, ty))
+            tx += 16
+        else:
+            curr_offset = (0, 0) # default offset
+            curr_color = 'black' # default color
+            for effect in effect_list:
+                curr_color, curr_offset = effect.apply(curr_color, curr_offset)
+            print(f"blitting with {text}, ({tx},{ty}), {curr_color}, ({curr_offset[0]:.2f}, {curr_offset[1]:.2f})")
+            FONT[font].blit(text, surf, (tx, ty), curr_color, curr_offset)
+            tx += FONT[font].width(text)
+
+    return surf
+
+def parse_text_and_render(surf: engine.Surface, text: str, default_font: NID,
+                          default_color: Optional[NID], topleft: Tuple[int, int],
+                          align: HAlignment = HAlignment.LEFT) -> engine.Surface:
+    texts, fonts, effects = _parse_text(text, default_font, default_color)
+    return _render_text2(surf, texts, fonts, effects, topleft, align)
+
 def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
                 colors: List[NID | None], topleft: Tuple[int, int],
-                jitter: List[JitterXY] = [JitterXY(0, 0)],
                 align: HAlignment = HAlignment.LEFT) -> engine.Surface:
     """An enhanced text render layer wrapper around BmpFont.
     Supports multiple fonts and multiple text sections, as well as
@@ -169,12 +276,9 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
         fonts += [fonts[-1] for i in range(len(texts) - len(fonts))]
     if len(colors) < len(texts):
         colors += [colors[-1] for i in range(len(texts) - len(colors))]
-    if len(jitter) < len(texts):
-        jitter += [jitter[-1] for i in range (len(texts) - len(colors))]
     font_stack = list(reversed(fonts))
     text_stack = list(reversed(texts))
     color_stack = list(reversed(colors))
-    jitter_stack = list(reversed(jitter))
 
     # for non-left alignments
     if align == HAlignment.CENTER or align == HAlignment.RIGHT:
@@ -193,24 +297,16 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
         curr_text = text_stack.pop()
         curr_font = font_stack.pop()
         curr_color = color_stack.pop() if color_stack else None
-        curr_jitter = jitter_stack.pop() if jitter_stack else None
         # process text for tags and push them onto stack for later processing
         any_tags = MATCH_TAG_RE.search(curr_text)
         if any_tags:
             tag_start, tag_end = any_tags.span()
             tag_font = any_tags.group().strip("<>")
-            tag_color = curr_color
-            tag_jitter = JitterXY(0, 0)
             if '/' in tag_font:
-                print("getting font and color from stack")
                 tag_font, tag_color = font_history_stack.pop() if font_history_stack else (base_font, None)
             else:
-                print("getting font and color from tag")
                 if tag_font in FONT or tag_font == 'icon':
-                    pass
-                elif tag_font == 'j':
-                    tag_jitter = TextJitter().get_jitter()
-                    tag_font = curr_font
+                    tag_color = curr_color
                 else:
                     tag_color = tag_font
                     tag_font = curr_font
@@ -219,11 +315,9 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
             curr_text = curr_text[:tag_start]
             font_stack.append(tag_font)
             color_stack.append(tag_color)
-            jitter_stack.append(tag_jitter)
         # actually render font
         if curr_font != 'icon':
-            print(f"blitting with {curr_text}, ({tx},{ty}), {curr_color}, ({curr_jitter.x},{curr_jitter.y})")
-            FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color, curr_jitter)
+            FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color, (0, 0))
             tx += FONT[curr_font].width(curr_text)
         else:
             draw_icon_by_alias(surf, curr_text.strip(), (tx, ty))
