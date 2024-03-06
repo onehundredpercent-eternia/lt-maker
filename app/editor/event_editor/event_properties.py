@@ -11,11 +11,11 @@ from PyQt5.QtCore import QRect, QSize, QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt5.QtGui import (QFont, QFontMetrics, QIcon, QPainter, QPalette,
                          QTextCursor)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication,
-                             QCheckBox, QCompleter, QDialog, QFrame,
+                             QCheckBox, QCompleter, QDialog, QFrame, QFormLayout,
                              QGridLayout, QHBoxLayout, QHeaderView, QLabel,
                              QLineEdit, QListView, QMenu, QMessageBox,
                              QPlainTextEdit, QPushButton, QSizePolicy,
-                             QSpinBox, QSplitter, QStyle, QStyledItemDelegate,
+                             QSpinBox, QSplitter, QStyle, QStyledItemDelegate, QInputDialog,
                              QTextEdit, QToolBar, QVBoxLayout, QWidget)
 from app.editor.event_editor.event_function_hinter import EventScriptFunctionHinter, PythonFunctionHinter
 from app.editor.event_editor.event_text_editor import EventTextEditor
@@ -43,6 +43,7 @@ from app.events.regions import RegionType
 from app.events.triggers import ALL_TRIGGERS
 from app.extensions.custom_gui import (ComboBox, PropertyBox, PropertyCheckBox,
                                        QHLine, TableView)
+from app.extensions.list_dialogs import ListSelector, SingleListDialog
 from app.extensions.markdown2 import Markdown
 from app.utilities import str_utils
 
@@ -68,6 +69,7 @@ class EventCollection(QWidget):
         self.level_filter_box = PropertyBox("Level Filter", ComboBox, self)
         self.level_filter_box.edit.addItem("All")
         self.level_filter_box.edit.addItem("Global")
+        self.level_filter_box.edit.addItem("Template")
         self.level_filter_box.edit.addItems(DB.levels.keys())
         self.level_filter_box.edit.currentIndexChanged.connect(self.filter_changed)
 
@@ -102,6 +104,8 @@ class EventCollection(QWidget):
 
         self.button = QPushButton(button_text % self.title)
         self.button.clicked.connect(self.create_new_event)
+        self.template_button = QPushButton("Create new Event from Template")
+        self.template_button.clicked.connect(self.create_event_from_template)
 
         self.create_actions()
         self.create_toolbar()
@@ -109,7 +113,8 @@ class EventCollection(QWidget):
         grid.addWidget(self.event_name_filter_box, 0, 1, Qt.AlignRight)
         grid.addWidget(self.level_filter_box, 0, 2, Qt.AlignRight)
         grid.addWidget(self.view, 1, 0, 1, 3)
-        grid.addWidget(self.button, 2, 0, 1, 3)
+        grid.addWidget(self.button, 2, 0, 1, 1)
+        grid.addWidget(self.template_button, 2, 1, 1, 1)
 
         if self.current_level:
             self.level_filter_box.edit.setValue(self.current_level.nid)
@@ -200,6 +205,42 @@ class EventCollection(QWidget):
         self.set_current_index(proxy_last_index)
 
         self._set_enabled(True)
+
+
+    def create_event_from_template(self):
+        template_events = [item.name for item in DB.events if item.level_nid == 'Template']
+        if template_events:
+            template_dialog = ListSelector(self, template_events, 'Template')
+            template_event_name = template_dialog.selected_item
+            template_event = DB.events.get_by_nid_or_name(template_event_name, 'Template')[0]
+            level_nid = self._get_level_nid()
+
+            self.model.layoutAboutToBeChanged.emit()
+            output: EventPrefab = self.model.create_new(level_nid)
+            other_names = [ev.name for ev in DB.events.get_by_level(self.current_level.nid)]
+            new_name = str_utils.get_next_name(template_event.name, other_names)
+            output.name = new_name
+            DB.events.update_nid(output, output.nid, False)
+            output.source = template_event.source
+            output.condition = template_event.condition
+            output.only_once = template_event.only_once
+            output.priority = template_event.priority
+            output.trigger = template_event.trigger
+            self.model.layoutChanged.emit()
+            if not output:
+                return
+
+            last_index = self.model.index(self.model.rowCount() - 1, 0)
+
+            proxy_last_index = self.level_filtered_model.mapFromSource(self.name_filtered_model.mapFromSource(last_index))
+            self.view.setCurrentIndex(proxy_last_index)
+            self.set_current_index(proxy_last_index)
+
+            self._set_enabled(True)
+        else:
+            warning = QMessageBox(self)
+            warning.setText("No template events found!")
+            warning.exec_()
 
     def on_item_changed(self, curr, prev):
         if self._data:
@@ -340,6 +381,7 @@ class EventProperties(QWidget):
 
         self.level_nid_box = PropertyBox("Level", ComboBox, self)
         self.level_nid_box.edit.addItem("Global")
+        self.level_nid_box.edit.addItem("Template")
         self.level_nid_box.edit.addItems(DB.levels.keys())
         self.level_nid_box.edit.currentIndexChanged.connect(self.level_nid_changed)
 
@@ -505,14 +547,15 @@ class EventProperties(QWidget):
         self.window.update_list()
 
     def level_nid_changed(self, idx):
-        if idx == 0:
+        text = self.level_nid_box.edit.currentText()
+        if text == 'Global':
             self.current.level_nid = None
             self.name_done_editing()
             self.show_map_button.setEnabled(False)
             if self.level_filter_box.edit.currentText() != "All":
                 self.level_filter_box.edit.setValue("Global")
-        else:
-            self.current.level_nid = DB.levels[idx - 1].nid
+        elif text in DB.levels.keys():
+            self.current.level_nid = text
             self.name_done_editing()
             current_level = DB.levels.get(self.current.level_nid)
             if current_level.tilemap:
@@ -521,10 +564,15 @@ class EventProperties(QWidget):
                 self.show_map_button.setEnabled(False)
             if self.level_filter_box.edit.currentText() != "All":
                 self.level_filter_box.edit.setValue(self.current.level_nid)
+        elif text == 'Template':
+            self.current.level_nid = 'Template'
+            self.name_done_editing()
+            self.show_map_button.setEnabled(False)
+            self.level_filter_box.edit.setValue("Template")
 
         # Update trigger box to match current level
         self.trigger_box.edit.clear()
-        if idx == 0:
+        if text in ('Global', 'Template'):
             self.trigger_box.edit.addItems(self.get_trigger_items("Global"))
         else:
             self.trigger_box.edit.addItems(self.get_trigger_items(self.current.level_nid))

@@ -1,10 +1,24 @@
-from PyQt5.QtWidgets import QPushButton, QDialog, QDialogButtonBox, QGridLayout
+from typing import List
+from PyQt5.QtWidgets import QPushButton, QDialog, QDialogButtonBox, QGridLayout, QFormLayout, QInputDialog
 from PyQt5.QtCore import Qt
 
 from app.extensions.custom_gui import RightClickListView, RightClickTreeView, IntDelegate, RightClickTableView
 from app.extensions.list_models import SingleListModel, DefaultMultiAttrListModel
 
 # === LIST DIALOGS ===========================================================
+class ListSelector(QDialog):
+    def __init__(self, parent, data: List[str], title, flags=None) -> None:
+        super(ListSelector, self).__init__(parent)
+        layout = QFormLayout()
+        self.setLayout(layout)
+        self.setWindowTitle("New Popup")
+        self.setMinimumWidth(400)
+        item, okPressed = QInputDialog.getItem(self, "Choose %s" % title,
+                        "%s:" % title, data, 0, False)
+        self.selected_item = data[0]
+        if okPressed and item:
+            self.selected_item = item
+
 class SingleListDialog(QDialog):
     def __init__(self, data, title, parent=None):
         super().__init__(parent)
