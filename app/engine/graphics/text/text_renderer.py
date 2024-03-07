@@ -171,12 +171,16 @@ class JitterEffect(TextEffect):
     def __repr__(self):
         return f"({self._jitter[0]:.2f},{self._jitter[1]:.2f})"
 
-def _parse_text(text: str, default_font: NID, default_color: NID) -> Tuple[List[str], List[NID], List[List[TextEffect]]]:
+class TaggedText():
+    def __init__(self, text: str, font: NID, effects: List[TextEffect]):
+        self.text = text
+        self.font = font
+        self.effects = effects
+
+def _parse_text(text: str, default_font: NID, default_color: NID) -> List[TaggedText]:
     # process text for tags and push them onto stack for later processing
     print(f"input is: {text}, {default_font}, {default_color}")
-    texts = []
-    fonts = []
-    effects = []
+    tagged_texts = []
     tag_history_stack = []
     keep_processing_tags = True
     while keep_processing_tags:
@@ -186,7 +190,7 @@ def _parse_text(text: str, default_font: NID, default_color: NID) -> Tuple[List[
             tag = any_tags.group().strip("<>")
             curr_text = text[:tag_start]
             text = text[tag_end:]
-            default_settings =  tag_history_stack[-1] if tag_history_stack else (default_font, [ColorEffect(default_color)])
+            default_settings = tag_history_stack[-1] if tag_history_stack else (default_font, [ColorEffect(default_color)])
             curr_font = default_settings[0]
             curr_effect_list = list.copy(default_settings[1])
             if '/' in tag: # ending tag
@@ -201,27 +205,30 @@ def _parse_text(text: str, default_font: NID, default_color: NID) -> Tuple[List[
                 else: # we have a color tag
                     tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
                 tag_history_stack.append((tag_font, tag_effect_list))
-            texts.append(curr_text)
-            fonts.append(curr_font)
-            effects.append(curr_effect_list)
+            tagged_texts.append(TaggedText(curr_text, curr_font, curr_effect_list))
         else: # no more tags to process
-            texts.append(text)
-            fonts.append(default_font)
-            effects.append([ColorEffect(default_color)])
+            tagged_texts.append(TaggedText(text, default_font, [ColorEffect(default_color)]))
             keep_processing_tags = False
 
-    print(f"output is: {texts}, {fonts}, {effects}")
-    return texts, fonts, effects # texts, fonts, effects
+    print(f"output is: {tagged_texts}")
+    return tagged_texts
 
-def _render_text2(surf: engine.Surface, texts: List[str], fonts: List[NID],
-                  effects: List[List[TextEffect]], topleft: Tuple[int, int],
+def _tagged_text_width(tagged_texts: List[TaggedText]) -> int:
+    total_width = 0
+    for tagged_text in tagged_texts:
+        curr_text = tagged_text.text
+        curr_font = tagged_text.font
+        if curr_font != 'icon':
+            total_width += FONT[curr_font].width(curr_text)
+        else:
+            total_width += 16
+    return total_width
+
+def _render_text(surf: engine.Surface, tagged_texts: List[TaggedText], topleft: Tuple[int, int],
                   align: HAlignment = HAlignment.LEFT) -> engine.Surface:
-    if len(texts) != len(fonts) or len(texts) != len(effects):
-        raise f"mismatched argument sizes in {__name__}"
-
     # for non-left alignments
     if align == HAlignment.CENTER or align == HAlignment.RIGHT:
-        width = rendered_text_width(fonts, texts)
+        width = _tagged_text_width(tagged_texts)
         tx, ty = topleft
         if align == HAlignment.CENTER:
             tx -= width//2
@@ -230,16 +237,18 @@ def _render_text2(surf: engine.Surface, texts: List[str], fonts: List[NID],
     else:
         tx, ty = topleft
 
-    for text, font, effect_list in zip(texts, fonts, effects):
+    for tagged_text in tagged_texts:
+        font = tagged_text.font
+        text = tagged_text.text
+        effects = tagged_text.effects
         if font == 'icon':
             draw_icon_by_alias(surf, text.strip(), (tx, ty))
             tx += 16
         else:
             curr_offset = (0, 0) # default offset
             curr_color = 'black' # default color
-            for effect in effect_list:
+            for effect in effects:
                 curr_color, curr_offset = effect.apply(curr_color, curr_offset)
-            print(f"blitting with {text}, ({tx},{ty}), {curr_color}, ({curr_offset[0]:.2f}, {curr_offset[1]:.2f})")
             FONT[font].blit(text, surf, (tx, ty), curr_color, curr_offset)
             tx += FONT[font].width(text)
 
@@ -248,8 +257,8 @@ def _render_text2(surf: engine.Surface, texts: List[str], fonts: List[NID],
 def parse_text_and_render(surf: engine.Surface, text: str, default_font: NID,
                           default_color: Optional[NID], topleft: Tuple[int, int],
                           align: HAlignment = HAlignment.LEFT) -> engine.Surface:
-    texts, fonts, effects = _parse_text(text, default_font, default_color)
-    return _render_text2(surf, texts, fonts, effects, topleft, align)
+    tagged_texts = _parse_text(text, default_font, default_color)
+    return _render_text(surf, tagged_texts, topleft, align)
 
 def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
                 colors: List[NID | None], topleft: Tuple[int, int],
