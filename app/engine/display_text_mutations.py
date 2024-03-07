@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional
+from typing import Tuple
 
-from app.engine.jitter import get_jitter
+from random import Random
+
 from app.utilities.typing import NID
 
 import pygame
@@ -27,12 +28,16 @@ class ColorEffect(TextEffect):
         return f"{self._color}"
 
 class JitterEffect(TextEffect):
+    _rng = Random()
+    def get_jitter(magnitude: float = 1) -> Tuple[float, float]:
+        return (JitterEffect._rng.gauss(0, 1) * magnitude, JitterEffect._rng.gauss(0, 1) * magnitude)
+
     def __init__(self):
         self._jitter = (0, 0)
         self._count = 0
     def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
         if self._count % 3 == 1:
-            self._jitter = get_jitter()
+            self._jitter = JitterEffect.get_jitter()
         self._count += 1
         return curr_color, tuple(map(sum, zip(curr_offset, self._jitter)))
     def __repr__(self):
