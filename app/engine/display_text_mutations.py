@@ -29,7 +29,11 @@ class ColorEffect(TextEffect):
 class JitterEffect(TextEffect):
     def __init__(self):
         self._jitter = get_jitter()
+        self._count = 0
     def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
+        if self._count % 20 == 0:
+            self._jitter = get_jitter()
+        self._count += 1
         return curr_color, tuple(map(sum, zip(curr_offset, self._jitter)))
     def __repr__(self):
         return f"({self._jitter[0]:.2f},{self._jitter[1]:.2f})"

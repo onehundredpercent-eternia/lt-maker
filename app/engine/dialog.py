@@ -84,6 +84,8 @@ class Dialog():
         self.no_wait = False
         self.text_commands = self._tokenize_plain_text()
         self.text_lines = []
+        self._saved_tagged_texts = {} # dynamically saved text_lines that
+                                      # have already been parsed into tagged texted
 
         # Size
         if width:
@@ -511,15 +513,21 @@ class Dialog():
         return True
 
     def _render_text(self, surf: engine.Surface, line: str, topleft: Tuple[int, int],):
-        tagged_texts = parse_display_text(line, self.font_type, self.font_color)
-        render_tagged_texts(surf, tagged_texts, topleft)
+        if line not in self._saved_tagged_texts:
+            tagged_texts = parse_display_text(line, self.font_type, self.font_color)
+            self._saved_tagged_texts[line] = tagged_texts
+        else:
+            print("got tagged text from cache")
+        render_tagged_texts(surf, self._saved_tagged_texts[line], topleft)
 
     def _draw_text(self, surf):
         end_x_pos, end_y_pos = 0, 0
         text_surf = engine.create_surface((self.text_width, self.text_height), transparent=True)
 
+        print(f"draw text with raw lines {self.text_lines}")
         # Draw line that's disappearing
         processed_text_lines = fix_tags(self.text_lines)
+        print(f"processed lines {processed_text_lines}")
         if self.y_offset and len(processed_text_lines) > self.num_lines:
             x_pos = 0
             y_pos = -16 + self.y_offset
@@ -529,6 +537,7 @@ class Dialog():
             x_pos += width
 
         display_lines = processed_text_lines[-self.num_lines:]
+        print(f"display lines {display_lines}")
         for idx, line in enumerate(display_lines):
             x_pos = 0
             y_pos = 16 * idx
@@ -538,7 +547,6 @@ class Dialog():
                 y_set = y_pos
             width = text_width(self.font_type, line)
             print(f"rendering text {line}")
-            input()
             self._render_text(text_surf, line, (x_pos, y_set))
             x_pos += width
 
