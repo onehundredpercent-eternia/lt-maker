@@ -114,7 +114,7 @@ class EventCollection(QWidget):
         grid.addWidget(self.level_filter_box, 0, 2, Qt.AlignRight)
         grid.addWidget(self.view, 1, 0, 1, 3)
         grid.addWidget(self.button, 2, 0, 1, 1)
-        grid.addWidget(self.template_button, 2, 1, 1, 1)
+        grid.addWidget(self.template_button, 2, 1, 1, 2)
 
         if self.current_level:
             self.level_filter_box.edit.setValue(self.current_level.nid)
