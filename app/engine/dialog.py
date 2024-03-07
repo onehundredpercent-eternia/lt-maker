@@ -1,6 +1,6 @@
 from enum import Enum
 import re
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.engine import config as cf
@@ -11,8 +11,9 @@ from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.ui_funcs import calc_align
 from app.engine.graphics.text.text_renderer import (MATCH_CAPTURE_TAG_RE,
-                                                    fix_tags, render_text, parse_text_and_render,
+                                                    fix_tags, render_text, render_tagged_texts,
                                                     text_width)
+from app.engine.display_text_parser import parse_display_text
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.events.speak_style import SpeakStyle
@@ -509,6 +510,10 @@ class Dialog():
                 self.state = DialogState.PROCESS
         return True
 
+    def _render_text(self, surf: engine.Surface, line: str, topleft: Tuple[int, int],):
+        tagged_texts = parse_display_text(line, self.font_type, self.font_color)
+        render_tagged_texts(surf, tagged_texts, topleft)
+
     def _draw_text(self, surf):
         end_x_pos, end_y_pos = 0, 0
         text_surf = engine.create_surface((self.text_width, self.text_height), transparent=True)
@@ -520,7 +525,7 @@ class Dialog():
             y_pos = -16 + self.y_offset
             line = processed_text_lines[-self.num_lines - 1]
             width = text_width(self.font_type, line)
-            parse_text_and_render(text_surf, line, self.font_type, self.font_color, (x_pos, y_pos))
+            self._render_text(text_surf, line, (x_pos, y_pos))
             x_pos += width
 
         display_lines = processed_text_lines[-self.num_lines:]
@@ -532,7 +537,9 @@ class Dialog():
             else:
                 y_set = y_pos
             width = text_width(self.font_type, line)
-            parse_text_and_render(text_surf, line, self.font_type, self.font_color, (x_pos, y_set))
+            print(f"rendering text {line}")
+            input()
+            self._render_text(text_surf, line, (x_pos, y_set))
             x_pos += width
 
             end_x_pos = self.position[0] + 8 + x_pos

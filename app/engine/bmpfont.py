@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple
 from functools import lru_cache
 from app.data.resources.fonts import Font
 
 from app.engine import engine
+from app.engine.display_text_mutations import TextTransform
 import pygame
 
 from app.utilities.typing import Color4
@@ -143,12 +144,15 @@ class BmpFont():
         lowsurf = engine.subsurface(base_surf, (cx, cy + self.height, self._width, self.height))
         return (high_surf, lowsurf, cwidth)
 
-    def blit(self, string, surf, pos=(0, 0), color: Optional[str] = None, offset = (0, 0), no_process=False):
+    def blit(self, string, surf, pos=(0, 0), color: Optional[str] = None,
+             offset = (0, 0), transforms: List[TextTransform] = [], no_process=False):
         if not color:
             color = self.default_color
         def normal_render(left, top, string: str, bcolor):
             for c in string:
                 c_surf, char_width = self._get_char_from_surf(c, bcolor)
+                for transform in transforms:
+                    c_surf = transform.apply(c_surf)
                 engine.blit(surf, c_surf, (left, top))
                 left += char_width + self.space_offset
 
