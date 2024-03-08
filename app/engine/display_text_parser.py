@@ -20,6 +20,24 @@ class TaggedText():
         self.effects = effects
         self.transforms = transforms
 
+    def get_start(self, end: int) -> TaggedText:
+        if end > len(self.text):
+            raise Exception(f"{__name__}: not enough text")
+        return TaggedText(self.text[:end], self.font, self.effects, self.transforms)
+    
+    def get_end(self, start: int) -> TaggedText:
+        if start >= len(self.text):
+            raise Exception(f"{__name__}: not enough text")
+        return TaggedText(self.text[start:], self.font, self.effects, self.transforms)
+
+    def get_between(self, start: int, end: int) -> TaggedText:
+        if start >= len(self.text) or end > len(self.text):
+            raise Exception(f"{__name__}: not enough text")
+        return TaggedText(self.text[start:end], self.font, self.effects, self.transforms)
+
+    def __repr__(self):
+        return f"({self.text}, {self.font}, {self.effects}, {self.transforms})"
+
 def parse_display_text(text: str, default_font: NID, default_color: Optional[NID],) -> List[TaggedText]:
     # process text for tags and push them onto stack for later processing
     print(f"input is: {text}, {default_font}, {default_color}")

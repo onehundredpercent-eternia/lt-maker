@@ -9,7 +9,7 @@ import pygame
 
 class TextEffect():
     def __init__(self):
-        raise "TextEffect should not be directly instantiated"
+        raise Exception("TextEffect should not be directly instantiated")
     def apply(self, curr_color: NID, curr_offset: Tuple[float, float]) -> Tuple[NID, Tuple[float, float]]:
         pass
 
@@ -39,7 +39,7 @@ class JitterEffect(TextEffect):
 
 class TextTransform():
     def __init__(self):
-        raise "TextTransform should not be directly instantiated"
+        raise Exception("TextTransform should not be directly instantiated")
     def apply(self, surf: pygame.Surface) -> pygame.Surface:
         pass
 
