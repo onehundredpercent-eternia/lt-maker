@@ -6,10 +6,8 @@ from typing import List, Tuple, Optional
 
 from app.engine import engine
 from app.engine.fonts import FONT
-from app.engine.icons import draw_icon_by_alias
 from app.engine.display_text_mutations import (TextEffect, ColorEffect, JitterEffect,
                                        TextTransform, FlipTransform, RotateTransform)
-from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
 
 MATCH_TAG_RE = re.compile('<(.*?)>')
@@ -56,10 +54,12 @@ def parse_display_text(text: str, default_font: NID, default_color: Optional[NID
                 else: # we have a color tag
                     tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
                 tag_history_stack.append((tag_font, tag_effect_list, tag_transform_list))
-            tagged_texts.append(TaggedText(curr_text, curr_font, curr_effect_list, curr_transform_list))
+            if curr_text: # not empty string
+                tagged_texts.append(TaggedText(curr_text, curr_font, curr_effect_list, curr_transform_list))
         else: # no more tags to process
-            tagged_texts.append(TaggedText(text, default_font, [ColorEffect(default_color)], []))
+            if text: # not empty string
+                tagged_texts.append(TaggedText(text, default_font, [ColorEffect(default_color)], []))
             keep_processing_tags = False
 
-    print(f"output is: {tagged_texts}")
+    print(f"output is: {[tagged_text.text for tagged_text in tagged_texts]}")
     return tagged_texts
