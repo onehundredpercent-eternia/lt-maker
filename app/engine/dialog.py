@@ -317,7 +317,6 @@ class Dialog():
                     self.portrait.stop_talking()
         self.text_lines.append("")
         self._add_text_indices(whitespace)
-        print(f"added line, _text_indices state: {self._text_indices}")
 
     def _add_letter(self, letter):
         self.text_lines[-1] += letter
@@ -565,10 +564,8 @@ class Dialog():
         # into list of raw text "A line.With some text."
         return re.sub(MATCH_CAPTURE_TAG_RE, "", display_text)
 
-    def _render_text2(self, surf: engine.Surface, topleft: Tuple[int, int], indices: Tuple[int, int]):
-        print(f"rendering text with indices {indices}")
-
-        start_pos, process_up_to = indices
+    def _render_text(self, surf: engine.Surface, topleft: Tuple[int, int], text_idx: int):
+        start_pos, process_up_to = self._text_indices[text_idx]
         tagged_texts = []
 
         # process using a second window (processed_pos, total_pos)
@@ -608,67 +605,7 @@ class Dialog():
                 tagged_texts.append(tagged_text.get_start(process_up_to - processed_pos))
                 break
 
-        print(tagged_texts)
-
         render_tagged_texts(surf, tagged_texts, topleft)
-
-    def _render_text(self, surf: engine.Surface, line: str, topleft: Tuple[int, int], start_pos: int):
-        """
-        render text in tagged text between the characters at start_pos to start_pos + len(line)
-        when ignoring tag characters in line (since they have already been preprocessed in tagged text)
-        """
-        # obligatory regex explanation:
-        # turns display text line "A line.With some <red>text</>."
-        # into list of raw text "A line.With some text."
-        raw_text = self._remove_tags(line)
-
-        # we want to grab all tagged text between (start_pos, process_up_to)
-        process_up_to = start_pos + len(raw_text)
-        tagged_texts = []
-
-        # process using a second window (processed_pos, total_pos)
-        # this represents the start and end of the current tagged text
-        processed_pos = 0
-        for tagged_text in self._tagged_texts:
-            text_len = len(tagged_text.text)
-            total_pos = processed_pos + text_len
-            if total_pos < start_pos:
-                # skip this tagged text, we are not using it
-                processed_pos = total_pos
-                continue
-
-            # here, processed_pos <= start_pos
-            first_intersect = processed_pos <= start_pos
-            if first_intersect:
-                if total_pos >= process_up_to:
-                    # the entirety of the text we want to process is between the window
-                    tagged_texts.append(tagged_text.get_between(start_pos - processed_pos, process_up_to - processed_pos))
-                    break
-                else:
-                    # grab the back portion after start_pos
-                    tagged_texts.append(tagged_text.get_end(start_pos - processed_pos))
-                    processed_pos = total_pos
-                    continue
-
-            # here, processed_pos > start_pos
-            if total_pos < process_up_to:
-                tagged_texts.append(tagged_text)
-                processed_pos = total_pos
-                continue
-            elif total_pos == process_up_to:
-                tagged_texts.append(tagged_text)
-                break
-            else:
-                # grab the first portion before process_up_to
-                tagged_texts.append(tagged_text.get_start(process_up_to - processed_pos))
-                break
-
-        print(f"getting tagged_texts for {raw_text}")
-        print(tagged_texts)
-
-        render_tagged_texts(surf, tagged_texts, topleft)
-
-        return process_up_to
 
     def _get_pos_of_display_text_line_up_to(self, display_texts: List[str], index: int):
         pos = 0
@@ -682,21 +619,16 @@ class Dialog():
 
         # Draw line that's disappearing
         processed_text_lines = fix_tags(self.text_lines)
-        print(f"draw text with processed lines {processed_text_lines}")
         if self.y_offset and len(processed_text_lines) > self.num_lines:
             x_pos = 0
             y_pos = -16 + self.y_offset
             text_idx = len(processed_text_lines) - self.num_lines - 1
-            print(text_idx)
             line = processed_text_lines[text_idx]
             width = text_width(self.font_type, line)
-            start_pos = self._get_pos_of_display_text_line_up_to(processed_text_lines, text_idx)
-            # self._render_text(text_surf, line, (x_pos, y_pos), start_pos)
-            self._render_text2(text_surf, (x_pos, y_pos), tuple(self._text_indices[text_idx]))
+            self._render_text(text_surf, (x_pos, y_pos), text_idx)
             x_pos += width
 
         display_lines = processed_text_lines[-self.num_lines:]
-        print(f"display lines {display_lines}")
         for idx, line in enumerate(display_lines):
             x_pos = 0
             y_pos = 16 * idx
@@ -706,9 +638,7 @@ class Dialog():
                 y_set = y_pos
             width = text_width(self.font_type, line)
             text_idx = len(processed_text_lines) - self.num_lines + idx
-            start_pos = self._get_pos_of_display_text_line_up_to(processed_text_lines, text_idx)
-            # self._render_text(text_surf, line, (x_pos, y_set), start_pos)
-            self._render_text2(text_surf, (x_pos, y_pos), tuple(self._text_indices[text_idx]))
+            self._render_text(text_surf, (x_pos, y_set), text_idx)
             x_pos += width
 
             end_x_pos = self.position[0] + 8 + x_pos

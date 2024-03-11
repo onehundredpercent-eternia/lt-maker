@@ -77,5 +77,4 @@ def parse_display_text(text: str, default_font: NID, default_color: Optional[NID
                 tagged_texts.append(TaggedText(text, default_font, [ColorEffect(default_color)], []))
             keep_processing_tags = False
 
-    print(f"output is: {[tagged_text.text for tagged_text in tagged_texts]}")
     return tagged_texts
