@@ -1,10 +1,8 @@
-
 from __future__ import annotations
+from typing import List, Optional
 
 import re
-from typing import List, Tuple, Optional
 
-from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.display_text_mutations import (TextEffect, ColorEffect, JitterEffect,
                                        TextTransform, FlipTransform, RotateTransform)

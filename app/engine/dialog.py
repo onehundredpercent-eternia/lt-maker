@@ -83,9 +83,26 @@ class Dialog():
         self._state = DialogState.TRANSITION_IN
 
         self.no_wait = False
-        self.text_commands = self._tokenize_plain_text(self.plain_text) # this is used to run the state machine
+        self.text_commands = self._tokenize_plain_text(self.plain_text)
+        self.text_lines = [] # filled up in update
+
+        # aorlnn: here is the idea behind this change
+        # currently dialog tags a "plain_text" string which consists of text, commands ("{}"), and tags ("<>")
+        # this text is immediately broken down into individiual characters (including the tags) except
+        # for the commands present (they are left intact)
+        # these "text_commands" are then parsed a single element at a time during update
+        # based on the drawing speed of the text box and added to "text_lines"
+        # this is also needed to ensure that text commands are performed at the correct time
+        # these text lines are then sent to render_text (including tags) to be drawn onto the screen
+        # ---
+        # the current change proposes that plain text should be parsed into TaggedText during initialization
+        # commands are discarded and tags are parsed into the fields of the TaggedText
+        # during update, "text_commands" is parsed as normal but instead of generating "text_lines"
+        # it instead generates "_text_indices" which will then be used during draw state to pull out
+        # the corresponding tagged text and pass it to a render function
+        # this allows correct handling for discarding whitespace characters that happens during update
         self._tagged_texts = self._parse_plain_text(self.plain_text) # this is used to render text
-        self.text_lines = []
+        self._text_indices = []
 
         # Size
         if width:
@@ -271,7 +288,22 @@ class Dialog():
         lines = text_funcs.split(self.font_type, block, num_lines, WINWIDTH - 16)
         return lines
 
-    def _next_line(self):
+    def _increment_text_indices(self):
+        if not self._text_indices:
+            # this should never happen
+            raise Exception("can't increment text index, none exists")
+        self._text_indices[-1][1] += 1 # increment the end of text index
+
+    def _add_text_indices(self, whitespace: bool):
+        if self._text_indices:
+            self._text_indices.append([self._text_indices[-1][1], self._text_indices[-1][1]])
+            if whitespace:
+                self._text_indices[-1][0] += 1
+                self._text_indices[-1][1] += 1
+        else:
+            self._text_indices.append([0, 0])
+
+    def _next_line(self, whitespace=False):
         # Don't do this for the first line
         if len(self.text_lines) > self.num_lines - 1:
             self.state = DialogState.NEW_LINE
@@ -284,9 +316,13 @@ class Dialog():
                 else:
                     self.portrait.stop_talking()
         self.text_lines.append("")
+        self._add_text_indices(whitespace)
+        print(f"added line, _text_indices state: {self._text_indices}")
 
     def _add_letter(self, letter):
         self.text_lines[-1] += letter
+        if not letter.startswith('<'):
+            self._increment_text_indices()
 
     def _done_processing(self):
         return self.text_index >= len(self.text_commands)
@@ -302,6 +338,7 @@ class Dialog():
             self._pause_before_wait()
         elif command == '{clear}':
             self.text_lines.clear()
+            self._text_indices.clear()
             self._next_line()
         elif command == '{p}':
             self.command_pause()
@@ -330,7 +367,7 @@ class Dialog():
             test_line = re.sub(r'\{[^}]*\}', '', test_line)
             next_width = text_width(self.font_type, test_line)
             if next_width > self.text_width:
-                self._next_line()
+                self._next_line(True)
             else:
                 self._add_letter(' ')
                 if sound:
@@ -528,6 +565,53 @@ class Dialog():
         # into list of raw text "A line.With some text."
         return re.sub(MATCH_CAPTURE_TAG_RE, "", display_text)
 
+    def _render_text2(self, surf: engine.Surface, topleft: Tuple[int, int], indices: Tuple[int, int]):
+        print(f"rendering text with indices {indices}")
+
+        start_pos, process_up_to = indices
+        tagged_texts = []
+
+        # process using a second window (processed_pos, total_pos)
+        # this represents the start and end of the current tagged text
+        processed_pos = 0
+        for tagged_text in self._tagged_texts:
+            text_len = len(tagged_text.text)
+            total_pos = processed_pos + text_len
+            if total_pos < start_pos:
+                # skip this tagged text, we are not using it
+                processed_pos = total_pos
+                continue
+
+            # here, processed_pos <= start_pos
+            first_intersect = processed_pos <= start_pos
+            if first_intersect:
+                if total_pos >= process_up_to:
+                    # the entirety of the text we want to process is between the window
+                    tagged_texts.append(tagged_text.get_between(start_pos - processed_pos, process_up_to - processed_pos))
+                    break
+                else:
+                    # grab the back portion after start_pos
+                    tagged_texts.append(tagged_text.get_end(start_pos - processed_pos))
+                    processed_pos = total_pos
+                    continue
+
+            # here, processed_pos > start_pos
+            if total_pos < process_up_to:
+                tagged_texts.append(tagged_text)
+                processed_pos = total_pos
+                continue
+            elif total_pos == process_up_to:
+                tagged_texts.append(tagged_text)
+                break
+            else:
+                # grab the first portion before process_up_to
+                tagged_texts.append(tagged_text.get_start(process_up_to - processed_pos))
+                break
+
+        print(tagged_texts)
+
+        render_tagged_texts(surf, tagged_texts, topleft)
+
     def _render_text(self, surf: engine.Surface, line: str, topleft: Tuple[int, int], start_pos: int):
         """
         render text in tagged text between the characters at start_pos to start_pos + len(line)
@@ -604,11 +688,11 @@ class Dialog():
             y_pos = -16 + self.y_offset
             text_idx = len(processed_text_lines) - self.num_lines - 1
             print(text_idx)
-            input()
             line = processed_text_lines[text_idx]
             width = text_width(self.font_type, line)
             start_pos = self._get_pos_of_display_text_line_up_to(processed_text_lines, text_idx)
-            self._render_text(text_surf, line, (x_pos, y_pos), start_pos)
+            # self._render_text(text_surf, line, (x_pos, y_pos), start_pos)
+            self._render_text2(text_surf, (x_pos, y_pos), tuple(self._text_indices[text_idx]))
             x_pos += width
 
         display_lines = processed_text_lines[-self.num_lines:]
@@ -623,7 +707,8 @@ class Dialog():
             width = text_width(self.font_type, line)
             text_idx = len(processed_text_lines) - self.num_lines + idx
             start_pos = self._get_pos_of_display_text_line_up_to(processed_text_lines, text_idx)
-            self._render_text(text_surf, line, (x_pos, y_set), start_pos)
+            # self._render_text(text_surf, line, (x_pos, y_set), start_pos)
+            self._render_text2(text_surf, (x_pos, y_pos), tuple(self._text_indices[text_idx]))
             x_pos += width
 
             end_x_pos = self.position[0] + 8 + x_pos
