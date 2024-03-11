@@ -38,7 +38,6 @@ class TaggedText():
 
 def parse_display_text(text: str, default_font: NID, default_color: Optional[NID],) -> List[TaggedText]:
     # process text for tags and push them onto stack for later processing
-    print(f"input is: {text}, {default_font}, {default_color}")
     tagged_texts = []
     tag_history_stack = []
     keep_processing_tags = True
