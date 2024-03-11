@@ -1,7 +1,5 @@
 import unittest
 
-from typing import List
-
 from app.engine.display_text_parser import parse_display_text, TaggedText
 
 class DisplayTextParsingTest(unittest.TestCase):
@@ -23,16 +21,10 @@ class DisplayTextParsingTest(unittest.TestCase):
                 offsets.append(effect_name)
         return offsets
 
-    def _tagged_transforms(self, tagged_text: TaggedText):
-        transforms = []
-        for transform in tagged_text.transforms:
-            transforms.append(str(transform).split("(")[0])
-        return transforms
-
     def test_parsing(self):
         default_font = 'default_font'
         default_color = 'default_color'
-        test_display_text = "<blue>this is some <red><rotate>slanted red</></> text<blue>"
+        test_display_text = "<blue>this is some <red>slanted red</> text<blue>"
         tagged_texts = parse_display_text(test_display_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
@@ -54,11 +46,6 @@ class DisplayTextParsingTest(unittest.TestCase):
         actual_offsets = [self._tagged_offsets(x) for x in tagged_texts]
         expected_offsets = [[], [], []]
         self.assertEqual(actual_offsets, expected_offsets)
-
-        # test that transforms are correct
-        actual_transforms = [self._tagged_transforms(x) for x in tagged_texts]
-        expected_transforms = [[], ["rotate"], []]
-        self.assertEqual(actual_transforms, expected_transforms)
 
 if __name__ == '__main__':
     unittest.main()

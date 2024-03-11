@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from app.engine import engine
 from app.engine.fonts import FONT
@@ -171,7 +171,6 @@ def render_tagged_texts(surf: engine.Surface, tagged_texts: List[TaggedText], to
         font = tagged_text.font
         text = tagged_text.text
         effects = tagged_text.effects
-        transforms = tagged_text.transforms
         if font == 'icon':
             draw_icon_by_alias(surf, text.strip(), (tx, ty))
             tx += 16
@@ -180,7 +179,7 @@ def render_tagged_texts(surf: engine.Surface, tagged_texts: List[TaggedText], to
             curr_color = 'black' # default color
             for effect in effects:
                 curr_color, curr_offset = effect.apply(curr_color, curr_offset)
-            FONT[font].blit(text, surf, (tx, ty), curr_color, curr_offset, transforms)
+            FONT[font].blit(text, surf, (tx + curr_offset[0], ty + curr_offset[1]), curr_color)
             tx += FONT[font].width(text)
 
     return surf
@@ -251,7 +250,7 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
             color_stack.append(tag_color)
         # actually render font
         if curr_font != 'icon':
-            FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color, (0, 0))
+            FONT[curr_font].blit(curr_text, surf, (tx, ty), curr_color)
             tx += FONT[curr_font].width(curr_text)
         else:
             draw_icon_by_alias(surf, curr_text.strip(), (tx, ty))

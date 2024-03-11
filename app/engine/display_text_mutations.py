@@ -5,8 +5,6 @@ from random import Random
 
 from app.utilities.typing import NID
 
-import pygame
-
 class TextEffect():
     def __init__(self):
         raise Exception("TextEffect should not be directly instantiated")
@@ -36,26 +34,3 @@ class JitterEffect(TextEffect):
         return curr_color, tuple(map(sum, zip(curr_offset, self._jitter)))
     def __repr__(self):
         return f"jitter({self._jitter[0]:.2f},{self._jitter[1]:.2f})"
-
-class TextTransform():
-    def __init__(self):
-        raise Exception("TextTransform should not be directly instantiated")
-    def apply(self, surf: pygame.Surface) -> pygame.Surface:
-        pass
-
-class FlipTransform(TextTransform):
-    def __init__(self, flip_x: bool = False, flip_y: bool = True):
-        self._flip_x = flip_x
-        self._flip_y = flip_y
-    def apply(self, surf: pygame.Surface) -> pygame.Surface:
-        return pygame.transform.flip(surf, self._flip_x, self._flip_y)
-    def __repr__(self):
-        return f"flip(x:{self._flip_x},y:{self._flip_y})"
-
-class RotateTransform(TextTransform):
-    def __init__(self, degrees: float = 30):
-        self._degrees = degrees
-    def apply(self, surf: pygame.Surface) -> pygame.Surface:
-        return pygame.transform.rotate(surf, self._degrees)
-    def __repr__(self):
-        return f"rotate(deg:{self._degrees:.2f})"
