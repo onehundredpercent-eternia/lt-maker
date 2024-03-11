@@ -4,6 +4,7 @@ from typing import Tuple
 from random import Random
 
 from app.utilities.typing import NID
+from app.utilities.utils import tuple_add
 
 class TextEffect():
     def __init__(self):
@@ -31,6 +32,7 @@ class JitterEffect(TextEffect):
         if self._count % 3 == 1:
             self._jitter = JitterEffect.get_jitter()
         self._count += 1
-        return curr_color, tuple(map(sum, zip(curr_offset, self._jitter)))
+        self._count = self._count % 3 # prevent infinitely counting up
+        return curr_color, tuple_add(curr_offset, self._jitter)
     def __repr__(self):
         return f"jitter({self._jitter[0]:.2f},{self._jitter[1]:.2f})"
