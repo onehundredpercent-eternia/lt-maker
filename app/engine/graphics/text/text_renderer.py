@@ -6,7 +6,7 @@ from typing import List, Tuple
 from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.icons import draw_icon_by_alias
-from app.engine.display_text_parser import TaggedText
+from app.engine.graphics.text.styled_text_parser import TaggedText
 from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
 

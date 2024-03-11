@@ -13,7 +13,7 @@ from app.engine.graphics.ingame_ui.ui_funcs import calc_align
 from app.engine.graphics.text.text_renderer import (MATCH_CAPTURE_TAG_RE,
                                                     fix_tags, render_text, render_tagged_texts,
                                                     text_width)
-from app.engine.display_text_parser import parse_display_text
+from app.engine.graphics.text.styled_text_parser import parse_styled_text
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.events.speak_style import SpeakStyle
@@ -217,7 +217,7 @@ class Dialog():
         # into display text line "A line.With some <red>text</>."
         display_text = re.sub(MATCH_DIALOG_COMMAND_RE, "", text)
         # parse display text line into tagged text
-        tagged_texts = parse_display_text(display_text, self.font_type, self.font_color)
+        tagged_texts = parse_styled_text(display_text, self.font_type, self.font_color)
         return tagged_texts
 
     def determine_desired_center(self, portrait):

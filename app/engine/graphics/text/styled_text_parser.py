@@ -4,7 +4,7 @@ from typing import List, Optional
 import re
 
 from app.engine.fonts import FONT
-from app.engine.display_text_mutations import TextEffect, ColorEffect, JitterEffect
+from app.engine.graphics.text.text_effects import TextEffect, ColorEffect, JitterEffect
 from app.utilities.typing import NID
 
 MATCH_TAG_RE = re.compile('<(.*?)>')
@@ -34,7 +34,7 @@ class TaggedText():
     def __repr__(self):
         return f"({self.text}, {self.font}, {self.effects})"
 
-def parse_display_text(text: str, default_font: NID, default_color: Optional[NID],) -> List[TaggedText]:
+def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID],) -> List[TaggedText]:
     # process text for tags and push them onto stack for later processing
     tagged_texts = []
     tag_history_stack = []
