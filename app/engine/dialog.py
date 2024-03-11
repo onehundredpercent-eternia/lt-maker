@@ -220,8 +220,8 @@ class Dialog():
         tagged_texts = parse_display_text(display_text, self.font_type, self.font_color)
         return tagged_texts
 
-    def determine_desired_center(self):
-        x = self.portrait.position[0] + self.portrait.get_width()//2
+    def determine_desired_center(self, portrait):
+        x = portrait.position[0] + portrait.get_width()//2
         return screen_positions.get_desired_center(x)
 
     def determine_width(self):
@@ -295,7 +295,7 @@ class Dialog():
 
     def _add_text_indices(self, whitespace: bool):
         if self.text_indices:
-            self.text_indices.append([self._text_indices[-1][1], self._text_indices[-1][1]])
+            self.text_indices.append([self.text_indices[-1][1], self.text_indices[-1][1]])
             if whitespace:
                 self.text_indices[-1][0] += 1
                 self.text_indices[-1][1] += 1
@@ -336,7 +336,7 @@ class Dialog():
             self.pause_before_wait()
         elif command == '{clear}':
             self.text_lines.clear()
-            self._text_indices.clear()
+            self.text_indices.clear()
             self._next_line()
         elif command == '{p}':
             self.command_pause()
@@ -564,7 +564,7 @@ class Dialog():
         return re.sub(MATCH_CAPTURE_TAG_RE, "", display_text)
 
     def _render_text(self, surf: engine.Surface, topleft: Tuple[int, int], text_idx: int):
-        start_pos, process_up_to = self._text_indices[text_idx]
+        start_pos, process_up_to = self.text_indices[text_idx]
         tagged_texts = []
 
         # process using a second window (processed_pos, total_pos)
