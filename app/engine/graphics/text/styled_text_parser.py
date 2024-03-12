@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional
+from typing import List, Optional, Iterator
 
 import re
 
@@ -45,7 +45,7 @@ class TaggedText():
     def width(self) -> int:
         return sum([t.width() for t in self.chunks])
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[TaggedTextChunk]:
         for chunk in self.chunks:
             yield chunk
         

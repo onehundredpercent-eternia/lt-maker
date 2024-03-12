@@ -6,6 +6,7 @@ from typing import List, Tuple
 from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.icons import draw_icon_by_alias
+from app.engine.graphics.text.text_effects import TextSetting
 from app.engine.graphics.text.styled_text_parser import TaggedText
 from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
@@ -237,11 +238,9 @@ def render_tagged_text(surf: engine.Surface, tagged_text: TaggedText, topleft: T
             draw_icon_by_alias(surf, text.strip(), (tx, ty))
             tx += 16
         else:
-            curr_offset = (0, 0) # default offset
-            curr_color = 'black' # default color
-            for effect in effects:
-                curr_color, curr_offset = effect.apply(curr_color, curr_offset)
-            FONT[font].blit(text, surf, (tx + curr_offset[0], ty + curr_offset[1]), curr_color)
+            settings = TextSetting('black', (0, 0)) # default color and offset
+            settings.apply(effects)
+            FONT[font].blit(text, surf, (tx + settings.offset[0], ty + settings.offset[1]), settings.color)
             tx += FONT[font].width(text)
 
     return surf
