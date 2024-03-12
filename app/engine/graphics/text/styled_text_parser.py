@@ -16,20 +16,8 @@ class TaggedText():
         self.font = font
         self.effects = effects
 
-    def get_start(self, end: int) -> TaggedText:
-        if end > len(self.text):
-            raise Exception(f"{__name__}: not enough text")
-        return TaggedText(self.text[:end], self.font, self.effects)
-    
-    def get_end(self, start: int) -> TaggedText:
-        if start >= len(self.text):
-            raise Exception(f"{__name__}: not enough text")
-        return TaggedText(self.text[start:], self.font, self.effects)
-
-    def get_between(self, start: int, end: int) -> TaggedText:
-        if start >= len(self.text) or end > len(self.text):
-            raise Exception(f"{__name__}: not enough text")
-        return TaggedText(self.text[start:end], self.font, self.effects)
+    def __getitem__(self, item):
+        return TaggedText(self.text[item], self.font, self.effects)
 
     def __repr__(self):
         return f"({self.text}, {self.font}, {self.effects})"

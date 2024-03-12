@@ -583,11 +583,11 @@ class Dialog():
             if first_intersect:
                 if total_pos >= process_up_to:
                     # the entirety of the text we want to process is between the window
-                    tagged_texts.append(tagged_text.get_between(start_pos - processed_pos, process_up_to - processed_pos))
+                    tagged_texts.append(tagged_text[start_pos - processed_pos:process_up_to - processed_pos])
                     break
                 else:
                     # grab the back portion after start_pos
-                    tagged_texts.append(tagged_text.get_end(start_pos - processed_pos))
+                    tagged_texts.append(tagged_text[start_pos - processed_pos:])
                     processed_pos = total_pos
                     continue
 
@@ -601,7 +601,7 @@ class Dialog():
                 break
             else:
                 # grab the first portion before process_up_to
-                tagged_texts.append(tagged_text.get_start(process_up_to - processed_pos))
+                tagged_texts.append(tagged_text[:process_up_to - processed_pos])
                 break
 
         render_tagged_texts(surf, tagged_texts, topleft)
