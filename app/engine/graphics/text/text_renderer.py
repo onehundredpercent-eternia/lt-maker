@@ -143,47 +143,6 @@ def remove_tags(text_block: List[str]) -> List[str]:
         new_text_block.append(new_line)
     return new_text_block
 
-def _tagged_text_width(tagged_texts: List[TaggedText]) -> int:
-    total_width = 0
-    for tagged_text in tagged_texts:
-        curr_text = tagged_text.text
-        curr_font = tagged_text.font
-        if curr_font != 'icon':
-            total_width += FONT[curr_font].width(curr_text)
-        else:
-            total_width += 16
-    return total_width
-
-def render_tagged_texts(surf: engine.Surface, tagged_texts: List[TaggedText], topleft: Tuple[int, int],
-                        align: HAlignment = HAlignment.LEFT) -> engine.Surface:
-    # for non-left alignments
-    if align == HAlignment.CENTER or align == HAlignment.RIGHT:
-        width = _tagged_text_width(tagged_texts)
-        tx, ty = topleft
-        if align == HAlignment.CENTER:
-            tx -= width//2
-        elif align == HAlignment.RIGHT:
-            tx -= width
-    else:
-        tx, ty = topleft
-
-    for tagged_text in tagged_texts:
-        font = tagged_text.font
-        text = tagged_text.text
-        effects = tagged_text.effects
-        if font == 'icon':
-            draw_icon_by_alias(surf, text.strip(), (tx, ty))
-            tx += 16
-        else:
-            curr_offset = (0, 0) # default offset
-            curr_color = 'black' # default color
-            for effect in effects:
-                curr_color, curr_offset = effect.apply(curr_color, curr_offset)
-            FONT[font].blit(text, surf, (tx + curr_offset[0], ty + curr_offset[1]), curr_color)
-            tx += FONT[font].width(text)
-
-    return surf
-
 def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
                 colors: List[NID | None], topleft: Tuple[int, int],
                 align: HAlignment = HAlignment.LEFT) -> engine.Surface:
@@ -255,4 +214,34 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
         else:
             draw_icon_by_alias(surf, curr_text.strip(), (tx, ty))
             tx += 16
+    return surf
+
+def render_tagged_text(surf: engine.Surface, tagged_text: TaggedText, topleft: Tuple[int, int],
+                        align: HAlignment = HAlignment.LEFT) -> engine.Surface:
+    # for non-left alignments
+    if align == HAlignment.CENTER or align == HAlignment.RIGHT:
+        width = tagged_text.width()
+        tx, ty = topleft
+        if align == HAlignment.CENTER:
+            tx -= width//2
+        elif align == HAlignment.RIGHT:
+            tx -= width
+    else:
+        tx, ty = topleft
+
+    for chunk in tagged_text:
+        font = chunk.font
+        text = chunk.text
+        effects = chunk.effects
+        if font == 'icon':
+            draw_icon_by_alias(surf, text.strip(), (tx, ty))
+            tx += 16
+        else:
+            curr_offset = (0, 0) # default offset
+            curr_color = 'black' # default color
+            for effect in effects:
+                curr_color, curr_offset = effect.apply(curr_color, curr_offset)
+            FONT[font].blit(text, surf, (tx + curr_offset[0], ty + curr_offset[1]), curr_color)
+            tx += FONT[font].width(text)
+
     return surf

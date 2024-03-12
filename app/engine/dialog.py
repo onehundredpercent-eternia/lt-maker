@@ -11,7 +11,8 @@ from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.ui_funcs import calc_align
 from app.engine.graphics.text.text_renderer import (MATCH_CAPTURE_TAG_RE,
-                                                    fix_tags, render_text, render_tagged_texts,
+                                                    fix_tags, render_text,
+                                                    render_tagged_text,
                                                     text_width)
 from app.engine.graphics.text.styled_text_parser import parse_styled_text
 from app.engine.sound import get_sound_thread
@@ -86,21 +87,21 @@ class Dialog():
         self.text_lines = [] # filled up in update
 
         # aorlnn: here is the idea behind this change
-        # currently dialog tags a "plain_text" string which consists of text, commands ("{}"), and tags ("<>")
-        # this text is immediately broken down into individiual characters (including the tags) except
-        # for the commands present (they are left intact)
-        # these "text_commands" are then parsed a single element at a time during update
-        # based on the drawing speed of the text box and added to "text_lines"
-        # this is also needed to ensure that text commands are performed at the correct time
-        # these text lines are then sent to render_text (including tags) to be drawn onto the screen
+        # Currently dialog tags a "plain_text" string which consists of text, commands ("{}"), and tags ("<>").
+        # This text is immediately broken down into individiual characters (including the tags) except
+        # for the commands present (they are left intact).
+        # These "text_commands" are then parsed a single element at a time during update
+        # based on the drawing speed of the text box and added to "text_lines".
+        # This is also needed to ensure that text commands are performed at the correct time.
+        # These text lines are then sent to render_text (including tags) to be drawn onto the screen.
         # ---
-        # the current change proposes that plain text should be parsed into TaggedText during initialization
-        # commands are discarded and tags are parsed into the fields of the TaggedText
-        # during update, "text_commands" is parsed as normal but instead of generating "text_lines"
-        # it instead generates "text_indices" which will then be used during draw state to pull out
-        # the corresponding tagged text and pass it to a render function
-        # this allows correct handling for discarding whitespace characters that happens during update
-        self.tagged_texts = self.parse_plain_text(self.plain_text) # this is used to render text
+        # The current change proposes that plain text should be parsed into TaggedText during initialization.
+        # Commands are discarded and tags are parsed into the fields of the TaggedText.
+        # During update, "text_commands" is parsed as normal but instead of generating "text_lines"
+        # it instead generates "text_indices" which will then be used during draw state to slice out
+        # the corresponding tagged text and pass it to a render function.
+        # This allows correct handling for discarding whitespace characters that happens during update.
+        self.tagged_text = self.parse_plain_text(self.plain_text) # this is used to render text
         self.text_indices = []
 
         # Size
@@ -217,8 +218,8 @@ class Dialog():
         # into display text line "A line.With some <red>text</>."
         display_text = re.sub(MATCH_DIALOG_COMMAND_RE, "", text)
         # parse display text line into tagged text
-        tagged_texts = parse_styled_text(display_text, self.font_type, self.font_color)
-        return tagged_texts
+        tagged_text = parse_styled_text(display_text, self.font_type, self.font_color)
+        return tagged_text
 
     def determine_desired_center(self, portrait):
         x = portrait.position[0] + portrait.get_width()//2
@@ -288,9 +289,6 @@ class Dialog():
         return lines
 
     def _increment_text_indices(self):
-        if not self.text_indices:
-            # this should never happen
-            raise Exception("can't increment text index, none exists")
         self.text_indices[-1][1] += 1 # increment the end of text index
 
     def _add_text_indices(self, whitespace: bool):
@@ -557,54 +555,10 @@ class Dialog():
                 self.state = DialogState.PROCESS
         return True
 
-    def _remove_tags(self, display_text: str) -> str:
-        # obligatory regex explanation:
-        # turns display text line "A line.With some <red>text</>."
-        # into list of raw text "A line.With some text."
-        return re.sub(MATCH_CAPTURE_TAG_RE, "", display_text)
-
     def _render_text(self, surf: engine.Surface, topleft: Tuple[int, int], text_idx: int):
-        start_pos, process_up_to = self.text_indices[text_idx]
-        tagged_texts = []
-
-        # process using a second window (processed_pos, total_pos)
-        # this represents the start and end of the current tagged text
-        processed_pos = 0
-        for tagged_text in self.tagged_texts:
-            text_len = len(tagged_text.text)
-            total_pos = processed_pos + text_len
-            if total_pos < start_pos:
-                # skip this tagged text, we are not using it
-                processed_pos = total_pos
-                continue
-
-            # here, processed_pos <= start_pos
-            first_intersect = processed_pos <= start_pos
-            if first_intersect:
-                if total_pos >= process_up_to:
-                    # the entirety of the text we want to process is between the window
-                    tagged_texts.append(tagged_text[start_pos - processed_pos:process_up_to - processed_pos])
-                    break
-                else:
-                    # grab the back portion after start_pos
-                    tagged_texts.append(tagged_text[start_pos - processed_pos:])
-                    processed_pos = total_pos
-                    continue
-
-            # here, processed_pos > start_pos
-            if total_pos < process_up_to:
-                tagged_texts.append(tagged_text)
-                processed_pos = total_pos
-                continue
-            elif total_pos == process_up_to:
-                tagged_texts.append(tagged_text)
-                break
-            else:
-                # grab the first portion before process_up_to
-                tagged_texts.append(tagged_text[:process_up_to - processed_pos])
-                break
-
-        render_tagged_texts(surf, tagged_texts, topleft)
+        start, stop = self.text_indices[text_idx]
+        tagged_text_to_render = self.tagged_text[start:stop]
+        render_tagged_text(surf, tagged_text_to_render, topleft)
 
     def draw_text(self, surf):
         end_x_pos, end_y_pos = 0, 0

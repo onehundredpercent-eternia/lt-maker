@@ -1,21 +1,22 @@
 import unittest
 
-from app.engine.graphics.text.styled_text_parser import parse_styled_text, TaggedText
+from app.engine.graphics.text.styled_text_parser import (parse_styled_text,
+                                                         TaggedTextChunk)
 
 class DisplayTextParsingTest(unittest.TestCase):
     """
     Tests parsing of display text into tagged text
     """
 
-    def _tagged_text_color(self, tagged_text: TaggedText):
+    def _tagged_text_color(self, chunk: TaggedTextChunk):
         color = 'default_color'
-        for effect in tagged_text.effects:
+        for effect in chunk.effects:
             color, _ = effect.apply(color, (0, 0))
         return color
     
-    def _tagged_offsets(self, tagged_text: TaggedText):
+    def _tagged_offsets(self, chunk: TaggedTextChunk):
         offsets = []
-        for effect in tagged_text.effects:
+        for effect in chunk.effects:
             effect_name = str(effect).split("(")[0]
             if effect_name != "color":
                 offsets.append(effect_name)
@@ -25,25 +26,25 @@ class DisplayTextParsingTest(unittest.TestCase):
         default_font = 'default_font'
         default_color = 'default_color'
         test_display_text = "<blue>this is some <red>red</> text<blue>"
-        tagged_texts = parse_styled_text(test_display_text, default_font, default_color)
+        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
-        actual_texts = [x.text for x in tagged_texts]
+        actual_texts = [x.text for x in tagged_text]
         expected_texts = ["this is some ", "red", " text"]
         self.assertEqual(actual_texts, expected_texts)
 
         # test that the font is correct
-        actual_fonts = [x.font for x in tagged_texts]
+        actual_fonts = [x.font for x in tagged_text]
         expected_fonts = [default_font, default_font, default_font]
         self.assertEqual(actual_fonts, expected_fonts)
 
         # test that the colors are correct
-        actual_colors = [self._tagged_text_color(x) for x in tagged_texts]
+        actual_colors = [self._tagged_text_color(x) for x in tagged_text]
         expected_colors = ["blue", "red", "blue"]
         self.assertEqual(actual_colors, expected_colors)
 
         # test that offsets are correct
-        actual_offsets = [self._tagged_offsets(x) for x in tagged_texts]
+        actual_offsets = [self._tagged_offsets(x) for x in tagged_text]
         expected_offsets = [[], [], []]
         self.assertEqual(actual_offsets, expected_offsets)
 
