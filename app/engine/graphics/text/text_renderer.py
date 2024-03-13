@@ -231,16 +231,6 @@ def render_tagged_text(surf: engine.Surface, tagged_text: TaggedText, topleft: T
         tx, ty = topleft
 
     for chunk in tagged_text:
-        font = chunk.font
-        text = chunk.text
-        effects = chunk.effects
-        if font == 'icon':
-            draw_icon_by_alias(surf, text.strip(), (tx, ty))
-            tx += 16
-        else:
-            settings = TextSettings('black', (0, 0)) # default color and offset
-            settings.apply(effects)
-            FONT[font].blit(text, surf, (tx + settings.offset[0], ty + settings.offset[1]), settings.color)
-            tx += FONT[font].width(text)
+        tx += chunk.draw(surf, (tx, ty))
 
     return surf

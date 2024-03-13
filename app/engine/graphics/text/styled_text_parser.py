@@ -1,14 +1,14 @@
 from __future__ import annotations
-from typing import List, Optional, Iterator
+from typing import List, Tuple, Optional, Iterator
 
 import re
 import logging
 
+from app.engine import engine
 from app.engine.fonts import FONT
+from app.engine.graphics.text.text_effects import TextSettings
 from app.engine.graphics.text.text_effects import TextEffect, ColorEffect, JitterEffect
 from app.utilities.typing import NID
-
-from pygame.colordict import THECOLORS
 
 MATCH_TAG_RE = re.compile('<(.*?)>')
 MATCH_CAPTURE_TAG_RE = re.compile('(<[^<]*?>)')
@@ -21,6 +21,18 @@ class TaggedTextChunk():
 
     def width(self):
         return FONT[self.font].width(self.text) if self.font != 'icon' else 16
+    
+    def draw(self, surf: engine.Surface, topleft: Tuple[int, int]) -> int:
+        settings = TextSettings('', (0, 0))
+        settings.apply(self.effects)
+        if self.font == 'icon':
+            # not sure why but this import needs to go here to avoid a circular dependency
+            from app.engine.icons import draw_icon_by_alias
+            draw_icon_by_alias(surf, self.text.strip(), (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]), settings.color)
+            return 16
+        else:
+            FONT[self.font].blit(self.text, surf, (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]), settings.color)
+            return self.width()
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, TaggedTextChunk):
@@ -152,14 +164,12 @@ def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID]
                 tag_effect_list = list.copy(curr_effect_list)
                 if tag in FONT or tag == 'icon': # special handling for fonts and icons
                     tag_font = tag
-                # elif tag in FONT[curr_font].surfaces:
-                #     tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
+                elif tag in FONT[curr_font].surfaces:
+                    tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
                 elif tag == "jitter" or tag == 'j':
                     tag_effect_list.append(JitterEffect())
-                # else:
-                #     logging.warning(f"ignoring {tag} tag")
                 else:
-                    tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
+                    logging.warning(f"ignoring {tag} tag")
                 tag_history_stack.append((tag_font, tag_effect_list))
             if curr_text: # not empty string
                 tagged_text.append(curr_text, curr_font, curr_effect_list)

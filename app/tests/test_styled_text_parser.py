@@ -29,8 +29,8 @@ class DisplayTextParsingTest(unittest.TestCase):
         return offsets
 
     def test_parsing(self):
-        default_font = "default_font"
-        default_color = "default_color"
+        default_font = "convo"
+        default_color = "white"
         test_display_text = "<blue>this is some <red>red</> and some <j>jittering <green>green</></> text</>"
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
@@ -55,8 +55,8 @@ class DisplayTextParsingTest(unittest.TestCase):
         self.assertEqual(actual_offsets, expected_offsets)
 
     def test_parsing_malformed(self):
-        default_font = "default_font"
-        default_color = "default_color"
+        default_font = "convo"
+        default_color = "white"
         test_display_text = "<blue>blue text? <red>red text?</> but did not close blue"
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
@@ -81,8 +81,8 @@ class DisplayTextParsingTest(unittest.TestCase):
         self.assertEqual(actual_offsets, expected_offsets)
 
     def test_indexing(self):
-        default_font = "default_font"
-        default_color = "default_color"
+        default_font = "convo"
+        default_color = "white"
         test_display_text = "<blue>this is some <red>red</> text</>"
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
@@ -136,8 +136,8 @@ class DisplayTextParsingTest(unittest.TestCase):
             tagged_text[len(tagged_text)]
 
     def test_slicing(self):
-        default_font = "default_font"
-        default_color = "default_color"
+        default_font = "convo"
+        default_color = "white"
         test_display_text = "<blue>this is some <red>red</> text</>"
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
