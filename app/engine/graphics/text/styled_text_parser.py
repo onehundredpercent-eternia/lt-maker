@@ -2,10 +2,13 @@ from __future__ import annotations
 from typing import List, Optional, Iterator
 
 import re
+import logging
 
 from app.engine.fonts import FONT
 from app.engine.graphics.text.text_effects import TextEffect, ColorEffect, JitterEffect
 from app.utilities.typing import NID
+
+from pygame.colordict import THECOLORS
 
 MATCH_TAG_RE = re.compile('<(.*?)>')
 MATCH_CAPTURE_TAG_RE = re.compile('(<[^<]*?>)')
@@ -19,6 +22,11 @@ class TaggedTextChunk():
     def width(self):
         return FONT[self.font].width(self.text) if self.font != 'icon' else 16
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, TaggedTextChunk):
+            return NotImplemented
+        return self.text == other.text and self.font == other.font and self.effects == other.effects
+
     def __len__(self):
         return len(self.text)
 
@@ -30,8 +38,8 @@ class TaggedTextChunk():
 
 class TaggedText():
     def __init__(self):
-        self.size = 0
-        self.chunks = []
+        self.size: int = 0
+        self.chunks: List[TaggedTextChunk] = []
 
     def append(self, text: str, font: NID, effects: List[TextEffect]):
         chunk = TaggedTextChunk(text, font, effects)
@@ -45,36 +53,51 @@ class TaggedText():
     def width(self) -> int:
         return sum([t.width() for t in self.chunks])
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, TaggedText):
+            return NotImplemented
+        return self.size == other.size and self.chunks == other.chunks
+
+    def __len__(self) -> int:
+        return self.size
+
     def __iter__(self) -> Iterator[TaggedTextChunk]:
         for chunk in self.chunks:
             yield chunk
-        
-    def __getitem__(self, item) -> TaggedTextChunk:
+
+    def __getitem__(self, item) -> TaggedText:
         if isinstance(item, slice):
             if item.step is not None:
-                raise ValueError(f"TaggedText does not support indexing with custom step {item.step}")
+                raise ValueError(f"no support for indexing with a custom step {item.step}")
             return self._get_slice(item.start, item.stop)
         else:
-            if not isinstance(int):
-                raise KeyError
-            return self._get_slice(item, item)
+            if not isinstance(item, int):
+                raise KeyError(f"only supports integer or slice keys not {type(item)}")
+            return self._get_slice(item, item + 1)
 
-    def _get_slice(self, start: int, stop: int) -> TaggedText:
-        if stop < start:
-            raise ValueError
+    def _get_slice(self, start: Optional[int], stop: Optional[int]) -> TaggedText:
+        if start is None:
+            start = 0
+        if stop is None:
+            stop = len(self)
+
         if start < 0 or stop < 0:
-            raise ValueError
+            raise IndexError(f"no support for negative indexes {start}:{stop}")
         if start >= self.size or stop > self.size:
-            raise IndexError
+            raise IndexError(f"out of range {start}:{stop}")
+        if stop < start:
+            raise ValueError(f"no support for backwards slice {start}:{stop}")
 
         tagged_text = TaggedText()
+        if start == stop:
+            return tagged_text
 
         # process using a window (curr, total)
         # which represents the start and stop of the current tagged text
         curr = 0
         for chunk in self.chunks:
             total = curr + len(chunk)
-            if total < start:
+            if total <= start:
                 # skip this tagged text, we are not using it
                 curr = total
                 continue
@@ -102,6 +125,12 @@ class TaggedText():
 
         return tagged_text
 
+    def __repr__(self):
+        s = ""
+        for chunk in self.chunks:
+            s += repr(chunk)
+        return s
+
 def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID],) -> TaggedText:
     # process text for tags and push them onto stack for later processing
     tagged_text = TaggedText()
@@ -123,16 +152,23 @@ def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID]
                 tag_effect_list = list.copy(curr_effect_list)
                 if tag in FONT or tag == 'icon': # special handling for fonts and icons
                     tag_font = tag
+                # elif tag in FONT[curr_font].surfaces:
+                #     tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
                 elif tag == "jitter" or tag == 'j':
                     tag_effect_list.append(JitterEffect())
-                else: # we have a color tag
+                # else:
+                #     logging.warning(f"ignoring {tag} tag")
+                else:
                     tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
                 tag_history_stack.append((tag_font, tag_effect_list))
             if curr_text: # not empty string
                 tagged_text.append(curr_text, curr_font, curr_effect_list)
         else: # no more tags to process
             if text: # not empty string
-                tagged_text.append(text, default_font, [ColorEffect(default_color)])
+                default_settings = tag_history_stack[-1] if tag_history_stack else (default_font, [ColorEffect(default_color)])
+                curr_font = default_settings[0]
+                curr_effect_list = list.copy(default_settings[1])
+                tagged_text.append(text, curr_font, curr_effect_list)
             break
 
     return tagged_text
