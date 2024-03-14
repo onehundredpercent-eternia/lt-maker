@@ -313,10 +313,6 @@ class Dialog():
                     self.portrait.stop_talking()
         self._add_text_indices(whitespace)
 
-    def _add_letter(self, letter):
-        if not letter.startswith('<'):
-            self._increment_text_indices()
-
     def _done_processing(self):
         return self.text_index >= len(self.text_commands)
 
@@ -355,14 +351,14 @@ class Dialog():
             if next_width > self.text_width:
                 self._next_line(True)
             else:
-                self._add_letter(' ')
+                self._increment_text_indices()
                 if sound:
                     self.play_talk_boop(self.boop_sound)
         elif command in ('.', ',', ';', '!', '?'):
-            self._add_letter(command)
+            self._increment_text_indices()
             self.pause()
         else:
-            self._add_letter(command)
+            self._increment_text_indices()
             if sound:
                 self.play_talk_boop(self.boop_sound)
         self.text_index += 1
