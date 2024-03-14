@@ -83,8 +83,9 @@ class Dialog():
         self._state = DialogState.TRANSITION_IN
 
         self.no_wait = False
+        # text commands is used to draw characters one at a time onto the screen to match
+        # the text speed and also to handle any commands at the correct timing
         self.text_commands = self.format_text(self.plain_text)
-        self.text_lines = [] # filled up in update
 
         # aorlnn: here is the idea behind this change
         # Currently dialog tags a "plain_text" string which consists of text, commands ("{}"), and tags ("<>").
@@ -196,16 +197,14 @@ class Dialog():
             text += '{w}'
         processed_text: List[str] = []
         # obligatory regex explanation: turns "A line.{w} With some <red>text</>."
+        # into "A line.{w} With some text."
+        text_without_tags = re.sub(MATCH_CAPTURE_TAG_RE, "", text)
+        # obligatory regex explanation: turns "A line.{w} With some <red>text</>."
         # into ["A line.", "{w}", " With some ", "<red>", "text", "</>", "."]
         # and then decomposes the non-command/tag elements into individual chars.
-        text_split_by_commands: List[str] = re.split(MATCH_DIALOG_COMMAND_RE, text)
-        text_split_by_commands_and_tags: List[str] = []
+        text_split_by_commands: List[str] = re.split(MATCH_DIALOG_COMMAND_RE, text_without_tags)
         for block in text_split_by_commands:
-            text_split_by_commands_and_tags += re.split(MATCH_CAPTURE_TAG_RE, block)
-        for block in text_split_by_commands_and_tags:
-            if block.startswith('<') and block.endswith('>'): # tag (e.g. "<red>")
-                processed_text.append(block)
-            elif block.startswith('{') and block.endswith('}'): # command (e.g. "{br}")
+            if block.startswith('{') and block.endswith('}'): # command (e.g. "{br}")
                 processed_text.append(block)
             else: # normal char str (e.g. "hello")
                 processed_text += list(block)
@@ -302,7 +301,7 @@ class Dialog():
 
     def _next_line(self, whitespace=False):
         # Don't do this for the first line
-        if len(self.text_lines) > self.num_lines - 1:
+        if len(self.text_indices) > self.num_lines - 1:
             self.state = DialogState.NEW_LINE
             self.y_offset = 16
         else:
@@ -312,18 +311,16 @@ class Dialog():
                     self.portrait.talk()
                 else:
                     self.portrait.stop_talking()
-        self.text_lines.append("")
         self._add_text_indices(whitespace)
 
     def _add_letter(self, letter):
-        self.text_lines[-1] += letter
         if not letter.startswith('<'):
             self._increment_text_indices()
 
     def _done_processing(self):
         return self.text_index >= len(self.text_commands)
 
-    def _next_char(self, sound=True):  # Add the next character to the text_lines list
+    def _next_char(self, sound=True):
         if self._done_processing():
             self.pause_before_wait()
             return
@@ -333,7 +330,6 @@ class Dialog():
         elif command == '{w}' or command == '{wait}':
             self.pause_before_wait()
         elif command == '{clear}':
-            self.text_lines.clear()
             self.text_indices.clear()
             self._next_line()
         elif command == '{p}':
@@ -352,16 +348,10 @@ class Dialog():
         elif command == '{starting_speed}':
             self.speed = self.starting_speed
         elif command == ' ':  # Check to see if we should move to next line
-            # Wow this is cursed
-            # Basically, we need to make sure we are using
-            # a fixed tags version of what the dialog would look like,
-            # if the next word was added to the current line (self.text_lines[-1])
             next_word = self._get_next_word(self.text_index)
-            test_lines = self.text_lines[:-1] + [self.text_lines[-1] + ' ' + next_word]
-            test_line = fix_tags(test_lines)[-1]
-            # Remove any commands from line
-            test_line = re.sub(r'\{[^}]*\}', '', test_line)
-            next_width = text_width(self.font_type, test_line)
+            start, stop = self.text_indices[-1]
+            stop += len(next_word) + 1
+            next_width = self.tagged_text[start:stop].width()
             if next_width > self.text_width:
                 self._next_line(True)
             else:
@@ -555,38 +545,31 @@ class Dialog():
                 self.state = DialogState.PROCESS
         return True
 
-    def _render_text(self, surf: engine.Surface, topleft: Tuple[int, int], text_idx: int):
-        start, stop = self.text_indices[text_idx]
-        tagged_text_to_render = self.tagged_text[start:stop]
-        render_tagged_text(surf, tagged_text_to_render, topleft)
-
     def draw_text(self, surf):
         end_x_pos, end_y_pos = 0, 0
         text_surf = engine.create_surface((self.text_width, self.text_height), transparent=True)
 
         # Draw line that's disappearing
-        processed_text_lines = fix_tags(self.text_lines)
-        if self.y_offset and len(processed_text_lines) > self.num_lines:
+        if self.y_offset and len(self.text_indices) > self.num_lines:
             x_pos = 0
             y_pos = -16 + self.y_offset
-            text_idx = len(processed_text_lines) - self.num_lines - 1
-            line = processed_text_lines[text_idx]
-            width = text_width(self.font_type, line)
-            self._render_text(text_surf, (x_pos, y_pos), text_idx)
-            x_pos += width
+            start, stop = self.text_indices[-self.num_lines - 1]
+            tagged_text = self.tagged_text[start:stop]
+            render_tagged_text(text_surf, tagged_text, (x_pos, y_pos))
+            x_pos += tagged_text.width()
 
-        display_lines = processed_text_lines[-self.num_lines:]
-        for idx, line in enumerate(display_lines):
+        display_indices = self.text_indices[-self.num_lines:]
+        for idx, indices in enumerate(display_indices):
             x_pos = 0
             y_pos = 16 * idx
-            if len(processed_text_lines) > self.num_lines:
+            if len(self.text_indices) > self.num_lines:
                 y_set = y_pos + self.y_offset
             else:
                 y_set = y_pos
-            width = text_width(self.font_type, line)
-            text_idx = len(processed_text_lines) - self.num_lines + idx
-            self._render_text(text_surf, (x_pos, y_set), text_idx)
-            x_pos += width
+            start, stop = indices
+            tagged_text = self.tagged_text[start:stop]
+            render_tagged_text(text_surf, tagged_text, (x_pos, y_set))
+            x_pos += tagged_text.width()
 
             end_x_pos = self.position[0] + 8 + x_pos
             end_y_pos = self.position[1] + 8 + y_pos
