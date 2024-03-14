@@ -28,33 +28,39 @@ class DisplayTextParsingTest(unittest.TestCase):
                 offsets.append(effect_name)
         return offsets
 
+    def setUp(self):
+        from app.data.resources.resources import RESOURCES
+        from app.engine import fonts
+        RESOURCES.load('testing_proj.ltproj')
+        fonts.load_fonts()
+
     def test_parsing(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>this is some <red>red</> and some <j>jittering <green>green</></> text</>"
+        test_display_text = "<blue>this <iconvo>is</> some <red>red</> and some <j>jittering <green>green</></> text</>"
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
-        expected_texts = ["this is some ", "red", " and some ", "jittering ", "green", " text"]
+        expected_texts = ["this ", "is", " some ", "red", " and some ", "jittering ", "green", " text"]
         self.assertEqual(actual_texts, expected_texts)
 
         # test that the font is correct
         actual_fonts = [x.font for x in tagged_text]
-        expected_fonts = [default_font, default_font, default_font, default_font, default_font, default_font]
+        expected_fonts = [default_font, "iconvo", default_font, default_font, default_font, default_font, default_font, default_font]
         self.assertEqual(actual_fonts, expected_fonts)
 
         # test that the colors are correct
         actual_colors = [self._tagged_text_color(x) for x in tagged_text]
-        expected_colors = ["blue", "red", "blue", "blue", "green", "blue"]
+        expected_colors = ["blue", "blue", "blue", "red", "blue", "blue", "green", "blue"]
         self.assertEqual(actual_colors, expected_colors)
 
         # test that offsets are correct
         actual_offsets = [self._tagged_offsets(x) for x in tagged_text]
-        expected_offsets = [[], [], [], ["jitter"], ["jitter"], []]
+        expected_offsets = [[], [], [], [], [], ["jitter"], ["jitter"], []]
         self.assertEqual(actual_offsets, expected_offsets)
 
-    def test_parsing_malformed(self):
+    def test_parsing_unclosed_tag(self):
         default_font = "convo"
         default_color = "white"
         test_display_text = "<blue>blue text? <red>red text?</> but did not close blue"
@@ -73,6 +79,110 @@ class DisplayTextParsingTest(unittest.TestCase):
         # test that the colors are correct
         actual_colors = [self._tagged_text_color(x) for x in tagged_text]
         expected_colors = ["blue", "red", "blue"]
+        self.assertEqual(actual_colors, expected_colors)
+
+        # test that offsets are correct
+        actual_offsets = [self._tagged_offsets(x) for x in tagged_text]
+        expected_offsets = [[], [], []]
+        self.assertEqual(actual_offsets, expected_offsets)
+
+    def test_parsing_doubled_up_tag(self):
+        default_font = "convo"
+        default_color = "white"
+        test_display_text = "<blue>blue text <blue>more blue text<red> now it's red text</> back to blue</> still blue</> now white"
+        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+
+        # test that the text is parsed correctly based on tags
+        actual_texts = [x.text for x in tagged_text]
+        expected_texts = ["blue text ", "more blue text", " now it's red text", " back to blue", " still blue", " now white"]
+        self.assertEqual(actual_texts, expected_texts)
+
+        # test that the font is correct
+        actual_fonts = [x.font for x in tagged_text]
+        expected_fonts = [default_font, default_font, default_font, default_font, default_font, default_font]
+        self.assertEqual(actual_fonts, expected_fonts)
+
+        # test that the colors are correct
+        actual_colors = [self._tagged_text_color(x) for x in tagged_text]
+        expected_colors = ["blue", "blue", "red", "blue", "blue", default_color]
+        self.assertEqual(actual_colors, expected_colors)
+
+        # test that offsets are correct
+        actual_offsets = [self._tagged_offsets(x) for x in tagged_text]
+        expected_offsets = [[], [], [], [], [], []]
+        self.assertEqual(actual_offsets, expected_offsets)
+
+    def test_parsing_nonexistent(self):
+        default_font = "convo"
+        default_color = "white"
+        test_display_text = "some text with <???>a non-existent tag</>"
+        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+
+        # test that the text is parsed correctly based on tags
+        actual_texts = [x.text for x in tagged_text]
+        expected_texts = ["some text with ", "a non-existent tag"]
+        self.assertEqual(actual_texts, expected_texts)
+
+        # test that the font is correct
+        actual_fonts = [x.font for x in tagged_text]
+        expected_fonts = [default_font, default_font]
+        self.assertEqual(actual_fonts, expected_fonts)
+
+        # test that the colors are correct
+        actual_colors = [self._tagged_text_color(x) for x in tagged_text]
+        expected_colors = [default_color, default_color]
+        self.assertEqual(actual_colors, expected_colors)
+
+        # test that offsets are correct
+        actual_offsets = [self._tagged_offsets(x) for x in tagged_text]
+        expected_offsets = [[], []]
+        self.assertEqual(actual_offsets, expected_offsets)
+
+    def test_parsing_unclosed_tag(self):
+        default_font = "convo"
+        default_color = "white"
+        test_display_text = "another tag <blue that is simply never closed oops</>"
+        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+
+        # test that the text is parsed correctly based on tags
+        actual_texts = [x.text for x in tagged_text]
+        expected_texts = ["another tag "]
+        self.assertEqual(actual_texts, expected_texts)
+
+        # test that the font is correct
+        actual_fonts = [x.font for x in tagged_text]
+        expected_fonts = [default_font]
+        self.assertEqual(actual_fonts, expected_fonts)
+
+        # test that the colors are correct
+        actual_colors = [self._tagged_text_color(x) for x in tagged_text]
+        expected_colors = [default_color]
+        self.assertEqual(actual_colors, expected_colors)
+
+        # test that offsets are correct
+        actual_offsets = [self._tagged_offsets(x) for x in tagged_text]
+        expected_offsets = [[]]
+        self.assertEqual(actual_offsets, expected_offsets)
+
+    def test_parsing_orphaned_closing_tag(self):
+        default_font = "convo"
+        default_color = "white"
+        test_display_text = "some </>text with <red>extra closing tags</></>"
+        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+
+        # test that the text is parsed correctly based on tags
+        actual_texts = [x.text for x in tagged_text]
+        expected_texts = ["some ", "text with ", "extra closing tags"]
+        self.assertEqual(actual_texts, expected_texts)
+
+        # test that the font is correct
+        actual_fonts = [x.font for x in tagged_text]
+        expected_fonts = [default_font, default_font, default_font]
+        self.assertEqual(actual_fonts, expected_fonts)
+
+        # test that the colors are correct
+        actual_colors = [self._tagged_text_color(x) for x in tagged_text]
+        expected_colors = [default_color, default_color, "red"]
         self.assertEqual(actual_colors, expected_colors)
 
         # test that offsets are correct

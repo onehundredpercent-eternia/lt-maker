@@ -157,19 +157,23 @@ def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID]
             default_settings = tag_history_stack[-1] if tag_history_stack else (default_font, [ColorEffect(default_color)])
             curr_font = default_settings[0]
             curr_effect_list = list.copy(default_settings[1])
-            if '/' in tag: # ending tag
-                tag_history_stack.pop()
+            if tag.startswith('/'): # ending tag
+                if tag_history_stack:
+                    tag_history_stack.pop()
+                else:
+                    # orphaned closing tag with no opening tag
+                    logging.warning(f"Ignoring orphaned closing tag")
             else: # starting tag
                 tag_font = curr_font
                 tag_effect_list = list.copy(curr_effect_list)
-                if tag in FONT or tag == 'icon': # special handling for fonts and icons
+                if tag in FONT or tag == "icon": # special handling for fonts and icons
                     tag_font = tag
                 elif tag in FONT[curr_font].surfaces:
                     tag_effect_list.append(ColorEffect(tag)) # last ColorEffect pushed to list overrides
                 elif tag == "jitter" or tag == 'j':
                     tag_effect_list.append(JitterEffect())
                 else:
-                    logging.warning(f"ignoring {tag} tag")
+                    logging.warning(f"Ignoring unknown tag: {tag}")
                 tag_history_stack.append((tag_font, tag_effect_list))
             if curr_text: # not empty string
                 tagged_text.append(curr_text, curr_font, curr_effect_list)
