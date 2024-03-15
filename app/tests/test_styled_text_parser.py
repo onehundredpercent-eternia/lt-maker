@@ -6,9 +6,12 @@ from typing import Tuple
 
 from app.engine.fonts import FONT
 from app.engine.graphics.text.text_effects import TextSettings
-from app.engine.graphics.text.styled_text_parser import (TaggedTextChunk,
-                                                         parse_styled_text)
+from app.engine.graphics.text.styled_text_parser import (
+    TaggedTextChunk,
+    parse_styled_text,
+)
 from app.utilities.typing import NID
+
 
 class DisplayTextParsingTest(unittest.TestCase):
     """
@@ -19,11 +22,11 @@ class DisplayTextParsingTest(unittest.TestCase):
         settings = TextSettings("default_color", (0, 0))
         settings.apply(chunk.effects)
         return settings.color
-    
+
     def _tagged_offsets(self, chunk: TaggedTextChunk) -> Tuple[float, float]:
         offsets = []
         for effect in chunk.effects:
-            effect_name = str(effect).split("(")[0]
+            effect_name = str(effect).split("(", maxsplit=1)[0]
             if effect_name != "color":
                 offsets.append(effect_name)
         return offsets
@@ -31,28 +34,56 @@ class DisplayTextParsingTest(unittest.TestCase):
     def setUp(self):
         from app.data.resources.resources import RESOURCES
         from app.engine import fonts
-        RESOURCES.load('testing_proj.ltproj')
+
+        RESOURCES.load("testing_proj.ltproj")
         fonts.load_fonts()
 
     def test_parsing(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>this <iconvo>is</> some <red>red</> and some <j>jittering <green>green</></> text</>"
+        test_display_text = "<blue>this <iconvo>is</> some <red>red</> and some <jitter>jittering <green>green</></> text</>"
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
-        expected_texts = ["this ", "is", " some ", "red", " and some ", "jittering ", "green", " text"]
+        expected_texts = [
+            "this ",
+            "is",
+            " some ",
+            "red",
+            " and some ",
+            "jittering ",
+            "green",
+            " text",
+        ]
         self.assertEqual(actual_texts, expected_texts)
 
         # test that the font is correct
         actual_fonts = [x.font for x in tagged_text]
-        expected_fonts = [default_font, "iconvo", default_font, default_font, default_font, default_font, default_font, default_font]
+        expected_fonts = [
+            default_font,
+            "iconvo",
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+        ]
         self.assertEqual(actual_fonts, expected_fonts)
 
         # test that the colors are correct
         actual_colors = [self._tagged_text_color(x) for x in tagged_text]
-        expected_colors = ["blue", "blue", "blue", "red", "blue", "blue", "green", "blue"]
+        expected_colors = [
+            "blue",
+            "blue",
+            "blue",
+            "red",
+            "blue",
+            "blue",
+            "green",
+            "blue",
+        ]
         self.assertEqual(actual_colors, expected_colors)
 
         # test that offsets are correct
@@ -60,7 +91,7 @@ class DisplayTextParsingTest(unittest.TestCase):
         expected_offsets = [[], [], [], [], [], ["jitter"], ["jitter"], []]
         self.assertEqual(actual_offsets, expected_offsets)
 
-    def test_parsing_unclosed_tag(self):
+    def test_parsing_unclosed_tag_pair(self):
         default_font = "convo"
         default_color = "white"
         test_display_text = "<blue>blue text? <red>red text?</> but did not close blue"
@@ -94,12 +125,26 @@ class DisplayTextParsingTest(unittest.TestCase):
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
-        expected_texts = ["blue text ", "more blue text", " now it's red text", " back to blue", " still blue", " now white"]
+        expected_texts = [
+            "blue text ",
+            "more blue text",
+            " now it's red text",
+            " back to blue",
+            " still blue",
+            " now white",
+        ]
         self.assertEqual(actual_texts, expected_texts)
 
         # test that the font is correct
         actual_fonts = [x.font for x in tagged_text]
-        expected_fonts = [default_font, default_font, default_font, default_font, default_font, default_font]
+        expected_fonts = [
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+        ]
         self.assertEqual(actual_fonts, expected_fonts)
 
         # test that the colors are correct
@@ -138,7 +183,7 @@ class DisplayTextParsingTest(unittest.TestCase):
         expected_offsets = [[], []]
         self.assertEqual(actual_offsets, expected_offsets)
 
-    def test_parsing_unclosed_tag(self):
+    def test_parsing_unclosed_opening_tag(self):
         default_font = "convo"
         default_color = "white"
         test_display_text = "another tag <blue that is simply never closed oops</>"
@@ -255,7 +300,7 @@ class DisplayTextParsingTest(unittest.TestCase):
         indexed_text = tagged_text[:]
         self.assertEqual(indexed_text, tagged_text)
 
-        indexed_text = tagged_text[:len(tagged_text)]
+        indexed_text = tagged_text[: len(tagged_text)]
         self.assertEqual(indexed_text, tagged_text)
 
         indexed_text = tagged_text[0:]
@@ -303,13 +348,14 @@ class DisplayTextParsingTest(unittest.TestCase):
         with self.assertRaises(IndexError):
             tagged_text[:-1]
         with self.assertRaises(IndexError):
-            tagged_text[:len(tagged_text) + 1]
+            tagged_text[: len(tagged_text) + 1]
         with self.assertRaises(IndexError):
-            tagged_text[len(tagged_text):]
+            tagged_text[len(tagged_text) :]
         with self.assertRaises(ValueError):
             tagged_text[5:0]
         with self.assertRaises(ValueError):
             tagged_text[0:5:1]
+
 
 if __name__ == "__main__":
     unittest.main()

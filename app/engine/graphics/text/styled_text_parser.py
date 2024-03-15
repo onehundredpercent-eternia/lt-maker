@@ -10,25 +10,31 @@ from app.engine.graphics.text import text_effects
 from app.engine.graphics.text.text_effects import TextSettings, TextEffect, BitEffect
 from app.utilities.typing import NID
 
-MATCH_TAG_RE = re.compile('<(.*?)>')
-MATCH_CAPTURE_TAG_RE = re.compile('(<[^<]*?>)')
+MATCH_TAG_RE = re.compile("<(.*?)>")
+MATCH_CAPTURE_TAG_RE = re.compile("(<[^<]*?>)")
 
 
-class TaggedTextChunk():
+class TaggedTextChunk:
     def __init__(self, text: str, font: NID, effects: List[TextEffect]):
         self.text = text
         self.font = font
         self.effects = effects
 
     def width(self):
-        return FONT[self.font].width(self.text) if self.font != 'icon' else 16
+        return FONT[self.font].width(self.text) if self.font != "icon" else 16
 
     def draw(self, surf: engine.Surface, topleft: Tuple[int, int]) -> int:
-        if self.font == 'icon':
+        if self.font == "icon":
             # not sure why but this import needs to go here to avoid a circular dependency
             from app.engine.icons import draw_icon_by_alias
-            draw_icon_by_alias(surf, self.text.strip(
-            ), (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]), settings.color)
+
+            settings = TextSettings("", (0, 0))
+            settings.apply(self.effects)
+            draw_icon_by_alias(
+                surf,
+                self.text.strip(),
+                (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]),
+            )
             return self.width()
 
         has_bit_effect = False
@@ -40,23 +46,38 @@ class TaggedTextChunk():
         if has_bit_effect:
             width = 0
             for idx, c in enumerate(self.text):
-                settings = TextSettings('', (0, 0))
+                settings = TextSettings("", (0, 0))
                 settings.apply(self.effects, idx)
-                FONT[self.font].blit(c, surf, (topleft[0] + width + settings.offset[0],
-                                               topleft[1] + settings.offset[1]), settings.color)
+                FONT[self.font].blit(
+                    c,
+                    surf,
+                    (
+                        topleft[0] + width + settings.offset[0],
+                        topleft[1] + settings.offset[1],
+                    ),
+                    settings.color,
+                )
                 width += FONT[self.font].width(c)
             return width
         else:
-            settings = TextSettings('', (0, 0))
+            settings = TextSettings("", (0, 0))
             settings.apply(self.effects)
-            FONT[self.font].blit(self.text, surf, (topleft[0] + settings.offset[0],
-                                                   topleft[1] + settings.offset[1]), settings.color)
+            FONT[self.font].blit(
+                self.text,
+                surf,
+                (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]),
+                settings.color,
+            )
             return self.width()
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, TaggedTextChunk):
             return NotImplemented
-        return self.text == other.text and self.font == other.font and self.effects == other.effects
+        return (
+            self.text == other.text
+            and self.font == other.font
+            and self.effects == other.effects
+        )
 
     def __len__(self):
         return len(self.text)
@@ -68,7 +89,7 @@ class TaggedTextChunk():
         return f"({self.text}, {self.font}, {self.effects})"
 
 
-class TaggedText():
+class TaggedText:
     def __init__(self):
         self.size: int = 0
         self.chunks: List[TaggedTextChunk] = []
@@ -101,12 +122,12 @@ class TaggedText():
         if isinstance(item, slice):
             if item.step is not None:
                 raise ValueError(
-                    f"no support for indexing with a custom step {item.step}")
+                    f"no support for indexing with a custom step {item.step}"
+                )
             return self._get_slice(item.start, item.stop)
         else:
             if not isinstance(item, int):
-                raise KeyError(
-                    f"only supports integer or slice keys not {type(item)}")
+                raise KeyError(f"only supports integer or slice keys not {type(item)}")
             return self._get_slice(item, item + 1)
 
     def _get_slice(self, start: Optional[int], stop: Optional[int]) -> TaggedText:
@@ -139,11 +160,11 @@ class TaggedText():
             if curr <= start:
                 if total >= stop:
                     # the entirety of the text we want to process is between the window
-                    tagged_text.append_chunk(chunk[start - curr:stop - curr])
+                    tagged_text.append_chunk(chunk[start - curr : stop - curr])
                     break
                 else:
                     # grab the back portion after start
-                    tagged_text.append_chunk(chunk[start - curr:])
+                    tagged_text.append_chunk(chunk[start - curr :])
                     curr = total
                     continue
 
@@ -154,7 +175,7 @@ class TaggedText():
                 continue
             else:
                 # grab the first portion before stop
-                tagged_text.append_chunk(chunk[:stop - curr])
+                tagged_text.append_chunk(chunk[: stop - curr])
                 break
 
         return tagged_text
@@ -166,7 +187,11 @@ class TaggedText():
         return s
 
 
-def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID],) -> TaggedText:
+def parse_styled_text(
+    text: str,
+    default_font: NID,
+    default_color: Optional[NID],
+) -> TaggedText:
     # process text for tags and push them onto stack for later processing
     tagged_text = TaggedText()
     tag_history_stack = []
@@ -179,10 +204,13 @@ def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID]
             curr_text = text[:tag_start]
             length += len(curr_text)
             text = text[tag_end:]
-            default_settings = tag_history_stack[-1] if tag_history_stack else (0,
-                default_font, [text_effects.ColorEffect(default_color)])
+            default_settings = (
+                tag_history_stack[-1]
+                if tag_history_stack
+                else (0, default_font, [text_effects.ColorEffect(default_color)])
+            )
             curr_length, curr_font, curr_effect_list = default_settings
-            if tag.startswith('/'):  # ending tag
+            if tag.startswith("/"):  # ending tag
                 if tag_history_stack:
                     previous_tag_settings = tag_history_stack[-1]
                     for effect in previous_tag_settings[2]:
@@ -191,7 +219,7 @@ def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID]
                     tag_history_stack.pop()
                 else:
                     # orphaned closing tag with no opening tag
-                    logging.warning(f"Ignoring orphaned closing tag")
+                    logging.warning("Ignoring orphaned closing tag")
             else:  # starting tag
                 tag_font = curr_font
                 tag_effect_list = list.copy(curr_effect_list)
@@ -209,19 +237,22 @@ def parse_styled_text(text: str, default_font: NID, default_color: Optional[NID]
                 elif tag == "wave2":
                     tag_effect_list.append(text_effects.Wave2Effect())
                 else:
-                    logging.warning(f"Ignoring unknown tag: {tag}")
+                    logging.warning("Ignoring unknown tag: %s", tag)
                 tag_history_stack.append((length, tag_font, tag_effect_list))
             if curr_text:  # not empty string
                 tagged_text.append(curr_text, curr_font, curr_effect_list)
         else:  # no more tags to process
             if text:  # not empty string
                 length += len(text)
-                default_settings = tag_history_stack[-1] if tag_history_stack else (0,
-                    default_font, [text_effects.ColorEffect(default_color)])
+                default_settings = (
+                    tag_history_stack[-1]
+                    if tag_history_stack
+                    else (0, default_font, [text_effects.ColorEffect(default_color)])
+                )
                 curr_length, curr_font, curr_effect_list = default_settings
                 for effect in curr_effect_list:
-                        if isinstance(effect, BitEffect):
-                            effect.set_length(length - curr_length)
+                    if isinstance(effect, BitEffect):
+                        effect.set_length(length - curr_length)
                 tagged_text.append(text, curr_font, curr_effect_list)
             break
 
