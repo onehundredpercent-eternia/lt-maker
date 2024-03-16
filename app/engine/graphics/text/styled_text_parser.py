@@ -1,13 +1,19 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Iterator
+from typing import Any, List, Dict, Tuple, Optional, Iterator
 
 import re
 import logging
+from ast import literal_eval
 
+from app.data.resources.resources import RESOURCES
 from app.engine import engine
 from app.engine.fonts import FONT
-from app.engine.graphics.text import text_effects
-from app.engine.graphics.text.text_effects import TextSettings, TextEffect, BitEffect
+from app.engine.graphics.text.text_effects import (
+    TextSettings,
+    TextEffect,
+    ColorEffect,
+    TEXT_EFFECTS,
+)
 from app.utilities.typing import NID
 
 MATCH_TAG_RE = re.compile("<(.*?)>")
@@ -20,10 +26,24 @@ class TaggedTextChunk:
         self.font = font
         self.effects = effects
 
-    def width(self):
+    def width(self) -> int:
+        """return the font width
+
+        Returns:
+            int: width
+        """
         return FONT[self.font].width(self.text) if self.font != "icon" else 16
 
     def draw(self, surf: engine.Surface, topleft: Tuple[int, int]) -> int:
+        """draw this TaggedTextChunk onto surf at topleft
+
+        Args:
+            surf (engine.Surface): surface to draw on
+            topleft (Tuple[int, int]): top left location to begin drawing
+
+        Returns:
+            int: font width of the drawn TaggedTextChunk
+        """
         if self.font == "icon":
             # not sure why but this import needs to go here to avoid a circular dependency
             from app.engine.icons import draw_icon_by_alias
@@ -39,7 +59,7 @@ class TaggedTextChunk:
 
         has_bit_effect = False
         for effect in self.effects:
-            if isinstance(effect, BitEffect):
+            if effect.is_char_level:
                 # blit characters individually
                 has_bit_effect = True
 
@@ -95,15 +115,32 @@ class TaggedText:
         self.chunks: List[TaggedTextChunk] = []
 
     def append(self, text: str, font: NID, effects: List[TextEffect]):
+        """add a chunk as parameters to TaggedTextChunk
+
+        Args:
+            text (str): raw text
+            font (NID): associated font
+            effects (List[TextEffect]): associated effects
+        """
         chunk = TaggedTextChunk(text, font, effects)
         self.size += len(chunk)
         self.chunks.append(chunk)
 
     def append_chunk(self, chunk: TaggedTextChunk):
+        """add a chunk as TaggedTextChunk
+
+        Args:
+            chunk (TaggedTextChunk): chunk to add
+        """
         self.size += len(chunk)
         self.chunks.append(chunk)
 
     def width(self) -> int:
+        """return the font width
+
+        Returns:
+            int: width
+        """
         return sum([t.width() for t in self.chunks])
 
     def __eq__(self, other) -> bool:
@@ -186,15 +223,41 @@ class TaggedText:
             s += repr(chunk)
         return s
 
+def _parse_tag_and_args(tag_args: str) -> Optional[Tuple[NID, Dict[str: Any]]]:
+    """Parses a tag string into a tag and its args
+    "wave amplitude=1" -> ("wave", {"amplitude": 1})
+
+    Args:
+        tag_args (str): _description_
+    """
+    tag_and_args = tag_args.split(" ")
+    if not tag_and_args:
+        # malformed tag
+        return None
+    tag = tag_and_args[0]
+    args = [x.split("=") for x in tag_and_args[1:]]
+    args = {x[0]: literal_eval(x[1]) for x in args}
+    return (tag, args)
 
 def parse_styled_text(
     text: str,
     default_font: NID,
     default_color: Optional[NID],
 ) -> TaggedText:
+    """Parse styled text (text with no commands, only tags) into TaggedText
+
+    Args:
+        text (str): the styled text string to parse
+        default_font (NID): front to parse text with no font tags as
+        default_color (Optional[NID]): color to parse text with no color tags as
+            None means text is parsed with default color associated with default_font
+
+    Returns:
+        TaggedText: TagedText object representing parse styled text
+    """
     # process text for tags and push them onto stack for later processing
     tagged_text = TaggedText()
-    tag_history_stack = []
+    tag_history_stack: List[Tuple[int, NID, List[TextEffect]]] = []
     length = 0
     while True:
         any_tags = MATCH_TAG_RE.search(text)
@@ -207,14 +270,14 @@ def parse_styled_text(
             default_settings = (
                 tag_history_stack[-1]
                 if tag_history_stack
-                else (0, default_font, [text_effects.ColorEffect(default_color)])
+                else (0, default_font, [ColorEffect(default_color)])
             )
             curr_length, curr_font, curr_effect_list = default_settings
             if tag.startswith("/"):  # ending tag
                 if tag_history_stack:
                     previous_tag_settings = tag_history_stack[-1]
                     for effect in previous_tag_settings[2]:
-                        if isinstance(effect, BitEffect):
+                        if effect.is_char_level:
                             effect.set_length(length - curr_length)
                     tag_history_stack.pop()
                 else:
@@ -223,19 +286,16 @@ def parse_styled_text(
             else:  # starting tag
                 tag_font = curr_font
                 tag_effect_list = list.copy(curr_effect_list)
-                if tag in FONT or tag == "icon":  # special handling for fonts and icons
+                # parse tag arguments
+                tag, args = _parse_tag_and_args(tag)
+                if RESOURCES.fonts.get(tag) or tag == "icon":
+                    # special handling for fonts and icons
                     tag_font = tag
-                elif tag in FONT[curr_font].surfaces:
+                elif tag in RESOURCES.fonts.get(curr_font).palettes:
                     # last ColorEffect pushed to list overrides
-                    tag_effect_list.append(text_effects.ColorEffect(tag))
-                elif tag == "jitter":
-                    tag_effect_list.append(text_effects.JitterEffect())
-                elif tag == "jitter2":
-                    tag_effect_list.append(text_effects.Jitter2Effect())
-                elif tag == "wave":
-                    tag_effect_list.append(text_effects.WaveEffect())
-                elif tag == "wave2":
-                    tag_effect_list.append(text_effects.Wave2Effect())
+                    tag_effect_list.append(ColorEffect(tag))
+                elif tag in TEXT_EFFECTS:
+                    tag_effect_list.append(TEXT_EFFECTS[tag](**args))
                 else:
                     logging.warning("Ignoring unknown tag: %s", tag)
                 tag_history_stack.append((length, tag_font, tag_effect_list))
@@ -247,11 +307,11 @@ def parse_styled_text(
                 default_settings = (
                     tag_history_stack[-1]
                     if tag_history_stack
-                    else (0, default_font, [text_effects.ColorEffect(default_color)])
+                    else (0, default_font, [ColorEffect(default_color)])
                 )
                 curr_length, curr_font, curr_effect_list = default_settings
                 for effect in curr_effect_list:
-                    if isinstance(effect, BitEffect):
+                    if effect.is_char_level:
                         effect.set_length(length - curr_length)
                 tagged_text.append(text, curr_font, curr_effect_list)
             break

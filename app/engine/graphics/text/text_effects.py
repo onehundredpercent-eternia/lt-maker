@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, List, Optional
+from typing import List, Dict, Tuple, Optional
 
 from math import sin, pi
 from random import Random
@@ -17,19 +17,18 @@ class TextSettings():
 
     def apply(self, effects: List[TextEffect], bit: Optional[int] = None):
         for effect in effects:
-            if isinstance(effect, BitEffect):
+            if effect.is_char_level:
                 effect.apply(self, bit)
             else:
                 effect.apply(self)
 
 
 class TextEffect():
+    nid: NID = None
+    is_char_level = False
+
     def __init__(self):
         raise Exception("TextEffect should not be directly instantiated")
-
-    def apply(self, settings: TextSettings):
-        # modifies setting
-        pass
 
 
 class ColorEffect(TextEffect):
@@ -44,6 +43,8 @@ class ColorEffect(TextEffect):
 
 
 class JitterEffect(TextEffect):
+    nid = "jitter"
+
     @classmethod
     def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:
         return (_rng.gauss(0, 1) * magnitude, _rng.gauss(0, 1) * magnitude)
@@ -63,18 +64,14 @@ class JitterEffect(TextEffect):
     def __repr__(self):
         return f"jitter({self._wait_iters}{self._jitter[0]:.2f},{self._jitter[1]:.2f})"
 
-
-class BitEffect():
-    def __init__(self):
-        raise Exception("BitEffect should not be directly instantiated")
-
-
 def _initialize_sin_sequence(length: int) -> List[float]:
     return [sin(x * 2 * pi / length)
             for x in range(length)]
 
 
-class Jitter2Effect(BitEffect):
+class Jitter2Effect(TextEffect):
+    nid = "jitter2"
+    is_char_level = True
     class Bit():
         @classmethod
         def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:
@@ -109,7 +106,9 @@ class Jitter2Effect(BitEffect):
         return f"jitter2({self._length})"
 
 
-class WaveEffect(BitEffect):
+class WaveEffect(TextEffect):
+    nid = "wave"
+    is_char_level = True
     class Bit():
         _SIN_SEQUENCE_LENGTH = 30
         _sin_sequence = _initialize_sin_sequence(_SIN_SEQUENCE_LENGTH)
@@ -144,7 +143,10 @@ class WaveEffect(BitEffect):
         return f"wave({self._length})"
 
 
-class Wave2Effect(BitEffect):
+class Wave2Effect(TextEffect):
+    nid = "wave2"
+    is_char_level = True
+
     class Bit():
         _SIN_SEQUENCE_LENGTH = 30
         _sin_sequence = _initialize_sin_sequence(_SIN_SEQUENCE_LENGTH)
@@ -180,3 +182,7 @@ class Wave2Effect(BitEffect):
 
     def __repr__(self):
         return f"wave({self._length})"
+
+TEXT_EFFECTS: Dict[NID, TextEffect] = {
+    effect.nid: effect for effect in TextEffect.__subclasses__()
+}

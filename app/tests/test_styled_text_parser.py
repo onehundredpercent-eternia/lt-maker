@@ -4,7 +4,6 @@ import unittest
 
 from typing import Tuple
 
-from app.engine.fonts import FONT
 from app.engine.graphics.text.text_effects import TextSettings
 from app.engine.graphics.text.styled_text_parser import (
     TaggedTextChunk,
@@ -33,15 +32,18 @@ class DisplayTextParsingTest(unittest.TestCase):
 
     def setUp(self):
         from app.data.resources.resources import RESOURCES
-        from app.engine import fonts
 
         RESOURCES.load("testing_proj.ltproj")
-        fonts.load_fonts()
+        print(f"fonts: {RESOURCES.fonts}")
+        input()
 
     def test_parsing(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>this <iconvo>is</> some <red>red</> and some <jitter>jittering <green>green</></> text</>"
+        test_display_text = (
+            "<blue>this <iconvo>is</> some <red>red</> "
+            "and some <jitter>jittering <green>green</></> text</>"
+        )
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
@@ -120,7 +122,10 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing_doubled_up_tag(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>blue text <blue>more blue text<red> now it's red text</> back to blue</> still blue</> now white"
+        test_display_text = (
+            "<blue>blue text <blue>more blue text<red> "
+            "now it's red text</> back to blue</> still blue</> now white"
+        )
         tagged_text = parse_styled_text(test_display_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
