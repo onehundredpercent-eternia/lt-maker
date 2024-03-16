@@ -34,8 +34,6 @@ class DisplayTextParsingTest(unittest.TestCase):
         from app.data.resources.resources import RESOURCES
 
         RESOURCES.load("testing_proj.ltproj")
-        print(f"fonts: {RESOURCES.fonts}")
-        input()
 
     def test_parsing(self):
         default_font = "convo"

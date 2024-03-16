@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Dict, Tuple, Optional, Iterator
+from typing import Any, List, Dict, Tuple, Optional, Union, Iterator
 
 import re
 import logging
@@ -223,21 +223,36 @@ class TaggedText:
             s += repr(chunk)
         return s
 
-def _parse_tag_and_args(tag_args: str) -> Optional[Tuple[NID, Dict[str: Any]]]:
-    """Parses a tag string into a tag and its args
-    "wave amplitude=1" -> ("wave", {"amplitude": 1})
+def _parse_tag_id(tag: str) -> Optional[NID]:
+    tag_and_args = tag.split(" ")
+    return tag_and_args[0] if tag_and_args else None
 
-    Args:
-        tag_args (str): _description_
-    """
-    tag_and_args = tag_args.split(" ")
+def _parse_arg(arg: str) -> Union[int, float, str]:
+    try:
+        val = int(arg)
+        return val
+    except Exception:
+        pass
+    try:
+        val = float(arg)
+        return val
+    except Exception:
+        pass
+    return arg
+
+def _parse_tag_args(tag: str) -> Optional[Dict[str: Any]]:
+    tag_and_args = tag.split(" ")
     if not tag_and_args:
         # malformed tag
         return None
-    tag = tag_and_args[0]
+    # expect args in the exact form "arg=val"
     args = [x.split("=") for x in tag_and_args[1:]]
-    args = {x[0]: literal_eval(x[1]) for x in args}
-    return (tag, args)
+    for arg in args:
+        if len(arg) != 2:
+            # maformed arg
+            return None
+    args = {x[0]: _parse_arg(x[1]) for x in args}
+    return args
 
 def parse_styled_text(
     text: str,
@@ -287,15 +302,16 @@ def parse_styled_text(
                 tag_font = curr_font
                 tag_effect_list = list.copy(curr_effect_list)
                 # parse tag arguments
-                tag, args = _parse_tag_and_args(tag)
-                if RESOURCES.fonts.get(tag) or tag == "icon":
+                tag_id = _parse_tag_id(tag)
+                if RESOURCES.fonts.get(tag_id) or tag_id == "icon":
                     # special handling for fonts and icons
-                    tag_font = tag
-                elif tag in RESOURCES.fonts.get(curr_font).palettes:
+                    tag_font = tag_id
+                elif tag_id in RESOURCES.fonts.get(curr_font).palettes:
                     # last ColorEffect pushed to list overrides
-                    tag_effect_list.append(ColorEffect(tag))
-                elif tag in TEXT_EFFECTS:
-                    tag_effect_list.append(TEXT_EFFECTS[tag](**args))
+                    tag_effect_list.append(ColorEffect(tag_id))
+                elif tag_id in TEXT_EFFECTS:
+                    args = _parse_tag_args(tag)
+                    tag_effect_list.append(TEXT_EFFECTS[tag_id](**args))
                 else:
                     logging.warning("Ignoring unknown tag: %s", tag)
                 tag_history_stack.append((length, tag_font, tag_effect_list))

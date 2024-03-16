@@ -24,7 +24,7 @@ class TextSettings():
 
 
 class TextEffect():
-    nid: NID = None
+    nid: NID = ""
     is_char_level = False
 
     def __init__(self):
