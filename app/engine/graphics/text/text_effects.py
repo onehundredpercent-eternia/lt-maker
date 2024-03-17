@@ -10,7 +10,7 @@ from app.utilities.utils import tuple_add
 _rng = Random()
 
 
-class TextSettings():
+class TextSettings:
     def __init__(self, color: NID, offset: Tuple[float, float]):
         self.color = color
         self.offset = offset
@@ -23,23 +23,29 @@ class TextSettings():
                 effect.apply(self)
 
 
-class TextEffect():
+class TextEffect:
     nid: NID = ""
-    is_char_level = False
+    is_char_level: bool = False
+    impl_nid: NID = None
 
     def __init__(self):
         raise Exception("TextEffect should not be directly instantiated")
 
+    def __str__(self):
+        return self.nid
+
 
 class ColorEffect(TextEffect):
+    nid = "color"
+
     def __init__(self, color: NID):
         self._color = color
 
     def apply(self, settings: TextSettings):
         settings.color = self._color
 
-    def __repr__(self):
-        return f"color({self._color})"
+    def __str__(self):
+        return f"{self._color}"
 
 
 class JitterEffect(TextEffect):
@@ -49,139 +55,123 @@ class JitterEffect(TextEffect):
     def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:
         return (_rng.gauss(0, 1) * magnitude, _rng.gauss(0, 1) * magnitude)
 
-    def __init__(self, wait_iters: int = 3):
-        self._wait_iters = wait_iters
+    def __init__(self, idx: int = 0, magnitude: float = 1, wait: int = 3):
+        self._idx = idx
+        self._magnitude = magnitude
+        self._wait = wait
+
         self._jitter = (0, 0)
         self._count = 0
 
     def apply(self, settings: TextSettings):
-        if self._count % self._wait_iters == 1:
-            self._jitter = self._get_jitter()
+        if self._count % self._wait == 1:
+            self._jitter = self._get_jitter(self._magnitude)
         # prevent infinitely counting up
-        self._count = (self._count + 1) % self._wait_iters
+        self._count = (self._count + 1) % self._wait
         settings.offset = tuple_add(settings.offset, self._jitter)
-
-    def __repr__(self):
-        return f"jitter({self._wait_iters}{self._jitter[0]:.2f},{self._jitter[1]:.2f})"
-
-def _initialize_sin_sequence(length: int) -> List[float]:
-    return [sin(x * 2 * pi / length)
-            for x in range(length)]
 
 
 class Jitter2Effect(TextEffect):
     nid = "jitter2"
     is_char_level = True
-    class Bit():
-        @classmethod
-        def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:
-            return (_rng.gauss(0, 1) * magnitude, _rng.gauss(0, 1) * magnitude)
+    impl_nid = "jitter"
 
-        def __init__(self, wait_iters: int = 3):
-            self._wait_iters = wait_iters
-            self._jitter = (0, 0)
-            self._count = 0
+    def __init__(self, magnitude: float = 1, wait: int = 3):
+        self._magnitude = magnitude
+        self._wait = wait
 
-        def apply(self, settings: TextSettings):
-            if self._count % self._wait_iters == 1:
-                self._jitter = self._get_jitter()
-            self._count = (self._count + 1) % self._wait_iters
-            settings.offset = tuple_add(settings.offset, self._jitter)
-
-    def __init__(self):
         self._length = 0
-        self._bits: List[self.Bit] = []
+        self._bits = []
 
     def set_length(self, length: int):
         self._length = length
-        self._bits = [self.Bit() for _ in range(length)]
+        self._bits = [
+            TEXT_EFFECTS[self.impl_nid](idx, self._magnitude, self._wait)
+            for idx in range(length)
+        ]
 
     def apply(self, settings: TextSettings, bit: int):
         if not self._bits:
             raise Exception(
-                "Jitter2Effect length not initialized, must call set_length()")
+                "Jitter2Effect length not initialized, must call set_length()"
+            )
         self._bits[bit].apply(settings)
 
-    def __repr__(self):
-        return f"jitter2({self._length})"
+    def __str__(self):
+        return self.nid
+
+
+def _initialize_sin_sequence(length: int) -> List[float]:
+    return [sin(x * 2 * pi / length) for x in range(length)]
+
+class SinEffect(TextEffect):
+    nid = "sin"
+
+    _SIN_SEQUENCE_LENGTH = 30
+    _sin_sequence = _initialize_sin_sequence(_SIN_SEQUENCE_LENGTH)
+
+    def __init__(self, idx: int = 0, x_amplitude: float = 0, y_amplitude: float = 3.5):
+        self._idx = idx
+        self._amplitude = (x_amplitude, y_amplitude)
+
+        self._count = 0
+
+    def apply(self, settings: TextSettings):
+        idx = (
+            self._count + self._idx * self._SIN_SEQUENCE_LENGTH // 10
+        ) % self._SIN_SEQUENCE_LENGTH
+        x_offset = settings.offset[0] + self._sin_sequence[idx] * self._amplitude[0]
+        y_offset = settings.offset[1] + self._sin_sequence[idx] * self._amplitude[1]
+        settings.offset = (x_offset, y_offset)
+        self._count = (self._count + 1) % self._SIN_SEQUENCE_LENGTH
 
 
 class WaveEffect(TextEffect):
     nid = "wave"
     is_char_level = True
-    class Bit():
-        _SIN_SEQUENCE_LENGTH = 30
-        _sin_sequence = _initialize_sin_sequence(_SIN_SEQUENCE_LENGTH)
+    impl_nid = "sin"
 
-        def __init__(self, index: int):
-            self._index = index
-            self._amplitude = 3.5
-            self._count = 0
+    def __init__(self, amplitude: float = 3.5):
+        self._amplitude = amplitude
 
-        def apply(self, settings: TextSettings):
-            idx = (self._count + self._index *
-                   self._SIN_SEQUENCE_LENGTH // 10) % self._SIN_SEQUENCE_LENGTH
-            settings.offset = (
-                settings.offset[0], settings.offset[1] + self._sin_sequence[idx] * self._amplitude)
-            self._count = (self._count + 1) % self._SIN_SEQUENCE_LENGTH
-
-    def __init__(self):
         self._length = 0
-        self._bits: List[self.Bit] = []
+        self._bits = []
 
     def set_length(self, length: int):
         self._length = length
-        self._bits = [self.Bit(x) for x in range(length)]
+        self._bits = [
+            TEXT_EFFECTS[self.impl_nid](idx, 0, self._amplitude)
+            for idx in range(length)
+        ]
 
     def apply(self, settings: TextSettings, bit: int):
         if not self._bits:
-            raise Exception(
-                "WaveEffect length not initialized, must call set_length()")
+            raise Exception("WaveEffect length not initialized, must call set_length()")
         self._bits[bit].apply(settings)
-
-    def __repr__(self):
-        return f"wave({self._length})"
 
 
 class Wave2Effect(TextEffect):
     nid = "wave2"
     is_char_level = True
+    impl_nid = "sin"
 
-    class Bit():
-        _SIN_SEQUENCE_LENGTH = 30
-        _sin_sequence = _initialize_sin_sequence(_SIN_SEQUENCE_LENGTH)
-
-        def __init__(self, index: int):
-            self._index = index
-            self._amplitude = (2, 3.5)
-            self._count = 0
-
-        def apply(self, settings: TextSettings):
-            idx = (self._count + self._index *
-                   self._SIN_SEQUENCE_LENGTH // 10) % self._SIN_SEQUENCE_LENGTH
-            x_offset = settings.offset[0] + \
-                self._sin_sequence[idx] * self._amplitude[0]
-            y_offset = settings.offset[1] + \
-                self._sin_sequence[idx] * self._amplitude[1]
-            settings.offset = (x_offset, y_offset)
-            self._count = (self._count + 1) % self._SIN_SEQUENCE_LENGTH
-
-    def __init__(self):
+    def __init__(self, x_amplitude: float = 2, y_amplitude: float = 3.5):
+        self._amplitude = (x_amplitude, y_amplitude)
         self._length = 0
-        self._bits: List[self.Bit] = []
+        self._bits = []
 
     def set_length(self, length: int):
         self._length = length
-        self._bits = [self.Bit(x) for x in range(length)]
+        self._bits = [
+            TEXT_EFFECTS[self.impl_nid](idx, self._amplitude[0], self._amplitude[1])
+            for idx in range(length)
+        ]
 
     def apply(self, settings: TextSettings, bit: int):
         if not self._bits:
-            raise Exception(
-                "WaveEffect length not initialized, must call set_length()")
+            raise Exception("WaveEffect length not initialized, must call set_length()")
         self._bits[bit].apply(settings)
 
-    def __repr__(self):
-        return f"wave({self._length})"
 
 TEXT_EFFECTS: Dict[NID, TextEffect] = {
     effect.nid: effect for effect in TextEffect.__subclasses__()

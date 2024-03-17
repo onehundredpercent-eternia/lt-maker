@@ -25,9 +25,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def _tagged_offsets(self, chunk: TaggedTextChunk) -> Tuple[float, float]:
         offsets = []
         for effect in chunk.effects:
-            effect_name = str(effect).split("(", maxsplit=1)[0]
-            if effect_name != "color":
-                offsets.append(effect_name)
+            if effect.nid != "color":
+                offsets.append(str(effect))
         return offsets
 
     def setUp(self):
