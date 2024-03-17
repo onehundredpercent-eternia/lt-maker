@@ -11,7 +11,9 @@ from app.engine.graphics.text.text_effects import (
     TextSettings,
     TextEffect,
     ColorEffect,
+    CoordinatedTextEffect,
     TEXT_EFFECTS,
+    COORDINATED_TEXT_EFFECTS,
 )
 from app.utilities.typing import NID
 
@@ -65,38 +67,15 @@ class TaggedTextChunk:
             )
             return self.width()
 
-        has_bit_effect = False
-        for effect in self.effects:
-            if effect.is_char_level:
-                # blit characters individually
-                has_bit_effect = True
-
-        if has_bit_effect:
-            width = 0
-            for idx, c in enumerate(self.text):
-                settings = TextSettings("", (0, 0))
-                settings.apply(self.effects, idx)
-                FONT[self.font].blit(
-                    c,
-                    surf,
-                    (
-                        topleft[0] + width + settings.offset[0],
-                        topleft[1] + settings.offset[1],
-                    ),
-                    settings.color,
-                )
-                width += FONT[self.font].width(c)
-            return width
-        else:
-            settings = TextSettings("", (0, 0))
-            settings.apply(self.effects)
-            FONT[self.font].blit(
-                self.text,
-                surf,
-                (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]),
-                settings.color,
-            )
-            return self.width()
+        settings = TextSettings("", (0, 0))
+        settings.apply(self.effects)
+        FONT[self.font].blit(
+            self.text,
+            surf,
+            (topleft[0] + settings.offset[0], topleft[1] + settings.offset[1]),
+            settings.color,
+        )
+        return self.width()
 
 
 class TaggedText:
@@ -222,11 +201,6 @@ class TaggedText:
                     effects_updated.add(effect)
 
 
-def _parse_tag_id(tag: str) -> Optional[NID]:
-    tag_and_args = tag.split(" ")
-    return tag_and_args[0] if tag_and_args else None
-
-
 def _parse_arg(arg: str) -> Union[int, float, str]:
     try:
         val = int(arg)
@@ -241,19 +215,92 @@ def _parse_arg(arg: str) -> Union[int, float, str]:
     return arg
 
 
-def _parse_tag_args(tag: str) -> Optional[Dict[str:Any]]:
-    tag_and_args = tag.split(" ")
-    if not tag_and_args:
+def _parse_tag_id(tag: str) -> Optional[NID]:
+    id_and_args = tag.split(" ")
+    return id_and_args[0] if id_and_args else None
+
+
+def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:Any]]]:
+    id_and_args = tag.split(" ")
+    if not id_and_args:
         # malformed tag
-        return None
+        return (None, None)
     # expect args in the exact form "arg=val"
-    args = [x.split("=") for x in tag_and_args[1:]]
+    tag_id = id_and_args[0]
+    args = [x.split("=") for x in id_and_args[1:]]
     for arg in args:
         if len(arg) != 2:
             # maformed arg
-            return None
+            return (tag_id, None)
     args = {x[0]: _parse_arg(x[1]) for x in args}
-    return args
+    return (tag_id, args)
+
+
+def _preprocess_tags(text: str) -> str:
+    """preprocesses text to decay CoordinateTextEffects into TextEffects
+    "<wave>hi</>" -> ("<sin idx=0 x_amplitude=0 y_amplitude=3.5>h</>"
+                      "<sin idx=0 x_amplitude=0 y_amplitude=3.5>i</>")
+
+    Args:
+        text (str): styled text with various tags
+
+    Returns:
+        str: styled text with CoordinatedTextEffect tags decayed to TextEffect tags
+    """
+    processed_text: List[str] = []
+    # obligatory regex explanation: turns "A line.{w} With some <red>text</>."
+    # into ["A line.", "{w}", " With some ", "<red>", "text", "</>", "."]
+    # and then decomposes the non-command/tag elements into individual chars.
+    text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
+    for block in text_split_by_tags:
+        if block.startswith("<") and block.endswith(">"):
+            processed_text.append(block)
+        else:  # normal char str (e.g. "hello")
+            processed_text += list(block)
+
+    class Tag:
+        def __init__(self, tag: str):
+            self._effect: Optional[CoordinatedTextEffect] = None
+            self.char_level: bool = False
+            tag_id = _parse_tag_id(tag)
+            if tag_id in COORDINATED_TEXT_EFFECTS:
+                _, tag_args = _parse_tag_id_and_args(tag)
+                try:
+                    self._effect = COORDINATED_TEXT_EFFECTS[tag_id](**tag_args)
+                    self.char_level = True
+                    print(f"found char level effect {tag_id}")
+                    input()
+                except Exception:
+                    # broken arguments
+                    pass
+
+        def get_tags(self) -> Tuple[str, str]:
+            assert self.char_level
+            return self._effect.next().as_tags()
+
+    preprocessed_text: str = ""
+    tag_stack: List[Tag] = []
+    for token in processed_text:
+        if len(token) > 1:  # tag
+            tag = token.strip("<>")
+            if tag.startswith("/"):  # closing tag
+                if not tag_stack or not tag_stack.pop().char_level:
+                    preprocessed_text += token
+            else:  # starting tag
+                tag_stack.append(Tag(tag))
+                if not tag_stack[-1].char_level:
+                    preprocessed_text += token
+        else:
+            tags_start = ""
+            tags_end = ""
+            for tag in tag_stack:
+                if tag.char_level:
+                    tag_start, tag_end = tag.get_tags()
+                    tags_start += tag_start
+                    tags_end += tag_end
+            preprocessed_text += tags_start + token + tags_end
+
+    return preprocessed_text
 
 
 def parse_styled_text(
@@ -273,9 +320,9 @@ def parse_styled_text(
         TaggedText: TaggedText object representing parse styled text
     """
     # process text for tags and push them onto stack for later processing
+    text = _preprocess_tags(text)
     tagged_text = TaggedText()
     tag_history_stack: List[Tuple[int, NID, List[TextEffect]]] = []
-    length = 0
     while True:
         any_tags = MATCH_TAG_RE.search(text)
         if any_tags:
@@ -283,20 +330,15 @@ def parse_styled_text(
             tag = any_tags.group().strip("<>")
             malformed_tag = None
             curr_text = text[:tag_start]
-            length += len(curr_text)
             text = text[tag_end:]
             default_settings = (
                 tag_history_stack[-1]
                 if tag_history_stack
-                else (0, default_font, [ColorEffect(default_color)])
+                else (default_font, [ColorEffect(default_color)])
             )
-            curr_length, curr_font, curr_effect_list = default_settings
+            curr_font, curr_effect_list = default_settings
             if tag.startswith("/"):  # ending tag
                 if tag_history_stack:
-                    previous_tag_settings = tag_history_stack[-1]
-                    for effect in previous_tag_settings[2]:
-                        if effect.is_char_level:
-                            effect.set_length(length - curr_length)
                     tag_history_stack.pop()
                 else:
                     # orphaned closing tag with no opening tag
@@ -306,8 +348,7 @@ def parse_styled_text(
                 tag_font = curr_font
                 tag_effect_list = list.copy(curr_effect_list)
                 # parse tag arguments
-                tag_id = _parse_tag_id(tag)
-                tag_args = _parse_tag_args(tag)
+                tag_id, tag_args = _parse_tag_id_and_args(tag)
                 if RESOURCES.fonts.get(tag_id) or tag_id == "icon":
                     # special handling for fonts and icons
                     # expect no args
@@ -336,23 +377,19 @@ def parse_styled_text(
                     logging.warning("Ignoring unknown tag: %s", tag)
                     malformed_tag = f"<{tag}>"
                 if not malformed_tag:
-                    tag_history_stack.append((length, tag_font, tag_effect_list))
+                    tag_history_stack.append((tag_font, tag_effect_list))
             if curr_text:  # not empty string
                 tagged_text.append(curr_text, curr_font, curr_effect_list)
             if malformed_tag:  # display malformed tag as text
                 tagged_text.append(malformed_tag, curr_font, curr_effect_list)
         else:  # no more tags to process
             if text:  # not empty string
-                length += len(text)
                 default_settings = (
                     tag_history_stack[-1]
                     if tag_history_stack
-                    else (0, default_font, [ColorEffect(default_color)])
+                    else (default_font, [ColorEffect(default_color)])
                 )
-                curr_length, curr_font, curr_effect_list = default_settings
-                for effect in curr_effect_list:
-                    if effect.is_char_level:
-                        effect.set_length(length - curr_length)
+                curr_font, curr_effect_list = default_settings
                 tagged_text.append(text, curr_font, curr_effect_list)
             break
 
