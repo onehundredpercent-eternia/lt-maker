@@ -543,6 +543,9 @@ class Dialog():
         end_x_pos, end_y_pos = 0, 0
         text_surf = engine.create_surface((self.text_width, self.text_height), transparent=True)
 
+        # update state of tagged_text
+        self.tagged_text.update()
+
         # Draw line that's disappearing
         if self.y_offset and len(self.text_indices) > self.num_lines:
             x_pos = 0

@@ -25,6 +25,15 @@ class TaggedTextChunk:
         self.font = font
         self.effects = effects
 
+    def __len__(self):
+        return len(self.text)
+
+    def __getitem__(self, item):
+        return TaggedTextChunk(self.text[item], self.font, self.effects)
+
+    def __repr__(self):
+        return f"({self.text}, {self.font}, {self.effects})"
+
     def width(self) -> int:
         """return the font width
 
@@ -89,63 +98,11 @@ class TaggedTextChunk:
             )
             return self.width()
 
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, TaggedTextChunk):
-            return NotImplemented
-        return (
-            self.text == other.text
-            and self.font == other.font
-            and self.effects == other.effects
-        )
-
-    def __len__(self):
-        return len(self.text)
-
-    def __getitem__(self, item):
-        return TaggedTextChunk(self.text[item], self.font, self.effects)
-
-    def __repr__(self):
-        return f"({self.text}, {self.font}, {self.effects})"
-
 
 class TaggedText:
     def __init__(self):
         self.size: int = 0
         self.chunks: List[TaggedTextChunk] = []
-
-    def append(self, text: str, font: NID, effects: List[TextEffect]):
-        """add a chunk as parameters to TaggedTextChunk
-
-        Args:
-            text (str): raw text
-            font (NID): associated font
-            effects (List[TextEffect]): associated effects
-        """
-        chunk = TaggedTextChunk(text, font, effects)
-        self.size += len(chunk)
-        self.chunks.append(chunk)
-
-    def append_chunk(self, chunk: TaggedTextChunk):
-        """add a chunk as TaggedTextChunk
-
-        Args:
-            chunk (TaggedTextChunk): chunk to add
-        """
-        self.size += len(chunk)
-        self.chunks.append(chunk)
-
-    def width(self) -> int:
-        """return the font width
-
-        Returns:
-            int: width
-        """
-        return sum([t.width() for t in self.chunks])
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, TaggedText):
-            return NotImplemented
-        return self.size == other.size and self.chunks == other.chunks
 
     def __len__(self) -> int:
         return self.size
@@ -166,6 +123,12 @@ class TaggedText:
                 raise KeyError(f"only supports integer or slice keys not {type(item)}")
             return self._get_slice(item, item + 1)
 
+    def __repr__(self):
+        s = ""
+        for chunk in self.chunks:
+            s += repr(chunk)
+        return s
+
     def _get_slice(self, start: Optional[int], stop: Optional[int]) -> TaggedText:
         if start is None:
             start = 0
@@ -178,6 +141,9 @@ class TaggedText:
             raise IndexError(f"out of range {start}:{stop}")
         if stop < start:
             raise ValueError(f"no support for backwards slice {start}:{stop}")
+
+        if start == 0 and stop == self.size:
+            return self
 
         tagged_text = TaggedText()
         if start == stop:
@@ -216,11 +182,44 @@ class TaggedText:
 
         return tagged_text
 
-    def __repr__(self):
-        s = ""
+    def append(self, text: str, font: NID, effects: List[TextEffect]):
+        """add a chunk as parameters to TaggedTextChunk
+
+        Args:
+            text (str): raw text
+            font (NID): associated font
+            effects (List[TextEffect]): associated effects
+        """
+        chunk = TaggedTextChunk(text, font, effects)
+        self.size += len(chunk)
+        self.chunks.append(chunk)
+
+    def append_chunk(self, chunk: TaggedTextChunk):
+        """add a chunk as TaggedTextChunk
+
+        Args:
+            chunk (TaggedTextChunk): chunk to add
+        """
+        self.size += len(chunk)
+        self.chunks.append(chunk)
+
+    def width(self) -> int:
+        """return the font width
+
+        Returns:
+            int: width
+        """
+        return sum([t.width() for t in self.chunks])
+
+    def update(self):
+        """update the internal state of all text effects, should be called once per frame"""
+        # WARNING: this function relies on __eq__ not being implemented for TaggedTextChunk
+        effects_updated = set()
         for chunk in self.chunks:
-            s += repr(chunk)
-        return s
+            for effect in chunk.effects:
+                if effect not in effects_updated:
+                    effect.update()
+                    effects_updated.add(effect)
 
 
 def _parse_tag_id(tag: str) -> Optional[NID]:

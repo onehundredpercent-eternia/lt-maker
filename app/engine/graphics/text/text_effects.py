@@ -34,6 +34,10 @@ class TextEffect:
     def __str__(self):
         return self.nid
 
+    def update(self):
+        """update the internal state of this TextEffect, should only be called once per frame"""
+        pass
+
 
 class ColorEffect(TextEffect):
     nid = "color"
@@ -60,14 +64,19 @@ class JitterEffect(TextEffect):
         self._magnitude = magnitude
         self._wait = wait
 
-        self._jitter = (0, 0)
+        self._jitter = self._jitter = self._get_jitter(self._magnitude)
         self._count = 0
 
-    def apply(self, settings: TextSettings):
-        if self._count % self._wait == 1:
-            self._jitter = self._get_jitter(self._magnitude)
+    def __repr__(self):
+        return f"({self.nid}, {self._idx}, {self._magnitude}, {self._wait}, {self._jitter}, {self._count})"
+    
+    def update(self):
         # prevent infinitely counting up
         self._count = (self._count + 1) % self._wait
+        if self._count % self._wait == 0:
+            self._jitter = self._get_jitter(self._magnitude)
+
+    def apply(self, settings: TextSettings):
         settings.offset = tuple_add(settings.offset, self._jitter)
 
 
@@ -90,6 +99,10 @@ class Jitter2Effect(TextEffect):
             for idx in range(length)
         ]
 
+    def update(self):
+        for bit in self._bits:
+            bit.update()
+
     def apply(self, settings: TextSettings, bit: int):
         if not self._bits:
             raise Exception(
@@ -104,6 +117,7 @@ class Jitter2Effect(TextEffect):
 def _initialize_sin_sequence(length: int) -> List[float]:
     return [sin(x * 2 * pi / length) for x in range(length)]
 
+
 class SinEffect(TextEffect):
     nid = "sin"
 
@@ -116,6 +130,9 @@ class SinEffect(TextEffect):
 
         self._count = 0
 
+    def update(self):
+        self._count = (self._count + 1) % self._SIN_SEQUENCE_LENGTH
+
     def apply(self, settings: TextSettings):
         idx = (
             self._count + self._idx * self._SIN_SEQUENCE_LENGTH // 10
@@ -123,7 +140,6 @@ class SinEffect(TextEffect):
         x_offset = settings.offset[0] + self._sin_sequence[idx] * self._amplitude[0]
         y_offset = settings.offset[1] + self._sin_sequence[idx] * self._amplitude[1]
         settings.offset = (x_offset, y_offset)
-        self._count = (self._count + 1) % self._SIN_SEQUENCE_LENGTH
 
 
 class WaveEffect(TextEffect):
@@ -143,6 +159,10 @@ class WaveEffect(TextEffect):
             TEXT_EFFECTS[self.impl_nid](idx, 0, self._amplitude)
             for idx in range(length)
         ]
+
+    def update(self):
+        for bit in self._bits:
+            bit.update()
 
     def apply(self, settings: TextSettings, bit: int):
         if not self._bits:
@@ -166,6 +186,10 @@ class Wave2Effect(TextEffect):
             TEXT_EFFECTS[self.impl_nid](idx, self._amplitude[0], self._amplitude[1])
             for idx in range(length)
         ]
+
+    def update(self):
+        for bit in self._bits:
+            bit.update()
 
     def apply(self, settings: TextSettings, bit: int):
         if not self._bits:
