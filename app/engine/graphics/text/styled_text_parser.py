@@ -3,7 +3,6 @@ from typing import Any, List, Dict, Tuple, Optional, Union, Iterator
 
 import re
 import logging
-from ast import literal_eval
 
 from app.data.resources.resources import RESOURCES
 from app.engine import engine
@@ -223,9 +222,11 @@ class TaggedText:
             s += repr(chunk)
         return s
 
+
 def _parse_tag_id(tag: str) -> Optional[NID]:
     tag_and_args = tag.split(" ")
     return tag_and_args[0] if tag_and_args else None
+
 
 def _parse_arg(arg: str) -> Union[int, float, str]:
     try:
@@ -240,7 +241,8 @@ def _parse_arg(arg: str) -> Union[int, float, str]:
         pass
     return arg
 
-def _parse_tag_args(tag: str) -> Optional[Dict[str: Any]]:
+
+def _parse_tag_args(tag: str) -> Optional[Dict[str:Any]]:
     tag_and_args = tag.split(" ")
     if not tag_and_args:
         # malformed tag
@@ -253,6 +255,7 @@ def _parse_tag_args(tag: str) -> Optional[Dict[str: Any]]:
             return None
     args = {x[0]: _parse_arg(x[1]) for x in args}
     return args
+
 
 def parse_styled_text(
     text: str,
@@ -268,7 +271,7 @@ def parse_styled_text(
             None means text is parsed with default color associated with default_font
 
     Returns:
-        TaggedText: TagedText object representing parse styled text
+        TaggedText: TaggedText object representing parse styled text
     """
     # process text for tags and push them onto stack for later processing
     tagged_text = TaggedText()
@@ -279,6 +282,7 @@ def parse_styled_text(
         if any_tags:
             tag_start, tag_end = any_tags.span()
             tag = any_tags.group().strip("<>")
+            malformed_tag = None
             curr_text = text[:tag_start]
             length += len(curr_text)
             text = text[tag_end:]
@@ -298,25 +302,46 @@ def parse_styled_text(
                 else:
                     # orphaned closing tag with no opening tag
                     logging.warning("Ignoring orphaned closing tag")
+                    malformed_tag = f"<{tag}>"
             else:  # starting tag
                 tag_font = curr_font
                 tag_effect_list = list.copy(curr_effect_list)
                 # parse tag arguments
                 tag_id = _parse_tag_id(tag)
+                tag_args = _parse_tag_args(tag)
                 if RESOURCES.fonts.get(tag_id) or tag_id == "icon":
                     # special handling for fonts and icons
-                    tag_font = tag_id
+                    # expect no args
+                    if tag_args == {}:
+                        tag_font = tag_id
+                    else:
+                        logging.warning("Ignoring font tag with args: %s", tag)
+                        malformed_tag = f"<{tag}>"
                 elif tag_id in RESOURCES.fonts.get(curr_font).palettes:
                     # last ColorEffect pushed to list overrides
-                    tag_effect_list.append(ColorEffect(tag_id))
+                    # expect no args
+                    if tag_args == {}:
+                        tag_effect_list.append(ColorEffect(tag_id))
+                    else:
+                        logging.warning("Ignoring color tag with args: %s", tag)
+                        malformed_tag = f"<{tag}>"
                 elif tag_id in TEXT_EFFECTS:
-                    args = _parse_tag_args(tag)
-                    tag_effect_list.append(TEXT_EFFECTS[tag_id](**args))
+                    try:
+                        tag_effect_list.append(TEXT_EFFECTS[tag_id](**tag_args))
+                    except TypeError:
+                        logging.warning(
+                            "Ignoring tag with malformed or nonexistent args: %s", tag
+                        )
+                        malformed_tag = f"<{tag}>"
                 else:
                     logging.warning("Ignoring unknown tag: %s", tag)
-                tag_history_stack.append((length, tag_font, tag_effect_list))
+                    malformed_tag = f"<{tag}>"
+                if not malformed_tag:
+                    tag_history_stack.append((length, tag_font, tag_effect_list))
             if curr_text:  # not empty string
                 tagged_text.append(curr_text, curr_font, curr_effect_list)
+            if malformed_tag:  # display malformed tag as text
+                tagged_text.append(malformed_tag, curr_font, curr_effect_list)
         else:  # no more tags to process
             if text:  # not empty string
                 length += len(text)

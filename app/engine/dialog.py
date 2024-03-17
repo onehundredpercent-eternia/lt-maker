@@ -1,6 +1,6 @@
 from enum import Enum
 import re
-from typing import Callable, List, Tuple
+from typing import Callable, List
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.engine import config as cf
@@ -11,7 +11,7 @@ from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.ui_funcs import calc_align
 from app.engine.graphics.text.text_renderer import (MATCH_CAPTURE_TAG_RE,
-                                                    fix_tags, render_text,
+                                                    render_text,
                                                     render_tagged_text,
                                                     text_width)
 from app.engine.graphics.text.styled_text_parser import parse_styled_text
@@ -20,8 +20,6 @@ from app.engine.sprites import SPRITES
 from app.events.speak_style import SpeakStyle
 from app.utilities import utils
 from app.utilities.enums import Alignments, HAlignment
-
-import logging
 
 from app.utilities.str_utils import SHIFT_NEWLINE
 
