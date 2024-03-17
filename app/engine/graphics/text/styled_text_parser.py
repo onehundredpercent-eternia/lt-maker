@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Dict, Tuple, Optional, Union, Iterator
+from typing import Any, List, Dict, Tuple, Optional, Union, Iterator, NamedTuple
 
 import re
 import logging
@@ -201,7 +201,28 @@ class TaggedText:
                     effects_updated.add(effect)
 
 
+def _is_tag(text: str) -> bool:
+    """check whether a text chunk is a tag
+
+    Args:
+        text (str): chunk to check
+
+    Returns:
+        bool: whether it's a tag
+    """
+    return text.startswith("<") and text.endswith(">")
+
+
 def _parse_arg(arg: str) -> Union[int, float, str]:
+    """try to parse an arg string into a type
+    Tries to parse as as int > float > string in that order
+
+    Args:
+        arg (str): Arg string
+
+    Returns:
+        Union[int, float, str]: Arg string parsed as int, float, or string
+    """
     try:
         val = int(arg)
         return val
@@ -216,11 +237,31 @@ def _parse_arg(arg: str) -> Union[int, float, str]:
 
 
 def _parse_tag_id(tag: str) -> Optional[NID]:
+    """individually parse tag_id and ignore args
+    If tag_id is nonexistent it will be returned as None
+
+    Args:
+        tag (str): Input tag with "<>" stripped
+
+    Returns:
+        Optional[NID]: Parsed tag_id
+    """
     id_and_args = tag.split(" ")
     return id_and_args[0] if id_and_args else None
 
 
 def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:Any]]]:
+    """parse tag string into tag id and args
+    If tag_id is nonexistent it will be returned as None
+    If tag_args are malformed, they will be returned as None
+    If there are no arguments, tag_args will be returned as an empty dict
+
+    Args:
+        tag (str): Input tag with "<>" stripped
+
+    Returns:
+        Tuple[Optional[NID], Optional[Dict[str:Any]]]: A tuple containing parsed (tag_id, tag_args)
+    """
     id_and_args = tag.split(" ")
     if not id_and_args:
         # malformed tag
@@ -230,7 +271,7 @@ def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:A
     args = [x.split("=") for x in id_and_args[1:]]
     for arg in args:
         if len(arg) != 2:
-            # maformed arg
+            # malformed arg
             return (tag_id, None)
     args = {x[0]: _parse_arg(x[1]) for x in args}
     return (tag_id, args)
@@ -247,16 +288,16 @@ def _preprocess_tags(text: str) -> str:
     Returns:
         str: styled text with CoordinatedTextEffect tags decayed to TextEffect tags
     """
-    processed_text: List[str] = []
-    # obligatory regex explanation: turns "A line.{w} With some <red>text</>."
-    # into ["A line.", "{w}", " With some ", "<red>", "text", "</>", "."]
+    tokenized_text: List[str] = []
+    # obligatory regex explanation: turns "A line. With some <red>text</>."
+    # into ["A line. With some ", "<red>", "text", "</>", "."]
     # and then decomposes the non-command/tag elements into individual chars.
     text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
     for block in text_split_by_tags:
         if block.startswith("<") and block.endswith(">"):
-            processed_text.append(block)
+            tokenized_text.append(block)
         else:  # normal char str (e.g. "hello")
-            processed_text += list(block)
+            tokenized_text += list(block)
 
     class Tag:
         def __init__(self, tag: str):
@@ -268,9 +309,7 @@ def _preprocess_tags(text: str) -> str:
                 try:
                     self._effect = COORDINATED_TEXT_EFFECTS[tag_id](**tag_args)
                     self.char_level = True
-                    print(f"found char level effect {tag_id}")
-                    input()
-                except Exception:
+                except TypeError:
                     # broken arguments
                     pass
 
@@ -278,10 +317,12 @@ def _preprocess_tags(text: str) -> str:
             assert self.char_level
             return self._effect.next().as_tags()
 
+    # reconstructs individual characters into strings with CoordinatedTextEffects
+    # decayed to TextEffects applied to individual characters
     preprocessed_text: str = ""
     tag_stack: List[Tag] = []
-    for token in processed_text:
-        if len(token) > 1:  # tag
+    for token in tokenized_text:
+        if _is_tag(token):
             tag = token.strip("<>")
             if tag.startswith("/"):  # closing tag
                 if not tag_stack or not tag_stack.pop().char_level:
@@ -303,6 +344,97 @@ def _preprocess_tags(text: str) -> str:
     return preprocessed_text
 
 
+def _parse_as_closing_tag(tag_stack: List[Tuple[NID, List[TextEffect]]]) -> bool:
+    """parse a closing tag and return whether it was parsed successfully
+    """
+    malformed_tag = False
+    if tag_stack:
+        tag_stack.pop()
+    else:
+        # orphaned closing tag with no opening tag
+        logging.warning("Ignoring orphaned closing tag")
+        malformed_tag = True
+
+    return not malformed_tag
+
+
+def _parse_as_starting_tag(
+    tag_stack: List[Tuple[NID, List[TextEffect]]],
+    tag: Tuple[NID, List[TextEffect]],
+    curr_font: NID,
+    curr_effects: List[TextEffect],
+) -> bool:
+    """parse a starting tag and return whether it was parsed successfully
+    """
+    tag_font = curr_font
+    tag_effects = list.copy(curr_effects)
+    malformed_tag = False
+    # parse tag arguments
+    tag_id, tag_args = _parse_tag_id_and_args(tag)
+    if RESOURCES.fonts.get(tag_id) or tag_id == "icon":
+        # special handling for fonts and icons
+        # expect no args
+        if tag_args == {}:
+            tag_font = tag_id
+        else:
+            logging.warning("Ignoring font tag with args: %s", tag)
+            malformed_tag = True
+    elif tag_id in RESOURCES.fonts.get(curr_font).palettes:
+        # last ColorEffect pushed to list overrides
+        # expect no args
+        if tag_args == {}:
+            tag_effects.append(ColorEffect(tag_id))
+        else:
+            logging.warning("Ignoring color tag with args: %s", tag)
+            malformed_tag = True
+    elif tag_id in TEXT_EFFECTS:
+        try:
+            tag_effects.append(TEXT_EFFECTS[tag_id](**tag_args))
+        except TypeError:
+            logging.warning("Ignoring tag with malformed or nonexistent args: %s", tag)
+            malformed_tag = True
+    else:
+        logging.warning("Ignoring unknown tag: %s", tag)
+        malformed_tag = True
+    if not malformed_tag:
+        tag_stack.append((tag_font, tag_effects))
+
+    return not malformed_tag
+
+
+def _parse_as_tag(
+    chunk: str,
+    tagged_text: TaggedText,
+    tag_stack: List[Tuple[NID, List[TextEffect]]],
+    default_tag: Tuple[NID, List[TextEffect]],
+):
+    """parse a tag and add it to stack or append it to tagged_text if malformed
+    """
+    tag = chunk.strip("<>")
+    parsed_successfully = False  # used to add malformed tag as text chunk
+    curr_font, curr_effects = tag_stack[-1] if tag_stack else default_tag
+    if tag.startswith("/"):  # ending tag
+        parsed_successfully = _parse_as_closing_tag(tag_stack)
+    else:  # starting tag
+        parsed_successfully = _parse_as_starting_tag(
+            tag_stack, tag, curr_font, curr_effects
+        )
+    if not parsed_successfully:  # display malformed tag as text if it exists
+        tagged_text.append(tag, curr_font, curr_effects)
+
+
+def _parse_as_plain_text(
+    chunk: str,
+    tagged_text: TaggedText,
+    tag_stack: List[Tuple[NID, List[TextEffect]]],
+    default_tag: Tuple[NID, List[TextEffect]],
+):
+    """parse a plaintext chunk and append it to tagged_text
+    """
+    curr_font, curr_effects = tag_stack[-1] if tag_stack else default_tag
+    tagged_text.append(chunk, curr_font, curr_effects)
+
+
 def parse_styled_text(
     text: str,
     default_font: NID,
@@ -321,76 +453,22 @@ def parse_styled_text(
     """
     # process text for tags and push them onto stack for later processing
     text = _preprocess_tags(text)
+    # obligatory regex explanation: turns "A line. With some <red>text</>."
+    # into ["A line. With some ", "<red>", "text", "</>", "."]
+    # and then decomposes the non-command/tag elements into individual chars.
+    text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
+
+    class Tag(NamedTuple):
+        font: NID = default_font
+        effects: List[TextEffect] = [ColorEffect(default_color)]
+
     tagged_text = TaggedText()
-    tag_history_stack: List[Tuple[int, NID, List[TextEffect]]] = []
-    while True:
-        any_tags = MATCH_TAG_RE.search(text)
-        if any_tags:
-            tag_start, tag_end = any_tags.span()
-            tag = any_tags.group().strip("<>")
-            malformed_tag = None
-            curr_text = text[:tag_start]
-            text = text[tag_end:]
-            default_settings = (
-                tag_history_stack[-1]
-                if tag_history_stack
-                else (default_font, [ColorEffect(default_color)])
-            )
-            curr_font, curr_effect_list = default_settings
-            if tag.startswith("/"):  # ending tag
-                if tag_history_stack:
-                    tag_history_stack.pop()
-                else:
-                    # orphaned closing tag with no opening tag
-                    logging.warning("Ignoring orphaned closing tag")
-                    malformed_tag = f"<{tag}>"
-            else:  # starting tag
-                tag_font = curr_font
-                tag_effect_list = list.copy(curr_effect_list)
-                # parse tag arguments
-                tag_id, tag_args = _parse_tag_id_and_args(tag)
-                if RESOURCES.fonts.get(tag_id) or tag_id == "icon":
-                    # special handling for fonts and icons
-                    # expect no args
-                    if tag_args == {}:
-                        tag_font = tag_id
-                    else:
-                        logging.warning("Ignoring font tag with args: %s", tag)
-                        malformed_tag = f"<{tag}>"
-                elif tag_id in RESOURCES.fonts.get(curr_font).palettes:
-                    # last ColorEffect pushed to list overrides
-                    # expect no args
-                    if tag_args == {}:
-                        tag_effect_list.append(ColorEffect(tag_id))
-                    else:
-                        logging.warning("Ignoring color tag with args: %s", tag)
-                        malformed_tag = f"<{tag}>"
-                elif tag_id in TEXT_EFFECTS:
-                    try:
-                        tag_effect_list.append(TEXT_EFFECTS[tag_id](**tag_args))
-                    except TypeError:
-                        logging.warning(
-                            "Ignoring tag with malformed or nonexistent args: %s", tag
-                        )
-                        malformed_tag = f"<{tag}>"
-                else:
-                    logging.warning("Ignoring unknown tag: %s", tag)
-                    malformed_tag = f"<{tag}>"
-                if not malformed_tag:
-                    tag_history_stack.append((tag_font, tag_effect_list))
-            if curr_text:  # not empty string
-                tagged_text.append(curr_text, curr_font, curr_effect_list)
-            if malformed_tag:  # display malformed tag as text
-                tagged_text.append(malformed_tag, curr_font, curr_effect_list)
-        else:  # no more tags to process
-            if text:  # not empty string
-                default_settings = (
-                    tag_history_stack[-1]
-                    if tag_history_stack
-                    else (default_font, [ColorEffect(default_color)])
-                )
-                curr_font, curr_effect_list = default_settings
-                tagged_text.append(text, curr_font, curr_effect_list)
-            break
+    tag_stack: List[Tag] = []
+    default_tag = Tag()
+    for chunk in text_split_by_tags:
+        if _is_tag(chunk):
+            _parse_as_tag(chunk, tagged_text, tag_stack, default_tag)
+        else:  # plain text
+            _parse_as_plain_text(chunk, tagged_text, tag_stack, default_tag)
 
     return tagged_text

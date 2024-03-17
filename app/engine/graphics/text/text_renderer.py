@@ -218,6 +218,15 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
 
 def render_tagged_text(surf: engine.Surface, tagged_text: TaggedText, topleft: Tuple[int, int],
                         align: HAlignment = HAlignment.LEFT) -> engine.Surface:
+    """An enhanced enhanced text render abstraction to render TaggedText.
+    Includes advanced support for text effects defined in TaggedText.
+
+    Args:
+        tagged_text (TaggedText): TaggedText generated via parse_styled_text
+
+    Returns:
+        engine.Surface: a surface that has text printed upon it.
+    """
     # for non-left alignments
     if align == HAlignment.CENTER or align == HAlignment.RIGHT:
         width = tagged_text.width()
