@@ -17,7 +17,6 @@ from app.engine.graphics.text.text_effects import (
 )
 from app.utilities.typing import NID
 
-MATCH_TAG_RE = re.compile("<(.*?)>")
 MATCH_CAPTURE_TAG_RE = re.compile("(<[^<]*?>)")
 
 
@@ -201,6 +200,14 @@ class TaggedText:
                     effects_updated.add(effect)
 
 
+def _tokenize_styled_text(text: str) -> List[str]:
+    """turns "A line. With some <red>text</>." -> ["A line. With some ", "<red>", "text", "</>", "."]
+    """
+    text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
+    # strip out empty strings
+    return [x for x in text_split_by_tags if x]
+
+
 def _is_tag(text: str) -> bool:
     """check whether a text chunk is a tag
 
@@ -289,10 +296,8 @@ def _preprocess_tags(text: str) -> str:
         str: styled text with CoordinatedTextEffect tags decayed to TextEffect tags
     """
     tokenized_text: List[str] = []
-    # obligatory regex explanation: turns "A line. With some <red>text</>."
-    # into ["A line. With some ", "<red>", "text", "</>", "."]
-    # and then decomposes the non-command/tag elements into individual chars.
-    text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
+    text_split_by_tags: List[str] = _tokenize_styled_text(text)
+    # decompose the non-command/tag elements into individual chars.
     for block in text_split_by_tags:
         if block.startswith("<") and block.endswith(">"):
             tokenized_text.append(block)
@@ -345,8 +350,7 @@ def _preprocess_tags(text: str) -> str:
 
 
 def _parse_as_closing_tag(tag_stack: List[Tuple[NID, List[TextEffect]]]) -> bool:
-    """parse a closing tag and return whether it was parsed successfully
-    """
+    """parse a closing tag and return whether it was parsed successfully"""
     malformed_tag = False
     if tag_stack:
         tag_stack.pop()
@@ -364,8 +368,7 @@ def _parse_as_starting_tag(
     curr_font: NID,
     curr_effects: List[TextEffect],
 ) -> bool:
-    """parse a starting tag and return whether it was parsed successfully
-    """
+    """parse a starting tag and return whether it was parsed successfully"""
     tag_font = curr_font
     tag_effects = list.copy(curr_effects)
     malformed_tag = False
@@ -408,8 +411,7 @@ def _parse_as_tag(
     tag_stack: List[Tuple[NID, List[TextEffect]]],
     default_tag: Tuple[NID, List[TextEffect]],
 ):
-    """parse a tag and add it to stack or append it to tagged_text if malformed
-    """
+    """parse a tag and add it to stack or append it to tagged_text if malformed"""
     tag = chunk.strip("<>")
     parsed_successfully = False  # used to add malformed tag as text chunk
     curr_font, curr_effects = tag_stack[-1] if tag_stack else default_tag
@@ -420,7 +422,7 @@ def _parse_as_tag(
             tag_stack, tag, curr_font, curr_effects
         )
     if not parsed_successfully:  # display malformed tag as text if it exists
-        tagged_text.append(tag, curr_font, curr_effects)
+        tagged_text.append(chunk, curr_font, curr_effects)
 
 
 def _parse_as_plain_text(
@@ -429,8 +431,7 @@ def _parse_as_plain_text(
     tag_stack: List[Tuple[NID, List[TextEffect]]],
     default_tag: Tuple[NID, List[TextEffect]],
 ):
-    """parse a plaintext chunk and append it to tagged_text
-    """
+    """parse a plaintext chunk and append it to tagged_text"""
     curr_font, curr_effects = tag_stack[-1] if tag_stack else default_tag
     tagged_text.append(chunk, curr_font, curr_effects)
 
@@ -453,10 +454,7 @@ def parse_styled_text(
     """
     # process text for tags and push them onto stack for later processing
     text = _preprocess_tags(text)
-    # obligatory regex explanation: turns "A line. With some <red>text</>."
-    # into ["A line. With some ", "<red>", "text", "</>", "."]
-    # and then decomposes the non-command/tag elements into individual chars.
-    text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
+    text_split_by_tags: List[str] = _tokenize_styled_text(text)
 
     class Tag(NamedTuple):
         font: NID = default_font

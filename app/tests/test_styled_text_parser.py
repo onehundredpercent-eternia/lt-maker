@@ -193,7 +193,7 @@ class DisplayTextParsingTest(unittest.TestCase):
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
-        expected_texts = ["another tag ", "<blue that is simply never closed oops</>"]
+        expected_texts = ["another tag <blue that is simply never closed oops", "</>"]
         self.assertEqual(actual_texts, expected_texts)
 
         # test that the font is correct
