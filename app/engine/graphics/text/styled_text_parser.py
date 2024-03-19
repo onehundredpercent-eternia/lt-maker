@@ -171,8 +171,9 @@ class TaggedText:
         return sum([t.width() for t in self.chunks])
 
     def update(self):
-        """update the internal state of all text effects, should be called once per frame"""
-        # WARNING: this function relies on __eq__ not being implemented for TaggedTextChunk
+        """update the internal state of all text effects, should be called once per frame
+        WARNING: this function relies on __eq__ not being implemented for TaggedTextChunk
+        """
         effects_updated = set()
         for chunk in self.chunks:
             for effect in chunk.effects:
@@ -182,7 +183,11 @@ class TaggedText:
 
 
 def _tokenize_styled_text(text: str) -> List[str]:
-    """turns "A line. With some <red>text</>." -> ["A line. With some ", "<red>", "text", "</>", "."]
+    """tokenize input text into a list of substrings and tags
+    
+    Examples:
+        >>> _tokenize_styled_text('A line. With some <red>text</>.')
+        ['A line. With some ', '<red>', 'text', '</>', '.']
     """
     text_split_by_tags: List[str] = re.split(MATCH_CAPTURE_TAG_RE, text)
     # strip out empty strings
@@ -191,6 +196,16 @@ def _tokenize_styled_text(text: str) -> List[str]:
 
 def _is_tag(text: str) -> bool:
     """check whether a text chunk is a tag
+
+    Examples:
+        >>> _is_tag('')
+        False
+        >>> _is_tag('<>')
+        True
+        >>> _is_tag('<random tag with a bunch of stuff>')
+        True
+        >>> _is_tag('<hi')
+        False
 
     Args:
         text (str): chunk to check
@@ -204,6 +219,18 @@ def _is_tag(text: str) -> bool:
 def _parse_arg(arg: str) -> Union[int, float, str]:
     """try to parse an arg string into a type
     Tries to parse as as int > float > string in that order
+
+    Examples:
+        >>> _parse_arg('3')
+        3
+        >>> _parse_arg('-3')
+        -3
+        >>> _parse_arg('3.424')
+        3.424
+        >>> _parse_arg('+3e10')
+        30000000000.0
+        >>> _parse_arg('hello')
+        'hello'
 
     Args:
         arg (str): Arg string
@@ -228,11 +255,12 @@ def _parse_tag_id(tag: str) -> Optional[NID]:
     """individually parse tag_id and ignore args for a tag with <> stripped
     If tag_id is nonexistent it will be returned as None
 
-    >>> _parse_tag_id('wave amplitude=5')
-    'wave'
-    >>> _parse_tag_id('/')
-    '/'
-    >>> _parse_tag_id('') # returns None
+    Examples:
+        >>> _parse_tag_id('wave amplitude=5')
+        'wave'
+        >>> _parse_tag_id('/')
+        '/'
+        >>> _parse_tag_id('') # returns None
 
     Args:
         tag (str): Input tag with "<>" stripped
@@ -250,18 +278,19 @@ def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:A
     If tag_args are malformed, they will be returned as None
     If there are no arguments, tag_args will be returned as an empty dict
 
-    >>> _parse_tag_id_and_args('wave amplitude=5')
-    ('wave', {'amplitude': 5})
-    >>> _parse_tag_id_and_args('/')
-    ('/', {})
-    >>> _parse_tag_id_and_args('')
-    (None, None)
-    >>> _parse_tag_id_and_args('wave amp litude=5')
-    ('wave', None)
-    >>> _parse_tag_id_and_args('wave amplitude=5=3')
-    ('wave', None)
-    >>> _parse_tag_id_and_args('wave amplitude = 5')
-    ('wave', None)
+    Examples:
+        >>> _parse_tag_id_and_args('wave amplitude=5')
+        ('wave', {'amplitude': 5})
+        >>> _parse_tag_id_and_args('/')
+        ('/', {})
+        >>> _parse_tag_id_and_args('')
+        (None, None)
+        >>> _parse_tag_id_and_args('wave amp litude=5')
+        ('wave', None)
+        >>> _parse_tag_id_and_args('wave amplitude=5=3')
+        ('wave', None)
+        >>> _parse_tag_id_and_args('wave amplitude = 5')
+        ('wave', None)
 
     Args:
         tag (str): Input tag with "<>" stripped
@@ -286,8 +315,10 @@ def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:A
 
 def _preprocess_tags(text: str) -> str:
     """preprocesses text to decay CoordinateTextEffects into TextEffects
-    "<wave>hi</>" -> ("<sin idx=0 x_amplitude=0 y_amplitude=3.5>h</>"
-                      "<sin idx=0 x_amplitude=0 y_amplitude=3.5>i</>")
+
+    Examples:
+        >>> _preprocess_tags('<wave>hi</>')
+        '<sin idx=0 x_amplitude=0 y_amplitude=3.5>h</><sin idx=1 x_amplitude=0 y_amplitude=3.5>i</>'
 
     Args:
         text (str): styled text with various tags
