@@ -34,6 +34,9 @@ class DisplayTextParsingTest(unittest.TestCase):
 
         RESOURCES.load("testing_proj.ltproj")
 
+    def test_tagged_text_chunk_does_not_override_eq(self):
+        self.assertEqual(id(TaggedTextChunk.__eq__), id(object.__eq__))
+
     def test_parsing(self):
         default_font = "convo"
         default_color = "white"

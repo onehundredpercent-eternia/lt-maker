@@ -23,7 +23,7 @@ class TextSettings:
 class TextEffect:
     """A text effect that applies a consistent effect to a text chunk"""
 
-    nid: NID = None
+    nid: NID = "text_effect"
 
     def __init__(self):
         raise Exception("TextEffect should not be directly instantiated")
@@ -139,8 +139,8 @@ class CoordinatedTextEffect:
     with an idx variable, it can be used to generate coordinated text effects.
     """
 
-    nid: NID = None
-    impl_nid: NID = None
+    nid: NID = "coordinated_text_effect"
+    impl_nid: NID = "text_effect"
 
     def __init__(self):
         raise Exception("CoordinatedTextEffect should not be directly instantiated")

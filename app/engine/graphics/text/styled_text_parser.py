@@ -17,6 +17,7 @@ from app.engine.graphics.text.text_effects import (
 )
 from app.utilities.typing import NID
 
+# this regex captures tags (strings enclosed with <>) lazily
 MATCH_CAPTURE_TAG_RE = re.compile("(<[^<]*?>)")
 
 
@@ -36,10 +37,10 @@ class TaggedTextChunk:
         return f"({self.text}, {self.font}, {self.effects})"
 
     def width(self) -> int:
-        """return the font width
+        """return the pixel width of this text chunk when rendered
 
         Returns:
-            int: width
+            int: pixel width
         """
         return FONT[self.font].width(self.text) if self.font != "icon" else 16
 
@@ -79,7 +80,7 @@ class TaggedTextChunk:
 
 class TaggedText:
     def __init__(self):
-        self.size: int = 0
+        self.size: int = 0 # this is the total length of the individual chunks
         self.chunks: List[TaggedTextChunk] = []
 
     def __len__(self) -> int:
@@ -102,10 +103,7 @@ class TaggedText:
             return self._get_slice(item, item + 1)
 
     def __repr__(self):
-        s = ""
-        for chunk in self.chunks:
-            s += repr(chunk)
-        return s
+        return "".join(repr(chunk) for chunk in self.chunks)
 
     def _get_slice(self, start: Optional[int], stop: Optional[int]) -> TaggedText:
         if start is None:
@@ -247,6 +245,13 @@ def _parse_tag_id(tag: str) -> Optional[NID]:
     """individually parse tag_id and ignore args
     If tag_id is nonexistent it will be returned as None
 
+    >>> _parse_tag_id("<wave amplitude=5>")
+    "wave"
+    >>> _parse_tag_id("</>")
+    "/"
+    >>> _parse_tag_id("<>")
+    None
+
     Args:
         tag (str): Input tag with "<>" stripped
 
@@ -262,6 +267,19 @@ def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:A
     If tag_id is nonexistent it will be returned as None
     If tag_args are malformed, they will be returned as None
     If there are no arguments, tag_args will be returned as an empty dict
+
+    >>> _parse_tag_id("<wave amplitude=5>")
+    ("wave", {"amplitude": 5})
+    >>> _parse_tag_id("</>")
+    ("/", {})
+    >>> _parse_tag_id("<>")
+    (None, None)
+    >>> _parse_tag_id("<wave amp litude=5>")
+    ("wave", None)
+    >>> _parse_tag_id("<wave amplitude=5=3>")
+    ("wave", None)
+    >>> _parse_tag_id("<wave amplitude = 5>")
+    ("wave", None)
 
     Args:
         tag (str): Input tag with "<>" stripped
