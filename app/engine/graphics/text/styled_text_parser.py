@@ -30,8 +30,12 @@ class TaggedTextChunk:
     def __len__(self):
         return len(self.text)
 
-    def __getitem__(self, item):
-        return TaggedTextChunk(self.text[item], self.font, self.effects)
+    def __getitem__(self, item) -> Optional[TaggedTextChunk]:
+        substr = self.text[item]
+        if substr:
+            return TaggedTextChunk(substr, self.font, self.effects)
+        else:
+            return None
 
     def __repr__(self):
         return f"({self.text}, {self.font}, {self.effects})"
@@ -125,36 +129,15 @@ class TaggedText:
         if start == stop:
             return tagged_text
 
-        # process using a window (curr, total)
-        # which represents the start and stop of the current tagged text
-        curr = 0
-        for chunk in self.chunks:
-            total = curr + len(chunk)
-            if total <= start:
-                # skip this tagged text, we are not using it
-                curr = total
-                continue
-
-            if curr <= start:
-                if total >= stop:
-                    # the entirety of the text we want to process is between the window
-                    tagged_text.append_chunk(chunk[start - curr : stop - curr])
-                    break
-                else:
-                    # grab the back portion after start
-                    tagged_text.append_chunk(chunk[start - curr :])
-                    curr = total
-                    continue
-
-            # here, curr > start
-            if total < stop:
-                tagged_text.append_chunk(chunk)
-                curr = total
-                continue
-            else:
-                # grab the first portion before stop
-                tagged_text.append_chunk(chunk[: stop - curr])
-                break
+        chunk_idx = 0
+        while stop > 0:
+            curr_chunk = self.chunks[chunk_idx]
+            subchunk = curr_chunk[start:stop]
+            if subchunk:
+                tagged_text.append_chunk(subchunk)
+            start -= len(curr_chunk)
+            stop -= len(curr_chunk)
+            chunk_idx += 1
 
         return tagged_text
 
