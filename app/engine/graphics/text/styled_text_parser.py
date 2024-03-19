@@ -225,15 +225,14 @@ def _parse_arg(arg: str) -> Union[int, float, str]:
 
 
 def _parse_tag_id(tag: str) -> Optional[NID]:
-    """individually parse tag_id and ignore args
+    """individually parse tag_id and ignore args for a tag with <> stripped
     If tag_id is nonexistent it will be returned as None
 
-    >>> _parse_tag_id("<wave amplitude=5>")
-    "wave"
-    >>> _parse_tag_id("</>")
-    "/"
-    >>> _parse_tag_id("<>")
-    None
+    >>> _parse_tag_id('wave amplitude=5')
+    'wave'
+    >>> _parse_tag_id('/')
+    '/'
+    >>> _parse_tag_id('') # returns None
 
     Args:
         tag (str): Input tag with "<>" stripped
@@ -242,27 +241,27 @@ def _parse_tag_id(tag: str) -> Optional[NID]:
         Optional[NID]: Parsed tag_id
     """
     id_and_args = tag.split(" ")
-    return id_and_args[0] if id_and_args else None
+    return id_and_args[0] if id_and_args[0] else None
 
 
 def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:Any]]]:
-    """parse tag string into tag id and args
+    """parse tag string into tag id and args for a tag with <> stripped
     If tag_id is nonexistent it will be returned as None
     If tag_args are malformed, they will be returned as None
     If there are no arguments, tag_args will be returned as an empty dict
 
-    >>> _parse_tag_id("<wave amplitude=5>")
-    ("wave", {"amplitude": 5})
-    >>> _parse_tag_id("</>")
-    ("/", {})
-    >>> _parse_tag_id("<>")
+    >>> _parse_tag_id_and_args('wave amplitude=5')
+    ('wave', {'amplitude': 5})
+    >>> _parse_tag_id_and_args('/')
+    ('/', {})
+    >>> _parse_tag_id_and_args('')
     (None, None)
-    >>> _parse_tag_id("<wave amp litude=5>")
-    ("wave", None)
-    >>> _parse_tag_id("<wave amplitude=5=3>")
-    ("wave", None)
-    >>> _parse_tag_id("<wave amplitude = 5>")
-    ("wave", None)
+    >>> _parse_tag_id_and_args('wave amp litude=5')
+    ('wave', None)
+    >>> _parse_tag_id_and_args('wave amplitude=5=3')
+    ('wave', None)
+    >>> _parse_tag_id_and_args('wave amplitude = 5')
+    ('wave', None)
 
     Args:
         tag (str): Input tag with "<>" stripped
@@ -271,7 +270,7 @@ def _parse_tag_id_and_args(tag: str) -> Tuple[Optional[NID], Optional[Dict[str:A
         Tuple[Optional[NID], Optional[Dict[str:Any]]]: A tuple containing parsed (tag_id, tag_args)
     """
     id_and_args = tag.split(" ")
-    if not id_and_args:
+    if not id_and_args[0]:
         # malformed tag
         return (None, None)
     # expect args in the exact form "arg=val"

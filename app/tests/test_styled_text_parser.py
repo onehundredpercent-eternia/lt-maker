@@ -227,12 +227,24 @@ class DisplayTextParsingTest(unittest.TestCase):
 
         # test that the font is correct
         actual_fonts = [x.font for x in tagged_text]
-        expected_fonts = [default_font, default_font, default_font, default_font, default_font]
+        expected_fonts = [
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+            default_font,
+        ]
         self.assertEqual(actual_fonts, expected_fonts)
 
         # test that the colors are correct
         actual_colors = [self._tagged_text_color(x) for x in tagged_text]
-        expected_colors = [default_color, default_color, default_color, "red", default_color]
+        expected_colors = [
+            default_color,
+            default_color,
+            default_color,
+            "red",
+            default_color,
+        ]
         self.assertEqual(actual_colors, expected_colors)
 
         # test that offsets are correct
@@ -360,6 +372,14 @@ class DisplayTextParsingTest(unittest.TestCase):
             tagged_text[5:0]
         with self.assertRaises(ValueError):
             tagged_text[0:5:1]
+
+
+def load_tests(loader, tests, ignore):
+    import doctest
+    from app.engine.graphics.text import styled_text_parser
+
+    tests.addTests(doctest.DocTestSuite(styled_text_parser))
+    return tests
 
 
 if __name__ == "__main__":
