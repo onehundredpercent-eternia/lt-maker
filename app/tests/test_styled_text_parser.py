@@ -12,9 +12,9 @@ from app.engine.graphics.text.styled_text_parser import (
 from app.utilities.typing import NID
 
 
-class DisplayTextParsingTest(unittest.TestCase):
+class StyledTextParsingTest(unittest.TestCase):
     """
-    Tests parsing of display text into tagged text
+    Tests parsing of styled text into tagged text
     """
 
     def _tagged_text_color(self, chunk: TaggedTextChunk) -> NID:
@@ -40,11 +40,11 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = (
+        test_styled_text = (
             "<blue>this <iconvo>is</> some <red>red</> "
             "and some <jitter>jittering <green>green</></> text</>"
         )
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
@@ -96,8 +96,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing_unclosed_tag_pair(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>blue text? <red>red text?</> but did not close blue"
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        test_styled_text = "<blue>blue text? <red>red text?</> but did not close blue"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
@@ -122,11 +122,11 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing_doubled_up_tag(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = (
+        test_styled_text = (
             "<blue>blue text <blue>more blue text<red> "
             "now it's red text</> back to blue</> still blue</> now white"
         )
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
@@ -165,8 +165,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing_nonexistent(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "some text with <???>a non-existent tag</>"
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        test_styled_text = "some text with <???>a non-existent tag</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
@@ -191,8 +191,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing_unclosed_opening_tag(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "another tag <blue that is simply never closed oops</>"
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        test_styled_text = "another tag <blue that is simply never closed oops</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
@@ -217,8 +217,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_parsing_orphaned_closing_tag(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "some </>text with <red>extra closing tags</></>"
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        test_styled_text = "some </>text with <red>extra closing tags</></>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that the text is parsed correctly based on tags
         actual_texts = [x.text for x in tagged_text]
@@ -255,8 +255,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_indexing(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>this is some <red>red</> text</>"
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        test_styled_text = "<blue>this is some <red>red</> text</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that single indices work as expected
         indexed_text = tagged_text[0]
@@ -310,8 +310,8 @@ class DisplayTextParsingTest(unittest.TestCase):
     def test_slicing(self):
         default_font = "convo"
         default_color = "white"
-        test_display_text = "<blue>this is some <red>red</> text</>"
-        tagged_text = parse_styled_text(test_display_text, default_font, default_color)
+        test_styled_text = "<blue>this is some <red>red</> text</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
 
         # test that single slices work as expected
         indexed_text = tagged_text[:]

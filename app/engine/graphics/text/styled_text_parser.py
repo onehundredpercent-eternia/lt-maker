@@ -472,7 +472,11 @@ def parse_styled_text(
     default_font: NID,
     default_color: Optional[NID],
 ) -> TaggedText:
-    """Parse styled text (text with no commands, only tags) into TaggedText
+    """Parse styled text (text with no commands, only tags) into TaggedText.
+    In order to properly render time-dependent text animations, the parsed
+    TaggedText must be saved between frames with TaggedText.update() called
+    once every frame in order to update the text animation. Otherwise rendering
+    TaggedText will result in a static text effect when rendered.
 
     Args:
         text (str): the styled text string to parse
