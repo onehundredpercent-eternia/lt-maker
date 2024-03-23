@@ -405,7 +405,7 @@ def _parse_as_starting_tag(
     malformed_tag = False
     # parse tag arguments
     tag_id, tag_args = _parse_tag_id_and_args(tag)
-    if RESOURCES.fonts.get(tag_id) or tag_id == "icon":
+    if tag_id in RESOURCES.fonts or tag_id == "icon":
         # special handling for fonts and icons
         # expect no args
         if tag_args == {}:
