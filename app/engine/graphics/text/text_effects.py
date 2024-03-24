@@ -68,41 +68,6 @@ class TextEffect:
         """
         return 0, 0, 0, 0
 
-    def _adjust_max_offset(
-        self, raw_max_offset: Tuple[float, float, float, float]
-    ) -> Tuple[int, int, int, int]:
-        """adjusts for negative cardinal values and rounds up to nearest integer"""
-        return (
-            math.ceil(
-                raw_max_offset[0]
-                if raw_max_offset[0] > 0
-                else 0 + -raw_max_offset[2]
-                if raw_max_offset[2] < 0
-                else 0
-            ),
-            math.ceil(
-                raw_max_offset[1]
-                if raw_max_offset[1] > 0
-                else 0 + -raw_max_offset[3]
-                if raw_max_offset[3] < 0
-                else 0
-            ),
-            math.ceil(
-                raw_max_offset[2]
-                if raw_max_offset[2] > 0
-                else 0 + -raw_max_offset[0]
-                if raw_max_offset[0] < 0
-                else 0
-            ),
-            math.ceil(
-                raw_max_offset[3]
-                if raw_max_offset[3] > 0
-                else 0 + -raw_max_offset[1]
-                if raw_max_offset[1] < 0
-                else 0
-            ),
-        )
-
 
 class ColorEffect(TextEffect):
     nid = "color"
