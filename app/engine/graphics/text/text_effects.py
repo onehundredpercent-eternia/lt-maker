@@ -1,3 +1,8 @@
+"""Note to all devs trying to add a new TextEffect:
+Unless you have special requirements, make sure your new effect has
+a cycle period that is a divisor of 240, usually 30, 60, or 120
+"""
+
 from __future__ import annotations
 from typing import List, Dict, Tuple
 
@@ -24,7 +29,7 @@ class TextEffect:
     """A text effect that applies a consistent effect to a text chunk"""
 
     nid: NID = "text_effect"
-    length: int = 1
+    cycle_period: int = 1
 
     def __init__(self):
         raise Exception("TextEffect should not be directly instantiated")
@@ -118,7 +123,9 @@ class ColorEffect(TextEffect):
 
 class JitterEffect(TextEffect):
     nid = "jitter"
-    length = 1000003  # a very large prime that you probably shouldn't try to cache
+    cycle_period = (
+        1000003  # a very large prime that you probably shouldn't try to cache
+    )
 
     @classmethod
     def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:
@@ -149,18 +156,18 @@ class JitterEffect(TextEffect):
 
     def max_offset(self) -> Tuple[float, float, float, float]:
         # 95% chance to be within 2 std, if it gets cut off oh well
-        return self._adjust_max_offset((2 * self._magnitude,) * 4)
+        return (abs(self._magnitude) * 2,) * 4
 
 
-def _initialize_sin_sequence(length: int) -> List[float]:
-    return [math.sin(x * 2 * math.pi / length) for x in range(length)]
+def _initialize_sin_sequence(cycle_period: int) -> List[float]:
+    return [math.sin(x * 2 * math.pi / cycle_period) for x in range(cycle_period)]
 
 
 class SinEffect(TextEffect):
     nid = "sin"
-    length = 30
+    cycle_period = 30
 
-    _sin_sequence = _initialize_sin_sequence(length)
+    _sin_sequence = _initialize_sin_sequence(cycle_period)
 
     def __init__(self, idx: int = 0, x_amplitude: float = 0, y_amplitude: float = 3.5):
         self._idx = idx
@@ -168,10 +175,10 @@ class SinEffect(TextEffect):
         self._count = 0
 
     def update(self):
-        self._count = (self._count + 1) % self.length
+        self._count = (self._count + 1) % self.cycle_period
 
     def apply(self, settings: TextSettings):
-        idx = (self._count + self._idx * self.length // 10) % self.length
+        idx = (self._count + self._idx * self.cycle_period // 10) % self.cycle_period
         x_offset = settings.offset[0] + self._sin_sequence[idx] * self._amplitude[0]
         y_offset = settings.offset[1] + self._sin_sequence[idx] * self._amplitude[1]
         settings.offset = (x_offset, y_offset)
@@ -183,25 +190,20 @@ class SinEffect(TextEffect):
         )
 
     def max_offset(self) -> Tuple[int, int, int, int]:
-        # 95% chance to be within 2 std, if it gets cut off oh well
-        return self._adjust_max_offset(
-            (
-                self._amplitude[1] * 2,
-                self._amplitude[0] * 2,
-            )
-            * 2
-        )
+        return (
+            abs(self._amplitude[1]),
+            abs(self._amplitude[0]),
+        ) * 2
 
 
 class CoordinatedTextEffect:
-    """A text effect that decays into a character wise application of impl_nid with incrementing idx.
+    """A text effect that decays into a character wise application of a TextEffect with incrementing idx.
     This class is only used for preprocessing and decays to a TextEffect applied per character after
-    preprocessing. Depending on the implementation of the impl_nid text effect, and how it interacts
+    preprocessing. Depending on the implementation of the TextEffect, and how it interacts
     with an idx variable, it can be used to generate coordinated text effects.
     """
 
     nid: NID = "coordinated_text_effect"
-    impl_nid: NID = "text_effect"
 
     def __init__(self):
         raise Exception("CoordinatedTextEffect should not be directly instantiated")
@@ -220,7 +222,6 @@ class CoordinatedTextEffect:
 
 class Jitter2Effect(CoordinatedTextEffect):
     nid = "jitter2"
-    impl_nid = "jitter"
 
     def __init__(self, magnitude: float = 1, wait: int = 3):
         self._magnitude = magnitude
@@ -228,37 +229,33 @@ class Jitter2Effect(CoordinatedTextEffect):
         self._idx = 0
 
     def next(self) -> TextEffect:
-        impl = TEXT_EFFECTS[self.impl_nid](self._idx, self._magnitude, self._wait)
+        impl = JitterEffect(self._idx, self._magnitude, self._wait)
         self._idx += 1
         return impl
 
 
 class WaveEffect(CoordinatedTextEffect):
     nid = "wave"
-    impl_nid = "sin"
 
     def __init__(self, amplitude: float = 3.5):
         self._amplitude = amplitude
         self._idx = 0
 
     def next(self) -> TextEffect:
-        impl = TEXT_EFFECTS[self.impl_nid](self._idx, 0, self._amplitude)
+        impl = SinEffect(self._idx, 0, self._amplitude)
         self._idx += 1
         return impl
 
 
 class Wave2Effect(CoordinatedTextEffect):
     nid = "wave2"
-    impl_nid = "sin"
 
     def __init__(self, x_amplitude: float = 2, y_amplitude: float = 3.5):
         self._amplitude = (x_amplitude, y_amplitude)
         self._idx = 0
 
     def next(self) -> TextEffect:
-        impl = TEXT_EFFECTS[self.impl_nid](
-            self._idx, self._amplitude[0], self._amplitude[1]
-        )
+        impl = SinEffect(self._idx, self._amplitude[0], self._amplitude[1])
         self._idx += 1
         return impl
 

@@ -90,16 +90,12 @@ class TaggedText:
         self.chunks: List[TaggedTextChunk] = []
         self._caching: bool = False
         self._cache: Dict[int, engine.Surface] = {}
-        self._effect_cycle_lcm: int = 1
+        self._effect_cycle_period_lcm: int = 1
         self._max_offset: Tuple[int, int, int, int] = (0, 0, 0, 0)
 
     @property
-    def caching(self):
+    def caching_enabled(self):
         return self._caching
-
-    @caching.setter
-    def caching(self, enable: bool):
-        self._caching = enable
 
     def __len__(self) -> int:
         return self.size
@@ -174,8 +170,8 @@ class TaggedText:
         self.size += len(chunk)
         self.chunks.append(chunk)
         # find the lcm between current and cycles of all new effects
-        self._effect_cycle_lcm = math.lcm(
-            self._effect_cycle_lcm, *[e.length for e in chunk.effects]
+        self._effect_cycle_period_lcm = math.lcm(
+            self._effect_cycle_period_lcm, *[e.cycle_period for e in chunk.effects]
         )
         # find the element-wise max offset between current and cycles of all new effects
         self._max_offset = tuple(
@@ -202,8 +198,43 @@ class TaggedText:
                     effect.update()
                     effects_updated.add(effect)
 
-    def get_dynamic_sequence_length(self) -> int:
-        return self._effect_cycle_lcm
+    def get_cycle_period(self) -> int:
+        return self._effect_cycle_period_lcm
+
+    def set_caching_if_recommended(self) -> bool:
+        """Enable or disable caching depending if it is recommended.
+        Recommended threshold corresponds to an effect cycle period of <= 4s.
+        Anything above this threshold is not recommended to turn on caching.
+
+        Returns:
+            bool: Whether caching was enabled or disabled.
+        """
+        caching = False
+        if self.get_cycle_period() <= 240: # ~= 4 seconds
+            caching = True
+        self._caching = caching
+        return caching
+
+    def set_caching_if_under_max_threshold(self) -> bool:
+        """Enable or disable caching depending if it is under the maximum threshold for caching.
+        Maximum threshold corresponds to an effect cycle period of <= 10s.
+        Anything above this threshold is strongly not recommended to turn on caching.
+
+        Returns:
+            bool: Whether caching was enabled or disabled.
+        """
+        caching = False
+        if self.get_cycle_period() <= 6000: # ~= 10 seconds
+            caching = True
+        self._caching = caching
+        return caching
+
+    def force_enable_caching(self):
+        """Forces caching even if it is strongly not recommended.
+        Beware of excessive memory use depending on how long the effect cycle period
+        is and how long you leave the text on screen for.
+        """
+        self._caching = True
 
     def _get_cached_text_surf(self, cache_index):
         offset_up, offset_right, offset_down, offset_left = self._max_offset

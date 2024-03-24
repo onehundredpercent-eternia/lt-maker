@@ -623,13 +623,10 @@ class Dialog:
             x_pos = 0
             y_pos = -16 + self.y_offset
             start, stop = self.text_indices[-self.num_lines - 1]
+            # if it's not cached already at this point it's probably never going to be
             if (start, stop) in self.tagged_text_cache:
                 tagged_text = self.tagged_text_cache[(start, stop)]
-            else:
-                tagged_text = self.tagged_text[start:stop]
-                if tagged_text.get_dynamic_sequence_length() <= 120:
-                    tagged_text.caching = True
-            cache_index = self.cache_index_counter % tagged_text.get_dynamic_sequence_length()
+            cache_index = self.cache_index_counter % tagged_text.get_cycle_period()
             tagged_text.draw(text_surf, (x_pos, y_pos), cache_index=cache_index)
             x_pos += tagged_text.width()
 
@@ -642,14 +639,14 @@ class Dialog:
             else:
                 y_set = y_pos
             start, stop = indices
+            # check cache
             if (start, stop) in self.tagged_text_cache:
                 tagged_text = self.tagged_text_cache[(start, stop)]
             else:
                 tagged_text = self.tagged_text[start:stop]
-                if tagged_text.get_dynamic_sequence_length() <= 120:
-                    tagged_text.caching = True
+                tagged_text.set_caching_if_recommended()
                 self.tagged_text_cache[(start, stop)] = tagged_text
-            cache_index = self.cache_index_counter % tagged_text.get_dynamic_sequence_length()
+            cache_index = self.cache_index_counter % tagged_text.get_cycle_period()
             tagged_text.draw(text_surf, (x_pos, y_set), cache_index=cache_index)
             x_pos += tagged_text.width()
 
