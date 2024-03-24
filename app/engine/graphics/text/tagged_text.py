@@ -211,7 +211,7 @@ class TaggedText:
             bool: Whether caching was enabled or disabled.
         """
         caching = False
-        if self.get_cycle_period() <= 6000:  # ~= 10 seconds
+        if self.get_cycle_period() <= 600:  # ~= 10 seconds
             caching = True
         self._caching = caching
         return caching
