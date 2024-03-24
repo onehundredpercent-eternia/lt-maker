@@ -90,6 +90,7 @@ class TaggedText:
         self.chunks: List[TaggedTextChunk] = []
         self._caching: bool = False
         self._cache: Dict[int, engine.Surface] = {}
+        self._effect_cycle_lcm: int = 1
 
     @property
     def caching(self):
@@ -161,9 +162,7 @@ class TaggedText:
             font (NID): associated font
             effects (List[TextEffect]): associated effects
         """
-        chunk = TaggedTextChunk(text, font, effects)
-        self.size += len(chunk)
-        self.chunks.append(chunk)
+        self.append_chunk(TaggedTextChunk(text, font, effects))
 
     def append_chunk(self, chunk: TaggedTextChunk):
         """add a chunk as TaggedTextChunk
@@ -173,6 +172,9 @@ class TaggedText:
         """
         self.size += len(chunk)
         self.chunks.append(chunk)
+        self._effect_cycle_lcm = math.lcm(
+            self._effect_cycle_lcm, *[e.length for e in chunk.effects]
+        )
 
     def width(self) -> int:
         """return the font width
@@ -194,11 +196,7 @@ class TaggedText:
                     effects_updated.add(effect)
 
     def get_dynamic_sequence_length(self) -> int:
-        effects = []
-        for chunk in self.chunks:
-            for effect in chunk.effects:
-                effects.append(effect)
-        return math.lcm([effect.length for effect in effects])
+        return self._effect_cycle_lcm
 
     def draw(
         self,
@@ -234,6 +232,9 @@ class TaggedText:
 
         for chunk in self.chunks:
             tx += chunk.draw(surf, (tx, ty))
+
+        if self._caching and cache_index not in self._cache:
+            print(f"Caching is enabled, inserting new surf with index {cache_index}")
 
         return surf
 

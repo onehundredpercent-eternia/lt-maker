@@ -32,6 +32,9 @@ class TextEffect:
     def __str__(self):
         return self.nid
 
+    def __repr__(self):
+        return self.nid
+
     def update(self):
         """update the internal state of this TextEffect, should only be called once per frame"""
         pass
@@ -72,7 +75,7 @@ class ColorEffect(TextEffect):
 
 class JitterEffect(TextEffect):
     nid = "jitter"
-    length: 1000003  # a very large prime that you probably shouldn't try to cache
+    length = 1000003  # a very large prime that you probably shouldn't try to cache
 
     @classmethod
     def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:

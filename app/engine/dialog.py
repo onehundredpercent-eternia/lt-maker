@@ -139,6 +139,7 @@ class Dialog:
         self.text_indices: List[self.TextIndex] = []
         # This caches tagged texts so we can reuse a TaggedText surf when drawing
         self.tagged_text_cache: Dict[Tuple[int, int], TaggedText] = {}
+        self.cache_index_counter: int = 0
 
         # Size
         if width:
@@ -622,8 +623,14 @@ class Dialog:
             x_pos = 0
             y_pos = -16 + self.y_offset
             start, stop = self.text_indices[-self.num_lines - 1]
-            tagged_text = self.tagged_text[start:stop]
-            tagged_text.draw(text_surf, (x_pos, y_pos))
+            if (start, stop) in self.tagged_text_cache:
+                tagged_text = self.tagged_text_cache[(start, stop)]
+            else:
+                tagged_text = self.tagged_text[start:stop]
+                if tagged_text.get_dynamic_sequence_length() <= 120:
+                    tagged_text.caching = True
+            cache_index = self.cache_index_counter % tagged_text.get_dynamic_sequence_length()
+            tagged_text.draw(text_surf, (x_pos, y_pos), cache_index=cache_index)
             x_pos += tagged_text.width()
 
         display_indices = self.text_indices[-self.num_lines :]
@@ -635,12 +642,20 @@ class Dialog:
             else:
                 y_set = y_pos
             start, stop = indices
-            tagged_text = self.tagged_text[start:stop]
-            tagged_text.draw(text_surf, (x_pos, y_set))
+            if (start, stop) in self.tagged_text_cache:
+                tagged_text = self.tagged_text_cache[(start, stop)]
+            else:
+                tagged_text = self.tagged_text[start:stop]
+                if tagged_text.get_dynamic_sequence_length() <= 120:
+                    tagged_text.caching = True
+            cache_index = self.cache_index_counter % tagged_text.get_dynamic_sequence_length()
+            tagged_text.draw(text_surf, (x_pos, y_set), cache_index=cache_index)
             x_pos += tagged_text.width()
 
             end_x_pos = self.position[0] + 8 + x_pos
             end_y_pos = self.position[1] + 8 + y_pos
+
+        self.cache_index_counter += 1
 
         surf.blit(text_surf, (self.position[0] + 8, self.position[1] + 8))
         return end_x_pos, end_y_pos
