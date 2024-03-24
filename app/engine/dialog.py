@@ -11,11 +11,10 @@ from app.engine.base_surf import create_base_surf
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.ui_funcs import calc_align
+from app.engine.graphics.text.tagged_text import TaggedText
 from app.engine.graphics.text.text_renderer import (
-    TaggedText,
     MATCH_CAPTURE_TAG_RE,
     render_text,
-    render_tagged_text,
     text_width,
 )
 from app.engine.graphics.text.styled_text_parser import parse_styled_text
