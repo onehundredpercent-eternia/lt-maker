@@ -218,7 +218,7 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
     return surf
 
 def _render_tagged_text(surf: engine.Surface, tagged_text: TaggedText, topleft: Tuple[int, int],
-                       align: HAlignment = HAlignment.LEFT) -> engine.Surface:
+                        align: HAlignment = HAlignment.LEFT) -> engine.Surface:
     """An enhanced text render abstraction to render dynamically styled text.
     Includes advanced support for text effects defined in TaggedText.
     Usage requires calling parse_styled_text on some styled text and passing the

@@ -45,7 +45,7 @@ class TaggedTextChunk:
             topleft (Tuple[int, int]): top left location to begin drawing
 
         Returns:
-            int: font width of the drawn TaggedTextChunk
+            int: pixel width of the drawn TaggedTextChunk
         """
         if self.font == "icon":
             # not sure why but this import needs to go here to avoid a circular dependency
@@ -73,8 +73,8 @@ class TaggedTextChunk:
 
 class TaggedText:
     def __init__(self):
-        self.size: int = 0  # this is the total length of the individual chunks
         self.chunks: List[TaggedTextChunk] = []
+        self._size: int = 0  # this is the total length of the individual chunks
         self._caching: bool = False
         self._cache: Dict[int, engine.Surface] = {}
         self._effect_cycle_period_lcm: int = 1
@@ -85,7 +85,7 @@ class TaggedText:
         return self._caching
 
     def __len__(self) -> int:
-        return self.size
+        return self._size
 
     def __iter__(self) -> Iterator[TaggedTextChunk]:
         for chunk in self.chunks:
@@ -114,12 +114,12 @@ class TaggedText:
 
         if start < 0 or stop < 0:
             raise IndexError(f"no support for negative indexes {start}:{stop}")
-        if start >= self.size or stop > self.size:
+        if start >= self._size or stop > self._size:
             raise IndexError(f"out of range {start}:{stop}")
         if stop < start:
             raise ValueError(f"no support for backwards slice {start}:{stop}")
 
-        if start == 0 and stop == self.size:
+        if start == 0 and stop == self._size:
             return self
 
         tagged_text = TaggedText()
@@ -154,23 +154,23 @@ class TaggedText:
         Args:
             chunk (TaggedTextChunk): chunk to add
         """
-        self.size += len(chunk)
+        self._size += len(chunk)
         self.chunks.append(chunk)
         # find the lcm between current and cycles of all new effects
         self._effect_cycle_period_lcm = math.lcm(
             self._effect_cycle_period_lcm, *[e.cycle_period for e in chunk.effects]
         )
-        # find the element-wise max offset between current and cycles of all new effects
+        # find the element-wise max offset between current and max offsets of all new effects
         self._max_offset = tuple(
             max(*x)
             for x in zip(self._max_offset, *[e.max_offset() for e in chunk.effects])
         )
 
     def width(self) -> int:
-        """return the font width
+        """return the pixel width
 
         Returns:
-            int: width
+            int: pixel width
         """
         return sum([t.width() for t in self.chunks])
 
@@ -224,13 +224,13 @@ class TaggedText:
         self._caching = True
 
     def _get_cached_text_surf(self, cache_index):
-        offset_up, offset_right, offset_down, offset_left = self._max_offset
         if cache_index not in self._cache:
             # setup a new text surf
-            padding_x = self.width() + offset_left + offset_right
-            padding_y = 16 + offset_up + offset_down
+            offset_up, offset_right, offset_down, offset_left = self._max_offset
+            padding_x = offset_left + offset_right
+            padding_y = offset_up + offset_down
             text_surf = engine.create_surface(
-                (padding_x, padding_y),
+                (self.width() + padding_x, 16 + padding_y),
                 transparent=True,
             )
             text_surf_tx, text_surf_ty = offset_left, offset_up
@@ -249,16 +249,13 @@ class TaggedText:
         align: HAlignment = HAlignment.LEFT,
         cache_index: int = 0,
     ) -> engine.Surface:
-        """An enhanced text render abstraction to render dynamically styled text.
-        Includes advanced support for text effects defined in TaggedText.
-        Usage requires calling parse_styled_text on some styled text and passing the
-        resulting TaggedText into this render function.
+        """Render this tagged text onto surf. Creates and uses a cached surface if caching is enabled.
 
         Args:
             surf (engine.Surface): Surface to draw on.
-            tagged_text (TaggedText): TaggedText generated via parse_styled_text
             topleft (Tuple[int, int]): Where to start drawing on surf.
             align (HAlignment, optional): Text alignment. Defaults to HAlignment.LEFT.
+            cache_index (int, optional): Which cached surface to use when caching is enabled. Defaults to 0.
 
         Returns:
             engine.Surface: Surface with styled text drawn on it.

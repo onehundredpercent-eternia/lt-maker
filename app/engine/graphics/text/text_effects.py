@@ -1,6 +1,8 @@
 """Note to all devs trying to add a new TextEffect:
 Unless you have special requirements, make sure your new effect has
-a cycle period that is a divisor of 240, usually 30, 60, or 120
+a cycle period that is a divisor of 240, some suggestions are
+30, 60, or 120 but any divisor of 240 is fine.
+Static effects should have a cycle period of 1.
 """
 
 from __future__ import annotations

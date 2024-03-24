@@ -32,7 +32,7 @@ def _tokenize_styled_text(text: str) -> List[str]:
 
 
 def _is_tag(text: str) -> bool:
-    """check whether a text chunk is a tag
+    """check whether text is a tag
 
     Examples:
         >>> _is_tag('')
@@ -45,7 +45,7 @@ def _is_tag(text: str) -> bool:
         False
 
     Args:
-        text (str): chunk to check
+        text (str): text to check
 
     Returns:
         bool: whether it's a tag
@@ -313,11 +313,11 @@ def parse_styled_text(
     In order to properly render time-dependent text animations, the parsed
     TaggedText must be saved between frames with TaggedText.update() called
     once every frame in order to update the text animation. Otherwise rendering
-    TaggedText will result in a static text effect when rendered.
+    TaggedText will result in a static text effect.
 
     Args:
         text (str): the styled text string to parse
-        default_font (NID): front to parse text with no font tags as
+        default_font (NID): font to parse text with no font tags as
         default_color (Optional[NID]): color to parse text with no color tags as
             None means text is parsed with default color associated with default_font
 
