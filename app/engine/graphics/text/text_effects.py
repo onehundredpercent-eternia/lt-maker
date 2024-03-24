@@ -15,7 +15,7 @@ class TextSettings:
         self.color = color
         self.offset = offset
 
-    def apply(self, effects: List[TextEffect], bit: Optional[int] = None):
+    def apply(self, effects: List[TextEffect]):
         for effect in effects:
             effect.apply(self)
 
@@ -24,6 +24,7 @@ class TextEffect:
     """A text effect that applies a consistent effect to a text chunk"""
 
     nid: NID = "text_effect"
+    length: int = 1
 
     def __init__(self):
         raise Exception("TextEffect should not be directly instantiated")
@@ -55,7 +56,8 @@ class TextEffect:
 class ColorEffect(TextEffect):
     nid = "color"
 
-    def __init__(self, color: NID):
+    def __init__(self, idx: int, color: NID):
+        self._idx = idx
         self._color = color
 
     def __str__(self):
@@ -70,6 +72,7 @@ class ColorEffect(TextEffect):
 
 class JitterEffect(TextEffect):
     nid = "jitter"
+    length: 1000003  # a very large prime that you probably shouldn't try to cache
 
     @classmethod
     def _get_jitter(klass, magnitude: float = 1) -> Tuple[float, float]:
@@ -105,9 +108,9 @@ def _initialize_sin_sequence(length: int) -> List[float]:
 
 class SinEffect(TextEffect):
     nid = "sin"
+    length = 30
 
-    _SIN_SEQUENCE_LENGTH = 30
-    _sin_sequence = _initialize_sin_sequence(_SIN_SEQUENCE_LENGTH)
+    _sin_sequence = _initialize_sin_sequence(length)
 
     def __init__(self, idx: int = 0, x_amplitude: float = 0, y_amplitude: float = 3.5):
         self._idx = idx
@@ -115,12 +118,10 @@ class SinEffect(TextEffect):
         self._count = 0
 
     def update(self):
-        self._count = (self._count + 1) % self._SIN_SEQUENCE_LENGTH
+        self._count = (self._count + 1) % self.length
 
     def apply(self, settings: TextSettings):
-        idx = (
-            self._count + self._idx * self._SIN_SEQUENCE_LENGTH // 10
-        ) % self._SIN_SEQUENCE_LENGTH
+        idx = (self._count + self._idx * self.length // 10) % self.length
         x_offset = settings.offset[0] + self._sin_sequence[idx] * self._amplitude[0]
         y_offset = settings.offset[1] + self._sin_sequence[idx] * self._amplitude[1]
         settings.offset = (x_offset, y_offset)

@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import Any, List, Dict, Tuple, Optional, Union, Iterator, NamedTuple
 
-import re
 import logging
+import math
+import re
 
 from app.data.resources.resources import RESOURCES
 from app.engine import engine
@@ -15,6 +16,7 @@ from app.engine.graphics.text.text_effects import (
     TEXT_EFFECTS,
     COORDINATED_TEXT_EFFECTS,
 )
+from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
 
 # this regex captures tags (strings enclosed with <>) lazily
@@ -84,8 +86,18 @@ class TaggedTextChunk:
 
 class TaggedText:
     def __init__(self):
-        self.size: int = 0 # this is the total length of the individual chunks
+        self.size: int = 0  # this is the total length of the individual chunks
         self.chunks: List[TaggedTextChunk] = []
+        self._caching: bool = False
+        self._cache: Dict[int, engine.Surface] = {}
+
+    @property
+    def caching(self):
+        return self._caching
+
+    @caching.setter
+    def caching(self, enable: bool):
+        self._caching = enable
 
     def __len__(self) -> int:
         return self.size
@@ -181,10 +193,54 @@ class TaggedText:
                     effect.update()
                     effects_updated.add(effect)
 
+    def get_dynamic_sequence_length(self) -> int:
+        effects = []
+        for chunk in self.chunks:
+            for effect in chunk.effects:
+                effects.append(effect)
+        return math.lcm([effect.length for effect in effects])
+
+    def draw(
+        self,
+        surf: engine.Surface,
+        topleft: Tuple[int, int],
+        align: HAlignment = HAlignment.LEFT,
+        cache_index: int = 0,
+    ) -> engine.Surface:
+        """An enhanced text render abstraction to render dynamically styled text.
+        Includes advanced support for text effects defined in TaggedText.
+        Usage requires calling parse_styled_text on some styled text and passing the
+        resulting TaggedText into this render function.
+
+        Args:
+            surf (engine.Surface): Surface to draw on.
+            tagged_text (TaggedText): TaggedText generated via parse_styled_text
+            topleft (Tuple[int, int]): Where to start drawing on surf.
+            align (HAlignment, optional): Text alignment. Defaults to HAlignment.LEFT.
+
+        Returns:
+            engine.Surface: Surface with styled text drawn on it.
+        """
+        # for non-left alignments
+        if align == HAlignment.CENTER or align == HAlignment.RIGHT:
+            width = self.width()
+            tx, ty = topleft
+            if align == HAlignment.CENTER:
+                tx -= width // 2
+            elif align == HAlignment.RIGHT:
+                tx -= width
+        else:
+            tx, ty = topleft
+
+        for chunk in self.chunks:
+            tx += chunk.draw(surf, (tx, ty))
+
+        return surf
+
 
 def _tokenize_styled_text(text: str) -> List[str]:
     """tokenize input text into a list of substrings and tags
-    
+
     Examples:
         >>> _tokenize_styled_text('A line. With some <red>text</>.')
         ['A line. With some ', '<red>', 'text', '</>', '.']
@@ -417,7 +473,7 @@ def _parse_as_starting_tag(
         # last ColorEffect pushed to list overrides
         # expect no args
         if tag_args == {}:
-            tag_effects.append(ColorEffect(tag_id))
+            tag_effects.append(ColorEffect(0, tag_id))
         else:
             logging.warning("Ignoring color tag with args: %s", tag)
             malformed_tag = True
@@ -493,7 +549,7 @@ def parse_styled_text(
 
     class Tag(NamedTuple):
         font: NID = default_font
-        effects: List[TextEffect] = [ColorEffect(default_color)]
+        effects: List[TextEffect] = [ColorEffect(0, default_color)]
 
     tagged_text = TaggedText()
     tag_stack: List[Tag] = []

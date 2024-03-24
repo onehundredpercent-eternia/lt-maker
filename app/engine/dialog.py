@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import Callable, List
+from typing import Callable, List, Dict, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.engine import config as cf
@@ -11,6 +12,7 @@ from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.ui_funcs import calc_align
 from app.engine.graphics.text.text_renderer import (
+    TaggedText,
     MATCH_CAPTURE_TAG_RE,
     render_text,
     render_tagged_text,
@@ -64,6 +66,17 @@ class Dialog:
     attempt_split: bool = (
         True  # Whether we attempt to split big chunks across multiple lines
     )
+
+    @dataclass
+    class TextIndex:
+        start: int
+        stop: int
+
+        def __iter__(self):
+            return iter(self.to_tuple())
+
+        def to_tuple(self):
+            return (self.start, self.stop)
 
     def __init__(
         self,
@@ -123,9 +136,9 @@ class Dialog:
         # within TaggedText that should render on each line of a text box during dalog.
         # It will be used during draw state to slice out the corresponding tagged text substring to render.
         # This also allows correct handling for discarding whitespace characters that happens during update.
-        # The type of text_indices is List[List[int]] but it should really be List[Tuple[int, int]] but
-        # tuples are immutable so this it's easier to implement it as a tuple
-        self.text_indices: List[List[int]] = []
+        self.text_indices: List[self.TextIndex] = []
+        # This caches tagged texts so we can reuse a TaggedText surf when drawing
+        self.tagged_text_cache: Dict[Tuple[int, int], TaggedText] = {}
 
         # Size
         if width:
@@ -321,18 +334,18 @@ class Dialog:
         return lines
 
     def _increment_text_indices(self):
-        self.text_indices[-1][1] += 1  # increment the end of text index
+        self.text_indices[-1].stop += 1  # increment the end of text index
 
     def _add_text_indices(self, whitespace: bool):
         if self.text_indices:
             self.text_indices.append(
-                [self.text_indices[-1][1], self.text_indices[-1][1]]
+                self.TextIndex(self.text_indices[-1].stop, self.text_indices[-1].stop)
             )
             if whitespace:
-                self.text_indices[-1][0] += 1
-                self.text_indices[-1][1] += 1
+                self.text_indices[-1].start += 1
+                self.text_indices[-1].stop += 1
         else:
-            self.text_indices.append([0, 0])
+            self.text_indices.append(self.TextIndex(0, 0))
 
     def _next_line(self, whitespace=False):
         """handle state in preparation to transition to next dialog line
@@ -610,7 +623,7 @@ class Dialog:
             y_pos = -16 + self.y_offset
             start, stop = self.text_indices[-self.num_lines - 1]
             tagged_text = self.tagged_text[start:stop]
-            render_tagged_text(text_surf, tagged_text, (x_pos, y_pos))
+            tagged_text.draw(text_surf, (x_pos, y_pos))
             x_pos += tagged_text.width()
 
         display_indices = self.text_indices[-self.num_lines :]
@@ -623,7 +636,7 @@ class Dialog:
                 y_set = y_pos
             start, stop = indices
             tagged_text = self.tagged_text[start:stop]
-            render_tagged_text(text_surf, tagged_text, (x_pos, y_set))
+            tagged_text.draw(text_surf, (x_pos, y_set))
             x_pos += tagged_text.width()
 
             end_x_pos = self.position[0] + 8 + x_pos
