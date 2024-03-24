@@ -4,11 +4,9 @@ import unittest
 
 from typing import Tuple
 
+from app.engine.graphics.text.tagged_text import TaggedTextChunk
 from app.engine.graphics.text.text_effects import TextSettings
-from app.engine.graphics.text.styled_text_parser import (
-    TaggedTextChunk,
-    parse_styled_text,
-)
+from app.engine.graphics.text.styled_text_parser import parse_styled_text
 from app.utilities.typing import NID
 
 
