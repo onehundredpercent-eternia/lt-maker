@@ -648,6 +648,7 @@ class Dialog:
                 tagged_text = self.tagged_text[start:stop]
                 if tagged_text.get_dynamic_sequence_length() <= 120:
                     tagged_text.caching = True
+                self.tagged_text_cache[(start, stop)] = tagged_text
             cache_index = self.cache_index_counter % tagged_text.get_dynamic_sequence_length()
             tagged_text.draw(text_surf, (x_pos, y_set), cache_index=cache_index)
             x_pos += tagged_text.width()

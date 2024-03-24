@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 
-from math import sin, pi
+import math
 from random import Random
 
 from app.utilities.typing import NID
@@ -55,6 +55,49 @@ class TextEffect:
         """
         pass
 
+    def max_offset(self) -> Tuple[int, int, int, int]:
+        """get the maximum offset in each cardinal direction rounded up to the nearest integer
+
+        Returns:
+            Tuple[int, int, int, int]: north, east, south, west
+        """
+        return 0, 0, 0, 0
+
+    def _adjust_max_offset(
+        self, raw_max_offset: Tuple[float, float, float, float]
+    ) -> Tuple[int, int, int, int]:
+        """adjusts for negative cardinal values and rounds up to nearest integer"""
+        return (
+            math.ceil(
+                raw_max_offset[0]
+                if raw_max_offset[0] > 0
+                else 0 + -raw_max_offset[2]
+                if raw_max_offset[2] < 0
+                else 0
+            ),
+            math.ceil(
+                raw_max_offset[1]
+                if raw_max_offset[1] > 0
+                else 0 + -raw_max_offset[3]
+                if raw_max_offset[3] < 0
+                else 0
+            ),
+            math.ceil(
+                raw_max_offset[2]
+                if raw_max_offset[2] > 0
+                else 0 + -raw_max_offset[0]
+                if raw_max_offset[0] < 0
+                else 0
+            ),
+            math.ceil(
+                raw_max_offset[3]
+                if raw_max_offset[3] > 0
+                else 0 + -raw_max_offset[1]
+                if raw_max_offset[1] < 0
+                else 0
+            ),
+        )
+
 
 class ColorEffect(TextEffect):
     nid = "color"
@@ -104,9 +147,13 @@ class JitterEffect(TextEffect):
             "</>",
         )
 
+    def max_offset(self) -> Tuple[float, float, float, float]:
+        # 95% chance to be within 2 std, if it gets cut off oh well
+        return self._adjust_max_offset((2 * self._magnitude,) * 4)
+
 
 def _initialize_sin_sequence(length: int) -> List[float]:
-    return [sin(x * 2 * pi / length) for x in range(length)]
+    return [math.sin(x * 2 * math.pi / length) for x in range(length)]
 
 
 class SinEffect(TextEffect):
@@ -133,6 +180,16 @@ class SinEffect(TextEffect):
         return (
             f"<{self.nid} idx={self._idx} x_amplitude={self._amplitude[0]} y_amplitude={self._amplitude[1]}>",
             "</>",
+        )
+
+    def max_offset(self) -> Tuple[int, int, int, int]:
+        # 95% chance to be within 2 std, if it gets cut off oh well
+        return self._adjust_max_offset(
+            (
+                self._amplitude[1] * 2,
+                self._amplitude[0] * 2,
+            )
+            * 2
         )
 
 

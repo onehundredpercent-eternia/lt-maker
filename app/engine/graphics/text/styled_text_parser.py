@@ -91,6 +91,7 @@ class TaggedText:
         self._caching: bool = False
         self._cache: Dict[int, engine.Surface] = {}
         self._effect_cycle_lcm: int = 1
+        self._max_offset: Tuple[int, int, int, int] = (0, 0, 0, 0)
 
     @property
     def caching(self):
@@ -172,8 +173,14 @@ class TaggedText:
         """
         self.size += len(chunk)
         self.chunks.append(chunk)
+        # find the lcm between current and cycles of all new effects
         self._effect_cycle_lcm = math.lcm(
             self._effect_cycle_lcm, *[e.length for e in chunk.effects]
+        )
+        # find the element-wise max offset between current and cycles of all new effects
+        self._max_offset = tuple(
+            max(*x)
+            for x in zip(self._max_offset, *[e.max_offset() for e in chunk.effects])
         )
 
     def width(self) -> int:
@@ -197,6 +204,25 @@ class TaggedText:
 
     def get_dynamic_sequence_length(self) -> int:
         return self._effect_cycle_lcm
+
+    def _get_cached_text_surf(self, cache_index):
+        offset_up, offset_right, offset_down, offset_left = self._max_offset
+        if cache_index not in self._cache:
+            # setup a new text surf
+            padding_x = self.width() + offset_left + offset_right
+            padding_y = 16 + offset_up + offset_down
+            text_surf = engine.create_surface(
+                (padding_x, padding_y),
+                transparent=True,
+            )
+            text_surf_tx, text_surf_ty = offset_left, offset_up
+            for chunk in self.chunks:
+                text_surf_tx += chunk.draw(text_surf, (text_surf_tx, text_surf_ty))
+            self._cache[cache_index] = text_surf
+        else:
+            # grab existing text surf
+            text_surf = self._cache[cache_index]
+        return text_surf
 
     def draw(
         self,
@@ -230,11 +256,15 @@ class TaggedText:
         else:
             tx, ty = topleft
 
-        for chunk in self.chunks:
-            tx += chunk.draw(surf, (tx, ty))
-
-        if self._caching and cache_index not in self._cache:
-            print(f"Caching is enabled, inserting new surf with index {cache_index}")
+        if self._caching:
+            text_surf = self._get_cached_text_surf(cache_index)
+            text_surf_ty, _, _, text_surf_tx = self._max_offset
+            surf.blit(text_surf, (tx - text_surf_tx, ty - text_surf_ty))
+            print("blit surf from cache")
+        else:
+            # blit normally
+            for chunk in self.chunks:
+                tx += chunk.draw(surf, (tx, ty))
 
         return surf
 

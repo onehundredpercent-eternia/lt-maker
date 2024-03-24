@@ -102,7 +102,7 @@ def run(game):
     _soft_reset_start_time: int = None  # UTC time.time()
     SOFT_RESET_TIME = 3  # seconds
     while True:
-        # start = time.time_ns()
+        start = time.perf_counter_ns()
         engine.update_time()
         fps_records.append(engine.get_delta())
         # print(engine.get_delta())
@@ -163,10 +163,9 @@ def run(game):
         save_screenshot(raw_events, surf)
 
         engine.update_display()
-        # end = time.time_ns()
-        # milliseconds_elapsed = (end - start)/1e6
-        # if milliseconds_elapsed > 10:
-        #     print("Engine took too long: %f" % milliseconds_elapsed)
+        end = time.perf_counter_ns()
+        milliseconds_elapsed = (end - start)/1e6
+        print(f"took {milliseconds_elapsed:.3f}")
 
         game.playtime += clock.tick()
 
