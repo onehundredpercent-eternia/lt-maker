@@ -188,7 +188,9 @@ class PhaseChangeState(MapState):
     name = 'phase_change'
 
     def is_roam(self):
-        return game.is_roam() and game.get_roam_unit()
+        is_roam = game.is_roam() and game.get_roam_unit()
+        is_first_turn = game.turncount == 1 and game.phase.get_current() == 'player'
+        return is_roam or is_first_turn
 
     def refresh_fatigue(self):
         refresh_these = [unit for unit in game.get_all_units_in_party() if not unit.position]
