@@ -91,6 +91,14 @@ class PhaseChange(EventTrigger):
     team: NID
 
 @dataclass(init=True)
+class AfterPhaseChange(EventTrigger):
+    """
+    Occurs whenever the phase changes. Check `team` to figure out whose phase it is now.
+    """
+    nid: ClassVar[NID] = 'after_phase_change'
+    team: NID
+
+@dataclass(init=True)
 class TurnChange(EventTrigger):
     """
     Occurs immediately before turn changes to Player Phase. Useful for dialogue or reinforcements.

@@ -269,6 +269,10 @@ def _handle_info():
 class FreeState(MapState):
     name = 'free'
 
+    def start(self):
+        game.events.trigger(triggers.AfterPhaseChange('player'))
+        return 'repeat'
+
     def begin(self):
         if game.is_roam() and game.get_roam_unit():
             game.state.change('free_roam')
@@ -359,9 +363,9 @@ class FreeState(MapState):
     def _select_next_available_unit(self):
         avail_units = [
             u for u in game.units
-            if u.team == 'player' 
-            and u.position 
-            and not u.finished 
+            if u.team == 'player'
+            and u.position
+            and not u.finished
             and skill_system.can_select(u)
             and 'Tile' not in u.tags]
 
