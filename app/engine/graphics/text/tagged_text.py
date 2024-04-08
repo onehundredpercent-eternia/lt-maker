@@ -5,7 +5,12 @@ import math
 
 from app.engine import engine
 from app.engine.fonts import FONT
-from app.engine.graphics.text.text_effects import TextSettings, TextEffect
+from app.engine.graphics.text.text_effects import (
+    TextSettings,
+    TextEffect,
+    RECOMMENDED_CYCLE_PERIOD,
+    MAX_RECOMMENDED_CYCLE_PERIOD,
+)
 from app.utilities.enums import HAlignment
 from app.utilities.typing import NID
 
@@ -174,7 +179,7 @@ class TaggedText:
         """
         return sum([t.width() for t in self.chunks])
 
-    def update(self):
+    def update_effects(self):
         """update the internal state of all text effects, should be called once per frame
         WARNING: this function relies on __eq__ not being implemented for TaggedTextChunk
         """
@@ -190,28 +195,28 @@ class TaggedText:
 
     def set_caching_if_recommended(self) -> bool:
         """Enable or disable caching depending if it is recommended.
-        Recommended threshold corresponds to an effect cycle period of <= 4s.
+        Recommended threshold corresponds to an effect cycle period of <= 4s at 60FPS.
         Anything above this threshold is not recommended to turn on caching.
 
         Returns:
             bool: Whether caching was enabled or disabled.
         """
         caching = False
-        if self.get_cycle_period() <= 240:  # ~= 4 seconds
+        if self.get_cycle_period() <= RECOMMENDED_CYCLE_PERIOD:
             caching = True
         self._caching = caching
         return caching
 
     def set_caching_if_under_max_threshold(self) -> bool:
         """Enable or disable caching depending if it is under the maximum threshold for caching.
-        Maximum threshold corresponds to an effect cycle period of <= 10s.
+        Maximum threshold corresponds to an effect cycle period of <= 10s at 60FPS.
         Anything above this threshold is strongly not recommended to turn on caching.
 
         Returns:
             bool: Whether caching was enabled or disabled.
         """
         caching = False
-        if self.get_cycle_period() <= 600:  # ~= 10 seconds
+        if self.get_cycle_period() <= MAX_RECOMMENDED_CYCLE_PERIOD:
             caching = True
         self._caching = caching
         return caching

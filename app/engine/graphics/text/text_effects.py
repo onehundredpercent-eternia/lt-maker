@@ -3,6 +3,12 @@ Unless you have special requirements, make sure your new effect has
 a cycle period that is a divisor of 240, some suggestions are
 30, 60, or 120 but any divisor of 240 is fine.
 Static effects should have a cycle period of 1.
+A cycle period of 240 corresponds to 4 seconds for a full effect cycle
+at the default FPS of 60. This makes sure that caching does not require
+excessive amounts of memory to store all those frames.
+Making sure an effect has a cycle period of a divisor of 240 makes sure
+that the lowest common denominator of the combination of effects is
+always a maximum of 240.
 """
 
 from __future__ import annotations
@@ -16,6 +22,10 @@ from app.utilities.utils import tuple_add
 
 _rng = Random()
 
+# corresponds to 4s at 60FPS
+RECOMMENDED_CYCLE_PERIOD = 240
+# corresponds to 10s at 60FPS
+MAX_RECOMMENDED_CYCLE_PERIOD = 600
 
 class TextSettings:
     def __init__(self, color: NID, offset: Tuple[float, float]):

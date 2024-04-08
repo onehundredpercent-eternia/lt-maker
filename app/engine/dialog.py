@@ -615,7 +615,7 @@ class Dialog:
         )
 
         # update state of tagged_text
-        self.tagged_text.update()
+        self.tagged_text.update_effects()
 
         # Draw line that's disappearing
         if self.y_offset and len(self.text_indices) > self.num_lines:
@@ -625,9 +625,10 @@ class Dialog:
             # if it's not cached already at this point it's probably never going to be
             if (start, stop) in self.tagged_text_cache:
                 tagged_text = self.tagged_text_cache[(start, stop)]
+            else:
+                tagged_text = self.tagged_text[start:stop]
             cache_index = self.cache_index_counter % tagged_text.get_cycle_period()
             tagged_text.draw(text_surf, (x_pos, y_pos), cache_index=cache_index)
-            x_pos += tagged_text.width()
 
         display_indices = self.text_indices[-self.num_lines :]
         for idx, indices in enumerate(display_indices):
