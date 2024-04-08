@@ -7,8 +7,8 @@ A cycle period of 240 corresponds to 4 seconds for a full effect cycle
 at the default FPS of 60. This makes sure that caching does not require
 excessive amounts of memory to store all those frames.
 Making sure an effect has a cycle period of a divisor of 240 makes sure
-that the lowest common denominator of the combination of effects is
-always a maximum of 240.
+that the least common multiple of the combination of effect cycle periods
+is always a maximum of 240.
 """
 
 from __future__ import annotations
