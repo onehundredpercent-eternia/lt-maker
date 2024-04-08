@@ -77,6 +77,7 @@ class TaggedTextChunk:
 
 
 class TaggedText:
+    global_caching = True
     def __init__(self):
         self.chunks: List[TaggedTextChunk] = []
         self._size: int = 0  # this is the total length of the individual chunks
@@ -228,16 +229,19 @@ class TaggedText:
         """
         self._caching = True
 
-    def _get_cached_text_surf(self, cache_index):
+    def _get_cached_text_surf(self, cache_index, test_surf=None):
         if cache_index not in self._cache:
-            # setup a new text surf
             offset_up, offset_right, offset_down, offset_left = self._max_offset
             padding_x = offset_left + offset_right
             padding_y = offset_up + offset_down
-            text_surf = engine.create_surface(
-                (self.width() + padding_x, 16 + padding_y),
-                transparent=True,
-            )
+            # setup a new text surf
+            if test_surf:
+                text_surf = test_surf
+            else:
+                text_surf = engine.create_surface(
+                    (self.width() + padding_x, 16 + padding_y),
+                    transparent=True,
+                )
             text_surf_tx, text_surf_ty = offset_left, offset_up
             for chunk in self.chunks:
                 text_surf_tx += chunk.draw(text_surf, (text_surf_tx, text_surf_ty))
@@ -253,6 +257,7 @@ class TaggedText:
         topleft: Tuple[int, int],
         align: HAlignment = HAlignment.LEFT,
         cache_index: int = 0,
+        test_surf: Optional[engine.Surface] = None
     ) -> engine.Surface:
         """Render this tagged text onto surf. Creates and uses a cached surface if caching is enabled.
 
@@ -261,6 +266,7 @@ class TaggedText:
             topleft (Tuple[int, int]): Where to start drawing on surf.
             align (HAlignment, optional): Text alignment. Defaults to HAlignment.LEFT.
             cache_index (int, optional): Which cached surface to use when caching is enabled. Defaults to 0.
+            test_surf: (Optional[engine.Surface], optional): For testing only. Defaults to None.
 
         Returns:
             engine.Surface: Surface with styled text drawn on it.
@@ -276,8 +282,8 @@ class TaggedText:
         else:
             tx, ty = topleft
 
-        if self._caching:
-            text_surf = self._get_cached_text_surf(cache_index)
+        if self._caching and self.global_caching:
+            text_surf = self._get_cached_text_surf(cache_index, test_surf=test_surf)
             text_surf_ty, _, _, text_surf_tx = self._max_offset
             surf.blit(text_surf, (tx - text_surf_tx, ty - text_surf_ty))
         else:

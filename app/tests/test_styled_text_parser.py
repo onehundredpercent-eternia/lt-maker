@@ -371,6 +371,55 @@ class StyledTextParsingTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             tagged_text[0:5:1]
 
+class TaggedTextCachingTest(unittest.TestCase):
+
+    def test_huge_cycle_period_does_not_cache(self):
+        default_font = "convo"
+        default_color = "white"
+        test_styled_text = "<jitter>this is some <red>red</> text</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
+        tagged_text.set_caching_if_recommended()
+        self.assertFalse(tagged_text.caching_enabled)
+        tagged_text.set_caching_if_under_max_threshold()
+        self.assertFalse(tagged_text.caching_enabled)
+        tagged_text.force_enable_caching()
+        self.assertTrue(tagged_text.caching_enabled)
+
+    def test_text_does_not_cache_when_disabled(self):
+        default_font = "convo"
+        default_color = "white"
+        test_styled_text = "<wave>this is some <red>red</> text</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
+        self.assertFalse(tagged_text.caching_enabled)
+        self.assertGreater(tagged_text.get_cycle_period(), 1)
+
+        from unittest.mock import MagicMock
+        surf = MagicMock()
+        cache_surf = MagicMock()
+        for i in range(tagged_text.get_cycle_period()):
+            tagged_text.draw(surf, (0,0), cache_index=i, test_surf=cache_surf)
+
+        for i in range(tagged_text.get_cycle_period()):
+            self.assertFalse(i in tagged_text._cache)
+
+    def test_text_can_cache_when_enabled(self):
+        default_font = "convo"
+        default_color = "white"
+        test_styled_text = "<wave>this is some <red>red</> text</>"
+        tagged_text = parse_styled_text(test_styled_text, default_font, default_color)
+        tagged_text.set_caching_if_recommended()
+        self.assertTrue(tagged_text.caching_enabled)
+        self.assertGreater(tagged_text.get_cycle_period(), 1)
+
+        from unittest.mock import MagicMock
+        surf = MagicMock()
+        cache_surf = MagicMock()
+        for i in range(tagged_text.get_cycle_period()):
+            tagged_text.draw(surf, (0,0), cache_index=i, test_surf=cache_surf)
+
+        for i in range(tagged_text.get_cycle_period()):
+            self.assertTrue(i in tagged_text._cache)
+
 
 def load_tests(loader, tests, ignore):
     import doctest
