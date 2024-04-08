@@ -137,7 +137,7 @@ class TaggedText:
             subchunk = curr_chunk[start:stop]
             if subchunk:
                 tagged_text.append_chunk(subchunk)
-            start -= len(curr_chunk)
+            start = max(start - len(curr_chunk), 0)
             stop -= len(curr_chunk)
             chunk_idx += 1
 
