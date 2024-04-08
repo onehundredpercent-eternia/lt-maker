@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import random
+
+from typing import Dict, Any
 
 RANDOM_SEED = 0
 
@@ -31,6 +35,21 @@ def edge_random(pos1: tuple, pos2: tuple, seed: int = None):
         seed = RANDOM_SEED
     random.seed(seed + pos1[0] * 1024**3 + pos1[1] * 1024**2 + pos2[0] * 1024 + pos2[1])
     return random.random()
+
+class WeightedRandomizer:
+    def __init__(self, weights: Dict[Any, float], offset: int = 0):
+        random.seed(RANDOM_SEED + offset)
+        self._max = 0.
+        self._weights = []
+        for value, weight in weights.items():
+            self._max += weight
+            self._weights.append((self._max, value))
+
+    def random(self):
+        r = random.random() * self._max
+        for ceil, value in self._weights:
+            if ceil > r:
+                return value
 
 def flood_fill(tilemap, pos: tuple, diagonal: bool = False, match: set = None, match_set: set = None) -> set:
     blob_positions = set()

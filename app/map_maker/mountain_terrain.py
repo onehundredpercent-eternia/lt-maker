@@ -59,7 +59,7 @@ class MountainTerrain(Terrain):
     def single_process(self, tilemap):
         positions: set = tilemap.get_all_terrain(self.nid)
         self.organization.clear()
-        groupings: list = [] # of sets
+        groupings: list = []  # of sets
         counter: int = 0
         limit: int = int(1e6)
         while positions and counter < limit:
