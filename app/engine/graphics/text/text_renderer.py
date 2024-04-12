@@ -217,38 +217,6 @@ def render_text(surf: engine.Surface, fonts: List[NID], texts: List[str],
             tx += 16
     return surf
 
-def _render_tagged_text(surf: engine.Surface, tagged_text: TaggedText, topleft: Tuple[int, int],
-                        align: HAlignment = HAlignment.LEFT) -> engine.Surface:
-    """An enhanced text render abstraction to render dynamically styled text.
-    Includes advanced support for text effects defined in TaggedText.
-    Usage requires calling parse_styled_text on some styled text and passing the
-    resulting TaggedText into this render function.
-
-    Args:
-        surf (engine.Surface): Surface to draw on.
-        tagged_text (TaggedText): TaggedText generated via parse_styled_text
-        topleft (Tuple[int, int]): Where to start drawing on surf.
-        align (HAlignment, optional): Text alignment. Defaults to HAlignment.LEFT.
-
-    Returns:
-        engine.Surface: Surface with styled text drawn on it.
-    """
-    # for non-left alignments
-    if align == HAlignment.CENTER or align == HAlignment.RIGHT:
-        width = tagged_text.width()
-        tx, ty = topleft
-        if align == HAlignment.CENTER:
-            tx -= width//2
-        elif align == HAlignment.RIGHT:
-            tx -= width
-    else:
-        tx, ty = topleft
-
-    for chunk in tagged_text:
-        tx += chunk.draw(surf, (tx, ty))
-
-    return surf
-
 def render_styled_text(
     text: str,
     default_font: NID,
@@ -271,4 +239,4 @@ def render_styled_text(
         engine.Surface: Surface with styled text drawn on it.
     """
     tagged_text = parse_styled_text(text, default_font, default_color)
-    return _render_tagged_text(surf, tagged_text, topleft, align)
+    return tagged_text.draw(surf, topleft, align)
