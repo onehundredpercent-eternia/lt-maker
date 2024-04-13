@@ -253,6 +253,12 @@ class TaggedText:
             text_surf = self._cache[cache_index]
         return text_surf
 
+    def update(self):
+        """
+        Updates the internal cache index for which of the jittery text surfs to grab
+        """
+        self._cache_index_counter += 1
+
     def draw(
         self,
         surf: engine.Surface,
@@ -292,7 +298,5 @@ class TaggedText:
             # blit normally
             for chunk in self.chunks:
                 tx += chunk.draw(surf, (tx, ty))
-
-        self._cache_index_counter += 1
 
         return surf
