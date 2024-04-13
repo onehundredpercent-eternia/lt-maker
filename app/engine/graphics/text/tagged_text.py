@@ -3,6 +3,7 @@ from typing import List, Dict, Tuple, Optional, Iterator
 
 import math
 
+from app.constants import FRAMERATE
 from app.engine import engine
 from app.engine.fonts import FONT
 from app.engine.graphics.text.text_effects import (
@@ -83,8 +84,6 @@ class TaggedText:
         self._size: int = 0  # this is the total length of the individual chunks
         self._caching: bool = False
         self._cache: Dict[int, engine.Surface] = {}
-        # This is basically a frame counter, that increments by 1 every frame to make dynamic text effects increment as well.
-        self._cache_index_counter: int = 0
         self._effect_cycle_period_lcm: int = 1
         self._max_offset: Tuple[int, int, int, int] = (0, 0, 0, 0)
 
@@ -253,12 +252,6 @@ class TaggedText:
             text_surf = self._cache[cache_index]
         return text_surf
 
-    def update(self):
-        """
-        Updates the internal cache index for which of the jittery text surfs to grab
-        """
-        self._cache_index_counter += 1
-
     def draw(
         self,
         surf: engine.Surface,
@@ -289,8 +282,8 @@ class TaggedText:
         else:
             tx, ty = topleft
 
-        cache_index = self._cache_index_counter % self.get_cycle_period()
         if self._caching and self.global_caching:
+            cache_index = int(engine.get_time() / FRAMERATE) % self.get_cycle_period()
             text_surf = self._get_cached_text_surf(cache_index, test_surf=test_surf)
             text_surf_ty, _, _, text_surf_tx = self._max_offset
             surf.blit(text_surf, (tx - text_surf_tx, ty - text_surf_ty))

@@ -627,7 +627,6 @@ class Dialog:
             else:
                 tagged_text = self.tagged_text[start:stop]
             tagged_text.draw(text_surf, (x_pos, y_pos))
-            tagged_text.update()
 
         display_indices = self.text_indices[-self.num_lines :]
         for idx, indices in enumerate(display_indices):
@@ -646,7 +645,6 @@ class Dialog:
                 tagged_text.set_caching_if_recommended()
                 self.tagged_text_cache[(start, stop)] = tagged_text
             tagged_text.draw(text_surf, (x_pos, y_set))
-            tagged_text.update()
             x_pos += tagged_text.width()
 
             end_x_pos = self.position[0] + 8 + x_pos
