@@ -192,7 +192,6 @@ class TaggedText:
                 if effect not in effects_updated:
                     effect.update()
                     effects_updated.add(effect)
-        self._cache_index_counter += 1
 
     def get_cycle_period(self) -> int:
         return self._effect_cycle_period_lcm
@@ -293,5 +292,7 @@ class TaggedText:
             # blit normally
             for chunk in self.chunks:
                 tx += chunk.draw(surf, (tx, ty))
+
+        self._cache_index_counter += 1
 
         return surf
