@@ -136,9 +136,8 @@ class Dialog:
         # It will be used during draw state to slice out the corresponding tagged text substring to render.
         # This also allows correct handling for discarding whitespace characters that happens during update.
         self.text_indices: List[self.TextIndex] = []
-        # This caches tagged texts so we can reuse a TaggedText surf when drawing
+        # This caches tagged texts so we can reuse a TaggedText object when drawing
         self.tagged_text_cache: Dict[Tuple[int, int], TaggedText] = {}
-        self.cache_index_counter: int = 0
 
         # Size
         if width:
@@ -627,8 +626,7 @@ class Dialog:
                 tagged_text = self.tagged_text_cache[(start, stop)]
             else:
                 tagged_text = self.tagged_text[start:stop]
-            cache_index = self.cache_index_counter % tagged_text.get_cycle_period()
-            tagged_text.draw(text_surf, (x_pos, y_pos), cache_index=cache_index)
+            tagged_text.draw(text_surf, (x_pos, y_pos))
 
         display_indices = self.text_indices[-self.num_lines :]
         for idx, indices in enumerate(display_indices):
@@ -646,14 +644,11 @@ class Dialog:
                 tagged_text = self.tagged_text[start:stop]
                 tagged_text.set_caching_if_recommended()
                 self.tagged_text_cache[(start, stop)] = tagged_text
-            cache_index = self.cache_index_counter % tagged_text.get_cycle_period()
-            tagged_text.draw(text_surf, (x_pos, y_set), cache_index=cache_index)
+            tagged_text.draw(text_surf, (x_pos, y_set))
             x_pos += tagged_text.width()
 
             end_x_pos = self.position[0] + 8 + x_pos
             end_y_pos = self.position[1] + 8 + y_pos
-
-        self.cache_index_counter += 1
 
         surf.blit(text_surf, (self.position[0] + 8, self.position[1] + 8))
         return end_x_pos, end_y_pos
