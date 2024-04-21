@@ -1,3 +1,4 @@
+import re
 from typing import List, Tuple
 import unittest
 
@@ -24,6 +25,23 @@ class UtilsTests(unittest.TestCase):
 
         assert_pos([(1, 1)], (-1, -1))
         assert_pos([(1, 1), (1, 0), (1, -1), (1, -2)], (-1, 1))
+
+    def test_nested_expr(self):
+        from app.utilities.str_utils import nested_expr
+        test_str = "A{B{CD}E}F{GH}"
+        self.assertEqual(nested_expr(test_str), ['A', ['B', ['C', 'D'], 'E'], 'F', ['G', 'H']])
+
+    def test_matched_expr(self):
+        from app.utilities.str_utils import matched_expr
+        test_str = "{bac{def}jk} {lmno}"
+        self.assertEqual(matched_expr(test_str, '{', '}'), ['{bac{def}jk}', '{lmno}'])
+
+def load_tests(loader, tests, ignore):
+    import doctest
+    from app.utilities import str_utils
+
+    tests.addTests(doctest.DocTestSuite(str_utils))
+    return tests
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,6 @@
 import functools
 import re
-from typing import Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 
 RAW_NEWLINE = '\u2029'
@@ -9,7 +9,7 @@ SHIFT_NEWLINE = '\u2028'
 def convert_raw_text_newlines(s: str) -> str:
     return s.replace('\u2029', '\n')
 
-def get_next_name(name, names, infix='_'):
+def get_next_name(name: str, names: List[str], infix: str='_') -> str:
     if name not in names:
         return name
     else:
@@ -22,7 +22,7 @@ def get_next_name(name, names, infix='_'):
                 return test_name
             counter += 1
 
-def get_next_int(name, names):
+def get_next_int(name: str, names: List[str]) -> str:
     if name not in names:
         return name
     else:
@@ -33,7 +33,7 @@ def get_next_int(name, names):
                 return test_name
             counter += 1
 
-def get_next_generic_nid(name: str, names):
+def get_next_generic_nid(name: str, names: List[str]) -> str:
     if name not in names:
         return name
     elif is_int(name):
@@ -46,7 +46,7 @@ def get_next_generic_nid(name: str, names):
     else:
         return get_next_name(name, names)
 
-def find_last_number(s: str):
+def find_last_number(s: str) -> Optional[int]:
     last_number = re.findall(r'\d+$', s)
     if last_number:
         return int(last_number[-1])
@@ -65,10 +65,10 @@ def intify(s: str) -> List[int]:
     vals = s.split(',')
     return [int(i) for i in vals]
 
-def skill_parser(s: str) -> list:
+def skill_parser(s: str) -> List[Tuple[int, str]]:
     if s is not None:
         each_skill = [each.split(',') for each in s.split(';')]
-        split_line = [[int(s_l[0]), s_l[1]] for s_l in each_skill]
+        split_line = [(int(s_l[0]), s_l[1]) for s_l in each_skill]
         return split_line
     else:
         return []
@@ -108,17 +108,32 @@ def camel_to_snake(name: str) -> str:
 def snake_to_readable(s: str) -> str:
     return s.replace('_', ' ').title()
 
-def nested_expr(s, opener, closer):
-    # Returns a nested list
+def nested_expr(s: str, opener: str="{", closer: str="}") -> List[str | List[Any]]:
+    """Breaks a string into a nested list of strings
+
+    Examples:
+        >>> nested_expr("A{B{CD}E}F{GH}")
+        ['A', ['B', ['C', 'D'], 'E'], 'F', ['G', 'H']]
+
+    Args:
+        text (str): a string with nested openers and closers
+        opener (str): the opener character
+        closer (str): the closer character
+
+    Returns:
+        List[str | List]: the string broken into a list of chars and lists corresponding to the nested openers and closers
+    """
     assert opener != closer
     assert len(opener) == 1
     assert len(closer) == 1
-    main_list = []
-    list_stack = [main_list]
+    if not s.startswith(opener) or not s.endswith(closer):
+        s = opener + s + closer
+    main_list: List[str | List[Any]] = []
+    list_stack: List[List[Any]] = [main_list]
     current_list = main_list
     for character in s:
         if character == opener:
-            new_list = []
+            new_list: List[Any] = []
             list_stack.append(new_list)
             current_list.append(new_list)
             current_list = new_list
@@ -130,8 +145,19 @@ def nested_expr(s, opener, closer):
     return main_list[0]
 
 def matched_expr(s: str, opener: str, closer: str):
-    # returns all strings bounded by balanced openers, closers
-    # e.g. "{bac{def}jk} {lmno}" would return "[bac{def}jk, lmno]", not "[bac{def, lmno]"
+    """Returns all strings bounded by balanced openers, closers
+
+    Examples:
+        >>> matched_expr('{bac{def}jk} {lmno}', '{', '}')
+        ['{bac{def}jk}', '{lmno}']
+
+    Args:
+        s (str): the string to parse
+        opener (str): the opener character
+        closer (str): the closer character
+
+    Returns:
+        List[str]: all strings bounded by balanced openers, closers"""
     assert opener != closer
     assert len(opener) == 1
     assert len(closer) == 1
