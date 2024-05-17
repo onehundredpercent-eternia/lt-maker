@@ -22,7 +22,7 @@ from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
 from app.events import event_commands, triggers
-from app.events.event_processor import EventProcessor
+from app.events.lt_eventing.event_processor import EventProcessor
 from app.events.event_portrait import EventPortrait
 from app.events.event_prefab import EventPrefab
 from app.events.event_version import EventVersion

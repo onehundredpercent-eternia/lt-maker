@@ -6,7 +6,7 @@ from app.events import speak_style, event_commands
 from app.events.event import Event
 from app.engine.sprites import SPRITES
 from app.engine.text_evaluator import TextEvaluator
-from app.events.event_processor import EventProcessor
+from app.events.lt_eventing.event_processor import EventProcessor
 from app.events.event_prefab import EventPrefab
 from app.events.event_version import EventVersion
 from app.events.python_eventing.python_event_processor import PythonEventProcessor
@@ -81,7 +81,7 @@ class MockEvent(Event):
         return None
 
 class MockEventProcessor(EventProcessor):
-    def __init__(self, nid: NID, script: str, text_evaluator: TextEvaluator, 
+    def __init__(self, nid: NID, script: str, text_evaluator: TextEvaluator,
                  if_statement_strategy=IfStatementStrategy.ALWAYS_TRUE,
                  command_pointer: int = 0):
         super().__init__(nid, script, text_evaluator)

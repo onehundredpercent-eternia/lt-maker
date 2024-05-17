@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 from app.engine.text_evaluator import TextEvaluator
 from app.events import event_commands
-from app.events.event_processor import EventProcessor, IteratorInfo
+from app.events.lt_eventing.event_processor import EventProcessor, IteratorInfo
 from app.events.triggers import GenericTrigger
 from app.tests.mocks.mock_game import get_mock_game
 
