@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Tuple
+from collections import deque
+from typing import Deque, List, Set, Tuple
 
 from app.constants import WINWIDTH, WINHEIGHT
 from app.engine import engine
@@ -31,6 +32,12 @@ class InputManager():
 
         self.unavailable_button = None
 
+        # added to replicate input lag on the gba. can be configured.
+        self.input_lag = cf.SETTINGS['input_lag'] # frames
+        self.input_lag_buffer: Deque[List] = deque()
+        for i in range(self.input_lag): # initialize lag buffer
+            self.input_lag_buffer.append([])
+
     # The joystick needs be plugged in before this method is called
     def init_joystick(self):
         if engine.joystick_avail():
@@ -54,7 +61,7 @@ class InputManager():
 
     def just_pressed(self, button):
         return button in self.key_down_events
-    
+
     def directional_input_pressed(self):
         directional_inputs = ('UP', 'DOWN', 'LEFT', 'RIGHT')
         return any([input_pressed for input_pressed in directional_inputs if self.is_pressed(input_pressed)])
@@ -126,7 +133,12 @@ class InputManager():
         self.hat_state = {k: False for k in range(4)}
         self.axis_state = {k: False for k in range(6)}
 
-    def process_input(self, events):
+    def process_input(self, new_events: list):
+        events = new_events
+        self.input_lag_buffer.append(new_events.copy())
+        lagged_events = self.input_lag_buffer.popleft()
+        events = lagged_events
+
         self.key_up_events.clear()
         self.key_down_events.clear()
 

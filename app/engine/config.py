@@ -37,7 +37,9 @@ def read_config_file():
                          ('key_LEFT', 'K_LEFT'),
                          ('key_RIGHT', 'K_RIGHT'),
                          ('key_UP', 'K_UP'),
-                         ('key_DOWN', 'K_DOWN')])
+                         ('key_DOWN', 'K_DOWN'),
+                         ('input_lag', 5)
+                         ])
 
     def parse_ini(fn):
         with open(fn) as fp:
