@@ -394,23 +394,31 @@ class AnimationCombat(BaseCombat, MockCombat):
                 elif self.get_from_playback('defense_proc'):
                     self.set_up_proc_animation('defense_proc')
                 else:
+                    self.add_proc_icon.memory.clear()
                     self.set_up_combat_animation()
 
         elif self.state == 'attack_proc':
-            if self.left_battle_anim.done() and self.right_battle_anim.done() and current_time > 400:
-                if self.get_from_playback('defense_proc'):
+            if self.left_battle_anim.done() and self.right_battle_anim.done() and not self.proc_icons:
+                if self.get_from_playback('attack_proc'):
+                    self.set_up_proc_animation('attack_proc')
+                elif self.get_from_playback('defense_proc'):
                     self.set_up_proc_animation('defense_proc')
                 else:
+                    self.add_proc_icon.memory.clear()
                     self.set_up_combat_animation()
 
         elif self.state == 'defense_proc':
-            if self.left_battle_anim.done() and self.right_battle_anim.done() and current_time > 400:
-                self.set_up_combat_animation()
+            if self.left_battle_anim.done() and self.right_battle_anim.done() and not self.proc_icons:
+                if self.get_from_playback('defense_proc'):
+                    self.set_up_proc_animation('defense_proc')
+                else:
+                    self.add_proc_icon.memory.clear()
+                    self.set_up_combat_animation()
 
         elif self.state == 'anim':
             if self.left_battle_anim.done() and self.right_battle_anim.done() and \
-                    (not self.rp_battle_anim or self.rp_battle_anim.done()) and (not \
-                    self.lp_battle_anim or self.lp_battle_anim.done()):
+                    (not self.rp_battle_anim or self.rp_battle_anim.done()) and \
+                    (not self.lp_battle_anim or self.lp_battle_anim.done()):
                 self.state = 'end_phase'
 
         elif self.state == 'hp_change':
@@ -665,6 +673,10 @@ class AnimationCombat(BaseCombat, MockCombat):
         hp_brushes = ('damage_hit', 'damage_crit', 'heal_hit')
         if not any(brush.nid in hp_brushes for brush in self.playback):
             self.current_battle_anim.resume()
+
+        # If damage is 0 and this is a damaging spell
+        if self.get_damage() <= 0 and any(brush.nid in ('damage_hit', 'damage_crit') for brush in self.playback):
+            self.no_damage()
 
     def _handle_playback(self, sound=True):
         hp_brushes = ('damage_hit', 'damage_crit', 'heal_hit')
@@ -1152,7 +1164,7 @@ class AnimationCombat(BaseCombat, MockCombat):
     def draw_item(self, surf, item, other_item, unit, other, topleft):
         icon = icons.get_icon(item)
         if icon:
-            icon = item_system.item_icon_mod(unit, item, other, icon)
+            icon = item_system.item_icon_mod(unit, item, other, other_item, icon)
             surf.blit(icon, (topleft[0] + 2, topleft[1] + 4))
 
         if skill_system.check_enemy(unit, other):
@@ -1192,6 +1204,10 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         self.cleanup_combat()
 
+        self.handle_records(self.full_playback, all_units)
+
+        self.handle_combat_death(all_units)
+
         # handle wexp & skills
         if not self.attacker.is_dying:
             self.handle_wexp(self.attacker, self.main_item, self.defender)
@@ -1217,7 +1233,6 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         pairs = self.handle_supports(all_units)
         self.handle_support_pairs(pairs)
-        self.handle_records(self.full_playback, all_units)
 
         asp = self.attacker.strike_partner
         dsp = None

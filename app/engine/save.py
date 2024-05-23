@@ -67,7 +67,7 @@ def dict_print(d):
         if isinstance(v, dict):
             dict_print(v)
         else:
-            s = "{0} : {1}".format(k, v)
+            s = "{0} : {1} ({2})".format(k, v, type(v))
             print(s)
 
 def save_io(s_dict, meta_dict, old_slot, slot, force_loc=None, name=None):
