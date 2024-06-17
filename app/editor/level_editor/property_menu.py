@@ -136,11 +136,7 @@ class PropertiesMenu(QWidget):
         form.addWidget(self.overworld_box)
         self.overworld_box.hide()
 
-        # Free roam stuff
-        self.free_roam_box = PropertyCheckBox("Free Roam?", QCheckBox, self)
-        self.free_roam_box.edit.stateChanged.connect(self.free_roam_changed)
-        form.addWidget(self.free_roam_box)
-
+        # Tag stuff
         self.tag_box = PropertyBox(_("Level Tags"), MultiSelectComboBox, self)
         self.tag_box.edit.setPlaceholderText(_("No tag"))
         self.tag_box.edit.addItems(DB.tags.keys())
@@ -150,6 +146,11 @@ class PropertiesMenu(QWidget):
         self.tag_box.add_button(QPushButton('...'))
         self.tag_box.button.setMaximumWidth(40)
         self.tag_box.button.clicked.connect(self.access_tags)
+
+        # Free roam stuff
+        self.free_roam_box = PropertyCheckBox("Free Roam?", QCheckBox, self)
+        self.free_roam_box.edit.stateChanged.connect(self.free_roam_changed)
+        form.addWidget(self.free_roam_box)
 
         self.unit_box = UnitBox(self, button=True, title="Roaming Unit")
         self.unit_box.edit.activated.connect(self.unit_changed)
