@@ -372,11 +372,6 @@ class PrepFormationState(MapState):
                     game.memory['formation_unit'] = game.get_unit(cur_unit.traveler)
                     game.memory['child_menu'] = menus.Choice(cur_unit, ['Separate', 'Switch'])
                     game.state.change('prep_formation_menu')
-                # paired up unit not on a formation tile
-                # elif cur_unit.traveler and cur_unit.team == 'player' and not game.check_for_region(game.cursor.position, 'formation'):
-                #     get_sound_thread().play_sfx('Select 1')
-                #     game.memory['formation_unit'] = game.get_unit(cur_unit.traveler)
-                #     game.state.change('prep_formation_select')
                 else:
                     get_sound_thread().play_sfx('Select 2')
                     player_team_enemies = DB.teams.enemies
@@ -486,10 +481,6 @@ class PrepFormationSelectState(MapState):
                         action.do(action.Separate(game.get_rescuer(self.unit), self.unit, None, False))
                     action.do(action.ArriveOnMap(self.unit, game.cursor.position))
                     self.back()
-            # Paired up unit not on a formation tile
-            # elif hovered_unit and hovered_unit.team == 'player' and hovered_unit.traveler:
-            #     swap_duo_unit(hovered_unit)
-            # unit without formation OR no unit without formation
             else:
                 get_sound_thread().play_sfx('Error')
 
