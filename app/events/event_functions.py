@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 from app.constants import WINHEIGHT, WINWIDTH, FANCY_DIALOG_MODE
 from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit, UniqueUnit
+from app.data.database.difficulty_modes import RNGOption
 from app.data.resources.resources import RESOURCES
 from app.data.resources.sounds import SFXPrefab, SongPrefab
 from app.engine import (action, background, banner, base_surf, dialog, engine,
@@ -690,7 +691,7 @@ def force_chapter_clean_up(self: Event, flags=None):
 def skip_save(self: Event, true_or_false: bool, flags=None):
     action.do(action.SetLevelVar('_skip_save', true_or_false))
 
-def activate_turnwheel(self: Event, force: bool=True, flags=None):
+def activate_turnwheel(self: Event, force: bool = True, flags=None):
     self.turnwheel_flag = 2 if force else 1
 
 def battle_save(self: Event, flags=None):
@@ -1148,7 +1149,7 @@ def interact_unit(self: Event, unit, position, combat_script: Optional[List[str]
             return
 
     interaction.start_combat(
-        actor, target, item, event_combat=True, script=script, total_rounds=total_rounds,
+        actor, target, item, skip='immediate' in flags, event_combat=True, script=script, total_rounds=total_rounds,
         arena='arena' in flags, force_animation='force_animation' in flags, force_no_animation='force_no_animation' in flags)
     self.state = "paused"
 
@@ -1194,12 +1195,12 @@ def add_fatigue(self: Event, unit, fatigue: int, flags=None):
         return
     action.do(action.ChangeFatigue(actor, fatigue))
 
-def set_unit_field(self: Event, unit, key, value, flags=None):
+def set_unit_field(self: Event, global_unit, key, value, flags=None):
     flags = flags or set()
 
-    actor = self._get_unit(unit)
+    actor = self._get_unit(global_unit)
     if not actor:
-        self.logger.error("set_unit_field: Couldn't find unit %s" % unit)
+        self.logger.error("set_unit_field: Couldn't find unit %s" % global_unit)
         return
     try:
         value = self._eval_expr(value, 'from_python' in flags)
@@ -1609,6 +1610,7 @@ def set_item_uses(self: Event, global_unit_or_convoy, item, uses: int, flags=Non
         action.do(action.SetObjData(item, 'c_uses', utils.clamp(uses, 0, item.data['starting_c_uses'])))
     else:
         self.logger.error("set_item_uses: Item %s does not have uses!" % item.nid)
+        return
 
 def set_item_data(self: Event, global_unit_or_convoy, item, nid, expression, flags=None):
     flags = flags or set()
@@ -2279,7 +2281,16 @@ def set_mode_autolevels(self: Event, level: int, flags=None):
         else:
             self.game.current_mode.enemy_truelevels = autolevel
 
-def promote(self: Event, global_unit, klass_list: Optional[List[NID]]=None, flags=None):
+def set_mode_rng(self: Event, rng: str, flags=None):
+    flags = flags or set()
+
+    new_mode = rng
+    if new_mode not in [r.value for r in RNGOption]:
+        self.logger.error("set_mode_rng: %s is not a valid RNG Option" % new_mode)
+        return
+    self.game.current_mode.rng_mode = RNGOption(new_mode)
+
+def promote(self: Event, global_unit, klass_list: Optional[List[NID]] = None, flags=None):
     flags = flags or set()
     unit = self._get_unit(global_unit)
     if not unit:

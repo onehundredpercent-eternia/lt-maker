@@ -96,12 +96,12 @@ class TargetSystem():
                 if movement_funcs.check_weakly_traversable(unit, n1) \
                         and not self.game.board.get_unit(n1) \
                         and not self.game.movement.check_if_occupied_in_future(n1) \
-                        and (not check_for_valid_path or self.game.path_system.get_path(unit, n1)):
+                        and (not check_for_valid_path or not unit.position or self.game.path_system.get_path(unit, n1)):
                     return n1
                 elif movement_funcs.check_weakly_traversable(unit, n2) \
                         and not self.game.board.get_unit(n2) \
                         and not self.game.movement.check_if_occupied_in_future(n2) \
-                        and (not check_for_valid_path or self.game.path_system.get_path(unit, n2)):
+                        and (not check_for_valid_path or not unit.position or self.game.path_system.get_path(unit, n2)):
                     return n2
             r += 1
         return None
@@ -204,6 +204,7 @@ class TargetSystem():
         manhattan_restriction = item_system.range_restrict(unit, item)
         if max_range >= 99:
             attacks = self.game.board.get_all_positions_in_bounds()
+            attacks = attacks - self.get_shell({unit.position}, set(range(0, min(item_range, default=0))), self.game.board.bounds)
             if manhattan_restriction:
                 x, y = unit.position
                 attacks = {(a, b) for (a, b) in attacks if (a - x, b - y) in manhattan_restriction}
@@ -256,6 +257,7 @@ class TargetSystem():
             manhattan_restriction = item_system.range_restrict(unit, item)
             if max_range >= 99:
                 item_attacks = self.game.board.get_all_positions_in_bounds()
+                item_attacks = item_attacks - self.get_shell({unit.position}, set(range(0, min(item_range, default=0))), self.game.board.bounds)
                 if manhattan_restriction:
                     attacks = set()
                     for move in moves:

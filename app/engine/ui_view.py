@@ -397,7 +397,7 @@ class UIView():
                 FONT['text-blue'].blit_right(str(num), surf, (x_pos, y_pos))
 
         crit_flag = DB.constants.value('crit')
-        grandmaster = game.mode.rng_choice == RNGOption.GRANDMASTER
+        grandmaster = game.rng_mode == RNGOption.GRANDMASTER
         if grandmaster:  # Grandmaster takes precedence
             crit_flag = False
 
@@ -546,7 +546,11 @@ class UIView():
         up_arrow = engine.subsurface(SPRITES.get('arrow_advantage'), (ANIMATION_COUNTERS.arrow_counter.count * 7, 0, 7, 10))
         down_arrow = engine.subsurface(SPRITES.get('arrow_advantage'), (ANIMATION_COUNTERS.arrow_counter.count * 7, 10, 7, 10))
 
-        if adv and adv.modification > 0:
+        if item_system.show_weapon_advantage(attacker, weapon, defender, def_weapon):
+            surf.blit(up_arrow, topleft)
+        elif item_system.show_weapon_disadvantage(attacker, weapon, defender, def_weapon):
+            surf.blit(down_arrow, topleft)
+        elif adv and adv.modification > 0:
             surf.blit(up_arrow, topleft)
         elif adv and adv.modification < 0:
             surf.blit(down_arrow, topleft)
@@ -574,7 +578,7 @@ class UIView():
             self.attack_info_disp = self.create_attack_info(attacker, weapon, defender, a_assist, d_assist)
 
         crit_flag = DB.constants.value('crit')
-        grandmaster = game.mode.rng_choice == RNGOption.GRANDMASTER
+        grandmaster = game.rng_mode == RNGOption.GRANDMASTER
         if grandmaster:  # Grandmaster takes precedence
             crit_flag = False
 
@@ -631,7 +635,7 @@ class UIView():
         x2_pos_player_partner = (topleft[0] + 107 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
         x2_pos_enemy_partner = (topleft[0] + 20 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
 
-        my_num = combat_calcs.outspeed(attacker, defender, weapon, resolve_weapon(defender), "attack", (0, 0))
+        my_num = combat_calcs.compute_attack_phases(attacker, defender, weapon, resolve_weapon(defender), "attack", (0 , 0))
         my_num *= combat_calcs.compute_multiattacks(attacker, defender, weapon, "attack", (0, 0))
         if weapon.uses_options and weapon.uses_options.one_loss_per_combat():
             pass  # If you can only lose one use at a time, no need to min this
@@ -648,10 +652,7 @@ class UIView():
         # Enemy doubling
         eweapon = defender.get_weapon()
         if eweapon and combat_calcs.can_counterattack(attacker, weapon, defender, eweapon):
-            if DB.constants.value('def_double') or skill_system.def_double(defender):
-                e_num = combat_calcs.outspeed(defender, attacker, eweapon, weapon, 'defense', (0, 0))
-            else:
-                e_num = 1
+            e_num = combat_calcs.compute_attack_phases(defender, attacker, eweapon, weapon, 'defense', (0, 0))
             e_num *= combat_calcs.compute_multiattacks(defender, attacker, eweapon, 'defense', (0, 0))
             e_num = min(e_num, eweapon.data.get('uses', 100))
 
@@ -675,7 +676,7 @@ class UIView():
             if mt is not None:
                 height += 1
             hit = combat_calcs.compute_hit(attacker, defender, spell, resolve_weapon(defender), 'attack', (0, 0))
-            if hit is not None:
+            if spell.hit is not None:
                 height += 1
             crit = combat_calcs.compute_crit(attacker, defender, spell, resolve_weapon(defender), 'attack', (0, 0))
             if DB.constants.value('crit') and crit is not None:
@@ -709,7 +710,7 @@ class UIView():
                 mt_width = FONT['text-blue'].width(str(mt))
                 FONT['text-blue'].blit(str(mt), bg_surf, (width - 5 - mt_width, running_height))
 
-            if hit is not None:
+            if spell.hit is not None:
                 running_height += 16
                 FONT['text-yellow'].blit('Hit', bg_surf, (9, running_height))
                 if hit >= 100:

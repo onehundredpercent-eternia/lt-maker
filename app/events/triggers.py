@@ -122,19 +122,21 @@ class OnRegionInteract(EventTrigger):
     follow this trigger's format.
     """
     nid: ClassVar[NID] = 'on_region_interact'
-    unit1: UnitObject #: the unit that is interacting
-    position: Tuple[int, int] #: the position of the unit.
-    region: RegionObject #: the event region.
+    unit1: UnitObject  #: the unit that is interacting
+    position: Tuple[int, int]  #: the position of the unit.
+    region: RegionObject  #: the event region.
 
 @dataclass(init=True)
 class CombatDeath(EventTrigger):
     """
     Occurs during combat when any unit dies, including generics.
+    If triggered, will delay the death animation of unit1 until
+    after the attack animation of unit2 finishes.
     """
     nid: ClassVar[NID] = 'combat_death'
-    unit1: UnitObject #: the unit that died.
-    unit2: Optional[UnitObject] #: the unit that killed them (can be None).
-    position: Tuple[int, int] #: the position they died at.
+    unit1: UnitObject  #: the unit that died.
+    unit2: Optional[UnitObject]  #: the unit that killed them (can be None).
+    position: Tuple[int, int]  #: the position they died at.
 
 @dataclass(init=True)
 class UnitDeath(EventTrigger):
@@ -142,9 +144,9 @@ class UnitDeath(EventTrigger):
     Occurs after combat when any unit dies, including generics.
     """
     nid: ClassVar[NID] = 'unit_death'
-    unit1: UnitObject #: the unit that died.
-    unit2: Optional[UnitObject] #: the unit that killed them (can be None).
-    position: Tuple[int, int] #: the position they died at.
+    unit1: UnitObject  #: the unit that died.
+    unit2: Optional[UnitObject]  #: the unit that killed them (can be None).
+    position: Tuple[int, int]  #: the position they died at.
 
 @dataclass(init=True)
 class UnitWait(EventTrigger):
@@ -152,10 +154,10 @@ class UnitWait(EventTrigger):
     Occurs when any unit waits.
     """
     nid: ClassVar[NID] = 'unit_wait'
-    unit1: UnitObject #: the unit that waited.
-    position: Tuple[int, int] #: the position they waited at.
-    region: Optional[RegionObject] #: region under the unit (can be None)
-    actively_chosen: bool #: boolean for whether the player actively selected Wait
+    unit1: UnitObject  #: the unit that waited.
+    position: Tuple[int, int]  #: the position they waited at.
+    region: Optional[RegionObject]  #: region under the unit (can be None)
+    actively_chosen: bool  #: boolean for whether the player actively selected Wait
 
 @dataclass(init=True)
 class UnitSelect(EventTrigger):
@@ -164,7 +166,7 @@ class UnitSelect(EventTrigger):
     """
     nid: ClassVar[NID] = 'unit_select'
     unit1: UnitObject
-    position: Tuple[int, int] #: the position they were selected at.
+    position: Tuple[int, int]  #: the position they were selected at.
 
 @dataclass(init=True)
 class UnitDeselect(EventTrigger):

@@ -57,11 +57,11 @@ def get_support_rank_bonus(unit, target=None):
             continue
         highest_rank = pair.unlocked_ranks[-1]
         support_rank_bonus = game.supports.get_bonus(unit, other_unit, highest_rank)
-        bonuses.append((support_rank_bonus, other_unit))
+        bonuses.append((support_rank_bonus, other_unit, highest_rank))
     num_allies_allowed = DB.support_constants.value('bonus_ally_limit')
     if num_allies_allowed and len(bonuses) > num_allies_allowed:
         # Get the X highest bonuses
-        bonuses = sorted(bonuses, key=lambda x: DB.support_ranks.index(x[0].support_rank), reverse=True)
+        bonuses = sorted(bonuses, key=lambda x: DB.support_ranks.index(x[2]), reverse=True)
         bonuses = bonuses[:num_allies_allowed]
     allies = [_[1] for _ in bonuses]
     bonuses = [_[0] for _ in bonuses]
@@ -569,15 +569,30 @@ def compute_true_speed(unit, target, item, def_item, mode, attack_info) -> int:
 
 def outspeed(unit, target, item, def_item, mode, attack_info) -> int:
     if not item:
-        return 1
+        return 0
     if not item_system.can_double(unit, item):
-        return 1
+        return 0
     if skill_system.no_double(unit):
-        return 1
+        return 0
+    if mode == 'defense' and not (DB.constants.value('def_double') or skill_system.def_double(target)):
+        return 0
 
     speed = compute_true_speed(unit, target, item, def_item, mode, attack_info)
 
-    return 2 if speed >= equations.parser.speed_to_double(unit) else 1
+    return 1 if speed >= equations.parser.speed_to_double(unit) else 0
+
+def compute_attack_phases(unit, target, item, def_item, mode, attack_info) -> int:
+    num_attacks = 1
+    if not item:
+        return 0
+
+    num_attacks += item_system.dynamic_attacks(unit, item, target, resolve_weapon(target), mode, attack_info, num_attacks)
+    num_attacks += skill_system.dynamic_attacks(unit, item, target, resolve_weapon(target), mode, attack_info, num_attacks)
+    # Only bother calculating whether we outspeed when there is a target
+    if target:
+        num_attacks += outspeed(unit, target, item, def_item, mode, attack_info)
+
+    return num_attacks
 
 def compute_multiattacks(unit, target, item, mode, attack_info):
     if not item:

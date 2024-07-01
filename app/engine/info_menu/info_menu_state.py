@@ -679,6 +679,11 @@ class InfoMenuState(State):
                     render_text(surf, ['text'], [str(aid)], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
 
                     # Mount Symbols
+                    for tag in self.unit.tags:
+                        if ('aid_icon_%s' % tag) in SPRITES:
+                            aid_surf = SPRITES.get('aid_icon_%s' % tag)
+                            break
+                    else:
                     if 'Dragon' in self.unit.tags:
                         aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 48, 16, 16))
                     elif 'Flying' in self.unit.tags:
