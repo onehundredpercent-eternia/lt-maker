@@ -9,9 +9,9 @@ from app.dungeon_maker.terrain_generation import DungeonTileMap, Terrain
 
 from app.engine import engine
 
-PaletteDatabase = Dict[Terrain, 'Palette']
+PainterDatabase = Dict[Terrain, 'Painter']
 
-def get_image16(base_image, coord) -> engine.Surface:
+def get_image16(base_image: engine.Surface, coord: Pos) -> engine.Surface:
     im = engine.subsurface(base_image, (
         coord[0] * TILEWIDTH,
         coord[1] * TILEHEIGHT,
@@ -28,7 +28,7 @@ def find_limit(image: engine.Surface, idx: int) -> int:
             return y // TILEHEIGHT
     return image.get_height() // TILEHEIGHT
 
-class Palette:
+class Painter:
     base_coord: Pos = (0, 0)
 
     def __init__(self, tileset_image_fn: str):
@@ -39,10 +39,10 @@ class Palette:
 
     def determine_sprite(self, dungeon_tilemap: DungeonTileMap, 
                          position: Pos, 
-                         palette_database: PaletteDatabase) -> engine.Surface:
+                         painter_database: PainterDatabase) -> engine.Surface:
         return get_image16(self.tileset_image, self.base_coord)
 
-class WangEdge2Palette(Palette):
+class WangEdge2Painter(Painter):
     terrain_like: Tuple[Terrain] = tuple()
 
     def __init__(self, tileset_image_fn: str):
@@ -60,18 +60,18 @@ class WangEdge2Palette(Palette):
 
     def determine_sprite(self, dungeon_tilemap: DungeonTileMap, 
                          position: Pos, 
-                         palette_database: PaletteDatabase) -> engine.Surface:
+                         painter_database: PainterDatabase) -> engine.Surface:
         idx = self._determine_index(dungeon_tilemap, position)
         coord = random_choice([(idx, k) for k in range(self.limits[idx])], position)
         return get_image16(self.tileset_image, coord)
 
-class FloorPalette(Palette):
+class FloorPainter(Painter):
     def __init__(self, tileset_image_fn: str, shading_image_fn: str):
         self.tileset_image = engine.image_load(tileset_image_fn)
         self.shading_image = engine.image_load(shading_image_fn)
         self.limit = find_limit(self.tileset_image, 0)
 
-    def _get_floor_shading(self, dungeon_tilemap: DungeonTileMap, pos: Pos, palette_database: PaletteDatabase) -> Pos:
+    def _get_floor_shading(self, dungeon_tilemap: DungeonTileMap, pos: Pos, painter_database: PainterDatabase) -> Pos:
         north, _, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
         _, _, _, northwest = dungeon_tilemap.get_diagonal_terrain(pos)
         top, left, corner = False, False, False
@@ -87,7 +87,7 @@ class FloorPalette(Palette):
         # if west and west == 'StairsLeft' and northwest == 'Wall':
             # corner = True
         # if northwest == Terrain.WALL and west and is_floor(west) \
-        #         and self._is_column_bottom(tilemap, (pos[0] - 1, pos[1]), palette_database):
+        #         and self._is_column_bottom(tilemap, (pos[0] - 1, pos[1]), painter_database):
         #     corner = True
 
         shading_coord = None
@@ -106,9 +106,9 @@ class FloorPalette(Palette):
 
     def determine_sprite(self, dungeon_tilemap: DungeonTileMap,
                          position: Pos,
-                         palette_database: PaletteDatabase) -> engine.Surface:
+                         painter_database: PainterDatabase) -> engine.Surface:
         coord = random_choice([(0, k) for k in range(self.limit)], position)
-        shading_coord = self._get_floor_shading(dungeon_tilemap, position, palette_database)
+        shading_coord = self._get_floor_shading(dungeon_tilemap, position, painter_database)
 
         base_image = get_image16(self.tileset_image, coord)
         shading_image = None
@@ -120,7 +120,7 @@ class FloorPalette(Palette):
 
         return base_image
 
-class WallPalette(WangEdge2Palette):
+class WallPainter(WangEdge2Painter):
     terrain_like = (Terrain.WALL,)
 
     class WallKind(Enum):
@@ -225,11 +225,11 @@ class WallPalette(WangEdge2Palette):
 
     def determine_sprite(self, dungeon_tilemap: DungeonTileMap,
                          position: Pos,
-                         palette_database: PaletteDatabase) -> engine.Surface:
+                         painter_database: PainterDatabase) -> engine.Surface:
         coord = self._determine_sprite_coord(dungeon_tilemap,  position)
         return get_image16(self.tileset_image, coord)
 
-def get_palette(palette: str) -> PaletteDatabase:
+def get_painter(palette: str) -> PainterDatabase:
     palette_dir = 'app/dungeon_maker/palettes/'
     if os.path.isdir(palette_dir + palette):
         palette_dir = palette_dir + palette
@@ -237,6 +237,6 @@ def get_palette(palette: str) -> PaletteDatabase:
         palette_dir = palette_dir + "dungeon"
 
     return {
-        Terrain.FLOOR_LOWER: FloorPalette(os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-        Terrain.WALL: WallPalette(os.path.join(palette_dir, 'wall.png')),
+        Terrain.FLOOR_LOWER: FloorPainter(),
+        Terrain.WALL: WallPainter(os.path.join(palette_dir, 'wall.png')),
     }

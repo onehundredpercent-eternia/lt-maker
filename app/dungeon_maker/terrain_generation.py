@@ -40,6 +40,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from app.utilities import utils
 from app.utilities.typing import Pos
 from app.utilities.direction import Direction, get_cardinal_positions, get_diagonal_positions
+from app.dungeon_maker.utilities import set_random_seed
 
 class Terrain(Enum):
     VOID = 0
@@ -58,6 +59,7 @@ class Terrain(Enum):
 
 def generate_terrain(theme: str, size: Pos, seed=-1) -> DungeonTileMap:
     random.seed(seed)
+    set_random_seed(seed)
 
     while True:
         result = _generate_terrain_process(theme, size)
