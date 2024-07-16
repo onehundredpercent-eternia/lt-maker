@@ -12,8 +12,8 @@ class FloorPainter(Painter):
     will select a tile that has shading on the left to make the shadow appear
     """
 
-    def get_coord(self, position: Pos) -> Pos:
-        coord = random_choice([(0, k) for k in range(self.limit[0])], position)
+    def get_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Pos:
+        coord = random_choice([(0, k) for k in range(self.limit[0])], pos)
         return coord
 
     def get_shading_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Pos:

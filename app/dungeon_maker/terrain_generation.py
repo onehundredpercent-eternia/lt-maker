@@ -207,10 +207,17 @@ class DungeonTileMap:
             self.terrain_grid[pos] = Terrain.VOID
 
     def get_cardinal_terrain(self, pos: Pos) -> List[Optional[Terrain]]:
-        return [self.get_terrain(adj) for adj in utils.get_cardinal_positions(pos)]
+        return [self.get_terrain(adj) for adj in get_cardinal_positions(pos)]
 
     def get_diagonal_terrain(self, pos: Pos) -> List[Optional[Terrain]]:
-        return [self.get_terrain(adj) for adj in utils.get_diagonal_positions(pos)]
+        return [self.get_terrain(adj) for adj in get_diagonal_positions(pos)]
+
+    def determine_floor_level(self, pos: Pos) -> int:
+        # TODO
+        """
+        Eventually will return whether this is on floor level 1 (low) or 2 (high)
+        """
+        return 1
 
     def print_grid(self):
         print("   ", end='')

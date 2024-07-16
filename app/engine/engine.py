@@ -7,6 +7,7 @@ import pygame.image
 import pygame.time
 
 from app.constants import WINWIDTH, WINHEIGHT, FPS
+from app.utilities.utils import clamp
 from app.engine import config as cf
 
 import logging
@@ -140,10 +141,10 @@ def save_surface(surf, fn):
 
 def subsurface(surf, rect) -> pygame.Surface:
     x, y, width, height = rect
-    twidth = max(0, min(surf.get_width() - x, width))
-    theight = max(0, min(surf.get_height() - y, height))
-    tx = max(0, x)
-    ty = max(0, y)
+    tx = clamp(x, 0, surf.get_width() - width)
+    ty = clamp(y, 0, surf.get_height() - height)
+    twidth = clamp(width, 0, surf.get_width() - tx)
+    theight = clamp(height, 0, surf.get_height() - ty)
     return surf.subsurface(tx, ty, twidth, theight)
 
 def image_load(fn, convert=False, convert_alpha=False):

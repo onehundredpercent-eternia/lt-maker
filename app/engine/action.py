@@ -1012,7 +1012,7 @@ class Separate(Action):
         game.arrive(self.droppee)
         self.droppee.sprite.change_state('normal')
         if self.with_wait:
-        self.droppee_wait_action.do()
+            self.droppee_wait_action.do()
 
         self.unit.traveler = None
         self.unit.has_dropped = True
@@ -1035,7 +1035,7 @@ class Separate(Action):
         game.arrive(self.droppee)
         self.droppee.sprite.change_state('normal')
         if self.with_wait:
-        self.droppee_wait_action.execute()
+            self.droppee_wait_action.execute()
 
         self.unit.traveler = None
         self.unit.has_dropped = True
@@ -1049,7 +1049,7 @@ class Separate(Action):
         self.unit.traveler = self.droppee.nid
 
         if self.with_wait:
-        self.droppee_wait_action.reverse()
+            self.droppee_wait_action.reverse()
         game.leave(self.droppee)
         self.droppee.position = None
         self.unit.has_dropped = False

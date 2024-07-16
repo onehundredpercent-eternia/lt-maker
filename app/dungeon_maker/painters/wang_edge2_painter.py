@@ -32,6 +32,6 @@ class WangEdge2Painter(Painter):
         return index
 
     def get_coord(self, dungeon_tilemap: DungeonTileMap, position: Pos) -> Pos:
-        col_idx = self.determine_index(dungeon_tilemap, position)
+        col_idx = self._determine_index(dungeon_tilemap, position)
         coord = random_choice([(col_idx, k) for k in range(self.limit[col_idx])], position)
         return coord

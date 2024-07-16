@@ -1,5 +1,6 @@
-from app.utilities.typing import NID
-from typing import List
+from typing import Dict, List, Tuple
+from app.utilities.typing import NID, Pos
+
 from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES, COLORKEY
 from app.utilities.data import Data, Prefab
 
@@ -195,6 +196,40 @@ class TileMapObject(Prefab):
 
         return self
 
+    @classmethod
+    def build_from_scratch(cls, nid: NID, size: Tuple[int, int], 
+                           terrain_grid: Dict[Pos, NID], surf: engine.Surface, 
+                           scratch_data: Dict):
+        self = cls()
+        self.nid = nid
+        self.width = size[0]
+        self.height = size[1]
+        self.autotile_fps = 0
+        self.layers = Data()
+        self.scratch_data = scratch_data
+
+        # Build a layer
+        base_layer = LayerObject('base', False, self)
+        
+        for coord, terrain_nid in terrain_grid.items():
+            base_layer.terrain[coord] = terrain_nid
+
+        image = engine.create_surface((self.width * TILEWIDTH, self.height * TILEHEIGHT))
+        engine.fill(image, COLORKEY)
+        engine.set_colorkey(image, COLORKEY, rleaccel=True)
+        image.blit(surf, (0, 0))
+
+        right_bound = (self.width + 1) * TILEWIDTH
+        bottom_bound = (self.height + 1) * TILEHEIGHT
+        base_layer.pixel_bounds = [0, 0, right_bound, bottom_bound]
+
+        base_layer.image = image
+        base_layer.visible = True
+
+        self.layers.append(base_layer)
+
+        return self
+
     def check_bounds(self, pos):
         return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
 
@@ -255,8 +290,9 @@ class TileMapObject(Prefab):
             os.mkdir('screenshots')
         current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
 
-        image = self.get_full_image((0, 0, self.width * TILEWIDTH, self.height * TILEHEIGHT))
-        image.blit(self.get_foreground_image((0, 0, self.width * TILEWIDTH, self.height * TILEHEIGHT)))
+        cull_rect = (0, 0, self.width * TILEWIDTH, self.height * TILEHEIGHT)
+        image = self.get_full_image(cull_rect)
+        image.blit(self.get_foreground_image(cull_rect), (0, 0))
         engine.save_surface(image, 'screenshots/LT_%s_tilemap.png' % current_time)
 
     def update(self):

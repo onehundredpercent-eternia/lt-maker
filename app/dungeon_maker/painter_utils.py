@@ -15,5 +15,5 @@ class Painter:
     def single_process(self, dungeon_tilemap: DungeonTileMap) -> None:
         pass
 
-    def get_coord(self, position: Pos) -> Pos:
+    def get_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Pos:
         return self.base_coord

@@ -29,7 +29,7 @@ class WallPainter(WangEdge2Painter):
         for pos in all_walls.copy():
             north, east, south, west = dungeon_tilemap.get_cardinal_terrain(pos)
             if east != Terrain.WALL and west != Terrain.WALL and south != Terrain.WALL:
-                if dungeon_tilemap.calc_layer(pos) == 1 and north == Terrain.WALL:
+                if dungeon_tilemap.determine_floor_level(pos) == 1 and north == Terrain.WALL:
                     self.wall_grid[pos] = self.WallKind.BOTTOM
                 else:
                     self.wall_grid[pos] = self.WallKind.TOP

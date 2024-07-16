@@ -1,13 +1,12 @@
 from typing import Dict, Set
 
-from app.constants import TILEWIDTH, TILEHEIGHT
-from app.utilities.typing import Pos
+from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
+from app.utilities.typing import Pos, NID
 from app.dungeon_maker.terrain_generation import generate_terrain, Terrain, DungeonTileMap
 from app.dungeon_maker.pygame_renderers.renderers import get_renderers, RendererDatabase
 
 from app.engine.objects.tilemap import TileMapObject
 from app.engine import engine
-from app.engine.game_state import game
 
 def build_surface(dungeon_tilemap: DungeonTileMap, renderers: RendererDatabase) -> TileMapObject:
     im_width, im_height = dungeon_tilemap.width * TILEWIDTH, dungeon_tilemap.height * TILEHEIGHT
@@ -36,11 +35,21 @@ def build_surface(dungeon_tilemap: DungeonTileMap, renderers: RendererDatabase) 
 
     return surf
 
+def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
+    return {
+        Terrain.VOID: 'Void',
+        Terrain.WALL: 'Wall',
+        Terrain.FLOOR_LOWER: 'Floor',
+        Terrain.FLOOR_UPPER: 'Floor',
+        Terrain.START: 'Stairs',
+        Terrain.END: 'Stairs'
+    }[terrain]
+
 def generate_map(theme: str = 'default', palette_name: str = 'dungeon', 
                  size: Pos = (30, 18), seed: int = -1):
     dungeon_tilemap = generate_terrain(theme, size, seed)
     renderers = get_renderers(palette_name)
-    surf = build_surface(dungeon_tilemap, renderers)
+    surf: engine.Surface = build_surface(dungeon_tilemap, renderers)
 
     # Now we have the surface to use as a real tilemap
     scratch_data = {
@@ -49,10 +58,15 @@ def generate_map(theme: str = 'default', palette_name: str = 'dungeon',
         'size': size,
         'seed': seed,
     }
-    tilemap = TileMapObject.build_from_scratch(dungeon_tilemap, surf, scratch_data)
 
-    game.build_level_from_scratch(tilemap)
-    game.tilemap.save_screenshot()
+    true_terrain_grid = \
+        {pos: get_terrain_nid_from_dungeon_terrain(terrain) for pos, terrain in dungeon_tilemap.terrain_grid.items()}
+    tilemap = TileMapObject.build_from_scratch("sample", size, true_terrain_grid, surf, scratch_data)
+    tilemap.save_screenshot()
 
+# python -m app.dungeon_maker.tilemap_generation
+# Puts the screenshot at the bottom of the screenshot directory
 if __name__ == '__main__':
+    engine.init()
+    engine.build_display((WINWIDTH, WINHEIGHT))
     generate_map(seed=-1)
