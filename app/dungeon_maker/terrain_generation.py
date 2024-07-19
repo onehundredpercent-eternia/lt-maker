@@ -44,18 +44,19 @@ from app.dungeon_maker.utilities import set_random_seed
 
 class Terrain(Enum):
     VOID = 0
-    WALL = 1
-    FLOOR_UPPER = 2
-    FLOOR_LOWER = 3
-    WATER = 4
-    STAIRS_UP = 5
-    STAIRS_RIGHT = 6
-    STAIRS_DOWN = 7
-    STAIRS_LEFT = 8
-    PILLAR = 9
-    FOREST = 10
-    START = 11
-    END = 12
+    WALL_TOP = 1
+    WALL_BOTTOM = 2
+    FLOOR_UPPER = 3
+    FLOOR_LOWER = 4
+    WATER = 5
+    STAIRS_UP = 6
+    STAIRS_RIGHT = 7
+    STAIRS_DOWN = 8
+    STAIRS_LEFT = 9
+    PILLAR = 10
+    FOREST = 11
+    START = 12
+    END = 13
 
 def generate_terrain(theme: str, size: Pos, seed=-1) -> DungeonTileMap:
     random.seed(seed)
@@ -72,7 +73,7 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
     width, height = size
 
     tilemap = DungeonTileMap(width, height)
-    tilemap.reset_grid(Terrain.WALL)
+    tilemap.reset_grid(Terrain.WALL_TOP)
 
     tilemap.set_sections(4, 2)
 
@@ -83,7 +84,7 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
     tilemap.generate_start_and_end()
 
     tilemap.coerce_terrain()
-    tilemap.generate_void()
+    tilemap.split_walls()
 
     tilemap.print_grid()
 
@@ -219,6 +220,52 @@ class DungeonTileMap:
         """
         return 1
 
+    def split_walls(self):
+        """
+        Converts walls from ALL WALL_TOP, and determines which should become WALL_BOTTOM and/or VOID
+        whether we need a TOP wall or a BOTTOM wall for this sprite
+        """
+        all_walls = {pos for pos, terrain in self.terrain_grid.items() if terrain == Terrain.WALL_TOP}
+
+        def is_wall(terrain: Terrain) -> bool:
+            return terrain == Terrain.WALL_TOP or terrain == Terrain.WALL_BOTTOM
+
+        # First, build standalone columns
+        for pos in all_walls.copy():
+            north, east, south, west = self.get_cardinal_terrain(pos)
+            if not is_wall(east) and not is_wall(west) and not is_wall(south):
+                if self.determine_floor_level(pos) == 1 and north == Terrain.WALL_TOP:
+                    self.terrain_grid[pos] = Terrain.WALL_BOTTOM
+                all_walls.remove(pos)
+
+        for pos in all_walls.copy():
+            south_pos = (pos[0], pos[1] + 1)
+            if is_wall(self.terrain_grid.get(south_pos)) or not self.check_bounds(south_pos):
+                all_walls.remove(pos)
+
+        for pos in all_walls.copy():
+            south_pos = (pos[0], pos[1] + 1)
+            north_pos = (pos[0], pos[1] - 1)
+            north, _, south, _ = self.get_cardinal_terrain(pos)
+            if (is_wall(north) or not self.check_bounds(north_pos)) \
+                    and not is_wall(south) \
+                    and (self.determine_floor_level(pos) == 1 
+                         or self.determine_floor_level(south_pos) == 1):
+                self.terrain_grid[pos] = Terrain.WALL_BOTTOM
+                all_walls.remove(pos)
+
+        # Convert pieces that are surrounded to void
+        convert_to_void: Set[Pos] = set()
+        for pos in self.terrain_grid.keys():
+            if self.terrain_grid.get(pos) == Terrain.WALL_TOP \
+                    and all(terrain == Terrain.WALL_TOP or not self.check_bounds(adj) for terrain, adj in 
+                            zip(self.get_cardinal_terrain(pos) + self.get_diagonal_terrain(pos),
+                                get_cardinal_positions(pos) + get_diagonal_positions(pos))):
+                convert_to_void.add(pos)
+
+        for pos in convert_to_void:
+            self.terrain_grid[pos] = Terrain.VOID
+
     def print_grid(self):
         print("   ", end='')
         for x in range(self.width):
@@ -230,8 +277,10 @@ class DungeonTileMap:
                 terrain = self.terrain_grid[(x, y)]
                 if terrain == Terrain.FLOOR_UPPER or terrain == Terrain.FLOOR_LOWER:
                     print("_", end='')
-                elif terrain == Terrain.WALL:
+                elif terrain == Terrain.WALL_TOP:
                     print("#", end='')
+                elif terrain == Terrain.WALL_BOTTOM:
+                    print("|", end='')
                 elif terrain == Terrain.VOID:
                     print(" ", end='')
                 elif terrain == Terrain.PILLAR or terrain == Terrain.FOREST:

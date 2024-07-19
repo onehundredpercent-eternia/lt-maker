@@ -38,7 +38,8 @@ def build_surface(dungeon_tilemap: DungeonTileMap, renderers: RendererDatabase) 
 def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
     return {
         Terrain.VOID: 'Void',
-        Terrain.WALL: 'Wall',
+        Terrain.WALL_TOP: 'Wall',
+        Terrain.WALL_BOTTOM: 'Wall',
         Terrain.FLOOR_LOWER: 'Floor',
         Terrain.FLOOR_UPPER: 'Floor',
         Terrain.START: 'Stairs',

@@ -21,9 +21,9 @@ class FloorPainter(Painter):
         _, _, _, northwest = dungeon_tilemap.get_diagonal_terrain(pos)
         top, left, corner = False, False, False
 
-        if north == Terrain.WALL:
+        if north in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
             top = True
-        if west == Terrain.WALL:
+        if west in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
             left = True
         # if northwest == 'Pillar' and pillar:
             # corner = True
