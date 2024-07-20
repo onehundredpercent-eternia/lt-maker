@@ -165,8 +165,8 @@ class FrameSelector(Dialog):
 
     def draw(self):
         if self.anim_background_check.isChecked():
-        base_image = QImage(WINWIDTH, WINHEIGHT, QImage.Format_ARGB32)
-        base_image.fill(editor_utilities.qCOLORKEY)
+            base_image = QImage(WINWIDTH, WINHEIGHT, QImage.Format_ARGB32)
+            base_image.fill(editor_utilities.qCOLORKEY)
         else:
             base_image = QImage(self.anim_background)
         painter = QPainter()
