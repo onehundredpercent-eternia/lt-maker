@@ -31,6 +31,11 @@ class Tags(Enum):
     OVERWORLD = 'Overworld'
     ACHIEVEMENT = 'Achievement'
     PERSISTENT_RECORDS = 'Persistent Records'
+
+    # Event commands that can only be used in specific triggers
+    NONSTANDARD = 'Nonstandard'
+
+    # Event commands that shouldn't be used. Deprecated commands, or just internal commands.
     HIDDEN = 'Hidden'
 
 UNIVERSAL_FLAGS = ['no_warn']
@@ -3433,6 +3438,12 @@ class UnlockDifficulty(EventCommand):
 
     keywords = ['DifficultyMode']
     keyword_types = ['DifficultyMode']
+
+class SetSaveSlot(EventCommand):
+    nid = 'select_save'
+    tag = Tags.NONSTANDARD
+    desc = ("Brings up the save selection state. This is used to determine what save slot will be used as a base. " +
+            "This is only used when loading a trial map from the main menu, where there is no predetermined save slot.")
 
 def get_commands():
     return EventCommand.__subclasses__()
