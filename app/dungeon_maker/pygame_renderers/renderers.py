@@ -19,6 +19,7 @@ def get_renderers(palette: str) -> RendererDatabase:
     return {
         Terrain.VOID: SimpleRenderer(Painter(), os.path.join(palette_dir, 'void.png')),
         Terrain.FLOOR_LOWER: ShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
+        Terrain.FLOOR_UPPER: ShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
         Terrain.WALL_TOP: LimitRenderer(WallTopPainter(), os.path.join(palette_dir, 'wall_top.png')),
         Terrain.WALL_BOTTOM: SimpleRenderer(WallBottomPainter(), os.path.join(palette_dir, 'wall_bottom.png')),
         Terrain.START: SimpleRenderer(Painter(), os.path.join(palette_dir, 'stairs_updown.png')),

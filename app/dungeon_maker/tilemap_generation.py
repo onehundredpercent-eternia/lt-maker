@@ -49,6 +49,7 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
 def generate_map(theme: str = 'default', palette_name: str = 'dungeon', 
                  size: Pos = (30, 18), seed: int = -1):
     dungeon_tilemap = generate_terrain(theme, size, seed)
+    size = dungeon_tilemap.width, dungeon_tilemap.height
     renderers = get_renderers(palette_name)
     surf: engine.Surface = build_surface(dungeon_tilemap, renderers)
 
@@ -56,7 +57,7 @@ def generate_map(theme: str = 'default', palette_name: str = 'dungeon',
     scratch_data = {
         'theme': theme,
         'palette_name': palette_name,
-        'size': size,
+        'size': dungeon_tilemap,
         'seed': seed,
     }
 
