@@ -894,6 +894,7 @@ class MenuState(MapState):
 
         # Handle extra ability options
         self.extra_abilities = skill_system.get_extra_abilities(self.cur_unit)
+        self.categories = {}
         if 'Spells' in options:
             start_index = options.index('Spells') + 1
         elif 'Attack' in options:
@@ -902,8 +903,17 @@ class MenuState(MapState):
             start_index = len(self.valid_regions)
         for ability_name, ability in self.extra_abilities.items():
             if game.target_system.get_valid_targets_recursive_with_availability_check(self.cur_unit, ability):
-                options.insert(start_index, ability_name)
-                info_descs.insert(start_index, ability)
+                if ability.category:
+                    # Already in options, so no need to do anything special
+                    if ability.category.value in options:
+                        self.categories[ability.category.value].append(ability)
+                    else:
+                        self.categories[ability.category.value] = [ability]
+                        options.insert(start_index, ability.category.value)
+                        info_descs.insert(start_index, ability.category.value + '_desc')
+                else:
+                    options.insert(start_index, ability_name)
+                    info_descs.insert(start_index, ability)
 
         # Handle combat art options (only available if you haven't attacked)
         if not self.cur_unit.has_attacked:
@@ -1022,6 +1032,7 @@ class MenuState(MapState):
                 game.state.clear()
                 game.state.change('free')
                 self.cur_unit.wait(actively_chosen=True)
+
             # A region event
             elif selection in [region.sub_nid for region in self.valid_regions]:
                 for region in self.valid_regions:
@@ -1035,6 +1046,12 @@ class MenuState(MapState):
                             action.do(action.RemoveRegion(region))
                         # if did_trigger:
                             # action.do(action.HasTraded(self.cur_unit))
+
+            # A category
+            elif selection in self.categories:
+                game.memory['valid_abilities'] = self.categories[selection]
+                game.state.change('ability_choice')
+
             # An extra ability
             elif selection in self.extra_abilities:
                 item = self.extra_abilities[selection]
@@ -1075,9 +1092,13 @@ class MenuState(MapState):
                 game.memory['valid_weapons'] = self.combat_arts[selection][1]
                 skill_system.activate_combat_art(self.cur_unit, skill)
                 game.state.change('weapon_choice')
+
+            # Combat Art Category
             elif selection == 'Combat Arts':
                 game.memory['combat_arts'] = self.combat_arts
                 game.state.change('combat_art_choice')
+            
+            # Some other obility (Talk, Support, etc.)
             else:  # Selection is one of the other abilities
                 game.memory['ability'] = self.target_dict[selection]
                 game.state.change('targeting')

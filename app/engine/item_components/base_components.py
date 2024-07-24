@@ -179,3 +179,10 @@ class ItemTags(ItemComponent):
 
     expose = (ComponentType.List, ComponentType.Tag)
     value = []
+
+class Category(ItemComponent):
+    nid = 'category'
+    desc = "Item will appear under a category name in the regular Menu instead of under it's proper name"
+    tag = ItemTags.BASE
+
+    expose = ComponentType.String
