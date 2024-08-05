@@ -7,8 +7,8 @@ import pygame.image
 import pygame.time
 
 from app.constants import WINWIDTH, WINHEIGHT, FPS
-from app.utilities.utils import clamp
 from app.engine import config as cf
+from app.utilities import utils
 
 import logging
 
@@ -139,12 +139,21 @@ def copy_surface(surf):
 def save_surface(surf, fn):
     pygame.image.save(surf, fn)
 
-def subsurface(surf, rect) -> pygame.Surface:
+def _subsurface_fix(
+        surf_size: Tuple[int, int], rect: Tuple[int, int, int, int]) -> Tuple[int, int, int, int]:
     x, y, width, height = rect
-    tx = clamp(x, 0, surf.get_width() - width)
-    ty = clamp(y, 0, surf.get_height() - height)
-    twidth = clamp(width, 0, surf.get_width() - tx)
-    theight = clamp(height, 0, surf.get_height() - ty)
+    nx, ny = x + width, y + height
+    surf_width, surf_height = surf_size
+    tx = utils.clamp(0, x, surf_width - 1)
+    ty = utils.clamp(0, y, surf_height - 1)
+    tnx = utils.clamp(1, nx, surf_width)
+    tny = utils.clamp(1, ny, surf_height)
+    twidth = tnx - tx
+    theight = tny - ty
+    return tx, ty, twidth, theight
+
+def subsurface(surf: pygame.Surface, rect: Tuple[int, int, int, int]) -> pygame.Surface:
+    tx, ty, twidth, theight = _subsurface_fix((surf.get_width(), surf.get_height()), rect)
     return surf.subsurface(tx, ty, twidth, theight)
 
 def image_load(fn, convert=False, convert_alpha=False):

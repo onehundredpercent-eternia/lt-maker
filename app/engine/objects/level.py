@@ -1,3 +1,4 @@
+from app.data.database.database import DB
 from app.engine.objects.difficulty_mode import DifficultyModeObject
 from app.utilities.data import Data
 
@@ -74,6 +75,17 @@ class LevelObject():
         level.ai_groups = Data([AIGroupObject.from_prefab(p) for p in prefab.ai_groups])
 
         return level
+
+    # If the attribute is not found
+    def __getattr__(self, attr):
+        if attr.startswith('__') and attr.endswith('__'):
+            return super().__getattr__(attr)
+        elif self.nid:
+            prefab = DB.levels.get(self.nid)
+            if prefab and hasattr(prefab, attr):
+                return getattr(prefab, attr)
+        # not in prefab, so...
+        raise AttributeError('LevelObject has no attribute %s' % attr)
 
     @classmethod
     def from_scratch(cls, nid, tilemap, bg_tilemap, party, unit_registry, current_mode: DifficultyModeObject):

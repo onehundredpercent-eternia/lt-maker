@@ -14,7 +14,7 @@ ITEM_HOOKS: Dict[str, HookInfo] = {
     'can_double':                                      HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'can_use':                                         HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'can_use_in_base':                                 HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
-    'locked':                                          HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    # 'locked':                                          HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'unstealable':                                     HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'allow_same_target':                               HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'allow_less_than_max_targets':                     HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
@@ -34,6 +34,9 @@ ITEM_HOOKS: Dict[str, HookInfo] = {
     'ignore_fog_of_war':                               HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     # default true, return false if any component returns false
     'alerts_when_broken':                              HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_TRUE, inherits_parent=True),
+    'tradeable':                                       HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_TRUE),                                       
+    'storeable':                                       HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_TRUE),
+    'discardable':                                     HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_TRUE),
     # returns latest value defined by a component, or default value if not defined
     'damage_formula':                                  HookInfo(['unit', 'item'], ResolvePolicy.UNIQUE),
     'resist_formula':                                  HookInfo(['unit', 'item'], ResolvePolicy.UNIQUE),
@@ -86,6 +89,7 @@ ITEM_HOOKS: Dict[str, HookInfo] = {
     'dynamic_attacks':                                 HookInfo(['unit', 'item', 'target', 'item2', 'mode', 'attack_info', 'base_value'], ResolvePolicy.NUMERIC_ACCUM),
     'dynamic_multiattacks':                            HookInfo(['unit', 'item', 'target', 'item2', 'mode', 'attack_info', 'base_value'], ResolvePolicy.NUMERIC_ACCUM),
     # aesthetic components that return a value
+    'hover_description':                               HookInfo(['unit', 'item'], ResolvePolicy.UNIQUE),
     'show_weapon_advantage':                           HookInfo(['unit', 'item', 'target', 'item2'], ResolvePolicy.UNIQUE),
     'show_weapon_disadvantage':                        HookInfo(['unit', 'item', 'target', 'item2'], ResolvePolicy.UNIQUE),
     'battle_music':                                    HookInfo(['unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.UNIQUE),
