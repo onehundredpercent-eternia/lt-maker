@@ -32,6 +32,10 @@ Encounter generation:
 1. For each room, choose an encounter from the encounter list
 2. Place appropriate enemies in each room
 """
+
+# Figure out how to make hallways the right size for the room
+# Figure out where the draw the stairways and sections
+
 from __future__ import annotations
 from enum import Enum
 import random
@@ -89,6 +93,7 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
 
     tilemap.coerce_terrain()
 
+    tilemap.make_walls_two_high()
     tilemap.wrap_in_walls()
     tilemap.split_walls()
     tilemap.crop_void()
@@ -224,14 +229,53 @@ class DungeonTileMap:
     def get_diagonal_terrain(self, pos: Pos) -> List[Optional[Terrain]]:
         return [self.get_terrain(adj) for adj in get_diagonal_positions(pos)]
 
+    def _get_section(self, pos: Pos) -> Optional[DungeonSection]:
+        for section in self.sections.values():
+            if pos in section.get_true_positions():
+                return section
+        return None
+
     def _determine_floor_level(self, pos: Pos) -> int:
-        # TODO
         """
-        Eventually will return whether this is on floor level 1 (low) or 2 (high)
+        Returns whether this is on floor level 1 (low) or 2 (high)
         Nothing else should use this, since the user of this painter should never
         have to care
         """
+        section = self._get_section(pos)
+        if section and section.room:
+            return section.room.floor_level
         return FloorLevel.LOWER
+
+    def make_walls_two_high(self):
+        """
+        Any walls that are adjacent on the bottom side of their group
+        to a LOWER_FLOOR must be at least 2 tiles high
+        """
+
+        # Figure out which spots should be swapped
+        swap_these = set()
+        for pos, val in self.terrain_grid.items():
+            if val == Terrain.FLOOR_LOWER:
+                north_terrain = self.terrain_grid.get((pos[0], pos[1] - 1))
+                north_north_terrain = self.terrain_grid.get((pos[0], pos[1] - 2))
+                # If I have wall above me, but the one above that is not a wall
+                if north_terrain == Terrain.WALL_TOP and north_north_terrain \
+                        and north_north_terrain != Terrain.WALL_TOP:
+                    south_terrain = self.terrain_grid.get((pos[0], pos[1] - 1))
+                    n3_terrain = self.terrain_grid.get((pos[0], pos[1] - 3))
+                    # If I have a floor below me, I am safe to turn myself into wall
+                    if south_terrain == Terrain.FLOOR_LOWER:
+                        swap_these.add(pos)
+                    # If I have a floor above me, I am safe to turn the one above me into wall
+                    elif n3_terrain in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER):
+                        swap_these.add((pos[0], pos[1] - 2))
+                    # Else fall back on self
+                    else:
+                        swap_these.add(pos)
+
+        # Actually swap them
+        for pos in swap_these:
+            self.terrain_grid[pos] = Terrain.WALL_TOP
 
     def wrap_in_walls(self):
         """
@@ -377,6 +421,13 @@ class DungeonSection:
         self.tilemap = tilemap
         self.room: Optional[DungeonRoom] = None
         self.hallways: List[List[Pos]] = []  # True positions
+
+    def get_true_positions(self) -> List[Pos]:
+        positions = []
+        for x in range(self.width):
+            for y in range(self.height):
+                positions.append((self.offset[0] + x, self.offset[1] + y))
+        return positions
 
     def generate_room(self):
         width = random.randint(self.min_room_x, self.width - 1)
