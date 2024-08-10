@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import ClassVar, Dict, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Callable, ClassVar, Dict, Generic, Iterable, List, Optional, Tuple, Type, TypeVar, cast
 from typing_extensions import Protocol
 
-from app.utilities.typing import NID
+from app.utilities.typing import NID, NestedPrimitiveDictElement, Primitive
 
 
 class HasNid(Protocol):
@@ -17,7 +17,7 @@ class Data(Generic[T]):
     Only accepts data points that have nid attribute
     Generally behaves as a list first and a dictionary second
     """
-    datatype: ClassVar[Type]
+    datatype: ClassVar[Type[Any]]
 
     def __init__(self, vals: Optional[List[T]] = None):
         vals = vals or []
@@ -36,13 +36,13 @@ class Data(Generic[T]):
     def get(self, key: NID, fallback: Optional[T] = None) -> Optional[T]:
         return self._dict.get(key, fallback)
 
-    def sort(self, sort_func=None):
+    def sort(self, sort_func: None=None) -> None:
         self._list = sorted(self._list, key=sort_func)
         self._dict.clear()
         for val in self._list:
             self._dict[val.nid] = val
 
-    def update_nid(self, val: T, nid: NID, set_nid=True):
+    def update_nid(self, val: T, nid: NID, set_nid: bool=True) -> None:
         for k, v in self._dict.items():
             if v == val:
                 del self._dict[k]
@@ -57,7 +57,7 @@ class Data(Generic[T]):
                 return k
         return None
 
-    def change_key(self, old_key: NID, new_key: NID):
+    def change_key(self, old_key: NID, new_key: NID) -> None:
         if old_key in self._dict:
             old_value = self._dict[old_key]
             del self._dict[old_key]
@@ -66,7 +66,7 @@ class Data(Generic[T]):
         else:
             logging.error('%s not found in self._dict' % old_key)
 
-    def append(self, val: T, overwrite: bool = False):
+    def append(self, val: T, overwrite: bool = False) -> None:
         if val.nid not in self._dict:
             self._list.append(val)
             self._dict[val.nid] = val
@@ -77,18 +77,18 @@ class Data(Generic[T]):
         else:
             logging.warning("%s already present in data" % val.nid)
 
-    def delete(self, val: T):
+    def delete(self, val: T) -> None:
         # Fails silently
         if val.nid in self._dict:
             self._list.remove(val)
             del self._dict[val.nid]
 
-    def remove_key(self, key: NID):
+    def remove_key(self, key: NID) -> None:
         val = self._dict[key]
         self._list.remove(val)
         del self._dict[key]
 
-    def pop(self, idx: Optional[int] = None):
+    def pop(self, idx: Optional[int] = None) -> None:
         if idx is None:
             idx = len(self._list) - 1
         r = self._list[idx]
@@ -98,11 +98,11 @@ class Data(Generic[T]):
         else:
             logging.error("Tried to delete %s which wasn't present in data" % r.nid)
 
-    def insert(self, idx: int, val: T):
+    def insert(self, idx: int, val: T) -> None:
         self._list.insert(idx, val)
         self._dict[val.nid] = val
 
-    def clear(self):
+    def clear(self) -> None:
         self._list = []
         self._dict = {}
 
@@ -112,7 +112,7 @@ class Data(Generic[T]):
                 return idx
         raise ValueError
 
-    def move_index(self, old_index: int, new_index: int):
+    def move_index(self, old_index: int, new_index: int) -> None:
         if old_index == new_index:
             return
         obj = self._list.pop(old_index)
@@ -122,41 +122,45 @@ class Data(Generic[T]):
     #     self.drop_to = index
 
     # Saving functions
-    def save(self):
+    def save(self) -> List[NestedPrimitiveDictElement | T]:
         if self.datatype and issubclass(self.datatype, Prefab):
-            return [elem.save() for elem in self._list]
+            return [cast(Prefab, elem).save() for elem in self._list]
         else:
             return self._list[:]
 
-    def restore(self, vals: list):
+    def restore(self, vals: List[NestedPrimitiveDictElement | T]) -> Data[T]:
         self.clear()
         if self.datatype and issubclass(self.datatype, Prefab):
             for s_dict in vals:
-                new_val = self.datatype.restore(s_dict)
+                s_dict = cast(Dict[str, NestedPrimitiveDictElement], s_dict)
+                new_val = cast(T, self.datatype.restore(s_dict))
                 self.append(new_val)
         else:
             for val in vals:
+                val = cast(T, val)
                 self.append(val)
         return self
 
     # Magic Methods
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self._list)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> T:
         return self._list[idx]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[T]:
         return iter(self._list)
 
     def __contains__(self, key: NID) -> bool:
         return key in self._dict
 
+
+U = TypeVar('U')
 class Prefab():
-    def save(self):
+    def save(self) -> Dict[str, NestedPrimitiveDictElement]:
         s_dict = {}
         for attr in self.__dict__.items():
             name, value = attr
@@ -164,15 +168,14 @@ class Prefab():
             s_dict[name] = value
         return s_dict
 
-    def save_attr(self, name, value):
+    def save_attr(self, name: str, value: Data[T] | Primitive | List[Primitive]) -> List[NestedPrimitiveDictElement] | Primitive:
         if isinstance(value, Data):
-            value = value.save()
-        else:  # int, str, float, list, dict
-            value = value
-        return value
+            return value.save()
+        else:
+            return value
 
     @classmethod
-    def restore(cls, s_dict):
+    def restore(cls, s_dict: Dict[str, NestedPrimitiveDictElement]) -> Prefab:
         self = cls.default()
         for attr_name, attr_value in self.__dict__.items():
             value = self.restore_attr(attr_name, s_dict.get(attr_name))
@@ -180,13 +183,9 @@ class Prefab():
                 setattr(self, attr_name, value)
         return self
 
-    def restore_attr(self, name, value):
-        if isinstance(value, Data):
-            value = value.restore()
-        else:
-            value = value
+    def restore_attr(self, name: str, value: U) -> U:
         return value
 
     @classmethod
-    def default(cls):
+    def default(cls) -> Prefab:
         return cls()

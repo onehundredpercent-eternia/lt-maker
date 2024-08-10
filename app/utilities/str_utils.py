@@ -1,6 +1,8 @@
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from app.utilities.typing import NestedString
 
 
 RAW_NEWLINE = '\u2029'
@@ -108,7 +110,7 @@ def camel_to_snake(name: str) -> str:
 def snake_to_readable(s: str) -> str:
     return s.replace('_', ' ').title()
 
-def nested_expr(s: str, opener: str="{", closer: str="}") -> List[str | List[Any]]:
+def nested_expr(s: str, opener: str="{", closer: str="}") -> List[NestedString]:
     """Breaks a string into a nested list of strings
 
     Examples:
@@ -126,25 +128,26 @@ def nested_expr(s: str, opener: str="{", closer: str="}") -> List[str | List[Any
     assert opener != closer
     assert len(opener) == 1
     assert len(closer) == 1
-    if not s.startswith(opener) or not s.endswith(closer):
-        s = opener + s + closer
-    main_list: List[str | List[Any]] = []
-    list_stack: List[List[Any]] = [main_list]
+    main_list: List[NestedString] = []
+    list_stack: List[List[NestedString]] = [main_list]
     current_list = main_list
     for character in s:
         if character == opener:
-            new_list: List[Any] = []
+            new_list: List[NestedString] = []
             list_stack.append(new_list)
             current_list.append(new_list)
             current_list = new_list
         elif character == closer:
+            if len(list_stack) == 1:
+                current_list.append(character)
+                continue
             list_stack.pop()
             current_list = list_stack[-1]
         else:
             current_list.append(character)
-    return main_list[0]
+    return main_list
 
-def matched_expr(s: str, opener: str, closer: str):
+def matched_expr(s: str, opener: str, closer: str) -> List[str]:
     """Returns all strings bounded by balanced openers, closers
 
     Examples:
@@ -161,7 +164,7 @@ def matched_expr(s: str, opener: str, closer: str):
     assert opener != closer
     assert len(opener) == 1
     assert len(closer) == 1
-    all_strs = []
+    all_strs: List[str] = []
     curr = ""
     unclosed = 0
     for character in s:
@@ -178,14 +181,14 @@ def matched_expr(s: str, opener: str, closer: str):
             unclosed += 1
     return all_strs
 
-def matched_block_expr(s: str, opener: str, closer: str):
+def matched_block_expr(s: str, opener: str, closer: str) -> List[str]:
     # returns all strings bounded by balanced openers, closers
     # inclduding content not found within the openers and closers
     # e.g. "Hi{bac{def}jk}Waffle{lmno}" would return "[Hi, {bac{def}jk}, Waffle, {lmno}]""
     assert opener != closer
     assert len(opener) == 1
     assert len(closer) == 1
-    all_strs = []
+    all_strs: List[str] = []
     curr = ""
     unclosed = 0
     for character in s:
@@ -205,12 +208,12 @@ def matched_block_expr(s: str, opener: str, closer: str):
             curr += character
     return all_strs
 
-def remove_prefix(text: str, prefix: str):
+def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         return text[len(prefix):]
     return text
 
-def remove_all_matched(s: str, opener: str, closer: str):
+def remove_all_matched(s: str, opener: str, closer: str) -> str:
     """
     usage: `{d:{eval:f}.{eval:y}.` becomes `{d:..` - useful for determining which level of a nested eval we're in
     https://stackoverflow.com/questions/37528373/how-to-remove-all-text-between-the-outer-parentheses-in-a-string

@@ -31,6 +31,12 @@ class UtilsTests(unittest.TestCase):
         test_str = "A{B{CD}E}F{GH}"
         self.assertEqual(nested_expr(test_str), ['A', ['B', ['C', 'D'], 'E'], 'F', ['G', 'H']])
 
+        test_str_2 = "A}}}B"
+        self.assertEqual(nested_expr(test_str_2), ['A', '}', '}', '}', 'B'])
+
+        test_str_3 = "{A{B}C}"
+        self.assertEqual(nested_expr(test_str_3), [['A', ['B'], 'C']])
+
     def test_matched_expr(self):
         from app.utilities.str_utils import matched_expr
         test_str = "{bac{def}jk} {lmno}"

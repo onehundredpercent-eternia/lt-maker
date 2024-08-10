@@ -8,6 +8,8 @@ from typing import Dict, List, Tuple
 from app.utilities import str_utils
 import logging
 
+from app.utilities.typing import NestedString
+
 class TextEvaluator():
     def __init__(self, logger: logging.Logger, game: GameState, unit=None, unit2=None, position=None, local_args=None) -> None:
         self.logger = logger
@@ -57,7 +59,7 @@ class TextEvaluator():
             return text
 
     def _evaluate_all(self, text: str, local_args=None) -> str:
-        def recursive_parse(parse_list) -> str:
+        def recursive_parse(parse_list: NestedString) -> str:
             copy = [""] * len(parse_list)
             for idx, nested in enumerate(parse_list):
                 if isinstance(nested, list):
@@ -69,7 +71,7 @@ class TextEvaluator():
         to_evaluate = str_utils.matched_expr(text, '{', '}')
         evaluated = []
         for to_eval in to_evaluate:
-            parsed = str_utils.nested_expr(to_eval, '{', '}')
+            parsed = str_utils.nested_expr(to_eval, '{', '}')[0]
             evaled = recursive_parse(parsed)
             evaluated.append(evaled)
         evaluated_pairs = zip(to_evaluate, evaluated)
