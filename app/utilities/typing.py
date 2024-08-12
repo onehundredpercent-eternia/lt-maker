@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, List, Tuple, Union
 
 Pos = Tuple[int, int]
 
@@ -9,3 +9,6 @@ NID = str
 UID = int
 Color3 = Tuple[int, int, int]
 Color4 = Tuple[int, int, int, int]
+
+Primitive = Union[int, str, float, bool, None]
+NestedPrimitiveDict = Dict[str, Union[Primitive, 'NestedPrimitiveDict']]
