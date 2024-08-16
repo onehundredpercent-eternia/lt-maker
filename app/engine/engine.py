@@ -142,7 +142,7 @@ def save_surface(surf, fn):
 def _subsurface_fix(
         surf_size: Tuple[int, int], rect: Tuple[int, int, int, int]) -> Tuple[int, int, int, int]:
     x, y, width, height = rect
-    nx, ny = x + width, y + height
+    nx, ny = x + max(width, 1), y + max(height, 1)
     surf_width, surf_height = surf_size
     tx = utils.clamp(0, x, surf_width - 1)
     ty = utils.clamp(0, y, surf_height - 1)
@@ -153,7 +153,12 @@ def _subsurface_fix(
     return tx, ty, twidth, theight
 
 def subsurface(surf: pygame.Surface, rect: Tuple[int, int, int, int]) -> pygame.Surface:
-    tx, ty, twidth, theight = _subsurface_fix((surf.get_width(), surf.get_height()), rect)
+    surf_width, surf_height = surf.get_width(), surf.get_height()
+    # If surface width and height are reasonable
+    if surf_width > 0 and surf_height > 0:
+        tx, ty, twidth, theight = _subsurface_fix((surf_width, surf_height), rect)
+    else:
+        tx, ty, twidth, theight = rect
     return surf.subsurface(tx, ty, twidth, theight)
 
 def image_load(fn, convert=False, convert_alpha=False):

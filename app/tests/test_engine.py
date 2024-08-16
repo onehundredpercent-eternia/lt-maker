@@ -92,3 +92,23 @@ class EngineTests(unittest.TestCase):
         should_be = (0, 0, 1, 1)
         new_rect = engine._subsurface_fix(main_surf_size, subsurface_rect)
         self.assertEqual(should_be, new_rect)
+
+        # Can handle negative height
+        main_surf_size = (136, 24)
+        for i in range(24):
+            subsurface_rect = (0, i, 136, 24 - i * 2)
+            new_rect = engine._subsurface_fix(main_surf_size, subsurface_rect)
+            self.assertGreater(new_rect[3], 0)
+
+        main_surf_size = (4, 4)
+        for x in range(-10, 10):
+            for y in range(-10, 10):
+                for width in range(-10, 10):
+                    for height in range(-10, 10):
+                        with self.subTest(x=x, y=y, width=width, height=height):
+                            subsurface_rect = (x, y, width, height)
+                            new_rect = engine._subsurface_fix(main_surf_size, subsurface_rect)
+                            self.assertGreaterEqual(new_rect[0], 0)
+                            self.assertGreaterEqual(new_rect[1], 0)
+                            self.assertGreater(new_rect[2], 0)
+                            self.assertGreater(new_rect[3], 0)

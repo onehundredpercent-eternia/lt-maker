@@ -69,6 +69,7 @@ def engage(attacker: UnitObject, positions: list, main_item: ItemObject, skip: b
             target_positions.append(position)
         else:  # Using an item in the base/prep
             main_target, splash = position, []
+            target_positions.append(position)
         main_targets.append(main_target)
         splashes.append(splash)
 
@@ -122,7 +123,7 @@ def start_combat(unit: UnitObject, target: tuple, item: ItemObject, skip: bool =
     combat = engage(
         unit, targets, item, skip=skip, script=script, total_rounds=total_rounds,
         arena_combat=arena, force_animation=force_animation, force_no_animation=force_no_animation)
-    combat.ai_combat = ai_combat # Must mark this so we can come back!
-    combat.event_combat = event_combat # Must mark this so we can come back!
+    combat.ai_combat = ai_combat  # Must mark this so we can come back!
+    combat.event_combat = event_combat  # Must mark this so we can come back!
     combat.arena_combat = arena
     game.combat_instance.append(combat)
