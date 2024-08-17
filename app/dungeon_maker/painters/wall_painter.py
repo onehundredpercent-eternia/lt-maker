@@ -41,33 +41,39 @@ class WallBottomPainter(WangEdge2Painter):
         north, east, south, west = dungeon_tilemap.get_cardinal_terrain(pos)
         ne, se, sw, nw = dungeon_tilemap.get_diagonal_terrain(pos)
 
-        left, right, shadow = True, True, False
-        if west in self.terrain_like and sw not in self.terrain_like:
-            left = False
-        if east in self.terrain_like and se not in self.terrain_like:
-            right = False
-        if sw in self.terrain_like or sw == Terrain.PILLAR:
+        ends_on_left, ends_on_right, shadow = True, True, False
+        if west in self.terrain_like:
+            ends_on_left = False
+        if east in self.terrain_like:
+            ends_on_right = False
+
+        if west == Terrain.WALL_TOP:
+            shadow = True
+        elif sw in self.terrain_like:
+            shadow = True
+        elif west == Terrain.PILLAR:
             shadow = True
 
-        if left and right:
+        if ends_on_left and ends_on_right:
             north_pos = (pos[0], pos[1] - 1)
             # If north has no adjacent friends
             if north == Terrain.WALL_TOP and WallTopPainter.get_index(dungeon_tilemap, north_pos) == 0:
-                index = 6
+                index = 6  # Is a column
             elif shadow:
-                index = 5
+                index = 5  # shadowcast on a wall that ends on both right and left
             else:
-                index = 0
-        elif left:
-            if shadow:
-                index = 4
+                index = 0  # Wall ends on both right and left
+        elif shadow:
+            if ends_on_right:
+                index = 5  # shadowcast on a wall that ends on right
             else:
-                index = 1
-        elif right:
-            index = 2
+                index = 4  # Wall has a shadow cast on it
+        elif ends_on_right:
+            index = 2  # Wall ends on the right
+        elif ends_on_left:
+            index = 1  # Wall ends on the left
         else:
-            index = 3
+            index = 3  # Wall does not end on either side
 
         coord = index, 0
-
         return coord

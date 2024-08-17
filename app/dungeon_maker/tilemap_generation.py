@@ -42,6 +42,10 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.WALL_BOTTOM: 'Wall',
         Terrain.FLOOR_LOWER: 'Floor',
         Terrain.FLOOR_UPPER: 'Floor',
+        Terrain.STAIRS_UP: 'Stairs',
+        Terrain.STAIRS_RIGHT: 'Stairs',
+        Terrain.STAIRS_DOWN: 'Stairs',
+        Terrain.STAIRS_LEFT: 'Stairs',
         Terrain.START: 'Stairs',
         Terrain.END: 'Stairs'
     }[terrain]
@@ -71,4 +75,4 @@ def generate_map(theme: str = 'default', palette_name: str = 'dungeon',
 if __name__ == '__main__':
     engine.init()
     engine.build_display((WINWIDTH, WINHEIGHT))
-    generate_map(seed=-1)
+    generate_map(seed=3)
