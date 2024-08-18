@@ -44,7 +44,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from app.utilities import utils
 from app.utilities.typing import Pos
 from app.utilities.direction import Direction, get_cardinal_positions, get_diagonal_positions
-from app.dungeon_maker.utilities import set_random_seed
+from app.dungeon_maker.utilities import set_random_seed, flood_fill
 
 class Terrain(Enum):
     VOID = 0
@@ -90,9 +90,11 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
         return
     tilemap.print_sections()
     tilemap.connect_rooms()
-    tilemap.print_sections()
 
     tilemap.coerce_terrain()
+    # All floor tiles must be reachable
+    if not tilemap.is_fully_connected():
+        return
 
     tilemap.make_walls_two_high()
 
@@ -128,6 +130,27 @@ class DungeonTileMap:
         for x in range(self.width):
             for y in range(self.height):
                 self.terrain_grid[(x, y)] = terrain
+
+    def is_fully_connected(self) -> bool:
+        floor_terrain = {Terrain.FLOOR_LOWER, 
+                         Terrain.FLOOR_UPPER, 
+                         Terrain.STAIRS_UP, 
+                         Terrain.STAIRS_RIGHT, 
+                         Terrain.STAIRS_DOWN, 
+                         Terrain.STAIRS_LEFT
+                         }
+        floor_tiles = {pos for pos, terrain in self.terrain_grid.items() 
+                       if terrain in floor_terrain}
+        test_pos = floor_tiles.pop()
+        can_reach = flood_fill(self, test_pos, match=floor_terrain)
+        floor_tiles -= can_reach
+        if floor_tiles:
+            self.print_terrain_grid()
+            # There are some tiles that haven't been reached
+            print("Could not find these tiles:", sorted(floor_tiles))
+            print(sorted(can_reach))
+            return False
+        return True
 
     def set_sections(self, x: int, y: int):
         self.grid_size = (x, y)
@@ -230,29 +253,50 @@ class DungeonTileMap:
                     terrain = Terrain.FLOOR_LOWER
                 for pos in hallway:
                     self.terrain_grid[pos] = terrain
+
         # Make sure stairs won't go straight into a wall
         while True:
+            walls = (Terrain.WALL_TOP, Terrain.WALL_BOTTOM)
             to_fix = set()
             for pos, terrain in self.terrain_grid.items():
                 if terrain != Terrain.FLOOR_LOWER:
                     continue
-                east_terrain = self.terrain_grid.get((pos[0] + 1, pos[1]))
-                west_terrain = self.terrain_grid.get((pos[0] - 1, pos[1]))
-                north_terrain = self.terrain_grid.get((pos[0], pos[1] - 1))
-                south_terrain = self.terrain_grid.get((pos[0], pos[1] + 1))
-                if east_terrain == Terrain.FLOOR_UPPER and west_terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+                north, east, south, west = self.get_cardinal_terrain(pos)
+                ne, se, sw, nw = self.get_diagonal_terrain(pos)
+                if east == Terrain.FLOOR_UPPER and west in walls:
                     to_fix.add(pos)
-                elif west_terrain == Terrain.FLOOR_UPPER and east_terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+                elif west == Terrain.FLOOR_UPPER and east in walls:
                     to_fix.add(pos)
-                elif north_terrain == Terrain.FLOOR_UPPER and south_terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+                elif north == Terrain.FLOOR_UPPER and south in walls:
                     to_fix.add(pos)
-                elif south_terrain == Terrain.FLOOR_UPPER and north_terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+                elif south == Terrain.FLOOR_UPPER and north in walls:
+                    to_fix.add(pos)
+                # Prevent building a wall above stairs that would result in a hallway being blocked
+                elif west == Terrain.FLOOR_UPPER and east == Terrain.FLOOR_LOWER \
+                        and north == Terrain.FLOOR_LOWER and ne in walls and nw in walls:
+                    to_fix.add(pos)
+                elif east == Terrain.FLOOR_UPPER and west == Terrain.FLOOR_LOWER \
+                        and north == Terrain.FLOOR_LOWER and ne in walls and nw in walls:
                     to_fix.add(pos)
             for pos in to_fix:
                 self.terrain_grid[pos] = Terrain.FLOOR_UPPER
             if not to_fix:
                 break
             to_fix.clear()
+
+        # Flood fill to find small areas of floor surrounded by areas of other kind and switch them
+        floor_tiles = {pos for pos, terrain in self.terrain_grid.items() 
+                       if terrain in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER)}
+        while floor_tiles:
+            test_pos = floor_tiles.pop()
+            swap_to = Terrain.FLOOR_LOWER if self.terrain_grid.get(test_pos) == Terrain.FLOOR_UPPER else Terrain.FLOOR_UPPER
+            friends = flood_fill(self, test_pos)
+            if len(friends) <= 2:  # Very conservative
+                # Section is too small, swap to other side
+                for pos in friends:
+                    self.terrain_grid[pos] = swap_to
+            floor_tiles -= friends
+
         # Create stairs
         for pos, terrain in self.terrain_grid.items():
             if terrain != Terrain.FLOOR_LOWER:
@@ -373,32 +417,41 @@ class DungeonTileMap:
         """
 
         # Figure out which spots should be swapped
-        swap_these = set()
+        turn_into_walls = set()
+    
+        # Locate walls that are only 1 tile tall above FLOOR_LOWER
+        bad_walls: Set[Pos] = set()
         for pos, val in self.terrain_grid.items():
-            if self._is_low_floor(val):
-                north_terrain = self.terrain_grid.get((pos[0], pos[1] - 1))
-                north_north_terrain = self.terrain_grid.get((pos[0], pos[1] - 2))
-                # If I have wall above me, but the one above that is not a wall
-                if north_terrain == Terrain.WALL_TOP and north_north_terrain \
-                        and north_north_terrain != Terrain.WALL_TOP:
-                    # Check whether the position two above me or my current position
-                    # has more adjacent floors. Turn the one with more adjacent floors into a wall
-                    pos_adj = self.get_cardinal_terrain(pos)
-                    north2_adj = self.get_cardinal_terrain((pos[0], pos[1] - 2))
-                    open_adjacency_pos = sum([terrain and terrain != Terrain.WALL_TOP for terrain in pos_adj])
-                    open_adjacency_north2 = sum([terrain and terrain != Terrain.WALL_TOP for terrain in north2_adj])
-                    # If I have more open adjacencies, turn myself into a wall
-                    if open_adjacency_pos > open_adjacency_north2:
-                        swap_these.add(pos)
-                    # If I have a floor above me, I am safe to the one above into a wall
-                    elif open_adjacency_north2 > open_adjacency_pos:
-                        swap_these.add((pos[0], pos[1] - 2))
-                    # Else fall back on just swapping myself
-                    else:
-                        swap_these.add(pos)
+            north, _, south, _ = self.get_cardinal_terrain(pos)
+            if val == Terrain.WALL_TOP and north \
+                    and north != Terrain.WALL_TOP \
+                    and south != Terrain.WALL_TOP \
+                    and south != Terrain.FLOOR_UPPER:
+                bad_walls.add(pos)
+
+        # Handle each of these walls in groups
+        while bad_walls:
+            test_pos = next(iter(bad_walls))
+            wall_group = flood_fill(self, test_pos, match_only_these_positions=bad_walls)
+            # Figure out which side (top or bottom) handles a wall addition better
+            # If all of the positions south 2 tiles are exist and are not wall
+            # Easy fix to make it lower by 1
+            if all(self.terrain_grid.get((pos[0], pos[1] + 2), Terrain.WALL_TOP) != Terrain.WALL_TOP for pos in wall_group):
+                for pos in wall_group:
+                    turn_into_walls.add((pos[0], pos[1] + 1))
+            # If all of the positions north 2 tiles are exist and are not wall
+            # Easy fix to make it higher by 1
+            elif all(self.terrain_grid.get((pos[0], pos[1] - 2), Terrain.WALL_TOP) != Terrain.WALL_TOP for pos in wall_group):
+                for pos in wall_group:
+                    turn_into_walls.add((pos[0], pos[1] - 1))
+            # Fallback option is turn the south into a wall
+            else:
+                for pos in wall_group:
+                    turn_into_walls.add((pos[0], pos[1] + 1))
+            bad_walls -= wall_group
 
         # Actually swap them
-        for pos in swap_these:
+        for pos in turn_into_walls:
             self.terrain_grid[pos] = Terrain.WALL_TOP
 
     def wrap_in_walls(self):
