@@ -5,7 +5,7 @@ from app.dungeon_maker.painter_utils import Painter
 from app.dungeon_maker.pygame_renderers.renderer_utils import find_limit, get_image16
 from app.engine import engine
 
-class ShadingRenderer:
+class FloorShadingRenderer:
     def __init__(self, painter: Painter, main_image_fn: str, shading_image_fn: str):
         self.painter = painter
         self.main_image = engine.image_load(main_image_fn)
@@ -23,7 +23,16 @@ class ShadingRenderer:
         if shading_coord is not None:
             shading_image = get_image16(self.shading_image, shading_coord)
 
+        extra_image = None
+        pillar_coord = self.painter.get_pillar_coord(dungeon_tilemap, position)
+        if pillar_coord:
+            extra_image = get_image16(self.shading_image, pillar_coord)
+        elif self.painter.is_column_bottom(dungeon_tilemap, position):
+            extra_image = get_image16(self.shading_image, (7, 0))
+
         if shading_image:
             base_image.blit(shading_image, (0, 0))
+        if extra_image:
+            base_image.blit(extra_image, (0, 0))
 
         return base_image

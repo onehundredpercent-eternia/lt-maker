@@ -6,7 +6,7 @@ from app.dungeon_maker.terrain_generation import Terrain
 from app.dungeon_maker.painter_utils import Painter
 from app.dungeon_maker.painters import FloorPainter, WallTopPainter, WallBottomPainter, \
     StairsUpDownPainter, StairsLeftPainter, StairsRightPainter
-from app.dungeon_maker.pygame_renderers import LimitRenderer, ShadingRenderer, SimpleRenderer
+from app.dungeon_maker.pygame_renderers import LimitRenderer, FloorShadingRenderer, SimpleRenderer
 
 RendererDatabase = Dict[Terrain, object]
 
@@ -19,14 +19,15 @@ def get_renderers(palette: str) -> RendererDatabase:
 
     return {
         Terrain.VOID: SimpleRenderer(Painter(), os.path.join(palette_dir, 'void.png')),
-        Terrain.FLOOR_LOWER: ShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-        Terrain.FLOOR_UPPER: ShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
+        Terrain.FLOOR_LOWER: FloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
+        Terrain.FLOOR_UPPER: FloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
         Terrain.WALL_TOP: LimitRenderer(WallTopPainter(), os.path.join(palette_dir, 'wall_top.png')),
         Terrain.WALL_BOTTOM: SimpleRenderer(WallBottomPainter(), os.path.join(palette_dir, 'wall_bottom.png')),
         Terrain.STAIRS_UP: SimpleRenderer(StairsUpDownPainter(), os.path.join(palette_dir, 'stairs_updown.png')),
         Terrain.STAIRS_DOWN: SimpleRenderer(StairsUpDownPainter(), os.path.join(palette_dir, 'stairs_updown.png')),
         Terrain.STAIRS_LEFT: SimpleRenderer(StairsLeftPainter(), os.path.join(palette_dir, 'stairs_left.png')),
         Terrain.STAIRS_RIGHT: SimpleRenderer(StairsRightPainter(), os.path.join(palette_dir, 'stairs_right.png')),
-        Terrain.START: SimpleRenderer(Painter(), os.path.join(palette_dir, 'stairs_updown.png')),
-        Terrain.END: SimpleRenderer(Painter(), os.path.join(palette_dir, 'stairs_updown.png')),
+        Terrain.PILLAR: SimpleRenderer(Painter(), os.path.join(palette_dir, 'pillar.png')),
+        Terrain.START: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
+        Terrain.END: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
     }

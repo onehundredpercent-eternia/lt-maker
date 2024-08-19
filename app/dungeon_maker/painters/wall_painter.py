@@ -37,6 +37,17 @@ class WallTopPainter(WangEdge2Painter):
 class WallBottomPainter(WangEdge2Painter):
     terrain_like = (Terrain.WALL_TOP, Terrain.WALL_BOTTOM)
 
+    # Used by Floor Painter
+    @staticmethod
+    def is_a_column(dungeon_tilemap: DungeonTileMap, pos: Pos) -> bool:
+        north, east, south, west = dungeon_tilemap.get_cardinal_terrain(pos)
+        if west not in WallBottomPainter.terrain_like and east not in WallBottomPainter.terrain_like:
+            north_pos = (pos[0], pos[1] - 1)
+            # If north has no adjacent friends
+            if north == Terrain.WALL_TOP and WallTopPainter.get_index(dungeon_tilemap, north_pos) == 0:
+                return True
+        return False
+
     def get_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Pos:
         north, east, south, west = dungeon_tilemap.get_cardinal_terrain(pos)
         ne, se, sw, nw = dungeon_tilemap.get_diagonal_terrain(pos)

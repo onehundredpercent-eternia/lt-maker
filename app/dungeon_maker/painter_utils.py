@@ -6,8 +6,9 @@ from app.dungeon_maker.terrain_generation import DungeonTileMap
 class Painter:
     base_coord: Pos = (0, 0)
 
-    def __init__(self):
+    def __init__(self, base_coord: Optional[Pos] = None):
         self.limit: Optional[Dict[int, int]] = None
+        self.base_coord = base_coord or (0, 0)
 
     def set_limit(self, limit: Dict[int, int]):
         self.limit = limit

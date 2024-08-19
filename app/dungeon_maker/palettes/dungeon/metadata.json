@@ -1,5 +1,3 @@
 {
-    "floor1": "default",
-    "floor2": "default",
-    "water": false
+    "location": "Stronghold1.png"
 }

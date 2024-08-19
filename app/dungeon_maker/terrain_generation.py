@@ -98,12 +98,17 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
 
     tilemap.make_walls_two_high()
 
+    tilemap.add_pillars()
+
     tilemap.generate_start_and_end()
 
     tilemap.wrap_in_walls()
     tilemap.fill_in_crevices()
     tilemap.split_walls()
     tilemap.crop_void()
+    # All floor tiles must be reachable
+    if not tilemap.is_fully_connected():
+        return
 
     tilemap.print_terrain_grid()
 
@@ -454,6 +459,91 @@ class DungeonTileMap:
         for pos in turn_into_walls:
             self.terrain_grid[pos] = Terrain.WALL_TOP
 
+    def add_pillars(self):
+        """
+        For each room, determines what pillar arrangement should exist
+        """
+        pillar_arrangements = ["NoPillars", "NoPillars", "NoPillars", "OnEdge", "FourCorners", "NearEdge"]
+        odd_only_pillar_arrangements = ["Middle", "Middle"]
+        even_only_pillar_arragements = []
+        final_pillar_positions = set()
+        final_column_positions = set()
+        for section_grid_pos, section in self.sections.items():
+            if not section.has_full_room():
+                continue
+            ox, oy = section.room.get_true_offset()
+            # Whether the room is taller than it is wide
+            is_vertical = section.room.height >= section.room.width
+            # Determine whether the smaller width of the room is even or odd
+            if is_vertical:
+                is_odd = section.room.width % 2 == 1
+            else:
+                is_odd = section.room.height % 2 == 1
+            if is_odd:
+                arrs = pillar_arrangements + odd_only_pillar_arrangements
+            else:
+                arrs = pillar_arrangements + even_only_pillar_arragements
+            arr = random.choice(arrs)
+            pillar_positions = set()
+            if arr == "NoPillars":
+                continue  # No need to do anything at all
+            elif arr == "OnEdge":
+                if is_vertical:
+                    # Find positions on height
+                    pillar_positions |= {(ox, oy + y) for y in range(1, section.room.height, 3)}
+                    pillar_positions |= {(ox + section.room.width - 1, oy + y) for y in range(1, section.room.height, 3)}
+                else:
+                    pillar_positions |= {(ox + x, oy) for x in range(1, section.room.width, 3)}
+                    pillar_positions |= {(ox + x, oy + section.room.height - 1) for x in range(1, section.room.width, 3)}
+            elif arr == "NearEdge":
+                if is_vertical:
+                    # Find positions on height
+                    pillar_positions |= {(ox + 1, oy + y) for y in range(1, section.room.height - 1, 3)}
+                    pillar_positions |= {(ox + section.room.width - 2, oy + y) for y in range(1, section.room.height - 1, 3)}
+                else:
+                    pillar_positions |= {(ox + x, oy + 1) for x in range(1, section.room.width - 1, 3)}
+                    pillar_positions |= {(ox + x, oy + section.room.height - 2) for x in range(1, section.room.width - 1, 3)}
+            elif arr == "Middle":
+                if is_vertical:
+                    # Find positions on height
+                    pillar_positions |= {(ox + section.room.width // 2, oy + y) for y in range(1, section.room.height, 3)}
+                else:
+                    pillar_positions |= {(ox + x, oy + section.room.height // 2) for x in range(1, section.room.width, 3)}
+            elif arr == "FourCorners":
+                inner_positions = section.room.get_true_inner_positions()
+                topleft = sorted(inner_positions)[0]
+                bottomright = sorted(inner_positions, reverse=True)[0]
+                topright = sorted(inner_positions, key=lambda pos: (-pos[0], pos[1]))[0]
+                bottomleft = sorted(inner_positions, key=lambda pos: (pos[0], -pos[1]))[0]
+                pillar_positions |= {topleft, topright, bottomright, bottomleft}
+
+            # Decide whether these should be pillars or columns
+            # Columns only for certain arrangements with a big enough room
+            if arr in {"FourCorners"} \
+                    and section.room.width >= 5 and section.room.height >= 5 \
+                    and section.room.floor_level == FloorLevel.LOWER:
+                sorted_positions = sorted(pillar_positions, key=lambda pos: pos[1])
+                top_positions = set(sorted_positions[:2])
+                bottom_positions = set(sorted_positions[2:])
+
+                column_positions = set()
+                column_positions |= top_positions
+                # Make the bottom columns point up instead of taking up space below them
+                column_positions |= {(pos[0], pos[1] - 1) for pos in bottom_positions}
+                # If we are near the top, point the columns up more
+                if section_grid_pos[1] < self.grid_size[1] - 1:
+                    column_positions |= {(pos[0], pos[1] - 1) for pos in column_positions}
+                else:
+                    column_positions |= {(pos[0], pos[1] + 1) for pos in column_positions}
+                final_column_positions |= column_positions
+            else:
+                final_pillar_positions |= pillar_positions
+
+        for pos in final_pillar_positions:
+            self.terrain_grid[pos] = Terrain.PILLAR
+        for pos in final_column_positions:
+            self.terrain_grid[pos] = Terrain.WALL_TOP
+                
     def wrap_in_walls(self):
         """
         Takes the entire map and wraps it in 2 layers of walls to make sure there
@@ -750,6 +840,14 @@ class DungeonRoom:
         self.floor_level = floor_level
         self.positions: List[Pos] = \
             [(x + self.offset[0], y + self.offset[1]) for x in range(self.width) for y in range(self.height)]
+
+    def get_true_offset(self) -> Pos:
+        """
+        Returns the true top left position of the room
+        """
+        ox, oy = self.section.offset
+        x, y = self.offset
+        return (ox + x, oy + y)
 
     def get_true_positions(self) -> List[Pos]:
         ox, oy = self.section.offset

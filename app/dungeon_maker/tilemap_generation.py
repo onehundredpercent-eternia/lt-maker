@@ -46,6 +46,7 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.STAIRS_RIGHT: 'Stairs',
         Terrain.STAIRS_DOWN: 'Stairs',
         Terrain.STAIRS_LEFT: 'Stairs',
+        Terrain.PILLAR: 'Pillar',
         Terrain.START: 'Stairs',
         Terrain.END: 'Stairs'
     }[terrain]
