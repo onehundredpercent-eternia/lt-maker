@@ -114,6 +114,20 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
 
     return tilemap
 
+"""
+Parameters that could be modified:
+    DungeonTilemap size: (30, 18) by default
+    Section grid size: (4, 2) by default
+    Room Chance: 0.6 by default
+    Hallway Node Chance: 0.4 by default
+    Empty Section Chance: 0.0 by default
+    Pillar Distribution
+    Wide Hallway Chance: 0.5 by default
+    Room Size Distribution: 3 to (max section size - 1) distributed equally. 
+        Width and Height are independent
+    Size of small floor sections that swap to match the other floor type: 2 or less
+"""
+
 class DungeonTileMap:
     room_chance = 0.6
 
