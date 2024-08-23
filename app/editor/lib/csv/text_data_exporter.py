@@ -31,7 +31,7 @@ def dump_script(event_db: EventCatalog, level_db: LevelCatalog=None) -> Dict[NID
             event_str = ""
             event_str += "Event: %s\n\n" % event_nid
             for line in event_commands:
-                speaker = line.parameters['Speaker']
+                speaker = line.parameters['SpeakerOrStyle']
                 text = line.parameters['Text']
                 if not speaker:
                     speaker = line.parameters.get('StyleNid', "")
