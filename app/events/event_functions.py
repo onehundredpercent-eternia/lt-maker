@@ -3659,6 +3659,9 @@ def delete_record(self: Event, nid: str, flags=None):
 def unlock_difficulty(self: Event, difficulty_mode: str, flags=None):
     RECORDS.unlock_difficulty(difficulty_mode)
 
+def unlock_trial(self: Event, nid: str, flags=None):
+    RECORDS.unlock_trial(nid)
+
 def hide_combat_ui(self: Event, flags=None):
     self.game.game_vars["_hide_ui"] = True
 

@@ -3461,6 +3461,13 @@ class UnlockDifficulty(EventCommand):
     keywords = ['DifficultyMode']
     keyword_types = ['DifficultyMode']
 
+class UnlockTrial(EventCommand):
+    nid = 'unlock_trial'
+    tag = Tags.PERSISTENT_RECORDS
+    desc = ("Unlocks the specified trial map. Locked trials cannot be selected by the player in the Extras Menu.")
+
+    keywords = ['Nid']
+
 def get_commands():
     return EventCommand.__subclasses__()
 
