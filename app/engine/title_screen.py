@@ -881,7 +881,7 @@ class TitleTrialMapsState(State):
 
     def take_input(self, event):
         # Only take input in normal state, or in either of the waits
-        if self.state != 'normal' and self.state != 'trial_wait' and self.state != 'save_wait':
+        if self.state not in ['trial_wait', 'save_wait']:
             return
 
         first_push = self.fluid.update()

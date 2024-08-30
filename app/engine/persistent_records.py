@@ -66,17 +66,17 @@ class PersistentRecordManager(Data):
         else:
             return False
         
-    def unlock_trial(self, trialMap: str):
-        if trialMap in self:
+    def unlock_trial(self, trial_map: str):
+        if trial_map in self:
             logging.info("Difficulty with nid of %s already unlocked")
             return
         else:
-            self.append(PersistentRecord(trialMap, True))
+            self.append(PersistentRecord(trial_map, True))
         persistent_data.serialize(self.location, self.save())
     
-    def check_trial_unlocked(self, trialMap: str):
-        if trialMap in self:
-            return super().get(trialMap).value
+    def check_trial_unlocked(self, trial_map: str):
+        if trial_map in self:
+            return super().get(trial_map).value
         else:
             return False
 
