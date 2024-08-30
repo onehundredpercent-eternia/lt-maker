@@ -898,6 +898,19 @@ Activates or deactivates convoy access.
 
     keywords = ["Activated"]
     keyword_types = ['Bool']
+    
+class EnableRepairShop(EventCommand):
+    nid = 'enable_repair_shop'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Enables or disables repair shop. You will also need the Constant
+checked to see the repair shop in base/preps. Defaults to True.
+        """
+
+    keywords = ["Activated"]
+    keyword_types = ['Bool']
 
 class EnableSupports(EventCommand):
     nid = 'enable_supports'
@@ -1505,7 +1518,8 @@ Be extremely careful with this function. The new NID *must* be unique across eve
 Otherwise extremely undefined behavior can occur.
 """
 
-    keywords = ['Unit', 'Nid', 'Name']
+    keywords = ['Unit', 'Nid']
+    optional_keywords = ['Name']
     keyword_types = ['Unit', 'Nid', 'String']
 
 class AddGroup(EventCommand):

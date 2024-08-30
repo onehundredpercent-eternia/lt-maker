@@ -629,6 +629,9 @@ def set_next_chapter(self: Event, chapter, flags=None):
 
 def enable_convoy(self: Event, activated: bool, flags=None):
     action.do(action.SetGameVar("_convoy", activated))
+    
+def enable_repair_shop(self: Event, activated: bool, flags=None):
+    action.do(action.SetGameVar("_repair_shop", activated))
 
 def enable_supports(self: Event, activated: bool, flags=None):
     action.do(action.SetGameVar("_supports", activated))
@@ -1150,7 +1153,7 @@ def interact_unit(self: Event, unit, position, combat_script: Optional[List[str]
         arena='arena' in flags, force_animation='force_animation' in flags, force_no_animation='force_no_animation' in flags)
     self.state = "paused"
 
-def recruit_generic(self: Event, unit, nid, name, flags=None):
+def recruit_generic(self: Event, unit, nid, name=None, flags=None):
     new_unit = self._get_unit(unit)
     if not new_unit:
         self.logger.error("recruit_generic: Couldn't find unit %s" % unit)
@@ -1158,7 +1161,8 @@ def recruit_generic(self: Event, unit, nid, name, flags=None):
     unit = new_unit
     action.do(action.SetPersistent(unit))
     action.do(action.SetNid(unit, nid))
-    action.do(action.SetName(unit, name))
+    if name:
+        action.do(action.SetName(unit, name))
     for item in unit.items:
         action.do(action.SetItemOwner(item, nid))
     for skill in unit.all_skills:
