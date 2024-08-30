@@ -57,6 +57,7 @@ class StateMachine():
              'title_extras': title_screen.TitleExtrasState,
              'title_all_saves': title_screen.TitleAllSavesState,
              'title_trial_maps': title_screen.TitleTrialMapsState,
+             'title_trial_map_saves': title_screen.TitleTrialSavesState,
              'title_wait': title_screen.TitleWaitState,
              'title_save': title_screen.TitleSaveState,
              'in_chapter_save': title_screen.TitleSaveState,
