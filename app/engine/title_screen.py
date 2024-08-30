@@ -842,7 +842,6 @@ class TitleTrialMapsState(State):
     def get_slots(self):
         return save.SAVE_SLOTS
     
-
     def start(self):
         self.fluid = FluidScroll(128)
         self.bg = game.memory['title_bg']
@@ -879,6 +878,7 @@ class TitleTrialMapsState(State):
             game.state.change('transition_in')
 
         self.fluid.reset_on_change_state()
+        return 'repeat'
 
     def take_input(self, event):
         # Only take input in normal state, or in either of the waits
@@ -899,12 +899,12 @@ class TitleTrialMapsState(State):
         if event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
             if self.state == 'trial_wait':
-                game.state.change('transition_out')
+                game.state.change('transition_pop')
             elif self.state == 'save_wait':
                 self.state = 'trial_setup'
                 game.state.change('transition_out')
             else:
-                game.state.change('transition_out')
+                game.state.change('transition_pop')
 
             return 'repeat'
 
