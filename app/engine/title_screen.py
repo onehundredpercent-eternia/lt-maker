@@ -869,7 +869,6 @@ class TitleTrialMapsState(State):
         
         #If we're in save set up mode, we should see all available saves instead
         elif self.state == 'save_setup':
-            logging.error("We've reached the save set up")
             self.options, self.colors = save.get_save_title(self.save_slots)
             self.menu = menus.ChapterSelect(self.options, self.colors)
             most_recent = self.save_slots.index(max(self.save_slots, key=lambda x: x.realtime))
@@ -952,8 +951,7 @@ class TitleTrialMapsState(State):
                     game.state.process_temp_state()
 
             return 'repeat'
-         
-            # Just for displaying the correct information on the title menu
+        
            
 
     def back(self):
