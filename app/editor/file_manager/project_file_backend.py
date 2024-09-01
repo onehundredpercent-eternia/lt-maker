@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog, QVBoxLayo
 from app.constants import VERSION
 from app.data.database.database import DB, Database
 from app.data.resources.resources import RESOURCES, Resources
+from app.data.serialization.versions import CURRENT_GLOBAL_SERIALIZATION_VERSION
 from app.data.validation.db_validation import DBChecker
 from app.editor import timer
 from app.editor.error_viewer import show_error_report
@@ -154,6 +155,9 @@ class ProjectFileBackend():
         except Exception as e:
             QMessageBox.warning(self.parent, "Validation warning", "Validation failed with error. Please send this message to the devs.\nYour save will continue as normal.\nException:\n" + traceback.format_exc())
             DB.game_flags.has_fatal_errors = False
+
+        DB.game_flags.as_chunks = self.settings.get_should_save_as_chunks()
+        DB.game_flags.serialization_ver = CURRENT_GLOBAL_SERIALIZATION_VERSION
 
         # Returns whether we successfully saved
         # check if we're editing default, if so, prompt to save as

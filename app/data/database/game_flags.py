@@ -1,5 +1,7 @@
 from dataclasses import dataclass, asdict, fields
 
+from app.data.serialization.versions import CURRENT_GLOBAL_SERIALIZATION_VERSION
+
 def dataclass_from_dict(klass, d):
     try:
         fieldtypes = {f.name:f.type for f in fields(klass)}
@@ -10,6 +12,8 @@ def dataclass_from_dict(klass, d):
 @dataclass
 class GameFlags():
     has_fatal_errors: bool = False
+    serialization_ver: int = CURRENT_GLOBAL_SERIALIZATION_VERSION
+    as_chunks: bool = False
 
     def save(self):
         return asdict(self)

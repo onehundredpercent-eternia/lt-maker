@@ -15,6 +15,9 @@ from app.data.database import (ai, constants, difficulty_modes, equations,
                                raw_data, skills, stats, supports, tags, teams,
                                terrain, translations, units, varslot, weapons)
 from app.data.database.game_flags import GameFlags
+from app.data.serialization.serialization_options import SerializeOptions
+from app.data.serialization.serialize_main import SerializerController
+from app.data.serialization.versions import CURRENT_GLOBAL_SERIALIZATION_VERSION
 from app.events import event_prefab
 from app.utilities.data_order import parse_order_keys_file
 from app.utilities.serialization import load_json, save_json
@@ -159,6 +162,11 @@ class Database(object):
         import time
         start = time.perf_counter() * 1000
 
+        test_serializer = SerializerController(Path(proj_dir), CURRENT_GLOBAL_SERIALIZATION_VERSION)
+        for data_type in self.save_data_types:
+            data = getattr(self, data_type)
+            as_chunks = data_type in self.save_as_chunks and main_settings.get_should_save_as_chunks()
+            print(test_serializer.serialize_catalog(data, data_type, SerializeOptions(as_chunks)))
         to_save = self.save()
         # This section is what takes so long!
         try:
@@ -172,15 +180,7 @@ class Database(object):
                     orderkeys: List[str] = []
                     for idx, subvalue in enumerate(value):
                         # ordering
-                        if 'nid' in subvalue:
-                            name = subvalue['nid']
-                        elif 'name' in subvalue:
-                            if 'level_nid' in subvalue: # to handle the wonky event nid property
-                                name = (subvalue['level_nid'] if subvalue['level_nid'] else 'global') + "_" + subvalue['name']
-                            else:
-                                name = subvalue['name']
-                        else:
-                            name = str(idx).zfill(6)
+                        name = subvalue['nid']
                         name = re.sub(r'[\\/*?:"<>|]', "", name)
                         name = name.replace(' ', '_')
                         orderkeys.append(name)
