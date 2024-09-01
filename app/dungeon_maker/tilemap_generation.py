@@ -3,6 +3,8 @@ from typing import Dict, Set
 from app.constants import TILEWIDTH, TILEHEIGHT, WINWIDTH, WINHEIGHT
 from app.utilities.typing import Pos, NID
 from app.dungeon_maker.terrain_generation import generate_terrain, Terrain, DungeonTileMap
+from app.dungeon_maker import themes
+from app.dungeon_maker.palette import Palette
 from app.dungeon_maker.pygame_renderers.renderers import get_renderers, RendererDatabase
 
 from app.engine.objects.tilemap import TileMapObject
@@ -47,22 +49,39 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.STAIRS_DOWN: 'Stairs',
         Terrain.STAIRS_LEFT: 'Stairs',
         Terrain.PILLAR: 'Pillar',
+        Terrain.SPARSE_FOREST: 'Forest',
+        Terrain.GRASS: 'Plains',
+        Terrain.RUINS: 'Ruins',
         Terrain.START: 'Stairs',
         Terrain.END: 'Stairs'
     }[terrain]
 
-def generate_map(theme: str = 'default', palette_name: str = 'dungeon', 
-                 size: Pos = (15, 14), seed: int = -1):
-    dungeon_tilemap = generate_terrain(theme, size, seed)
+def generate_map(theme: str = 'default', 
+                 palette_name: str = 'dungeon', 
+                 seed: int = -1):
+    dungeon_tilemap = generate_terrain(theme, seed)
     size = dungeon_tilemap.width, dungeon_tilemap.height
+
+    # Swap Terrains for the palette terrains if necessary
+    palette = Palette.from_json(f'app/dungeon_maker/palettes/{palette_name}/metadata.json')
+    if palette.floor1 == "grass":
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_LOWER, Terrain.GRASS)
+    if palette.floor2 == "grass":
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_UPPER, Terrain.GRASS)
+    if palette.floor1 == "ruins":
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_LOWER, Terrain.RUINS)
+    if palette.floor2 == "ruins":
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_UPPER, Terrain.RUINS)
+
     renderers = get_renderers(palette_name)
     surf: engine.Surface = build_surface(dungeon_tilemap, renderers)
+    theme: themes.Theme = themes.themes[theme]
 
     # Now we have the surface to use as a real tilemap
     scratch_data = {
         'theme': theme,
         'palette_name': palette_name,
-        'size': dungeon_tilemap,
+        'size': size,
         'seed': seed,
     }
 
@@ -76,4 +95,4 @@ def generate_map(theme: str = 'default', palette_name: str = 'dungeon',
 if __name__ == '__main__':
     engine.init()
     engine.build_display((WINWIDTH, WINHEIGHT))
-    generate_map(seed=4)
+    generate_map('forest', 'monastery', seed=1)

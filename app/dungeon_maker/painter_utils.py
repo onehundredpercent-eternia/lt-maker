@@ -1,7 +1,9 @@
-from typing import Dict, Optional
+from __future__ import annotations
+from typing import Dict, Optional, TYPE_CHECKING
 
 from app.utilities.typing import Pos
-from app.dungeon_maker.terrain_generation import DungeonTileMap
+if TYPE_CHECKING:
+    from app.dungeon_maker.terrain_generation import DungeonTileMap
 
 class Painter:
     base_coord: Pos = (0, 0)

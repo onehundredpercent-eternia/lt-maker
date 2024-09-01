@@ -7,7 +7,7 @@ class WallTopPainter(WangEdge2Painter):
     terrain_like = (Terrain.WALL_TOP,)
 
     @staticmethod
-    def get_index(dungeon_tilemap, pos):
+    def get_index(dungeon_tilemap: DungeonTileMap, pos: Pos) -> int:
         north, east, south, west = dungeon_tilemap.get_cardinal_terrain(pos)
         north_edge = bool(north in WallTopPainter.terrain_like)
         south_edge = bool(south in WallTopPainter.terrain_like)

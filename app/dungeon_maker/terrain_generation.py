@@ -45,45 +45,28 @@ from app.utilities import utils
 from app.utilities.typing import Pos
 from app.utilities.direction import Direction, get_cardinal_positions, get_diagonal_positions
 from app.dungeon_maker.utilities import set_random_seed, flood_fill
-
-class Terrain(Enum):
-    VOID = 0
-    WALL_TOP = 1
-    WALL_BOTTOM = 2
-    FLOOR_UPPER = 3
-    FLOOR_LOWER = 4
-    WATER = 5
-    STAIRS_UP = 6
-    STAIRS_RIGHT = 7
-    STAIRS_DOWN = 8
-    STAIRS_LEFT = 9
-    PILLAR = 10
-    FOREST = 11
-    START = 12
-    END = 13
+from app.dungeon_maker.themes import Theme, themes
+from app.dungeon_maker.terrain import Terrain
 
 class FloorLevel(Enum):
     LOWER = 1
     UPPER = 2
 
-def generate_terrain(theme: str, size: Pos, seed=-1) -> DungeonTileMap:
+def generate_terrain(theme: str, seed=-1) -> DungeonTileMap:
     random.seed(seed)
     set_random_seed(seed)
+    theme = themes.get(theme)  # Convert str to Theme
 
     while True:
-        result = _generate_terrain_process(theme, size)
+        result = _generate_terrain_process(theme)
         if result:
             break
 
     return result
 
-def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]:
-    width, height = size
-
-    tilemap = DungeonTileMap(width, height)
+def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
+    tilemap = DungeonTileMap(theme)
     tilemap.reset_grid(Terrain.WALL_TOP)
-
-    tilemap.set_sections(4, 2)
 
     num_rooms = tilemap.generate_rooms()
     if num_rooms < 2:  # Need at least 2 rooms
@@ -98,7 +81,10 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
 
     tilemap.make_walls_two_high()
 
-    tilemap.add_pillars()
+    if theme.use_forest:
+        tilemap.add_forest()
+    else:
+        tilemap.add_pillars()
 
     tilemap.generate_start_and_end()
 
@@ -114,33 +100,31 @@ def _generate_terrain_process(theme: str, size: Pos) -> Optional[DungeonTileMap]
 
     return tilemap
 
-"""
-Parameters that could be modified:
-    DungeonTilemap size: (30, 18) by default
-    Section grid size: (4, 2) by default
-    Room Chance: 0.6 by default
-    Hallway Node Chance: 0.4 by default
-    Empty Section Chance: 0.0 by default
-    Pillar Distribution
-    Wide Hallway Chance: 0.5 by default
-    Room Size Distribution: 3 to (max section size - 1) distributed equally. 
-        Width and Height are independent
-    Size of small floor sections that swap to match the other floor type: 2 or less
-"""
-
 class DungeonTileMap:
-    room_chance = 0.6
-
-    def __init__(self, width: int, height: int):
-        self.width, self.height = width, height
+    def __init__(self, theme: Theme):
+        self.theme = theme
+        self.width, self.height = theme.size
         self.terrain_grid: Dict[Pos, Terrain] = {}
         self.start: Pos = None
         self.end: Pos = None
-        self.grid_size: Tuple[int, int] = None
+        self.grid_size: Tuple[int, int] = theme.section_grid
         self.sections: Dict[Pos, DungeonSection] = {}
+        self.set_sections()
 
     def get_terrain(self, pos: Pos) -> Optional[Terrain]:
         return self.terrain_grid.get(pos, None)
+
+    def swap_terrain(self, terrain1: Terrain, terrain2: Terrain):
+        """
+        Converts all tiles with terrain of type terrain1 to 
+        terrain of type terrain2
+        """
+        swap_to = set()
+        for pos, terrain in self.terrain_grid.items():
+            if terrain == terrain1:
+                swap_to.add(pos)
+        for pos in swap_to:
+            self.terrain_grid[pos] = terrain2
 
     def check_bounds(self, pos: Pos) -> bool:
         return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
@@ -151,13 +135,7 @@ class DungeonTileMap:
                 self.terrain_grid[(x, y)] = terrain
 
     def is_fully_connected(self) -> bool:
-        floor_terrain = {Terrain.FLOOR_LOWER, 
-                         Terrain.FLOOR_UPPER, 
-                         Terrain.STAIRS_UP, 
-                         Terrain.STAIRS_RIGHT, 
-                         Terrain.STAIRS_DOWN, 
-                         Terrain.STAIRS_LEFT
-                         }
+        floor_terrain = Terrain.floor_terrain()
         floor_tiles = {pos for pos, terrain in self.terrain_grid.items() 
                        if terrain in floor_terrain}
         test_pos = floor_tiles.pop()
@@ -171,8 +149,8 @@ class DungeonTileMap:
             return False
         return True
 
-    def set_sections(self, x: int, y: int):
-        self.grid_size = (x, y)
+    def set_sections(self):
+        x, y = self.grid_size
         xwidth = self.width / x
         ywidth = self.height / y 
         for xi in range(x):
@@ -188,11 +166,13 @@ class DungeonTileMap:
         full_rooms_generated = 0
         for section in self.sections.values():
             val = random.random()
-            if val < self.room_chance:
+            if val < self.theme.room_chance:
                 section.generate_room()
                 full_rooms_generated += 1
-            else:
+            elif val < self.theme.room_chance + self.theme.hallway_chance:
                 section.generate_hallway_node()
+            else:
+                pass
         return full_rooms_generated
 
     def connect_rooms(self):
@@ -310,7 +290,7 @@ class DungeonTileMap:
             test_pos = floor_tiles.pop()
             swap_to = Terrain.FLOOR_LOWER if self.terrain_grid.get(test_pos) == Terrain.FLOOR_UPPER else Terrain.FLOOR_UPPER
             friends = flood_fill(self, test_pos)
-            if len(friends) <= 2:  # Very conservative
+            if len(friends) <= self.theme.small_floor_section_size:  # Very conservative
                 # Section is too small, swap to other side
                 for pos in friends:
                     self.terrain_grid[pos] = swap_to
@@ -477,9 +457,6 @@ class DungeonTileMap:
         """
         For each room, determines what pillar arrangement should exist
         """
-        pillar_arrangements = ["NoPillars", "NoPillars", "NoPillars", "OnEdge", "FourCorners", "NearEdge"]
-        odd_only_pillar_arrangements = ["Middle", "Middle"]
-        even_only_pillar_arragements = []
         final_pillar_positions = set()
         final_column_positions = set()
         for section_grid_pos, section in self.sections.items():
@@ -494,9 +471,9 @@ class DungeonTileMap:
             else:
                 is_odd = section.room.height % 2 == 1
             if is_odd:
-                arrs = pillar_arrangements + odd_only_pillar_arrangements
+                arrs = self.theme.pillar_arrangements + self.theme.odd_only_pillar_arrangements
             else:
-                arrs = pillar_arrangements + even_only_pillar_arragements
+                arrs = self.theme.pillar_arrangements + self.theme.even_only_pillar_arragements
             arr = random.choice(arrs)
             pillar_positions = set()
             if arr == "NoPillars":
@@ -557,6 +534,18 @@ class DungeonTileMap:
             self.terrain_grid[pos] = Terrain.PILLAR
         for pos in final_column_positions:
             self.terrain_grid[pos] = Terrain.WALL_TOP
+
+    def add_forest(self):
+        """
+        For each room on the lower floor, randomly choose positions for forests
+        """
+        to_swap = set()
+        for pos, terrain in self.terrain_grid.items():
+            if terrain == Terrain.FLOOR_LOWER:
+                if random.random() < self.theme.sparse_forest_chance:
+                    to_swap.add(pos)
+        for pos in to_swap:
+            self.terrain_grid[pos] = Terrain.SPARSE_FOREST
                 
     def wrap_in_walls(self):
         """
@@ -687,7 +676,10 @@ class DungeonTileMap:
             print("%02d " % y, end='')
             for x in range(self.width):
                 terrain = self.terrain_grid[(x, y)]
-                if terrain == Terrain.FLOOR_UPPER or terrain == Terrain.FLOOR_LOWER:
+                if terrain == Terrain.FLOOR_UPPER \
+                        or terrain == Terrain.FLOOR_LOWER \
+                        or terrain == Terrain.GRASS \
+                        or terrain == Terrain.RUINS:
                     print("_", end='')
                 elif terrain == Terrain.WALL_TOP:
                     print("#", end='')
@@ -695,7 +687,7 @@ class DungeonTileMap:
                     print("|", end='')
                 elif terrain == Terrain.VOID:
                     print(" ", end='')
-                elif terrain == Terrain.PILLAR or terrain == Terrain.FOREST:
+                elif terrain == Terrain.PILLAR or terrain == Terrain.SPARSE_FOREST:
                     print("%", end='')
                 elif terrain == Terrain.STAIRS_UP:
                     print("^", end='')
@@ -735,10 +727,6 @@ class DungeonTileMap:
             print("\n", end='')
 
 class DungeonSection:
-    min_room_x = 3
-    min_room_y = 3
-    wide_hallway_chance = 0.5
-
     def __init__(self, size: Pos, offset: Pos, tilemap: DungeonTileMap):
         self.width, self.height = size
         self.offset = offset
@@ -757,8 +745,8 @@ class DungeonSection:
         return self.room and self.room.width > 1 and self.room.height > 1
 
     def generate_room(self):
-        width = random.randint(self.min_room_x, self.width - 1)
-        height = random.randint(self.min_room_y, self.height - 1)
+        width = random.randint(self.tilemap.theme.room_size_min_x, self.width - 1)
+        height = random.randint(self.tilemap.theme.room_size_min_y, self.height - 1)
         offset_x = random.randint(0, self.width - width - 1)
         offset_y = random.randint(0, self.height - height - 1)
         floor_level = random.choice((FloorLevel.LOWER, FloorLevel.UPPER))
@@ -773,7 +761,7 @@ class DungeonSection:
         self.room = DungeonRoom((1, 1), (offset_x, offset_y), self, self.tilemap, floor_level)
 
     def connect(self, other: DungeonSection, direction: Direction):
-        hallway_width = 2 if random.random() < self.wide_hallway_chance else 1
+        hallway_width = 2 if random.random() < self.tilemap.theme.wide_hallway_chance else 1
         hallway = []
 
         if direction == Direction.EAST:
@@ -878,4 +866,5 @@ class DungeonRoom:
 
 # python -m app.dungeon_maker.terrain_generation
 if __name__ == '__main__':
-    generate_terrain('normal', (30, 18))
+    from app.dungeon_maker.themes import DefaultTheme
+    generate_terrain(DefaultTheme)
