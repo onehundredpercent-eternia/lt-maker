@@ -77,7 +77,6 @@ class ProjectFileBackend():
         self.current_proj = self.settings.get_current_project()
         self.file_manager = FileManager(self.current_proj)
         self.is_saving = False
-
         self.metadata: Metadata = dataclass_from_dict(Metadata, self.file_manager.load_json(Path('metadata.json')))
 
         self.save_progress = QProgressDialog(
