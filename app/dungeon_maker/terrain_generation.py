@@ -204,7 +204,7 @@ class DungeonTileMap:
     def generate_start_and_end(self):
         available_sections = [
             (pos, section.room) for pos, section in self.sections.items() 
-            if section.has_full_room()
+            if section.has_big_room()
         ]
         start_pos, start_room = random.choice(available_sections)
         furthest_away_section = \
@@ -422,10 +422,12 @@ class DungeonTileMap:
         bad_walls: Set[Pos] = set()
         for pos, val in self.terrain_grid.items():
             north, _, south, _ = self.get_cardinal_terrain(pos)
-            if val == Terrain.WALL_TOP and north \
+            if val == Terrain.WALL_TOP and north and south \
                     and north != Terrain.WALL_TOP \
                     and south != Terrain.WALL_TOP \
-                    and south != Terrain.FLOOR_UPPER:
+                    and south != Terrain.FLOOR_UPPER \
+                    and south != Terrain.STAIRS_LEFT \
+                    and south != Terrain.STAIRS_RIGHT:
                 bad_walls.add(pos)
 
         # Handle each of these walls in groups
@@ -744,19 +746,22 @@ class DungeonSection:
     def has_full_room(self) -> bool:
         return self.room and self.room.width > 1 and self.room.height > 1
 
+    def has_big_room(self) -> bool:
+        return self.room and self.room.width >= 3 and self.room.height >= 3
+
     def generate_room(self):
         width = random.randint(self.tilemap.theme.room_size_min_x, self.width - 1)
         height = random.randint(self.tilemap.theme.room_size_min_y, self.height - 1)
         offset_x = random.randint(0, self.width - width - 1)
         offset_y = random.randint(0, self.height - height - 1)
-        floor_level = random.choice((FloorLevel.LOWER, FloorLevel.UPPER))
+        floor_level = FloorLevel.LOWER if random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
 
         self.room = DungeonRoom((width, height), (offset_x, offset_y), self, self.tilemap, floor_level)
 
     def generate_hallway_node(self):
         offset_x = random.randint(1, self.width - 1)
         offset_y = random.randint(1, self.height - 1)
-        floor_level = random.choice((FloorLevel.LOWER, FloorLevel.UPPER))
+        floor_level = FloorLevel.LOWER if random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
 
         self.room = DungeonRoom((1, 1), (offset_x, offset_y), self, self.tilemap, floor_level)
 
