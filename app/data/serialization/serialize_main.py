@@ -10,15 +10,13 @@ from app.utilities.data import Data
 T = TypeVar('T', bound=Data)
 
 class SerializerController():
-    root_dir: Path
     serializer: Serializer
 
-    def __init__(self, root_dir: Path, version: int):
-        self.root_dir = root_dir
+    def __init__(self, version: int):
         self.serializer = SERIALIZATION_VERSION_MAP.get(version)()
 
     def serialize_catalog(self, catalog: Data, catalog_name: str, options: SerializeOptions) -> List[SerializeCommand]:
-        self.serializer.serialize_catalog(catalog, catalog_name)
+        return self.serializer.serialize_catalog(catalog, catalog_name, options)
 
     def deserialize_catalog(self, catalog_type: T, catalog_name: str, options: SerializeOptions) -> T:
-        self.serializer.deserialize_catalog(catalog_type, catalog_name)
+        return self.serializer.deserialize_catalog(catalog_type, catalog_name, options)

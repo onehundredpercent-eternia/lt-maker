@@ -15,6 +15,8 @@ from app.data.database import (ai, constants, difficulty_modes, equations,
                                raw_data, skills, stats, supports, tags, teams,
                                terrain, translations, units, varslot, weapons)
 from app.data.database.game_flags import GameFlags
+from app.data.serialization.command import SerializeCommand
+from app.data.serialization.serialization_file_manager import SerializationFileManager
 from app.data.serialization.serialization_options import SerializeOptions
 from app.data.serialization.serialize_main import SerializerController
 from app.data.serialization.versions import CURRENT_GLOBAL_SERIALIZATION_VERSION
@@ -134,69 +136,32 @@ class Database(object):
             if isinstance(data, CategorizedCatalog):
                 data.categories = Categories.load(save_obj.get(data_type + CATEGORY_SUFFIX, {}))
 
-    def save(self):
+    def save(self) -> List[SerializeCommand]:
         # import time
-        to_save = {}
+        from app.editor.settings import MainSettingsController
+        main_settings = MainSettingsController()
+        commands = []
+        test_serializer = SerializerController(CURRENT_GLOBAL_SERIALIZATION_VERSION)
         for data_type in self.save_data_types:
-            # logging.info("Saving %s..." % data_type)
-            # time1 = time.time_ns()/1e6
             data = getattr(self, data_type)
-            to_save[data_type] = data.save()
-            # also save the categories if it has any
-            if isinstance(data, CategorizedCatalog):
-                to_save[data_type + CATEGORY_SUFFIX] = data.categories.save()
-            # time2 = time.time_ns()/1e6 - time1
-            # logging.info("Time taken: %s ms" % time2)
-        return to_save
+            as_chunks = data_type in self.save_as_chunks and main_settings.get_should_save_as_chunks()
+            commands += test_serializer.serialize_catalog(data, data_type, SerializeOptions(as_chunks))
+        return commands
 
     def serialize(self, proj_dir) -> bool:
         # Returns whether we were successful
-        from app.editor.settings import MainSettingsController
-        main_settings = MainSettingsController()
-
         data_dir = os.path.join(proj_dir, 'game_data')
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
         logging.info("Serializing data in %s..." % data_dir)
-
         import time
         start = time.perf_counter() * 1000
-
-        test_serializer = SerializerController(Path(proj_dir), CURRENT_GLOBAL_SERIALIZATION_VERSION)
-        for data_type in self.save_data_types:
-            data = getattr(self, data_type)
-            as_chunks = data_type in self.save_as_chunks and main_settings.get_should_save_as_chunks()
-            print(test_serializer.serialize_catalog(data, data_type, SerializeOptions(as_chunks)))
-        to_save = self.save()
+        commands = self.save()
+        serialization_fm = SerializationFileManager(Path(proj_dir) / 'game_data')
         # This section is what takes so long!
         try:
-            for key, value in to_save.items():
-                # divide save data into chunks based on key value
-                if key in self.save_as_chunks and main_settings.get_should_save_as_chunks():
-                    save_dir = os.path.join(data_dir, key)
-                    if os.path.exists(save_dir):
-                        shutil.rmtree(save_dir)
-                    os.mkdir(save_dir)
-                    orderkeys: List[str] = []
-                    for idx, subvalue in enumerate(value):
-                        # ordering
-                        name = subvalue['nid']
-                        name = re.sub(r'[\\/*?:"<>|]', "", name)
-                        name = name.replace(' ', '_')
-                        orderkeys.append(name)
-                        save_loc = Path(save_dir, name + '.json')
-                        # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
-                        save_json(save_loc, [subvalue])
-                    save_json(Path(save_dir, '.orderkeys'), orderkeys)
-                else:  # Save as a single file
-                    # Which means deleting the old directory
-                    save_dir = Path(data_dir, key)
-                    if os.path.exists(save_dir):
-                        shutil.rmtree(save_dir)
-                    save_loc = Path(data_dir, key + '.json')
-                    # logging.info("Serializing %s to %s" % (key, save_loc))
-                    save_json(save_loc, value)
-
+            for cmd in commands:
+                serialization_fm.process_serialization_command(cmd)
         except OSError as e:  # In case we ran out of memory
             logging.error("Editor was unable to save your project. Free up memory in your hard drive or try saving somewhere else, otherwise progress will be lost when the editor is closed.")
             logging.exception(e)
