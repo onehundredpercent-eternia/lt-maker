@@ -139,6 +139,10 @@ class Data(Generic[T]):
                 self.append(val)
         return self
 
+    def copy(self) -> Data[T]:
+        new_data = Data()
+        return new_data.restore(self.save())
+
     # Magic Methods
     def __repr__(self):
         return repr(self._list)
@@ -186,3 +190,6 @@ class Prefab():
     @classmethod
     def default(cls):
         return cls()
+
+    def copy(self) -> Prefab:
+        return self.__class__.restore(self.save())
