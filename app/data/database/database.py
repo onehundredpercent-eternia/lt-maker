@@ -14,10 +14,14 @@ from app.data.database import (ai, constants, difficulty_modes, equations,
                                minimap, overworld, parties,
                                raw_data, skills, stats, supports, tags, teams,
                                terrain, translations, units, varslot, weapons)
+from app.data.database.game_flags import GameFlags
+from app.data.serialization.serializer_main import SerializerController
+from app.data.serialization.type_0_serializer import ObjectCanSaveSerializer
 from app.events import event_prefab
+from app.utilities import compare
 from app.utilities.data_order import parse_order_keys_file
 from app.utilities.serialization import load_json, save_json
-from app.utilities.typing import NID
+from app.utilities.typing import NID, NestedPrimitiveDict
 
 CATEGORY_SUFFIX = '.category'
 
@@ -119,7 +123,7 @@ class Database(object):
             return load_json(save_loc)
 
     # === Saving and loading important data functions ===
-    def restore(self, save_obj):
+    def restore(self, save_obj: NestedPrimitiveDict):
         for data_type in self.save_data_types:
             logging.info("Database: Restoring %s..." % (data_type))
             data = getattr(self, data_type)
@@ -128,14 +132,15 @@ class Database(object):
             if isinstance(data, CategorizedCatalog):
                 data.categories = Categories.load(save_obj.get(data_type + CATEGORY_SUFFIX, {}))
 
-    def save(self):
+    def save(self) -> NestedPrimitiveDict:
         # import time
         to_save = {}
+        serializer = SerializerController(self.game_flags.serialization_ver)
         for data_type in self.save_data_types:
             # logging.info("Saving %s..." % data_type)
             # time1 = time.time_ns()/1e6
             data = getattr(self, data_type)
-            to_save[data_type] = data.save()
+            to_save[data_type] = serializer.serialize_catalog(data, data_type)
             # also save the categories if it has any
             if isinstance(data, CategorizedCatalog):
                 to_save[data_type + CATEGORY_SUFFIX] = data.categories.save()

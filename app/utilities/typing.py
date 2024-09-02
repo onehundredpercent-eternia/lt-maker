@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 Pos = Tuple[int, int]
 
