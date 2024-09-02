@@ -24,3 +24,15 @@ class LimitRenderer(SimpleLimitRenderer):
         self.image = engine.image_load(image_fn)
         limits: Dict[int, int] = {k: find_limit16(self.image, k) for k in range(16)}
         self.painter.set_limit(limits)
+
+class SimpleLimitShadingRenderer(SimpleLimitRenderer):
+    def determine_sprite(self, dungeon_tilemap: DungeonTileMap, 
+                         position: Pos) -> engine.Surface:
+        coord, shading_coord = self.painter.get_coord(dungeon_tilemap, position)
+        im = get_image16(self.image, coord)
+
+        if shading_coord:
+            shading_im = get_image16(self.image, shading_coord)
+            im.blit(shading_im, (0, 0))
+
+        return im

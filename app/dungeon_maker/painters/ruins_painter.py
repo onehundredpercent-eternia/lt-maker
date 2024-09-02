@@ -6,24 +6,23 @@ from app.dungeon_maker.painters.floor_painter import FloorPainter
 from app.dungeon_maker.painters.noise_interface import NoiseInterface
 from app.dungeon_maker.utilities import random_choice
 
-class RuinsPainter(FloorPainter, NoiseInterface):
+class RuinsPainter(NoiseInterface, FloorPainter):
     """
     # Implements 16x16 Floor with Ruins
     """
     noise_vertices: Dict[Pos, bool] = {}
     noise_threshold: float = 0.5
 
-    @staticmethod
-    def get_index(dungeon_tilemap: DungeonTileMap, pos: Pos) -> int:
-        center = RuinsPainter.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 1), False) 
-        north = RuinsPainter.noise_vertices.get((pos[0]*2 + 1, pos[1]*2), False)
-        east = RuinsPainter.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 1), False)
-        south = RuinsPainter.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 2), False)
-        west = RuinsPainter.noise_vertices.get((pos[0]*2, pos[1]*2 + 1), False)
-        northwest = RuinsPainter.noise_vertices.get((pos[0]*2, pos[1]*2), False)
-        northeast = RuinsPainter.noise_vertices.get((pos[0]*2 + 2, pos[1]*2), False)
-        southwest = RuinsPainter.noise_vertices.get((pos[0]*2, pos[1]*2 + 2), False)
-        southeast = RuinsPainter.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 2), False)
+    def get_index(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> int:
+        center = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 1), False) 
+        north = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2), False)
+        east = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 1), False)
+        south = self.noise_vertices.get((pos[0]*2 + 1, pos[1]*2 + 2), False)
+        west = self.noise_vertices.get((pos[0]*2, pos[1]*2 + 1), False)
+        northwest = self.noise_vertices.get((pos[0]*2, pos[1]*2), False)
+        northeast = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2), False)
+        southwest = self.noise_vertices.get((pos[0]*2, pos[1]*2 + 2), False)
+        southeast = self.noise_vertices.get((pos[0]*2 + 2, pos[1]*2 + 2), False)
 
         topleft = center + north + west + northwest >= 3
         topright = center + north + east + northeast >= 3
@@ -37,7 +36,7 @@ class RuinsPainter(FloorPainter, NoiseInterface):
         return index
 
     def get_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Tuple[Pos, Pos]:
-        index = RuinsPainter.get_index(dungeon_tilemap, pos)
+        index = self.get_index(dungeon_tilemap, pos)
 
         coord = random_choice([(index, k) for k in range(self.limit[index])], pos)
         shading_coord = self.get_shading_coord(dungeon_tilemap, pos)

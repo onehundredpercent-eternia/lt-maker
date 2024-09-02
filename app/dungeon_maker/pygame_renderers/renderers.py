@@ -12,12 +12,14 @@ from app.dungeon_maker.painters import (
     StairsLeftPainter, 
     StairsRightPainter, 
     RandomPainter,
+    RandomShadingPainter,
     GrassPainter,
     RuinsPainter,
 )
 from app.dungeon_maker.pygame_renderers import (
     SimpleRenderer,
     SimpleLimitRenderer, 
+    SimpleLimitShadingRenderer, 
     LimitRenderer, 
     FloorShadingRenderer,
     Limit8ShadingRenderer,
@@ -44,7 +46,7 @@ def get_renderers(palette: str) -> RendererDatabase:
         Terrain.STAIRS_LEFT: SimpleRenderer(StairsLeftPainter(), os.path.join(palette_dir, 'stairs_left.png')),
         Terrain.STAIRS_RIGHT: SimpleRenderer(StairsRightPainter(), os.path.join(palette_dir, 'stairs_right.png')),
         Terrain.PILLAR: SimpleRenderer(Painter(), os.path.join(palette_dir, 'pillar.png')),
-        Terrain.SPARSE_FOREST: SimpleLimitRenderer(RandomPainter(), os.path.join(palette_dir, 'forest.png')),
+        Terrain.SPARSE_FOREST: SimpleLimitShadingRenderer(RandomShadingPainter(), os.path.join(palette_dir, 'forest.png')),
         Terrain.GRASS: Limit8ShadingRenderer(GrassPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
         Terrain.RUINS: Limit16ShadingRenderer(RuinsPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
         Terrain.START: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
