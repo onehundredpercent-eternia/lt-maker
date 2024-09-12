@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.serialization.dataclass_serialization import dataclass_from_dict
-from app.utilities.typing import Color4
+from app.utilities.typing import Color3, Color4
 
 @dataclass
 class Font():

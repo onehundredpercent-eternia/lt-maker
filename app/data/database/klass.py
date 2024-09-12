@@ -1,14 +1,14 @@
 import copy
-from dataclasses import dataclass
-from typing import Dict, List
+from dataclasses import asdict, dataclass
+from typing import Dict, List, Tuple
 
-from app.utilities.data import Data, Prefab
+from app.data.serialization.dataclass_serialization import dataclass_from_dict
+from app.utilities.data import Data
+from app.utilities.prefab import Prefab
 from app.data.database.weapons import WexpGain
 from app.utilities import str_utils
-from app.utilities.typing import NID
+from app.utilities.typing import NID, NestedPrimitiveDict, Point
 
-
-@dataclass
 class Klass(Prefab):
     nid: str = None
     name: str = None
@@ -17,26 +17,26 @@ class Klass(Prefab):
     tier: int = 1
     movement_group: str = None
 
-    promotes_from: str = None
-    turns_into: list = None
-    tags: list = None
+    promotes_from: str = None           # cllass this class promotes from
+    turns_into: List[NID] = None        # List of classes this class can promote
+    tags: List[NID] = None              # List of tags
     max_level: int = 20
 
-    bases: dict = None
-    growths: dict = None
-    growth_bonus: dict = None
-    promotion: dict = None
-    max_stats: dict = None
+    bases: Dict[NID, int] = None        # (stat, value)
+    growths: Dict[NID, int] = None      # (stat, value)
+    growth_bonus: Dict[NID, int] = None # (stat, value)
+    promotion: Dict[NID, int] = None    # (stat, value)
+    max_stats: Dict[NID, int] = None    # (stat, value)
 
-    learned_skills: list = None
+    learned_skills: List[Tuple[int, NID]] = None # (level, skill_nid)
     wexp_gain: Dict[NID, WexpGain] = None
 
     icon_nid: str = None
-    icon_index: tuple = (0, 0)
+    icon_index: Point = (0, 0)
     map_sprite_nid: str = None
     combat_anim_nid: str = None
 
-    fields: list = None # arbitrary field, allow players to fill out anything they want for XTRA POWERFUL SCRIPTING
+    fields: List[Tuple[str, str]] = None # arbitrary field, allow players to fill out anything they want for XTRA POWERFUL SCRIPTING
 
     def get_stat_titles(self):
         return ['Generic Bases', 'Generic Growths', 'Promotion Gains', 'Growth Bonuses', 'Stat Maximums']
@@ -54,34 +54,6 @@ class Klass(Prefab):
 
     def promotion_options(self, db) -> list:
         return [option for option in self.turns_into if db.classes.get(option).tier == self.tier + 1]
-
-    def save_attr(self, name, value):
-        if name in ('bases', 'growths', 'growth_bonus', 'promotion', 'max_stats', 'fields', 'tags'):
-            return copy.deepcopy(value)  # So we don't make a copy
-        elif name == 'learned_skills':
-            return [val.copy() for val in value]  # So we don't make a copy
-        elif name == 'wexp_gain':
-            return {k: v.save() for (k, v) in self.wexp_gain.items()}
-        else:
-            return super().save_attr(name, value)
-
-    def restore_attr(self, name, value):
-        if name in ('bases', 'growths', 'growth_bonus', 'promotion', 'max_stats'):
-            if isinstance(value, list):
-                value = {k: v for (k, v) in value}
-            else:
-                value = value
-        elif name == 'wexp_gain':
-            if isinstance(value, list):
-                value = {nid: WexpGain(usable, wexp_gain) for (usable, nid, wexp_gain) in value}
-            else:
-                value = {k: WexpGain.restore(v) for (k, v) in value.items()}
-        elif name == 'fields':
-            if value is None:
-                return []
-        else:
-            value = super().restore_attr(name, value)
-        return value
 
 class ClassCatalog(Data[Klass]):
     datatype = Klass

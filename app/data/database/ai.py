@@ -1,4 +1,8 @@
-from app.utilities.data import Data, Prefab
+from __future__ import annotations
+from dataclasses import field
+from typing import Any
+from app.utilities.data import Data
+from app.utilities.prefab import Prefab
 from app.utilities import str_utils
 
 AI_ActionTypes = ['None', 'Attack', 'Support', 'Steal', 'Interact', 'Move_to', 'Move_away_from', 'Wait']
@@ -8,14 +12,13 @@ unit_spec = ['All', 'Class', 'Tag', 'Name', 'Team', 'Faction', 'Party', 'ID']
 # (Don't look | Movement*2 + Maximum Item Range | Entire Map | Custom Range (Integer))
 
 class AIPrefab(Prefab):
-    def __init__(self, nid, priority, offense_bias=2):
-        self.nid = nid
-        self.behaviours = [AIBehaviour.DoNothing(), AIBehaviour.DoNothing(), AIBehaviour.DoNothing()]
-        self.priority: int = priority
-        self.offense_bias: float = offense_bias
-        self.roam_ai = False
+    nid: str
+    priority: int
+    offense_bias: float = 2
+    behaviours: list[AIBehaviour] = field(default_factory=list)
+    roam_ai: bool = False
 
-    def add_behaviour(self, behaviour):
+    def add_behaviour(self, behaviour: AIBehaviour):
         self.behaviours.append(behaviour)
 
     def add_default(self):
@@ -24,25 +27,8 @@ class AIPrefab(Prefab):
     def pop_behaviour(self):
         self.behaviours.pop()
 
-    def set_behaviour(self, idx, behaviour):
+    def set_behaviour(self, idx: int, behaviour: AIBehaviour):
         self.behaviours[idx] = behaviour
-
-    def save_attr(self, name, value):
-        if name == 'behaviours':
-            value = [b.save() for b in value]
-        else:
-            value = super().save_attr(name, value)
-        return value
-
-    def restore_attr(self, name, value):
-        if name == 'behaviours':
-            value = [AIBehaviour.restore(b) for b in value]
-        elif name == 'offense_bias':
-            if value is None:
-                value = 2.
-        else:
-            value = super().restore_attr(name, value)
-        return value
 
     @classmethod
     def default(cls):
@@ -71,15 +57,14 @@ class AIPrefab(Prefab):
         return True
 
 class AIBehaviour(Prefab):
-    def __init__(self, action: str, target, view_range: int, target_spec=None, speed=100, desired_proximity=0, condition=''):
-        self.action: str = action
-        self.target = target
-        self.target_spec = target_spec
-        self.view_range: int = view_range
-        self.invert_targeting: bool = False
-        self.roam_speed = speed
-        self.desired_proximity = desired_proximity
-        self.condition: str = condition
+    action: str
+    target: Any
+    target_spec: Any = None
+    view_range: int = 0
+    invert_targeting: bool = False
+    roam_speed: int = 100
+    desired_proximity: int = 0
+    condition: str = ''
 
     @classmethod
     def DoNothing(cls):

@@ -1,6 +1,8 @@
+from app.data.serialization.loaders import migrate0_1
 from app.utilities.typing import NestedPrimitiveDict
 
 MIGRATORS = {
+    0: migrate0_1.migrate,
 }
 
 def migrate_to_next(data: NestedPrimitiveDict, version: int) -> NestedPrimitiveDict:
