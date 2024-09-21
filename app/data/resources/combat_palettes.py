@@ -67,35 +67,10 @@ class PaletteCatalog(ManifestCatalog[Palette]):
         # Because Palettes don't have any connection to any actual file.
         self.dump(loc)
 
-    def load(self, loc):
-        single_loc = os.path.join(loc, self.manifest)
-        multi_loc = os.path.join(loc, self.multi_loc)
-        if not os.path.exists(multi_loc):  # use the old method, single location in palettes.json
-            if not os.path.exists(single_loc):
-                return
-            palette_dict = self.read_manifest(single_loc)
-            for s_dict in palette_dict:
-                new_palette = Palette.restore(s_dict)
-                self.append(new_palette)
-        else:   # new distributed saving
-            data_fnames = os.listdir(multi_loc)
-            save_data = []
-            for fname in data_fnames:
-                if not fname.endswith('.json'):
-                    continue
-                save_loc = os.path.join(multi_loc, fname)
-                # logging.info("Deserializing %s from %s" % ('palette data', save_loc))
-                with open(save_loc) as load_file:
-                    for data in json.load(load_file):
-                        save_data.append(data)
-            if '.orderkeys' in data_fnames:  # using order key file
-                ordering = parse_order_keys_file(Path(multi_loc, '.orderkeys'))
-                save_data = sorted(save_data, key=lambda data: ordering.index(data[0]) if data[0] in ordering else 99999)
-            else:
-                save_data = sorted(save_data, key=lambda obj: obj[2])
-            for s_dict in save_data:
-                new_palette = Palette.restore(s_dict)
-                self.append(new_palette)
+    def load(self, loc, palette_dict):
+        for s_dict in palette_dict:
+            new_palette = Palette.restore(s_dict)
+            self.append(new_palette)
 
         # Always load in the default map sprite palettes
         for palette_nid, colors in default_palettes.items():

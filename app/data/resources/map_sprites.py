@@ -3,7 +3,7 @@ import shutil
 from typing import Optional
 
 from app.data.resources.base_catalog import ManifestCatalog
-from app.utilities.typing import NID
+from app.utilities.typing import NID, NestedPrimitiveDict
 
 class MapSprite():
     def __init__(self, nid, stand_full_path=None, move_full_path=None):
@@ -34,8 +34,7 @@ class MapSpriteCatalog(ManifestCatalog[MapSprite]):
     title = 'map sprites'
     datatype = MapSprite
 
-    def load(self, loc):
-        map_sprite_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, map_sprite_dict: NestedPrimitiveDict):
         for s_dict in map_sprite_dict:
             new_map_sprite = MapSprite.restore(s_dict)
             new_map_sprite.set_stand_full_path(os.path.join(loc, new_map_sprite.nid + '-stand.png'))

@@ -11,6 +11,7 @@ from app.data.resources.base_catalog import ManifestCatalog
 from app.utilities import str_utils
 from app.utilities.data import Data, Prefab
 from app.utilities.data_order import parse_order_keys_file, rchop
+from app.utilities.typing import NestedPrimitiveDict
 
 
 class TileMapPrefab(Prefab):
@@ -246,8 +247,7 @@ class TileSetCatalog(ManifestCatalog[TileSet]):
     title = 'tilesets'
     datatype = TileSet
 
-    def load(self, loc):
-        tileset_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, tileset_dict: NestedPrimitiveDict):
         for s_dict in tileset_dict:
             new_tileset = TileSet.restore(s_dict)
             new_tileset.set_full_path(os.path.join(loc, new_tileset.nid + '.png'))
@@ -280,35 +280,10 @@ class TileMapCatalog(ManifestCatalog[TileMapPrefab]):
     title = 'tilemaps'
     multi_loc = 'tilemap_data'
 
-    def load(self, loc):
-        single_loc = os.path.join(loc, self.manifest)
-        multi_loc = os.path.join(loc, self.multi_loc)
-        if not os.path.exists(multi_loc):  # old tilemap.json
-            if not os.path.exists(single_loc):
-                return
-            tilemap_dict = self.read_manifest(single_loc)
-            for s_dict in tilemap_dict:
-                new_tilemap = TileMapPrefab.restore(s_dict)
-                self.append(new_tilemap)
-        else:   # new distributed saving
-            data_fnames = os.listdir(multi_loc)
-            save_data = []
-            for fname in data_fnames:
-                if not fname.endswith('.json'):
-                    continue
-                save_loc = os.path.join(multi_loc, fname)
-                with open(save_loc) as load_file:
-                    for data in json.load(load_file):
-                        data['fname'] = os.path.basename(fname)
-                        save_data.append(data)
-            if '.orderkeys' in data_fnames:  # using order key file
-                ordering = parse_order_keys_file(Path(multi_loc, '.orderkeys'))
-                save_data = sorted(save_data, key=lambda data: ordering.index(rchop(data['fname'], '.json')) if rchop(data['fname'], '.json') in ordering else 99999)
-            else:  # using order keys per object
-                save_data = sorted(save_data, key=lambda obj: obj['_orderkey'])
-            for s_dict in save_data:
-                new_tilemap = TileMapPrefab.restore(s_dict)
-                self.append(new_tilemap)
+    def load(self, loc, tilemap_dict: NestedPrimitiveDict):
+        for s_dict in tilemap_dict:
+            new_tilemap = TileMapPrefab.restore(s_dict)
+            self.append(new_tilemap)
 
     def dump(self, loc):
         saves = [datum.save() for datum in self]

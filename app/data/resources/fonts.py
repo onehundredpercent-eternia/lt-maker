@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.serialization.dataclass_serialization import dataclass_from_dict
-from app.utilities.typing import Color4
+from app.utilities.typing import Color4, NestedPrimitiveDict
 
 @dataclass
 class Font():
@@ -56,8 +56,7 @@ class FontCatalog(ManifestCatalog[Font]):
     title = 'fonts'
     filetype = ''
 
-    def load(self, loc):
-        resource_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, resource_dict: NestedPrimitiveDict):
         if len(resource_dict) == 0:
             self.load('default.ltproj/resources/fonts')
             return

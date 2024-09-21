@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+import pprint
 import shutil
 import os
 import traceback
@@ -7,6 +9,7 @@ import traceback
 from typing import Dict, List
 
 from app import sprites
+from app.data.serialization import disk_loader
 from app.utilities import exceptions
 from app.data.resources.fonts import FontCatalog
 from app.data.resources.icons import Icon16Catalog, Icon32Catalog, Icon80Catalog
@@ -81,7 +84,7 @@ class Resources():
         self.music = MusicCatalog()
         self.sfx = SFXCatalog()
 
-    def load(self, proj_dir, specific=None):
+    def load(self, proj_dir, version: int, specific=None):
         self.main_folder = os.path.join(proj_dir, 'resources')
 
         # Load custom sprites for the UI
@@ -93,10 +96,11 @@ class Resources():
             save_data_types = specific
         else:
             save_data_types = self.save_data_types
+        resource_data = disk_loader.load_resources(Path(self.main_folder), version)
         for data_type in save_data_types:
             logging.info("Loading %s from %s..." % (data_type, self.main_folder))
             getattr(self, data_type).clear()  # Now always clears first
-            getattr(self, data_type).load(os.path.join(self.main_folder, data_type))
+            getattr(self, data_type).load(os.path.join(self.main_folder, data_type), resource_data.get(data_type, []))
 
         # load custom components
         self.load_components()

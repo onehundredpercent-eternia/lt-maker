@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import shutil
 import filecmp
 import json
@@ -7,6 +8,8 @@ from typing import List, Type, TypeVar
 from app.utilities.data import Data
 
 import logging
+
+from app.utilities.typing import NestedPrimitiveDict
 
 B = TypeVar('B')
 class BaseResourceCatalog(Data[B]):
@@ -27,19 +30,11 @@ class ManifestCatalog(Data[M]):
     datatype: Type[M] = None  # To be implemented
     multi_loc = None  # Can be implemented for distributed saving
 
-    def load(self, loc):
-        resource_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, resource_dict: NestedPrimitiveDict):
         for s_dict in resource_dict:
             new_resource = self.datatype.restore(s_dict)
             new_resource.set_full_path(os.path.join(loc, new_resource.nid + self.filetype))
             self.append(new_resource)
-
-    def read_manifest(self, fn: str) -> dict:
-        datum = {}
-        if os.path.exists(fn):
-            with open(fn) as load_file:
-                datum = json.load(load_file)
-        return datum
 
     def dump(self, loc):
         save = [datum.save() for datum in self]

@@ -3,6 +3,7 @@ import shutil
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.utilities.data import HasNid
+from app.utilities.typing import NestedPrimitiveDict
 
 class SongPrefab(HasNid):
     def __init__(self, nid, full_path=None):
@@ -44,8 +45,7 @@ class MusicCatalog(ManifestCatalog[SongPrefab]):
     title = 'music'
     datatype = SongPrefab
 
-    def load(self, loc):
-        music_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, music_dict: NestedPrimitiveDict):
         for s_dict in music_dict:
             new_song = SongPrefab.restore(s_dict)
             new_song.set_full_path(os.path.join(loc, new_song.nid + '.ogg'))

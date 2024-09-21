@@ -6,6 +6,8 @@ from app.utilities.data import Data
 
 import logging
 
+from app.utilities.typing import NestedPrimitiveDict
+
 required_poses = ('Stand', 'Attack', 'Miss', 'Dodge')
 other_poses = ('RangedStand', 'RangedDodge', 'Critical')
 
@@ -141,8 +143,7 @@ class CombatCatalog(ManifestCatalog):
     title = 'Combat Animations'
     datatype = CombatAnimation
 
-    def load(self, loc):
-        combat_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, combat_dict: NestedPrimitiveDict):
         for s_dict in combat_dict:
             new_combat_anim = CombatAnimation.restore(s_dict)
             for weapon_anim in new_combat_anim.weapon_anims:
@@ -153,7 +154,7 @@ class CombatCatalog(ManifestCatalog):
     def save_image(self, loc, combat_anim, temp=False):
         for weapon_anim in combat_anim.weapon_anims:
             short_path = "%s-%s.png" % (combat_anim.nid, weapon_anim.nid)
-            new_full_path = os.path.join(loc, short_path)    
+            new_full_path = os.path.join(loc, short_path)
             if temp and weapon_anim.pixmap:
                 weapon_anim.pixmap.save(new_full_path, "PNG")
             elif not weapon_anim.full_path and weapon_anim.pixmap:
@@ -183,8 +184,7 @@ class CombatEffectCatalog(ManifestCatalog):
     title = 'Combat Effects'
     datatype = EffectAnimation
 
-    def load(self, loc):
-        effect_dict = self.read_manifest(os.path.join(loc, self.manifest))
+    def load(self, loc, effect_dict: NestedPrimitiveDict):
         for s_dict in effect_dict:
             new_effect_anim = EffectAnimation.restore(s_dict)
             full_path = os.path.join(loc, new_effect_anim.nid + '.png')
