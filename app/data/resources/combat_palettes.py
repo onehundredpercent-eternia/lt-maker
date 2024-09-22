@@ -3,7 +3,9 @@ import os
 from pathlib import Path
 import re
 import shutil
-from typing import Dict, List
+from typing import Dict, List, Set
+from typing_extensions import override
+from app.data.resources.resource_prefab import WithResources
 from app.utilities.data import Prefab
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.default_palettes import default_palettes
@@ -11,7 +13,7 @@ from app.data.resources.default_palettes import default_palettes
 from app.constants import COLORKEY
 from app.utilities.data_order import parse_order_keys_file
 
-class Palette(Prefab):
+class Palette(Prefab, WithResources):
     def __init__(self, nid):
         self.nid = nid
         # Mapping of color indices to true colors
@@ -44,6 +46,14 @@ class Palette(Prefab):
     def save(self):
         return (self.nid, list(self.colors.items()))
 
+    @override
+    def set_full_path(self, path: str) -> None:
+        pass
+
+    @override
+    def used_resources(self) -> Set[Path]:
+        return set()
+
     @classmethod
     def restore(cls, s):
         self = cls(s[0])
@@ -62,16 +72,11 @@ class PaletteCatalog(ManifestCatalog[Palette]):
     title = 'palettes'
     multi_loc = 'palette_data'
 
-    def save(self, loc):
-        # No need to finagle with full paths
-        # Because Palettes don't have any connection to any actual file.
-        self.dump(loc)
+    def __init__(self, vals: List[Palette] | None = None):
+        super().__init__(vals)
 
     def load(self, loc, palette_dict):
-        for s_dict in palette_dict:
-            new_palette = Palette.restore(s_dict)
-            self.append(new_palette)
-
+        super().load(loc, palette_dict)
         # Always load in the default map sprite palettes
         for palette_nid, colors in default_palettes.items():
             if palette_nid not in self:

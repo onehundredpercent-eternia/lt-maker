@@ -9,6 +9,7 @@ import traceback
 from typing import Dict, List
 
 from app import sprites
+from app.data.resources.base_catalog import ManifestCatalog
 from app.data.serialization import disk_loader
 from app.utilities import exceptions
 from app.data.resources.fonts import FontCatalog
@@ -162,7 +163,8 @@ class Resources():
                     os.mkdir(data_dir)
                 logging.info("Saving %s..." % data_type)
                 time1 = time.time_ns()/1e6
-                getattr(self, data_type).save(data_dir)
+                catalog: ManifestCatalog = getattr(self, data_type)
+                catalog.save(data_dir)
                 time2 = time.time_ns()/1e6 - time1
                 logging.info("Time Taken: %s ms" % time2)
                 if progress:

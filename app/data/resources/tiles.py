@@ -4,17 +4,19 @@ import os
 from pathlib import Path
 import re
 import shutil
-from typing import Dict, List
+from typing import Dict, List, Set
+from typing_extensions import override
 
 from app.constants import AUTOTILE_FRAMES, TILEHEIGHT, TILEWIDTH, TILEX, TILEY
 from app.data.resources.base_catalog import ManifestCatalog
+from app.data.resources.resource_prefab import WithResources
 from app.utilities import str_utils
 from app.utilities.data import Data, Prefab
 from app.utilities.data_order import parse_order_keys_file, rchop
 from app.utilities.typing import NestedPrimitiveDict
 
 
-class TileMapPrefab(Prefab):
+class TileMapPrefab(Prefab, WithResources):
     def __init__(self, nid):
         self.nid = nid
         self.width, self.height = int(TILEX), int(TILEY)
@@ -66,6 +68,14 @@ class TileMapPrefab(Prefab):
                     new_sprite_grid[new_coord] = tile_sprite
             layer.sprite_grid = new_sprite_grid
 
+    @override
+    def set_full_path(self, path: str) -> None:
+        pass
+
+    @override
+    def used_resources(self) -> Set[Path]:
+        return set()
+
     def save(self):
         s_dict = {}
         s_dict['nid'] = self.nid
@@ -93,7 +103,7 @@ class TileMapPrefab(Prefab):
         self.layers = Data([LayerGrid.restore(layer, self) for layer in s_dict['layers']])
         return self
 
-class TileSet(Prefab):
+class TileSet(Prefab, WithResources):
     def __init__(self, nid, full_path=None):
         self.nid = nid
         self.width, self.height = 0, 0
@@ -139,11 +149,21 @@ class TileSet(Prefab):
             return self.subpixmaps[pos]
         return None
 
+    @override
     def set_full_path(self, full_path):
         self.full_path = full_path
+        if self.autotiles:
+            self.set_autotile_full_path(str(Path(full_path).parent / (self.nid + '_autotiles.png')))
 
     def set_autotile_full_path(self, full_path):
         self.autotile_full_path = full_path
+
+    @override
+    def used_resources(self) -> Set[Path]:
+        paths = {Path(self.full_path)}
+        if self.autotile_full_path:
+            paths.add(Path(self.autotile_full_path))
+        return paths
 
     def save(self):
         s_dict = {}
@@ -247,43 +267,11 @@ class TileSetCatalog(ManifestCatalog[TileSet]):
     title = 'tilesets'
     datatype = TileSet
 
-    def load(self, loc, tileset_dict: NestedPrimitiveDict):
-        for s_dict in tileset_dict:
-            new_tileset = TileSet.restore(s_dict)
-            new_tileset.set_full_path(os.path.join(loc, new_tileset.nid + '.png'))
-            if new_tileset.autotiles:
-                new_tileset.set_autotile_full_path(os.path.join(loc, new_tileset.nid + '_autotiles.png'))
-            self.append(new_tileset)
-
-    def save(self, loc):
-        for tileset in self:
-            # Regular sprite
-            new_full_path = os.path.join(loc, tileset.nid + '.png')
-            if os.path.abspath(tileset.full_path) != os.path.abspath(new_full_path):
-                shutil.copy(tileset.full_path, new_full_path)
-                tileset.set_full_path(new_full_path)
-            # Autotile sprite
-            if tileset.autotiles and tileset.autotile_full_path:
-                new_full_path = os.path.join(loc, tileset.nid + '_autotiles.png')
-                if os.path.abspath(tileset.autotile_full_path) != os.path.abspath(new_full_path):
-                    shutil.copy(tileset.autotile_full_path, new_full_path)
-                    tileset.set_autotile_full_path(new_full_path)
-        self.dump(loc)
-
-    def valid_files(self) -> set:
-        valid_filenames = {datum.nid + '.png' for datum in self}
-        valid_filenames |= {datum.nid + '_autotiles.png' for datum in self}
-        return valid_filenames
-
 class TileMapCatalog(ManifestCatalog[TileMapPrefab]):
     manifest = 'tilemap.json'
     title = 'tilemaps'
     multi_loc = 'tilemap_data'
-
-    def load(self, loc, tilemap_dict: NestedPrimitiveDict):
-        for s_dict in tilemap_dict:
-            new_tilemap = TileMapPrefab.restore(s_dict)
-            self.append(new_tilemap)
+    datatype = TileMapPrefab
 
     def dump(self, loc):
         saves = [datum.save() for datum in self]
@@ -304,13 +292,3 @@ class TileMapCatalog(ManifestCatalog[TileMapPrefab]):
                 json.dump([save], serialize_file, indent=4)
         with open(os.path.join(save_dir, '.orderkeys'), 'w') as orderkey_file:
             json.dump(orderkeys, orderkey_file, indent=4)
-
-    def save(self, loc):
-        # No need to finagle with full paths
-        # Because TileMaps are don't have any connection to any actual file.
-        # They are all references to TileSets
-        import time
-        start = time.time_ns()/1e6
-        self.dump(loc)
-        end = time.time_ns()/1e6
-        print("Time Taken: %s ms" % (end - start))
