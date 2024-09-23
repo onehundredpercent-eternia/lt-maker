@@ -3,8 +3,9 @@ from typing import Dict, Set, Tuple
 from typing_extensions import override
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
+from app.utilities.data import Prefab
 
-class IconSheet(WithResources):
+class IconSheet(WithResources, Prefab):
     def __init__(self, nid, full_path=None, subicon_dict = None):
         self.nid = nid
         self.full_path = full_path

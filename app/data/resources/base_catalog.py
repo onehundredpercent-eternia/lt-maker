@@ -3,16 +3,16 @@ from pathlib import Path
 import shutil
 import filecmp
 import json
-from typing import List, Type, TypeVar
+from typing import List, Set, Type, TypeVar, Union
 
 from app.data.resources.resource_prefab import WithResources
-from app.utilities.data import Data
+from app.utilities.data import Data, Prefab
 
 import logging
 
 from app.utilities.typing import NestedPrimitiveDict
 
-M = TypeVar('M', bound=WithResources)
+M = TypeVar('M', bound=Union[WithResources, Prefab])
 class ManifestCatalog(Data[M]):
     filetype = '.png'
     manifest = None  # To be implemented
@@ -26,13 +26,7 @@ class ManifestCatalog(Data[M]):
             new_resource.set_full_path(os.path.join(loc, new_resource.nid + self.filetype))
             self.append(new_resource)
 
-    def dump(self, loc):
-        save = [datum.save() for datum in self]
-        save_loc = os.path.join(loc, self.manifest)
-        with open(save_loc, 'w') as serialize_file:
-            json.dump(save, serialize_file, indent=4)
-
-    def save(self, loc):
+    def save_resources(self, loc):
         for datum in self:
             for resource in datum.used_resources():
                 if not resource:
@@ -44,7 +38,6 @@ class ManifestCatalog(Data[M]):
                     except shutil.SameFileError: # windows filesystem doesn't distinguish between capitals
                         os.rename(resource, new_full_path)
             datum.set_full_path(os.path.join(loc, datum.nid + self.filetype))
-        self.dump(loc)
 
     def make_copy(self, old_full_path, new_full_path):
         if os.path.exists(old_full_path):
@@ -55,7 +48,7 @@ class ManifestCatalog(Data[M]):
         else:
             logging.warning("%s does not exist" % old_full_path)
 
-    def used_resources(self) -> set:
+    def used_resources(self) -> Set[Path]:
         resources = set()
         for datum in self:
             resources |= datum.used_resources()

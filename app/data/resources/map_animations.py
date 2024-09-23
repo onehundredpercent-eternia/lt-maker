@@ -6,8 +6,9 @@ from app.constants import FRAMERATE
 from app.data.resources.resource_prefab import WithResources
 from app.utilities import str_utils
 from app.data.resources.base_catalog import ManifestCatalog
+from app.utilities.data import Prefab
 
-class MapAnimation(WithResources):
+class MapAnimation(WithResources, Prefab):
     def __init__(self, nid, full_path=None, pixmap=None):
         self.nid = nid
         self.full_path = full_path

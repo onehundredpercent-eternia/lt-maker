@@ -6,10 +6,10 @@ from typing_extensions import override
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
-from app.utilities.data import HasNid
+from app.utilities.data import HasNid, Prefab
 from app.utilities.typing import NestedPrimitiveDict
 
-class SongPrefab(HasNid, WithResources):
+class SongPrefab(HasNid, WithResources, Prefab):
     def __init__(self, nid, full_path=None):
         self.nid = nid
         self.full_path = full_path
@@ -62,7 +62,7 @@ class MusicCatalog(ManifestCatalog[SongPrefab]):
     title = 'music'
     datatype = SongPrefab
 
-class SFXPrefab(HasNid, WithResources):
+class SFXPrefab(HasNid, WithResources, Prefab):
     def __init__(self, nid, full_path=None, tag=None):
         self.nid = nid
         self.tag = tag

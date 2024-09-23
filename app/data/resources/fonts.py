@@ -7,10 +7,11 @@ from typing_extensions import override
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
 from app.data.serialization.dataclass_serialization import dataclass_from_dict
+from app.utilities.data import Prefab
 from app.utilities.typing import Color4, NestedPrimitiveDict
 
 @dataclass
-class Font(WithResources):
+class Font(WithResources, Prefab):
     nid: str                                                                             #: NID of the font.
     file_name: str = None                                                                #: Root path without file ending, e.g. `project.ltproj/resources/convo`.
     fallback_ttf: str = None                                                             #: name of the .ttf file (in this directory) to be used as a fallback if the main font cannot render anything

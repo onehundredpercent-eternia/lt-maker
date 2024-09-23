@@ -6,9 +6,10 @@ from typing_extensions import override
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
+from app.utilities.data import Prefab
 from app.utilities.typing import NID, NestedPrimitiveDict
 
-class MapSprite(WithResources):
+class MapSprite(WithResources, Prefab):
     def __init__(self, nid, stand_full_path=None, move_full_path=None):
         self.nid: NID = nid
         self.stand_full_path: Optional[str] = stand_full_path

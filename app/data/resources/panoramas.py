@@ -6,8 +6,9 @@ from typing_extensions import override
 
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
+from app.utilities.data import Prefab
 
-class Panorama(WithResources):
+class Panorama(WithResources, Prefab):
     """
     A collection of background images
     """

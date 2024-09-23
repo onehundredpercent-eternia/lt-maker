@@ -82,23 +82,3 @@ class PaletteCatalog(ManifestCatalog[Palette]):
             if palette_nid not in self:
                 new_palette = Palette.from_list(palette_nid, colors)
                 self.append(new_palette)
-
-    def dump(self, loc):
-        saves = [datum.save() for datum in self]
-        save_dir = os.path.join(loc, self.multi_loc)
-        if os.path.exists(save_dir):
-            shutil.rmtree(save_dir)
-        os.mkdir(save_dir)
-        orderkeys: List[str] = []
-        for idx, save in enumerate(saves):
-            # ordering
-            save = list(save)  # by default a tuple
-            nid = save[0]
-            orderkeys.append(nid)
-            nid = re.sub(r'[\\/*?:"<>|]', "", nid)
-            nid = nid.replace(' ', '_')
-            save_loc = os.path.join(save_dir, nid + '.json')
-            with open(save_loc, 'w') as serialize_file:
-                json.dump([save], serialize_file, indent=4)
-        with open(os.path.join(save_dir, '.orderkeys'), 'w') as orderkey_file:
-            json.dump(orderkeys, orderkey_file, indent=4)

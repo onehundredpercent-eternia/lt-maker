@@ -6,7 +6,7 @@ from typing_extensions import override
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources import combat_commands
 from app.data.resources.resource_prefab import WithResources
-from app.utilities.data import Data
+from app.utilities.data import Data, Prefab
 
 import logging
 
@@ -90,7 +90,7 @@ class WeaponAnimation(WithResources):
             self.poses.append(Pose.restore(pose_save))
         return self
 
-class CombatAnimation(WithResources):
+class CombatAnimation(WithResources, Prefab):
     nid: NID
     weapon_anims: Data[WeaponAnimation]
 
@@ -126,7 +126,7 @@ class CombatAnimation(WithResources):
             self.weapon_anims.append(WeaponAnimation.restore(weapon_anim_save))
         return self
 
-class EffectAnimation(WithResources):
+class EffectAnimation(WithResources, Prefab):
     def __init__(self, nid, full_path=None):
         self.nid = nid
         self.full_path = full_path
@@ -185,10 +185,9 @@ class CombatCatalog(ManifestCatalog):
                 self.make_copy(weapon_anim.full_path, new_full_path)
                 weapon_anim.set_full_path(new_full_path)
 
-    def save(self, loc):
+    def save_resources(self, loc):
         for combat_anim in self:
             self.save_image(loc, combat_anim)
-        self.dump(loc)
 
 class CombatEffectCatalog(ManifestCatalog):
     manifest = 'combat_effects.json'
@@ -209,8 +208,7 @@ class CombatEffectCatalog(ManifestCatalog):
             self.make_copy(effect_anim.full_path, new_full_path)
             effect_anim.set_full_path(new_full_path)
 
-    def save(self, loc):
+    def save_resources(self, loc):
         for effect_anim in self:
             if effect_anim.pixmap or effect_anim.full_path:  # Possible that no pixmap is associated with a simple control script
                 self.save_image(loc, effect_anim)
-        self.dump(loc)
