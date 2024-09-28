@@ -326,7 +326,6 @@ class MapCombat(SimpleCombat):
                 get_sound_thread().play_sfx(brush.sound)
             elif brush.nid == 'shake':
                 shake = brush.shake
-                print('shaking', brush)
                 if self.get_from_playback('attack_proc'):
                     shake = 3  # Force critical type shake
                 for health_bar in self.health_bars.values():

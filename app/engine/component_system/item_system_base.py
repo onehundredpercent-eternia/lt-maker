@@ -317,16 +317,17 @@ def on_hit(actions, playback: List[pb.PlaybackBrush], unit: UnitObject, item: It
                 component.on_hit(actions, playback, unit, item.parent_item, target, item2, target_pos, mode, attack_info)
 
     # Default playback
-    if target and find_hp(actions, target) <= 0:
-        playback.append(pb.Shake(2))
-        if not any(brush.nid == 'hit_sound' for brush in playback):
-            playback.append(pb.HitSound('Final Hit'))
-    else:
-        playback.append(pb.Shake(1))
-        if not any(brush.nid == 'hit_sound' for brush in playback):
-            playback.append(pb.HitSound('Attack Hit ' + str(random.randint(1, 5))))
-    if target and not any(brush.nid in ('unit_tint_add', 'unit_tint_sub') for brush in playback):
-        playback.append(pb.UnitTintAdd(target, (255, 255, 255)))
+    if target and find_hp(actions, target) <= target.get_hp(): # only trigger these brushes if damage was net dealt
+        if target and find_hp(actions, target) <= 0:
+            playback.append(pb.Shake(2))
+            if not any(brush.nid == 'hit_sound' for brush in playback):
+                playback.append(pb.HitSound('Final Hit'))
+        else:
+            playback.append(pb.Shake(1))
+            if not any(brush.nid == 'hit_sound' for brush in playback):
+                playback.append(pb.HitSound('Attack Hit ' + str(random.randint(1, 5))))
+        if target and not any(brush.nid in ('unit_tint_add', 'unit_tint_sub') for brush in playback):
+            playback.append(pb.UnitTintAdd(target, (255, 255, 255)))
 
 def on_crit(actions, playback: List[pb.PlaybackBrush], unit: UnitObject, item: ItemObject, target: UnitObject, item2: ItemObject, target_pos, mode, attack_info, first_item: ItemObject):
     all_components = get_all_components(unit, item)
@@ -368,16 +369,17 @@ def on_glancing_hit(actions, playback: List[pb.PlaybackBrush], unit: UnitObject,
                 component.on_hit(actions, playback, unit, item.parent_item, target, item2, target_pos, mode, attack_info)
 
     # Default playback
-    if target and find_hp(actions, target) <= 0:
-        playback.append(pb.Shake(2))
-        if not any(brush.nid == 'hit_sound' for brush in playback):
-            playback.append(pb.HitSound('Final Hit'))
-    else:
-        playback.append(pb.Shake(4))
-        if not any(brush.nid == 'hit_sound' for brush in playback):
-            playback.append(pb.HitSound('No Damage'))
-    if target and not any(brush.nid in ('unit_tint_add', 'unit_tint_sub') for brush in playback):
-        playback.append(pb.UnitTintAdd(target, (255, 255, 255)))
+    if target and find_hp(actions, target) <= target.get_hp(): # only trigger these brushes if damage was net dealt
+        if target and find_hp(actions, target) <= 0:
+            playback.append(pb.Shake(2))
+            if not any(brush.nid == 'hit_sound' for brush in playback):
+                playback.append(pb.HitSound('Final Hit'))
+        else:
+            playback.append(pb.Shake(4))
+            if not any(brush.nid == 'hit_sound' for brush in playback):
+                playback.append(pb.HitSound('No Damage'))
+        if target and not any(brush.nid in ('unit_tint_add', 'unit_tint_sub') for brush in playback):
+            playback.append(pb.UnitTintAdd(target, (255, 255, 255)))
 
 def on_miss(actions, playback: List[pb.PlaybackBrush], unit: UnitObject, item: ItemObject, target: UnitObject, item2: ItemObject, target_pos, mode, attack_info, first_item: ItemObject):
     all_components = get_all_components(unit, item)
