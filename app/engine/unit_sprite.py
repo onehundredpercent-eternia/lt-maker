@@ -26,6 +26,7 @@ from app.utilities.typing import NID, Color3
 
 import logging
 
+
 class MapSprite():
     def __init__(self, map_sprite, team):
         self.nid = map_sprite.nid
@@ -550,7 +551,7 @@ class UnitSprite():
                 image = image_mods.add_tint(image.convert_alpha(), color)
             else:
                 image = image_mods.sub_tint(image.convert_alpha(), color)
-                
+
         # Each image has (self.image.get_width() - 32)//2 pixels on the
         # left and right of it, to handle any off tile spriting
         topleft = left - max(0, (image.get_width() - 16)//2), top - 24
