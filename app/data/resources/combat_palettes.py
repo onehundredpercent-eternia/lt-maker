@@ -70,7 +70,6 @@ class PaletteCatalog(ManifestCatalog[Palette]):
     datatype = Palette
     manifest = 'palettes.json'
     title = 'palettes'
-    multi_loc = 'palette_data'
 
     def __init__(self, vals: List[Palette] | None = None):
         super().__init__(vals)

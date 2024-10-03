@@ -18,7 +18,6 @@ class ManifestCatalog(Data[M]):
     manifest = None  # To be implemented
     title = ''  # To be implemented
     datatype: Type[M] = None  # To be implemented
-    multi_loc = None  # Can be implemented for distributed saving
 
     def load(self, loc, resource_dict: NestedPrimitiveDict):
         for s_dict in resource_dict:
@@ -56,10 +55,13 @@ class ManifestCatalog(Data[M]):
 
     def get_unused_files(self, loc: str) -> List[str]:
         unused_files = []
-        valid_filenames = self.used_resources()
-        valid_filenames.add(self.manifest)  # also include the manifest file otherwise it would be deleted
-        valid_filenames.add(self.multi_loc)
+        used_files = self.used_resources()
+        # in the format of just the filename (e.g. 'test.png')
+        valid_filenames: str = {r.name for r in used_files}
+        valid_filenames.add(self.manifest)  # also include the manifest file ('manifest.json') otherwise it would be deleted
         for fn in os.listdir(loc):
+            if not Path(fn).suffix: # no filetype indicates directory, don't delete directories
+                continue
             if fn not in valid_filenames:
                 full_fn = os.path.normpath(os.path.join(loc, fn))
                 unused_files.append(full_fn)

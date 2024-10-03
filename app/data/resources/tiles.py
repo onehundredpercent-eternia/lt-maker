@@ -16,7 +16,7 @@ from app.utilities.data_order import parse_order_keys_file, rchop
 from app.utilities.typing import NestedPrimitiveDict
 
 
-class TileMapPrefab(Prefab, WithResources):
+class TileMapPrefab(WithResources, Prefab):
     def __init__(self, nid):
         self.nid = nid
         self.width, self.height = int(TILEX), int(TILEY)
@@ -103,7 +103,7 @@ class TileMapPrefab(Prefab, WithResources):
         self.layers = Data([LayerGrid.restore(layer, self) for layer in s_dict['layers']])
         return self
 
-class TileSet(Prefab, WithResources):
+class TileSet(WithResources, Prefab):
     def __init__(self, nid, full_path=None):
         self.nid = nid
         self.width, self.height = 0, 0
@@ -270,5 +270,4 @@ class TileSetCatalog(ManifestCatalog[TileSet]):
 class TileMapCatalog(ManifestCatalog[TileMapPrefab]):
     manifest = 'tilemap.json'
     title = 'tilemaps'
-    multi_loc = 'tilemap_data'
     datatype = TileMapPrefab
