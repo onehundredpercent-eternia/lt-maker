@@ -192,7 +192,10 @@ class Resources():
                         orderkeys: List[str] = []
                         for idx, subvalue in enumerate(value):
                             # ordering
-                            name = subvalue['nid']
+                            if key == 'combat_palettes':
+                                name = subvalue[0]
+                            else:
+                                name = subvalue['nid']
                             name = re.sub(r'[\\/*?:"<>|]', "", name)
                             name = name.replace(' ', '_')
                             orderkeys.append(name)
