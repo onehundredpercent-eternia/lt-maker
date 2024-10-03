@@ -173,7 +173,7 @@ class UnitSprite():
 
         self.health_bar = health_bar.MapHealthBar(self.unit)
 
-    def set_state(self, new_state: str):
+    def set_image_state(self, new_state: str):
         self.image_state = new_state
 
     @property
@@ -337,7 +337,7 @@ class UnitSprite():
             self.handle_net_position(self.net_position)
             self.reset()
         elif self.state in ('combat_active'):
-            self.set_state('active')
+            self.set_image_state('active')
         elif self.state == 'combat_defender':
             attacker = game.memory['current_combat'].attacker
             self.net_position = attacker.position[0] - self.unit.position[0], attacker.position[1] - self.unit.position[1]
@@ -361,7 +361,7 @@ class UnitSprite():
             self.net_position = pos
             self.handle_net_position(self.net_position)
         elif self.state == 'selected':
-            self.set_state('down')
+            self.set_image_state('down')
         elif self.state == 'normal':
             self.set_transition('normal')
 
@@ -369,16 +369,16 @@ class UnitSprite():
         self.net_position = pos
         if abs(pos[0]) >= abs(pos[1]):
             if pos[0] > 0:
-                self.set_state('right')
+                self.set_image_state('right')
             elif pos[0] < 0:
-                self.set_state('left')
+                self.set_image_state('left')
             else:
-                self.set_state('down')  # default
+                self.set_image_state('down')  # default
         else:
             if pos[1] < 0:
-                self.set_state('up')
+                self.set_image_state('up')
             else:
-                self.set_state('down')
+                self.set_image_state('down')
 
     def update(self):
         self.update_state()
@@ -401,16 +401,16 @@ class UnitSprite():
     def update_state(self):
         if self.state == 'normal':
             if self.unit.finished and not self.unit.is_dying:
-                self.set_state('gray')
+                self.set_image_state('gray')
             elif DB.constants.value('initiative') and game.initiative.get_current_unit() != self.unit \
                     and not game.is_roam() and self.unit.team == 'player':
-                self.set_state('gray')
+                self.set_image_state('gray')
             elif game.cursor.draw_state and game.cursor.position == self.unit.position and self.unit.team == 'player':
-                self.set_state('active')
+                self.set_image_state('active')
             elif game.is_roam() and game.get_roam_unit() == self.unit:
-                self.set_state('passive')
+                self.set_image_state('passive')
             else:
-                self.set_state('passive')
+                self.set_image_state('passive')
         elif self.state == 'combat_anim':
             self.offset[0] = utils.clamp(self.net_position[0], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
             self.offset[1] = utils.clamp(self.net_position[1], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
@@ -422,7 +422,7 @@ class UnitSprite():
             if self.net_position:
                 self.handle_net_position(self.net_position)
             else:
-                self.set_state('down')
+                self.set_image_state('down')
         elif self.state == 'moving':
             # next_position = game.movement.get_next_position(self.unit.nid)
             # if not next_position or not self.unit.position:
