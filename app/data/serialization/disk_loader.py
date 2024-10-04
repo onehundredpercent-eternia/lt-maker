@@ -1,12 +1,14 @@
 from typing import Dict
+from app.data.serialization.loaders.loader1 import Loader1
 from app.data.serialization.loaders.loader_base import LoaderBase
 from app.data.serialization.migration import migrate_db, migrate_resources
 from app.data.serialization.versions import CURRENT_SERIALIZATION_VERSION
 from app.utilities.typing import NestedPrimitiveDict
-from app.data.serialization.loaders import loader0
+from app.data.serialization.loaders.loader0 import Loader0
 
 LOADERS: Dict[int, LoaderBase] = {
-    0: loader0.Loader0(),
+    0: Loader0(),
+    1: Loader1()
 }
 
 def _dispatch_load_resources(data_dir: str, version: int) -> NestedPrimitiveDict:

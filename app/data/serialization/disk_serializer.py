@@ -57,10 +57,6 @@ class Serializer():
                     # if chunks, delete the old directory
                     actual_save_dir = save_dir
                     if key in resources.Resources.save_as_chunks:
-                        if key == 'tilemaps':
-                            actual_save_dir = Path(save_dir, 'tilemap_data')
-                        elif key == 'combat_palettes':
-                            actual_save_dir = Path(save_dir, 'palette_data')
                         if os.path.exists(actual_save_dir):
                             shutil.rmtree(actual_save_dir)
                     # divide save data into chunks based on key value

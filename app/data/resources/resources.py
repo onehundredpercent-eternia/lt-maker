@@ -11,7 +11,7 @@ from typing import Dict, List
 
 from app import sprites
 from app.data.resources.base_catalog import ManifestCatalog
-from app.data.serialization import disk_loader
+from app.data.serialization import disk_loader, disk_serializer
 from app.utilities import exceptions
 from app.data.resources.fonts import FontCatalog
 from app.data.resources.icons import Icon16Catalog, Icon32Catalog, Icon80Catalog
@@ -172,6 +172,7 @@ class Resources():
                 save_data_types = self.save_data_types
                 should_save_loose_files = True
             to_save = self.save_as_data(save_data_types)
+            disk_serializer.Serializer.save_resources(Path(proj_dir), to_save, main_settings.get_should_save_as_chunks())
             # copy resources
             for idx, data_type in enumerate(save_data_types):
                 data_dir = os.path.join(resource_dir, data_type)
