@@ -172,46 +172,6 @@ class Resources():
                 save_data_types = self.save_data_types
                 should_save_loose_files = True
             to_save = self.save_as_data(save_data_types)
-            # serialize manifest data
-            try:
-                for key, value in to_save.items():
-                    save_dir = Path(resource_dir, key)
-                    # if chunks, delete the old directory
-                    actual_save_dir = save_dir
-                    if key in self.save_as_chunks:
-                        if key == 'tilemaps':
-                            actual_save_dir = Path(save_dir, 'tilemap_data')
-                        elif key == 'combat_palettes':
-                            actual_save_dir = Path(save_dir, 'palette_data')
-                        if os.path.exists(actual_save_dir):
-                            shutil.rmtree(actual_save_dir)
-                    # divide save data into chunks based on key value
-                    if not os.path.exists(actual_save_dir):
-                        os.makedirs(actual_save_dir)
-                    if key in self.save_as_chunks and main_settings.get_should_save_as_chunks():
-                        orderkeys: List[str] = []
-                        for idx, subvalue in enumerate(value):
-                            # ordering
-                            if key == 'combat_palettes':
-                                name = subvalue[0]
-                            else:
-                                name = subvalue['nid']
-                            name = re.sub(r'[\\/*?:"<>|]', "", name)
-                            name = name.replace(' ', '_')
-                            orderkeys.append(name)
-                            save_loc = Path(actual_save_dir, name + '.json')
-                            # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
-                            save_json(save_loc, [subvalue])
-                        save_json(Path(actual_save_dir, '.orderkeys'), orderkeys)
-                    else:  # Save as a single file
-                        save_loc = Path(actual_save_dir, key + '.json')
-                        # logging.info("Serializing %s to %s" % (key, save_loc))
-                        save_json(save_loc, value)
-            except OSError as e:  # In case we ran out of memory
-                logging.error("Editor was unable to save your project. Free up memory in your hard drive or try saving somewhere else, otherwise progress will be lost when the editor is closed.")
-                logging.exception(e)
-                return False
-
             # copy resources
             for idx, data_type in enumerate(save_data_types):
                 data_dir = os.path.join(resource_dir, data_type)

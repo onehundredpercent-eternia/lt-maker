@@ -14,7 +14,7 @@ from app.data.database import (ai, constants, difficulty_modes, equations,
                                minimap, overworld, parties,
                                raw_data, skills, stats, supports, tags, teams,
                                terrain, translations, units, varslot, weapons)
-from app.data.serialization import disk_loader
+from app.data.serialization import disk_loader, disk_serializer
 from app.events import event_prefab
 from app.utilities.data_order import parse_order_keys_file
 from app.utilities.serialization import load_json, save_json
@@ -120,39 +120,7 @@ class Database(object):
         start = time.perf_counter() * 1000
 
         to_save = self.save()
-        # This section is what takes so long!
-        try:
-            for key, value in to_save.items():
-                # divide save data into chunks based on key value
-                if key in self.save_as_chunks and main_settings.get_should_save_as_chunks():
-                    save_dir = os.path.join(data_dir, key)
-                    if os.path.exists(save_dir):
-                        shutil.rmtree(save_dir)
-                    os.mkdir(save_dir)
-                    orderkeys: List[str] = []
-                    for idx, subvalue in enumerate(value):
-                        # ordering
-                        name = subvalue['nid']
-                        name = re.sub(r'[\\/*?:"<>|]', "", name)
-                        name = name.replace(' ', '_')
-                        orderkeys.append(name)
-                        save_loc = Path(save_dir, name + '.json')
-                        # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
-                        save_json(save_loc, [subvalue])
-                    save_json(Path(save_dir, '.orderkeys'), orderkeys)
-                else:  # Save as a single file
-                    # Which means deleting the old directory
-                    save_dir = Path(data_dir, key)
-                    if os.path.exists(save_dir):
-                        shutil.rmtree(save_dir)
-                    save_loc = Path(data_dir, key + '.json')
-                    # logging.info("Serializing %s to %s" % (key, save_loc))
-                    save_json(save_loc, value)
-
-        except OSError as e:  # In case we ran out of memory
-            logging.error("Editor was unable to save your project. Free up memory in your hard drive or try saving somewhere else, otherwise progress will be lost when the editor is closed.")
-            logging.exception(e)
-            return False
+        disk_serializer.Serializer.save_database(Path(proj_dir), to_save, main_settings.get_should_save_as_chunks())
 
         end = time.perf_counter() * 1000
         logging.info("Total Time Taken for Database: %s ms" % (end - start))
