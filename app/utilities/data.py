@@ -5,6 +5,7 @@ from typing import ClassVar, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 from typing_extensions import Protocol
 
 from app.utilities.typing import NID
+from . import prefab
 
 
 class HasNid(Protocol):
@@ -123,14 +124,14 @@ class Data(Generic[T]):
 
     # Saving functions
     def save(self):
-        if self.datatype and issubclass(self.datatype, Prefab):
+        if self.datatype and issubclass(self.datatype, (Prefab, prefab.Prefab)):
             return [elem.save() for elem in self._list]
         else:
             return self._list[:]
 
     def restore(self, vals: list):
         self.clear()
-        if self.datatype and issubclass(self.datatype, Prefab):
+        if self.datatype and issubclass(self.datatype, (Prefab, prefab.Prefab)):
             for s_dict in vals:
                 new_val = self.datatype.restore(s_dict)
                 self.append(new_val)
