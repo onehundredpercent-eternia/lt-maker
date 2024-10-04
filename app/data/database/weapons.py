@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from app.utilities.data import Data, Prefab
-from app.utilities import str_utils
+from app.utilities import prefab, str_utils
 
 # === Can get bonuses to combat statistics based on weapon_type and weapon_rank
 class CombatBonus(Prefab):
@@ -72,8 +72,7 @@ class CombatBonusList(list):
         self.insert(new_index, obj)
 
 # === WEAPON RANK ===
-@dataclass
-class WeaponRank(Prefab):
+class WeaponRank(prefab.Prefab):
     rank: str = None
     requirement: int = 1
 
@@ -84,10 +83,6 @@ class WeaponRank(Prefab):
     @nid.setter
     def nid(self, value):
         self.rank = value
-
-    def __repr__(self):
-        return "WeaponRank %s: %d" % \
-            (self.rank, self.requirement)
 
 class RankCatalog(Data[WeaponRank]):
     datatype = WeaponRank
@@ -165,15 +160,7 @@ class WeaponCatalog(Data[WeaponType]):
         return new_weapon
 
 # === WEAPON EXPERIENCE GAINED ===
-class WexpGain():
-    def __init__(self, usable: bool, wexp_gain: int, cap: int = None):
-        self.usable = usable  # Used only by Klass Objects
-        self.wexp_gain = wexp_gain
-        self.cap = cap  # Used only by Klass Objects -- when None, default to highest weapon rank
-
-    def save(self):
-        return (self.usable, self.wexp_gain, self.cap)
-    
-    @classmethod
-    def restore(cls, s_tuple):
-        return cls(*s_tuple)
+class WexpGain(prefab.Prefab):
+    usable: bool
+    wexp_gain: int
+    cap: int
