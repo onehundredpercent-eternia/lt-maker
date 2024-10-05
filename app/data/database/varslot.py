@@ -1,11 +1,7 @@
-from dataclasses import dataclass
+from app.utilities.data import Data
+from app.utilities import prefab, str_utils
 
-from app.utilities.data import Data, Prefab
-from app.utilities import str_utils
-
-
-@dataclass
-class VarSlot(Prefab):
+class VarSlot(prefab.Prefab):
     nid: str = None
     desc: str = None
 

@@ -1,19 +1,51 @@
-from app.utilities.data import Data, Prefab
-from app.utilities import str_utils
+from dataclasses import field
+from typing import Any, List
+from app.utilities.data import Data
+from app.utilities import prefab, str_utils
 
 AI_ActionTypes = ['None', 'Attack', 'Support', 'Steal', 'Interact', 'Move_to', 'Move_away_from', 'Wait']
 AI_TargetTypes = ['None', 'Enemy', 'Ally', 'Unit', 'Position', 'Event', 'Terrain', 'Time']
 unit_spec = ['All', 'Class', 'Tag', 'Name', 'Team', 'Faction', 'Party', 'ID']
 # View Range
 # (Don't look | Movement*2 + Maximum Item Range | Entire Map | Custom Range (Integer))
+class AIBehaviour(prefab.Prefab):
+    action: str
+    target: str
+    view_range: int
+    target_spec: Any = None
+    roam_speed: int = 100
+    desired_proximity: int = 0
+    condition: str = ''
+    invert_targeting: bool = False
 
-class AIPrefab(Prefab):
-    def __init__(self, nid, priority, offense_bias=2):
-        self.nid = nid
-        self.behaviours = [AIBehaviour.DoNothing(), AIBehaviour.DoNothing(), AIBehaviour.DoNothing()]
-        self.priority: int = priority
-        self.offense_bias: float = offense_bias
-        self.roam_ai = False
+    @classmethod
+    def DoNothing(cls):
+        return cls('None', 'None', 0)
+
+    @classmethod
+    def default(cls):
+        return cls.DoNothing()
+
+    def has_unit_spec(self, spec_type, spec_nid):
+        if self.target in ('Enemy', 'Ally', 'Unit'):
+            if self.target_spec and self.target_spec[0] == spec_type and self.target_spec[1] == spec_nid:
+                return True
+        return False
+
+    def change_unit_spec(self, spec_type, old_nid, new_nid):
+        if self.target in ('Enemy', 'Ally', 'Unit'):
+            if self.target_spec and self.target_spec[0] == spec_type and self.target_spec[1] == old_nid:
+                self.target_spec[1] = new_nid
+
+    def guard_ai(self):
+        return self.view_range == -1
+
+class AIPrefab(prefab.Prefab):
+    nid: str
+    priority: int
+    offense_bias: float = 2.
+    behaviours: List[AIBehaviour] = field(default_factory=lambda: [AIBehaviour.DoNothing(), AIBehaviour.DoNothing(), AIBehaviour.DoNothing()])
+    roam_ai: bool = False
 
     def add_behaviour(self, behaviour):
         self.behaviours.append(behaviour)
@@ -26,23 +58,6 @@ class AIPrefab(Prefab):
 
     def set_behaviour(self, idx, behaviour):
         self.behaviours[idx] = behaviour
-
-    def save_attr(self, name, value):
-        if name == 'behaviours':
-            value = [b.save() for b in value]
-        else:
-            value = super().save_attr(name, value)
-        return value
-
-    def restore_attr(self, name, value):
-        if name == 'behaviours':
-            value = [AIBehaviour.restore(b) for b in value]
-        elif name == 'offense_bias':
-            if value is None:
-                value = 2.
-        else:
-            value = super().restore_attr(name, value)
-        return value
 
     @classmethod
     def default(cls):
@@ -69,39 +84,6 @@ class AIPrefab(Prefab):
             elif not behaviour.guard_ai():
                 return False
         return True
-
-class AIBehaviour(Prefab):
-    def __init__(self, action: str, target, view_range: int, target_spec=None, speed=100, desired_proximity=0, condition=''):
-        self.action: str = action
-        self.target = target
-        self.target_spec = target_spec
-        self.view_range: int = view_range
-        self.invert_targeting: bool = False
-        self.roam_speed = speed
-        self.desired_proximity = desired_proximity
-        self.condition: str = condition
-
-    @classmethod
-    def DoNothing(cls):
-        return cls('None', 'None', 0)
-
-    @classmethod
-    def default(cls):
-        return cls.DoNothing()
-
-    def has_unit_spec(self, spec_type, spec_nid):
-        if self.target in ('Enemy', 'Ally', 'Unit'):
-            if self.target_spec and self.target_spec[0] == spec_type and self.target_spec[1] == spec_nid:
-                return True
-        return False
-
-    def change_unit_spec(self, spec_type, old_nid, new_nid):
-        if self.target in ('Enemy', 'Ally', 'Unit'):
-            if self.target_spec and self.target_spec[0] == spec_type and self.target_spec[1] == old_nid:
-                self.target_spec[1] = new_nid
-
-    def guard_ai(self):
-        return self.view_range == -1
 
 class AICatalog(Data[AIPrefab]):
     datatype = AIPrefab
