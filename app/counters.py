@@ -50,6 +50,61 @@ class generic3counter():
     def to_edge_counter(self) -> GenericEdgeCounter:
         return GenericEdgeCounter([self.first_time, self.second_time, self.third_time])
 
+class GenericAnimCounter():
+    _count: int
+    _frame_counter: List[int]
+    _loop: bool = True
+
+    def __init__(self, frame_counter: List[int], loop: bool = True):
+        self._count = 0
+        self._frame_counter = frame_counter
+        self._loop = loop
+
+    def get(self):
+        return self._frame_counter[self._count]
+
+    def update(self, steps: int = 1):
+        if self._loop:
+            self._count = (self._count + steps) % len(self._frame_counter)
+        else:
+            if self._count < len(self._frame_counter) - 1:
+                self._count += steps
+                self._count = min(self._count, len(self._frame_counter) - 1)
+
+    def reset(self):
+        self._count = 0
+
+    @staticmethod
+    def from_frames(frames: List[int], loop: bool = True) -> GenericAnimCounter:
+        """
+        Create a GenericAnimCounter from a list of persisted frames.
+        For example, [20, 10, 30] would create a counter that returns 0 for 20 frames, 1 for 10 frames, and 2 for 30 frames.
+        """
+        frames_as_count = []
+        for i, frame in enumerate(frames):
+            frames_as_count.extend([i] * frame)
+        return GenericAnimCounter(frames_as_count, loop)
+
+    @staticmethod
+    def from_frames_back_and_forth(frames: List[int], loop: bool = True) -> GenericAnimCounter:
+        """
+        Create a GenericAnimCounter from a list of persisted frames. Will loop backwards rather than resetting to the start.
+        For example, [20, 10, 30] would create a counter that returns 0 for 20 frames, 1 for 10 frames, 2 for 30 frames, 1 for 10 frames, then 0 for 20 frames again, etc.
+        """
+        frames_as_count = []
+        for i, frame in enumerate(frames):
+            frames_as_count.extend([i] * frame)
+        if(len(frames) > 2):
+            for i, frame in enumerate(reversed(frames[1:-1])):
+                frames_as_count.extend([len(frames) - i - 2] * frame)
+        return GenericAnimCounter(frames_as_count, loop)
+
+    @property
+    def count(self):
+        """stupid compatability getter, replace this with all haste"""
+        return self.get()
+
+
 class GenericEdgeCounter():
     def __init__(self, times: List[int]):
         self.count = 0

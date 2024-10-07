@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, Union
 
-from app.counters import AnimCounter, GenericEdgeCounter, generic3counter
+from app.counters import AnimCounter, GenericAnimCounter, GenericEdgeCounter, generic3counter
 from app.data.database.units import UnitPrefab
 from app.data.resources import map_sprites
 from app.engine.game_counters import ANIMATION_COUNTERS
@@ -50,7 +50,8 @@ class SingleMapSprite():
 
     def get_frame(self) -> engine.Surface:
         # lmao this is so dumb. we should be updating these counters on a clock
-        self.counter.update(engine.get_time())
+        if not isinstance(self.counter, GenericAnimCounter):
+            self.counter.update(engine.get_time())
         return self.frames[self.counter.count].copy()
 
     def get_stationary_frame(self) -> engine.Surface:

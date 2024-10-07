@@ -1,13 +1,32 @@
-from app.utilities.utils import frames2ms
+from dataclasses import fields
+from typing import List
+from app.utilities.utils import frames2ms, frames_to_ms
 from app.engine import engine
-from app.counters import generic3counter, movement_counter, simplecounter
+from app.counters import GenericAnimCounter, generic3counter, movement_counter, simplecounter
 
 class Counters():
+    anim_counters: List[GenericAnimCounter]
+    last_update: int = 0 # should be divisible evenly by update_delta
+    update_delta: float = 16.67
+
     def __init__(self):
+        self.anim_counters = []
+        self.passive_sprite_counter = GenericAnimCounter.from_frames_back_and_forth([32, 4, 32])
+        self.anim_counters.append(self.passive_sprite_counter)
         self.reset()
 
+    def update(self):
+        current_time = engine.get_time()
+        dt = current_time - self.last_update
+        if dt > self.update_delta:
+            frames_elapsed = int(dt // self.update_delta)
+            self.last_update = int((current_time // self.update_delta) * self.update_delta)
+            for counter in self.anim_counters:
+                counter.update(frames_elapsed)
+
     def reset(self):
-        self._passive_sprite_counter = generic3counter(frames2ms(32), frames2ms(4))
+        for counter in self.anim_counters:
+            counter.reset()
         self._active_sprite_counter = generic3counter(frames2ms(20), frames2ms(4))
         self._move_sprite_counter = simplecounter((frames2ms(13), frames2ms(6), frames2ms(13), frames2ms(6)))
         self._fast_move_sprite_counter = simplecounter((frames2ms(6), frames2ms(3), frames2ms(6), frames2ms(3)))
@@ -17,12 +36,6 @@ class Counters():
         self._flag_counter = simplecounter([frames2ms(15)] * 4)
         self._fps6_360counter = simplecounter([frames2ms(6)] * 360)
         self._fps2_360counter = simplecounter([frames2ms(2)] * 360)
-
-    @property
-    def passive_sprite_counter(self):
-        current_time = engine.get_time()
-        self._passive_sprite_counter.update(current_time)
-        return self._passive_sprite_counter
 
     @property
     def active_sprite_counter(self):
