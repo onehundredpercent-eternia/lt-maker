@@ -68,8 +68,7 @@ class GenericAnimCounter():
             self._count = (self._count + steps) % len(self._frame_counter)
         else:
             if self._count < len(self._frame_counter) - 1:
-                self._count += steps
-                self._count = min(self._count, len(self._frame_counter) - 1)
+                self._count = min(self._count + steps, len(self._frame_counter) - 1)
 
     def reset(self):
         self._count = 0

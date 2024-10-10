@@ -1,5 +1,6 @@
 from dataclasses import fields
 from typing import List
+from app.constants import FRAMERATE
 from app.utilities.utils import frames2ms, frames_to_ms
 from app.engine import engine
 from app.counters import GenericAnimCounter, generic3counter, movement_counter, simplecounter
@@ -7,7 +8,7 @@ from app.counters import GenericAnimCounter, generic3counter, movement_counter, 
 class Counters():
     anim_counters: List[GenericAnimCounter]
     last_update: int = 0 # should be divisible evenly by update_delta
-    update_delta: float = 16.67
+    update_delta: float = FRAMERATE
 
     def __init__(self):
         self.anim_counters = []
