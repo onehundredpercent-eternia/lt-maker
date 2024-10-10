@@ -7,11 +7,12 @@ import shutil
 import os
 import traceback
 
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from app import sprites
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.serialization import disk_loader
+from app.data.serialization.versions import CURRENT_SERIALIZATION_VERSION
 from app.utilities import exceptions
 from app.data.resources.fonts import FontCatalog
 from app.data.resources.icons import Icon16Catalog, Icon32Catalog, Icon80Catalog
@@ -103,10 +104,22 @@ class Resources():
         else:
             save_data_types = self.save_data_types
         resource_data = disk_loader.load_resources(Path(self.main_folder), version)
+        from_default: Set[str] = set()
+        if any(not resource_data.get(data_type) for data_type in save_data_types):
+            default_resource_data = disk_loader.load_resources(Path('default.ltproj/resources'), CURRENT_SERIALIZATION_VERSION)
+            for data_type in save_data_types:
+                if not resource_data.get(data_type):
+                    logging.warning("missing data in resources: %s, loading from default" % (data_type))
+                    from_default.add(data_type)
+                    resource_data[data_type] = default_resource_data[data_type]
         for data_type in save_data_types:
             logging.info("Loading %s from %s..." % (data_type, self.main_folder))
-            getattr(self, data_type).clear()  # Now always clears first
-            getattr(self, data_type).load(os.path.join(self.main_folder, data_type), resource_data.get(data_type, []))
+            catalog: ManifestCatalog = getattr(self, data_type)
+            catalog.clear()  # Now always clears first
+            if data_type in from_default:
+                catalog.load(os.path.join('default.ltproj/resources', data_type), resource_data.get(data_type))
+            else:
+                catalog.load(os.path.join(self.main_folder, data_type), resource_data.get(data_type))
 
         # load custom components
         self.load_components()

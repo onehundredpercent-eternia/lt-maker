@@ -10,7 +10,7 @@ from app.utilities.data import Data, Prefab
 
 import logging
 
-from app.utilities.typing import NestedPrimitiveDict
+from app.utilities.typing import NestedPrimitiveList
 
 M = TypeVar('M', bound=Union[WithResources, Prefab])
 class ManifestCatalog(Data[M]):
@@ -19,8 +19,8 @@ class ManifestCatalog(Data[M]):
     title = ''  # To be implemented
     datatype: Type[M] = None  # To be implemented
 
-    def load(self, loc, resource_dict: NestedPrimitiveDict):
-        for s_dict in resource_dict:
+    def load(self, loc, resource_list: NestedPrimitiveList):
+        for s_dict in resource_list:
             new_resource: M = self.datatype.restore(s_dict)
             new_resource.set_full_path(os.path.join(loc, new_resource.nid + self.filetype))
             self.append(new_resource)

@@ -8,7 +8,7 @@ from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
 from app.data.serialization.dataclass_serialization import dataclass_from_dict
 from app.utilities.data import Prefab
-from app.utilities.typing import Color4, NestedPrimitiveDict
+from app.utilities.typing import Color4
 
 @dataclass
 class Font(WithResources, Prefab):
@@ -69,9 +69,3 @@ class FontCatalog(ManifestCatalog[Font]):
     manifest = 'fonts.json'
     title = 'fonts'
     filetype = ''
-
-    def load(self, loc, resource_dict: NestedPrimitiveDict):
-        super().load(loc, resource_dict)
-        if len(resource_dict) == 0:
-            self.load('default.ltproj/resources/fonts')
-            return
