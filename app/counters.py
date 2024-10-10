@@ -63,7 +63,7 @@ class GenericAnimCounter():
     def get(self):
         return self._frame_counter[self._count]
 
-    def update(self, steps: int = 1):
+    def update(self, steps):
         if self._loop:
             self._count = (self._count + steps) % len(self._frame_counter)
         else:
