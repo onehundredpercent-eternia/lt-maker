@@ -111,7 +111,6 @@ def run(game):
         start = time.perf_counter_ns()
 
         engine.update_time()
-        ANIMATION_COUNTERS.update()
         fps_records.append(engine.get_delta())
         # print(engine.get_delta())
 
