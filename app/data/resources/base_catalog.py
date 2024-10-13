@@ -6,6 +6,7 @@ import json
 from typing import List, Set, Type, TypeVar, Union
 
 from app.data.resources.resource_prefab import WithResources
+from app.editor.file_manager.file_manager import FileManager
 from app.utilities.data import Data, Prefab
 
 import logging
@@ -18,8 +19,10 @@ class ManifestCatalog(Data[M]):
     manifest = None  # To be implemented
     title = ''  # To be implemented
     datatype: Type[M] = None  # To be implemented
+    file_manager: FileManager = None
 
-    def load(self, loc, resource_dict: NestedPrimitiveDict):
+    def load(self, loc: str, resource_dict: NestedPrimitiveDict):
+        self.file_manager = FileManager(Path(loc))
         for s_dict in resource_dict:
             new_resource: M = self.datatype.restore(s_dict)
             new_resource.set_full_path(os.path.join(loc, new_resource.nid + self.filetype))
@@ -40,6 +43,7 @@ class ManifestCatalog(Data[M]):
                     os.rename(old_resource, new_resource)
 
     def save_resources(self, loc):
+        print(loc, 'other')
         for datum in self:
             for resource in datum.used_resources():
                 if not resource:
