@@ -220,6 +220,7 @@ class TitleMainState(State):
                 elif self.selection == 'Restart Level':
                     game.state.change('title_restart')
                 elif self.selection == 'Extras':
+                    
                     game.state.change('title_extras')
                 elif self.selection == 'New Game':
                     available_difficulties = [difficulty for difficulty in DB.difficulty_modes if (not difficulty.start_locked or RECORDS.check_difficulty_unlocked(difficulty.nid))]
@@ -746,6 +747,8 @@ class TitleExtrasState(TitleLoadState):
             options.append('Sound Room')
         if ACHIEVEMENTS:
             options.insert(1, 'Achievements')
+        if len([level for level in DB.levels if RECORDS.check_trial_unlocked(level.nid)]):
+            options.append('Trial Maps')
         if cf.SETTINGS['debug']:
             options.insert(0, 'All Saves')
         self.menu = menus.Main(options, 'title_menu_dark')
@@ -800,6 +803,10 @@ class TitleExtrasState(TitleLoadState):
                 game.memory['next_state'] = 'extras_sound_room'
                 game.memory['base_bg'] = self.bg
                 game.state.change('transition_to')
+            elif selection == 'Trial Maps':
+                game.memory['next_state'] = 'title_trial_maps'
+                game.memory['base_bg'] = self.bg
+                game.state.change('transition_to')
             elif selection == 'Achievements':
                 game.memory['next_state'] = 'base_achievement'
                 game.memory['base_bg'] = self.bg
@@ -821,6 +828,211 @@ class TitleAllSavesState(TitleLoadState):
         self.save_slots = save.get_all_saves()
         options, colors = save.get_save_title(self.save_slots)
         self.menu = menus.ChapterSelect(options, colors)
+
+class TitleTrialMapsState(State):
+    name = 'title_trial_maps'
+    in_level = False
+    show_map = False
+
+    menu = None
+    options = None
+    colors = None
+    bg = None
+    
+    def start(self):
+        self.fluid = FluidScroll(128)
+        self.bg = game.memory['title_bg']
+        self.particles = game.memory['title_particles']
+        
+        #We always start at trial_setup
+        self.state = 'transition_in'
+        self.position_x = int(WINWIDTH * 1.5)
+        self.trial_level_nid = None
+
+        self.trials = [level for level in DB.levels if RECORDS.check_trial_unlocked(level.nid)]
+        self.options = [level.nid for level in self.trials]
+        self.option_names = [level.name for level in self.trials]
+        self.colors = ['green' for level in self.options]
+        self.menu = menus.ChapterSelect(self.option_names, self.colors)
+
+    
+    def begin(self):
+        self.fluid.reset_on_change_state()
+
+    def take_input(self, event):
+        if self.state not in ['normal']:
+            return
+
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        self.menu.handle_mouse()
+        if 'DOWN' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_down(first_push)
+        elif 'UP' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_up(first_push)
+
+        if event == 'BACK':
+            get_sound_thread().play_sfx('Select 4')
+            game.state.change('transition_pop')
+
+        elif event == 'SELECT':
+            get_sound_thread().play_sfx('Save 4')
+            selection = self.menu.current_index
+            trial_level = self.options[selection]
+            self.trial_level_nid = trial_level
+                
+            #Does this require a save? If so, we want to go to the trial saves state
+            if 'Trial' in DB.levels.get(self.trial_level_nid).tags:
+                game.game_vars['_next_level_nid'] = self.trial_level_nid
+                game.memory['next_state'] = 'title_trial_map_saves'
+                game.state.change('transition_to')
+            #If there's no save, we can go ahead and load the new game
+            else:
+                game.state.clear()
+                game.state.process_temp_state()
+                game.build_new() 
+                game.state.change('start_level_asset_loading')
+                game.state.process_temp_state()
+                game.game_vars['_next_level_nid'] = self.trial_level_nid
+                next_level_nid = game.game_vars['_next_level_nid']
+                game.start_level(next_level_nid)
+                game.memory['title_menu'] = self.menu
+                game.state.change('title_wait')
+                game.state.process_temp_state()
+    
+    def update(self):
+        if self.menu:
+            self.menu.update()
+
+        if self.state == 'transition_in':
+            self.position_x -= 20
+            if self.position_x <= WINWIDTH//2:
+                self.position_x = WINWIDTH//2
+                self.state = 'normal'
+
+        elif self.state == 'transition_out':
+            self.position_x += 20
+            if self.position_x >= int(WINWIDTH * 1.5):
+                self.position_x = int(WINWIDTH * 1.5)
+                self.back()
+                self.state = 'transition_in'
+                return 'repeat'
+            
+    def draw(self, surf):
+        if self.bg:
+            self.bg.draw(surf)
+        if self.particles:
+            self.particles.update()
+            self.particles.draw(surf)
+        if self.menu:
+            self.menu.draw(surf)
+        return surf
+
+class TitleTrialSavesState(State):
+    name = 'title_trial_map_saves'
+    in_level = False
+    show_map = False
+
+    menu = None
+    options = None
+    colors = None
+    bg = None
+
+    #This gets the save slots for later
+    def get_slots(self):
+        return save.SAVE_SLOTS
+    
+    def start(self):
+        self.fluid = FluidScroll(128)
+        self.state = 'transition_in'
+        self.position_x = int(WINWIDTH * 1.5)
+
+        self.bg = game.memory['title_bg']
+        self.particles = game.memory['title_particles']
+        self.trial_level_nid = game.game_vars['_next_level_nid']
+        
+        save.check_save_slots()
+        self.save_slots = self.get_slots()
+        options, colors = save.get_save_title(self.save_slots)
+        self.menu = menus.ChapterSelect(options, colors)
+        most_recent = self.save_slots.index(max(self.save_slots, key=lambda x: x.realtime))
+        self.menu.move_to(most_recent)
+    
+    def begin(self):
+        self.fluid.reset_on_change_state()
+      
+    def take_input(self, event):
+        # Only take input in normal state
+        if self.state != 'normal':
+            return
+
+        first_push = self.fluid.update()
+        directions = self.fluid.get_directions()
+
+        self.menu.handle_mouse()
+        if 'DOWN' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_down(first_push)
+        elif 'UP' in directions:
+            get_sound_thread().play_sfx('Select 6')
+            self.menu.move_up(first_push)
+
+        if event == 'BACK':
+            get_sound_thread().play_sfx('Select 4')
+            game.state.change('transition_pop')
+
+        elif event == 'SELECT':
+            get_sound_thread().play_sfx('Save 4')
+            
+            selection = self.menu.current_index
+            save_slot = self.save_slots[selection]
+            if save_slot.kind:
+                get_sound_thread().play_sfx('Save')
+                logging.info("Loading save of kind %s...", save_slot.kind)
+                game.state.clear()
+                game.state.process_temp_state()
+                game.build_new()
+                save.load_game(game, save_slot)
+                game.state.change('start_level_asset_loading')
+                game.state.process_temp_state()
+                game.start_level(self.trial_level_nid)
+                game.memory['transition_from'] = 'Trial Saves'
+                game.memory['title_menu'] = self.menu
+                game.state.change('title_wait')
+                game.state.process_temp_state()
+            else:
+                get_sound_thread().play_sfx('Error')
+
+    def update(self):
+        if self.menu:
+            self.menu.update()
+
+        if self.state == 'transition_in':
+            self.position_x -= 20
+            if self.position_x <= WINWIDTH//2:
+                self.position_x = WINWIDTH//2
+                self.state = 'normal'
+
+        elif self.state == 'transition_out':
+            self.position_x += 20
+            if self.position_x >= int(WINWIDTH * 1.5):
+                self.position_x = int(WINWIDTH * 1.5)
+                self.back()
+                self.state = 'transition_in'
+                return 'repeat'
+            
+    def draw(self, surf):
+        if self.bg:
+            self.bg.draw(surf)
+        if self.particles:
+            self.particles.update()
+            self.particles.draw(surf)
+        if self.menu:
+            self.menu.draw(surf)
+        return surf
 
 class TitleWaitState(State):
     name = 'title_wait'

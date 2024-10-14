@@ -65,6 +65,20 @@ class PersistentRecordManager(Data):
             return super().get(difficultyMode).value
         else:
             return False
+        
+    def unlock_trial(self, trial_map_nid: str):
+        if '__trial__' + trial_map_nid in self:
+            logging.info("Trial with nid of %s already unlocked")
+            return
+        else:
+            self.append(PersistentRecord('__trial__' + trial_map_nid, True))
+        persistent_data.serialize(self.location, self.save())
+    
+    def check_trial_unlocked(self, trial_map_nid: str):
+        if '__trial__' + trial_map_nid in self:
+            return super().get('__trial__' + trial_map_nid).value
+        else:
+            return False
 
 def reset():
     game_id = str(DB.constants.value('game_nid'))
