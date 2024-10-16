@@ -437,9 +437,10 @@ class InfoMenuState(State):
         surf = engine.create_surface((96, WINHEIGHT), transparent=True)
         surf.blit(SPRITES.get('info_unit'), (8, 122))
 
-        render_text(surf, ['text'], [self.unit.name], ['white'], (48, 80), HAlignment.CENTER)
+        render_text(surf, ['text'], [self.unit.name], ['white'], (48, 82), HAlignment.CENTER)
         unit_desc = text_funcs.translate_and_text_evaluate(self.unit.desc, self=self.unit, unit=self.unit)
-        self.info_graph.register((24, 80, 52, 24), unit_desc, 'all')
+        self.info_graph.register((24, 82, 52, 24), unit_desc, 'all')
+
         class_obj = DB.classes.get(self.unit.klass)
         render_text(surf, ['text'], [class_obj.name], ['white'], (8, 104))
         class_desc = text_funcs.translate_and_text_evaluate(class_obj.desc, self=class_obj, unit=self.unit)
