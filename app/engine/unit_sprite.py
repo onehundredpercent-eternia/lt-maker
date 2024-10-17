@@ -33,7 +33,7 @@ class SingleMapSprite():
     counter: GenericAnimCounter = None
 
     @classmethod
-    def create_looping_sprite(cls, frames: List[engine.Surface], counter: Any) -> SingleMapSprite:
+    def create_looping_sprite(cls, frames: List[engine.Surface], counter: GenericAnimCounter) -> SingleMapSprite:
         """Create a sprite that loops on a (probably) shared counter"""
         sprite = cls()
         sprite.frames = frames
@@ -45,7 +45,7 @@ class SingleMapSprite():
         """Create an animated sprite that only plays once"""
         sprite = cls()
         sprite.frames = frames
-        sprite.counter = GenericEdgeCounter(frame_timings)
+        sprite.counter = GenericAnimCounter.from_frames(frame_timings, loop=False, get_time=engine.get_time)
         return sprite
 
     def get_frame(self) -> engine.Surface:
@@ -85,8 +85,8 @@ class MapSprite():
 
         active_frames = [engine.subsurface(stand, (num*64, 96, 64, 48)) for num in range(3)]
         self.active = SingleMapSprite.create_looping_sprite(active_frames, ANIMATION_COUNTERS.active_sprite_counter)
-        # self.start_cast = SingleMapSprite.create_anim_sprite(active_frames, ANIMATION_COUNTERS.active_sprite_counter.to_edge_counter())
-        # self.end_cast = SingleMapSprite.create_anim_sprite(reversed(active_frames), ANIMATION_COUNTERS.active_sprite_counter.to_edge_counter())
+        self.start_cast = SingleMapSprite.create_anim_sprite(active_frames, [20, 4, 20])
+        self.end_cast = SingleMapSprite.create_anim_sprite(reversed(active_frames), [20, 4, 20])
 
     def convert_to_team_colors(self, map_sprite):
         if self.team == 'black':
@@ -362,6 +362,10 @@ class UnitSprite():
             self.set_image_state('down')
         elif self.state == 'normal':
             self.set_transition('normal')
+        elif self.state == 'combat_cast':
+            self.set_image_state('start_cast')
+        elif self.state == 'combat_cast_end':
+            self.set_image_state('end_cast')
 
     def handle_net_position(self, pos):
         self.net_position = pos

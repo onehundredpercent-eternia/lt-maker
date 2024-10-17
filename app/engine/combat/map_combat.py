@@ -51,6 +51,7 @@ class MapCombat(SimpleCombat):
                 self.defender.strike_partner.sprite.reset()
 
     def update(self) -> bool:
+        print('current phase', self.state)
         current_time = engine.get_time() - self.last_update
         current_state = self.state
 

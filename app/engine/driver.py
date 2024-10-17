@@ -49,7 +49,7 @@ def start(title, from_editor=False):
     print("Version: %s" % VERSION)
 
 screenshot = False
-def save_screenshot(raw_events: list, surf):
+def save_screenshot(raw_events: list, surf, game):
     global screenshot
     for e in raw_events:
         if e.type == engine.KEYDOWN and e.key == engine.key_map['`']:
@@ -65,7 +65,10 @@ def save_screenshot(raw_events: list, surf):
             engine.save_surface(surf, 'screenshots/LT_%s.png' % current_time)
     if screenshot:
         current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
-        engine.save_surface(surf, 'screenshots/LT_%s.bmp' % current_time)
+        try:
+            engine.save_surface(surf, 'screenshots/LT_%s_%s.bmp' % (current_time, game.state.state[-1].combat.state))
+        except:
+            print('lol')
 
 def draw_fps(surf, fps_records):
     from app.engine.fonts import FONT
@@ -168,7 +171,7 @@ def run(game):
 
         engine.push_display(surf, engine.get_screensize(), engine.DISPLAYSURF)
 
-        save_screenshot(raw_events, surf)
+        save_screenshot(raw_events, surf, game)
 
         engine.update_display()
 
@@ -213,7 +216,7 @@ def run_in_isolation(obj):
         get_sound_thread().update(raw_events)
 
         engine.push_display(surf, engine.get_screensize(), engine.DISPLAYSURF)
-        save_screenshot(raw_events, surf)
+        save_screenshot(raw_events, surf, game)
 
         engine.update_display()
         clock.tick()

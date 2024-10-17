@@ -2,6 +2,8 @@ from __future__  import annotations
 # Helper global object for map sprite animations
 from typing import Callable, List, Union
 
+from pygame import init
+
 from app.constants import FRAMERATE
 
 
@@ -90,6 +92,11 @@ class GenericAnimCounter():
 
     def reset(self):
         self._count = 0
+
+    def done(self):
+        if self._loop:
+            return False
+        return self._count == len(self._frame_counter) - 1
 
     @staticmethod
     def from_frames(frames: List[int], loop: bool = True, frame_duration: int = FRAMERATE, get_time: Callable[[], int] = None) -> GenericAnimCounter:
