@@ -8,7 +8,7 @@ from app.engine import (base_surf, engine, icons, item_funcs,
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.text.text_renderer import (fix_tags, font_height, render_text,
-                                                    text_width)
+                                                    text_width, remove_tags)
 from app.engine.sprites import SPRITES
 from app.utilities import utils
 from app.utilities.enums import HAlignment
@@ -222,13 +222,14 @@ class StatDialog(HelpDialog):
 class ItemHelpDialog(HelpDialog):
     text_font: NID = 'text'
 
-    def __init__(self, item):
+    def __init__(self, item, display_name=False):
         self.last_time = self.start_time = 0
         self.transition_in = False
         self.transition_out = 0
 
         self.item = item
         self.unit = game.get_unit(item.owner_nid) if item.owner_nid else None
+        self.display_name = display_name
 
         weapon_rank = item_system.weapon_rank(self.unit, self.item)
         if not weapon_rank:
@@ -258,13 +259,16 @@ class ItemHelpDialog(HelpDialog):
             self.build_lines(desc, 144)
         else:
             self.lines = []
-
         self.num_present = len([v for v in self.vals if v is not None])
 
         if self.num_present > 3:
             height = 48 + font_height(self.font) * len(self.lines)
         else:
             height = 32 + font_height(self.font) * len(self.lines)
+        self.v_offset = 0
+        if self.display_name:
+            height += 16
+            self.v_offset = 16
 
         self.create_dialog(desc)
 
@@ -279,7 +283,7 @@ class ItemHelpDialog(HelpDialog):
                 dialog.Dialog.from_style(game.speak_styles.get('__default_help'), desc,
                                          width=160)
             y_height = 32 if self.num_present > 3 else 16
-            self.dlg.position = (0, y_height)
+            self.dlg.position = (0, y_height + self.v_offset)
         else:
             self.dlg = None
 
@@ -310,8 +314,8 @@ class ItemHelpDialog(HelpDialog):
         help_surf = engine.copy_surface(self.help_surf)
         weapon_type = item_system.weapon_type(self.unit, self.item)
         if weapon_type:
-            icons.draw_weapon(help_surf, weapon_type, (8, 6))
-        render_text(help_surf, [self.text_font], [str(self.vals[0])], ['blue'], (50, 6), HAlignment.RIGHT)
+            icons.draw_weapon(help_surf, weapon_type, (8, 6 + self.v_offset))
+        render_text(help_surf, [self.text_font], [str(self.vals[0])], ['blue'], (50, 6 + self.v_offset), HAlignment.RIGHT)
 
         name_positions = [(56, 6), (106, 6), (8, 22), (56, 22), (106, 22)]
         name_positions.reverse()
@@ -320,10 +324,13 @@ class ItemHelpDialog(HelpDialog):
         names = ['Rng', 'Wt', 'Mt', 'Hit', 'Crit']
         for v, n in zip(self.vals[1:], names):
             if v is not None:
-                name_pos = name_positions.pop()
-                render_text(help_surf, [self.text_font], [n], ['yellow'], name_pos)
-                val_pos = val_positions.pop()
-                render_text(help_surf, [self.text_font], [str(v)], ['blue'], val_pos, HAlignment.RIGHT)
+                x, y = name_positions.pop()
+                render_text(help_surf, [self.text_font], [n], ['yellow'], (x, y + self.v_offset))
+                vx, vy = val_positions.pop()
+                render_text(help_surf, [self.text_font], [str(v)], ['blue'], (vx, vy + self.v_offset), HAlignment.RIGHT)
+
+        if self.display_name:
+            render_text(help_surf, ['text'], [self.item.name], ['blue'], (8, 6))
 
         if self.dlg:
             self.dlg.update()
