@@ -15,6 +15,7 @@ from app.engine.game_state import game
 from app.engine.sprites import SPRITES
 from app.utilities import utils
 from app.utilities.enums import HAlignment
+import re
 
 from typing import List
 from app.engine.combat.utils import resolve_weapon
@@ -774,8 +775,12 @@ class UIView():
 
             # Blit name
             running_height += 16
-            name_width = text_width('text', spell.name)
-            render_text(bg_surf, ['text'], [spell.name], ['white'], (52 - name_width//2, running_height))
+            start = re.escape("<red>(")
+            end = re.escape(")</>(")
+            new_name = re.sub(r"<red>(.*?)</>", "", spell.name)
+            new_name = re.sub(r"<blue>(.*?)</>", "", new_name)
+            name_width = text_width('text', new_name)
+            render_text(bg_surf, ['text'], [new_name], ['white'], (52 - name_width//2, running_height))
 
             return bg_surf
 

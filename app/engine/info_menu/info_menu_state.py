@@ -265,7 +265,7 @@ class InfoMenuState(State):
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.next_unit.notes):
             self.state = 'personal_data'
             self.switch_logo('personal_data')
-        self.transition = 'DOWN'
+        self.transition = 'UP'
 
     def move_traveler(self):
         get_sound_thread().play_sfx('Status_Character')
