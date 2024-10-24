@@ -795,7 +795,7 @@ class InfoMenuState(State):
             name = ''
             nid = ''
             if color in ('green', 'brown'):
-                lore_entry = [lore for lore in DB.lore if lore.nid not in dupes and (lore.nid == word or lore.name == word or word in lore.aliases.split(','))]
+                lore_entry = [lore for lore in DB.lore if lore.nid not in dupes and (lore.nid == word or lore.name == word)]
                 if lore_entry:
                     text = lore_entry[0].text
                     name = lore_entry[0].title
