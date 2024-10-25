@@ -65,7 +65,7 @@ def save_screenshot(raw_events: list, surf):
             engine.save_surface(surf, 'screenshots/LT_%s.png' % current_time)
     if screenshot:
         current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
-        engine.save_surface(surf, 'screenshots/LT_%s.bmp' % current_time)
+        engine.save_surface(surf, 'screenshots/LT_%s.png' % current_time)
 
 def draw_fps(surf, fps_records):
     from app.engine.fonts import FONT
