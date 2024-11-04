@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict, List
 
 from app.engine import engine, help_menu, menus
 
@@ -16,13 +17,13 @@ class InfoGraph():
     draw_all_bbs: bool = False
 
     def __init__(self):
-        self.registry = {state: [] for state in info_states}
+        self.registry: Dict[str, List[BoundingBox]] = {state: [] for state in info_states}
         self.registry.update({'growths': []})
-        self.current_bb = None
-        self.last_bb = None
+        self.current_bb: BoundingBox = None
+        self.last_bb: BoundingBox = None
         self.current_state = None
         self.cursor = menus.Cursor()
-        self.first_bb = None
+        self.first_bb: BoundingBox = None
 
     def clear(self, keep_last_aabb=False):
         self.registry = {state: [] for state in info_states}
@@ -79,7 +80,7 @@ class InfoGraph():
         self.last_bb = self.current_bb
         self.current_bb = None
 
-    def _move(self, boxes, horiz=False):
+    def _move(self, boxes: List[BoundingBox], horiz=False):
         if not boxes:
             return
         if self.current_bb:
@@ -108,7 +109,10 @@ class InfoGraph():
                     if distance < max_distance:
                         max_distance = distance
                         closest_box = bb
+            self.last_bb = self.current_bb
             self.current_bb = closest_box
+            if self.current_bb and self.current_bb.help_box:
+                self.current_bb.help_box.replay_dialog()
 
     def move_left(self):
         boxes = [bb for bb in self.registry[self.current_state] if bb.aabb[0] < self.current_bb.aabb[0]]

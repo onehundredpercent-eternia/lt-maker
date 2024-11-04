@@ -92,6 +92,9 @@ class HelpDialog():
         self.transition_out = 0
         self.start_time = engine.get_time()
 
+    def replay_dialog(self):
+        self.create_dialog(self.dlg.plain_text)
+
     def handle_transition_in(self, time, h_surf):
         if self.transition_in:
             progress = utils.clamp((time - self.start_time) / 130., 0, 1)
@@ -174,6 +177,9 @@ class StatDialog(HelpDialog):
         self.help_surf = base_surf.create_base_surf(self.dlg.width, height, 'help_bg_base')
         self.h_surf = engine.create_surface((self.dlg.width, height + 3), transparent=True)
 
+    def replay_dialog(self):
+        self.create_dialog(self.plain_desc)
+
     def create_dialog(self, desc):
         from app.engine import dialog
         desc = desc.replace('\n', '{br}')
@@ -202,11 +208,6 @@ class StatDialog(HelpDialog):
 
     def draw(self, surf, pos, right=False):
         time = engine.get_time()
-        if time > self.last_time + 1000:  # If it's been at least a second since last update
-            self.start_time = time - 16
-            self.transition_in = True
-            self.transition_out = 0
-            self.create_dialog(self.plain_desc)
         self.last_time = time
 
         help_surf = engine.copy_surface(self.help_surf)
