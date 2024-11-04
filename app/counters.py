@@ -54,29 +54,29 @@ class generic3counter():
 
 class GenericAnimCounter():
     _count: int
-    _frame_counter: List[int]
+    _values: List[int]
     _loop: bool = True
     _frame_duration = FRAMERATE
     _last_update = 0                    # should be divisible evenly by _frame_duration
     _get_time: Callable[[], int] = None # source of current time
 
-    def __init__(self, frame_counter: List[int], loop: bool = True, frame_duration: int = FRAMERATE, get_time: Callable[[], int] = None):
+    def __init__(self, values: List[int], loop: bool = True, frame_duration: int = FRAMERATE, get_time: Callable[[], int] = None):
         self._count = 0
-        self._frame_counter = frame_counter
+        self._values = values
         self._loop = loop
         self._frame_duration = frame_duration
         self._get_time = get_time
 
     def get(self):
         self.sync()
-        return self._frame_counter[self._count]
+        return self._values[self._count]
 
     def update(self, steps):
         if self._loop:
-            self._count = (self._count + steps) % len(self._frame_counter)
+            self._count = (self._count + steps) % len(self._values)
         else:
-            if self._count < len(self._frame_counter) - 1:
-                self._count = min(self._count + steps, len(self._frame_counter) - 1)
+            if self._count < len(self._values) - 1:
+                self._count = min(self._count + steps, len(self._values) - 1)
 
     def sync(self):
         if not self._get_time:
