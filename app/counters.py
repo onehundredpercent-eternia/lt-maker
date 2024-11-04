@@ -83,7 +83,7 @@ class GenericAnimCounter():
             return
         current_time = self._get_time()
         dt = current_time - self._last_update
-        if dt > self._frame_duration:
+        if dt >= self._frame_duration:
             frames_elapsed = int(dt // self._frame_duration)
             self._last_update = int((current_time // self._frame_duration) * self._frame_duration)
             self.update(frames_elapsed)

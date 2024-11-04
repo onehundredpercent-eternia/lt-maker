@@ -27,7 +27,7 @@ class LevelCursor(BaseCursor):
     def __init__(self, game: GameState):
         super().__init__(camera=game.camera, game_board=game.board)
         # this is frame-accurate to GBA
-        self.cursor_counter = ANIMATION_COUNTERS.get_or_register("level_cursor", GenericAnimCounter.from_frames_back_and_forth([20, 2, 8]))
+        self.cursor_counter = GenericAnimCounter.from_frames_back_and_forth([20, 2, 8], get_time=engine.get_time)
         self.game = game
         self.cur_unit = None
         self.path = []
