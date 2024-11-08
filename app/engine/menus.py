@@ -24,7 +24,8 @@ def draw_unit_top(surf, topleft, unit):
     x, y = topleft
     white_surf = SPRITES.get('prep_top')
     surf.blit(white_surf, (x - 6, y - white_surf.get_height()))
-    icons.draw_chibi(surf, unit.portrait_nid, (x + 3, y - 33))
+    if unit:
+        icons.draw_chibi(surf, unit.portrait_nid, (x + 3, y - 33))
     FONT['text'].blit_center(unit.name, surf, (x + 68, y - 35))
     FONT['text-blue'].blit_right(str(unit.level), surf, (x + 72, y - 19))
     FONT['text-blue'].blit_right(str(unit.exp), surf, (x + 97, y - 19))
@@ -201,7 +202,7 @@ class Simple():
             for idx, option in enumerate(options):
                 option = menu_options.BasicOption(idx, option)
                 if info_descs:
-                    option.help_box = help_menu.HelpDialog(info_descs[idx])
+                    option.help_box = help_menu.HelpDialog(info_descs[idx], self=option)
                 self.options.append(option)
 
     def get_current(self):

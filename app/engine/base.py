@@ -1,7 +1,6 @@
 import math
 import random
 from typing import List, Tuple
-from app.engine.game_counters import ANIMATION_COUNTERS
 from app.constants import WINWIDTH, WINHEIGHT
 from app.utilities import utils
 
@@ -471,7 +470,7 @@ class SupportDisplay():
                 elif DB.units.get(other_unit_nid):  # Not loaded into game yet
                     other_unit_prefab = DB.units.get(other_unit_nid)
                     map_sprite = unit_sprite.load_map_sprite(other_unit_prefab, 'black')
-                    image = map_sprite.passive[ANIMATION_COUNTERS.passive_sprite_counter.count].copy()
+                    image = map_sprite.passive.get_frame()
                     # name = other_unit_prefab.name
                     name = '---'
                     affinity = DB.affinities.get(other_unit_prefab.affinity)
@@ -790,11 +789,11 @@ class LoreDisplay():
             return  # No need to update
 
         self.lore = DB.lore.get(lore_nid)
-        text = self.lore.text.split('\n')
+        text = text_funcs.translate_and_text_evaluate(self.lore.text, self=self.lore).split('\n')
         self.page_num = 0
         self.dialogs.clear()
-        for idx, line in enumerate(text):
-            dlg = dialog.Dialog(text[idx], font_type="text", font_color="white", num_lines=8, draw_cursor=False)
+        for line in text:
+            dlg = dialog.Dialog(line, font_type="text", font_color="white", num_lines=8, draw_cursor=False)
             dlg.position = self.topleft[0], self.topleft[1] + 12
             dlg.text_width = WINWIDTH - 100
             dlg.reformat()
@@ -1192,6 +1191,9 @@ class BaseBEXPSelectState(prep.PrepManageState):
                 DB.classes.get(unit.klass).turns_into and 'NoAutoPromote' not in unit.tags
             ignore.append(unit.level >= DB.classes.get(unit.klass).max_level and not auto_promote)
         self.menu.set_ignore(ignore)
+        base_music = game.game_vars.get('_bexp_menu_music')
+        if base_music:
+            get_sound_thread().fade_in(base_music)
         super().begin()
 
     def create_quick_disp(self):

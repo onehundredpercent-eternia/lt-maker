@@ -9,7 +9,6 @@ from app.utilities import file_utils
 
 from app.constants import WINWIDTH, WINHEIGHT, VERSION, FPS
 from app.engine import engine
-from app.data.database.database import DB
 
 import app.engine.config as cf
 
@@ -36,6 +35,11 @@ def start(title, from_editor=False):
     from app.engine import fonts
     fonts.load_fonts()
 
+    from app.engine import battle_animation
+    # Clear out old battle animations that we might have tested with earlier,
+    # because they could have changed.
+    battle_animation.battle_anim_registry.clear()
+
     # Hack to get icon to show up in windows
     try:
         import ctypes
@@ -48,8 +52,6 @@ def start(title, from_editor=False):
     engine.update_time()
     engine.set_title(title + ' - v' + VERSION)
     print("Version: %s" % VERSION)
-    if DB.game_flags.has_fatal_errors and not from_editor:
-        raise Exception("Fatal errors detected in game. If you are the developer, please validate and then save your game data before proceeding. Aborting launch.")
 
 screenshot = False
 def save_screenshot(raw_events: list, surf):
@@ -73,10 +75,13 @@ def save_screenshot(raw_events: list, surf):
 def draw_fps(surf, fps_records):
     from app.engine.fonts import FONT
     total_time = sum(fps_records)
-    num_frames = len(fps_records)
-    fps = int(num_frames / (total_time / 1000))
-    max_frame = max(fps_records)
-    min_fps = 1000 // max_frame
+    if total_time > 0:
+        num_frames = len(fps_records)
+        fps = int(num_frames / (total_time / 1000))
+        max_frame = max(fps_records)
+        min_fps = 1000 // max_frame
+    else:  # On the very first frame, can't figure out what the FPS is yet.
+        fps, min_fps = "--", "--"
 
     FONT['small-white'].blit(str(fps), surf, (surf.get_width() - 20, 0))
     FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
@@ -132,6 +137,7 @@ def run(game):
             if time.time() - SOFT_RESET_TIME >= _soft_reset_start_time:
                 _soft_reset_start_time = None
                 _error_mode = False
+                game.memory.clear()
                 game.state.change('title_start')
                 game.state.update([], surf)
                 continue

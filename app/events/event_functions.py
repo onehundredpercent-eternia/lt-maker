@@ -41,7 +41,7 @@ from app.events.utils import TableRows
 from app.sprites import SPRITES
 from app.utilities import str_utils, utils
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
-from app.utilities.type_checking import check_valid_type
+from app.utilities.type_checking import is_primitive_or_primitive_collection
 from app.utilities.typing import NID, Point
 from app.engine.source_type import SourceType
 
@@ -460,13 +460,14 @@ def transition(self: Event, direction=None, speed=None, color3=None, panorama=No
 
 def change_background(self: Event, panorama=None, flags=None):
     flags = flags or set()
-    if panorama:
-        panorama = RESOURCES.panoramas.get(panorama)
         if not panorama:
-            return
-        self.background = background.PanoramaBackground(panorama)
-    else:
         self.background = None
+    elif RESOURCES.panoramas.get(panorama):
+        if 'scroll' in flags:
+            self.background = background.create_background(panorama, True)
+        else:
+            self.background = background.create_background(panorama, False)
+    
     if 'keep_portraits' in flags:
         pass
     else:
@@ -589,7 +590,7 @@ def screen_shake_end(self: Event, flags=None):
 
 def game_var(self: Event, nid, expression, flags=None):
     val = self._eval_expr(expression, 'from_python' in flags)
-    if check_valid_type(val):
+    if is_primitive_or_primitive_collection(val):
         action.do(action.SetGameVar(nid, val))
     else:
         self.logger.error("game_var: %s is not a valid variable", val)
@@ -597,7 +598,7 @@ def game_var(self: Event, nid, expression, flags=None):
 def inc_game_var(self: Event, nid, expression=None, flags=None):
     if expression:
         val = self._eval_expr(expression, 'from_python' in flags)
-        if check_valid_type(val):
+        if is_primitive_or_primitive_collection(val):
             action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + val))
         else:
             self.logger.error("inc_game_var: %s is not a valid variable", val)
@@ -606,7 +607,7 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
 
 def level_var(self: Event, nid, expression, flags=None):
     val = self._eval_expr(expression, 'from_python' in flags)
-    if check_valid_type(val):
+    if is_primitive_or_primitive_collection(val):
         action.do(action.SetLevelVar(nid, val))
     else:
         self.logger.error("level_var: %s is not a valid variable", val)
@@ -614,7 +615,7 @@ def level_var(self: Event, nid, expression, flags=None):
 def inc_level_var(self: Event, nid, expression=None, flags=None):
     if expression:
         val = self._eval_expr(expression, 'from_python' in flags)
-        if check_valid_type(val):
+        if is_primitive_or_primitive_collection(val):
             action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + val))
         else:
             self.logger.error("inc_level_var: %s is not a valid variable", val)
@@ -1142,10 +1143,12 @@ def interact_unit(self: Event, unit, position, combat_script: Optional[List[str]
     else:
         if actor.get_weapon():
             item = actor.get_weapon()
+        elif any(item_funcs.available(actor, item) for item in items):
+            item = [item for item in items if item_funcs.available(actor, item)][0]
         elif items:
             item = items[0]
         else:
-            self.logger.error("interact_unit: Unit does not have item!")
+            self.logger.error("interact_unit: Unit does not have an item in their inventory!")
             return
 
     interaction.start_combat(
@@ -1446,6 +1449,7 @@ def give_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
             else:
                 action.do(action.GiveItem(unit, item))
                 self.game.memory['item_discard_current_unit'] = unit
+                self.game.memory['item_discard_new_item'] = item
                 self.game.state.change('item_discard')
                 self.state = 'paused'
                 if banner_flag:
@@ -1574,8 +1578,7 @@ def move_item_between_convoys(self: Event, item, party1, party2, flags=None):
 
     item_id = item
     item_list = giver.items
-    item_list = [item_nid.strip() for item_nid in item_list]
-    inids = [item.nid for item in item_list]
+    inids = [item.nid.strip() for item in item_list]
     iuids = [item.uid for item in item_list]
     if (item_id not in inids) and (not str_utils.is_int(item_id) or not int(item_id) in iuids):
         self.logger.error("Couldn't find item with id %s" % item)
@@ -2677,7 +2680,7 @@ def set_position(self: Event, position, flags=None):
     self.position = pos
     self.text_evaluator.position = pos
 
-def map_anim(self: Event, map_anim, float_position: Tuple[float, float] | NID, speed: float=1.0, flags=None):
+def map_anim(self: Event, map_anim, float_position: Tuple[float, float] | NID, speed: float = 1.0, flags=None):
     flags = flags or set()
     float_position = self._parse_pos(float_position, True)
     if not float_position:
@@ -2775,7 +2778,12 @@ def arrange_formation(self: Event, flags=None):
     player_units = self.game.get_units_in_party()
     stuck_units = [unit for unit in player_units if unit.position and not self.game.check_for_region(unit.position, 'formation')]
     unstuck_units = [unit for unit in player_units if unit not in stuck_units and not self.game.check_for_region(unit.position, 'formation')]
+    # Don't include blacklisted units
     unstuck_units = [unit for unit in unstuck_units if 'Blacklist' not in unit.tags]
+    # Don't include rescued units
+    travelers = self.game.get_travelers()
+    unstuck_units = [unit for unit in unstuck_units if unit not in travelers]
+    # Don't include fatigued units
     if DB.constants.value('fatigue') and self.game.game_vars.get('_fatigue') == 1:
         unstuck_units = [unit for unit in unstuck_units if unit.get_fatigue() < unit.get_max_fatigue()]
     # Place required units first
@@ -2965,6 +2973,10 @@ def choice(self: Event, nid: NID, title: str, choices: TableRows, row_width: int
         scroll_bar = False
     backable = 'backable' in flags
 
+    # Automatically convert str to alignment
+    if isinstance(alignment, str):
+        alignment = Alignments(alignment)
+
     event_context = {
         'unit': self.unit,
         'unit2': self.unit2,
@@ -3000,6 +3012,8 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
     default_textbox_style = self.game.speak_styles['__default_text']
 
     if box_position:
+        if isinstance(box_position, str):
+            box_position = Alignments(box_position)
         position = box_position
     elif textbox_style and textbox_style.position:
         position = textbox_style.position
@@ -3076,6 +3090,12 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
                       style_nid=style_nid, speed=speed,
                       font_color=fcolor, font_type=ftype, num_lines=lines,
                       draw_cursor=False, transparency=transparency)
+    elif callable(text):
+        textbox = dialog.DynamicDialogWrapper(
+            text, background=box_bg, position=position, width=box_width,
+            style_nid=style_nid, speed=speed,
+            font_color=fcolor, font_type=ftype, num_lines=lines,
+            draw_cursor=False, transparency=transparency)
     else:
         text = self.text_evaluator._evaluate_all(text)
         text = dialog.process_dialog_shorthand(text)
@@ -3318,6 +3338,21 @@ def open_trade(self: Event, unit1, unit2, flags=None):
     self.state = "paused"
     self.game.memory['next_state'] = 'combat_trade'
     self.game.state.change('transition_to')
+
+def open_bexp_menu(self: Event, panorama = "default_background", music: SongPrefab | SongObject | NID = None, flags=None):
+    bg = background.create_background(panorama, False)
+    self.game.memory['base_bg'] = bg
+
+    music_nid = self._resolve_nid(music)
+    if music_nid:
+        action.do(action.SetGameVar('_bexp_menu_music', music_nid))
+
+    self.state = "paused"
+    if 'immediate' in flags:
+        self.game.state.change('base_bexp_select')
+    else:
+        self.game.memory['next_state'] = 'base_bexp_select'
+        self.game.state.change('transition_to')
 
 def show_minimap(self: Event, flags=None):
     cursor_was_hidden = False
@@ -3723,3 +3758,28 @@ def hide_combat_ui(self: Event, flags=None):
 
 def show_combat_ui(self: Event, flags=None):
     self.game.game_vars["_hide_ui"] = False
+
+def party_transfer(self: Event, party1, party2, fixed_units = None, party1_name = "", party2_name = "", party1_limit = 0, party2_limit = 0, flags=None):
+    top_party = self.game.get_party(party1)
+    bottom_party = self.game.get_party(party2)
+    top_party_name = party1_name
+    bottom_party_name = party2_name
+    top_party_limit = party1_limit
+    bottom_party_limit = party2_limit
+    flags = flags or set()
+
+    if fixed_units:
+        try:
+            fixed_list = self._eval_expr(fixed_units, 'from_python' in flags)
+        except Exception as e:
+            self.logger.error("party_transfer: %s: Could not evalute {%s}" % (e, fixed_units))
+            return
+        if not all((isinstance(unit_nid, str) or isinstance(unit_nid, UnitObject)) for unit_nid in fixed_list):
+            self.logger.error("party_transfer: could not evaluate to NID list %s" % fixed_list)
+            return
+    else:
+        fixed_list = []
+
+    self.game.memory['party_transfer'] = (top_party, bottom_party, fixed_list, top_party_name, bottom_party_name, top_party_limit, bottom_party_limit)
+    self.game.state.change('party_transfer')
+    self.state = 'paused'
