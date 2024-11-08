@@ -71,13 +71,6 @@ class GenericAnimCounter():
         self.sync()
         return self._values[self._count]
 
-    def update(self, steps):
-        if self._loop:
-            self._count = (self._count + steps) % len(self._values)
-        else:
-            if self._count < len(self._values) - 1:
-                self._count = min(self._count + steps, len(self._values) - 1)
-
     def sync(self):
         if not self._get_time:
             return
@@ -86,7 +79,14 @@ class GenericAnimCounter():
         if dt >= self._frame_duration:
             frames_elapsed = int(dt // self._frame_duration)
             self._last_update = int((current_time // self._frame_duration) * self._frame_duration)
-            self.update(frames_elapsed)
+            self._update(frames_elapsed)
+
+    def _update(self, steps):
+        if self._loop:
+            self._count = (self._count + steps) % len(self._values)
+        else:
+            if self._count < len(self._values) - 1:
+                self._count = min(self._count + steps, len(self._values) - 1)
 
     def reset(self):
         self._count = 0
@@ -100,7 +100,7 @@ class GenericAnimCounter():
         frames_as_count = []
         for i, frame in enumerate(frames):
             frames_as_count.extend([i] * frame)
-        return GenericAnimCounter(frames_as_count, loop, get_time=get_time)
+        return GenericAnimCounter(frames_as_count, loop, frame_duration=frame_duration, get_time=get_time)
 
     @staticmethod
     def from_frames_back_and_forth(frames: List[int], loop: bool = True, frame_duration: int = FRAMERATE, get_time: Callable[[], int] = None) -> GenericAnimCounter:
@@ -114,7 +114,7 @@ class GenericAnimCounter():
         if(len(frames) > 2):
             for i, frame in enumerate(reversed(frames[1:-1])):
                 frames_as_count.extend([len(frames) - i - 2] * frame)
-        return GenericAnimCounter(frames_as_count, loop, get_time=get_time)
+        return GenericAnimCounter(frames_as_count, loop, frame_duration=frame_duration, get_time=get_time)
 
     @property
     def count(self):

@@ -26,9 +26,9 @@ class Timer(QWidget):
         self.autosave_timer.setInterval(int(autosave_time * 60 * 1000))
         self.autosave_timer.start()
 
-        self.passive_counter = GenericAnimCounter.from_frames_back_and_forth([16, 2, 16], frame_duration=constants.FRAMERATE * 2, get_time=time.time)
-        self.active_counter = GenericAnimCounter.from_frames_back_and_forth([10, 2, 10], frame_duration=constants.FRAMERATE * 2, get_time=time.time)
-        self.move_sprite_counter = GenericAnimCounter.from_frames([6, 3, 6, 3], frame_duration=constants.FRAMERATE * 2, get_time=time.time)
+        self.passive_counter = GenericAnimCounter.from_frames_back_and_forth([16, 2, 16], frame_duration=constants.FRAMERATE * 2, get_time=lambda: time.time() * 1000)
+        self.active_counter = GenericAnimCounter.from_frames_back_and_forth([10, 2, 10], frame_duration=constants.FRAMERATE * 2, get_time=lambda: time.time() * 1000)
+        self.move_sprite_counter = GenericAnimCounter.from_frames([6, 3, 6, 3], frame_duration=constants.FRAMERATE * 2, get_time=lambda: time.time() * 1000)
 
     def tick(self):
         self.tick_elapsed.emit()
