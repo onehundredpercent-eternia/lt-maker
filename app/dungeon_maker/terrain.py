@@ -29,6 +29,7 @@ class Terrain(Enum):
             Terrain.SPARSE_FOREST,
             Terrain.GRASS,
             Terrain.RUINS,
+            Terrain.PILLAR,
             Terrain.START,
             Terrain.END,
         }
