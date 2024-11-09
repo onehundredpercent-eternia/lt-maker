@@ -22,7 +22,7 @@ class EventManager():
         if level_nid:
             event_source_nid = level_nid
         else:
-            if game.level_nid:
+            if game.level_nid and not game.is_displaying_overworld():
                 event_source_nid = game.level_nid
             else:
                 event_source_nid = None
@@ -42,7 +42,10 @@ class EventManager():
         triggered_events = self.get_triggered_events(trigger, level_nid)
         return len(triggered_events) > 0
 
-    def trigger(self, trigger: EventTrigger, level_nid=None):
+    def trigger(self, trigger: EventTrigger, level_nid=None) -> bool:
+        """
+        Returns whether an event was triggered!
+        """
         triggered_events = self.get_triggered_events(trigger, level_nid)
         new_event = False
         sorted_events = sorted(triggered_events, key=lambda x: x.priority)

@@ -8,7 +8,7 @@ from app.engine import (base_surf, engine, icons, item_funcs,
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.graphics.text.text_renderer import (fix_tags, font_height, render_text,
-                                                    text_width, remove_tags)
+                                                    text_width)
 from app.engine.sprites import SPRITES
 from app.utilities import utils
 from app.utilities.enums import HAlignment
@@ -113,16 +113,20 @@ class HelpDialog():
             h_surf = engine.transform_scale(h_surf, (int(progress * h_surf.get_width()), int(progress * h_surf.get_height())))
         return h_surf
 
+    def top_left(self, pos, right=False):
+        if right:
+            pos = (pos[0] - self.help_surf.get_width(), pos[1])
+        if pos[0] + self.help_surf.get_width() >= WINWIDTH:
+            pos = (WINWIDTH - self.help_surf.get_width() - 8, pos[1])
+        if pos[1] + self.help_surf.get_height() >= WINHEIGHT:
+            pos = (pos[0], max(0, pos[1] - self.help_surf.get_height() - 16))
+        return pos
+
     def final_draw(self, surf, pos, time, help_surf):
         # Draw help logo
         h_surf = engine.copy_surface(self.h_surf)
         h_surf.blit(help_surf, (0, 3))
         h_surf.blit(self.help_logo, (9, 0))
-
-        if pos[0] + help_surf.get_width() >= WINWIDTH:
-            pos = (WINWIDTH - help_surf.get_width() - 8, pos[1])
-        if pos[1] + help_surf.get_height() >= WINHEIGHT:
-            pos = (pos[0], max(0, pos[1] - help_surf.get_height() - 16))
 
         if self.transition_in:
             h_surf = self.handle_transition_in(time, h_surf)
@@ -147,12 +151,7 @@ class HelpDialog():
 
         self.dlg.update()
         self.dlg.draw(help_surf)
-
-        if right:
-            surf = self.final_draw(surf, (pos[0] - help_surf.get_width(), pos[1]), time, help_surf)
-        else:
-            surf = self.final_draw(surf, pos, time, help_surf)
-
+        surf = self.final_draw(surf, self.top_left(pos, right), time, help_surf)
         return surf
 
 class StatDialog(HelpDialog):
@@ -216,10 +215,7 @@ class StatDialog(HelpDialog):
             self.dlg.update()
             self.dlg.draw(help_surf)
 
-        if right:
-            surf = self.final_draw(surf, (pos[0] - help_surf.get_width(), pos[1]), time, help_surf)
-        else:
-            surf = self.final_draw(surf, pos, time, help_surf)
+        surf = self.final_draw(surf, self.top_left(pos, right), time, help_surf)
         return surf
 
 
@@ -253,8 +249,13 @@ class ItemHelpDialog(HelpDialog):
 
         self.vals = [weapon_rank, rng, weight, might, hit, crit]
 
+        desc = self.item.desc
         if self.item.desc:
-            self.build_lines(self.item.desc, 144)
+            desc = text_funcs.translate_and_text_evaluate(
+                self.item.desc,
+                unit=self.unit,
+                self=self.item)
+            self.build_lines(desc, 144)
         else:
             self.lines = []
 
@@ -265,7 +266,7 @@ class ItemHelpDialog(HelpDialog):
         else:
             height = 32 + font_height(self.font) * len(self.lines)
 
-        self.create_dialog(self.item.desc)
+        self.create_dialog(desc)
 
         self.help_surf = base_surf.create_base_surf(160, height, 'help_bg_base')
         self.h_surf = engine.create_surface((160, height + 3), transparent=True)
@@ -285,7 +286,6 @@ class ItemHelpDialog(HelpDialog):
     def build_lines(self, desc, width):
         if not desc:
             desc = ''
-        desc = text_funcs.translate(desc)
         # Hard set num lines if desc is very short
         if '\n' in desc:
             lines = desc.splitlines()
@@ -329,8 +329,5 @@ class ItemHelpDialog(HelpDialog):
             self.dlg.update()
             self.dlg.draw(help_surf)
 
-        if right:
-            surf = self.final_draw(surf, (pos[0] - help_surf.get_width(), pos[1]), time, help_surf)
-        else:
-            surf = self.final_draw(surf, pos, time, help_surf)
+        surf = self.final_draw(surf, self.top_left(pos, right), time, help_surf)
         return surf

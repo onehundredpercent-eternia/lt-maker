@@ -9,6 +9,7 @@ from app.engine.state import MapState
 from app.engine import engine, text_funcs, menus, action, \
     icons, help_menu, banner, base_surf
 from app.engine.game_state import game
+from app.engine.source_type import SourceType
 
 class SkillOption(menu_options.BasicOption):
     """
@@ -44,7 +45,11 @@ class SkillOption(menu_options.BasicOption):
         return main_color
 
     def get_help_box(self):
-        return help_menu.HelpDialog(self.skill.desc, name=self.skill.name)
+        text = text_funcs.translate_and_text_evaluate(
+            self.skill.desc,
+            unit=game.get_unit(self.skill.owner_nid),
+            self=self.skill)
+        return help_menu.HelpDialog(text, name=self.skill.name)
 
     def draw(self, surf, x, y):
         icon = icons.get_icon(self.skill)
@@ -77,6 +82,9 @@ class FeatChoiceState(MapState):
         self.menu.shimmer = 2
         self.menu.topleft = (self.menu.get_topleft()[0], WINHEIGHT - self.menu.get_menu_height() - 4)
         self.menu.set_ignore(ignore)
+
+    def begin(self):
+        self.fluid.reset_on_change_state()
 
     def take_input(self, event):
         first_push = self.fluid.update()
@@ -113,7 +121,7 @@ class FeatChoiceState(MapState):
             get_sound_thread().play_sfx('Select 1')
             selection = self.menu.get_current()
             game.state.back()
-            act = action.AddSkill(self.unit, selection.nid)
+            act = action.AddSkill(self.unit, selection.nid, source=self.unit.nid, source_type=SourceType.PERSONAL)
             action.do(act)
             if act.skill_obj:
                 game.alerts.append(banner.GiveSkill(self.unit, act.skill_obj))

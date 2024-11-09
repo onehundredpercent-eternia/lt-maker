@@ -81,6 +81,9 @@ class PromotionChoiceState(State):
         game.state.change('transition_in')
         return 'repeat'
 
+    def begin(self):
+        self.fluid.reset_on_change_state()
+
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
@@ -140,8 +143,9 @@ class PromotionChoiceState(State):
 
     def _get_desc(self):
         current_klass = self.class_options[self.menu.get_current_index()]
-        desc = DB.classes.get(current_klass).desc
-        d = dialog.Dialog(desc.replace('\n', '{br}'))
+        klass = DB.classes.get(current_klass)
+        text = text_funcs.translate_and_text_evaluate(klass.desc, self=klass)
+        d = dialog.Dialog(text.replace('\n', '{br}'))
         d.position = (6, 112)
         d.text_width = WINWIDTH - 28
         d.width = d.text_width + 16
@@ -149,6 +153,7 @@ class PromotionChoiceState(State):
         d.font_color = 'white'
         d.font = FONT['convo-white']
         d.draw_cursor_flag = False
+        d.reformat()
         return d
 
     def update(self):
@@ -186,7 +191,7 @@ class PromotionChoiceState(State):
             anim.draw(surf, (self.anim_offset + 12, 0))
 
         # Class Reel
-        FONT['class-purple'].blit(self.menu.get_current(), surf, (114, 5))
+        FONT['class'].blit(self.menu.get_current(), surf, (114, 5))
 
         # Weapon Icons
         for idx, weapon in enumerate(self.weapon_icons[self.menu.get_current_index()]):

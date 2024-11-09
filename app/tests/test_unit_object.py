@@ -1,13 +1,14 @@
 import unittest
 from unittest.mock import MagicMock, patch, call
 
+from app.data.serialization.versions import CURRENT_SERIALIZATION_VERSION
 from app.engine.objects.unit import UnitObject
 from app.tests.mocks.mock_game import get_mock_game
 
 class UnitObjectUnitTests(unittest.TestCase):
     def setUp(self):
         from app.data.database.database import DB
-        DB.load('testing_proj.ltproj')
+        DB.load('testing_proj.ltproj', CURRENT_SERIALIZATION_VERSION)
         from app.engine import equations
         equations.clear()
         self.game = get_mock_game()
@@ -112,7 +113,7 @@ class UnitObjectUnitTests(unittest.TestCase):
                     'persistent': True,
                     'portrait_nid': 'Eirika',
                     'position': None,
-                    'skills': [110, 120],
+                    'skills': [(110, 'bob', ('klass', False, True)), (120, (1,1), ('terrain', False, False))],
                     'starting_position': (4, 5),
                     'stats': {'CON': 5,
                             'DEF': 3,

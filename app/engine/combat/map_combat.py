@@ -1,4 +1,5 @@
 from app.data.resources.resources import RESOURCES
+from app.data.database.database import DB
 
 from app.engine.combat.solver import CombatPhaseSolver
 
@@ -36,6 +37,9 @@ class MapCombat(SimpleCombat):
 
         self.first_phase = True
 
+    def set_state(self, state: str):
+        self.state = state
+
     def skip(self):
         self._skip = True
         self.attacker.sprite.reset()
@@ -54,11 +58,11 @@ class MapCombat(SimpleCombat):
         if self.state == 'init':
             self.start_combat()
             self.start_event()
-            self.state = 'init_pause'
+            self.set_state('init_pause')
 
         elif self.state == 'init_pause':
             if self._skip or current_time > 200:
-                self.state = 'begin_phase'
+                self.set_state('begin_phase')
 
         # print("Map Combat %s" % self.state)
         elif self.state == 'begin_phase':
@@ -77,8 +81,8 @@ class MapCombat(SimpleCombat):
                 self.set_up_pre_proc_animation('attack_pre_proc')
                 self.set_up_pre_proc_animation('defense_pre_proc')
                 self.set_up_other_proc_icons()
-                self.add_proc_icon.memory.clear()
                 self.first_phase = False
+            self.add_proc_icon.memory.clear()
 
             # Camera
             if self.get_from_playback('defender_phase') or self.get_from_playback('defender_partner_phase'):
@@ -117,7 +121,7 @@ class MapCombat(SimpleCombat):
                     if self.defender.strike_partner:
                         self.defender.strike_partner.sprite.change_state(
                             'combat_defender')
-            self.state = 'red_cursor'
+            self.set_state('red_cursor')
 
         elif self.state == 'red_cursor':
             if self.defender:
@@ -130,7 +134,7 @@ class MapCombat(SimpleCombat):
             self.set_up_proc_animation('defense_proc')
             self.set_up_proc_animation('defense_hit_proc')
 
-            self.state = 'start_anim'
+            self.set_state('start_anim')
 
         elif self.state == 'start_anim':
             if self._skip or current_time > 400:
@@ -151,7 +155,7 @@ class MapCombat(SimpleCombat):
                         anim = MapAnimation(anim, brush.pos)
                         self.animations.append(anim)
 
-                self.state = 'sound'
+                self.set_state('sound')
 
         elif self.state == 'sound':
             if self._skip or current_time > 250:
@@ -166,13 +170,13 @@ class MapCombat(SimpleCombat):
                 elif self.get_from_playback('attacker_partner_phase'):
                     self.attacker.strike_partner.sprite.change_state(
                         'combat_anim')
-                else:
+                elif self.attacker.position:
                     self.attacker.sprite.change_state('combat_anim')
                 sound_brushes = self.get_from_playback('cast_sound')
                 for brush in sound_brushes:
                     get_sound_thread().play_sfx(brush.sound)
 
-                self.state = 'anim'
+                self.set_state('anim')
 
         elif self.state == 'anim':
             if self._skip or current_time > 83:
@@ -187,11 +191,11 @@ class MapCombat(SimpleCombat):
                                            for hp_bar in self.health_bars.values())
                 else:
                     self.hp_bar_time = 0
-                self.state = 'hp_bar_wait'
+                self.set_state('hp_bar_wait')
 
         elif self.state == 'hp_bar_wait':
             if self._skip or current_time > self.hp_bar_time:
-                self.state = 'end_phase'
+                self.set_state('end_phase')
 
         elif self.state == 'end_phase':
             if self._skip or current_time > 550:
@@ -205,11 +209,11 @@ class MapCombat(SimpleCombat):
                         self.attacker.strike_partner.sprite.state == 'combat_anim':
                     self.attacker.strike_partner.sprite.change_state(
                         'combat_attacker')
-                else:
+                elif self.attacker.position:
                     self.attacker.sprite.change_state('combat_attacker')
                 self._end_phase()
                 self.state_machine.setup_next_state()
-                self.state = 'begin_phase'
+                self.set_state('begin_phase')
 
         if self.state != current_state:
             self.last_update = engine.get_time()
@@ -219,6 +223,9 @@ class MapCombat(SimpleCombat):
                 hp_bar.update()
 
         return False
+
+    def _show_guard_gauge(self) -> bool:
+        return DB.constants.value('pairup') and not DB.constants.value('attack_stance_only')
 
     def _build_health_bars(self):
         if (self.defender and self.all_splash) or len(self.all_splash) > 1:
@@ -233,39 +240,50 @@ class MapCombat(SimpleCombat):
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 mt = combat_calcs.compute_damage(
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                crt = combat_calcs.compute_crit(
+                    self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                grd = self.attacker.get_guard_gauge() if self._show_guard_gauge() else None
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo(
-                        'p1', self.attacker, self.main_item, self.defender, (hit, mt))
+                        'p1', self.attacker, self.main_item, self.defender, (hit, mt, crt, grd))
                     self.health_bars[self.attacker] = attacker_health
                 else:
-                    self.health_bars[self.attacker].update_stats((hit, mt))
+                    self.health_bars[self.attacker].update_stats((hit, mt, crt, grd))
 
             # P1 on P2
             elif self.defender:
+                # Attacker
                 hit = combat_calcs.compute_hit(
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 mt = combat_calcs.compute_damage(
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                crt = combat_calcs.compute_crit(
+                    self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                grd = self.attacker.get_guard_gauge() if self._show_guard_gauge() else None
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo(
-                        'p1', self.attacker, self.main_item, self.defender, (hit, mt))
+                        'p1', self.attacker, self.main_item, self.defender, (hit, mt, crt, grd))
                     self.health_bars[self.attacker] = attacker_health
                 else:
-                    self.health_bars[self.attacker].update_stats((hit, mt))
+                    self.health_bars[self.attacker].update_stats((hit, mt, crt, grd))
 
+                # Defender
                 if combat_calcs.can_counterattack(self.attacker, self.main_item, self.defender, self.def_item):
                     hit = combat_calcs.compute_hit(
                         self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
                     mt = combat_calcs.compute_damage(
                         self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
+                    crt = combat_calcs.compute_crit(
+                        self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
                 else:
-                    hit, mt = None, None
+                    hit, mt, crt = None, None, None
+                grd = self.defender.get_guard_gauge() if self._show_guard_gauge() else None
                 if self.defender not in self.health_bars:
                     defender_health = MapCombatInfo(
-                        'p2', self.defender, self.def_item, self.attacker, (hit, mt))
+                        'p2', self.defender, self.def_item, self.attacker, (hit, mt, crt, grd))
                     self.health_bars[self.defender] = defender_health
                 else:
-                    self.health_bars[self.defender].update_stats((hit, mt))
+                    self.health_bars[self.defender].update_stats((hit, mt, crt, grd))
 
             # P1 on single splash
             elif len(self.all_splash) == 1:
@@ -274,16 +292,18 @@ class MapCombat(SimpleCombat):
                     self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
                 mt = combat_calcs.compute_damage(
                     self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
+                crt = combat_calcs.compute_crit(
+                    self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo(
-                        'p1', self.attacker, self.main_item, defender, (hit, mt))
+                        'p1', self.attacker, self.main_item, defender, (hit, mt, crt, None))
                     self.health_bars[self.attacker] = attacker_health
                 else:
-                    self.health_bars[self.attacker].update_stats((hit, mt))
+                    self.health_bars[self.attacker].update_stats((hit, mt, crt, None))
 
                 if defender not in self.health_bars:
                     splash_health = MapCombatInfo(
-                        'splash', defender, None, self.attacker, (None, None))
+                        'splash', defender, None, self.attacker, (None, None, None, None))
                     self.health_bars[defender] = splash_health
 
     def _handle_playback(self):

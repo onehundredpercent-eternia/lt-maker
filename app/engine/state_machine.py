@@ -40,7 +40,7 @@ class StateMachine():
                                 player_choice, prep, promotion,
                                 settings, status_upkeep, text_entry,
                                 title_screen, trade, transitions, turnwheel,
-                                victory_screen)
+                                victory_screen, party_transfer)
         from app.engine.game_menus.menu_states import unit_menu_state
         from app.engine.info_menu import info_menu_state
         from app.engine.overworld import overworld_states
@@ -102,6 +102,7 @@ class StateMachine():
              'repair_shop': general_states.RepairShopState,
              'unlock_select': general_states.UnlockSelectState,
              'exp': level_up.ExpState,
+             'bonus_exp': level_up.ExpState,
              'promotion_choice': promotion.PromotionChoiceState,
              'class_change_choice': promotion.ClassChangeChoiceState,
              'promotion': promotion.PromotionState,
@@ -122,6 +123,7 @@ class StateMachine():
              'prep_pick_units': prep.PrepPickUnitsState,
              'prep_formation': prep.PrepFormationState,
              'prep_formation_select': prep.PrepFormationSelectState,
+             'prep_formation_menu': prep.PrepFormationMenuState,
              'prep_manage': prep.PrepManageState,
              'prep_manage_select': prep.PrepManageSelectState,
              'optimize_all_choice': prep.OptimizeAllChoiceState,
@@ -133,6 +135,7 @@ class StateMachine():
              'base_items': prep.PrepItemsState,
              'supply_items': prep.PrepItemsState,
              'prep_restock': prep.PrepRestockState,
+             'prep_use': prep.PrepUseState,
              'prep_market': prep.PrepMarketState,
              'base_main': base.BaseMainState,
              'base_market_select': base.BaseMarketSelectState,
@@ -156,7 +159,9 @@ class StateMachine():
              'overworld_party_option_menu': overworld_states.OverworldPartyOptionMenu,
              'overworld_on_node': overworld_states.OverworldNodeTransition,
              'overworld_next_level': overworld_states.OverworldLevelTransition,
-             'dialog_log': dialog_log.DialogLogState
+             'dialog_log': dialog_log.DialogLogState,
+             'party_transfer': party_transfer.PartyTransferState,
+             'party_transfer_confirm': party_transfer.PartyTransferConfirmState
              }
 
         if starting_states:

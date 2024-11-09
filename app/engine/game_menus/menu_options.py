@@ -110,29 +110,32 @@ class AchievementOption(BasicOption):
 
     def draw(self, surf, x, y):
         x_offset = 5
-        font = self.font
+        title_font = self.font
+        desc_font = self.font
 
         # Render Title
         if self.achievement.get_hidden():
             front_half = "Hidden - "
         else:
             front_half = self.achievement.name + " - "
-        if rendered_text_width([font], [front_half + "Complete"]) > 220:
-            font = 'narrow'
+        if rendered_text_width([title_font], [front_half + "Complete"]) > 220:
+            title_font = 'narrow'
         front_color = 'yellow' if self.achievement.get_complete() else 'grey'
-        render_text(surf, [font], [front_half], [front_color], (x + x_offset, y))
+        render_text(surf, [title_font], [front_half], [front_color], (x + x_offset, y))
 
         # Render Description
-        offset = rendered_text_width([font], [front_half])
+        offset = rendered_text_width([title_font], [front_half])
         if self.achievement.get_complete():
-            render_text(surf, [font], ["Complete"], ['green'], (x + x_offset + offset, y))
+            render_text(surf, [title_font], ["Complete"], ['green'], (x + x_offset + offset, y))
         else:
-            render_text(surf, [font], ["Locked"], ['red'], (x + x_offset + offset, y))
+            render_text(surf, [title_font], ["Locked"], ['red'], (x + x_offset + offset, y))
         if self.achievement.get_hidden():
             desc = "???"
         else:
             desc = self.achievement.desc
-        render_text(surf, [font], [desc], [self.get_color()], (x + x_offset, y + 13))
+        if rendered_text_width([desc_font], [desc]) > 220:
+            desc_font = 'narrow'
+        render_text(surf, [desc_font], [desc], [self.get_color()], (x + x_offset, y + 13))
 
     def get_color(self):
         if self.achievement.get_complete():
@@ -315,7 +318,11 @@ class ItemOption(BasicOption):
         if item_system.is_weapon(owner, self.item) or item_system.is_spell(owner, self.item):
             return help_menu.ItemHelpDialog(self.item)
         else:
-            return help_menu.HelpDialog(self.item.desc)
+            text = text_funcs.translate_and_text_evaluate(
+                self.item.desc,
+                unit=game.get_unit(self.item.owner_nid),
+                self=self.item)
+            return help_menu.HelpDialog(text)
 
     def draw(self, surf, x, y):
         icon = icons.get_icon(self.item)
@@ -540,7 +547,7 @@ class UnitOption(BasicOption):
             elif DB.constants.value('fatigue') and game.game_vars.get('_fatigue') and \
                     self.unit.get_fatigue() >= self.unit.get_max_fatigue():
                 color = 'red'
-            elif not self.unit.position:
+            elif not self.unit.position and not (game.get_rescuer(self.unit) and game.get_rescuer(self.unit).position):
                 color = 'grey'
             elif self.unit.position and (not game.check_for_region(self.unit.position, 'formation') or 'Required' in self.unit.tags):
                 color = 'green'
@@ -553,7 +560,7 @@ class UnitOption(BasicOption):
 
     def draw_map_sprite(self, surf, x, y, highlight=False):
         map_sprite = self.unit.sprite.create_image('passive')
-        if self.mode == 'position' and not self.unit.position:
+        if self.mode == 'position' and (not self.unit.position and not game.get_rescuer(self.unit)):
             map_sprite = self.unit.sprite.create_image('gray')
         elif highlight:
             map_sprite = self.unit.sprite.create_image('active')

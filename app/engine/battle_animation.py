@@ -109,6 +109,7 @@ class BattleAnimation():
 
         # For drawing
         self.blend = 0
+        self.partial_blend = 0
         # Flash Frames
         self.foreground = None
         self.foreground_counter = 0
@@ -161,6 +162,8 @@ class BattleAnimation():
         colors = self.current_palette.colors
         conversion_dict = {(0, coord[0], coord[1]): (color[0], color[1], color[2]) for coord, color in colors.items()}
         for frame in self.anim_prefab.frames:
+            if not frame.image:  
+                frame.image = engine.subsurface(self.anim_prefab.image, frame.rect)
             converted_image = image_mods.color_convert(engine.copy_surface(frame.image), conversion_dict)
             self.image_directory[frame.nid] = converted_image
 
@@ -308,8 +311,10 @@ class BattleAnimation():
             child_effect.pair(self.owner, self.partner_anim, right, self.at_range, parent=parent)
             if pose:
                 child_effect.start_anim(pose)
-            else:
+            elif self.current_pose in child_effect.poses:
                 child_effect.start_anim(self.current_pose)
+            elif 'Attack' in child_effect.poses:
+                child_effect.start_anim("Attack")
             return child_effect
         return None
 
@@ -543,6 +548,8 @@ class BattleAnimation():
                 self.blend = engine.BLEND_RGB_ADD
             else:
                 self.blend = 0
+        elif command.nid == 'partial_blend':
+            self.partial_blend = int(values[0])
         elif command.nid == 'static':
             self.static = bool(values[0])
         elif command.nid == 'ignore_pan':
@@ -628,6 +635,9 @@ class BattleAnimation():
             self.owner.darken()
         elif command.nid == 'lighten':
             self.owner.lighten()
+        elif command.nid == 'set_brightness':
+            brightness = int(values[0]) / 255
+            self.owner.set_brightness(brightness)
         elif command.nid == 'hit_spark':
             self.owner.hit_spark()
         elif command.nid == 'crit_spark':
@@ -651,12 +661,37 @@ class BattleAnimation():
                 child.end_loop()
 
     def draw(self, surf, shake=(0, 0), range_offset=0, pan_offset=0, y_offset=0):
+        """
+        Draw order for battle animations, assuming the right unit is attacking
+        Swap Left <-> Right for when the left unit is attacking.
+
+         -- Handled by BattleAnimation.draw_under
+        Left UnderEffect UnderFrame
+        Left UnderFrame
+        Left Effect UnderFrame
+        Right UnderEffect UnderFrame
+        Right UnderFrame
+        Right Effect UnderFrame
+         -- Handled by BattleAnimation.draw (this function)
+        Screen Flash
+        Left UnderEffect Frame
+        Left Frame
+        Left Effect Frame
+        Right UnderEffect Frame
+        Right Frame
+        Right Effect Frame
+         -- Handled by BattleAnimation.draw_over
+        Right OverFrame
+        Left OverFrame
+        """
+
         if self.state == 'inert':
             return
 
         # Screen flash
         if self.background and not self.blend:
             engine.blit(surf, self.background, (0, 0), None, engine.BLEND_RGB_ADD)
+            # engine.blit(surf, self.background, (0, 0))
 
         for child in self.under_child_effects:
             child.draw(surf, (0, 0), range_offset, pan_offset)
@@ -680,6 +715,7 @@ class BattleAnimation():
             # Self screen dodge
             image = self.handle_screen_dodge(image)
 
+            old_image = image.copy()
             if self.opacity != 255:
                 if self.blend:
                     image = image_mods.make_translucent_blend(image, 255 - self.opacity)
@@ -697,6 +733,13 @@ class BattleAnimation():
                 engine.blit(surf, old_bg, (0, 0), None, self.blend)
             else:
                 engine.blit(surf, image, offset, None, self.blend)
+            
+            # Handle situation where the image has a partial blend
+            # A partial blend is when the image should be drawn twice (above with a blend add)
+            # and then once with normal stamp (no blend) at a translucent opacity (to essentially make it darker)
+            if self.blend and self.partial_blend:
+                extra_image = image_mods.make_translucent(old_image.convert_alpha(), self.partial_blend/255.)
+                engine.blit(surf, extra_image, offset)
 
         # Handle children
         for child in self.child_effects:
@@ -718,9 +761,18 @@ class BattleAnimation():
                 self.background_counter = 0
 
     def draw_under(self, surf, shake=(0, 0), range_offset=0, pan_offset=0):
-        if self.state != 'inert' and self.under_frame is not None:
+        if self.state == 'inert':
+            return
+
+        for child in self.under_child_effects:
+            child.draw_under(surf, (0, 0), range_offset, pan_offset)
+
+        if self.under_frame is not None:
             image, offset = self.get_image(self.under_frame, shake, range_offset, pan_offset, False)
             engine.blit(surf, image, offset, None, self.blend)
+
+        for child in self.child_effects:
+            child.draw_under(surf, (0, 0), range_offset, pan_offset)
 
     def draw_over(self, surf, shake=(0, 0), range_offset=0, pan_offset=0):
         if self.state != 'inert' and self.over_frame is not None:
@@ -779,7 +831,7 @@ class BattleAnimation():
             self.screen_dodge_counter -= 1
             image = self.screen_dodge_image
             # done
-            if self.screen_dodge_color <= 0:
+            if self.screen_dodge_counter <= 0:
                 self.screen_dodge_color = None
                 self.screen_dodge_counter = 0
                 self.screen_dodge_image = None
@@ -855,7 +907,7 @@ def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False, a
             weapon_type = "Neutral"
         magic = item_funcs.is_magic(unit, item, distance)
         ranged = item_funcs.is_ranged(unit, item)
-        if item.nid in res.weapon_anims.keys():
+        if item.nid in res.weapon_anims:
             weapon_anim_nid = item.nid
             if magic:
                 weapon_anim_nid = "Magic" + weapon_anim_nid
@@ -870,7 +922,7 @@ def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False, a
                 weapon_anim_nid = "Ranged" + weapon_type
         else:
             weapon_anim_nid = weapon_type
-        if magic and weapon_anim_nid not in res.weapon_anims.keys():
+        if magic and weapon_anim_nid not in res.weapon_anims:
             weapon_anim_nid = 'MagicGeneric'
 
     weapon_anim = res.weapon_anims.get(weapon_anim_nid)
@@ -881,17 +933,24 @@ def get_battle_anim(unit, item, distance=1, klass=None, default_variant=False, a
         return None
 
     # Check spell effects
+    # Sanity check to make sure we have a valid spell to use in this animation
+    # we don't want to start a battle animation that asks for a spell animation and then not have the 
+    # right spell animation to use.
     for pose in weapon_anim.poses:
         script = pose.timeline
         for command in script:
             if command.nid == 'spell':
                 if command.value[0]:
                     effect = command.value[0]
+                elif not item:
+                    logging.warning("Could not find item to use for spell animation in weapon anim %s", weapon_anim_nid)
+                    return None
                 elif unit and item_system.effect_animation(unit, item):
                     effect = item_system.effect_animation(unit, item)
                 else:
                     effect = item.nid
-                if effect not in RESOURCES.combat_effects.keys():
+
+                if effect not in RESOURCES.combat_effects:
                     logging.warning("Could not find spell animation for effect %s in weapon anim %s", effect, weapon_anim_nid)
                     return None
 

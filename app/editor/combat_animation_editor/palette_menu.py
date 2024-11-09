@@ -8,6 +8,8 @@ from app.data.resources.resources import RESOURCES
 from app.extensions.custom_gui import ComboBox
 from app.editor.combat_animation_editor.palette_model import PaletteModel
 
+import logging
+
 class PaletteWidget(QWidget):
     palette_name_changed = pyqtSignal(int)
     palette_nid_changed = pyqtSignal(int)
@@ -76,25 +78,36 @@ class PaletteMenu(QListWidget):
 
         menu.popup(self.viewport().mapToGlobal(pos))
 
+    def add_palette_widget(self, idx: int):
+        item = QListWidgetItem(self)
+        pf = PaletteWidget(idx, self.combat_anim, self)
+        pf.palette_name_changed.connect(self.change_palette_name)
+        pf.palette_nid_changed.connect(self.change_palette_nid)
+        self.palette_widgets.append(pf)
+        item.setSizeHint(pf.minimumSizeHint())
+        self.addItem(item)
+        self.setItemWidget(item, pf)
+        self.setMinimumWidth(self.sizeHintForColumn(0))
+
     def set_current(self, combat_anim):
         self.clear()
         self.combat_anim = combat_anim
 
         for idx, palette in enumerate(combat_anim.palettes):
-            palette_name, palette_nid = palette
-
-            item = QListWidgetItem(self)
-            pf = PaletteWidget(idx, combat_anim, self)
-            pf.palette_name_changed.connect(self.change_palette_name)
-            pf.palette_nid_changed.connect(self.change_palette_nid)
-            self.palette_widgets.append(pf)
-            item.setSizeHint(pf.minimumSizeHint())
-            self.addItem(item)
-            self.setItemWidget(item, pf)
-            self.setMinimumWidth(self.sizeHintForColumn(0))
+            self.add_palette_widget(idx)
 
         if self.combat_anim.palettes:
             self.set_palette(0)
+
+    def update_palettes(self):
+        previous_idx = self.current_idx
+        self.clear()
+
+        for idx, palette in enumerate(self.combat_anim.palettes):
+            self.add_palette_widget(idx)
+
+        if self.combat_anim.palettes:
+            self.set_palette(previous_idx)
 
     def set_palette(self, idx):
         self.current_idx = idx
@@ -112,7 +125,10 @@ class PaletteMenu(QListWidget):
         return self.palette_widgets[self.current_idx]
 
     def change_palette_name(self, idx):
-        self.combat_anim.palettes[idx][0] = self.palette_widgets[idx].name_label.text()
+        if idx < len(self.combat_anim.palettes):
+            self.combat_anim.palettes[idx][0] = self.palette_widgets[idx].name_label.text()
+        else:
+            logging.error(f"Attempted to change palette name of non-existent palette at idx {idx}!")
 
     def change_palette_nid(self, idx):
         if len(self.palette_widgets) <= idx:

@@ -47,7 +47,7 @@ class ClassDatabase(DatabaseTab):
         window.exec_()
 
 # Testing
-# Run "python -m app.editor.unit_editor.unit_tab" from main directory
+# Run "python -m app.editor.class_editor.class_tab" from main directory
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
@@ -55,8 +55,9 @@ if __name__ == '__main__':
     d = dark_theme.QDarkBGPalette()
     d.set_app(app)
     from app.data.resources.resources import RESOURCES
-    RESOURCES.load('default.ltproj')
-    DB.load('default.ltproj')
+    RESOURCES.load('default.ltproj', CURRENT_SERIALIZATION_VERSION)
+    from app.data.serialization.versions import CURRENT_SERIALIZATION_VERSION
+    DB.load('default.ltproj', CURRENT_SERIALIZATION_VERSION)
     window = SingleDatabaseEditor(ClassDatabase)
     # MEME
     window.setStyleSheet("QDialog {background-image:url(icons/bg.png)};")

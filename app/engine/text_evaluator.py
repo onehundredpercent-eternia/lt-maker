@@ -1,6 +1,6 @@
 from app.data.database.components import Component
 from app.data.database.database import DB
-from app.engine.game_state import GameState
+from app.engine.game_state import GameState, game
 from app.engine import evaluate
 import re
 from typing import Dict, List, Tuple
@@ -90,16 +90,6 @@ class TextEvaluator():
                 evaluated.append(self._object_to_str(local_args[to_eval]))
             elif to_eval in self.local_args:
                 evaluated.append(self._object_to_str(self.local_args[to_eval]))
-            elif to_eval == 'unit':
-                if self.unit:
-                    evaluated.append(self.unit.nid)
-                else:
-                    evaluated.append("??")
-            elif to_eval == 'unit2':
-                if self.unit2:
-                    evaluated.append(self.unit2.nid)
-                else:
-                    evaluated.append("??")
             else:
                 evaluated.append('{%s}' % to_eval)
         for idx in range(len(to_evaluate)):

@@ -14,6 +14,8 @@ from app.data.resources import combat_commands
 from app.editor import combat_command_widgets
 from app.extensions.widget_list import WidgetList
 
+import logging
+
 class TimelineList(WidgetList):
     def __init__(self, parent):
         super().__init__(parent)
@@ -155,6 +157,15 @@ class TimelineMenu(QWidget):
         self.current_pose.timeline.append(new_command)
         self.add_command_widget(new_command)
 
+    def add_command_from_toolbar(self, command):
+        """Always adds where your cursor is 
+        """
+        new_command = command.__class__.copy(command)
+        self.current_pose.timeline.insert(self.current_idx + 1, new_command)
+        command_widget = \
+            combat_command_widgets.get_command_widget(new_command, self)
+        self.view.insert_command_widget(self.current_idx + 1, command_widget)
+
     def insert_command(self, idx, command):
         self.current_pose.timeline.insert(idx, command)
         command_widget = \
@@ -168,13 +179,9 @@ class TimelineMenu(QWidget):
 
     def command_moved(self, start, end):
         # self.current_pose.timeline.move_index(start, end)
-        if start == end:
-            return
         obj = self.current_pose.timeline.pop(start)
-        if start > end:
-            self.current_pose.timeline.insert(end, obj)
-        else:
-            self.current_pose.timeline.insert(end - 1, obj)
+        logging.debug("Command %s moved from %s to %s", obj, start, end)
+        self.current_pose.timeline.insert(end, obj)
 
     def add_text(self):
         try:
@@ -190,7 +197,7 @@ class TimelineMenu(QWidget):
     def create_actions(self):
         self.actions = {}
         for command in combat_commands.anim_commands:
-            new_func = functools.partial(self.add_command, command)
+            new_func = functools.partial(self.add_command_from_toolbar, command)
             new_action = QAction(QIcon(), command.name, self, triggered=new_func)
             self.actions[command.nid] = new_action
 

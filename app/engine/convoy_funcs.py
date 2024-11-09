@@ -38,11 +38,11 @@ def restock_convoy():
 def optimize_all():
     all_units = game.get_units_in_party()
     for unit in all_units:
-        for item in item_funcs.get_all_tradeable_items(unit):
+        for item in item_funcs.get_all_storeable_items(unit):
             store_item(item, unit)
     restock_convoy()
     # Only optimize for units that are actually on the field of battle
-    units = [unit for unit in game.get_units_in_party() if unit.position]
+    units = [unit for unit in game.get_units_in_party() if (unit.position or game.get_rescuer(unit))]
     random.shuffle(units)
     # Distribute Weapons
     weapons = [item for item in game.party.convoy if item_system.is_weapon(None, item)]
@@ -87,7 +87,7 @@ def optimize_all():
     # Done!
 
 def optimize(unit):
-    for item in item_funcs.get_all_tradeable_items(unit):
+    for item in item_funcs.get_all_storeable_items(unit):
         store_item(item, unit)
     # Distribute Weapons
     weapons = [
@@ -139,7 +139,9 @@ def store_item(item, unit):
     action.do(action.StoreItem(unit, item))
 
 def trade_items(convoy_item, unit_item, unit):
-    if convoy_item.owner_nid:
+    if not convoy_item:
+        store_item(unit_item, unit)
+    elif convoy_item.owner_nid:
         new_unit = game.get_unit(convoy_item.owner_nid)
         action.do(action.TradeItem(unit, new_unit, unit_item, convoy_item))
     else:

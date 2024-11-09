@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List
+from typing import Any, Dict, List, Union
 
+from app.counters import AnimCounter, GenericEdgeCounter, generic3counter
 from app.data.database.units import UnitPrefab
+from app.data.resources import map_sprites
 from app.engine.game_counters import ANIMATION_COUNTERS
 
 from app.constants import TILEWIDTH, TILEHEIGHT, COLORKEY
@@ -26,8 +28,36 @@ from app.utilities.typing import NID, Color3
 
 import logging
 
+class SingleMapSprite():
+    frames: List[engine.Surface] = []
+    counter: AnimCounter = None
+
+    @classmethod
+    def create_looping_sprite(cls, frames: List[engine.Surface], counter: Any) -> SingleMapSprite:
+        """Create a sprite that loops on a (probably) shared counter"""
+        sprite = cls()
+        sprite.frames = frames
+        sprite.counter = counter
+        return sprite
+
+    @classmethod
+    def create_anim_sprite(cls, frames: List[engine.Surface], frame_timings: List[int]) -> SingleMapSprite:
+        """Create an animated sprite that only plays once"""
+        sprite = cls()
+        sprite.frames = frames
+        sprite.counter = GenericEdgeCounter(frame_timings)
+        return sprite
+
+    def get_frame(self) -> engine.Surface:
+        # lmao this is so dumb. we should be updating these counters on a clock
+        self.counter.update(engine.get_time())
+        return self.frames[self.counter.count].copy()
+
+    def get_stationary_frame(self) -> engine.Surface:
+        return self.frames[0].copy()
+
 class MapSprite():
-    def __init__(self, map_sprite, team):
+    def __init__(self, map_sprite: map_sprites.MapSprite, team: NID):
         self.nid = map_sprite.nid
         self.team = team
         self.resource = map_sprite
@@ -38,17 +68,35 @@ class MapSprite():
         stand, move = self.convert_to_team_colors(map_sprite)
         engine.set_colorkey(stand, COLORKEY, rleaccel=True)
         engine.set_colorkey(move, COLORKEY, rleaccel=True)
-        self.passive = [engine.subsurface(stand, (num*64, 0, 64, 48)) for num in range(3)]
+        passive_frames = [engine.subsurface(stand, (num*64, 0, 64, 48)) for num in range(3)]
+        self.passive = SingleMapSprite.create_looping_sprite(passive_frames, ANIMATION_COUNTERS.passive_sprite_counter)
         if DB.constants.value('autogenerate_grey_map_sprites'):
-            gray_stand = map_sprite.standing_image.copy()
-            self.gray = self.create_gray([engine.subsurface(gray_stand, (num*64, 0, 64, 48)) for num in range(3)])
+            gray_frames = [engine.subsurface(stand, (num*64, 0, 64, 48)) for num in range(3)]
+            self.gray = SingleMapSprite.create_looping_sprite(self.create_gray(gray_frames), ANIMATION_COUNTERS.passive_sprite_counter)
         else:
-            self.gray = [engine.subsurface(stand, (num*64, 48, 64, 48)) for num in range(3)]
-        self.active = [engine.subsurface(stand, (num*64, 96, 64, 48)) for num in range(3)]
-        self.down = [engine.subsurface(move, (num*48, 0, 48, 40)) for num in range(4)]
-        self.left = [engine.subsurface(move, (num*48, 40, 48, 40)) for num in range(4)]
-        self.right = [engine.subsurface(move, (num*48, 80, 48, 40)) for num in range(4)]
-        self.up = [engine.subsurface(move, (num*48, 120, 48, 40)) for num in range(4)]
+            gray_frames = [engine.subsurface(stand, (num*64, 48, 64, 48)) for num in range(3)]
+            self.gray = SingleMapSprite.create_looping_sprite(gray_frames, ANIMATION_COUNTERS.passive_sprite_counter)
+        down_frames = [engine.subsurface(move, (num*48, 0, 48, 40)) for num in range(4)]
+        self.down = SingleMapSprite.create_looping_sprite(down_frames, ANIMATION_COUNTERS.move_sprite_counter)
+        left_frames = [engine.subsurface(move, (num*48, 40, 48, 40)) for num in range(4)]
+        self.left = SingleMapSprite.create_looping_sprite(left_frames, ANIMATION_COUNTERS.move_sprite_counter)
+        right_frames = [engine.subsurface(move, (num*48, 80, 48, 40)) for num in range(4)]
+        self.right = SingleMapSprite.create_looping_sprite(right_frames, ANIMATION_COUNTERS.move_sprite_counter)
+        up_frames = [engine.subsurface(move, (num*48, 120, 48, 40)) for num in range(4)]
+        self.up = SingleMapSprite.create_looping_sprite(up_frames, ANIMATION_COUNTERS.move_sprite_counter)
+
+        active_frames = [engine.subsurface(stand, (num*64, 96, 64, 48)) for num in range(3)]
+        self.active = SingleMapSprite.create_looping_sprite(active_frames, ANIMATION_COUNTERS.active_sprite_counter)
+        self.start_cast = SingleMapSprite.create_anim_sprite(active_frames, ANIMATION_COUNTERS.active_sprite_counter.to_edge_counter())
+        self.end_cast = SingleMapSprite.create_anim_sprite(reversed(active_frames), ANIMATION_COUNTERS.active_sprite_counter.to_edge_counter())
+
+    def _get_team_palette(self):
+        team_obj = DB.teams.get(self.team)
+        palette_nid = team_obj.map_sprite_palette
+        palette = RESOURCES.combat_palettes.get(palette_nid)
+        if not palette:
+            logging.error("Unable to locate map sprite palette with nid %s" % palette_nid)
+        return palette
 
     def convert_to_team_colors(self, map_sprite):
         if self.team == 'black':
@@ -58,13 +106,10 @@ class MapSprite():
             else:
                 colors: List[Color3] = default_palettes['map_sprite_black']
         else:
-            team_obj = DB.teams.get(self.team)
-            palette_nid = team_obj.map_sprite_palette
-            palette = RESOURCES.combat_palettes.get(palette_nid)
+            palette = self._get_team_palette()
             if palette:
                 colors: List[Color3] = palette.get_colors()
             else:
-                logging.error("Unable to locate map sprite palette with nid %s" % palette_nid)
                 colors: List[Color3] = default_palettes['map_sprite_black']
 
         conversion_dict = {a: b for a, b in zip(default_palettes['map_sprite_blue'], colors)}
@@ -72,16 +117,30 @@ class MapSprite():
             image_mods.color_convert(map_sprite.moving_image, conversion_dict)
 
     def create_gray(self, imgs):
+        """
+        Assumes imgs have already been converted to team colors
+        """
         palette = RESOURCES.combat_palettes.get('map_sprite_wait')
         if palette:
             colors: List[Color3] = palette.get_colors()
         else:
             colors: List[Color3] = default_palettes['map_sprite_wait']
-        conversion_dict = {a: b for a, b in zip(default_palettes['map_sprite_blue'], colors)}
+
+        # Handle the situation where team is "black"
+        if self.team == 'black':
+            new_colors: List[Color3] = default_palettes['map_sprite_black']
+        else:
+            current_palette = self._get_team_palette()
+            new_colors: List[Color3] = current_palette.get_colors()
+        conversion_dict: Dict[Color3, Color3] = {a: b for a, b in zip(new_colors, colors)}
         imgs = [image_mods.color_convert(img, conversion_dict) for img in imgs]
         for img in imgs:
             engine.set_colorkey(img, COLORKEY, rleaccel=True)
         return imgs
+
+    def create_image(self, state, stationary=False):
+        image: SingleMapSprite = self.__dict__.get(state)  # This is roughly 2x as fast as getattr, but getattr is safer
+        return image.get_stationary_frame() if stationary else image.get_frame()
 
 def load_map_sprite(unit: UnitObject | UnitPrefab, team='player'):
     klass = DB.classes.get(unit.klass)
@@ -129,6 +188,9 @@ class UnitSprite():
 
         self.health_bar = health_bar.MapHealthBar(self.unit)
 
+    def set_image_state(self, new_state: str):
+        self.image_state = new_state
+
     @property
     def position(self):
         if self._fake_position:
@@ -155,6 +217,7 @@ class UnitSprite():
     def reset(self):
         self.offset = [0, 0]
         ANIMATION_COUNTERS.attack_movement_counter.reset()
+        self._roam_position = None
 
     def get_round_fake_pos(self):
         if self._fake_position:
@@ -170,7 +233,7 @@ class UnitSprite():
                 anim = Animation(anim, (-16, -16), loop=loop, contingent=contingent)
             else:
                 return
-        if anim.nid in self.animations.keys():
+        if anim.nid in self.animations:
             return False
         self.animations[anim.nid] = anim
         return True
@@ -289,7 +352,7 @@ class UnitSprite():
             self.handle_net_position(self.net_position)
             self.reset()
         elif self.state in ('combat_active'):
-            self.image_state = 'active'
+            self.set_image_state('active')
         elif self.state == 'combat_defender':
             attacker = game.memory['current_combat'].attacker
             self.net_position = attacker.position[0] - self.unit.position[0], attacker.position[1] - self.unit.position[1]
@@ -313,7 +376,7 @@ class UnitSprite():
             self.net_position = pos
             self.handle_net_position(self.net_position)
         elif self.state == 'selected':
-            self.image_state = 'down'
+            self.set_image_state('down')
         elif self.state == 'normal':
             self.set_transition('normal')
 
@@ -321,16 +384,16 @@ class UnitSprite():
         self.net_position = pos
         if abs(pos[0]) >= abs(pos[1]):
             if pos[0] > 0:
-                self.image_state = 'right'
+                self.set_image_state('right')
             elif pos[0] < 0:
-                self.image_state = 'left'
+                self.set_image_state('left')
             else:
-                self.image_state = 'down'  # default
+                self.set_image_state('down')  # default
         else:
             if pos[1] < 0:
-                self.image_state = 'up'
+                self.set_image_state('up')
             else:
-                self.image_state = 'down'
+                self.set_image_state('down')
 
     def update(self):
         self.update_state()
@@ -353,16 +416,16 @@ class UnitSprite():
     def update_state(self):
         if self.state == 'normal':
             if self.unit.finished and not self.unit.is_dying:
-                self.image_state = 'gray'
+                self.set_image_state('gray')
             elif DB.constants.value('initiative') and game.initiative.get_current_unit() != self.unit \
                     and not game.is_roam() and self.unit.team == 'player':
-                self.image_state = 'gray'
+                self.set_image_state('gray')
             elif game.cursor.draw_state and game.cursor.position == self.unit.position and self.unit.team == 'player':
-                self.image_state = 'active'
+                self.set_image_state('active')
             elif game.is_roam() and game.get_roam_unit() == self.unit:
-                self.image_state = 'passive'
+                self.set_image_state('passive')
             else:
-                self.image_state = 'passive'
+                self.set_image_state('passive')
         elif self.state == 'combat_anim':
             self.offset[0] = utils.clamp(self.net_position[0], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
             self.offset[1] = utils.clamp(self.net_position[1], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
@@ -374,7 +437,7 @@ class UnitSprite():
             if self.net_position:
                 self.handle_net_position(self.net_position)
             else:
-                self.image_state = 'down'
+                self.set_image_state('down')
         elif self.state == 'moving':
             # next_position = game.movement.get_next_position(self.unit.nid)
             # if not next_position or not self.unit.position:
@@ -429,27 +492,14 @@ class UnitSprite():
             elif self.transition_state == 'swoosh_move':
                 self.set_transition('swoosh_in')
 
-    def select_frame(self, image, state):
-        if self.unit.is_dying:
-            return image[0].copy()
-        elif state == 'passive' or state == 'gray':
-            return image[ANIMATION_COUNTERS.passive_sprite_counter.count].copy()
-        elif state == 'active':
-            return image[ANIMATION_COUNTERS.active_sprite_counter.count].copy()
-        elif state == 'combat_anim':
-            return image[ANIMATION_COUNTERS.fast_move_sprite_counter.count].copy()
-        else:
-            return image[ANIMATION_COUNTERS.move_sprite_counter.count].copy()
-
-    def create_image(self, state):
+    def create_image(self, state, stationary=False):
+        stationary = stationary or self.unit.is_dying
         if not self.map_sprite:  # This shouldn't happen, but if it does...
             res = RESOURCES.map_sprites[0]
             self.map_sprite = MapSprite(res, self.unit.team)
         if self.transition_state == 'swoosh_in':
             state = 'down'
-        image = self.map_sprite.__dict__.get(state)  # This is roughly 2x as fast as getattr, but getattr is safer
-        image = self.select_frame(image, state)
-        return image
+        return self.map_sprite.create_image(state, stationary)
 
     def get_topleft(self, cull_rect):
         if self._fake_position:
@@ -502,6 +552,7 @@ class UnitSprite():
                 top -= extra_height
             image = image_mods.make_translucent(image.convert_alpha(), progress)
 
+        # Flickering the unit a specific color, like flash white during a map combat hit
         for flicker in self.flicker[:]:
             starting_time, total_time, color, direction, fade_out = flicker
             if engine.get_time() >= starting_time:
@@ -516,9 +567,11 @@ class UnitSprite():
                 elif direction == 'sub':
                     image = image_mods.sub_tint(image.convert_alpha(), color)
 
+        # Color a unit red if they are highlighted by the boundary
         if not self.flicker and game.boundary.draw_flag and self.unit.nid in game.boundary.displaying_units:
             image = image_mods.change_color(image.convert_alpha(), (60, 0, 0))
 
+        # Turnwheel tint of unit sprite
         if game.action_log.hovered_unit is self.unit:
             length = 200
             if not (current_time // length) % 2:
@@ -531,14 +584,19 @@ class UnitSprite():
 
         flicker_tint = skill_system.unit_sprite_flicker_tint(self.unit)
         for idx, tint in enumerate(flicker_tint):
-            color, period, width = tint
-            offset = idx * period / len(flicker_tint)
-            diff = utils.model_wave(current_time + offset, period, width)
-            diff = utils.clamp(diff, 0, 1)
-            color = tuple([int(c * diff) for c in color])
-            image = image_mods.add_tint(image.convert_alpha(), color)
+            color, period, width, add = tint
+            # Modify the color by the wave
+            if period > 0 and width > 0:
+                offset = idx * period / len(flicker_tint)
+                diff = utils.model_wave(current_time + offset, period, width)
+                diff = utils.clamp(diff, 0, 1)
+                color = tuple([int(c * diff) for c in color])
+            if add:
+                image = image_mods.add_tint(image.convert_alpha(), color)
+            else:
+                image = image_mods.sub_tint(image.convert_alpha(), color)
 
-        # Each image has (self.image.get_width() - 32)//2 buggers on the
+        # Each image has (self.image.get_width() - 32)//2 pixels on the
         # left and right of it, to handle any off tile spriting
         topleft = left - max(0, (image.get_width() - 16)//2), top - 24
 
@@ -547,16 +605,11 @@ class UnitSprite():
             partner_image = partner.sprite.create_image(self.image_state)
             partner_image = partner_image.convert_alpha()
             surf.blit(partner_image, (topleft[0] + 3, topleft[1] - 3))
-            # This make gray is probably slow...
-            gray_version = image_mods.make_gray(partner_image)
-            translucent_gray = image_mods.make_translucent(gray_version, 0.25)
-            surf.blit(translucent_gray, (topleft[0] + 3, topleft[1] - 3))
             surf.blit(image, (topleft[0] - 3, topleft[1] + 3))
         else:
             surf.blit(image, topleft)
 
         # Draw animations
-
         valid_anims: list = skill_system.should_draw_anim(self.unit)
         for animation in self.animations.values():
             if not animation.contingent or animation.nid in valid_anims:
@@ -604,7 +657,7 @@ class UnitSprite():
             markers.append('interact')
         if cur_unit.team == 'player':
             for item in item_funcs.get_all_items(self.unit):
-                markers += item_system.target_icon(cur_unit, item, self.unit)
+                markers += item_system.target_icon(self.unit, item, cur_unit)
             markers += skill_system.target_icon(cur_unit, self.unit)
         markers = [SPRITES.get('marker_%s' % marker) for marker in markers if marker]
         markers = [_ for _ in markers if _]  # Only include non-None
@@ -653,5 +706,10 @@ class UnitSprite():
             rescue_icon = SPRITES.get('rescue_icon_%s' % team_color, 'rescue_icon_green')
             topleft = (left - 8, top - 8)
             surf.blit(rescue_icon, topleft)
+
+        if any((i.droppable for i in self.unit.items)):
+            droppable_icon = SPRITES.get('droppable_icon')
+            topleft = (left - 8, top - 8)
+            surf.blit(droppable_icon, topleft)
 
         return surf

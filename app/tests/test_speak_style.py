@@ -1,11 +1,16 @@
 import unittest
 from unittest.mock import MagicMock, patch
+from app.data.serialization.versions import CURRENT_SERIALIZATION_VERSION
 import app.engine.dialog
 
 from app.events.speak_style import SpeakStyle, SpeakStyleLibrary
 
 class CsvExporterTests(unittest.TestCase):
     def setUp(self):
+        from app.data.resources.resources import RESOURCES
+        from app.engine import fonts
+        RESOURCES.load('testing_proj.ltproj', CURRENT_SERIALIZATION_VERSION)
+        fonts.load_fonts()
         self.db = SpeakStyleLibrary()
 
     def tearDown(self) -> None:
