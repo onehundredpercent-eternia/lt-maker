@@ -35,6 +35,9 @@ def start(title, from_editor=False):
     from app.engine import fonts
     fonts.load_fonts()
 
+    from app.engine import game_counters
+    game_counters.ANIMATION_COUNTERS.reset()
+
     # Hack to get icon to show up in windows
     try:
         import ctypes

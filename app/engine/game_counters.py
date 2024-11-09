@@ -7,12 +7,8 @@ from app.counters import GenericAnimCounter, movement_counter
 
 class Counters():
     anim_counters: Dict[str, GenericAnimCounter]
-    last_update: int = 0 # should be divisible evenly by update_delta
-    update_delta: float = FRAMERATE
 
     def __init__(self):
-        self.anim_counters = {}
-
         self.passive_sprite_counter = GenericAnimCounter.from_frames_back_and_forth([32, 4, 32], get_time=engine.get_time)
         self.active_sprite_counter = GenericAnimCounter.from_frames_back_and_forth([20, 4, 20], get_time=engine.get_time)
         self.move_sprite_counter = GenericAnimCounter.from_frames([13, 6, 13, 6], get_time=engine.get_time)
@@ -25,8 +21,15 @@ class Counters():
         self.reset()
 
     def reset(self):
-        for counter in self.anim_counters.values():
-            counter.reset()
+        self.passive_sprite_counter.reset()
+        self.active_sprite_counter.reset()
+        self.move_sprite_counter.reset()
+        self.fast_move_sprite_counter.reset()
+        self.arrow_counter.reset()
+        self.x2_counter.reset()
+        self.flag_counter.reset()
+        self.fps6_360counter.reset()
+        self.fps2_360counter.reset()
         self._attack_movement_counter = movement_counter()
 
     @property

@@ -90,6 +90,7 @@ class GenericAnimCounter():
 
     def reset(self):
         self._count = 0
+        self._last_update = 0
 
     @staticmethod
     def from_frames(frames: List[int], loop: bool = True, frame_duration: int = FRAMERATE, get_time: Callable[[], int] = None) -> GenericAnimCounter:
