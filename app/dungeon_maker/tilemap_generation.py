@@ -95,4 +95,4 @@ def generate_map(theme: str = 'default',
 if __name__ == '__main__':
     engine.init()
     engine.build_display((WINWIDTH, WINHEIGHT))
-    generate_map('winding', 'sacred_ruins', seed=2)
+    generate_map('complex', 'monastery', seed=2)

@@ -20,6 +20,7 @@ class Theme:
     horiz_symmetry: bool = False
     vert_symmetry: bool = False
     fill_in_empty_areas: bool = False
+    use_global_section: bool = False
 
 class DefaultTheme(Theme):
     pass
@@ -54,9 +55,24 @@ class WindingHallwaysTheme(Theme):
     small_floor_section_size: int = 5
     fill_in_empty_areas: bool = True
 
+class ComplexTheme(Theme):
+    size: Tuple[int, int] = (26, 36)
+    section_grid: Tuple[int, int] = (5, 6)
+    room_chance: float = 0.45
+    hallway_chance: float = 0  # Chance of single node room
+    connection_chance: float = 0.8  # Chance to connect adjacent rooms together
+    floor_lower_chance = 0
+    use_forest: bool = True
+    sparse_forest_chance: float = 0.25  # Chance that any lower floor position has a tree
+    room_size_min_x: int = 3
+    room_size_min_y: int = 2
+    pillar_chance: float = 0.25  # Chance that any room has pillars
+    use_global_section: bool = True
+
 themes = {
     'default': DefaultTheme,
     'forest': ForestTheme,
     'labyrinth': LabyrinthTheme,
     'winding': WindingHallwaysTheme,
+    'complex': ComplexTheme,
 }

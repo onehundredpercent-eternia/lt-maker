@@ -75,14 +75,21 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
     tilemap.connect_rooms()
 
     tilemap.coerce_terrain()
-    # All floor tiles must be reachable
-    if not tilemap.is_fully_connected():
-        return
 
     tilemap.print_terrain_grid()
 
+    if theme.use_global_section:
+        tilemap.fill_in_global_areas()
     if theme.fill_in_empty_areas:
         tilemap.fill_in_empty_areas()
+
+    tilemap.print_terrain_grid()
+
+    input()
+
+    # All floor tiles must be reachable
+    if not tilemap.is_fully_connected():
+        return
 
     tilemap.make_walls_two_high()
 
@@ -126,6 +133,8 @@ class DungeonTileMap:
         self.end: Pos = None
         self.grid_size: Tuple[int, int] = theme.section_grid
         self.sections: Dict[Pos, DungeonSection] = {}
+        self.global_empty_sections: List[Pos] = []  # If no room/hallway node is chosen, it goes here
+
         self.set_sections()
 
     def get_terrain(self, pos: Pos) -> Optional[Terrain]:
@@ -188,20 +197,20 @@ class DungeonTileMap:
 
     def set_sections(self):
         x, y = self.grid_size
-        xwidth = self.width / x
-        ywidth = self.height / y 
+        xsize = self.width / x
+        ysize = self.height / y 
         for xi in range(x):
             for yi in range(y):
-                offset = (int(xi * xwidth), int(yi * ywidth))
+                offset = (int(xi * xsize), int(yi * ysize))
                 self.sections[(xi, yi)] = \
-                    DungeonSection((int(xwidth), int(ywidth)), offset, self)
+                    DungeonSection((int(xsize), int(ysize)), offset, self)
 
     def generate_rooms(self) -> int:
         """
         Returns the number of rooms generated
         """
         full_rooms_generated = 0
-        for section in self.sections.values():
+        for spos, section in self.sections.items():
             val = random.random()
             if val < self.theme.room_chance:
                 section.generate_room()
@@ -209,7 +218,7 @@ class DungeonTileMap:
             elif val < self.theme.room_chance + self.theme.hallway_chance:
                 section.generate_hallway_node()
             else:
-                pass
+                self.global_empty_sections.append(spos)
         return full_rooms_generated
 
     def connect_rooms(self):
@@ -218,7 +227,6 @@ class DungeonTileMap:
         for coord in coords:
             section = self.sections.get(coord)
             if not section.room:
-                # Skip empty rooms
                 continue
             x, y = coord
             # Only need to support these two directions
@@ -594,6 +602,36 @@ class DungeonTileMap:
         for pos in final_column_positions:
             self.terrain_grid[pos] = Terrain.WALL_TOP
 
+    def fill_in_global_areas(self):
+        """
+        All areas that are not covered by a room or hallway, fill with Terrain.FLOOR_LOWER
+        Then connect them to the main sections
+        """
+        wall_terrain = Terrain.WALL_TOP
+        wall_tiles = {pos for pos, terrain in self.terrain_grid.items() 
+                      if terrain == wall_terrain
+                      and all(aterrain == wall_terrain for aterrain in (self.get_cardinal_terrain(pos) + self.get_diagonal_terrain(pos)))}
+
+        # Actually convert areas
+        for pos in wall_tiles:
+            self.terrain_grid[pos] = Terrain.FLOOR_LOWER
+
+        # now build hallways
+        for spos, section in self.sections.items():
+            if not section.room:
+                continue
+            x, y = spos
+            directions = [
+                ((x - 1, y), Direction.WEST), 
+                ((x + 1, y), Direction.EAST),
+                ((x, y - 1), Direction.NORTH),
+                ((x, y + 1), Direction.SOUTH),
+            ]
+            for adj, direction in directions:
+                adj_section = self.sections.get(spos)
+                if adj_section and not adj_section.room:
+                    section.connect_global(direction)
+
     def fill_in_empty_areas(self):
         """
         Find large empty areas (of walls) and fill in with Terrain.FLOOR_LOWER
@@ -639,8 +677,6 @@ class DungeonTileMap:
             for pos in section:
                 self.terrain_grid[pos] = Terrain.FLOOR_LOWER
 
-        self.print_terrain_grid()
-
         def get_adjacent_positions(pos: Pos) -> List[Pos]:
             x, y = pos
             adjs = ((x, y - 1), (x - 1, y), (x + 1, y), (x, y + 1))
@@ -680,8 +716,6 @@ class DungeonTileMap:
                     else:
                         continue
                     counter += 1
-
-        self.print_terrain_grid()
 
     def add_forest(self):
         """
@@ -926,6 +960,113 @@ class DungeonSection:
 
         self.room = DungeonRoom((size, size), (offset_x, offset_y), self, self.tilemap, floor_level)
 
+    def get_east_start(self) -> Tuple[int, int]:
+        random_point = random.randrange(self.room.height)
+        start = random_point + self.offset[1] + self.room.offset[1]
+        return random_point, start
+
+    def get_west_start(self) -> Tuple[int, int]:
+        random_point = random.randrange(self.room.height)
+        start = random_point + self.offset[1] + self.room.offset[1]
+        return random_point, start
+
+    def get_south_start(self) -> Tuple[int, int]:
+        random_point = random.randrange(self.room.width)
+        start = random_point + self.offset[0] + self.room.offset[0]
+        return random_point, start
+
+    def connect_global(self, direction: Direction):
+        """
+        Connects to the global background room if there is no room normally in this direction
+        """
+        # Chance to skip connecting
+        if random.random() > self.tilemap.theme.connection_chance:
+            return
+        hallway_width = 2 if random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        hallway = []
+
+        if direction == Direction.EAST:
+            # Find where to start on the right wall of me and the left wall of them
+            start_room_panel, start_on_wall = self.get_east_start()
+            # Find x starting point
+            start: int = self.offset[0] + self.room.offset[0] + self.room.width
+
+            # Determine which side the wide hallways should spawn on
+            if start_room_panel == self.room.height - 1:
+                hallway_side = -1
+            elif start_room_panel == 0:
+                hallway_side = 1
+            else:
+                hallway_side = random.choice([-1, 1])
+
+            for x in range(start, start + 2):
+                hallway.append((x, start_on_wall))
+                # Make the hallway wider if possible
+                if hallway_width == 2 and self.room.height > 1:
+                    hallway.append((x, start_on_wall + hallway_side))
+
+        elif direction == Direction.WEST:
+            # Find where to start on the right wall of me and the left wall of them
+            start_room_panel, start_on_wall = self.get_west_start()
+            # Find x starting point
+            start: int = self.offset[0] + self.room.offset[0]
+
+            # Determine which side the wide hallways should spawn on
+            if start_room_panel == self.room.height - 1:
+                hallway_side = -1
+            elif start_room_panel == 0:
+                hallway_side = 1
+            else:
+                hallway_side = random.choice([-1, 1])
+
+            for x in range(start, start - 2):
+                hallway.append((x, start_on_wall))
+                # Make the hallway wider if possible
+                if hallway_width == 2 and self.room.height > 1:
+                    hallway.append((x, start_on_wall + hallway_side))
+
+        elif direction == Direction.SOUTH:
+            # Find where to start on the bottom wall of me and the top wall of them
+            start_room_panel, start_on_wall = self.get_south_start()
+            # Find y starting point
+            start: int = self.offset[1] + self.room.offset[1] + self.room.height
+
+            # Determine which side the wide hallways should spawn on
+            if start_room_panel == self.room.width - 1:
+                hallway_side = -1
+            elif start_room_panel == 0:
+                hallway_side = 1
+            else:
+                hallway_side = random.choice([-1, 1])
+
+            for y in range(start, start + 2):
+                hallway.append((start_on_wall, y))
+                # Make the hallway wider if possible
+                if hallway_width == 2 and self.room.width > 1:
+                    hallway.append((start_on_wall + hallway_side, y))
+
+        elif direction == Direction.NORTH:
+            # Find where to start on the bottom wall of me and the top wall of them
+            start_room_panel, start_on_wall = self.get_north_start()
+            # Find y starting point
+            start: int = self.offset[1] + self.room.offset[1]
+
+            # Determine which side the wide hallways should spawn on
+            if start_room_panel == self.room.width - 1:
+                hallway_side = -1
+            elif start_room_panel == 0:
+                hallway_side = 1
+            else:
+                hallway_side = random.choice([-1, 1])
+
+            for y in range(start, start - 2):
+                hallway.append((start_on_wall, y))
+                # Make the hallway wider if possible
+                if hallway_width == 2 and self.room.width > 1:
+                    hallway.append((start_on_wall + hallway_side, y))
+
+        self.hallways[direction] = hallway
+
     def connect(self, other: DungeonSection, direction: Direction):
         # Chance to skip connecting the two rooms
         if random.random() > self.tilemap.theme.connection_chance:
@@ -935,10 +1076,8 @@ class DungeonSection:
 
         if direction == Direction.EAST:
             # Find where to start on the right wall of me and the left wall of them
-            start_room_panel = random.randrange(self.room.height)
-            start_on_wall = start_room_panel + self.offset[1] + self.room.offset[1]
-            other_start_room_panel = random.randrange(other.room.height)
-            other_start_on_wall = other_start_room_panel + other.offset[1] + other.room.offset[1]
+            start_room_panel, start_on_wall = self.get_east_start()
+            other_start_room_panel, other_start_on_wall = other.get_east_start()
             # Find x starting point
             start: int = self.offset[0] + self.room.offset[0] + self.room.width
             end: int = other.offset[0] + other.room.offset[0]
@@ -984,11 +1123,9 @@ class DungeonSection:
 
         elif direction == Direction.SOUTH:
             # Find where to start on the bottom wall of me and the top wall of them
-            start_room_panel = random.randrange(self.room.width)
-            start_on_wall = start_room_panel + self.offset[0] + self.room.offset[0]
-            other_start_room_panel = random.randrange(other.room.width)
-            other_start_on_wall = other_start_room_panel + other.offset[0] + other.room.offset[0]
-            # Find y starting point
+            start_room_panel, start_on_wall = self.get_south_start()
+            other_start_room_panel, other_start_on_wall = other.get_south_start()
+            # Find x starting point
             start: int = self.offset[1] + self.room.offset[1] + self.room.height
             end: int = other.offset[1] + other.room.offset[1]
             midpoint: int = other.offset[1]
