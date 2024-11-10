@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import shutil
-from typing import Optional, Set
+from typing import List, Optional, Set
 from typing_extensions import override
 
 from app.data.resources.base_catalog import ManifestCatalog
@@ -29,14 +29,14 @@ class MapSprite(WithResources, Prefab):
         return self.nid
 
     @override
-    def set_full_path(self, path: NID) -> None:
+    def set_full_path(self, path: str) -> None:
         parent_path = Path(path).parent
-        self.set_stand_full_path(str(parent_path/ (self.nid + '-stand.png')))
+        self.set_stand_full_path(str(parent_path / (self.nid + '-stand.png')))
         self.set_move_full_path(str(parent_path / (self.nid + '-move.png')))
 
     @override
-    def used_resources(self) -> Set[Path]:
-        return {Path(self.stand_full_path), Path(self.move_full_path)}
+    def used_resources(self) -> List[Optional[Path]]:
+        return [Path(self.stand_full_path), Path(self.move_full_path)]
 
     @classmethod
     def restore(cls, s):

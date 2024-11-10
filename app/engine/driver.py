@@ -36,7 +36,15 @@ def start(title, from_editor=False):
     fonts.load_fonts()
 
     from app.engine import game_counters
+    # Reset the animation counters for a new engine start
+    # otherwise, the animation counters would be at a large number instead of 0
+    # if you already started the engine this session
     game_counters.ANIMATION_COUNTERS.reset()
+
+    from app.engine import battle_animation
+    # Clear out old battle animations that we might have tested with earlier,
+    # because they could have changed.
+    battle_animation.battle_anim_registry.clear()
 
     # Hack to get icon to show up in windows
     try:
@@ -73,10 +81,13 @@ def save_screenshot(raw_events: list, surf):
 def draw_fps(surf, fps_records):
     from app.engine.fonts import FONT
     total_time = sum(fps_records)
-    num_frames = len(fps_records)
-    fps = int(num_frames / (total_time / 1000))
-    max_frame = max(fps_records)
-    min_fps = 1000 // max_frame
+    if total_time > 0:
+        num_frames = len(fps_records)
+        fps = int(num_frames / (total_time / 1000))
+        max_frame = max(fps_records)
+        min_fps = 1000 // max_frame
+    else:  # On the very first frame, can't figure out what the FPS is yet.
+        fps, min_fps = "--", "--"
 
     FONT['small-white'].blit(str(fps), surf, (surf.get_width() - 20, 0))
     FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
