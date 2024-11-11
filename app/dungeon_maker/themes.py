@@ -61,7 +61,7 @@ class ComplexTheme(Theme):
     room_chance: float = 0.45
     hallway_chance: float = 0  # Chance of single node room
     connection_chance: float = 0.8  # Chance to connect adjacent rooms together
-    floor_lower_chance = 0
+    floor_lower_chance: float = 0
     use_forest: bool = True
     sparse_forest_chance: float = 0.25  # Chance that any lower floor position has a tree
     room_size_min_x: int = 3
