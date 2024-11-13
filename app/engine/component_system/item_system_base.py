@@ -80,7 +80,7 @@ class Defaults():
         return None
 
     @staticmethod
-    def triangle_alias(unit: UnitObject, item: ItemObject):
+    def weapon_triangle_override(unit: UnitObject, item: ItemObject):
         return None
 
 def get_all_components(unit: UnitObject, item: ItemObject) -> list:

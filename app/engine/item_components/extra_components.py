@@ -229,8 +229,8 @@ class CustomTriangleMultiplier(ItemComponent):
     def modify_weapon_triangle(self, unit, item):
         return self.value
 
-class TriangleAlias(ItemComponent):
-    nid = 'triangle_alias'
+class WeaponTriangleOverride(ItemComponent):
+    nid = 'weapon_triangle_override'
     desc = "The item is considered as this weapon type when solving for weapon triangle advantage/disadvantage."
     tag = ItemTags.EXTRA
     
@@ -238,7 +238,7 @@ class TriangleAlias(ItemComponent):
     
     expose = ComponentType.WeaponType
 
-    def triangle_alias(self, unit, item):
+    def weapon_triangle_override(self, unit, item):
         return self.value
 
 class StatusOnEquip(ItemComponent):
