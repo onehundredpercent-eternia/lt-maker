@@ -78,6 +78,7 @@ class SettingsMenuState(State):
             return self.controls_menu
 
     def handle_mouse(self):
+        return 
         mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position

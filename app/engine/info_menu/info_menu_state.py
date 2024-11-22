@@ -262,6 +262,7 @@ class InfoMenuState(State):
         self.transition = 'DOWN'
 
     def handle_mouse(self):
+        return 
         mouse_position = get_input_manager().get_mouse_position()
         if not mouse_position:
             return

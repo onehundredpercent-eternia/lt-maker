@@ -147,28 +147,10 @@ class InputManager():
         if not self.change_keymap_mode and cf.SETTINGS['mouse']:
             self.current_mouse_position = None
             for event in events:
-                if event.type == engine.MOUSEBUTTONDOWN:
-                    lmb = event.button == 1
-                    if lmb:
-                        self.key_down_events.append('SELECT')
-                    rmb = event.button == 3
-                    if rmb:
-                        self.key_down_events.append('BACK')
-                    mmb = event.button == 2
-                    if mmb:
-                        self.key_down_events.append('INFO')
-                    wheel_up = event.button == 4
-                    wheel_down = event.button == 5
-                    if wheel_up:
-                        self.key_down_events.append('UP')
-                    else:
-                        self.key_up_events.append('UP')
-                    if wheel_down:
-                        self.key_down_events.append('DOWN')
-                    else:
-                        self.key_up_events.append('DOWN')
+                if event.type == engine.MOUSEBUTTONDOWN and event.button == 1:
                     position = event.pos
                     self.current_mouse_position = position
+                    self.get_mouse_button_clicked(self.get_mouse_position())
                 elif event.type == engine.MOUSEMOTION:
                     position = event.pos
                     self.current_mouse_position = position
@@ -193,6 +175,33 @@ class InputManager():
         # If only arrow keys pressed, return last one pressed
         if self.key_down_events:
             return self.key_down_events[-1]
+        
+    def get_mouse_button_clicked(self, mouse_pos):
+        # Buffer to make buttons easier to click on mobile
+        buffer = 6
+        from app import constants
+
+        primary_size = (14, 13)
+        a_box = (constants.A_POS[0], constants.A_POS[1], constants.A_POS[0] + primary_size[0], constants.A_POS[1] + primary_size[1])
+        b_box = (constants.B_POS[0], constants.B_POS[1], constants.B_POS[0] + primary_size[0], constants.B_POS[1] + primary_size[1])
+        y_box = (constants.Y_POS[0], constants.Y_POS[1], constants.Y_POS[0] + primary_size[0], constants.Y_POS[1] + primary_size[1])
+        x_box = (constants.X_POS[0], constants.X_POS[1], constants.X_POS[0] + primary_size[0], constants.X_POS[1] + primary_size[1])
+
+        print(mouse_pos, a_box)
+
+        if mouse_pos:
+            if a_box[0] - buffer <= mouse_pos[0] <= a_box[2] + buffer and \
+                    a_box[1] - buffer <= mouse_pos[1] <= a_box[3] + buffer:
+                self.key_down_events.append('SELECT')
+            elif b_box[0] - buffer <= mouse_pos[0] <= b_box[2] + buffer and \
+                    b_box[1] - buffer <= mouse_pos[1] <= b_box[3] + buffer:
+                self.key_down_events.append('BACK')
+            elif y_box[0] - buffer <= mouse_pos[0] <= y_box[2] + buffer and \
+                    y_box[1] - buffer <= mouse_pos[1] <= y_box[3] + buffer:
+                self.key_down_events.append('INFO')
+            elif x_box[0] - buffer <= mouse_pos[0] <= x_box[2] + buffer and \
+                    x_box[1] - buffer <= mouse_pos[1] <= x_box[3] + buffer:
+                self.key_down_events.append('AUX')
 
     def handle_joystick(self):
         def update_state(pushed, state, button_id, button):
