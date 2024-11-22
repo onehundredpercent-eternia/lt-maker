@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import random
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
@@ -39,7 +40,7 @@ from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.events.utils import TableRows
 from app.sprites import SPRITES
-from app.utilities import str_utils, utils
+from app.utilities import file_manager_utils, file_utils, str_utils, utils
 from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import is_primitive_or_primitive_collection
 from app.utilities.typing import NID, Point
@@ -444,7 +445,7 @@ def change_background(self: Event, panorama=None, flags=None):
             self.background = background.create_background(panorama, True)
         else:
             self.background = background.create_background(panorama, False)
-    
+
     if 'keep_portraits' in flags:
         pass
     else:
@@ -2620,7 +2621,7 @@ def set_position(self: Event, position, flags=None):
     self.position = pos
     self.text_evaluator.position = pos
 
-def map_anim(self: Event, map_anim, float_position: Tuple[float, float] | NID, speed: float=1.0, flags=None):
+def map_anim(self: Event, map_anim, float_position: Tuple[float, float] | NID, speed: float = 1.0, flags=None):
     flags = flags or set()
     float_position = self._parse_pos(float_position, True)
     if not float_position:
@@ -3699,3 +3700,37 @@ def hide_combat_ui(self: Event, flags=None):
 
 def show_combat_ui(self: Event, flags=None):
     self.game.game_vars["_hide_ui"] = False
+
+def party_transfer(self: Event, party1, party2, fixed_units = None, party1_name = "", party2_name = "", party1_limit = 0, party2_limit = 0, flags=None):
+    top_party = self.game.get_party(party1)
+    bottom_party = self.game.get_party(party2)
+    top_party_name = party1_name
+    bottom_party_name = party2_name
+    top_party_limit = party1_limit
+    bottom_party_limit = party2_limit
+    flags = flags or set()
+
+    if fixed_units:
+        try:
+            fixed_list = self._eval_expr(fixed_units, 'from_python' in flags)
+        except Exception as e:
+            self.logger.error("party_transfer: %s: Could not evalute {%s}" % (e, fixed_units))
+            return
+        if not all((isinstance(unit_nid, str) or isinstance(unit_nid, UnitObject)) for unit_nid in fixed_list):
+            self.logger.error("party_transfer: could not evaluate to NID list %s" % fixed_list)
+            return
+    else:
+        fixed_list = []
+
+    self.game.memory['party_transfer'] = (top_party, bottom_party, fixed_list, top_party_name, bottom_party_name, top_party_limit, bottom_party_limit)
+    self.game.state.change('party_transfer')
+    self.state = 'paused'
+
+def dump_vars(self: Event, flags=None):
+    try:
+        app_data_fman = file_manager_utils.get_app_data_fman()
+        all_vars = {'level_vars': self.game.level_vars, 'game_vars': self.game.game_vars}
+        app_data_fman.save('_vars.json', json.dumps(all_vars), True)
+        file_utils.startfile(app_data_fman.get_path('_vars.json'))
+    except:
+        self.logger.error("dump_vars: Could not dump vars", exc_info=1)
