@@ -339,6 +339,7 @@ class Simple():
         return NotImplementedError
 
     def handle_mouse(self) -> bool:
+        return False
         mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
@@ -962,6 +963,7 @@ class Trade(Simple):
         return surf
 
     def handle_mouse(self) -> bool:
+        return False
         mouse_position = get_input_manager().get_mouse_position()
         did_move = False
         if mouse_position:
@@ -1606,6 +1608,7 @@ class Convoy():
         return surf
 
     def handle_mouse(self) -> bool:
+        return False
         mouse_position = get_input_manager().get_mouse_position()
         did_move = False
         if mouse_position:

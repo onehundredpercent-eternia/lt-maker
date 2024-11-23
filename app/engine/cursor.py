@@ -183,9 +183,9 @@ class BaseCursor():
             self.mouse_mode = False
 
         # Handle mouse
-        mouse_position = get_input_manager().get_mouse_position()
-        if mouse_position:
-            self.mouse_mode = True
+        # mouse_position = get_input_manager().get_mouse_position()
+        # if mouse_position:
+        #     self.mouse_mode = True
         if self.mouse_mode:
             # Get the actual mouse position, irrespective if actually used recently
             mouse_pos = get_input_manager().get_real_mouse_position()

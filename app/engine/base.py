@@ -522,6 +522,7 @@ class SupportDisplay():
 
     # MOUSE STUFF FOR SUPPORT DISPLAY MENU
     def handle_mouse(self) -> bool:
+        return False
         mouse_position = get_input_manager().get_mouse_position()
         if mouse_position:
             mouse_x, mouse_y = mouse_position
