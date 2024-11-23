@@ -14,6 +14,7 @@ class InputManager():
         self.toggle_buttons = self.buttons[4:]  # These buttons cause state to change
 
         self.update_key_map()
+        self.set_mouse_button_boundaries()
 
         # Build and down button checker
         self.keys_pressed = {}
@@ -30,6 +31,23 @@ class InputManager():
         self.current_mouse_position = None
 
         self.unavailable_button = None
+
+    def set_mouse_button_boundaries(self):
+        from app import constants
+        primary_size = (14, 13)
+        self.a_box = (constants.A_POS[0], constants.A_POS[1], constants.A_POS[0] + primary_size[0], constants.A_POS[1] + primary_size[1])
+        self.b_box = (constants.B_POS[0], constants.B_POS[1], constants.B_POS[0] + primary_size[0], constants.B_POS[1] + primary_size[1])
+        self.y_box = (constants.Y_POS[0], constants.Y_POS[1], constants.Y_POS[0] + primary_size[0], constants.Y_POS[1] + primary_size[1])
+        self.x_box = (constants.X_POS[0], constants.X_POS[1], constants.X_POS[0] + primary_size[0], constants.X_POS[1] + primary_size[1])
+
+        arrow_size = (14, 15)
+        self.right_box = (constants.RIGHT_POS[0], constants.RIGHT_POS[1], constants.RIGHT_POS[0] + arrow_size[0], constants.RIGHT_POS[1] + arrow_size[1])
+        self.down_box = (constants.DOWN_POS[0], constants.DOWN_POS[1], constants.DOWN_POS[0] + arrow_size[0], constants.DOWN_POS[1] + arrow_size[1])
+        self.up_box = (constants.UP_POS[0], constants.UP_POS[1], constants.UP_POS[0] + arrow_size[0], constants.UP_POS[1] + arrow_size[1])
+        self.left_box = (constants.LEFT_POS[0], constants.LEFT_POS[1], constants.LEFT_POS[0] + arrow_size[0], constants.LEFT_POS[1] + arrow_size[1])
+
+        side_buttons = (18, 9)
+        self.start_box = (constants.START_POS[0], constants.START_POS[1], constants.START_POS[0] + side_buttons[0], constants.START_POS[1] + side_buttons[1])
 
     # The joystick needs be plugged in before this method is called
     def init_joystick(self):
@@ -147,13 +165,15 @@ class InputManager():
         if not self.change_keymap_mode and cf.SETTINGS['mouse']:
             self.current_mouse_position = None
             for event in events:
-                if event.type == engine.MOUSEBUTTONDOWN and event.button == 1:
+                if (event.type == engine.MOUSEBUTTONDOWN or event.type == engine.MOUSEBUTTONUP) and event.button == 1:
+                    key_up = event.type == engine.MOUSEBUTTONUP
                     position = event.pos
                     self.current_mouse_position = position
-                    self.get_mouse_button_clicked(self.get_mouse_position())
+                    self.get_mouse_button_clicked(self.get_mouse_position(), key_up)
                 elif event.type == engine.MOUSEMOTION:
                     position = event.pos
                     self.current_mouse_position = position
+                    self.get_mouse_button_moved(self.get_mouse_position())
 
         # Check game pad
         if not self.joystick:
@@ -176,32 +196,48 @@ class InputManager():
         if self.key_down_events:
             return self.key_down_events[-1]
         
-    def get_mouse_button_clicked(self, mouse_pos):
-        # Buffer to make buttons easier to click on mobile
+        
+    def mouse_in_boundary(self, mouse_pos: tuple, boundary: tuple):
         buffer = 6
-        from app import constants
+        if boundary[0] - buffer <= mouse_pos[0] <= boundary[2] + buffer and \
+                boundary[1] - buffer <= mouse_pos[1] <= boundary[3] + buffer: 
+            return True
+        return False
 
-        primary_size = (14, 13)
-        a_box = (constants.A_POS[0], constants.A_POS[1], constants.A_POS[0] + primary_size[0], constants.A_POS[1] + primary_size[1])
-        b_box = (constants.B_POS[0], constants.B_POS[1], constants.B_POS[0] + primary_size[0], constants.B_POS[1] + primary_size[1])
-        y_box = (constants.Y_POS[0], constants.Y_POS[1], constants.Y_POS[0] + primary_size[0], constants.Y_POS[1] + primary_size[1])
-        x_box = (constants.X_POS[0], constants.X_POS[1], constants.X_POS[0] + primary_size[0], constants.X_POS[1] + primary_size[1])
-
-        print(mouse_pos, a_box)
+    def get_mouse_button_clicked(self, mouse_pos: tuple, key_up: bool):
+        # Buffer to make buttons easier to click on mobile
+        button = None
+        all_buttons = {'SELECT': self.a_box, 'BACK': self.b_box, 
+                       'INFO': self.y_box, 'AUX': self.x_box, 
+                       'RIGHT': self.right_box, 'DOWN': self.down_box, 
+                       'UP': self.up_box, 'LEFT': self.left_box, 
+                       'START': self.start_box}
 
         if mouse_pos:
-            if a_box[0] - buffer <= mouse_pos[0] <= a_box[2] + buffer and \
-                    a_box[1] - buffer <= mouse_pos[1] <= a_box[3] + buffer:
-                self.key_down_events.append('SELECT')
-            elif b_box[0] - buffer <= mouse_pos[0] <= b_box[2] + buffer and \
-                    b_box[1] - buffer <= mouse_pos[1] <= b_box[3] + buffer:
-                self.key_down_events.append('BACK')
-            elif y_box[0] - buffer <= mouse_pos[0] <= y_box[2] + buffer and \
-                    y_box[1] - buffer <= mouse_pos[1] <= y_box[3] + buffer:
-                self.key_down_events.append('INFO')
-            elif x_box[0] - buffer <= mouse_pos[0] <= x_box[2] + buffer and \
-                    x_box[1] - buffer <= mouse_pos[1] <= x_box[3] + buffer:
-                self.key_down_events.append('AUX')
+            for b in all_buttons:
+                if self.mouse_in_boundary(mouse_pos, all_buttons[b]):
+                    button = b
+
+            if button:
+                self.keys_pressed[button] = not key_up
+                if key_up:
+                    self.key_up_events.append(button)
+                else:
+                    self.key_down_events.append(button)
+
+    def get_mouse_button_moved(self, mouse_pos: tuple):
+        button = None
+        all_buttons = {'SELECT': self.a_box, 'BACK': self.b_box, 
+                       'INFO': self.y_box, 'AUX': self.x_box, 
+                       'RIGHT': self.right_box, 'DOWN': self.down_box, 
+                       'UP': self.up_box, 'LEFT': self.left_box, 
+                       'START': self.start_box}
+
+        if mouse_pos:
+            for b in all_buttons:
+                if not self.mouse_in_boundary(mouse_pos, all_buttons[b]):
+                    self.keys_pressed[b] = False
+                    self.key_up_events.append(b)
 
     def handle_joystick(self):
         def update_state(pushed, state, button_id, button):

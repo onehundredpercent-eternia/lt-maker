@@ -65,6 +65,28 @@ def draw_fps(surf, fps_records):
     FONT['small-white'].blit(str(fps), surf, (surf.get_width() - 20, 0))
     FONT['small-white'].blit(str(min_fps), surf, (surf.get_width() - 20, 12))
 
+def draw_button_overlay(surf):
+    from app.sprites import SPRITES
+    sprite = SPRITES.get('buttons')
+    buttons = [sprite.subsurface(0, 66 + (y * 16), 14, 13) for y in range(0, 4)] # 4 main buttons
+    buttons.append(sprite.subsurface(0, 165, 33, 9)) # Start
+
+    arrows = [sprite.subsurface(0, (y * 16), 14, 15) for y in range(0, 4)] # Arrows
+
+    from app import constants
+    
+    surf.blit(buttons[0], constants.A_POS) # A
+    surf.blit(buttons[1], constants.B_POS) # B
+    surf.blit(buttons[2], constants.Y_POS) # Y
+    surf.blit(buttons[3], constants.X_POS) # X
+
+    surf.blit(arrows[0], constants.LEFT_POS) # Left
+    surf.blit(arrows[1], constants.RIGHT_POS) # Right
+    surf.blit(arrows[2], constants.DOWN_POS) # Down
+    surf.blit(arrows[3], constants.UP_POS) # Up
+
+    surf.blit(buttons[4], constants.START_POS) # Start
+
 def check_soft_reset(game, inp) -> bool:
     return game.state.current() != 'title_start' and \
         inp.is_pressed('SELECT') and inp.is_pressed('BACK') and \
@@ -126,6 +148,8 @@ async def run(game):
 
                 if cf.SETTINGS['display_fps']:
                     draw_fps(surf, fps_records)
+                if cf.SETTINGS['mouse']:
+                    draw_button_overlay(surf)
             except Exception as e:
                 logging.exception("Game crashed with exception.")
                 log_file_loc = lt_log.get_log_dir() or ''
