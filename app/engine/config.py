@@ -1,10 +1,10 @@
 import os
 from collections import OrderedDict
 
-from app.utilities import str_utils
+from app.utilities import str_utils, system_info
 
 def read_config_file():
-    lines = OrderedDict([('debug', 1),
+    lines = OrderedDict([('debug', 0 if system_info.is_editor_engine_built_version() else 1),
                          ('random_seed', -1),
                          ('screen_size', 2),
                          ('fullscreen', 0),
