@@ -239,16 +239,10 @@ class MiniMap(object):
                 for y in range(self.height):
                     if not game.board.in_vision((x, y)):
                         mask = (x * self.scale_factor, y * self.scale_factor, self.scale_factor, self.scale_factor)
-                        if game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.HYBRID.value:
-                            if (x, y) in game.board.previously_visited_tiles:
-                                engine.fill(self.surf, (128, 128, 128), mask, engine.BLEND_RGB_MULT)
-                            else:
-                                engine.fill(self.surf, (12, 12, 12), mask)
-                        elif game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.THRACIA.value:
-                            engine.fill(self.surf, (12, 12, 12), mask)
-                        # GBA
-                        else:
+                        if game.board.terrain_known((x, y)):
                             engine.fill(self.surf, (128, 128, 128), mask, engine.BLEND_RGB_MULT)
+                        else:
+                            engine.fill(self.surf, (12, 12, 12), mask)
 
             self.surf = self.surf.convert()
 

@@ -172,7 +172,7 @@ class GameBoard(object):
                 return True
         return False
 
-    # === Fog of War ===
+    # === Fog of War ==
     def update_fow(self, pos: Optional[Pos], unit: UnitObject, sight_range: int):
         """Modifies the state of the fog of war game board to reflect the unit moving to the pos"""
         grid: Grid[List[UnitObject]] = self.fog_of_war_grids[unit.team]
@@ -276,6 +276,16 @@ class GameBoard(object):
                     return True
             return False
         else:
+            return True
+
+    def terrain_known(self, pos: Pos) -> bool:
+        """Returns whether the player knows the terrain type of this position.
+        Assumes tile is not in vision"""
+        if game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.HYBRID.value:
+            return pos in self.previously_visited_tiles
+        elif game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.THRACIA.value:
+            return False
+        else:  # GBA
             return True
 
     def get_fog_of_war_radius(self, team: str) -> int:
