@@ -14,6 +14,7 @@ from app.data.resources.sounds import SFXPrefab, SongPrefab
 from app.engine import (action, background, banner, base_surf, dialog, engine,
                         icons, image_mods, item_funcs, item_system,
                         save, skill_system, unit_funcs)
+from app.engine.game_board import FogOfWarType
 from app.engine.achievements import ACHIEVEMENTS
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -624,14 +625,14 @@ def enable_fog_of_war(self: Event, activated: bool, flags=None):
 def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Optional[int] = None, other_radius: Optional[int] = None, flags=None):
     fowt = fog_of_war_type.lower()
     if fowt == 'gba':
-        fowt = 1
+        fowt = FogOfWarType.GBA
     elif fowt == 'thracia':
-        fowt = 2
+        fowt = FogOfWarType.THRACIA
     elif fowt == 'hybrid':
-        fowt = 3
+        fowt = FogOfWarType.HYBRID
     else:
-        fowt = 0
-    action.do(action.SetLevelVar('_fog_of_war_type', fowt))
+        fowt = FogOfWarType.GBA_DEPRECATED
+    action.do(action.SetLevelVar('_fog_of_war_type', fowt.value))
     action.do(action.SetLevelVar('_fog_of_war_radius', radius))
     if ai_radius is not None:
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', ai_radius))

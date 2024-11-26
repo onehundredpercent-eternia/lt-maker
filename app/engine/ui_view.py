@@ -11,6 +11,7 @@ from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
 from app.engine.fonts import FONT
 from app.engine.game_menus import menu_options
 from app.engine.game_counters import ANIMATION_COUNTERS
+from app.engine.game_board import FogOfWarType
 from app.engine.game_state import game
 from app.engine.sprites import SPRITES
 from app.utilities import utils
@@ -145,9 +146,9 @@ class UIView():
 
         # Display terrain with none, GBA, or Hybrid fog (hybrid only if in previously_visited_tile)
         if game.state.current() in self.legal_states and cf.SETTINGS['show_terrain'] and \
-                (game.level_vars['_fog_of_war_type'] in (0, 1) 
+                (game.level_vars['_fog_of_war_type'] in (FogOfWarType.GBA_DEPRECATED.value, FogOfWarType.GBA.value) 
                  or game.board.in_vision(game.cursor.position)
-                 or (game.level_vars['_fog_of_war_type'] == 3 and game.cursor.position in game.board.previously_visited_tiles)):
+                 or (game.level_vars['_fog_of_war_type'] == FogOfWarType.HYBRID.value and game.cursor.position in game.board.previously_visited_tiles)):
             self.tile_info_disp = self.create_tile_info(self.current_tile_pos)
             if self.tile_info_disp:
                 right = self.cursor_right

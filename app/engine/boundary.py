@@ -6,6 +6,7 @@ from app.constants import TILEWIDTH, TILEHEIGHT
 from app.data.database.database import DB
 from app.engine.sprites import SPRITES
 from app.engine import engine, equations, image_mods, aura_funcs
+from app.engine.game_board import FogOfWarType
 from app.engine.game_state import game
 
 class BoundaryInterface():
@@ -340,14 +341,14 @@ class BoundaryInterface():
                     for x in range(self.width):
                         if not game.board.in_vision((x, y)):
                             # Hybrid
-                            if game.level_vars.get('_fog_of_war_type', 0) == 3:
+                            if game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.HYBRID.value:
                                 if (x, y) in game.board.previously_visited_tiles:
                                     # If you've been before, use the GBA
                                     image = self.fog_of_war_tile1
                                 else:  # Otherwise, use Thracia
                                     image = self.fog_of_war_tile2
                             # Thracia
-                            elif game.level_vars.get('_fog_of_war_type', 0) == 2:
+                            elif game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.THRACIA.value:
                                 image = self.fog_of_war_tile2
                             # Default to regular GBA
                             else:

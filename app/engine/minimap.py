@@ -8,6 +8,7 @@ from app.engine.sound import get_sound_thread
 from app.data.database.database import DB
 from app.engine import engine, image_mods
 from app.engine.state import MapState
+from app.engine.game_board import FogOfWarType
 from app.engine.game_state import game
 
 from app.engine.input_manager import get_input_manager
@@ -238,14 +239,12 @@ class MiniMap(object):
                 for y in range(self.height):
                     if not game.board.in_vision((x, y)):
                         mask = (x * self.scale_factor, y * self.scale_factor, self.scale_factor, self.scale_factor)
-                        # Hybrid
-                        if game.level_vars.get('_fog_of_war_type', 0) == 3:
+                        if game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.HYBRID.value:
                             if (x, y) in game.board.previously_visited_tiles:
                                 engine.fill(self.surf, (128, 128, 128), mask, engine.BLEND_RGB_MULT)
                             else:
                                 engine.fill(self.surf, (12, 12, 12), mask)
-                        # Thracia
-                        elif game.level_vars.get('_fog_of_war_type', 0) == 2:
+                        elif game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.THRACIA.value:
                             engine.fill(self.surf, (12, 12, 12), mask)
                         # GBA
                         else:

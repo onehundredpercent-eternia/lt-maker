@@ -1,17 +1,24 @@
 from __future__ import annotations
 
-from app.engine.objects.unit import UnitObject
+from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from app.data.database.database import DB
 from app.engine import line_of_sight
 from app.engine.pathfinding.node import Node
 from app.engine.game_state import game
+from app.engine.objects.unit import UnitObject
 from app.utilities.grid import Grid, BoundedGrid
 from app.utilities.typing import NID, Pos, UID
 
 if TYPE_CHECKING:
     from app.engine.objects.skill import SkillObject
+
+class FogOfWarType(Enum):
+    GBA_DEPRECATED = 0
+    GBA = 1
+    THRACIA = 2
+    HYBRID = 3
 
 class GameBoard(object):
     def __init__(self, tilemap):
