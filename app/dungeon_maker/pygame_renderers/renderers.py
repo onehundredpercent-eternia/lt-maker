@@ -15,13 +15,17 @@ from app.dungeon_maker.painters import (
     RandomShadingPainter,
     GrassPainter,
     RuinsPainter,
+    WaterPainter,
+    WaterBridgePainter,
 )
 from app.dungeon_maker.pygame_renderers import (
     SimpleRenderer,
     SimpleLimitRenderer, 
     SimpleLimitShadingRenderer, 
     LimitRenderer, 
+    SimpleShadingRenderer,
     FloorShadingRenderer,
+    CheckerboardFloorShadingRenderer,
     Limit8ShadingRenderer,
     Limit16ShadingRenderer,
 )
@@ -48,7 +52,12 @@ def get_renderers(palette: str) -> RendererDatabase:
         Terrain.PILLAR: SimpleRenderer(Painter(), os.path.join(palette_dir, 'pillar.png')),
         Terrain.SPARSE_FOREST: SimpleLimitShadingRenderer(RandomShadingPainter(), os.path.join(palette_dir, 'forest.png')),
         Terrain.GRASS: Limit8ShadingRenderer(GrassPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-        Terrain.RUINS: Limit16ShadingRenderer(RuinsPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
+        Terrain.RUINS_LOWER: Limit16ShadingRenderer(RuinsPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
+        Terrain.RUINS_UPPER: Limit16ShadingRenderer(RuinsPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
+        Terrain.CHECKERBOARD_LOWER: CheckerboardFloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png'), os.path.join(palette_dir, 'floor1_beta.png'), os.path.join(palette_dir, 'floor1_shading_beta.png')),
+        Terrain.CHECKERBOARD_UPPER: CheckerboardFloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png'), os.path.join(palette_dir, 'floor2_beta.png'), os.path.join(palette_dir, 'floor2_shading_beta.png')),
+        Terrain.WATER: FloorShadingRenderer(WaterPainter(), os.path.join(palette_dir, 'water.png'), os.path.join(palette_dir, 'water_shading.png')),
+        Terrain.WATERBRIDGE: SimpleShadingRenderer(WaterBridgePainter(), os.path.join(palette_dir, 'bridge.png')),
         Terrain.START: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
         Terrain.END: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
     }

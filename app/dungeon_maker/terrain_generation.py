@@ -4,37 +4,10 @@ https://pokemon-dungeoneer.vercel.app/
 https://github.com/EpicYoshiMaster/dungeon-mystery
 https://www.youtube.com/watch?v=fudOO713qYo
 
-Types of terrain:
-Walls
-Upper floor
-Lower floor
-Stairs
-Pillars/Forest
-
-Generation algorithm:
-1. Create a big old field of walls
-2. Divide walls into grid (3x3, 2x3, 5x2, etc.)
-3. In each subgrid, create a room, hallway anchor, or blank
-    3.2. Randomly determine size (XxY) if room
-    3.3. Randomly determine position in subgrid if room or hallway anchor
-    3.4. N% chance to merge adjacent rooms together
-    3.5. M% chance to carve sections of the room off or add a section to it
-4. Connect rooms together with hallways
-    4.1 Adjacent grids with rooms, randomly select a hallway size (1, 2, or 3)
-    4.2 Select an anchor point on each wall randomly
-    4.3 If not perfect, on grid line is able to turn to match up
-5. (Optional) Generate extra hallways
-6. (Optional) Repeat with lower floor of rooms
-7. Randomly generate starting point in room, put staircase up there.
-8. Randomly generate ending point in room, put staircase down there.
-
 Encounter generation:
 1. For each room, choose an encounter from the encounter list
 2. Place appropriate enemies in each room
 """
-
-# Figure out how to make hallways the right size for the room
-# Figure out where the draw the stairways and sections
 
 from __future__ import annotations
 import random
@@ -63,18 +36,35 @@ def generate_terrain(theme: str, seed=-1) -> DungeonTileMap:
 
 def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
     tilemap = DungeonTileMap(theme)
+
+    # 1. Create a big old field of walls
     tilemap.reset_grid(Terrain.WALL_TOP)
 
+    # 2. Divide walls into grid (3x3, 2x3, 5x2, etc.)
+    # 3. In each subgrid, create a room, hallway anchor, or blank
+    # 3.2. Randomly determine size (XxY) if room
+    # 3.3. Randomly determine position in subgrid if room or hallway anchor
     num_rooms = tilemap.generate_rooms()
     if num_rooms < 2:  # Need at least 2 rooms
         return
+
     tilemap.print_sections()
+
+    # 4. Connect rooms together with hallways
+    # 4.1 Adjacent grids with rooms, randomly select a hallway size (1 or 2)
+    # 4.2 Select an anchor point on each wall randomly
+    # 4.3 If not perfect, on grid line is able to turn to match up with other room
     tilemap.connect_rooms()
+
+    # 4.4 If some rooms were generated as blanks and using global background section, 
+    #     connect all rooms with background
     if theme.use_global_section:
         tilemap.connect_global()
 
+    # 5. Converts rooms and hallways to terrain (Floors, Walls, Stairs)
     tilemap.coerce_terrain()
 
+    # 6. Any large empty areas with no terrain are filled with Floors and then connected to outside
     if theme.fill_in_empty_areas:
         tilemap.fill_in_empty_areas()
 
@@ -84,26 +74,42 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
     if not tilemap.is_fully_connected():
         return
 
+    # 7. Make sure all walls are at least 2 tiles high if grounded on the lower level
     tilemap.make_walls_two_high()
 
+    # 8. Add pillars to rooms
+    # 8.1 Randomly determine which pillar pattern will be used for this room
+    # 8.2 convert terrain to PILLAR
     if theme.use_forest:
         tilemap.add_pillars(upper_floor_only=True)
     else:
         tilemap.add_pillars()
 
+    # 9.1 Randomly generate starting point in room, put staircase up there.
+    # 9.2 Randomly generate ending point in room, put staircase down there.
     good_result = tilemap.generate_start_and_end()
     if not good_result:
         return
 
-    # At this point, sections can't matter anymore
+    # At this point, sections can't matter anymore, only terrain matters now
+    # 9. Flip top and left section over the x and/or y axis through the middle
+    #    of the map to make the map symmetrical
     if theme.horiz_symmetry:
         tilemap.flip_over_y_axis()
     if theme.vert_symmetry:
         tilemap.flip_over_x_axis()
 
+    # 10. Add forests in random positions on the lower floor
     if theme.use_forest:
         tilemap.add_forest()
 
+    # 11. Finalize walls and void positioning
+    # 11.1 Takes the entire map and wraps it in 2 layers of walls to make sure there
+    #      are no paths to outside the map
+    # 11.2 Fills in any tiles surrounded on three sides by walls (does this twice)
+    # 11.3 Converts walls, as appropriate, to WALL_BOTTOM
+    # 11.4 Removes any wall that has no adjacent walls
+    # 11.5 Crops the map to it's minimum possible size
     if not theme.use_global_section:
         tilemap.wrap_in_walls()
     tilemap.fill_in_crevices()
@@ -448,6 +454,29 @@ class DungeonTileMap:
         # print("--- After making sure stairs have a wall above them ---")
         # self.print_terrain_grid()
 
+    def generate_water(self):
+        """
+        Randomly select rooms/hallways (of lower floor) that should be considered on water
+        For each wall/void in the section, convert to water
+        Convert terrain.FLOOR_LOWER -> terrain.WATERBRIDGE if no longer touching any wall
+        """
+        water_sections = []
+        for section_pos, section in self.sections.items():    
+            if section.room and section.room.floor_level == FloorLevel.UPPER:
+                water_sections.append(section)
+
+        all_terrain_positions = []
+        for section in water_sections:
+            all_terrain_positions += section.get_true_positions()
+
+        terrain_to_change = []
+        for pos, terrain in self.terrain_grid.items():
+            if pos in all_terrain_positions and terrain in (Terrain.WALL_TOP, Terrain.VOID):
+                terrain_to_change.append(pos)
+
+        for pos in terrain_to_change:
+            self.terrain_grid[pos] = Terrain.WATER        
+
     def generate_void(self):
         convert_to_void: Set[Pos] = set()
         for pos, terrain in self.terrain_grid.items():
@@ -579,7 +608,7 @@ class DungeonTileMap:
         for section_grid_pos, section in self.sections.items():
             if random.random() > self.theme.pillar_chance:
                 continue
-            if not section.has_full_room():
+            if not section.has_big_room():
                 continue
             if upper_floor_only and section.room.floor_level == FloorLevel.LOWER:
                 continue
@@ -897,11 +926,9 @@ class DungeonTileMap:
             print("%02d " % y, end='')
             for x in range(self.width):
                 terrain = self.terrain_grid[(x, y)]
-                if terrain == Terrain.FLOOR_LOWER \
-                        or terrain == Terrain.GRASS:
+                if terrain == Terrain.FLOOR_LOWER:
                     print("_", end='')
-                elif terrain == Terrain.FLOOR_UPPER \
-                        or terrain == Terrain.RUINS:
+                elif terrain == Terrain.FLOOR_UPPER:
                     print("=", end='')
                 elif terrain == Terrain.WALL_TOP:
                     print("#", end='')

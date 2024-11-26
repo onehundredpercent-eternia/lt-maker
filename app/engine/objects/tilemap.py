@@ -282,18 +282,22 @@ class TileMapObject(Prefab):
                     image.blit(autotile_image, (0, 0))
         return image
 
-    def save_screenshot(self):
+    def save_screenshot(self, fn: str = None):
         import os
         from datetime import datetime
 
         if not os.path.isdir('screenshots'):
             os.mkdir('screenshots')
-        current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
 
         cull_rect = (0, 0, self.width * TILEWIDTH, self.height * TILEHEIGHT)
         image = self.get_full_image(cull_rect)
         image.blit(self.get_foreground_image(cull_rect), (0, 0))
-        engine.save_surface(image, 'screenshots/LT_%s_tilemap.png' % current_time)
+        if fn:
+            ss_fn = os.path.join('screenshots', fn)
+        else:
+            current_time = str(datetime.now()).replace(' ', '_').replace(':', '.')
+            ss_fn = 'screenshots/LT_%s_tilemap.png' % current_time
+        engine.save_surface(image, ss_fn)
 
     def update(self):
         for layer in self.layers:

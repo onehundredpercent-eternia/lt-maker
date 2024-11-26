@@ -9,6 +9,7 @@ class Theme:
     wide_hallway_chance: float = 0.5  # Chance of wide hallway
     floor_lower_chance = 0.5
     use_forest: bool = False
+    use_water: bool = False
     sparse_forest_chance: float = 0.15  # Chance that any lower floor position has a tree
     room_size_min_x: int = 3
     room_size_min_y: int = 3
@@ -69,10 +70,25 @@ class ComplexTheme(Theme):
     pillar_chance: float = 0.25  # Chance that any room has pillars
     use_global_section: bool = True
 
+class SewersTheme(Theme):
+    size: Tuple[int, int] = (25, 25)
+    section_grid: Tuple[int, int] = (4, 4)
+    room_chance: float = 0.55
+    hallway_chance: float = 0.45  # Chance of single node room
+    connection_chance: float = 0.8  # Chance to connect adjacent rooms together
+    wide_hallway_chance: float = 1.0  # Chance of wide hallway
+    floor_lower_chance = 0.75
+    use_water: bool = True
+    room_size_min_x: int = 3
+    room_size_min_y: int = 2
+    pillar_chance: float = 0.5  # Chance that any room has pillars
+
+
 themes = {
     'default': DefaultTheme,
     'forest': ForestTheme,
     'labyrinth': LabyrinthTheme,
     'winding': WindingHallwaysTheme,
     'complex': ComplexTheme,
+    'sewers': SewersTheme,
 }

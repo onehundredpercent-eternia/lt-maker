@@ -23,6 +23,12 @@ def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
     random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
     return random.choice(choices)
 
+def random_random(pos: tuple, seed: int = None, offset: int = 0):
+    if seed is None:
+        seed = RANDOM_SEED
+    random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
+    return random.random()
+
 def flood_fill(tilemap: DungeonTileMap, pos: Pos, 
                diagonal: bool = False, match: Set[Terrain] = None,
                match_only_these_positions: Set[Pos] = None) -> Set[Pos]:

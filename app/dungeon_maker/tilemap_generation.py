@@ -44,6 +44,7 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.WALL_BOTTOM: 'Wall',
         Terrain.FLOOR_LOWER: 'Floor',
         Terrain.FLOOR_UPPER: 'Floor',
+        Terrain.WATER: 'Water',
         Terrain.STAIRS_UP: 'Stairs',
         Terrain.STAIRS_RIGHT: 'Stairs',
         Terrain.STAIRS_DOWN: 'Stairs',
@@ -51,7 +52,10 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.PILLAR: 'Pillar',
         Terrain.SPARSE_FOREST: 'Forest',
         Terrain.GRASS: 'Plains',
-        Terrain.RUINS: 'Ruins',
+        Terrain.RUINS_LOWER: 'Floor',
+        Terrain.RUINS_UPPER: 'Floor',
+        Terrain.CHECKERBOARD_LOWER: 'Floor',
+        Terrain.CHECKERBOARD_UPPER: 'Floor',
         Terrain.START: 'Stairs',
         Terrain.END: 'Stairs'
     }[terrain]
@@ -69,17 +73,21 @@ def generate_map(theme: str = 'default',
     if palette.floor2 == "grass":
         dungeon_tilemap.swap_terrain(Terrain.FLOOR_UPPER, Terrain.GRASS)
     if palette.floor1 == "ruins":
-        dungeon_tilemap.swap_terrain(Terrain.FLOOR_LOWER, Terrain.RUINS)
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_LOWER, Terrain.RUINS_LOWER)
     if palette.floor2 == "ruins":
-        dungeon_tilemap.swap_terrain(Terrain.FLOOR_UPPER, Terrain.RUINS)
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_UPPER, Terrain.RUINS_UPPER)
+    if palette.floor1 == "checkerboard":
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_LOWER, Terrain.CHECKERBOARD_LOWER)
+    if palette.floor2 == "checkerboard":
+        dungeon_tilemap.swap_terrain(Terrain.FLOOR_UPPER, Terrain.CHECKERBOARD_UPPER)
 
     renderers = get_renderers(palette_name)
     surf: engine.Surface = build_surface(dungeon_tilemap, renderers)
-    theme: themes.Theme = themes.themes[theme]
+    theme_obj: themes.Theme = themes.themes[theme]
 
     # Now we have the surface to use as a real tilemap
     scratch_data = {
-        'theme': theme,
+        'theme': theme_obj,
         'palette_name': palette_name,
         'size': size,
         'seed': seed,
@@ -88,11 +96,11 @@ def generate_map(theme: str = 'default',
     true_terrain_grid = \
         {pos: get_terrain_nid_from_dungeon_terrain(terrain) for pos, terrain in dungeon_tilemap.terrain_grid.items()}
     tilemap = TileMapObject.build_from_scratch("sample", size, true_terrain_grid, surf, scratch_data)
-    tilemap.save_screenshot()
+    tilemap.save_screenshot(f'LT-{theme}-{palette_name}-{size[0]}x{size[1]}-{seed}.png')
 
 # python -m app.dungeon_maker.tilemap_generation
 # Puts the screenshot at the bottom of the screenshot directory
 if __name__ == '__main__':
     engine.init()
     engine.build_display((WINWIDTH, WINHEIGHT))
-    generate_map('complex', 'monastery', seed=2)
+    generate_map('sewers', 'mystic', seed=1)

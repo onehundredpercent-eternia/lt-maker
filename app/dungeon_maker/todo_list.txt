@@ -1,0 +1,22 @@
+Types of Terrain left to add:
+Palettes:
+Mystic Blue Sewers (Void + Hallway Walls on Lower Floor have chance to become Water / Random Pillars in WaterVoid)
+FE6 Final Map
+FE8 Final Map (Void -> Swamp)
+FE8 Some Castle (No new Tech required)
+Light Sacred Ruins (No new Tech required)
+Blue Bridges (Void + Hallway Walls on Lower Floor have chance to become Water)
+Gray Dungeon
+Echoes Dungeon + Lava (Void becomes Lava)
+Random Wizard FF Palette (Hallway Walls on Lower Floor have chance to become Void + Void has patterns in it)
+Desert
+Sacred Ruins (Can have chance for Void to become Water + Hallway Walls on Lower Floor to come Water)
+Lava (??) (Lava section of map)
+Cold Lava (N426_1.png in Outdoors)
+Snow Castle (All in Snow section of maps)
+Snow Fields
+Snow Swamp 
+Many Different Castle Palettes...
+Library (Castle)
+
+Add additional Trees/Flowers to Sacred Ruins/Monastery to make Garden Palette

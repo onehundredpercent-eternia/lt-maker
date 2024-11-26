@@ -5,3 +5,4 @@ from .stairs_painter import StairsUpDownPainter, StairsLeftPainter, StairsRightP
 from .random_painter import RandomPainter, RandomShadingPainter
 from .grass_painter import GrassPainter
 from .ruins_painter import RuinsPainter
+from .water_painter import WaterPainter, WaterBridgePainter

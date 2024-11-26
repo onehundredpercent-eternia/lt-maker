@@ -14,9 +14,13 @@ class Terrain(Enum):
     PILLAR = 10
     SPARSE_FOREST = 11
     GRASS = 12
-    RUINS = 13
-    START = 14
-    END = 15
+    RUINS_LOWER = 13
+    RUINS_UPPER = 14
+    CHECKERBOARD_LOWER = 15
+    CHECKERBOARD_UPPER = 16
+    WATERBRIDGE = 17
+    START = 98
+    END = 99
 
     def floor_terrain():
         return {
@@ -28,7 +32,11 @@ class Terrain(Enum):
             Terrain.STAIRS_LEFT,
             Terrain.SPARSE_FOREST,
             Terrain.GRASS,
-            Terrain.RUINS,
+            Terrain.RUINS_LOWER,
+            Terrain.RUINS_UPPER,
+            Terrain.CHECKERBOARD_LOWER,
+            Terrain.CHECKERBOARD_UPPER,
+            Terrain.WATERBRIDGE,
             Terrain.PILLAR,
             Terrain.START,
             Terrain.END,
