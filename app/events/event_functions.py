@@ -632,7 +632,7 @@ def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Op
         fowt = FogOfWarType.HYBRID
     else:
         fowt = FogOfWarType.GBA_DEPRECATED
-    action.do(action.SetLevelVar('_fog_of_war_type', fowt.value))
+    action.do(action.SetLevelVar('_fog_of_war_type', fowt))
     action.do(action.SetLevelVar('_fog_of_war_radius', radius))
     if ai_radius is not None:
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', ai_radius))

@@ -1,24 +1,18 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from app.data.database.database import DB
 from app.engine import line_of_sight
 from app.engine.pathfinding.node import Node
 from app.engine.game_state import game
+from app.engine.fog_of_war import FogOfWarType
 from app.engine.objects.unit import UnitObject
 from app.utilities.grid import Grid, BoundedGrid
 from app.utilities.typing import NID, Pos, UID
 
 if TYPE_CHECKING:
     from app.engine.objects.skill import SkillObject
-
-class FogOfWarType(Enum):
-    GBA_DEPRECATED = 0
-    GBA = 1
-    THRACIA = 2
-    HYBRID = 3
 
 class GameBoard(object):
     def __init__(self, tilemap):
@@ -198,7 +192,7 @@ class GameBoard(object):
         """
         if team == 'player':
             if DB.constants.value('fog_los'):
-                fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+                fog_of_war_radius = game.get_current_fog_info().default_radius
                 for position in positions:
                     # No need to recheck if we have already visited
                     if position in self.previously_visited_tiles:
@@ -251,12 +245,12 @@ class GameBoard(object):
         if self.vision_regions.get(pos):
             return True
 
-        if game.level_vars.get('_fog_of_war') or self.fog_regions.get(pos):
+        if game.get_current_fog_info().is_active or self.fog_regions.get(pos):
             if team == 'player':
                 # Right now, line of sight doesn't interact at all with vision regions
                 # Since I'm not sure how we'd handle cases where a vision region is obscured by an opaque tile
                 if DB.constants.value('fog_los'):
-                    fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+                    fog_of_war_radius = game.get_current_fog_info().default_radius
                     valid: bool = False  # Can we see the pos?
                     # We can if any of our allies can see the pos.
                     for team_nid in DB.teams.get_allies(team):
@@ -284,22 +278,23 @@ class GameBoard(object):
     def terrain_known(self, pos: Pos) -> bool:
         """Returns whether the player knows the terrain type of this position.
         Assumes tile is not in vision"""
-        if game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.HYBRID.value:
+        fog_of_war_type = game.get_current_fog_info().mode
+        if fog_of_war_type == FogOfWarType.HYBRID:
             return pos in self.previously_visited_tiles
-        elif game.level_vars.get('_fog_of_war_type', 0) == FogOfWarType.THRACIA.value:
+        elif fog_of_war_type == FogOfWarType.THRACIA:
             return False
         else:  # GBA
             return True
 
     def get_fog_of_war_radius(self, team: str) -> int:
-        ai_fog_of_war_radius = game.level_vars.get('_ai_fog_of_war_radius', game.level_vars.get('_fog_of_war_radius', 0))
+        fog_info = game.get_current_fog_info()
         player_team_allies = DB.teams.allies
         if team == 'player':
-            fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+            fog_of_war_radius = fog_info.default_radius
         elif team in player_team_allies:
-            fog_of_war_radius = game.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius)
+            fog_of_war_radius = fog_info.other_radius
         else:
-            fog_of_war_radius = ai_fog_of_war_radius
+            fog_of_war_radius = fog_info.ai_radius
         return fog_of_war_radius
 
     def check_fog_of_war(self, unit: UnitObject, pos: Pos) -> bool:
