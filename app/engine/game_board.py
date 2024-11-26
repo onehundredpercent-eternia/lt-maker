@@ -61,6 +61,9 @@ class GameBoard(object):
     def get_all_positions_in_bounds(self) -> Set[Pos]:
         return {(x, y) for x in range(self.bounds[0], self.bounds[2] + 1) for y in range(self.bounds[1], self.bounds[3] + 1)}
 
+    def set_previously_visited_tiles(self, val: Set[Pos]):
+        self.previously_visited_tiles = val
+
     def reset_tile_grids(self, tilemap):
         # For each movement type
         mtype_grid: Grid[NID] = Grid((self.width, self.height))
@@ -172,7 +175,7 @@ class GameBoard(object):
                 return True
         return False
 
-    # === Fog of War ==
+    # === Fog of War ===
     def update_fow(self, pos: Optional[Pos], unit: UnitObject, sight_range: int):
         """Modifies the state of the fog of war game board to reflect the unit moving to the pos"""
         grid: Grid[List[UnitObject]] = self.fog_of_war_grids[unit.team]
@@ -191,7 +194,7 @@ class GameBoard(object):
 
     def _update_previously_visited(self, positions: List[Pos], team: NID):
         """
-        If player team only, update with where he have seen before
+        If player team only, update with where we have seen before
         """
         if team == 'player':
             if DB.constants.value('fog_los'):

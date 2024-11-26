@@ -370,11 +370,13 @@ class GameState():
         for skill in unit.all_skills:
             self.register_skill(skill)
 
-    def set_up_game_board(self, tilemap, bounds=None):
+    def set_up_game_board(self, tilemap, bounds=None, fog_state=None):
         from app.engine import boundary, game_board
         self.board = game_board.GameBoard(tilemap)
         if bounds:
             self.board.set_bounds(*bounds)
+        if fog_state:
+            self.board.set_previously_visited_tiles(fog_state)
         self.boundary = boundary.BoundaryInterface(tilemap.width, tilemap.height)
 
     def save(self):
@@ -406,6 +408,7 @@ class GameState():
                   'base_convos': self.base_convos,
                   'current_random_state': static_random.get_combat_random_state(),
                   'bounds': self.board.bounds if self.board else None,
+                  'fog_state': self.board.previously_visited_tiles if self.board else None,
                   'roam_info': self.roam_info,
                   }
         meta_dict = {'playtime': self.playtime,
@@ -516,7 +519,7 @@ class GameState():
         if s_dict['level']:
             logging.info("Loading Level...")
             self._current_level = LevelObject.restore(s_dict['level'], self)
-            self.set_up_game_board(self._current_level.tilemap, s_dict.get('bounds'))
+            self.set_up_game_board(self._current_level.tilemap, s_dict.get('bounds'), s_dict.get('fog_state'))
 
             self.generic()
             from app.engine.level_cursor import LevelCursor
