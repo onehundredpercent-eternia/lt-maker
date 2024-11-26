@@ -119,7 +119,7 @@ pillar.save(os.path.join(palette_name, 'pillar.png'))
 # StairsLeft
 stairs = Image.new('RGBA', (16 * 4, 16))
 stairs.paste(base_tiles.crop((112, 208, 112 + 16, 208 + 16)), (0, 0))
-stairs.paste(base_tiles.crop((96, 208, 96 + 16, 208 + 16)), (16, 0))
+stairs.paste(base_tiles.crop((112, 256, 112 + 16, 256 + 16)), (16, 0))
 stairs.paste(base_tiles.crop((48, 192, 48 + 16, 192 + 16)), (32, 0))
 stairs.paste(base_tiles.crop((16, 192, 16 + 16, 192 + 16)), (48, 0))
 stairs.save(os.path.join(palette_name, 'stairs_left.png'))
@@ -259,7 +259,7 @@ water_shading.paste(base_tiles.crop((368, 80, 368 + 8, 80 + 16)), (0, 0))
 # Top
 water_shading.paste(base_tiles.crop((352, 80, 352 + 16, 80 + 8)), (16, 0))
 # Left Top
-water_shading.paste(base_tiles.crop((368, 96, 368 + 16, 96 + 16)), (32, 0))
+water_shading.paste(base_tiles.crop((352, 96, 352 + 16, 96 + 16)), (32, 0))
 # Column
 water_shading.paste(base_tiles.crop((400, 256, 400 + 16, 256 + 16)), (48, 0))
 # Column Left

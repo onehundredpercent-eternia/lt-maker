@@ -70,6 +70,11 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
 
     tilemap.print_terrain_grid()
 
+    if theme.use_water_chance:
+        tilemap.generate_water()
+
+    tilemap.print_terrain_grid()
+
     # All floor tiles must be reachable
     if not tilemap.is_fully_connected():
         return
@@ -115,6 +120,7 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
     tilemap.fill_in_crevices()
     tilemap.fill_in_crevices()  # Do it twice on purpose
     tilemap.split_walls()
+    tilemap.remove_useless_stairs()
     tilemap.remove_single_wall()
     tilemap.crop_void()
     # All floor tiles must be reachable
@@ -460,22 +466,37 @@ class DungeonTileMap:
         For each wall/void in the section, convert to water
         Convert terrain.FLOOR_LOWER -> terrain.WATERBRIDGE if no longer touching any wall
         """
+        # Find low sections
         water_sections = []
         for section_pos, section in self.sections.items():    
-            if section.room and section.room.floor_level == FloorLevel.UPPER:
+            if section.room and section.room.floor_level == FloorLevel.LOWER \
+                    and random.random() < self.theme.use_water_chance:
                 water_sections.append(section)
 
+        # Get all positions in those sections
         all_terrain_positions = []
         for section in water_sections:
             all_terrain_positions += section.get_true_positions()
 
-        terrain_to_change = []
+        # Swap Walls and Void to Water
+        # And Swap Floor to Water Bridge
+        wall_terrain_to_change = []
+        floor_terrain_to_change = []
         for pos, terrain in self.terrain_grid.items():
-            if pos in all_terrain_positions and terrain in (Terrain.WALL_TOP, Terrain.VOID):
-                terrain_to_change.append(pos)
-
-        for pos in terrain_to_change:
+            if pos in all_terrain_positions:
+                # Don't change walls above stairs
+                if terrain in (Terrain.WALL_TOP, Terrain.VOID) \
+                        and self.terrain_grid.get((pos[0], pos[1] + 1)) not in (Terrain.STAIRS_RIGHT, Terrain.STAIRS_LEFT, Terrain.FLOOR_UPPER) \
+                        and self.terrain_grid.get((pos[0], pos[1] - 1)) not in (Terrain.STAIRS_RIGHT, Terrain.STAIRS_LEFT, Terrain.FLOOR_UPPER) \
+                        and self.terrain_grid.get((pos[0] - 1, pos[1])) not in (Terrain.STAIRS_UP, Terrain.STAIRS_DOWN, Terrain.FLOOR_UPPER) \
+                        and self.terrain_grid.get((pos[0] + 1, pos[1])) not in (Terrain.STAIRS_UP, Terrain.STAIRS_DOWN, Terrain.FLOOR_UPPER):
+                    wall_terrain_to_change.append(pos)
+                elif terrain in (Terrain.FLOOR_LOWER,):
+                    floor_terrain_to_change.append(pos)
+        for pos in wall_terrain_to_change:
             self.terrain_grid[pos] = Terrain.WATER        
+        for pos in floor_terrain_to_change:
+            self.terrain_grid[pos] = Terrain.WATERBRIDGE
 
     def generate_void(self):
         convert_to_void: Set[Pos] = set()
@@ -529,6 +550,7 @@ class DungeonTileMap:
             Terrain.FLOOR_LOWER, 
             Terrain.STAIRS_DOWN, 
             Terrain.STAIRS_UP,
+            Terrain.WATERBRIDGE,
             )
 
     def _is_high_floor(self, terrain: Terrain) -> bool:
@@ -681,6 +703,8 @@ class DungeonTileMap:
             else:
                 final_pillar_positions |= pillar_positions
 
+        final_pillar_positions = [pos for pos in final_pillar_positions if self.terrain_grid[(pos[0], pos[1] + 1)] in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER)]
+        final_column_positions = [pos for pos in final_column_positions if self.terrain_grid[(pos[0], pos[1] + 1)] in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER)]
         for pos in final_pillar_positions:
             self.terrain_grid[pos] = Terrain.PILLAR
         for pos in final_column_positions:
@@ -879,12 +903,28 @@ class DungeonTileMap:
         convert_to_floor: Set[Pos] = set()
         for pos in self.terrain_grid.keys():
             if self.terrain_grid.get(pos) == Terrain.WALL_TOP \
-                and all(terrain in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER) and self.check_bounds(adj) for terrain, adj in
+                and all(terrain not in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM) and self.check_bounds(adj) for terrain, adj in
                         zip(self.get_cardinal_terrain(pos), get_cardinal_positions(pos))):
                 convert_to_floor.add(pos)
 
         for pos in convert_to_floor:
             self.terrain_grid[pos] = Terrain.FLOOR_UPPER
+
+    def remove_useless_stairs(self):
+        convert_to_floor_upper = set()
+        convert_to_floor_lower = set()
+        for pos, terrain in self.terrain_grid.items():
+            if terrain == Terrain.STAIRS_RIGHT and self.terrain_grid.get((pos[0] + 1, pos[1])) == Terrain.STAIRS_LEFT:
+                convert_to_floor_lower.add(pos)
+                convert_to_floor_lower.add((pos[0] + 1, pos[1]))
+            elif terrain == Terrain.STAIRS_LEFT and self.terrain_grid.get((pos[0] + 1, pos[1])) == Terrain.STAIRS_RIGHT:
+                convert_to_floor_upper.add(pos)
+                convert_to_floor_upper.add((pos[0] + 1, pos[1]))
+
+        for pos in convert_to_floor_upper:
+            self.terrain_grid[pos] = Terrain.FLOOR_UPPER
+        for pos in convert_to_floor_lower:
+            self.terrain_grid[pos] = Terrain.FLOOR_LOWER
 
     def crop_void(self):
         # Now crop out areas of just void
@@ -946,6 +986,8 @@ class DungeonTileMap:
                     print("<", end='')
                 elif terrain == Terrain.STAIRS_RIGHT:
                     print(">", end='')
+                elif terrain == Terrain.WATER:
+                    print("~", end='')
                 elif terrain == Terrain.START:
                     print("S", end='')
                 elif terrain == Terrain.END:

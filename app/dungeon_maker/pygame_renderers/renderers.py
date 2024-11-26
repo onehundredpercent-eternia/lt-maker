@@ -1,4 +1,5 @@
-from typing import Dict
+from typing import Any, Dict
+from functools import lru_cache
 
 import os
 
@@ -30,7 +31,55 @@ from app.dungeon_maker.pygame_renderers import (
     Limit16ShadingRenderer,
 )
 
-RendererDatabase = Dict[Terrain, object]
+class RendererDatabase:
+    """RendererDatabase = Dict[Terrain, Renderer]"""
+
+    def __init__(self, palette_dir: str):
+        self.palette_dir = palette_dir
+
+    @lru_cache(64)
+    def get(self, terrain: Terrain) -> Any:
+        match terrain:
+            case Terrain.VOID: 
+                return SimpleRenderer(Painter(), os.path.join(self.palette_dir, 'void.png'))
+            case Terrain.FLOOR_LOWER: 
+                return FloorShadingRenderer(FloorPainter(), os.path.join(self.palette_dir, 'floor1.png'), os.path.join(self.palette_dir, 'floor1_shading.png'))
+            case Terrain.FLOOR_UPPER: 
+                return FloorShadingRenderer(FloorPainter(), os.path.join(self.palette_dir, 'floor2.png'), os.path.join(self.palette_dir, 'floor2_shading.png'))
+            case Terrain.WALL_TOP: 
+                return LimitRenderer(WallTopPainter(), os.path.join(self.palette_dir, 'wall_top.png'))
+            case Terrain.WALL_BOTTOM: 
+                return SimpleRenderer(WallBottomPainter(), os.path.join(self.palette_dir, 'wall_bottom.png'))
+            case Terrain.STAIRS_UP: 
+                return SimpleRenderer(StairsUpDownPainter(), os.path.join(self.palette_dir, 'stairs_updown.png'))
+            case Terrain.STAIRS_DOWN: 
+                return SimpleRenderer(StairsUpDownPainter(), os.path.join(self.palette_dir, 'stairs_updown.png'))
+            case Terrain.STAIRS_LEFT: 
+                return SimpleRenderer(StairsLeftPainter(), os.path.join(self.palette_dir, 'stairs_left.png'))
+            case Terrain.STAIRS_RIGHT: 
+                return SimpleRenderer(StairsRightPainter(), os.path.join(self.palette_dir, 'stairs_right.png'))
+            case Terrain.PILLAR: 
+                return SimpleRenderer(Painter(), os.path.join(self.palette_dir, 'pillar.png'))
+            case Terrain.SPARSE_FOREST: 
+                return SimpleLimitShadingRenderer(RandomShadingPainter(), os.path.join(self.palette_dir, 'forest.png'))
+            case Terrain.GRASS: 
+                return Limit8ShadingRenderer(GrassPainter(), os.path.join(self.palette_dir, 'floor1.png'), os.path.join(self.palette_dir, 'floor1_shading.png'))
+            case Terrain.RUINS_LOWER: 
+                return Limit16ShadingRenderer(RuinsPainter(), os.path.join(self.palette_dir, 'floor1.png'), os.path.join(self.palette_dir, 'floor1_shading.png'))
+            case Terrain.RUINS_UPPER: 
+                return Limit16ShadingRenderer(RuinsPainter(), os.path.join(self.palette_dir, 'floor2.png'), os.path.join(self.palette_dir, 'floor2_shading.png'))
+            case Terrain.CHECKERBOARD_LOWER: 
+                return CheckerboardFloorShadingRenderer(FloorPainter(), os.path.join(self.palette_dir, 'floor1.png'), os.path.join(self.palette_dir, 'floor1_shading.png'), os.path.join(self.palette_dir, 'floor1_beta.png'), os.path.join(self.palette_dir, 'floor1_shading_beta.png'))
+            case Terrain.CHECKERBOARD_UPPER: 
+                return CheckerboardFloorShadingRenderer(FloorPainter(), os.path.join(self.palette_dir, 'floor2.png'), os.path.join(self.palette_dir, 'floor2_shading.png'), os.path.join(self.palette_dir, 'floor2_beta.png'), os.path.join(self.palette_dir, 'floor2_shading_beta.png'))
+            case Terrain.WATER: 
+                return FloorShadingRenderer(WaterPainter(), os.path.join(self.palette_dir, 'water.png'), os.path.join(self.palette_dir, 'water_shading.png'))
+            case Terrain.WATERBRIDGE: 
+                return SimpleShadingRenderer(WaterBridgePainter(), os.path.join(self.palette_dir, 'bridge.png'))
+            case Terrain.START: 
+                return SimpleRenderer(Painter(), os.path.join(self.palette_dir, 'start_end.png'))
+            case Terrain.END: 
+                return SimpleRenderer(Painter(), os.path.join(self.palette_dir, 'start_end.png'))
 
 def get_renderers(palette: str) -> RendererDatabase:
     palette_dir = 'app/dungeon_maker/palettes/'
@@ -38,26 +87,4 @@ def get_renderers(palette: str) -> RendererDatabase:
         palette_dir = palette_dir + palette
     else:
         palette_dir = palette_dir + "dungeon"
-
-    return {
-        Terrain.VOID: SimpleRenderer(Painter(), os.path.join(palette_dir, 'void.png')),
-        Terrain.FLOOR_LOWER: FloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-        Terrain.FLOOR_UPPER: FloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
-        Terrain.WALL_TOP: LimitRenderer(WallTopPainter(), os.path.join(palette_dir, 'wall_top.png')),
-        Terrain.WALL_BOTTOM: SimpleRenderer(WallBottomPainter(), os.path.join(palette_dir, 'wall_bottom.png')),
-        Terrain.STAIRS_UP: SimpleRenderer(StairsUpDownPainter(), os.path.join(palette_dir, 'stairs_updown.png')),
-        Terrain.STAIRS_DOWN: SimpleRenderer(StairsUpDownPainter(), os.path.join(palette_dir, 'stairs_updown.png')),
-        Terrain.STAIRS_LEFT: SimpleRenderer(StairsLeftPainter(), os.path.join(palette_dir, 'stairs_left.png')),
-        Terrain.STAIRS_RIGHT: SimpleRenderer(StairsRightPainter(), os.path.join(palette_dir, 'stairs_right.png')),
-        Terrain.PILLAR: SimpleRenderer(Painter(), os.path.join(palette_dir, 'pillar.png')),
-        Terrain.SPARSE_FOREST: SimpleLimitShadingRenderer(RandomShadingPainter(), os.path.join(palette_dir, 'forest.png')),
-        Terrain.GRASS: Limit8ShadingRenderer(GrassPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-        Terrain.RUINS_LOWER: Limit16ShadingRenderer(RuinsPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png')),
-        Terrain.RUINS_UPPER: Limit16ShadingRenderer(RuinsPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png')),
-        Terrain.CHECKERBOARD_LOWER: CheckerboardFloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor1.png'), os.path.join(palette_dir, 'floor1_shading.png'), os.path.join(palette_dir, 'floor1_beta.png'), os.path.join(palette_dir, 'floor1_shading_beta.png')),
-        Terrain.CHECKERBOARD_UPPER: CheckerboardFloorShadingRenderer(FloorPainter(), os.path.join(palette_dir, 'floor2.png'), os.path.join(palette_dir, 'floor2_shading.png'), os.path.join(palette_dir, 'floor2_beta.png'), os.path.join(palette_dir, 'floor2_shading_beta.png')),
-        Terrain.WATER: FloorShadingRenderer(WaterPainter(), os.path.join(palette_dir, 'water.png'), os.path.join(palette_dir, 'water_shading.png')),
-        Terrain.WATERBRIDGE: SimpleShadingRenderer(WaterBridgePainter(), os.path.join(palette_dir, 'bridge.png')),
-        Terrain.START: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
-        Terrain.END: SimpleRenderer(Painter(), os.path.join(palette_dir, 'start_end.png')),
-    }
+    return RendererDatabase(palette_dir)

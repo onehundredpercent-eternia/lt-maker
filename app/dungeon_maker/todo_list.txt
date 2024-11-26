@@ -1,6 +1,5 @@
 Types of Terrain left to add:
 Palettes:
-Mystic Blue Sewers (Void + Hallway Walls on Lower Floor have chance to become Water / Random Pillars in WaterVoid)
 FE6 Final Map
 FE8 Final Map (Void -> Swamp)
 FE8 Some Castle (No new Tech required)

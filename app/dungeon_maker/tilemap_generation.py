@@ -56,6 +56,7 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.RUINS_UPPER: 'Floor',
         Terrain.CHECKERBOARD_LOWER: 'Floor',
         Terrain.CHECKERBOARD_UPPER: 'Floor',
+        Terrain.WATERBRIDGE: 'Floor',
         Terrain.START: 'Stairs',
         Terrain.END: 'Stairs'
     }[terrain]
@@ -96,11 +97,12 @@ def generate_map(theme: str = 'default',
     true_terrain_grid = \
         {pos: get_terrain_nid_from_dungeon_terrain(terrain) for pos, terrain in dungeon_tilemap.terrain_grid.items()}
     tilemap = TileMapObject.build_from_scratch("sample", size, true_terrain_grid, surf, scratch_data)
-    tilemap.save_screenshot(f'LT-{theme}-{palette_name}-{size[0]}x{size[1]}-{seed}.png')
+    tilemap.save_screenshot(f'LT-{theme}-{palette_name}-{seed}.png')
 
 # python -m app.dungeon_maker.tilemap_generation
 # Puts the screenshot at the bottom of the screenshot directory
 if __name__ == '__main__':
     engine.init()
     engine.build_display((WINWIDTH, WINHEIGHT))
-    generate_map('sewers', 'mystic', seed=1)
+    for i in range(10):
+        generate_map('sewers', 'mystic', seed=i)

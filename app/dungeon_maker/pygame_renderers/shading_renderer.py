@@ -16,7 +16,8 @@ class SimpleShadingRenderer:
 
     def determine_sprite(self, dungeon_tilemap: DungeonTileMap, 
                          position: Pos) -> engine.Surface:
-        coord, shading_coord = self.painter.get_coord(dungeon_tilemap, position)
+        coord = self.painter.get_coord(dungeon_tilemap, position)
+        shading_coord = self.painter.get_shading_coord(dungeon_tilemap, position)
 
         base_image = get_image16(self.image, coord)
 
@@ -67,8 +68,6 @@ class CheckerboardFloorShadingRenderer:
         self.painter = painter
         self.main_alpha_image = engine.image_load(main_alpha_image_fn)
         self.shading_alpha_image = engine.image_load(shading_alpha_image_fn)
-        if not os.path.exists(main_beta_image_fn):
-            return
         self.main_beta_image = engine.image_load(main_beta_image_fn)
         self.shading_beta_image = engine.image_load(shading_beta_image_fn)
         alpha_limit: int = find_limit16(self.main_alpha_image, 0)

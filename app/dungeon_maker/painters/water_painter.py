@@ -43,6 +43,10 @@ class WaterPainter(Painter):
         return False
 
     @staticmethod
+    def get_pillar_coord(dungeon_tilemap: DungeonTileMap, pos: Pos):
+        return None
+
+    @staticmethod
     def get_shading(dungeon_tilemap: DungeonTileMap, pos: Pos) -> Tuple[bool, bool, bool]:
         north, _, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
         top, left, column = False, False, False
@@ -79,10 +83,10 @@ class WaterBridgePainter(Painter):
 
     @staticmethod
     def get_shading(dungeon_tilemap: DungeonTileMap, pos: Pos) -> Tuple[bool, bool, bool]:
-        north, _, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
+        _, _, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
         left = False
 
-        if west not in (Terrain.WATER, Terrain.WATERBRIDGE):
+        if west not in (Terrain.WATER, Terrain.WATERBRIDGE, Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER):
             left = True
         return left
 
@@ -91,6 +95,6 @@ class WaterBridgePainter(Painter):
 
         shading_coord = None
         if left:
-            shading_coord = (0, 0)
+            shading_coord = (1, 0)
 
         return shading_coord
