@@ -143,8 +143,11 @@ class UIView():
             else:
                 pass
 
+        # Display terrain with none, GBA, or Hybrid fog (hybrid only if in previously_visited_tile)
         if game.state.current() in self.legal_states and cf.SETTINGS['show_terrain'] and \
-                (game.level_vars['_fog_of_war'] != 2 or game.board.in_vision(game.cursor.position)):
+                (game.level_vars['_fog_of_war_type'] in (0, 1) 
+                 or game.board.in_vision(game.cursor.position)
+                 or (game.level_vars['_fog_of_war_type'] == 3 and game.cursor.position in game.board.previously_visited_tiles)):
             self.tile_info_disp = self.create_tile_info(self.current_tile_pos)
             if self.tile_info_disp:
                 right = self.cursor_right

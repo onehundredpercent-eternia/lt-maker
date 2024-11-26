@@ -33,8 +33,9 @@ class GameBoard(object):
             self.fog_of_war_grids[team.nid] = self.init_set_grid()
         self.fow_vantage_point = {}  # Unit: Position where the unit is that's looking
         self.fog_regions = self.init_set_grid()
-        self.fog_region_set = set()  # Set of Fog region nids so we can tell how many fog regions exist at all times
+        self.fog_region_set: Set[NID] = set()  # Set of Fog region nids so we can tell how many fog regions exist at all times
         self.vision_regions = self.init_set_grid()
+        self.previously_visited_tiles: Set[Pos] = set()  # Used for Hybrid Fog to mark where we have seen in the past
 
         # For Auras
         self.aura_grid = self.init_set_grid()
@@ -179,6 +180,28 @@ class GameBoard(object):
             positions = {pos for pos in positions if 0 <= pos[0] < self.width and 0 <= pos[1] < self.height}
             for position in positions:
                 grid.get(position).add(unit.nid)
+            self._update_previously_visited(positions, unit.team)
+
+    def _update_previously_visited(self, positions: List[Pos], team: NID):
+        """
+        If player team only, update with where he have seen before
+        """
+        if team == 'player':
+            if DB.constants.value('fog_los'):
+                fog_of_war_radius = game.level_vars.get('_fog_of_war_radius', 0)
+                for position in positions:
+                    # No need to recheck if we have already visited
+                    if position in self.previously_visited_tiles:
+                        continue
+                    valid: bool = False  # Can we see the pos?
+                    # We can if any of our allies can see the pos.
+                    for team_nid in DB.teams.get_allies(team):
+                        valid |= line_of_sight.simple_check(position, team_nid, fog_of_war_radius, self.fow_vantage_point)
+                    if valid:
+                        self.previously_visited_tiles.add(position)
+            else:
+                for position in positions:
+                    self.previously_visited_tiles.add(position)
 
     def add_fog_region(self, region):
         if region.position:
@@ -205,6 +228,8 @@ class GameBoard(object):
             positions = {pos for pos in positions if 0 <= pos[0] < self.width and 0 <= pos[1] < self.height}
             for position in positions:
                 self.vision_regions.get(position).add(region.nid)
+                # Anyone can see a vision region
+                self.previously_visited_tiles.add(position)
 
     def remove_vision_region(self, region):
         for cell in self.vision_regions.cells():

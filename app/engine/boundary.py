@@ -339,8 +339,17 @@ class BoundaryInterface():
                 for y in range(self.height):
                     for x in range(self.width):
                         if not game.board.in_vision((x, y)):
-                            if game.level_vars.get('_fog_of_war_type', 0) == 2:
+                            # Hybrid
+                            if game.level_vars.get('_fog_of_war_type', 0) == 3:
+                                if (x, y) in game.board.previously_visited_tiles:
+                                    # If you've been before, use the GBA
+                                    image = self.fog_of_war_tile1
+                                else:  # Otherwise, use Thracia
+                                    image = self.fog_of_war_tile2
+                            # Thracia
+                            elif game.level_vars.get('_fog_of_war_type', 0) == 2:
                                 image = self.fog_of_war_tile2
+                            # Default to regular GBA
                             else:
                                 image = self.fog_of_war_tile1
                             self.fog_of_war_surf.blit(image, (x * TILEWIDTH, y * TILEHEIGHT))
