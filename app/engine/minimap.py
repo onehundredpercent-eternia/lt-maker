@@ -8,7 +8,6 @@ from app.engine.sound import get_sound_thread
 from app.data.database.database import DB
 from app.engine import engine, image_mods
 from app.engine.state import MapState
-from app.engine.game_board import FogOfWarType
 from app.engine.game_state import game
 
 from app.engine.input_manager import get_input_manager

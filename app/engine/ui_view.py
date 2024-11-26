@@ -11,7 +11,6 @@ from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
 from app.engine.fonts import FONT
 from app.engine.game_menus import menu_options
 from app.engine.game_counters import ANIMATION_COUNTERS
-from app.engine.game_board import FogOfWarType
 from app.engine.game_state import game
 from app.engine.sprites import SPRITES
 from app.utilities import utils
