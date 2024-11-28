@@ -5,8 +5,8 @@ from PIL import Image
 
 # === Change These ===
 palette_type = 'castle'  # What kind of tilemap is this
-fn = '../palettes/0A00DC0C-mystic.png'  # The base tilemap to grab the tile from
-palette_name = '../palettes/mystic'  # The folder to put this into
+fn = '../palettes/1800571A-green_castle.png'  # The base tilemap to grab the tile from
+palette_name = '../palettes/green_castle'  # The folder to put this into
 # === End Change These ===
 
 if not os.path.exists(palette_name):
@@ -23,8 +23,38 @@ with open(os.path.join(palette_name, 'metadata.json'), 'w') as fp:
 
 base_tiles = Image.open(fn)
 
+# === RUINS FLOOR ===
+# # Floor1
+# tiles = [(144, 416), (160, 416)]
+# floor1 = Image.new('RGBA', (16, 16 * len(tiles)))
+# for idx, tile in enumerate(tiles):
+#     i = base_tiles.crop((tile[0], tile[1], tile[0] + 16, tile[1] + 16))
+#     floor1.paste(i, (0, 16 * idx))
+# floor1.save(os.path.join(palette_name, 'floor1.png'))
+
+# # Floor1Shading
+# left = base_tiles.crop((192, 432, 192 + 8, 432 + 16))
+# top = base_tiles.crop((176, 416, 176 + 16, 416 + 2))
+# corner = base_tiles.crop((192, 400, 192 + 8, 400 + 8))
+# lefttop = base_tiles.crop((192, 432, 192 + 16, 432 + 16))
+# cornertop = base_tiles.crop((192, 432, 192 + 16, 432 + 8))
+# pillar_bottom = base_tiles.crop((208, 400, 208 + 16, 400 + 8))
+# shaded_pillar_bottom = base_tiles.crop((208, 400, 208 + 16, 400 + 8))
+# column_bottom = base_tiles.crop((112, 432, 112 + 16, 432 + 8))
+# floor1_shading = Image.new('RGBA', (8 * 16, 16))
+# floor1_shading.paste(left, (0, 0))
+# floor1_shading.paste(top, (16, 0))
+# floor1_shading.paste(corner, (32, 0))
+# floor1_shading.paste(lefttop, (48, 0))
+# floor1_shading.paste(cornertop, (64, 0))
+# floor1_shading.paste(pillar_bottom, (80, 0))
+# floor1_shading.paste(shaded_pillar_bottom, (96, 0))
+# floor1_shading.paste(column_bottom, (112, 0))
+# floor1_shading.save(os.path.join(palette_name, 'floor1_shading.png'))
+
+# === STONE FLOOR ===
 # Floor1
-tiles = [(144, 416), (160, 416)]
+tiles = [(336, 400), (352, 400)]
 floor1 = Image.new('RGBA', (16, 16 * len(tiles)))
 for idx, tile in enumerate(tiles):
     i = base_tiles.crop((tile[0], tile[1], tile[0] + 16, tile[1] + 16))
@@ -32,14 +62,14 @@ for idx, tile in enumerate(tiles):
 floor1.save(os.path.join(palette_name, 'floor1.png'))
 
 # Floor1Shading
-left = base_tiles.crop((192, 432, 192 + 8, 432 + 16))
-top = base_tiles.crop((176, 416, 176 + 16, 416 + 2))
-corner = base_tiles.crop((192, 400, 192 + 8, 400 + 8))
-lefttop = base_tiles.crop((192, 432, 192 + 16, 432 + 16))
-cornertop = base_tiles.crop((192, 432, 192 + 16, 432 + 8))
+left = base_tiles.crop((320, 400, 320 + 8, 400 + 16))
+top = base_tiles.crop((384, 400, 384 + 16, 400 + 8))
+corner = base_tiles.crop((416, 416, 416 + 8, 416 + 8))
+lefttop = base_tiles.crop((368, 400, 368 + 16, 400 + 16))
+cornertop = base_tiles.crop((368, 400, 368 + 16, 400 + 8))
 pillar_bottom = base_tiles.crop((208, 400, 208 + 16, 400 + 8))
 shaded_pillar_bottom = base_tiles.crop((208, 400, 208 + 16, 400 + 8))
-column_bottom = base_tiles.crop((112, 432, 112 + 16, 432 + 8))
+column_bottom = base_tiles.crop((96, 432, 96 + 16, 432 + 8))
 floor1_shading = Image.new('RGBA', (8 * 16, 16))
 floor1_shading.paste(left, (0, 0))
 floor1_shading.paste(top, (16, 0))
@@ -121,7 +151,7 @@ stairs = Image.new('RGBA', (16 * 4, 16))
 stairs.paste(base_tiles.crop((112, 208, 112 + 16, 208 + 16)), (0, 0))
 stairs.paste(base_tiles.crop((112, 256, 112 + 16, 256 + 16)), (16, 0))
 stairs.paste(base_tiles.crop((48, 192, 48 + 16, 192 + 16)), (32, 0))
-stairs.paste(base_tiles.crop((16, 192, 16 + 16, 192 + 16)), (48, 0))
+stairs.paste(base_tiles.crop((0, 128, 0 + 16, 128 + 16)), (48, 0))
 stairs.save(os.path.join(palette_name, 'stairs_left.png'))
 
 # StairsRight
@@ -129,7 +159,7 @@ stairs = Image.new('RGBA', (16 * 4, 16))
 stairs.paste(base_tiles.crop((80, 208, 80 + 16, 208 + 16)), (0, 0))
 stairs.paste(base_tiles.crop((96, 208, 96 + 16, 208 + 16)), (16, 0))
 stairs.paste(base_tiles.crop((32, 192, 32 + 16, 192 + 16)), (32, 0))
-stairs.paste(base_tiles.crop((16, 192, 16 + 16, 192 + 16)), (48, 0))
+stairs.paste(base_tiles.crop((0, 128, 0 + 16, 128 + 16)), (48, 0))
 stairs.save(os.path.join(palette_name, 'stairs_right.png'))
 
 # Stairs
@@ -148,7 +178,7 @@ stairs.save(os.path.join(palette_name, 'start_end.png'))
 
 # Void
 void = Image.new('RGBA', (16, 16))
-void.paste(base_tiles.crop((48, 176, 48 + 16, 176 + 16)), (0, 0))
+void.paste(base_tiles.crop((0, 16, 0 + 16, 16 + 16)), (0, 0))
 void.save(os.path.join(palette_name, 'void.png'))
 
 # Wall Bottom

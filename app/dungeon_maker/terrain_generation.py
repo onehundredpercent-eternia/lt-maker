@@ -123,6 +123,8 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
     tilemap.remove_useless_stairs()
     tilemap.remove_single_wall()
     tilemap.crop_void()
+    if theme.convert_void_to_water:
+        tilemap.convert_void_to_water()
     # All floor tiles must be reachable
     if not tilemap.is_fully_connected():
         return
@@ -329,7 +331,7 @@ class DungeonTileMap:
                 # AND none of it's adjacent rooms are UPPER rooms
                 if section.room.floor_level == FloorLevel.UPPER \
                         and (section.has_full_room() 
-                             or any(adj.room.floor_level == FloorLevel.UPPER for adj in self._get_adj_sections(section_pos))):
+                             or any(adj.room and adj.room.floor_level == FloorLevel.UPPER for adj in self._get_adj_sections(section_pos))):
                     terrain = Terrain.FLOOR_UPPER  
                 else:
                     terrain = Terrain.FLOOR_LOWER
@@ -645,7 +647,7 @@ class DungeonTileMap:
             if is_odd:
                 arrs = self.theme.pillar_arrangements + self.theme.odd_only_pillar_arrangements
             else:
-                arrs = self.theme.pillar_arrangements + self.theme.even_only_pillar_arragements
+                arrs = self.theme.pillar_arrangements + self.theme.even_only_pillar_arrangements
             arr = random.choice(arrs)
             pillar_positions = set()
             if arr == "NoPillars":
@@ -956,6 +958,14 @@ class DungeonTileMap:
             for x in range(self.width):
                 del self.terrain_grid[(x, self.height - 1)]
             self.height -= 1
+
+    def convert_void_to_water(self):
+        convert = set()
+        for pos, terrain in self.terrain_grid.items():
+            if terrain == Terrain.VOID:
+                convert.add(pos)
+        for pos in convert:
+            self.terrain_grid[pos] = Terrain.WATER
 
     def print_terrain_grid(self):
         print("   ", end='')

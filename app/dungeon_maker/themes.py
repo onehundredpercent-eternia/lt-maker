@@ -7,21 +7,22 @@ class Theme:
     hallway_chance: float = 0.4  # Chance of single node room
     connection_chance: float = 1.0  # Chance to connect adjacent rooms together
     wide_hallway_chance: float = 0.5  # Chance of wide hallway
-    floor_lower_chance = 0.5
+    floor_lower_chance = 0.5  # Chance that a room is on the lower floor versus the upper floor
     use_forest: bool = False
-    use_water_chance: float = 0
+    use_water_chance: float = 0  # Use water and waterbridges on lower floor
     sparse_forest_chance: float = 0.15  # Chance that any lower floor position has a tree
     room_size_min_x: int = 3
     room_size_min_y: int = 3
     pillar_chance: float = 0.5  # Chance that any room has pillars
     pillar_arrangements: List[str] = ["OnEdge", "FourCorners", "NearEdge"]
     odd_only_pillar_arrangements: List[str] = ["Middle", "Middle"]
-    even_only_pillar_arragements: List[str] = []
+    even_only_pillar_arrangements: List[str] = []
     small_floor_section_area: int = 2  # A section of flooring that is this area or smaller, will swap to other level
     horiz_symmetry: bool = False
     vert_symmetry: bool = False
     fill_in_empty_areas: bool = False
     use_global_section: bool = False
+    convert_void_to_water: bool = False
 
 class DefaultTheme(Theme):
     pass
@@ -83,6 +84,29 @@ class SewersTheme(Theme):
     room_size_min_y: int = 2
     pillar_chance: float = 0.5  # Chance that any room has pillars
 
+class EntranceTheme(Theme):
+    size: Tuple[int, int] = (25, 15)
+    section_grid: Tuple[int, int] = (4, 3)
+    room_chance: float = 0.5
+    hallway_chance: float = 0.4  # Chance of single node room
+    connection_chance: float = 0.5  # Chance to connect adjacent rooms together
+    use_forest: bool = True
+    pillar_chance: float = 0.25  # Chance that any room has pillars
+    small_floor_section_area: int = 4  # A section of flooring that is this area or smaller, will swap to other level
+    convert_void_to_water: bool = True
+
+class CastleTheme(Theme):
+    size: Tuple[int, int] = (20, 30)
+    section_grid: Tuple[int, int] = (4, 4)
+    room_chance: float = 0.6
+    hallway_chance: float = 0.4  # Chance of single node room
+    connection_chance: float = 0.75  # Chance to connect adjacent rooms together
+    wide_hallway_chance: float = 1.0  # Chance of wide hallway
+    room_size_min_x: int = 3
+    room_size_min_y: int = 4
+    pillar_chance: float = 0.4  # Chance that any room has pillars
+    small_floor_section_area: int = 4  # A section of flooring that is this area or smaller, will swap to other level
+    fill_in_empty_areas: bool = True
 
 themes = {
     'default': DefaultTheme,
@@ -91,4 +115,6 @@ themes = {
     'winding': WindingHallwaysTheme,
     'complex': ComplexTheme,
     'sewers': SewersTheme,
+    'entrance': EntranceTheme,
+    'castle': CastleTheme,
 }

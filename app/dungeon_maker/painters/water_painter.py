@@ -51,9 +51,9 @@ class WaterPainter(Painter):
         north, _, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
         top, left, column = False, False, False
 
-        if north != Terrain.WATER:
+        if north and north != Terrain.WATER:
             top = True
-        if west != Terrain.WATER:
+        if west and west != Terrain.WATER:
             left = True
         if WaterPainter.is_column_bottom(dungeon_tilemap, pos):
             column = True

@@ -2,7 +2,6 @@ Types of Terrain left to add:
 Palettes:
 FE6 Final Map
 FE8 Final Map (Void -> Swamp)
-FE8 Some Castle (No new Tech required)
 Light Sacred Ruins (No new Tech required)
 Blue Bridges (Void + Hallway Walls on Lower Floor have chance to become Water)
 Gray Dungeon
@@ -19,3 +18,29 @@ Many Different Castle Palettes...
 Library (Castle)
 
 Add additional Trees/Flowers to Sacred Ruins/Monastery to make Garden Palette
+
+# Steps to make a dungeon
+`b;BlackBackground`
+`create_dungeon_level;level_id_to_replace;theme;size;palette;seed`
+`place_party_units`
+`gvar;light_points;20`
+`set_cursor;Start`
+`t;open`
+Dungeon has a set of parameters and palette
+Create a random map for level 1 based on parameters
+For each non-start room,
+    Decide on what kind of encounter will occur in that room
+        If enemies are in that encounter, decide on enemy types
+            Decide on enemy classes, items, formation
+            Place enemies
+    Decide if there will be treasure chest
+    If so, place treasure
+    Decide if there will be doors, if so, place keys somewhere
+Place party units at start of map
+Give party 20 Light Points
+Start the chapter
+When, they reach the end of the map, create a random map for level 2 based on parameters
+
+Determine how to create custom weapons
+
+

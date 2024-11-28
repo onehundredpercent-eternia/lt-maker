@@ -104,5 +104,6 @@ def generate_map(theme: str = 'default',
 if __name__ == '__main__':
     engine.init()
     engine.build_display((WINWIDTH, WINHEIGHT))
-    for i in range(10):
-        generate_map('sewers', 'mystic', seed=i)
+    for i in range(1):
+        generate_map('castle', 'green_castle', seed=i)
+    print("Done!")
