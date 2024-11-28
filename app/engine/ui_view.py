@@ -145,7 +145,7 @@ class UIView():
 
         # Display terrain with none, GBA, or Hybrid fog (hybrid only if in previously_visited_tile)
         if game.state.current() in self.legal_states and cf.SETTINGS['show_terrain'] and \
-                (game.board.terrain_known(game.cursor.position) or game.board.in_vision(game.cursor.position)):
+                game.board.terrain_known(game.cursor.position, game.board.in_vision(game.cursor.position)):
             self.tile_info_disp = self.create_tile_info(self.current_tile_pos)
             if self.tile_info_disp:
                 right = self.cursor_right

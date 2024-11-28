@@ -339,8 +339,9 @@ class BoundaryInterface():
             if not self.fog_of_war_surf:
                 self.fog_of_war_surf = engine.create_surface(full_size, transparent=True)
                 for (y, x) in utils.itergrid(self.height, self.width):
-                    if not game.board.in_vision((x, y)):
-                        if game.board.terrain_known((x, y)):
+                    is_in_vision = game.board.in_vision((x, y))
+                    if not is_in_vision:
+                        if game.board.terrain_known((x, y), is_in_vision):
                             image = self.fog_of_war_tile1
                         else:
                             image = self.fog_of_war_tile2

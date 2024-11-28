@@ -275,14 +275,14 @@ class GameBoard(object):
         else:
             return True
 
-    def terrain_known(self, pos: Pos) -> bool:
+    def terrain_known(self, pos: Pos, is_in_vision: bool) -> bool:
         """Returns whether the player knows the terrain type of this position.
-        Assumes tile is not in vision"""
+        """
         fog_of_war_type = game.get_current_fog_info().mode
         if fog_of_war_type == FogOfWarType.HYBRID:
-            return pos in self.previously_visited_tiles
+            return is_in_vision or pos in self.previously_visited_tiles
         elif fog_of_war_type == FogOfWarType.THRACIA:
-            return False
+            return is_in_vision
         else:  # GBA
             return True
 

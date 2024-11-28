@@ -235,9 +235,10 @@ class MiniMap(object):
         # Fog of War
         if game.get_current_fog_info().is_active or game.board.fog_region_set:
             for (x, y) in utils.itergrid(self.width, self.height):
-                if not game.board.in_vision((x, y)):
+                is_in_vision = game.board.in_vision((x, y))
+                if not is_in_vision:
                     mask = (x * self.scale_factor, y * self.scale_factor, self.scale_factor, self.scale_factor)
-                    if game.board.terrain_known((x, y)):
+                    if game.board.terrain_known((x, y), is_in_vision):
                         engine.fill(self.surf, (128, 128, 128), mask, engine.BLEND_RGB_MULT)
                     else:
                         engine.fill(self.surf, (12, 12, 12), mask)
