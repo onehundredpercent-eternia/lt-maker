@@ -1,3 +1,4 @@
+from pathlib import Path
 from app.data.resources.sounds import SongPrefab
 from app.utilities.data import HasNid
 from app.utilities.typing import NID
@@ -460,6 +461,10 @@ class SoundController(ABC):
     def reset(self):
         pass
 
+    @abstractmethod
+    def set_soundfont(self, nid: NID):
+        pass
+
 class NullSoundController(ABC):
     # === Volume ===
     def mute(self):
@@ -543,6 +548,9 @@ class NullSoundController(ABC):
         return None
 
     def reset(self):
+        pass
+
+    def set_soundfont(self, nid: NID):
         pass
 
 class DefaultSoundController(SoundController):
@@ -866,6 +874,10 @@ class DefaultSoundController(SoundController):
         SFX.clear()
         self.__init__()
 
+    def set_soundfont(self, nid: NID):
+        soundfont_path = RESOURCES.soundfonts.get(nid).full_path
+        engine.set_soundfont(Path(soundfont_path))
+
 MUSIC = MusicDict()
 SFX = SoundDict()
 
@@ -876,6 +888,8 @@ def init_sound_thread():
     try:
         pygame.mixer.init()
         _soundthread = DefaultSoundController()
+        print("setting soundfont", RESOURCES.soundfonts[0].nid)
+        _soundthread.set_soundfont(RESOURCES.soundfonts[0].nid)
     except Exception as e:
         logging.warning(e)
         logging.warning("Audio initialization failed; running game with no audio")

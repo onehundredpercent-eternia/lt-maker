@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 from typing import Tuple, TypeAlias
 from enum import Enum
@@ -26,6 +27,9 @@ def init():
     pygame.init()
     pygame.font.init()
     logging.info("Engine Init Completed")
+
+def set_soundfont(soundfont_path: Path):
+    pygame.mixer.set_soundfont(str(soundfont_path))
 
 def simple_init():
     pygame.init()

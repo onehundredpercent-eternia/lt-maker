@@ -9,6 +9,25 @@ from app.data.resources.resource_prefab import WithResources
 from app.utilities.data import HasNid, Prefab
 from app.utilities.typing import NestedPrimitiveDict
 
+class SoundFontPrefab(HasNid, WithResources, Prefab):
+    def __init__(self, nid):
+        self.nid = nid
+
+    @override
+    def set_full_path(self, full_path):
+        self.full_path = full_path
+
+    @override
+    def used_resources(self) -> List[Optional[Path]]:
+        return [Path(self.full_path)]
+
+    def save(self) -> NestedPrimitiveDict:
+        return {"nid": self.nid}
+
+    @classmethod
+    def restore(cls, s_dict: NestedPrimitiveDict):
+        return cls(s_dict["nid"])
+
 class SongPrefab(HasNid, WithResources, Prefab):
     def __init__(self, nid, format='ogg'):
         self.nid = nid
@@ -26,11 +45,9 @@ class SongPrefab(HasNid, WithResources, Prefab):
     def set_battle_full_path(self, full_path):
         self.battle_full_path = full_path
 
-    def save(self):
-        return {
-            'nid': self.nid,
-            'format': self.format
-        }
+    def save(self) -> NestedPrimitiveDict:
+        return {"nid": self.nid,
+                "format": self.format}
 
     @override
     def set_full_path(self, path: str) -> None:
@@ -90,3 +107,9 @@ class SFXCatalog(ManifestCatalog[SFXPrefab]):
     title = 'sfx'
     filetype = '.ogg'
     datatype = SFXPrefab
+
+class SoundFontCatalog(ManifestCatalog[SoundFontPrefab]):
+    manifest = 'soundfonts.json'
+    title = 'soundfonts'
+    filetype = '.sf2'
+    datatype = SoundFontPrefab

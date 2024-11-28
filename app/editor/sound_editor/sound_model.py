@@ -107,16 +107,16 @@ class MusicModel(SoundModel):
     def create_new(self) -> bool:
         settings = MainSettingsController()
         starting_path = settings.get_last_open_path()
-        fns, ok = QFileDialog.getOpenFileNames(self.window, "Select SFX File", starting_path, "OGG Files (*.ogg);;All FIles (*)")
+        fns, ok = QFileDialog.getOpenFileNames(self.window, "Select SFX File", starting_path, "OGG Files (*.ogg);MIDI Files(*.midi);All FIles (*)")
         created = False
         if ok:
             ogg_msg = False
             for fn in fns:
-                if fn.endswith('.ogg'):
+                if fn.endswith('.ogg') or fn.endswith('.midi'):
                     nid = os.path.split(fn)[-1][:-4]
                     nid = str_utils.get_next_name(nid, [d.nid for d in RESOURCES.music])
-                    new_music = SongPrefab(nid)
-                    new_music.set_full_path(os.path.basename(fn))
+                    format = 'ogg' if fn.endswith('.ogg') else 'midi'
+                    new_music = SongPrefab(nid, fn, format)
                     RESOURCES.music.append(new_music)
                     created = True
                 elif not ogg_msg:

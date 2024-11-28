@@ -21,7 +21,7 @@ from app.data.resources.panoramas import PanoramaCatalog
 from app.data.resources.map_icons import MapIconCatalog
 from app.data.resources.map_sprites import MapSpriteCatalog
 from app.data.resources.tiles import TileSetCatalog, TileMapCatalog
-from app.data.resources.sounds import SFXCatalog, MusicCatalog
+from app.data.resources.sounds import SFXCatalog, MusicCatalog, SoundFontCatalog
 from app.data.resources.combat_palettes import PaletteCatalog
 from app.data.resources.combat_anims import CombatCatalog, CombatEffectCatalog
 
@@ -33,7 +33,7 @@ from app.utilities.typing import NestedPrimitiveDict
 class Resources():
     save_data_types = ("icons16", "icons32", "icons80", "portraits", "animations", "panoramas", "fonts",
                        "map_icons", "map_sprites", "combat_palettes", "combat_anims", "combat_effects", "music", "sfx",
-                       "tilesets", "tilemaps")
+                       "soundfonts", "tilesets", "tilemaps")
     save_as_chunks = ("combat_palettes", 'tilemaps')
     loose_file_types = ["custom_components", "custom_sprites", "system"]
 
@@ -89,6 +89,7 @@ class Resources():
 
         self.music = MusicCatalog()
         self.sfx = SFXCatalog()
+        self.soundfonts = SoundFontCatalog()
 
     def load(self, proj_dir, version: int, specific=None):
         self.main_folder = os.path.join(proj_dir, 'resources')

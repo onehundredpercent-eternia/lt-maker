@@ -140,13 +140,13 @@ class Data(Generic[T]):
         return self
 
     # Magic Methods
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self._list)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> T:
         return self._list[idx]
 
     def __iter__(self):
