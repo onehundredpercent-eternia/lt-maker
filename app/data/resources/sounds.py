@@ -10,11 +10,12 @@ from app.utilities.data import HasNid, Prefab
 from app.utilities.typing import NestedPrimitiveDict
 
 class SongPrefab(HasNid, WithResources, Prefab):
-    def __init__(self, nid, full_path=None):
+    def __init__(self, nid, format='ogg'):
         self.nid = nid
-        self.full_path = full_path
-        # self.length = None
+        self.format = format
 
+        # path info
+        self.full_path = None
         # Mutually exclusive. Can't have both start and battle versions
         self.intro_full_path = None
         self.battle_full_path = None
@@ -25,20 +26,22 @@ class SongPrefab(HasNid, WithResources, Prefab):
     def set_battle_full_path(self, full_path):
         self.battle_full_path = full_path
 
-    def full_save(self):
-        return (self.nid, self.intro_full_path, self.battle_full_path)
-
     def save(self):
-        return (self.nid, True if self.intro_full_path else False, True if self.battle_full_path else False)
+        return {
+            'nid': self.nid,
+            'format': self.format
+        }
 
     @override
     def set_full_path(self, path: str) -> None:
-        self.full_path = path
+        self.full_path = path + '.' + self.format
         parent_path = Path(path).parent
-        if self.battle_full_path:
-            self.set_battle_full_path(str(parent_path / (self.nid + '-battle.ogg')))
-        if self.intro_full_path:
-            self.set_intro_full_path(str(parent_path / (self.nid + '-intro.ogg')))
+        battle_full_path = parent_path / (self.nid + '-battle.' + self.format)
+        intro_full_path = parent_path / (self.nid + '-intro.' + self.format)
+        if battle_full_path.exists():
+            self.battle_full_path = str(battle_full_path)
+        elif intro_full_path.exists():
+            self.intro_full_path = str(intro_full_path)
 
     @override
     def used_resources(self) -> List[Optional[Path]]:
@@ -48,14 +51,11 @@ class SongPrefab(HasNid, WithResources, Prefab):
         return paths
 
     @classmethod
-    def restore(cls, s_tuple):
-        self = cls(s_tuple[0])
-        self.intro_full_path = s_tuple[1]
-        self.battle_full_path = s_tuple[2]
-        return self
+    def restore(cls, s_dict: NestedPrimitiveDict):
+        return cls(s_dict['nid'], format=s_dict['format'])
 
 class MusicCatalog(ManifestCatalog[SongPrefab]):
-    filetype = '.ogg'
+    filetype = ''
     manifest = 'music.json'
     title = 'music'
     datatype = SongPrefab

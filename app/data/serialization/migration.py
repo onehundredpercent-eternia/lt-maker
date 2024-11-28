@@ -1,8 +1,10 @@
 from typing import Dict
+from app.data.serialization.migrators.migrator_01 import Migrator01
 from app.data.serialization.migrators.migrator_base import MigratorBase
 from app.utilities.typing import NestedPrimitiveDict
 
 MIGRATORS: Dict[int, MigratorBase] = {
+    0: Migrator01(),
 }
 
 def migrate_db(data: NestedPrimitiveDict, version: int) -> NestedPrimitiveDict:

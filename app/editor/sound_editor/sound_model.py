@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QDialog
 from PyQt5.QtCore import Qt
 
 from app.utilities import str_utils
-from app.data.resources.sounds import SFXPrefab, SongPrefab
+from app.data.resources.sounds import MusicCatalog, SFXPrefab, SongPrefab
 from app.data.resources.resources import RESOURCES
 from app.editor.settings import MainSettingsController
 from app.editor.table_model import TableModel
@@ -115,7 +115,8 @@ class MusicModel(SoundModel):
                 if fn.endswith('.ogg'):
                     nid = os.path.split(fn)[-1][:-4]
                     nid = str_utils.get_next_name(nid, [d.nid for d in RESOURCES.music])
-                    new_music = SongPrefab(nid, fn)
+                    new_music = SongPrefab(nid)
+                    new_music.set_full_path(os.path.basename(fn))
                     RESOURCES.music.append(new_music)
                     created = True
                 elif not ogg_msg:
@@ -131,8 +132,8 @@ class MusicModel(SoundModel):
             QMessageBox.critical(self.window, "Selection Error!", "Cannot modify multiple songs at the same time!")
             return
         # Only the last index
-        current = [self._data[idx] for idx in idxs]
-        saved_d = [c.full_save() for c in current]
+        current: MusicCatalog = [self._data[idx] for idx in idxs]
+        saved_d = [(c.nid, c.intro_full_path, c.battle_full_path) for c in current]
         dialog = ModifyMusicDialog(self._data, current, self.window)
         result = dialog.exec_()
         if result == QDialog.Accepted:
