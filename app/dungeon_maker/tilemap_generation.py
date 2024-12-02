@@ -63,7 +63,8 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
 
 def generate_map(theme: str = 'default', 
                  palette_name: str = 'dungeon', 
-                 seed: int = -1):
+                 seed: int = -1,
+                 save_screenshot: bool = False) -> TileMapObject:
     dungeon_tilemap = generate_terrain(theme, seed)
     size = dungeon_tilemap.width, dungeon_tilemap.height
 
@@ -97,7 +98,9 @@ def generate_map(theme: str = 'default',
     true_terrain_grid = \
         {pos: get_terrain_nid_from_dungeon_terrain(terrain) for pos, terrain in dungeon_tilemap.terrain_grid.items()}
     tilemap = TileMapObject.build_from_scratch("sample", size, true_terrain_grid, surf, scratch_data)
-    tilemap.save_screenshot(f'LT-{theme}-{palette_name}-{seed}.png')
+    if save_screenshot:
+        tilemap.save_screenshot(f'LT-{theme}-{palette_name}-{seed}.png')
+    return tilemap, dungeon_tilemap
 
 # python -m app.dungeon_maker.tilemap_generation
 # Puts the screenshot at the bottom of the screenshot directory

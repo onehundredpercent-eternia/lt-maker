@@ -3794,3 +3794,4 @@ def dump_vars(self: Event, flags=None):
         file_utils.startfile(app_data_fman.get_path('_vars.json'))
     except:
         self.logger.error("dump_vars: Could not dump vars", exc_info=1)
+

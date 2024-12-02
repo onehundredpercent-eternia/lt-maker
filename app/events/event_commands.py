@@ -31,6 +31,7 @@ class Tags(Enum):
     OVERWORLD = 'Overworld'
     ACHIEVEMENT = 'Achievement'
     PERSISTENT_RECORDS = 'Persistent Records'
+    CUSTOM = 'Custom'
     HIDDEN = 'Hidden'
 
 UNIVERSAL_FLAGS = ['no_warn']
@@ -3530,6 +3531,30 @@ The *Party* entries are existing parties (the second can be empty but still must
     keywords = ["Party1","Party2"]
     optional_keywords = ["FixedUnits","Party1Name","Party2Name","Party1Limit","Party2Limit"]
     keyword_types = ["Party","Party","Expression","String","String","PositiveInteger","PositiveInteger"]
+
+# === Custom Event Commands Here ===
+class GenerateDungeon(EventCommand):
+    nid = 'generate_dungeon'
+    tag = Tags.CUSTOM
+    desc = ""
+
+    keywords = ["Chapter", "DungeonTheme", "DungeonPalette"]
+    optional_keywords = ["Seed"]
+    keyword_types = ["Chapter", "DungeonTheme", "DungeonPalette", "WholeNumber"]
+
+class PlaceEncounters(EventCommand):
+    nid = 'place_encounters'
+    tag = Tags.CUSTOM
+    desc = ""
+
+    keywords = []
+
+class PlaceParty(EventCommand):
+    nid = 'place_party'
+    tag = Tags.CUSTOM
+    desc = ""
+
+    keywords = ["Party"]
 
 def get_commands():
     return EventCommand.__subclasses__()

@@ -1,7 +1,7 @@
 from typing import Callable, Dict
 import inspect
 
-from app.events import event_functions, overworld_event_functions
+from app.events import event_functions, overworld_event_functions, custom_event_functions
 from app.utilities.typing import NID
 
 FUNCTION_CATALOG: Dict[NID, Callable] = {}
@@ -15,7 +15,9 @@ def get_catalog():
         # print([(k, v.__module__) for (k, v) in inspect.getmembers(event_functions, inspect.isfunction)])
         general_funcs = {k: v for (k, v) in inspect.getmembers(event_functions, inspect.isfunction) if not k.startswith("__") and v.__module__ == 'app.events.event_functions'}
         overworld_funcs = {k: v for (k, v) in inspect.getmembers(overworld_event_functions, inspect.isfunction) if not k.startswith("__") and v.__module__ == 'app.events.overworld_event_functions'}
+        custom_funcs = {k: v for (k, v) in inspect.getmembers(custom_event_functions, inspect.isfunction) if not k.startswith("__") and v.__module__ == 'app.events.custom_event_functions'}
         general_funcs.update(overworld_funcs)
+        general_funcs.update(custom_funcs)
         FUNCTION_CATALOG = general_funcs
     return FUNCTION_CATALOG
 

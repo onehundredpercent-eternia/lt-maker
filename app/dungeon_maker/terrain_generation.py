@@ -3,27 +3,21 @@
 https://pokemon-dungeoneer.vercel.app/
 https://github.com/EpicYoshiMaster/dungeon-mystery
 https://www.youtube.com/watch?v=fudOO713qYo
-
-Encounter generation:
-1. For each room, choose an encounter from the encounter list
-2. Place appropriate enemies in each room
 """
 
 from __future__ import annotations
-import random
 from typing import Dict, List, Optional, Set, Tuple
 
 from app.utilities import utils
 from app.utilities.typing import Pos
 from app.utilities.direction import Direction, get_cardinal_positions, get_diagonal_positions
-from app.dungeon_maker.utilities import set_random_seed, flood_fill
+from app.dungeon_maker.utilities import get_random_seed, set_random_seed, flood_fill
 from app.dungeon_maker.themes import Theme, themes
 from app.dungeon_maker.terrain import Terrain
 from app.dungeon_maker.floor_level import FloorLevel
 from app.dungeon_maker.dungeon_section import DungeonSection
 
 def generate_terrain(theme: str, seed=-1) -> DungeonTileMap:
-    random.seed(seed)
     set_random_seed(seed)
     theme: Theme = themes.get(theme)  # Convert str to Theme
 
@@ -135,6 +129,7 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
 
 class DungeonTileMap:
     def __init__(self, theme: Theme):
+        self.random = static_random.LCG(get_random_seed())
         self.theme = theme
         self.width, self.height = theme.size
         self.terrain_grid: Dict[Pos, Terrain] = {}
@@ -220,7 +215,7 @@ class DungeonTileMap:
         """
         full_rooms_generated = 0
         for spos, section in self.sections.items():
-            val = random.random()
+            val = self.random.random()
             if val < self.theme.room_chance:
                 section.generate_room()
                 full_rooms_generated += 1
@@ -292,12 +287,12 @@ class DungeonTileMap:
             return False
 
         # Try to find a start position!
-        start_pos, start_room = random.choice(available_sections)
+        start_pos, start_room = self.random.choice(available_sections)
         available_sections.remove((start_pos, start_room))
         valid_start_positions = [pos for pos in start_room.get_true_inner_positions() 
                                  if self.terrain_grid.get(pos) in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER)]
 
-        self.start = random.choice(valid_start_positions)
+        self.start = self.random.choice(valid_start_positions)
         self.terrain_grid[self.start] = Terrain.START
 
         # Try to find a good end position
@@ -312,7 +307,7 @@ class DungeonTileMap:
         valid_end_positions = [pos for pos in end_room.get_true_inner_positions() 
                                if self.terrain_grid.get(pos) in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER)]
 
-        self.end = random.choice(valid_end_positions)
+        self.end = self.random.choice(valid_end_positions)
         self.terrain_grid[self.end] = Terrain.END
 
         return True
@@ -472,7 +467,7 @@ class DungeonTileMap:
         water_sections = []
         for section_pos, section in self.sections.items():    
             if section.room and section.room.floor_level == FloorLevel.LOWER \
-                    and random.random() < self.theme.use_water_chance:
+                    and self.random.random() < self.theme.use_water_chance:
                 water_sections.append(section)
 
         # Get all positions in those sections
@@ -630,7 +625,7 @@ class DungeonTileMap:
         final_pillar_positions = set()
         final_column_positions = set()
         for section_grid_pos, section in self.sections.items():
-            if random.random() > self.theme.pillar_chance:
+            if self.random.random() > self.theme.pillar_chance:
                 continue
             if not section.has_big_room():
                 continue
@@ -648,7 +643,7 @@ class DungeonTileMap:
                 arrs = self.theme.pillar_arrangements + self.theme.odd_only_pillar_arrangements
             else:
                 arrs = self.theme.pillar_arrangements + self.theme.even_only_pillar_arrangements
-            arr = random.choice(arrs)
+            arr = self.random.choice(arrs)
             pillar_positions = set()
             if arr == "NoPillars":
                 continue  # No need to do anything at all
@@ -768,7 +763,7 @@ class DungeonTileMap:
             counter = 0
             borders = sorted(border_sections[idx])
             while counter < 6 and borders:
-                pos = random.choice(borders)
+                pos = self.random.choice(borders)
                 borders.remove(pos)
                 x, y = pos
                 if any(apos in outside_sections[idx] for apos in get_adjacent_positions(pos)) \
@@ -804,7 +799,7 @@ class DungeonTileMap:
         to_swap = set()
         for pos, terrain in self.terrain_grid.items():
             if terrain == Terrain.FLOOR_LOWER:
-                if random.random() < self.theme.sparse_forest_chance:
+                if self.random.random() < self.theme.sparse_forest_chance:
                     to_swap.add(pos)
         for pos in to_swap:
             self.terrain_grid[pos] = Terrain.SPARSE_FOREST

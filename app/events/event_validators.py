@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os, glob
 from enum import Enum
 from app.data.database.items import ItemPrefab
 from app.data.database.levels import LevelPrefab
@@ -19,6 +20,7 @@ from app.utilities import str_utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
 from app.events.regions import RegionType as RegionTypeEnum
+from app.dungeon_maker import themes
 
 class Validator():
     desc = ""
@@ -1401,6 +1403,12 @@ class SaveSlot(Validator):
         valids = [(None, str(i)) for i in range(self._db.constants.value('num_save_slots'))]
         valids.append((None, "suspend"))
         return valids
+
+class DungeonTheme(OptionValidator):
+    valid = [k for k in themes.themes.keys()]
+
+class DungeonPalette(OptionValidator):
+    valid = [f for f in glob.glob('app/dungeon_maker/palettes/') if os.path.isdir(os.path.join('app/dungeon_maker/palettes/', f))]
 
 validators: Dict[str, Type[Validator]] = {validator.__name__: validator for validator in recursive_subclasses(Validator)}
 for validator in EvalValidator.__subclasses__():
