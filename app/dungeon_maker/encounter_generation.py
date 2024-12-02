@@ -69,35 +69,174 @@ class Basic(Encounter):
     requirements = EncounterRequirements(min_width=3, min_height=3)
     weight = 1
 
+    num_units = 4
     valid_classes = [
+        "Thief",
         "Mercenary",
         "Soldier",
+        "Cavalier"
+        "Armor",
         "Fighter",
+        "Raider",
+        "Mage",
+    ]
+
+    affix_unit_chance = 0.5
+    affix_classes = [
+        "Archer",
+        "Cleric",
+        "Mage",
+        "Sorceror",
+        "Thief"
     ]
 
     def apply(self, game, rect: Tuple[int, int, int, int], tilemap: TileMapObject, 
               enemy_level: int, encounter_uid: int, rng: static_random.LCG):
         x, y, width, height = rect
-        area = (width - x) * (height - y)
-        max_number_of_units = max(5, area // 2)
 
         klass = rng.choice(self.valid_classes)
 
         # Place units on board
         all_positions = rng.shuffle(
             sorted(utils.tuple_add((x, y), utils.itergrid(width, height))))
-        for _ in range(max_number_of_units):
+        for _ in range(self.num_units):
             position = next(all_positions)
             unit = create_unit(game, klass, enemy_level, encounter_uid)
             action.do(action.RegisterUnit(unit))
             action.do(action.ArriveOnMap(unit, position))
 
+        # Affix unit
+        if rng.random() < self.affix_unit_chance:
+            affix_klass = rng.choice(self.affix_classes)
+            position = next(all_positions)
+            unit = create_unit(game, affix_klass, enemy_level, encounter_uid, rng)
+            action.do(action.RegisterUnit(unit))
+            action.do(action.ArriveOnMap(unit, position))
+
+
+@dataclass
+class TwoTypes(Encounter):
+    nid = "two_types"
+    requirements = EncounterRequirements(min_width=3, min_height=3)
+    weight = 0.75
+
+    num_units = 6
+    valid_classes = [
+        "Thief",
+        "Myrmidon",
+        "Mercenary",
+        "Soldier",
+        "Cavalier"
+        "Armor",
+        "Fighter",
+        "Raider",
+        "Archer",
+        "Mage",
+        "Sorceror",
+    ]
+
+    def apply(self, game, rect: Tuple[int, int, int, int], tilemap: TileMapObject, 
+              enemy_level: int, encounter_uid: int, rng: static_random.LCG):
+        x, y, width, height = rect
+
+        klass1 = rng.choice(self.valid_classes)
+        self.valid_classes.remove(klass1)
+        klass2 = rng.choice(self.valid_classes)
+
+        # Place units on board
+        all_positions = rng.shuffle(
+            sorted(utils.tuple_add((x, y), utils.itergrid(width, height))))
+        for idx in range(self.num_units):
+            if idx % 2 == 1:
+                klass = klass2
+            else:
+                klass = klass1
+            position = next(all_positions)
+            unit = create_unit(game, klass, enemy_level, encounter_uid, rng)
+            action.do(action.RegisterUnit(unit))
+            action.do(action.ArriveOnMap(unit, position))
+
+@dataclass
+class Leader(Encounter):
+    nid = "leader"
+    requirements = EncounterRequirements(min_width=3, min_height=3)
+    weight = 0.5
+
+    num_units = 4
+    valid_classes = [
+        "Thief",
+        "Mercenary",
+        "Soldier",
+        "Cavalier"
+        "Armor",
+        "Fighter",
+        "Raider",
+        "Mage",
+    ]
+
+    affix_classes = [
+        "Archer",
+        "Cleric",
+        "Mage",
+        "Sorceror",
+        "Thief"
+    ]
+
+    def apply(self, game, rect: Tuple[int, int, int, int], tilemap: TileMapObject, 
+              enemy_level: int, encounter_uid: int, rng: static_random.LCG):
+        x, y, width, height = rect
+
+        klass = rng.choice(self.valid_classes)
+        leader_klass = rng.choice(self.valid_classes)
+
+        # Place units on board
+        all_positions = rng.shuffle(
+            sorted(utils.tuple_add((x, y), utils.itergrid(width, height))))
+        for idx in range(self.num_units):
+            position = next(all_positions)
+            unit = create_unit(game, klass, enemy_level, encounter_uid)
+            action.do(action.RegisterUnit(unit))
+            action.do(action.ArriveOnMap(unit, position))
+
+        # Place leader 5 levels ahead
+        position = next(all_positions)
+        unit = create_unit(game, leader_klass, enemy_level + 5, encounter_uid)
+        action.do(action.RegisterUnit(unit))
+        action.do(action.ArriveOnMap(unit, position))
+
+        # Affix unit
+        if rng.random() < self.affix_unit_chance:
+            affix_klass = rng.choice(self.affix_classes)
+            position = next(all_positions)
+            unit = create_unit(game, affix_klass, enemy_level, encounter_uid, rng)
+            action.do(action.RegisterUnit(unit))
+            action.do(action.ArriveOnMap(unit, position))
+
 encounters = [
-    Basic()
+    Basic(),
+    TwoTypes(),
+    Leader(),
 ]
 
-def get_items(self, game, klass: NID, level: int, rng: static_random.LCG) -> List[NID]:
+def convert_level_to_item_tier(level: int) -> str:
+    if 1 <= level <= 5:
+        return 'Bronze'
+    elif 6 <= level <= 12:
+        return 'Iron'
+    elif 13 <= level <= 19:
+        return 'Steel'
+    elif 20 <= level <= 32:
+        return 'Silver'
+    else:
+        return 'Mithril'
+
+def get_items(game, klass: NID, level: int, rng: static_random.LCG) -> List[NID]:
+    """
+    Returns list of items unit should start with
+    """
     klass_prefab = DB.classes.get(klass)
+    tier = convert_level_to_item_tier(level)
+
     # Figure out what kind of weapon this unit can wield
     usable_weapon_types: List[NID] = []
     for nid, wexp_gain in klass_prefab.wexp_gain:
@@ -105,22 +244,22 @@ def get_items(self, game, klass: NID, level: int, rng: static_random.LCG) -> Lis
             usable_weapon_types.append(nid)
 
     weapon_type = rng.choice(usable_weapon_types)
-    match weapon_type:
-        case 'Sword':
-            return ['Bronze Sword']
-        case 'Lance':
-            return ['Bronze Lance']
-        case 'Axe':
-            return ['Bronze Axe']
-    return []
 
-def create_unit(self, game, klass: NID, level: int, ai_group: NID) -> UnitObject:
+    item_prefabs = DB.items.values()
+    primary_item_prefabs = [i for i in item_prefabs if i.weapon_type == weapon_type and tier in i.item_tags and 'Primary' in i.item_tags]
+    secondary_item_prefabs = [i for i in item_prefabs if i.weapon_type == weapon_type and tier in i.item_tags and 'Secondary' in i.item_tags]
+    
+    primary = rng.choice(primary_item_prefabs)
+    secondary = rng.choice(secondary_item_prefabs)
+    return [primary] + [secondary]
+
+def create_unit(game, klass: NID, level: int, ai_group: NID, rng: static_random.LCG) -> UnitObject:
     """
     Given a desired unit's class, level, and ai_group,
     creates and returns the newly created unit
     """
     unit_nid = str_utils.get_next_int('201', [unit.nid for unit in game.units])
-    items: List[NID] = get_items(game, klass, level)
+    items: List[NID] = get_items(game, klass, level, rng)
     unit_prefab = GenericUnit(unit_nid, None, level, klass, "Enemy", items, [], "enemy", "Defend", ai_group=ai_group)
     unit = UnitObject.from_prefab(unit_prefab, game.current_mode)
     unit.party = game.current_party
