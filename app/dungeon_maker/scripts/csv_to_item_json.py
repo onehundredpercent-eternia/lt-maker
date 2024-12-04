@@ -64,6 +64,7 @@ for item in items:
             ["weight", item.weight],
             ["value", item.value],
             ["uses", item.uses],
+            ["uses_options", {"lose_uses_on_miss": False, "one_loss_per_combat": False}],
             ["item_tags", [f"{item.weapon_type}", f"{item.tier}"]]
         ]
     }
