@@ -245,10 +245,15 @@ def get_items(game, klass: NID, level: int, rng: static_random.LCG) -> List[NID]
 
     weapon_type = rng.choice(usable_weapon_types)
 
+    def is_weapon_type(item: ItemPrefab, weapon_type: NID):
+        return item.weapon_type == weapon_type or (item.item_prefab and DB.items.get(item.item_prefab.value).weapon_type == weapon_type)
+
     item_prefabs = DB.items.values()
-    primary_item_prefabs = [i for i in item_prefabs if i.weapon_type == weapon_type and tier in i.item_tags and 'Primary' in i.item_tags]
-    secondary_item_prefabs = [i for i in item_prefabs if i.weapon_type == weapon_type and tier in i.item_tags and 'Secondary' in i.item_tags]
-    
+    primary_item_prefabs = [i for i in item_prefabs 
+        if is_weapon_type(i, weapon_type)
+        and tier in i.item_tags and 'Primary' in i.item_tags]
+    secondary_item_prefabs = [i for i in item_prefabs if is_weapon_type(i, weapon_type) and tier in i.item_tags and 'Secondary' in i.item_tags]
+
     primary = rng.choice(primary_item_prefabs)
     secondary = rng.choice(secondary_item_prefabs)
     return [primary] + [secondary]
