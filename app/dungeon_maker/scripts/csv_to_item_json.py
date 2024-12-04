@@ -64,6 +64,7 @@ for item in items:
             ["weight", item.weight],
             ["value", item.value],
             ["uses", item.uses],
+            ["item_tags", [f"{item.weapon_type}", f"{item.tier}"]]
         ]
     }
     data.append(s_dict)
