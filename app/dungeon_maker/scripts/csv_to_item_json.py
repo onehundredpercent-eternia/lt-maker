@@ -6,11 +6,8 @@ from dataclasses import dataclass
 
 # Make sure file is saved with all items in the same json
 
-fn = "items.csv"
-proj = "west_march.ltproj"
-
-with open(fn, newline='') as csvfile:
-    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+csv_fn = os.path.abspath("items3.csv")
+proj = "../../../../west_march/west_march.ltproj"
 
 @dataclass
 class Item:
@@ -28,25 +25,29 @@ class Item:
     desc: str
 
 items: List[Item] = []
-for row in reader[1:]:
-    if len(row) == 0:
-        continue  # Skip empty lines
-    nid = row[0]
-    row = row[1]
-    col = row[2]
-    tier = row[3]
-    weapon_type = row[4]
-    mt = int(row[5])
-    hit = int(row[6])
-    crit = int(row[7])
-    weight = int(row[8])
-    uses = int(row[9])
-    value = int(row[10])
-    desc = row[12]
-    item = Item(nid, row, col, tier, weapon_type, mt, hit, crit, weight, uses, value, desc)
-    items.append(item)
+with open(csv_fn, newline='') as csvfile:
+    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    for row in reader:
+        print(row)
+        if len(row) == 0:
+            continue  # Skip empty lines
+        nid = row[0]
+        ro = int(row[1])
+        col = int(row[2])
+        tier = row[4]
+        weapon_type = row[3]
+        mt = int(row[5])
+        hit = int(row[6])
+        crit = int(row[7])
+        weight = int(row[8])
+        uses = int(row[9])
+        value = int(row[10])
+        desc = row[12]
+        item = Item(nid, ro, col, tier, weapon_type, mt, hit, crit, weight, uses, value, desc)
+        items.append(item)
 
-item_json_loc = os.path.join(proj, "game_data", "items.json")
+item_json_loc = os.path.abspath(os.path.join(proj, "game_data", "items.json"))
+new_item_json_loc = os.path.abspath(os.path.join(proj, "game_data", "items.json"))
 with open(item_json_loc) as fp:
     json_data = json.load(fp)
 
@@ -81,5 +82,5 @@ for item in items:
     # Add basic tag
     json_data.append(s_dict)
 
-with open(item_json_loc, 'w') as fp:
+with open(new_item_json_loc, 'w') as fp:
     json.dump(json_data, fp, indent=4)

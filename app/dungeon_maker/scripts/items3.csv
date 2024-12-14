@@ -1,0 +1,138 @@
+Bronze_Sword,0,0,Sword,Bronze,4,80,0,4,40,4,160,
+Iron_Sword,1,0,Sword,Iron,6,90,0,6,30,10,300,
+Steel_Sword,2,0,Sword,Steel,9,75,0,8,25,20,500,
+Silver_Sword,3,0,Sword,Silver,8,100,10,7,20,45,900,
+Adamant_Sword,4,0,Sword,Silver,12,80,5,13,20,56,1120,
+Mithril_Sword,5,0,Sword,Mithril,13,105,15,7,12,120,1440,
+Miracle_Sword,0,1,Sword,Steel,7,80,0,6,16,50,800,Grants Miracle. Shatters when used.
+Rapier,1,1,Sword,Iron,5,90,10,4,25,32,800,Effective against Armor
+Killing_Edge,2,1,Sword,Steel,9,80,30,6,30,30,900,
+Magebane_Sword,3,1,Sword,Silver,7,80,0,9,20,60,1200,Grants RES +10. Silences (2) on hit.
+Gallowglass_Sword,4,1,Sword,Steel,10,80,0,8,25,42,1050,Targets RES
+Brave_Sword,5,1,Sword,Mithril,9,80,0,8,30,70,2100,Brave on attack
+Coldiron_Blade,6,1,Sword,Iron,7,75,15,7,30,19,570,Effective against Fae
+Blessed_Blade,7,1,Sword,Steel,8,85,10,9,20,61,1220,Grants Regeneration. Effective against Monsters
+Armorslayer,0,2,Sword,Iron,8,80,0,10,25,32,800,Effective against Armor
+Electric_Edge,1,2,Sword,Silver,5,95,0,6,12,62,744,Paralyzes (2) on hit
+Lancereaver,2,2,Sword,Silver,7,80,0,9,20,60,1200,Reverses and doubles weapon triangle
+Greatsword,3,2,Sword,Silver,15,70,0,17,30,32,960,Shoves enemy on hit
+Masterwork_Sword,4,2,Sword,Mithril,14,115,20,7,16,160,2560,
+Zweihander,5,2,Sword,Steel,11,75,0,14,24,40,960,Cleaves on attack
+Crystal_Sword,6,2,Sword,Silver,13,120,35,10,3,180,540,
+Leeching_Sword,7,2,Sword,Silver,7,75,5,8,18,60,1080,Grants Lifelink
+Piercing_Sword,0,3,Sword,Steel,10,80,0,11,24,40,960,Pierces on attack
+Shimmer_Sword,1,3,Sword,Silver,8,95,10,7,20,48,960,Grants +50 Avoid against non-adjacent attacks
+Soldiers_Sword,2,3,Sword,Bronze,6,100,0,8,40,10,400,
+Superior_Edge,3,3,Sword,Silver,11,80,0,10,20,60,1200,Guaranteed to double against Swords. Cannot be doubled by Swords.
+Stone_Sword,4,3,Sword,Steel,16,55,0,20,17,30,510,
+Parrying_Blade,5,3,Sword,Iron,8,75,0,11,25,32,800,"Grants DEF +3, Avoid -10"
+Shamshir,6,3,Sword,Mithril,8,85,50,5,22,64,1408,
+Boom_Sword,7,3,Sword,Silver,12,65,0,14,20,77,1540,Double damage and +50 Hit on attack. Cannot counterattack
+Slim_Sword,0,4,Sword,Iron,4,100,10,2,25,22,550,
+Brightblade,1,4,Sword,Silver,8,100,0,8,16,72,1152,Sight +3. Grants Torchpoint on Hit
+Shield_Sword,2,4,Sword,Silver,10,70,0,13,15,88,1320,"Grants DEF +6, Avoid -30"
+Flareblade,3,4,Sword,Steel,6,85,0,6,30,30,900,Grants RES +4
+Thunderblade,4,4,Sword,Steel,9,75,0,8,25,48,1200,Grants Avoid +10
+Gustblade,5,4,Sword,SIlver,7,85,0,8,20,96,1920,Grants Brave on Attack
+Moonlight,6,4,Sword,Mithril,12,90,20,14,20,144,2880,
+Bronze_Lance,0,0,Lance,Bronze,5,70,0,5,40,3,120,
+Iron_Lance,1,0,Lance,Iron,7,75,0,8,30,8,240,
+Steel_Lance,2,0,Lance,Steel,10,65,0,10,25,16,400,
+Silver_Lance,3,0,Lance,Silver,9,85,10,9,20,37,740,
+Adamant_Lance,4,0,Lance,Silver,14,70,5,16,20,47,940,
+Mithril_Lance,5,0,Lance,Mithril,15,90,15,9,12,100,1200,
+Miracle_Lance,0,1,Lance,Steel,8,70,0,8,16,42,672,Grants Miracle. Shatters when used.
+Horseslayer,1,1,Lance,Iron,10,70,0,13,25,26,650,Effective against Cavalry
+Killer_Lance,2,1,Lance,Steel,10,70,30,8,30,25,750,
+Magebane_Lance,3,1,Lance,Silver,8,70,0,11,20,50,1000,Grants RES +10. Silences (2) on hit.
+Gallowglass_Lance,4,1,Lance,Steel,12,70,0,9,25,35,875,Targets RES
+Brave_Lance,5,1,Lance,Mithril,10,70,0,9,30,58,1740,Brave on attack
+Coldiron_Pike,6,1,Lance,Iron,8,65,15,9,30,15,450,Effective against Fae
+Blessed_Lance,7,1,Lance,Steel,9,70,10,11,20,51,1020,Grants Regeneration. Effective against Monsters
+Heavy_Spear,0,2,Lance,Iron,9,70,0,12,25,26,650,Effective against Armor
+Lightning_Lance,1,2,Lance,Silver,8,85,0,9,12,60,720,Paralyzes (2) on hit
+Axereaver,2,2,Lance,Silver,8,70,0,11,20,50,1000,Reverses and doubles weapon triangle
+Greatlance,3,2,Lance,Silver,18,60,0,18,30,26,780,Shoves enemy on hit
+Masterwork_Lance,4,2,Lance,Mithril,16,100,20,9,16,134,2144,
+Crystal_Lance,6,2,Lance,Silver,15,105,35,12,3,151,453,
+Leeching_Lance,7,2,Lance,Silver,8,65,5,9,18,50,900,Grants Lifelink
+Piercing_Spear,0,3,Lance,Steel,12,70,0,13,24,33,792,Pierces on attack
+Shimmer_Spear,1,3,Lance,Silver,9,80,10,9,20,40,800,Grants +50 Avoid against non-adjacent attacks
+Soldiers_Spear,2,3,Lance,Bronze,7,85,0,9,40,8,320,
+Superior_Lance,3,3,Lance,Silver,13,70,0,12,20,50,1000,Guaranteed to double against Lances. Cannot be doubled by Lances.
+Boom_Pike,7,3,Lance,Silver,14,55,0,17,20,64,1280,Double damage and +50 Hit on Attack. Cannot counterattack
+Slim_Lance,0,4,Lance,Iron,4,85,10,3,25,18,450,
+Brightlance,1,4,Lance,Silver,9,85,0,9,16,60,960,Sight +3. Grants Torchpoint on hit
+Shield_Lance,2,4,Lance,Silver,12,65,0,14,15,74,1110,"Grants DEF +6, Avoid -30"
+Javelin,3,4,Lance,Iron,5,65,0,10,20,40,800,Cannot double
+Spear,4,4,Lance,Silver,11,70,0,14,10,160,1600,Cannot double
+Bronze_Axe,0,0,Axe,Bronze,6,60,0,6,40,2,80,
+Iron_Axe,1,0,Axe,Iron,8,65,0,9,30,7,210,
+Steel_Axe,2,0,Axe,Steel,12,55,0,12,25,14,350,
+Silver_Axe,3,0,Axe,Silver,11,75,10,11,20,31,620,
+Adamant_Axe,4,0,Axe,Silver,16,60,5,18,20,39,780,
+Mithril_Axe,5,0,Axe,Mithril,18,75,15,11,12,84,1008,
+Miracle_Axe,0,1,Axe,Steel,9,60,0,9,16,35,560,Grants Miracle. Shatters when used.
+Halberd,1,1,Axe,Iron,11,65,0,14,25,30,750,Effective against Cavalry
+Hammer,1,2,Axe,Iron,15,50,0,18,25,26,650,Effective against Armor
+Killer_Axe,2,1,Axe,Steel,12,60,30,9,30,21,630,
+Magebane_Axe,3,1,Axe,Silver,9,60,0,13,20,42,840,Grants RES +10. Silences (2) on Hit.
+Gallowglass_Axe,4,1,Axe,Steel,14,60,0,11,25,29,725,Targets RES
+Brave_Axe,5,1,Axe,Mithril,12,60,0,14,30,49,1470,Brave on attack
+Coldiron_Axe,6,1,Axe,Iron,9,55,15,12,30,13,390,Effective against Fae
+Blessed_Axe,7,1,Axe,Steel,11,60,10,12,20,42,840,Grants Regeneration. Effective against Monsters
+Swordreaver,2,2,Axe,Silver,9,60,0,14,20,42,840,Reverses weapon triangle
+Greathammer,3,2,Axe,Silver,21,50,0,22,30,22,660,Shoves on hit
+Masterwork_Axe,4,2,Axe,Mithril,19,85,20,11,16,112,1792,
+Cleaving_Axe,5,2,Axe,Steel,15,55,0,19,24,28,672,Cleaves on attack
+Crystal_Mace,6,2,Axe,Silver,18,90,35,16,3,126,378,
+Leeching_Axe,7,2,Axe,Silver,9,55,5,12,18,42,756,Grants Lifelink
+Shimmer_Axe,1,3,Axe,Silver,11,70,10,10,20,36,720,Grants +50 Avoid against non-adjacent attacks
+Soldiers_Axe,2,3,Axe,Bronze,8,75,0,12,40,7,280,
+Superior_Axe,3,3,Axe,Silver,15,60,0,14,20,42,840,Guaranteed to double against Axes. Cannot be doubled by Axes.
+Dragontooth,4,3,Axe,Steel,22,40,0,25,17,21,357,
+Boomhammer,7,3,Axe,Silver,16,45,0,19,20,53,1060,Double damage and +50 Hit on attack. Cannot counterattack
+Shield_Axe,2,4,Axe,Silver,14,55,0,17,15,64,960,"Grants DEF +6, Avoid -30"
+Hatchet,0,4,Axe,Iron,5,75,10,3,25,15,375,
+Brightmace,1,4,Axe,Silver,11,75,0,12,16,50,800,Sight +3. Grants Torchpoint on hit
+Hand_Axe,3,4,Axe,Iron,7,55,0,13,20,36,720,Cannot double
+Tomahawk,4,4,Axe,Silver,13,60,0,16,10,130,1300,Cannot double
+Thorn_Bow,0,0,Bow,Bronze,4,75,0,5,40,3,120,
+Willow_Bow,1,0,Bow,Iron,6,80,0,7,30,9,270,
+Oak_Bow,2,0,Bow,Steel,9,70,0,9,25,18,450,
+Yew_Bow,3,0,Bow,Silver,8,90,10,8,20,40,800,
+Rowan_Bow,4,0,Bow,Silver,13,75,5,15,20,50,1000,
+Ash_Bow,5,0,Bow,Mithril,14,95,15,8,12,108,1296,
+Miracle_Bow,0,1,Bow,Steel,7,75,0,7,16,45,720,Grants Miracle. Shatters when used.
+Longbow,1,1,Bow,Iron,5,80,10,5,25,32,800,
+Killer_Bow,2,1,Bow,Steel,9,75,30,7,30,27,810,
+Magebane_Bow,3,1,Bow,Silver,7,75,0,11,20,54,1080,Grants RES +10. Silences (2) on hit.
+Hazel_Bow,4,1,Bow,Steel,11,75,0,9,25,37,925,Targets RES
+Brave_Bow,5,1,Bow,Mithril,9,75,0,9,30,63,1890,Brave on attack
+Blessed_Bow,7,1,Bow,Steel,8,75,10,11,20,54,1080,Grants Regeneration. Effective against Monsters
+Greatbow,3,2,Bow,Silver,16,65,0,20,30,28,840,Shoves enemy on hit
+Masterwork_Bow,4,2,Bow,Mithril,15,105,20,8,16,144,2304,
+Piercing_Bow,0,3,Bow,Steel,11,75,0,13,24,36,864,Pierces on attack
+Shimmer_Bow,1,3,Bow,Silver,8,85,10,8,20,43,860,Grants +50 Avoid against non-adjacent attacks
+Soldiers_Bow,2,3,Bow,Bronze,6,90,0,9,40,9,360,
+Superior_Bow,3,3,Bow,Silver,12,75,0,12,20,54,1080,Guaranteed to double against Swords. Cannot be doubled by Swords.
+Boom_Bow,7,3,Bow,Silver,11,55,0,16,20,69,1380,Double damage and +50 Hit on attack. Cannot counterattack
+Shortbow,0,4,Bow,Iron,4,90,15,3,25,19,475,
+Brightbow,1,4,Bow,Silver,8,90,0,9,16,64,1024,Sight +3. Grants Torchpoint on Hit
+Fire,0,0,Fire,Iron,6,85,0,6,30,20,600,Grants RES +4
+Ulfire,1,0,Fire,Silver,9,100,10,7,20,60,1200,Grants RES +10
+Arkfire,2,0,Fire,Mithril,13,80,0,11,12,500,6000,Grants RES +20. AoE on first strike
+Wind,0,0,Wind,Bronze,4,100,0,4,40,8,320,Grants SPD +2
+Ulwind,1,0,Wind,SIlver,7,85,0,8,30,64,1920,Grants Brave on Attack
+Arkwind,2,0,Wind,Mithril,9,125,30,9,12,500,6000,Grants Brave on Attack. Galeforce on Kill
+Thunder,0,0,Thunder,Steel,9,75,0,8,25,36,900,Grants Avoid +10
+Ulthunder,1,0,Thunder,Silver,12,80,5,13,20,56,1120,Grants Avoid +30
+Arkthunder,2,0,Thunder,Mithril,14,85,15,15,12,500,6000,Grants Avoid +50. Ignores enemy RES.
+Gloom,0,0,Dark,Bronze,6,70,0,6,30,25,750,
+Flux,1,0,Dark,Iron,8,75,0,9,20,70,1400,Grants DEF +4
+Nyx,2,0,Dark,Steel,12,65,0,13,15,140,2100,Restores 50% of damage dealt
+Luna,3,0,Dark,Silver,11,85,20,12,12,310,3720,Ignores enemy RES.
+Howl,4,0,Dark,Mithril,16,70,5,20,10,390,3900,Crit +100 against enemies with a negative status
+Glimmer,0,0,Light,Bronze,4,85,5,6,30,20,600,Rally Hit +20 after combat
+Shine,1,0,Light,Steel,7,80,10,10,20,80,1600,Rally POW +4 after combat
+Noon,2,0,Light,Mithril,12,90,12,12,12,240,2880,Rally Immortal after combat

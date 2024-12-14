@@ -1,0 +1,37 @@
+Bronze_Sword,0,0,Sword,Bronze,4,80,0,4,40,4,160,
+Iron_Sword,1,0,Sword,Iron,6,90,0,6,30,10,300,
+Steel_Sword,2,0,Sword,Steel,9,75,0,8,25,20,500,
+Silver_Sword,3,0,Sword,Silver,8,100,10,7,20,45,900,
+Adamant_Sword,4,0,Sword,Silver,12,80,5,13,20,56,1120,
+Mithril_Sword,5,0,Sword,Mithril,13,105,15,7,12,120,1440,
+Miracle_Sword,0,1,Sword,Steel,7,80,0,6,16,50,800,Grants Miracle. Shatters when used.
+Rapier,1,1,Sword,Iron,5,90,10,4,25,32,800,Effective against Armor
+Killing_Edge,2,1,Sword,Steel,9,80,30,6,30,30,900,
+Magebane_Sword,3,1,Sword,Silver,7,80,0,9,20,60,1200,Grants RES +10. Silences (2) on hit.
+Gallowglass_Sword,4,1,Sword,Steel,10,80,0,8,25,42,1050,Targets RES
+Brave_Sword,5,1,Sword,Mithril,9,80,0,8,30,70,2100,Brave on attack
+Coldiron_Blade,6,1,Sword,Iron,7,75,15,7,30,19,570,Effective against Fae
+Blessed_Blade,7,1,Sword,Steel,8,85,10,9,20,61,1220,Grants Regeneration. Effective against Monsters
+Armorslayer,0,2,Sword,Iron,8,80,0,10,25,32,800,Effective against Armor
+Electric_Edge,1,2,Sword,Silver,5,95,0,6,12,62,744,Paralyzes (2) on hit
+Lancereaver,2,2,Sword,Silver,7,80,0,9,20,60,1200,Reverses and doubles weapon triangle
+Greatsword,3,2,Sword,Silver,15,70,0,17,30,32,960,Shoves enemy on hit
+Masterwork_Sword,4,2,Sword,Mithril,14,115,20,7,16,160,2560,
+Zweihander,5,2,Sword,Steel,11,75,0,14,24,40,960,Cleaves on attack
+Crystal_Sword,6,2,Sword,Silver,13,120,35,10,3,180,540,
+Leeching_Sword,7,2,Sword,Silver,7,75,5,8,18,60,1080,Grants Lifelink
+Piercing_Sword,0,3,Sword,Steel,10,80,0,11,24,40,960,Pierces on attack
+Shimmer_Sword,1,3,Sword,Silver,8,95,10,7,20,48,960,Grants +50 Avoid against non-adjacent attacks
+Soldiers_Sword,2,3,Sword,Bronze,6,100,0,8,40,10,400,
+Superior_Edge,3,3,Sword,Silver,11,80,0,10,20,60,1200,Guaranteed to double against Swords. Cannot be doubled by Swords.
+Stone_Sword,4,3,Sword,Steel,16,55,0,20,17,30,510,
+Parrying_Blade,5,3,Sword,Iron,8,75,0,11,25,32,800,"Grants DEF +3, Avoid -10"
+Shamshir,6,3,Sword,Mithril,8,85,50,5,22,64,1408,
+Boom_Sword,7,3,Sword,Silver,12,65,0,14,20,77,1540,Double damage and +50 Hit on attack. Cannot counterattack
+Slim_Sword,0,4,Sword,Iron,4,100,10,2,25,22,550,
+Brightblade,1,4,Sword,Silver,8,100,0,8,16,72,1152,Sight +3. Grants Torchpoint on Hit
+Shield_Sword,2,4,Sword,Silver,10,70,0,13,15,88,1320,"Grants DEF +6, Avoid -30"
+Flareblade,3,4,Sword,Steel,6,85,0,6,30,30,900,Grants RES +4
+Thunderblade,4,4,Sword,Steel,9,75,0,8,25,48,1200,Grants Avoid +10
+Gustblade,5,4,Sword,Silver,7,85,0,8,20,96,1920,Grants Brave on Attack
+Moonlight,6,4,Sword,Mithril,12,90,20,14,20,144,2880,
