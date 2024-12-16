@@ -612,11 +612,11 @@ class InfoMenuState(State):
             if growths:
                 contribution = unit_funcs.growth_contribution(self.unit, stat_nid)
             else:
-            base_value = self.unit.stats.get(stat_nid, 0)
-            subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
-            base_value += subtle_stat_bonus
-            contribution = self.unit.stat_contribution(stat_nid)
-            contribution['Base Value'] = base_value
+                base_value = self.unit.stats.get(stat_nid, 0)
+                subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
+                base_value += subtle_stat_bonus
+                contribution = self.unit.stat_contribution(stat_nid)
+                contribution['Base Value'] = base_value
             desc_text = text_funcs.translate_and_text_evaluate(curr_stat.desc, self=curr_stat, unit=self.unit)
             help_box = help_menu.StatDialog(desc_text or ('%s_desc' % stat_nid), contribution)
             self.info_graph.register((96 + 8, 16 * idx + 24, 64, 16), help_box, state, first=(idx == 0))
@@ -637,11 +637,11 @@ class InfoMenuState(State):
             if growths:
                 contribution = unit_funcs.growth_contribution(self.unit, stat_nid)
             else:
-            base_value = self.unit.stats.get(stat_nid, 0)
+                base_value = self.unit.stats.get(stat_nid, 0)
                 subtle_stat_bonus = self.unit.subtle_stat_bonus(stat_nid)
                 base_value += subtle_stat_bonus
-            contribution = self.unit.stat_contribution(stat_nid)
-            contribution['Base Value'] = base_value
+                contribution = self.unit.stat_contribution(stat_nid)
+                contribution['Base Value'] = base_value
             desc_text = text_funcs.translate_and_text_evaluate(curr_stat.desc, self=curr_stat, unit=self.unit)
             help_box = help_menu.StatDialog(desc_text or ('%s_desc' % stat_nid), contribution)
             self.info_graph.register((96 + 72, 16 * idx + 24, 64, 16), help_box, state)
@@ -695,14 +695,14 @@ class InfoMenuState(State):
                             aid_surf = SPRITES.get('aid_icon_%s' % tag)
                             break
                     else:
-                    if 'Dragon' in self.unit.tags:
-                        aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 48, 16, 16))
-                    elif 'Flying' in self.unit.tags:
-                        aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 32, 16, 16))
-                    elif 'Mounted' in self.unit.tags:
-                        aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 16, 16, 16))
-                    else:
-                        aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 0, 16, 16))
+                        if 'Dragon' in self.unit.tags:
+                            aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 48, 16, 16))
+                        elif 'Flying' in self.unit.tags:
+                            aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 32, 16, 16))
+                        elif 'Mounted' in self.unit.tags:
+                            aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 16, 16, 16))
+                        else:
+                            aid_surf = engine.subsurface(SPRITES.get('aid_icons'), (0, 0, 16, 16))
                     surf.blit(aid_surf, (112, 16 * true_idx + 24))
                     render_text(surf, ['text'], [text_funcs.translate('Aid')], ['yellow'], (72, 16 * true_idx + 24))
                     desc = text_funcs.translate_and_text_evaluate('Aid_desc', unit=self.unit)
