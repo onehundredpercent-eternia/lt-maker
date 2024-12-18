@@ -1,0 +1,41 @@
+Bolting,0,1,Thunder,Steel,Long,9,70,5,2000,Long range damaging attack that chains to nearby units
+Wyrmsfire,0,1,Fire,Steel,2-2,8,65,6,2000,Blast-1 AoE
+Frostbolt,0,1,Wind,Steel,1-1,7,75,6,2000,Lance-4 AoE
+Sandblast,1,1,Thunder,Steel,2-2,4,85,4,2000,Blast-1 AoE that causes Blindness (2)
+Fly,2,1,Wind,Steel,Long,--,--,6,1200,Grants Flying (5) and MOV +2 (5)
+Haste,3,1,Fire,Silver,1-1,--,--,4,2400,"Grants Mov +2, Spd +4, and Brave (2)"
+Blizzard,1,1,Wind,Silver,3-3,5,70,3,2000,Blast-3 AoE that causes Icy (3)
+Fireball,1,1,Fire,Silver,3-3,11,65,3,2000,Blast-2 AoE
+Stride,3,1,Wind,Silver,0,--,--,4,2000,Burst-3 AoE of MOV +5 (1)
+Shapestone,2,1,Thunder,Silver,Long,--,--,2,2000,Summons 4 walls for 3 turns. Each wall has 20 + POW HP
+Meteor,2,1,Fire,Mithril,Long,13,55,2,3000,Long range Blast-1 AoE 
+Wither,0,2,Dark,Steel,Long,4,55,8,2000,Long range damaging attack
+Ruin,1,1,Dark,Steel,2-2,6,65,6,2000,Blast-1 AoE that damages all weapons in inventories
+Stun,2,1,Dark,Steel,Long,--,--,5,2000,Long range Stunned (1)
+Hex,3,1,Dark,Steel,Long,--,--,5,2000,Long range -4 to all stats
+Invisibility,4,1,Dark,Steel,Long,--,--,4,1600,Grants Invisbility and Hit -30 (3)
+Sleep,5,1,Dark,Steel,1-1,--,--,5,2000,Short-range Stunned (3) until damaged
+Summon_Monster_I,0,3,Dark,Steel,1-1,--,--,5,2000,Summons a random monster
+Warp,0,1,Dark,Silver,1-1,--,--,3,3000,Warp target to anywhere in long-range
+Disintegrate,1,2,Dark,Silver,Long,11,--,2,3000,Long range damaging attack with +100 Crit. Cannot miss
+Berserk,2,2,Dark,Silver,Long,--,--,3,2100,Long range Enraged (3)
+Glassflesh,3,2,Dark,Silver,1-1,--,70,3,2100,Sets targets DEF and RES to 0 (3)
+Clone,4,2,Dark,Silver,1-1,--,--,2,3000,Duplicate target for 3 turns. Clone loses stats each turn.
+Mutate,5,2,Dark,Silver,Long,--,--,5,2500,"Re-rolls Traits, Stats, and Class. 50% chance for curse."
+Polymorph,6,2,Dark,Silver,1-1,--,--,2,4000,Transform target into a random monster
+Summon_Monster_II,1,3,Dark,Silver,1-1,--,--,3,3000,Summons a random monster
+Summon_Monster_III,2,3,Dark,Mithril,1-1,--,--,1,4000,Summons a random monster
+Geas,3,3,Dark,Mithril,Long,--,--,1,3000,Mind-control target (3)
+Heal,0,1,Light,Iron,0-1,--,--,20,900,Heals POW damage
+Mend,1,1,Light,Steel,0-0,--,--,10,1350,Heals POW*2 damage in Blast-1 AoE
+Physic,2,1,Light,Silver,Long,--,--,8,2000,Heals POW damage at Long Range
+Fortune,3,1,Light,Iron,Long,--,--,8,800,Hit +50 (1)
+Empower,4,1,Light,Iron,Long,--,--,8,800,POW +4 (1)
+Torch,5,1,Light,Steel,0-0,--,--,5,1250,Grant +4 light to Light Counter
+Shield,6,1,Light,Iron ,Long,--,--,4,1000,Target ignores next instance of damage dealt
+Purge,7,1,Light,Steel,Long,7,70,4,2000,Long range damaging attack. Effective against monsters
+Rescue,0,2,Light,Silver,Long,--,--,3,3000,Warp long-range ally in range to self
+Silence,1,2,Light,Silver,Long,--,--,5,2000,Silence (3)
+Ennoble,2,2,Light,Silver,1-1,--,--,2,3000,Grants target +STATS and a random legendary weapon with (4) uses
+Time_Stop,3,2,Light,Mithril,0-0,--,--,1,4000,Refresh self. Burst-2 AoE of Stun (1) + Invincibility (1)
+Refresh,4,2,Light,Steel,1-1,--,--,6,3000,Target can go again

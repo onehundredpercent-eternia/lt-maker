@@ -130,6 +130,8 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     # phase events
     'on_upkeep':                            HookInfo(['actions', 'playback', 'unit'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     'on_endstep':                           HookInfo(['actions', 'playback', 'unit'], ResolvePolicy.NO_RETURN, has_unconditional=True),
+    # wait events
+    'after_wait':                           HookInfo(['unit', 'actively_chosen'], ResolvePolicy.NO_RETURN),
     # combat events (as events but has unconditional variants)
     'start_combat':                         HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     'cleanup_combat':                       HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
