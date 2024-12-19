@@ -1,6 +1,4 @@
 from __future__ import annotations
-from app.data.database.item_components import ItemComponent
-from app.data.database.supports import SupportPair
 from app.engine.objects.tilemap import TileMapObject
 from app.utilities.typing import NID
 
@@ -8,7 +6,7 @@ import functools
 import logging
 import sys
 import app.engine.config as cf
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.data.database.database import DB
@@ -24,6 +22,7 @@ from app.engine.objects.unit import UnitObject
 from app.engine.objects.region import RegionObject
 from app.engine import engine
 from app.utilities import utils, static_random
+from app.utilities.typing import Pos
 from app.engine.source_type import SourceType
 
 def alters_game_state(func):
@@ -181,16 +180,14 @@ class Move(Action):
         if self.new_movement_left is not None:
             self.unit.movement_left = self.new_movement_left
         self.unit.has_moved = True
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
 
     def reverse(self):
         game.leave(self.unit)
         self.new_movement_left = self.unit.movement_left
         self.unit.has_moved = self.has_moved
+        game.arrive(self.unit, self.old_pos)
         self.new_pos = self.unit.position
-        self.unit.position = self.old_pos
-        game.arrive(self.unit)
         self.unit.movement_left = self.prev_movement_left
 
 # Just another name for move
@@ -211,21 +208,18 @@ class SimpleMove(Move):
 
     def do(self):
         game.leave(self.unit)
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
         self.update_fow_action.do()
 
     def execute(self):
         game.leave(self.unit)
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
         self.update_fow_action.execute()
 
     def reverse(self):
         self.update_fow_action.reverse()
         game.leave(self.unit)
-        self.unit.position = self.old_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.old_pos)
 
 
 class Teleport(SimpleMove):
@@ -241,8 +235,7 @@ class ForcedMovement(SimpleMove):
         self.unit.sprite.set_transition('fake_in')
 
         game.leave(self.unit)
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
         self.update_fow_action.do()
 
 
@@ -258,9 +251,8 @@ class Swap(Action):
     def do(self):
         game.leave(self.unit1)
         game.leave(self.unit2)
-        self.unit1.position, self.unit2.position = self.pos2, self.pos1
-        game.arrive(self.unit2)
-        game.arrive(self.unit1)
+        game.arrive(self.unit2, self.pos1)
+        game.arrive(self.unit1, self.pos2)
         self.update_fow_action1.do()
         self.update_fow_action2.do()
 
@@ -269,9 +261,8 @@ class Swap(Action):
         self.update_fow_action2.reverse()
         game.leave(self.unit1)
         game.leave(self.unit2)
-        self.unit1.position, self.unit2.position = self.pos1, self.pos2
-        game.arrive(self.unit2)
-        game.arrive(self.unit1)
+        game.arrive(self.unit2, self.pos1)
+        game.arrive(self.unit1, self.pos2)
 
 
 class Warp(SimpleMove):
@@ -279,8 +270,7 @@ class Warp(SimpleMove):
         self.unit.sprite.set_transition('warp_move')
 
         game.leave(self.unit)
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
         self.update_fow_action.do()
 
 
@@ -289,8 +279,7 @@ class Swoosh(SimpleMove):
         self.unit.sprite.set_transition('swoosh_move')
 
         game.leave(self.unit)
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
         self.update_fow_action.do()
 
 
@@ -299,68 +288,83 @@ class FadeMove(SimpleMove):
         self.unit.sprite.set_transition('fade_move')
 
         game.leave(self.unit)
-        self.unit.position = self.new_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.new_pos)
         self.update_fow_action.do()
 
-class PutUnitDown(Action):
-    def __init__(self, unit, test=False):
-        self.unit = unit
-        self.test = test
+class QuickArrive(Action):
+    """
+    Similar to ArriveOnMap, but doesn't do the Fog of War changes
+    """
+    def __init__(self, unit: UnitObject, pos: Pos, test: bool = False):
+        self.unit: UnitObject = unit
+        self.pos: Pos = pos
+        self.test: bool = test
 
     def do(self):
-        game.arrive(self.unit, self.test)
+        game.arrive(self.unit, self.pos, self.test)
 
     def reverse(self):
         game.leave(self.unit, self.test)
 
-class PickUnitUp(Action):
-    def __init__(self, unit, test=False):
-        self.unit = unit
-        self.test = test
+class QuickLeave(Action):
+    """
+    Similar to LeaveMap, but doesn't do the Fog of War changes
+    """
+    def __init__(self, unit: UnitObject, test: bool = False, keep_position: bool = False):
+        self.unit: UnitObject = unit
+        self.old_pos: Pos = self.unit.position
+        self.test: bool = test
+        self.keep_position: bool = keep_position
 
     def do(self):
         game.leave(self.unit, self.test)
+        if self.keep_position:
+            self.unit.position = self.old_pos
 
     def reverse(self):
-        game.arrive(self.unit, self.test)
+        game.arrive(self.unit, self.old_pos, self.test)
+
 
 class ArriveOnMap(Action):
-    def __init__(self, unit, pos):
-        self.unit = unit
-        self.place_on_map = PlaceOnMap(unit, pos)
+    """
+    Puts the unit onto the map from not being on the map
+    """
+    def __init__(self, unit: UnitObject, pos: Pos):
+        self.unit: UnitObject = unit
+        self.pos: Pos = pos
+        self.update_fow_action = UpdateFogOfWar(self.unit)
 
     def do(self):
-        self.place_on_map.do()
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.pos)
+        self.unit.previous_position = self.unit.position
+        self.update_fow_action.do()
 
     def reverse(self):
+        self.update_fow_action.reverse()
+        self.unit.previous_position = None
         game.leave(self.unit)
-        self.place_on_map.reverse()
+
 
 class WarpIn(ArriveOnMap):
     def do(self):
-        self.place_on_map.do()
+        super().do()
         self.unit.sprite.set_transition('warp_in')
-        game.arrive(self.unit)
 
 
 class SwooshIn(ArriveOnMap):
     def do(self):
-        self.place_on_map.do()
+        super().do()
         self.unit.sprite.set_transition('swoosh_in')
-        game.arrive(self.unit)
 
 
 class FadeIn(ArriveOnMap):
-    def __init__(self, unit, pos, fade_direction=None):
-        self.unit = unit
-        self.fade_direction = fade_direction
-        self.place_on_map = PlaceOnMap(unit, pos)
+    def __init__(self, unit: UnitObject, pos: Pos, fade_direction: Optional[str] = None):
+        super().__init__(unit, pos)
+        self.fade_direction: Optional[str] = fade_direction
 
     def do(self):
-        self.place_on_map.do()
-        if game.tilemap.on_border(self.unit.position) or self.fade_direction:
+        super().do()
+        if game.tilemap.on_border(self.pos) or self.fade_direction:
             if self.unit.position[0] == 0 or self.fade_direction == 'west':
                 self.unit.sprite.offset = [-TILEWIDTH, 0]
             elif self.unit.position[0] == game.tilemap.width - 1 or self.fade_direction == 'east':
@@ -372,66 +376,53 @@ class FadeIn(ArriveOnMap):
             self.unit.sprite.set_transition('fake_in')
         else:
             self.unit.sprite.set_transition('fade_in')
-        game.arrive(self.unit)
 
 
-class PlaceOnMap(Action):
-    def __init__(self, unit, pos):
-        self.unit = unit
-        self.pos = pos
+class LeaveMap(Action):
+    """
+    Removes the unit from the map.
+    """
+    def __init__(self, unit: UnitObject):
+        self.unit: UnitObject = unit
+        self.old_pos: Pos = self.unit.position
         self.update_fow_action = UpdateFogOfWar(self.unit)
 
     def do(self):
-        self.unit.position = self.pos
-        if self.unit.position:
-            self.unit.previous_position = self.unit.position
+        # In case the unit is currently still moving
+        if game.movement.is_moving(self.unit):
+            game.movement.stop(self.unit)
+            self.unit.sprite.reset()
+
+        game.leave(self.unit)
+        self.unit.previous_position = None
         self.update_fow_action.do()
 
     def reverse(self):
         self.update_fow_action.reverse()
-        self.unit.position = None
+        self.unit.previous_position = self.old_pos
+        game.arrive(self.unit, self.old_pos)
 
-
-class LeaveMap(Action):
-    def __init__(self, unit):
-        self.unit = unit
-        self.remove_from_map = RemoveFromMap(self.unit)
-
-    def do(self):
-        game.leave(self.unit)
-        self.remove_from_map.do()
-
-    def execute(self):
-        game.leave(self.unit)
-        self.remove_from_map.do()
-
-    def reverse(self):
-        self.remove_from_map.reverse()
-        game.arrive(self.unit)
+        self.unit.sprite.change_state('normal')
 
 
 class WarpOut(LeaveMap):
     def do(self):
-        game.leave(self.unit)
         self.unit.sprite.set_transition('warp_out')
-        self.remove_from_map.do()
+        super().do()
 
 
 class SwooshOut(LeaveMap):
     def do(self):
-        game.leave(self.unit)
         self.unit.sprite.set_transition('swoosh_out')
-        self.remove_from_map.do()
+        super().do()
 
 
 class FadeOut(LeaveMap):
-    def __init__(self, unit, fade_direction=None):
-        self.unit = unit
+    def __init__(self, unit: UnitObject, fade_direction: Optional[str] = None):
+        super().__init__(unit)
         self.fade_direction = fade_direction
-        self.remove_from_map = RemoveFromMap(self.unit)
 
     def do(self):
-        game.leave(self.unit)
         if game.tilemap.on_border(self.unit.position) or self.fade_direction:
             if self.unit.position[0] == 0 or self.fade_direction == 'west':
                 self.unit.sprite.offset = [-2, 0]
@@ -444,30 +435,7 @@ class FadeOut(LeaveMap):
             self.unit.sprite.set_transition('fake_out')
         else:
             self.unit.sprite.set_transition('fade_out')
-        self.remove_from_map.do()
-
-
-class RemoveFromMap(Action):
-    def __init__(self, unit):
-        self.unit = unit
-        self.old_pos = self.unit.position
-        self.update_fow_action = UpdateFogOfWar(self.unit)
-
-    def do(self):
-        # In case the unit is currently still moving
-        if game.movement.is_moving(self.unit):
-            game.movement.stop(self.unit)
-            self.unit.sprite.reset()
-
-        self.unit.position = None
-        self.update_fow_action.do()
-
-    def reverse(self):
-        self.update_fow_action.reverse()
-        self.unit.position = self.old_pos
-        self.unit.sprite.change_state('normal')
-        if self.unit.position:
-            self.unit.previous_position = self.unit.position
+        super().do()
 
 class RegisterUnit(Action):
     def __init__(self, unit):
@@ -727,7 +695,6 @@ class Rescue(Action):
         # TODO Add transition
 
         game.leave(self.rescuee)
-        self.rescuee.position = None
         self.unit.has_rescued = True
 
         if not skill_system.ignore_rescue_penalty(self.unit) and 'Rescue' in DB.skills:
@@ -741,7 +708,6 @@ class Rescue(Action):
         self.unit.traveler = self.rescuee.nid
 
         game.leave(self.rescuee)
-        self.rescuee.position = None
         self.unit.has_rescued = True
 
         for action in self.subactions:
@@ -749,8 +715,7 @@ class Rescue(Action):
         self.update_fow_rescuee.execute()
 
     def reverse(self):
-        self.rescuee.position = self.old_pos
-        game.arrive(self.rescuee)
+        game.arrive(self.rescuee, self.old_pos)
         self.unit.traveler = None
         self.unit.has_rescued = False
 
@@ -773,8 +738,7 @@ class Drop(Action):
 
     def do(self):
         self.subactions.clear()
-        self.droppee.position = self.pos
-        game.arrive(self.droppee)
+        game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.droppee_wait_action:
             self.droppee_wait_action.do()
@@ -792,8 +756,7 @@ class Drop(Action):
                                           (self.unit.position[1] - self.pos[1]) * TILEHEIGHT]
 
     def execute(self):
-        self.droppee.position = self.pos
-        game.arrive(self.droppee)
+        game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.droppee_wait_action:
             self.droppee_wait_action.execute()
@@ -810,7 +773,6 @@ class Drop(Action):
         if self.droppee_wait_action:
             self.droppee_wait_action.reverse()
         game.leave(self.droppee)
-        self.droppee.position = None
         self.unit.has_dropped = False
 
         for action in self.subactions:
@@ -895,8 +857,8 @@ class PairUp(Action):
         self.subactions.append(Reset(self.unit))
         self.subactions.append(SetMovementLeft(self.unit, move_left))
         skill_system.on_pairup(self.unit, self.target)
-        game.leave(self.unit)
-        self.unit.position = None
+        if self.unit.position:
+            game.leave(self.unit)
 
         self.unit.lead_unit = False
         self.target.lead_unit = True
@@ -914,8 +876,8 @@ class PairUp(Action):
         self.target.traveler = self.unit.nid
 
         skill_system.on_pairup(self.unit, self.target)
-        game.leave(self.unit)
-        self.unit.position = None
+        if self.unit.position:
+            game.leave(self.unit)
 
         logging.info(self.unit.nid + " was at " + str(self.old_pos) + " but paired up with " + self.target.nid + " at " + str(self.target.position))
 
@@ -927,8 +889,7 @@ class PairUp(Action):
         self.update_fow_unit.execute()
 
     def reverse(self):
-        self.unit.position = self.old_pos
-        game.arrive(self.unit)
+        game.arrive(self.unit, self.old_pos)
         self.target.traveler = None
         skill_system.on_separate(self.unit, self.target)
 
@@ -964,9 +925,7 @@ class SwitchPaired(Action):
         logging.info(self.leader.nid + " and " + self.follower.nid + " switched. The first was leader but is now follower, and vice versa.")
 
         game.leave(self.leader)
-        self.leader.position = None
-        self.follower.position = self.pos
-        game.arrive(self.follower)
+        game.arrive(self.follower, self.pos)
         # What is this if statement doing?
         if not self.follower.lead_unit:
             self.follower.has_moved = True
@@ -983,9 +942,7 @@ class SwitchPaired(Action):
         skill_system.on_pairup(self.follower, self.leader)
 
         game.leave(self.follower)
-        self.follower.position = None
-        self.leader.position = self.pos
-        game.arrive(self.leader)
+        game.arrive(self.leader, self.pos)
         # What is this if statement doing?
         if not self.leader.lead_unit:
             self.leader.has_moved = True
@@ -1002,8 +959,8 @@ class Separate(Action):
         self.old_gauge = self.unit.get_guard_gauge()
 
     def do(self):
-        self.droppee.position = self.pos
-        game.arrive(self.droppee)
+        if self.pos:
+            game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.with_wait:
             self.droppee_wait_action.do()
@@ -1025,8 +982,7 @@ class Separate(Action):
                                           (self.unit.position[1] - self.pos[1]) * TILEHEIGHT]
 
     def execute(self):
-        self.droppee.position = self.pos
-        game.arrive(self.droppee)
+        game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.with_wait:
             self.droppee_wait_action.execute()
@@ -1045,7 +1001,6 @@ class Separate(Action):
         if self.with_wait:
             self.droppee_wait_action.reverse()
         game.leave(self.droppee)
-        self.droppee.position = None
         self.unit.has_dropped = False
 
         self.unit.lead_unit = True
@@ -2220,25 +2175,27 @@ class SetNid(Action):
         if self.unit.generic:
             # Leave and arrive are necessary because the game
             # board has references to unit's by their nid
-            if self.unit.position:
+            orig_pos = self.unit.position
+            if orig_pos:
                 game.leave(self.unit)
             if self.unit.nid in game.unit_registry:
                 del game.unit_registry[self.unit.nid]
             self.unit.nid = self.new_nid
             game.register_unit(self.unit)
-            if self.unit.position:
-                game.arrive(self.unit)
+            if orig_pos:
+                game.arrive(self.unit, orig_pos)
 
     def reverse(self):
         if self.unit.generic:
-            if self.unit.position:
+            orig_pos = self.unit.position
+            if orig_pos:
                 game.leave(self.unit)
             if self.unit.nid in game.unit_registry:
                 del game.unit_registry[self.unit.nid]
             self.unit.nid = self.old_nid
             game.register_unit(self.unit)
-            if self.unit.position:
-                game.arrive(self.unit)
+            if orig_pos:
+                game.arrive(self.unit, orig_pos)
 
 class SetHP(Action):
     def __init__(self, unit, new_hp):
@@ -2678,18 +2635,17 @@ class ChangeTeam(Action):
 
     def do(self):
         true_pos = self.unit.position
-        if self.unit.position:
+        # Remove from map so update fog of war will remove from map
+        if true_pos:
             game.leave(self.unit)
-        self.unit.position = None  # Remove from map so update fog of war will remove from map
         self.fog_action1.do()  # Remove unit from the fog grid for its old team
         self.unit.team = self.team
         self.action.do()
         if self.team == 'player':
             # Make sure player unit's don't keep their AI
             self.ai_action.do()
-        self.unit.position = true_pos  # Add unit back to map
-        if self.unit.position:
-            game.arrive(self.unit)
+        if true_pos:
+            game.arrive(self.unit, true_pos)
         self.fog_action2.do()  # Add to fog of war with new team
         if game.boundary:
             game.boundary.reset_unit(self.unit)
@@ -2697,18 +2653,16 @@ class ChangeTeam(Action):
 
     def reverse(self):
         true_pos = self.unit.position
-        if self.unit.position:
+        if true_pos:
             game.leave(self.unit)
-        self.unit.position = None
         self.fog_action2.reverse()  # Remove new team's FOW
         self.unit.team = self.old_team
         if self.team == 'player':
             self.ai_action.reverse()
         self.action.reverse()
         self.fog_action1.reverse()  # Put unit back onto map
-        self.unit.position = true_pos
-        if self.unit.position:
-            game.arrive(self.unit)
+        if true_pos:
+            game.arrive(self.unit, true_pos)
         if game.boundary:
             game.boundary.reset_unit(self.unit)
         self.unit.sprite.load_sprites()
@@ -2857,22 +2811,18 @@ class SetGameBoardBounds(Action):
     def reverse(self):
         game.board.set_bounds(*self.old_bounds)
 
-def _region_leave(region):
+def _region_leave(region: RegionObject) -> List[Tuple[UnitObject, Pos]]:
     # Force all affected units to leave
+    affected_units: List[Tuple[UnitObject, Pos]] = []
     region_positions = region.get_all_positions()
     for unit in game.units:
         if unit.position in region_positions:
+            affected_units.append((unit, unit.position))
             game.leave(unit)
-
-def _region_arrive(region):
-    # Force all affected units to arrive
-    region_positions = region.get_all_positions()
-    for unit in game.units:
-        if unit.position in region_positions:
-            game.arrive(unit)
+    return affected_units
 
 class AddRegion(Action):
-    def __init__(self, region):
+    def __init__(self, region: RegionObject):
         self.region = region
         self.did_add = False
         self.subactions = []
@@ -2882,12 +2832,14 @@ class AddRegion(Action):
         if self.region.nid in game.level.regions:
             logging.warning("AddRegion Action: RegionObject with nid %s already in level", self.region.nid)
         else:
+            affected_units = []
             if self.region.region_type == RegionType.TERRAIN:
-                _region_leave(self.region)
+                affected_units = _region_leave(self.region)
 
             game.get_region_under_pos.cache_clear()
             game.level.regions.append(self.region)
             self.did_add = True
+
             # Remember to add the status from the unit
             if self.region.region_type == RegionType.STATUS:
                 for unit in game.units:
@@ -2902,13 +2854,15 @@ class AddRegion(Action):
                 for position in self.region.get_all_positions():
                     game.board.reset_pos(game.level.tilemap, position)
                 game.boundary.reset()
-                _region_arrive(self.region)
+                for unit, pos in affected_units:
+                    game.arrive(unit, pos)
 
             # Update fog of war if appropriate
             elif self.region.region_type == RegionType.FOG:
                 update_fow_action = AddFogRegion(self.region)
                 update_fow_action.do()
                 self.subactions.append(update_fow_action)
+
             elif self.region.region_type == RegionType.VISION:
                 update_fow_action = AddVisionRegion(self.region)
                 update_fow_action.do()
@@ -2916,8 +2870,9 @@ class AddRegion(Action):
 
     def reverse(self):
         if self.did_add:
+            affected_units = []
             if self.region.region_type == RegionType.TERRAIN:
-                _region_leave(self.region)
+                affected_units = _region_leave(self.region)
 
             for act in self.subactions:
                 act.reverse()
@@ -2929,7 +2884,9 @@ class AddRegion(Action):
                 for position in self.region.get_all_positions():
                     game.board.reset_pos(game.level.tilemap, position)
                 game.boundary.reset()
-                _region_arrive(self.region)
+                for unit, pos in affected_units:
+                    game.arrive(unit, pos)
+
 
 class ChangeRegionCondition(Action):
     def __init__(self, region, condition):
@@ -3061,19 +3018,15 @@ class RemoveVisionRegion(Action):
         game.board.add_vision_region(self.region)
         game.boundary.reset_fog_of_war()
 
-def _leave(layer):
+def _leave(layer) -> List[Tuple[UnitObject, Pos]]:
     # Force all affected units to leave
+    affected_units = []
     layer_positions = layer.terrain.keys()
     for unit in game.units:
         if unit.position in layer_positions:
+            affected_units.append((unit, unit.position))
             game.leave(unit)
-
-def _arrive(layer):
-    # Force all affected units to arrive
-    layer_positions = layer.terrain.keys()
-    for unit in game.units:
-        if unit.position in layer_positions:
-            game.arrive(unit)
+    return affected_units
 
 class ShowLayer(Action):
     def __init__(self, layer_nid, transition):
@@ -3082,32 +3035,35 @@ class ShowLayer(Action):
 
     def do(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
-        _leave(layer)
+        affected_units = _leave(layer)
         # Actually change the layer
         if self.transition == 'immediate':
             layer.quick_show()
             game.level.tilemap.reset()
         else:
             layer.show()
-        _arrive(layer)
+        for unit, pos in affected_units:
+            game.arrive(unit, pos)
         game.board.reset_tile_grids(game.level.tilemap)
         game.boundary.reset()
 
     def execute(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
-        _leave(layer)
+        affected_units = _leave(layer)
         layer.quick_show()
         game.level.tilemap.reset()
-        _arrive(layer)
+        for unit, pos in affected_units:
+            game.arrive(unit, pos)
         game.board.reset_tile_grids(game.level.tilemap)
         game.boundary.reset()
 
     def reverse(self):
         layer = game.level.tilemap.layers.get(self.layer_nid)
-        _leave(layer)
+        affected_units = _leave(layer)
         layer.quick_hide()
         game.level.tilemap.reset()
-        _arrive(layer)
+        for unit, pos in affected_units:
+            game.arrive(unit, pos)
         game.board.reset_tile_grids(game.level.tilemap)
         game.boundary.reset()
 
@@ -3163,7 +3119,7 @@ class ChangeBGTileMap(Action):
         else:
             game.level.bg_tilemap = None
 
-        
+
 
 class AddWeather(Action):
     def __init__(self, weather_nid, position):
