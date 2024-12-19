@@ -253,3 +253,24 @@ class EnemyLineAOE(ItemComponent):
         # Doesn't highlight allies positions
         splash = {pos for pos in splash if not game.board.get_unit(pos) or skill_system.check_enemy(unit, game.board.get_unit(pos))}
         return splash
+
+class LanceAOE(ItemComponent):
+    nid = 'lance_aoe'
+    desc = "A line is drawn in the target direction with length of the desired value, affecting all within it"
+    tag = ItemTags.AOE
+
+    expose = ComponentType.Int
+    value = 4
+
+    def splash(self, unit, item, position) -> tuple:
+        diff_pos_x = position[0] - unit.position[0]
+        diff_pos_y = position[1] - unit.position[1]
+        splash = [(unit.position[0] + (diff_pos_x * i), unit.position[1] + (diff_pos_y * i)) for i in range(1, self.value + 1)]
+        splash = [s for s in splash if game.board.get_unit(s)]
+        return None, splash
+
+    def splash_positions(self, unit, item, position) -> set:
+        diff_pos_x = position[0] - unit.position[0]
+        diff_pos_y = position[1] - unit.position[1]
+        splash = {(unit.position[0] + (diff_pos_x * i), unit.position[1] + (diff_pos_y * i)) for i in range(1, self.value + 1)}
+        return splash
