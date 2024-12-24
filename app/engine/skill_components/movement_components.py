@@ -200,3 +200,13 @@ class Galeforce(SkillComponent):
         if self._did_something:
             action.do(action.Reset(unit))
         self._did_something = False
+
+
+class SimpleGaleforce(SkillComponent):
+    nid = 'simple_galeforce'
+    desc = "Unit can move again."
+    tag = SkillTags.MOVEMENT
+
+    def after_wait(self, unit, actively_chosen):
+        action.do(action.TriggerCharge(unit, self.skill))
+        action.do(action.Reset(unit))

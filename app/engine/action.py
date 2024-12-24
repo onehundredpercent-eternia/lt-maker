@@ -873,7 +873,7 @@ class PairUp(Action):
         self.subactions.append(SetMovementLeft(self.unit, move_left))
         skill_system.on_pairup(self.unit, self.target)
         if self.unit.position:
-        game.leave(self.unit)
+            game.leave(self.unit)
 
         self.unit.lead_unit = False
         self.target.lead_unit = True
@@ -892,7 +892,7 @@ class PairUp(Action):
 
         skill_system.on_pairup(self.unit, self.target)
         if self.unit.position:
-        game.leave(self.unit)
+            game.leave(self.unit)
 
         logging.info(self.unit.nid + " was at " + str(self.old_pos) + " but paired up with " + self.target.nid + " at " + str(self.target.position))
 
@@ -2389,7 +2389,7 @@ class Die(Action):
         # Old Pos is required for cursor movement in the turnwheel.py
         self.old_pos = self.unit.position
         if self.unit.position:
-        self.leave_map = LeaveMap(self.unit)
+            self.leave_map = LeaveMap(self.unit)
         else:
             self.leave_map = None
         if DB.support_constants.value('break_supports_on_death') and game.current_mode.permadeath:
@@ -2419,7 +2419,7 @@ class Die(Action):
             self.initiative_action.do()
 
         if self.leave_map:
-        self.leave_map.do()
+            self.leave_map.do()
 
         for act in self.lock_all_support_ranks:
             act.do()
@@ -2442,7 +2442,7 @@ class Die(Action):
         for act in self.lock_all_support_ranks:
             act.reverse()
         if self.leave_map:
-        self.leave_map.reverse()
+            self.leave_map.reverse()
         if self.drop:
             self.drop.reverse()
 
