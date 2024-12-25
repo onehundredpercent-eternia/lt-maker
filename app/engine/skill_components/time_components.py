@@ -232,6 +232,17 @@ class EventOnRemove(SkillComponent):
         if event_prefab:
             game.events.trigger_specific_event(event_prefab.nid, unit)
 
+class EventOnWait(SkillComponent):
+    nid = 'event_on_wait'
+    tag = SkillTags.TIME
+
+    expose = ComponentType.Event
+
+    def after_wait(self, unit, actively_chosen):
+        event_prefab = DB.events.get_from_nid(self.value)
+        if event_prefab:
+            game.events.trigger_specific_event(event_prefab.nid, unit)
+
 class UpkeepEvent(SkillComponent):
     nid = 'upkeep_event'
     desc = "Triggers the designated event at upkeep"
