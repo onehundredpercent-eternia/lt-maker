@@ -696,9 +696,10 @@ class MoveState(MapState):
 
         if cur_unit.has_traded:
             self.valid_moves = game.path_system.get_valid_moves(cur_unit)
+            self.valid_xcom_moves = set()
             game.highlight.display_moves(self.valid_moves, light=False)
         else:
-            self.valid_moves = game.highlight.display_highlights(cur_unit)
+            self.valid_moves, self.valid_xcom_moves = game.highlight.display_highlights(cur_unit)
         
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:  
@@ -763,6 +764,20 @@ class MoveState(MapState):
                         game.state.change('menu')
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
+
+            elif game.cursor.position in self.valid_xcom_moves:
+                if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
+                    get_sound_thread().play_sfx('Error')
+                else:
+                    xcom_moves = game.path_system.get_valid_xcom_moves(cur_unit, witch_warp=False)
+                    cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
+                    # Immediately wait after the XCOM Move
+                    game.state.clear()
+                    game.state.change('free')
+                    game.state.change('wait')
+                    game.state.change('movement')
+                    action.do(cur_unit.current_move)
+
             else:
                 get_sound_thread().play_sfx('Error')
 

@@ -111,7 +111,7 @@ class LevelCursor(BaseCursor):
     def move(self, dx, dy, mouse=False, sound=True):
         super().move(dx, dy, mouse, sound)
 
-        if self.game.highlight.check_in_move(self.position):
+        if self.game.highlight.check_in_all_move(self.position):
             self._last_valid_position = self.position
 
         if self._display_arrows:
@@ -203,17 +203,17 @@ class LevelCursor(BaseCursor):
         else:
             directions = self.fluid.get_directions(double_speed=self.speed_state)
 
-        if self.game.highlight.check_in_move(self.position):
+        if self.game.highlight.check_in_all_move(self.position):
             if directions:
                 # If we would move off the current move
                 if ('LEFT' in directions and not get_input_manager().just_pressed('LEFT') and
-                        not self.game.highlight.check_in_move((self.position[0] - 1, self.position[1]))) or \
+                        not self.game.highlight.check_in_all_move((self.position[0] - 1, self.position[1]))) or \
                         ('RIGHT' in directions and not get_input_manager().just_pressed('RIGHT') and
-                         not self.game.highlight.check_in_move((self.position[0] + 1, self.position[1]))) or \
+                         not self.game.highlight.check_in_all_move((self.position[0] + 1, self.position[1]))) or \
                         ('UP' in directions and not get_input_manager().just_pressed('UP') and
-                         not self.game.highlight.check_in_move((self.position[0], self.position[1] - 1))) or \
+                         not self.game.highlight.check_in_all_move((self.position[0], self.position[1] - 1))) or \
                         ('DOWN' in directions and not get_input_manager().just_pressed('DOWN') and
-                         not self.game.highlight.check_in_move((self.position[0], self.position[1] + 1))):
+                         not self.game.highlight.check_in_all_move((self.position[0], self.position[1] + 1))):
                     # Then we can just keep going
                     if self.stopped_at_move_border:
                         self.stopped_at_move_border = False

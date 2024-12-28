@@ -54,6 +54,33 @@ class PathSystem():
             valid_moves |= witch_warp
         return valid_moves
 
+    def get_valid_xcom_moves(self, unit: UnitObject) -> Set[Pos]:
+        """Given a unit, finds all positions on the map they can move to with their xcom move as well
+        Assumes unit is on the map.
+        
+        Args:
+            unit (UnitObject): The unit to find valid moves for
+        
+        Returns:
+            Set[Pos]: Set of valid positions the unit can move to using xcom movement
+        """
+        if unit.finished:
+            return set()
+        mtype = movement_funcs.get_movement_group(unit)
+        grid: BoundedGrid[Node] = self.game.board.get_movement_grid(mtype)
+        start_pos = unit.position
+        pathfinder = pathfinding.Djikstra(start_pos, grid)
+        movement_left = equations.parser.movement(unit) + equations.parser.get_expression("xcom_movement", unit)
+
+        if skill_system.pass_through(unit):
+            can_move_through = lambda adj: True
+        else:
+            # Feed the unit's team into the function
+            can_move_through = functools.partial(self.game.board.can_move_through, unit.team)
+
+        valid_moves = pathfinder.process(can_move_through, movement_left)
+        return valid_moves
+
     def get_path(self, unit: UnitObject, position: Pos, ally_block: bool = False, 
                  use_limit: bool = False, free_movement: bool = False) -> List[Pos]:
         """Given a unit and a goal position, find the best path for the unit to get to that goal position
