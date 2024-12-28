@@ -3215,7 +3215,7 @@ class RemoveWeather(Action):
             game.tilemap.weather.append(new_ps)
 
 class AddMapAnim(Action):
-    def __init__(self, nid: NID, pos: Tuple[int, int], speed_mult: float, blend_mode: engine.BlendMode, upper_layer: bool=False):
+    def __init__(self, nid: NID, pos: Tuple[int, int], speed_mult: float, blend_mode: engine.BlendMode, upper_layer: bool = False):
         self.nid: NID = nid
         self.pos: Tuple[int, int] = pos
         self.speed_mult: float = speed_mult

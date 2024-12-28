@@ -1,21 +1,19 @@
-"""
-Encounter generation:
-1. Find each room of appropriate size
-2. Randomly select a kind of encounter that fits the room
-3. If it requires changing the room slightly, do so
-4. Place the appropriate units down in random spots in the room
-"""
-from typing import List, Tuple, TYPE_CHECKING
+from typing import List, Set, Tuple, TYPE_CHECKING
 from dataclasses import dataclass, field
-from app.utilities.typing import NID
-from app.utilities import utils, str_utils, static_random
+from app.utilities.typing import NID, Pos
+from app.utilities import utils, static_random
+from app.utilities.static_random import LCG
 
 from app.data.database.database import DB
-from app.data.database.level_units import GenericUnit
+from app.events import regions
 
-from app.engine import action
+from app.engine import action, engine
 from app.engine.objects.tilemap import TileMapObject
-from app.engine.objects.unit import UnitObject
+from app.engine.objects.region import RegionObject
+from app.events.event_prefab import EventPrefab
+
+from app.dungeon_maker import enemy_encounters
+
 
 if TYPE_CHECKING:
     from app.dungeon_maker.terrain_generation import DungeonTileMap
@@ -54,227 +52,97 @@ class EncounterRequirements:
 
         return valid
 
-@dataclass
-class Encounter:
+class NonEnemyEncounter:
     nid: NID
     requirements: EncounterRequirements
     weight: float
 
-    def apply(self, rect: Tuple[int, int, int, int], tilemap: TileMapObject):
+    @staticmethod
+    def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
         pass
 
-@dataclass
-class Basic(Encounter):
-    nid = "basic"
-    requirements = EncounterRequirements(min_width=3, min_height=3)
-    weight = 1
+class Empty(NonEnemyEncounter):
+    nid: NID = 'empty'
+    requirements: EncounterRequirements = EncounterRequirements()
+    weight: float = 1.0
 
-    num_units = 4
-    valid_classes = [
-        "Thief",
-        "Mercenary",
-        "Soldier",
-        "Cavalier"
-        "Armor",
-        "Fighter",
-        "Raider",
-        "Mage",
-    ]
+    @staticmethod
+    def apply(game, rect: Tuple[int, int, int, int], dungeon_tilemap: DungeonTileMap, 
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
+        pass
 
-    affix_unit_chance = 0.5
-    affix_classes = [
-        "Archer",
-        "Cleric",
-        "Mage",
-        "Sorceror",
-        "Thief"
-    ]
+class Treasure(NonEnemyEncounter):
+    nid: NID = 'empty'
+    requirements: EncounterRequirements = EncounterRequirements()
+    weight: float = 0.5
 
-    def apply(self, game, rect: Tuple[int, int, int, int], tilemap: TileMapObject, 
-              enemy_level: int, encounter_uid: int, rng: static_random.LCG):
+    @staticmethod
+    def apply(game, rect: Tuple[int, int, int, int], dungeon_tilemap: DungeonTileMap, 
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
         x, y, width, height = rect
+        positions = sorted(utils.tuple_add((x, y), utils.itergrid(width, height)))
 
-        klass = rng.choice(self.valid_classes)
-
-        # Place units on board
-        all_positions = rng.shuffle(
-            sorted(utils.tuple_add((x, y), utils.itergrid(width, height))))
-        for _ in range(self.num_units):
-            position = next(all_positions)
-            unit = create_unit(game, klass, enemy_level, encounter_uid)
-            action.do(action.RegisterUnit(unit))
-            action.do(action.ArriveOnMap(unit, position))
-
-        # Affix unit
-        if rng.random() < self.affix_unit_chance:
-            affix_klass = rng.choice(self.affix_classes)
-            position = next(all_positions)
-            unit = create_unit(game, affix_klass, enemy_level, encounter_uid, rng)
-            action.do(action.RegisterUnit(unit))
-            action.do(action.ArriveOnMap(unit, position))
-
-
-@dataclass
-class TwoTypes(Encounter):
-    nid = "two_types"
-    requirements = EncounterRequirements(min_width=3, min_height=3)
-    weight = 0.75
-
-    num_units = 6
-    valid_classes = [
-        "Thief",
-        "Myrmidon",
-        "Mercenary",
-        "Soldier",
-        "Cavalier"
-        "Armor",
-        "Fighter",
-        "Raider",
-        "Archer",
-        "Mage",
-        "Sorceror",
-    ]
-
-    def apply(self, game, rect: Tuple[int, int, int, int], tilemap: TileMapObject, 
-              enemy_level: int, encounter_uid: int, rng: static_random.LCG):
-        x, y, width, height = rect
-
-        klass1 = rng.choice(self.valid_classes)
-        self.valid_classes.remove(klass1)
-        klass2 = rng.choice(self.valid_classes)
-
-        # Place units on board
-        all_positions = rng.shuffle(
-            sorted(utils.tuple_add((x, y), utils.itergrid(width, height))))
-        for idx in range(self.num_units):
-            if idx % 2 == 1:
-                klass = klass2
-            else:
-                klass = klass1
-            position = next(all_positions)
-            unit = create_unit(game, klass, enemy_level, encounter_uid, rng)
-            action.do(action.RegisterUnit(unit))
-            action.do(action.ArriveOnMap(unit, position))
-
-@dataclass
-class Leader(Encounter):
-    nid = "leader"
-    requirements = EncounterRequirements(min_width=3, min_height=3)
-    weight = 0.5
-
-    num_units = 4
-    valid_classes = [
-        "Thief",
-        "Mercenary",
-        "Soldier",
-        "Cavalier"
-        "Armor",
-        "Fighter",
-        "Raider",
-        "Mage",
-    ]
-
-    affix_classes = [
-        "Archer",
-        "Cleric",
-        "Mage",
-        "Sorceror",
-        "Thief"
-    ]
-
-    def apply(self, game, rect: Tuple[int, int, int, int], tilemap: TileMapObject, 
-              enemy_level: int, encounter_uid: int, rng: static_random.LCG):
-        x, y, width, height = rect
-
-        klass = rng.choice(self.valid_classes)
-        leader_klass = rng.choice(self.valid_classes)
-
-        # Place units on board
-        all_positions = rng.shuffle(
-            sorted(utils.tuple_add((x, y), utils.itergrid(width, height))))
-        for idx in range(self.num_units):
-            position = next(all_positions)
-            unit = create_unit(game, klass, enemy_level, encounter_uid)
-            action.do(action.RegisterUnit(unit))
-            action.do(action.ArriveOnMap(unit, position))
-
-        # Place leader 5 levels ahead
+        all_positions = rng.shuffle(positions)
         position = next(all_positions)
-        unit = create_unit(game, leader_klass, enemy_level + 5, encounter_uid)
-        action.do(action.RegisterUnit(unit))
-        action.do(action.ArriveOnMap(unit, position))
 
-        # Affix unit
-        if rng.random() < self.affix_unit_chance:
-            affix_klass = rng.choice(self.affix_classes)
-            position = next(all_positions)
-            unit = create_unit(game, affix_klass, enemy_level, encounter_uid, rng)
-            action.do(action.RegisterUnit(unit))
-            action.do(action.ArriveOnMap(unit, position))
+        # Add Map Anim
+        action.do(action.AddMapAnim("Treasure", position, 1.0, engine.BlendMode.NONE))
 
-encounters = [
-    Basic(),
-    TwoTypes(),
-    Leader(),
-]
+        # Add Region
+        x, y = position
+        name = f"Treasure_{x}_{y}"
+        new_region = RegionObject(name, regions.RegionType('event'))
+        new_region.position = position
+        new_region.size = (1, 1)
+        new_region.sub_nid = "Chest"
+        new_region.only_once = True
 
-def convert_level_to_item_tier(level: int) -> str:
-    if 1 <= level <= 5:
-        return 'Bronze'
-    elif 6 <= level <= 12:
-        return 'Iron'
-    elif 13 <= level <= 19:
-        return 'Steel'
-    elif 20 <= level <= 32:
-        return 'Silver'
-    else:
-        return 'Mithril'
+        game.register_region(new_region)
+        action.do(action.AddRegion(new_region))
 
-def get_items(game, klass: NID, level: int, rng: static_random.LCG) -> List[NID]:
-    """
-    Returns list of items unit should start with
-    """
-    klass_prefab = DB.classes.get(klass)
-    tier = convert_level_to_item_tier(level)
+        # TODO() Actually make this random
+        random_item = "Iron_Sword"
 
-    # Figure out what kind of weapon this unit can wield
-    usable_weapon_types: List[NID] = []
-    for nid, wexp_gain in klass_prefab.wexp_gain:
-        if wexp_gain.usable:
-            usable_weapon_types.append(nid)
+        # Add Event on Region
+        commands = [
+            f"remove_map_anim;Treasure;({x}, {y})",
+            f"map_anim;OpenTreasure;({x}, {y})",
+            f"give_item;{{unit}};{random_item}",]
+        event = EventPrefab(name, "Chest", game.level.nid, f'position == ({x}, {y})', [], True, 20, commands)
+        DB.events.append(event)
 
-    weapon_type = rng.choice(usable_weapon_types)
+def place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap, 
+                  tilemap: TileMapObject, enemy_level: int, enemy_budget: float, rng: LCG):
+    current_budget: float = enemy_budget
+    used_enemy_positions: Set[Pos] = {}
+    encounter_uid = 0
+    while current_budget > 0:
+        # Pick a random enemy encounter type
+        idx = static_random.weighted_choice([e.weight for e in enemy_encounters.ENEMY_ENCOUNTERS], rng)
+        enemy_encounter_type = enemy_encounters.ENEMY_ENCOUNTERS[idx]
+        # Pick a random point on the tilemap that's far away from other points
+        pos = rng.choice(dungeon_tilemap.get_open_tiles())
+        positions, cost = enemy_encounter_type.apply(game, pos, dungeon_tilemap, tilemap, enemy_level, encounter_uid, rng)
+        used_enemy_positions |= set(positions)
+        current_budget -= cost
 
-    def is_weapon_type(item: ItemPrefab, weapon_type: NID):
-        return item.weapon_type == weapon_type or (item.item_prefab and DB.items.get(item.item_prefab.value).weapon_type == weapon_type)
-
-    item_prefabs = DB.items.values()
-    primary_item_prefabs = [i for i in item_prefabs 
-        if is_weapon_type(i, weapon_type)
-        and tier in i.item_tags and 'Primary' in i.item_tags]
-    secondary_item_prefabs = [i for i in item_prefabs if is_weapon_type(i, weapon_type) and tier in i.item_tags and 'Secondary' in i.item_tags]
-
-    primary = rng.choice(primary_item_prefabs)
-    secondary = rng.choice(secondary_item_prefabs)
-    return [primary] + [secondary]
-
-def create_unit(game, klass: NID, level: int, ai_group: NID, rng: static_random.LCG) -> UnitObject:
-    """
-    Given a desired unit's class, level, and ai_group,
-    creates and returns the newly created unit
-    """
-    unit_nid = str_utils.get_next_int('201', [unit.nid for unit in game.units])
-    items: List[NID] = get_items(game, klass, level, rng)
-    unit_prefab = GenericUnit(unit_nid, None, level, klass, "Enemy", items, [], "enemy", "Defend", ai_group=ai_group)
-    unit = UnitObject.from_prefab(unit_prefab, game.current_mode)
-    unit.party = game.current_party
-    return unit
-
-def place_encounters(self, game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObject,
+def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObject,
                      enemy_level: int, floor_level: int, dungeon_theme: NID, seed: int):
     rng = static_random.LCG(seed)
+    num_open_tiles = len(dungeon_tilemap.get_open_tiles())
+    enemy_budget = 1 * (32 / 148) * num_open_tiles * (1 + enemy_level * 0.1) * (1 + floor_level * 0.1)
+    print(f"Enemy Budget: {enemy_budget}")
+    # Non-enemies
     for idx, section in enumerate(dungeon_tilemap.sections.values()):
         if section.has_full_room():
-            valid_encounters = [e for e in encounters if e.requirements.meets(section.room.width, section.room.height, dungeon_theme, floor_level)]
+            valid_encounters = [e for e in ENCOUNTERS if e.requirements.meets(section.room.width, section.room.height, dungeon_theme, floor_level)]
             encounter = static_random.weighted_choice([e.weight for e in valid_encounters], rng)
             encounter.apply(game, section.room.get_rect(), tilemap, enemy_level, idx, rng)
+    # Enemies
+    place_enemies(game, dungeon_theme, tilemap, enemy_level, enemy_budget, rng)
+
+ENCOUNTERS = [
+    Empty,
+    Treasure,
+]

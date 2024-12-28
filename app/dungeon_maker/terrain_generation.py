@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from app.utilities import utils
 from app.utilities.typing import Pos
 from app.utilities.direction import Direction, get_cardinal_positions, get_diagonal_positions
+from app.utilities import static_random
 from app.dungeon_maker.utilities import get_random_seed, set_random_seed, flood_fill
 from app.dungeon_maker.themes import Theme, themes
 from app.dungeon_maker.terrain import Terrain
@@ -143,6 +144,9 @@ class DungeonTileMap:
 
     def get_terrain(self, pos: Pos) -> Optional[Terrain]:
         return self.terrain_grid.get(pos, None)
+
+    def get_open_tiles(self) -> List[Pos]:
+        return [pos for pos, terrain in self.terrain_grid.items() if terrain in Terrain.floor_terrain()]
 
     def swap_terrain(self, terrain1: Terrain, terrain2: Terrain):
         """
