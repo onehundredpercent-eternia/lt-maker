@@ -10,7 +10,6 @@ from app.events import regions
 from app.engine import action, engine
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.region import RegionObject
-from app.events.event_prefab import EventPrefab
 
 from app.dungeon_maker import enemy_encounters
 
@@ -92,7 +91,7 @@ class Treasure(NonEnemyEncounter):
         # Add Region
         x, y = position
         name = f"Treasure_{x}_{y}"
-        new_region = RegionObject(name, regions.RegionType('event'))
+        new_region = RegionObject(name, regions.RegionType.EVENT)
         new_region.position = position
         new_region.size = (1, 1)
         new_region.sub_nid = "Chest"
@@ -100,17 +99,6 @@ class Treasure(NonEnemyEncounter):
 
         game.register_region(new_region)
         action.do(action.AddRegion(new_region))
-
-        # TODO() Actually make this random
-        random_item = "Iron_Sword"
-
-        # Add Event on Region
-        commands = [
-            f"remove_map_anim;Treasure;({x}, {y})",
-            f"map_anim;OpenTreasure;({x}, {y})",
-            f"give_item;{{unit}};{random_item}",]
-        event = EventPrefab(name, "Chest", game.level.nid, f'position == ({x}, {y})', [], True, 20, commands)
-        DB.events.append(event)
 
 def place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap, 
                   tilemap: TileMapObject, enemy_level: int, enemy_budget: float, rng: LCG):

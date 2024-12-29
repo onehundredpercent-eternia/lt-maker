@@ -1751,6 +1751,25 @@ class GainMoney(Action):
         party.money = self.old_money
 
 
+class IncLightLevel(Action):
+    def __init__(self, party_nid, light_level):
+        self.party_nid = party_nid
+        self.light_level = light_level
+        self.old_light_level = None
+
+    def do(self):
+        party = game.get_party(self.party_nid)
+        self.old_light_level = party.light_level
+        # Can't go below zero
+        if party.light_level + self.light_level < 0:
+            self.light_level = -party.light_level
+        party.light_level += self.light_level
+
+    def reverse(self):
+        party = game.get_party(self.party_nid)
+        party.light_level = self.old_light_level
+
+
 class GiveBexp(Action):
     def __init__(self, party_nid, bexp):
         self.party_nid = party_nid

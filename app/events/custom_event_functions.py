@@ -1,9 +1,12 @@
-from typing import TYPE_CHECKING, Set, Tuple
+from typing import TYPE_CHECKING
 
-from app.utilities.typing import NID, Pos
+from app.utilities.typing import Pos
 
 from app.dungeon_maker import encounter_generation, tilemap_generation
 from app.engine import action
+
+from app.engine.objects.region import RegionObject
+from app.events import regions
 
 if TYPE_CHECKING:
     from app.events.event import Event
@@ -19,7 +22,25 @@ def generate_dungeon(self: Event, floor_level: int, dungeon_theme: str,
     # Actually set up
     self.game.level.tilemap = tilemap
     self.game.set_up_game_board(self.game.level.tilemap)
-    
+
+    # Create the start and end regions
+    start_pos = dungeon_tilemap.get_start_pos()
+
+    start_region = RegionObject("Start", regions.RegionType.NORMAL)
+    start_region.position = start_pos
+    start_region.size = (1, 1)
+    self.game.register_region(start_region)
+    action.do(action.AddRegion(start_region))
+
+    end_pos = dungeon_tilemap.get_end_pos()
+
+    end_region = RegionObject("End", regions.RegionType.EVENT)
+    end_region.position = end_pos
+    end_region.size = (1, 1)
+    end_region.sub_nid = "Descend"
+    self.game.register_region(end_region)
+    action.do(action.AddRegion(end_region))
+
     # Place encounters
     encounter_generation.place_encounters(
         self.game, dungeon_tilemap, tilemap, 

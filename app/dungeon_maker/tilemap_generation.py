@@ -57,8 +57,6 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.CHECKERBOARD_LOWER: 'Floor',
         Terrain.CHECKERBOARD_UPPER: 'Floor',
         Terrain.WATERBRIDGE: 'Floor',
-        Terrain.TREASURE: 'Chest',
-        Terrain.OPEN_TREASURE: 'Chest',
         Terrain.START: 'Stairs',
         Terrain.END: 'Stairs'
     }[terrain]

@@ -148,6 +148,18 @@ class DungeonTileMap:
     def get_open_tiles(self) -> List[Pos]:
         return [pos for pos, terrain in self.terrain_grid.items() if terrain in Terrain.floor_terrain()]
 
+    def get_start(self) -> Optional[Pos]:
+        for pos, terrain in self.terrain_grid.items():
+            if terrain == Terrain.START:
+                return pos
+        return None
+
+    def get_end(self) -> Optional[Pos]:
+        for pos, terrain in self.terrain_grid.items():
+            if terrain == Terrain.END:
+                return pos
+        return None
+
     def swap_terrain(self, terrain1: Terrain, terrain2: Terrain):
         """
         Converts all tiles with terrain of type terrain1 to 

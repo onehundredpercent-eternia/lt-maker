@@ -7,7 +7,8 @@ from app.utilities.typing import NID
 
 class PartyObject(Prefab):
     def __init__(self, nid: NID, name: str, leader_nid: NID, party_prep_manage_sort_order: Optional[List[NID]]=None,
-                 money: int = 0, convoy: Optional[List[int]] = None, bexp: int = 0):
+                 money: int = 0, convoy: Optional[List[int]] = None, bexp: int = 0,
+                 light_level: int = 0):
         """Representation of a party of units. Unless you have a multi-party game, game.party will generally return
         the information you need for your party of units.
 
@@ -34,23 +35,27 @@ class PartyObject(Prefab):
             items = [game.get_item(item_uid) for item_uid in convoy]
             self.convoy = [i for i in items if i]
         self.bexp: int = bexp
+        self.light_level: int = light_level
 
     @property
     def items(self):
         return self.convoy
 
     def save(self):
-        return {'nid': self.nid,
-                'name': self.name,
-                'leader_nid': self.leader_nid,
-                'party_prep_manage_sort_order': self.party_prep_manage_sort_order,
-                'money': self.money,
-                'convoy': [item.uid for item in self.convoy],
-                'bexp': self.bexp}
+        return {
+            'nid': self.nid,
+            'name': self.name,
+            'leader_nid': self.leader_nid,
+            'party_prep_manage_sort_order': self.party_prep_manage_sort_order,
+            'money': self.money,
+            'convoy': [item.uid for item in self.convoy],
+            'bexp': self.bexp,
+            'light_level': self.light_level,
+        }
 
     @classmethod
     def restore(cls, s_dict):
         party = cls(s_dict['nid'], s_dict.get('name', s_dict['nid']), s_dict['leader_nid'],
                     s_dict.get('party_prep_manage_sort_order', []), s_dict.get('money', 0), s_dict.get('convoy', []),
-                    s_dict.get('bexp', 0))
+                    s_dict.get('bexp', 0), s_dict.get('light_level', 0))
         return party

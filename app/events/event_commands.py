@@ -1921,6 +1921,20 @@ If the *no_banner* flag is set, there will not be a banner announcing that the p
     keyword_types = ["Integer", "Party"]
     _flags = ['no_banner']
 
+class IncLightLevel(EventCommand):
+    nid = 'inc_light_level'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Increments *LightLevel* to the indicated *Party*.
+If *Party* is not specified, the player's current party will be used.
+        """
+
+    keywords = ["LightLevel"]
+    optional_keywords = ["Party"]
+    keyword_types = ["Integer", "Party"]
+
 class GiveBexp(EventCommand):
     nid = 'give_bexp'
     tag = Tags.GAME_VARS

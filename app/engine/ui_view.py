@@ -333,7 +333,7 @@ class UIView():
     def create_obj_info(self):
         if MEMORY_BAR_MODE:
             big_surf = engine.create_surface((self.memory_bar.width, self.memory_bar.height), transparent=True)
-            self.memory_bar.draw(big_surf, (0, 0), game.party.money)
+            self.memory_bar.draw(big_surf, (0, 0), game.party.light_level)
 
         else:
             obj = game.level.objective['simple']

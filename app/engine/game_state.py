@@ -1536,6 +1536,21 @@ class GameState():
     def set_bexp(self, amount):
         self.parties[self.current_party].bexp = amount
 
+    def get_light_level(self) -> int:
+        """
+        Gets the light level for the current party
+
+        Returns:
+            int: The light level
+        """
+        return self.parties[self.current_party].light_level
+
+    def inc_light_level(self, num: int):
+        self.parties[self.current_party].light_level += num
+
+    def set_light_level(self, num: int):
+        self.parties[self.current_party].light_level = num
+
     # Random funcs
     def get_random(self, a: int, b: int) -> int:
         """

@@ -70,7 +70,7 @@ class PathSystem():
         grid: BoundedGrid[Node] = self.game.board.get_movement_grid(mtype)
         start_pos = unit.position
         pathfinder = pathfinding.Djikstra(start_pos, grid)
-        movement_left = equations.parser.movement(unit) + equations.parser.get_expression("xcom_movement", unit)
+        movement_left = equations.parser.movement(unit) + equations.parser.get_xcom_movement(unit)
 
         if skill_system.pass_through(unit):
             can_move_through = lambda adj: True

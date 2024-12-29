@@ -1924,6 +1924,15 @@ def give_money(self: Event, money: int, party=None, flags=None):
         self.game.state.change('alert')
         self.state = 'paused'
 
+def inc_light_level(self: Event, light_level: int, party=None, flags=None):
+    flags = flags or set()
+
+    if party:
+        party_nid = party
+    else:
+        party_nid = self.game.current_party
+    action.do(action.IncLightLevel(party_nid, money))
+
 def give_bexp(self: Event, bexp: int, party=None, string=None, flags=None):
     flags = flags or set()
 
