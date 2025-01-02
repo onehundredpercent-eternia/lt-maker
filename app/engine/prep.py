@@ -109,11 +109,11 @@ class PrepMainState(MapState):
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:
+            if self.menu.move_down(first_push):
             get_sound_thread().play_sfx('Select 6')
-            self.menu.move_down(first_push)
         elif 'UP' in directions:
+            if self.menu.move_up(first_push):
             get_sound_thread().play_sfx('Select 6')
-            self.menu.move_up(first_push)
 
         elif event == 'SELECT':
             get_sound_thread().play_sfx('Select 1')
@@ -623,11 +623,11 @@ class PrepFormationMenuState(MapState):
 
         did_move = self.menu.handle_mouse()
         if 'DOWN' in directions:
+            if self.menu.move_down(first_push):
             get_sound_thread().play_sfx('Select 6')
-            self.menu.move_down(first_push)
         elif 'UP' in directions:
+            if self.menu.move_up(first_push):
             get_sound_thread().play_sfx('Select 6')
-            self.menu.move_up(first_push)
 
         if event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
@@ -843,11 +843,11 @@ class OptimizeAllChoiceState(State):
     def take_input(self, event):
         self.menu.handle_mouse()
         if event == 'RIGHT':
+            if self.menu.move_down():
             get_sound_thread().play_sfx('Select 6')
-            self.menu.move_down()
         elif event == 'LEFT':
+            if self.menu.move_up():
             get_sound_thread().play_sfx('Select 6')
-            self.menu.move_up()
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 4')

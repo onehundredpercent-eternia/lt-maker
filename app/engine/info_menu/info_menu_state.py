@@ -142,20 +142,19 @@ class InfoMenuState(State):
                 return
 
             if 'RIGHT' in directions:
+                if self.info_graph.move_right():
                 get_sound_thread().play_sfx('Select 6')
-                self.info_graph.move_right()
             elif 'LEFT' in directions:
+                if self.info_graph.move_left():
                 get_sound_thread().play_sfx('Select 6')
-                self.info_graph.move_left()
             elif 'UP' in directions:
+                if self.info_graph.move_up():
                 get_sound_thread().play_sfx('Select 6')
-                self.info_graph.move_up()
             elif 'DOWN' in directions:
+                if self.info_graph.move_down():
                 get_sound_thread().play_sfx('Select 6')
-                self.info_graph.move_down()
 
         elif not self.transition:  # Only takes input when not transitioning
-
             if event == 'INFO':
                 get_sound_thread().play_sfx('Info In')
                 self.info_graph.set_transition_in()
