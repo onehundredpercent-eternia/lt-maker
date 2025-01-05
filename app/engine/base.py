@@ -140,10 +140,10 @@ class BaseMainState(State):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         elif event == 'BACK':
             if self.is_from_overworld:
@@ -297,10 +297,10 @@ class BaseConvosChildState(State):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
@@ -427,8 +427,8 @@ class SupportDisplay():
         self.rank_idx -= 1
         if self.rank_idx < 0:
             if first_push:
-            self.rank_idx = 0
-            return False
+                self.rank_idx = 0
+                return False
             else:
                 self.rank_idx = 0
         return True
@@ -724,10 +724,10 @@ class BaseCodexChildState(State):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
@@ -1347,7 +1347,7 @@ class BaseBEXPAllocateState(State):
             if self.new_exp > self.original_exp:
                 # Go back to the original value
                 bexp_cost, exp_gain = self.get_bexp_cost_for_an_experience_point(self.new_exp - 1)
-            get_sound_thread().play_sfx('Select 5')
+                get_sound_thread().play_sfx('Select 5')
                 self.new_exp -= exp_gain
                 self.new_bexp += bexp_cost
             elif first_push:
@@ -1362,7 +1362,7 @@ class BaseBEXPAllocateState(State):
                     self.new_bexp -= bexp_cost
                     if self.new_exp < 100:
                         bexp_cost, exp_gain = self.get_bexp_cost_for_an_experience_point(self.new_exp)
-                else:
+                    else:
                         break
 
         # Allocates EXP, performs level up, and sets values as needed
