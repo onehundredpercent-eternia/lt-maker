@@ -3,37 +3,23 @@ from app.engine.game_state import game
 from app.utilities import static_random
 import logging
 
-def completed_chapters() -> int:
-    return game.game_vars.get('completed_chapters', 0)
-
-def get_random_item(tags: list = None, exclude: list = None, pos=(0, 0)) -> str:
+def get_random_treasure_item(tags: list = None, exclude: list = None, pos=(0, 0)) -> str:
     tags = tags or []
     exclude = exclude or []
     logging.debug("Get random item with tags %s and exclude %s", tags, exclude)
     all_items = []
     all_chances = []
     for tag in tags:
-        if tag == 'Promo':
-            chance = 20
-        elif tag in ('Accessory', 'Accessory+'):
-            chance = 45
-        elif tag in ('Spell', 'Spell+'):
-            chance = 20
-        else:
-            chance = 30
         items = [item for item in DB.items if item.item_tags and tag in item.item_tags.value]
-        if tag in ('Weapon', 'Weapon+', 'Spell', 'Spell+'):
-            # Don't allow two of the same weapon type in the three item choice
-            items = [item for item in items if item.item_tags.value not in exclude]
         items = [item for item in items if item.nid not in exclude]
         assert len(items) >= 1
         all_items.append(items)
-        all_chances.append(chance)
+        all_chances.append(100)
     assert len(all_items) >= 1
     assert len(all_chances) >= 1
     logging.debug(all_chances)
     generator: static_random.LCG = \
-        static_random.get_generator_from_pos(pos, completed_chapters())
+        static_random.get_generator_from_pos(pos, hash(game.level.nid) % 1024)
     logging.debug(pos)
     logging.debug(generator.state)
     idx = static_random.weighted_choice(all_chances, generator)
@@ -43,24 +29,6 @@ def get_random_item(tags: list = None, exclude: list = None, pos=(0, 0)) -> str:
     item = generator.choice(items)
     logging.debug(item.nid)
     return item.nid
-
-def get_random_tree_item(pos: tuple = (0, 0)):
-    chapter_num = completed_chapters()
-    if chapter_num == 0:
-        tags = ['Weapon', 'Accessory']
-    elif chapter_num == 1:
-        tags = ['Weapon', 'Spell', 'Accessory']
-    elif chapter_num == 2:
-        tags = ['Weapon', 'Spell', 'Promo', 'Accessory']
-    elif chapter_num == 3:
-        tags = ['Weapon', 'Weapon+', 'Spell', 'Promo', 'Accessory', 'Accessory+']
-    elif chapter_num == 4:
-        tags = ['Weapon+', 'Spell', 'Spell+', 'Promo', 'Accessory', 'Accessory+']
-    elif chapter_num == 5:
-        tags = ['Weapon+', 'Spell+', 'Promo', 'Accessory+']
-    elif chapter_num >= 6:
-        tags = ['Weapon+', 'Spell+', 'Accessory+']
-    return get_random_item(tags, pos=pos)
 
 def get_random_grave(tag: str, unit) -> str:
     logging.debug("Get random item with tag %s", tag)

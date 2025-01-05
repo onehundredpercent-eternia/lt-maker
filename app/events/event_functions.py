@@ -351,8 +351,8 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
     if style.num_lines == 0: # should auto choose 1 or 2 lines
         style.num_lines = 2
         if portrait:
-        if '{br}' not in text and '{clear}' not in text and text_width(style.font_type, text) < WINWIDTH // 2:
-            style.num_lines = 1
+            if '{br}' not in text and '{clear}' not in text and text_width(style.font_type, text) < WINWIDTH // 2:
+                style.num_lines = 1
 
     # Process text for commands
     blocks = str_utils.matched_block_expr(text, '{', '}')
@@ -462,7 +462,7 @@ def transition(self: Event, direction=None, speed=None, color3=None, panorama=No
 
 def change_background(self: Event, panorama=None, flags=None):
     flags = flags or set()
-        if not panorama:
+    if not panorama:
         self.background = None
     elif RESOURCES.panoramas.get(panorama):
         if 'scroll' in flags:
@@ -1749,7 +1749,7 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
                 return
     else:
         # Otherwise create the item from a prefab
-    subitem_prefab = DB.items.get(child_item)
+        subitem_prefab = DB.items.get(child_item)
     if not subitem_prefab:
         self.logger.error("add_item_to_multiitem: Couldn't find item with nid %s" % child_item)
         return
@@ -1924,6 +1924,15 @@ def give_money(self: Event, money: int, party=None, flags=None):
         self.game.state.change('alert')
         self.state = 'paused'
 
+def set_light_level(self: Event, light_level: int, party=None, flags=None):
+    flags = flags or set()
+
+    if party:
+        party_nid = party
+    else:
+        party_nid = self.game.current_party
+    action.do(action.SetLightLevel(party_nid, light_level))
+
 def inc_light_level(self: Event, light_level: int, party=None, flags=None):
     flags = flags or set()
 
@@ -1931,7 +1940,7 @@ def inc_light_level(self: Event, light_level: int, party=None, flags=None):
         party_nid = party
     else:
         party_nid = self.game.current_party
-    action.do(action.IncLightLevel(party_nid, money))
+    action.do(action.IncLightLevel(party_nid, light_level))
 
 def give_bexp(self: Event, bexp: int, party=None, string=None, flags=None):
     flags = flags or set()
@@ -2347,7 +2356,7 @@ def promote(self: Event, global_unit, klass_list: Optional[List[NID]] = None, fl
     elif silent and new_klass:
         swap_class = action.Promote(unit, new_klass)
         action.do(swap_class)
-        #check for new class skill
+        # check for new class skill
         unit_klass = DB.classes.get(unit.klass)
         for level_needed, class_skill_nid in unit_klass.learned_skills:
             if unit.level == level_needed:
@@ -2376,7 +2385,7 @@ def promote(self: Event, global_unit, klass_list: Optional[List[NID]] = None, fl
         self.game.state.change('transition_out')
         self.state = 'paused'
 
-def change_class(self: Event, global_unit, klass_list: Optional[List[NID]]=None, flags=None):
+def change_class(self: Event, global_unit, klass_list: Optional[List[NID]] = None, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
@@ -3147,7 +3156,7 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
-def text_entry(self: Event, nid, string, positive_integer: int=16, illegal_character_list: Optional[List[str]]=None, flags=None):
+def text_entry(self: Event, nid, string, positive_integer: int = 16, illegal_character_list: Optional[List[str]]=None, flags=None):
     flags = flags or set()
 
     header = string
@@ -3158,7 +3167,7 @@ def text_entry(self: Event, nid, string, positive_integer: int=16, illegal_chara
     self.game.state.change('text_entry')
     self.state = 'paused'
 
-def chapter_title(self: Event, music: SongPrefab | SongObject | NID=None, string=None, flags=None):
+def chapter_title(self: Event, music: SongPrefab | SongObject | NID = None, string=None, flags=None):
     custom_string = string
     self.game.memory['chapter_title_music'] = self._resolve_nid(music)
     self.game.memory['chapter_title_title'] = custom_string

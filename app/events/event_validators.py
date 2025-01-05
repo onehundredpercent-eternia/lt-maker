@@ -1408,7 +1408,7 @@ class DungeonTheme(OptionValidator):
     valid = [k for k in themes.themes.keys()]
 
 class DungeonPalette(OptionValidator):
-    valid = [f for f in glob.glob('app/dungeon_maker/palettes/') if os.path.isdir(os.path.join('app/dungeon_maker/palettes/', f))]
+    valid = [os.path.split(f)[-1] for f in glob.glob('app/dungeon_maker/palettes/*') if os.path.isdir(f)]
 
 validators: Dict[str, Type[Validator]] = {validator.__name__: validator for validator in recursive_subclasses(Validator)}
 for validator in EvalValidator.__subclasses__():

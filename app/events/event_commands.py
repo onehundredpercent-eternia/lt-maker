@@ -1921,6 +1921,20 @@ If the *no_banner* flag is set, there will not be a banner announcing that the p
     keyword_types = ["Integer", "Party"]
     _flags = ['no_banner']
 
+class SetLightLevel(EventCommand):
+    nid = 'set_light_level'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Sets *LightLevel* for the indicated *Party*.
+If *Party* is not specified, the player's current party will be used.
+        """
+
+    keywords = ["LightLevel"]
+    optional_keywords = ["Party"]
+    keyword_types = ["Integer", "Party"]
+
 class IncLightLevel(EventCommand):
     nid = 'inc_light_level'
     tag = Tags.GAME_VARS
@@ -3547,33 +3561,40 @@ The *Party* entries are existing parties (the second can be empty but still must
 *Party1Limit* and *Party2Limit* set optional caps on the number of units in either party.
         """
 
-    keywords = ["Party1","Party2"]
-    optional_keywords = ["FixedUnits","Party1Name","Party2Name","Party1Limit","Party2Limit"]
-    keyword_types = ["Party","Party","Expression","String","String","PositiveInteger","PositiveInteger"]
+    keywords = ["Party1", "Party2"]
+    optional_keywords = ["FixedUnits", "Party1Name", "Party2Name", "Party1Limit", "Party2Limit"]
+    keyword_types = ["Party", "Party", "Expression", "String", "String", "PositiveInteger", "PositiveInteger"]
 
 # === Custom Event Commands Here ===
 class GenerateDungeon(EventCommand):
     nid = 'generate_dungeon'
     tag = Tags.CUSTOM
-    desc = ""
+    desc = """
+    Generates a randomized floor of a dungeon given the *DungeonTheme* and *DungeonPalette*.
+    Can optionally specify a seed to force deterministic generation.
+    """
 
     keywords = ["Chapter", "DungeonTheme", "DungeonPalette"]
     optional_keywords = ["Seed"]
     keyword_types = ["Chapter", "DungeonTheme", "DungeonPalette", "WholeNumber"]
 
-class PlaceEncounters(EventCommand):
-    nid = 'place_encounters'
-    tag = Tags.CUSTOM
-    desc = ""
-
-    keywords = []
-
 class PlaceParty(EventCommand):
     nid = 'place_party'
     tag = Tags.CUSTOM
-    desc = ""
+    desc = "Places the first *PartySize* members of your party on the map around the *StartingPosition*"
 
-    keywords = ["Party"]
+    keywords = ["StartingPosition", "PartySize"]
+    keyword_types = ["Position", "WholeNumber"]
+
+class PlaceGraves(EventCommand):
+    nid = 'place_graves'
+    tag = Tags.CUSTOM
+    desc = "Places *Count* number of Grave Tiles on the map, some distance away from the *StartingPosition*"
+
+    keywords = ["StartingPosition", "Count"]
+    optional_keywords = ["Seed"]
+    keyword_types = ["Position", "WholeNumber", "WholeNumber"]
+
 
 def get_commands():
     return EventCommand.__subclasses__()

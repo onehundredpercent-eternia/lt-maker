@@ -1,14 +1,16 @@
 from typing import List, Set, Tuple, TYPE_CHECKING
 from dataclasses import dataclass, field
+
+from app.constants import TILEWIDTH, TILEHEIGHT
+
 from app.utilities.typing import NID, Pos
 from app.utilities import utils, static_random
 from app.utilities.static_random import LCG
 
-from app.data.database.database import DB
 from app.events import regions
 
 from app.engine import action, engine
-from app.engine.objects.tilemap import TileMapObject
+from app.engine.objects.tilemap import TileMapObject, LayerObject
 from app.engine.objects.region import RegionObject
 
 from app.dungeon_maker import enemy_encounters
@@ -57,8 +59,9 @@ class NonEnemyEncounter:
     weight: float
 
     @staticmethod
-    def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
+    def apply(game, rect: Tuple[int, int, int, int], dungeon_tilemap: DungeonTileMap, 
+              tilemap: TileMapObject, dungeon_palette: str, 
+              enemy_level: int, encounter_uid: int, rng: LCG):
         pass
 
 class Empty(NonEnemyEncounter):
@@ -68,7 +71,8 @@ class Empty(NonEnemyEncounter):
 
     @staticmethod
     def apply(game, rect: Tuple[int, int, int, int], dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
+              tilemap: TileMapObject, dungeon_palette: str, 
+              enemy_level: int, encounter_uid: int, rng: LCG):
         pass
 
 class Treasure(NonEnemyEncounter):
@@ -78,15 +82,13 @@ class Treasure(NonEnemyEncounter):
 
     @staticmethod
     def apply(game, rect: Tuple[int, int, int, int], dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
+              tilemap: TileMapObject, dungeon_palette: str, 
+              enemy_level: int, encounter_uid: int, rng: LCG):
         x, y, width, height = rect
         positions = sorted(utils.tuple_add((x, y), utils.itergrid(width, height)))
 
         all_positions = rng.shuffle(positions)
         position = next(all_positions)
-
-        # Add Map Anim
-        action.do(action.AddMapAnim("Treasure", position, 1.0, engine.BlendMode.NONE))
 
         # Add Region
         x, y = position
@@ -100,8 +102,28 @@ class Treasure(NonEnemyEncounter):
         game.register_region(new_region)
         action.do(action.AddRegion(new_region))
 
-def place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap, 
-                  tilemap: TileMapObject, enemy_level: int, enemy_budget: float, rng: LCG):
+        # Modify tilemap
+        treasure_im_fn = f'app/dungeon_maker/palettes/{dungeon_palette}/treasure.png'
+        treasure_im = engine.image_load(treasure_im_fn)
+        treasure_sprite = engine.subsurface(treasure_im, (0, 0, 20, 16))
+        open_treasure_sprite = engine.subsurface(treasure_im, (0, 16, 20, 16))
+
+        # Switch terrain & modify base image
+        pixel_pos = (position[0] * TILEWIDTH, position[1] * TILEHEIGHT)
+        base_layer = tilemap.layers[0]
+        base_layer.terrain[position] = "Chest"
+        base_layer.image.blit(treasure_sprite, pixel_pos)
+
+        # Now create a new layer
+        treasure_layer = LayerObject(name, False, tilemap)
+        treasure_layer.visible = False
+        treasure_layer.set_image(open_treasure_sprite)
+        treasure_layer.pixel_bounds = [pixel_pos[0], pixel_pos[1], pixel_pos[0] + 20, pixel_pos[1] + 16]
+        tilemap.layers.append(treasure_layer)
+
+
+def _place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap, 
+                   tilemap: TileMapObject, enemy_level: int, enemy_budget: float, rng: LCG):
     current_budget: float = enemy_budget
     used_enemy_positions: Set[Pos] = {}
     encounter_uid = 0
@@ -116,7 +138,8 @@ def place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap,
         current_budget -= cost
 
 def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObject,
-                     enemy_level: int, floor_level: int, dungeon_theme: NID, seed: int):
+                     enemy_level: int, floor_level: int, dungeon_theme: NID, 
+                     dungeon_palette: str, seed: int):
     rng = static_random.LCG(seed)
     num_open_tiles = len(dungeon_tilemap.get_open_tiles())
     enemy_budget = 1 * (32 / 148) * num_open_tiles * (1 + enemy_level * 0.1) * (1 + floor_level * 0.1)
@@ -126,9 +149,9 @@ def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObje
         if section.has_full_room():
             valid_encounters = [e for e in ENCOUNTERS if e.requirements.meets(section.room.width, section.room.height, dungeon_theme, floor_level)]
             encounter = static_random.weighted_choice([e.weight for e in valid_encounters], rng)
-            encounter.apply(game, section.room.get_rect(), tilemap, enemy_level, idx, rng)
+            encounter.apply(game, section.room.get_rect(), dungeon_tilemap, tilemap, dungeon_palette, enemy_level, idx, rng)
     # Enemies
-    place_enemies(game, dungeon_theme, tilemap, enemy_level, enemy_budget, rng)
+    _place_enemies(game, dungeon_theme, tilemap, enemy_level, enemy_budget, rng)
 
 ENCOUNTERS = [
     Empty,

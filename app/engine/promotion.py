@@ -9,7 +9,7 @@ from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
 from app.engine.state import State
 from app.engine import background, menus, engine, dialog, icons, \
-    action, item_system, battle_animation
+    action, item_system, battle_animation, text_funcs
 from app.engine.combat.mock_combat import MockCombat
 from app.engine.game_state import game
 from app.engine.fluid_scroll import FluidScroll

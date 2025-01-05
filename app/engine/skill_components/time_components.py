@@ -234,6 +234,7 @@ class EventOnRemove(SkillComponent):
 
 class EventOnWait(SkillComponent):
     nid = 'event_on_wait'
+    desc = "Calls event when unit waits"
     tag = SkillTags.TIME
 
     expose = ComponentType.Event

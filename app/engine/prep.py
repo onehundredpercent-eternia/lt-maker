@@ -110,10 +110,10 @@ class PrepMainState(MapState):
         self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         elif event == 'SELECT':
             get_sound_thread().play_sfx('Select 1')
@@ -274,9 +274,9 @@ class PrepPickUnitsState(State):
                     on_map += [unit for unit in game.units if unit in game.get_units_in_party() and not unit.position and game.get_rescuer(unit) and game.get_rescuer(unit).position]
                 if not is_fatigued and len(on_map) < num_slots:
                     if possible_position:
-                    get_sound_thread().play_sfx('Select 1')
-                    action.do(action.ArriveOnMap(unit, possible_position))
-                    action.do(action.Reset(unit))
+                        get_sound_thread().play_sfx('Select 1')
+                        action.do(action.ArriveOnMap(unit, possible_position))
+                        action.do(action.Reset(unit))
                     elif pair_up_valid and not all(unit.traveler for unit in on_map if unit.position):
                         get_sound_thread().play_sfx('Select 1')
                         next_unit = next((unit for unit in on_map if unit.position and not unit.traveler))
@@ -574,7 +574,7 @@ class PrepFormationSelectState(MapState):
 
         elif event == 'AUX':
             if self.unit.position:
-            game.cursor.set_pos(self.unit.position)
+                game.cursor.set_pos(self.unit.position)
             else:
                 game.cursor.set_pos(game.get_rescuer(self.unit).position)
 
@@ -587,7 +587,7 @@ class PrepFormationSelectState(MapState):
         # Draw static hand
         if self.unit:
             if self.unit.position:
-            pos = self.unit.position
+                pos = self.unit.position
             else:
                 pos = game.get_rescuer(self.unit).position
             x = (pos[0] - game.camera.get_x()) * TILEWIDTH + 2
@@ -624,10 +624,10 @@ class PrepFormationMenuState(MapState):
         did_move = self.menu.handle_mouse()
         if 'DOWN' in directions:
             if self.menu.move_down(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif 'UP' in directions:
             if self.menu.move_up(first_push):
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         if event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
@@ -805,7 +805,7 @@ class PrepManageState(State):
             get_sound_thread().play_sfx('Select 1')
             # convoy_funcs.optimize_all()
             if game.game_vars.get('_convoy'):
-            game.state.change('optimize_all_choice')
+                game.state.change('optimize_all_choice')
             else:
                 game.alerts.append(banner.Custom("Convoy not available"))
                 game.state.change('alert')
@@ -844,10 +844,10 @@ class OptimizeAllChoiceState(State):
         self.menu.handle_mouse()
         if event == 'RIGHT':
             if self.menu.move_down():
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
         elif event == 'LEFT':
             if self.menu.move_up():
-            get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 6')
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
