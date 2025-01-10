@@ -3575,9 +3575,9 @@ class GenerateDungeon(EventCommand):
     Can optionally specify a seed to force deterministic generation.
     """
 
-    keywords = ["Chapter", "DungeonTheme", "DungeonPalette"]
+    keywords = ["Chapter", "DungeonTheme", "DungeonPalette", "EnemyLevel", "EnemyTag"]
     optional_keywords = ["Seed"]
-    keyword_types = ["Chapter", "DungeonTheme", "DungeonPalette", "WholeNumber"]
+    keyword_types = ["Chapter", "DungeonTheme", "DungeonPalette", "WholeNumber", "Tag", "WholeNumber"]
 
 class PlaceParty(EventCommand):
     nid = 'place_party'

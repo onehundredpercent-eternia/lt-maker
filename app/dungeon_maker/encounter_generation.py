@@ -125,7 +125,8 @@ class Treasure(NonEnemyEncounter):
 
 
 def _place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap, 
-                   tilemap: TileMapObject, enemy_level: int, enemy_budget: float, rng: LCG):
+                   tilemap: TileMapObject, enemy_level: int, enemy_budget: float, 
+                   enemy_tag: str, rng: LCG):
     current_budget: float = enemy_budget
     used_enemy_positions: Set[Pos] = {}
     encounter_uid = 0
@@ -135,13 +136,15 @@ def _place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap,
         enemy_encounter_type = enemy_encounters.ENEMY_ENCOUNTERS[idx]
         # Pick a random point on the tilemap that's far away from other points
         pos = rng.choice(dungeon_tilemap.get_open_tiles())
-        positions, cost = enemy_encounter_type.apply(game, pos, dungeon_tilemap, tilemap, enemy_level, encounter_uid, rng)
+        positions, cost = enemy_encounter_type.apply(
+                game, pos, dungeon_tilemap, 
+                tilemap, enemy_level, encounter_uid, enemy_tag, rng)
         used_enemy_positions |= set(positions)
         current_budget -= cost
 
 def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObject,
                      enemy_level: int, floor_level: int, dungeon_theme: NID, 
-                     dungeon_palette: str, seed: int):
+                     enemy_tag: str, dungeon_palette: str, seed: int):
     rng = static_random.LCG(seed)
     num_open_tiles = len(dungeon_tilemap.get_open_tiles())
     enemy_budget = 1 * (32 / 148) * num_open_tiles * (1 + enemy_level * 0.1) * (1 + floor_level * 0.1)
@@ -153,7 +156,7 @@ def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObje
             encounter = static_random.weighted_choice([e.weight for e in valid_encounters], rng)
             encounter.apply(game, section.room.get_rect(), dungeon_tilemap, tilemap, dungeon_palette, enemy_level, idx, rng)
     # Enemies
-    _place_enemies(game, dungeon_theme, tilemap, enemy_level, enemy_budget, rng)
+    _place_enemies(game, dungeon_theme, tilemap, enemy_level, enemy_budget, enemy_tag, rng)
 
 ENCOUNTERS = [
     Empty,

@@ -103,7 +103,8 @@ class EnemyEncounter:
 
     @staticmethod
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG):
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, 
+              tag: str, rng: LCG):
         pass
 
 @dataclass
@@ -126,13 +127,13 @@ class Basic(EnemyEncounter):
 
     @staticmethod
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
-              ) -> Tuple[List[Pos], float]:
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, 
+              tag: str, rng: LCG) -> Tuple[List[Pos], float]:
         """
         Places the enemy encounter on the map
         Returns the positions placed at, plus the cost
         """
-        klass = rng.choice(get_valid_classes(enemy_level))
+        klass = rng.choice(get_valid_classes(enemy_level, tag))
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Basic.nearby]
@@ -170,12 +171,12 @@ class TwoTypes(EnemyEncounter):
 
     @staticmethod
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
-              ) -> Tuple[List[Pos], float]:
-        klasses = get_valid_classes(enemy_level).copy()
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, 
+              tag: str, rng: LCG) -> Tuple[List[Pos], float]:
+        klasses = get_valid_classes(enemy_level, tag).copy()
         klass1 = rng.choice(klasses)
         klasses.remove(klass1)
-        klass2 = rng.choice(get_valid_classes(enemy_level))
+        klass2 = rng.choice(get_valid_classes(enemy_level, tag))
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= TwoTypes.nearby]
@@ -216,9 +217,9 @@ class Leader(EnemyEncounter):
 
     @staticmethod
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
-              ) -> Tuple[List[Pos], float]:
-        klass = rng.choice(get_valid_classes())
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, 
+              tag: str, rng: LCG) -> Tuple[List[Pos], float]:
+        klass = rng.choice(get_valid_classes(enemy_level, tag))
         leader_klass = rng.choice(Leader.leader_classes)
 
         # Place units on board
@@ -254,9 +255,9 @@ class Elite(EnemyEncounter):
 
     @staticmethod
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
-              ) -> Tuple[List[Pos], float]:
-        klass = rng.choice(get_valid_classes())
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, 
+              tag: str, rng: LCG) -> Tuple[List[Pos], float]:
+        klass = rng.choice(get_valid_classes(enemy_level, tag))
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Elite.nearby]
@@ -288,8 +289,8 @@ class Weak(EnemyEncounter):
 
     @staticmethod
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
-              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
-              ) -> Tuple[List[Pos], float]:
+              tilemap: TileMapObject, enemy_level: int, encounter_uid: int, 
+              tag: str, rng: LCG) -> Tuple[List[Pos], float]:
         """
         Places the enemy encounter on the map
         Returns the positions placed at, plus the cost

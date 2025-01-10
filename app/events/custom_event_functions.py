@@ -9,16 +9,17 @@ from app.engine import action, pathfinding
 
 from app.engine.objects.region import RegionObject
 from app.events import regions
-from app.utilities import utils
+from app.utilities import utils, str_utils
 
+from app.utilities.typing import NID
 from app.data.database.database import DB
 
 if TYPE_CHECKING:
     from app.events.event import Event
 
-def generate_dungeon(self: Event, floor_level: int, dungeon_theme: str, 
-                     dungeon_palette: str, enemy_level: int, seed: int = None, 
-                     flags=None):
+def generate_dungeon(self: Event, chapter: NID, dungeon_theme: str, 
+                     dungeon_palette: str, enemy_level: int, enemy_tag: NID,
+                     seed: int = None, flags=None):
     if seed is None:
         seed = -1
     tilemap, dungeon_tilemap = \
@@ -46,11 +47,13 @@ def generate_dungeon(self: Event, floor_level: int, dungeon_theme: str,
     self.game.register_region(end_region)
     action.do(action.AddRegion(end_region))
 
+    floor_level = str_utils.find_last_number(chapter)
+
     # Place encounters
     encounter_generation.place_encounters(
         self.game, dungeon_tilemap, tilemap, 
         enemy_level, floor_level, dungeon_theme, 
-        dungeon_palette, seed)
+        enemy_tag, dungeon_palette, seed)
 
     # Can't use turnwheel to go any further back
     self.game.action_log.set_first_free_action()
