@@ -6,7 +6,7 @@ import pygame
 import pygame.image
 import pygame.time
 
-from app.constants import WINWIDTH, WINHEIGHT, FPS
+from app.constants import TOTAL_WIDTH, WINWIDTH, WINHEIGHT, FPS
 from app.engine import config as cf
 from app.utilities import utils
 
@@ -301,7 +301,7 @@ DISPLAYSURF: Surface = None
 def get_screensize(init=False):
     global DISPLAYSURF
     if not DISPLAYSURF or init:
-        return (WINWIDTH * min(cf.SETTINGS['screen_size'], 5), WINHEIGHT * min(cf.SETTINGS['screen_size'], 5))
+        return (TOTAL_WIDTH * min(cf.SETTINGS['screen_size'], 5), WINHEIGHT * min(cf.SETTINGS['screen_size'], 5))
     return (DISPLAYSURF.get_width(), DISPLAYSURF.get_height())
 
 class Clock():

@@ -41,7 +41,7 @@ from app.data.database.database import DB
 from app.data.database.difficulty_modes import DifficultyModePrefab, GrowthOption, PermadeathOption, RNGOption
 from app.events.regions import RegionType
 from app.events import speak_style
-from app.engine import config as cf
+from app.engine import config as cf, right_display_mug
 from app.engine import state_machine
 from app.engine.roam.roam_info import RoamInfo
 from app.utilities import static_random
@@ -85,6 +85,7 @@ class GameState():
         self.memory: Dict = {}
 
         self.state: state_machine.StateMachine = state_machine.StateMachine()
+        self.right_display: right_display_mug.RightDisplay = right_display_mug.RightDisplay()
 
         self.alerts: List[banner.Banner] = []
 
@@ -753,7 +754,7 @@ class GameState():
     @property
     def rng_mode(self) -> RNGOption:
         """
-        Gets which RNG Option the game is currently using. 
+        Gets which RNG Option the game is currently using.
         If none have been set, falls back to the DifficultyModePrefab's RNG option
 
         Returns:

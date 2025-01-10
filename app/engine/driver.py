@@ -5,9 +5,10 @@ import collections
 from datetime import datetime
 import time
 from app import lt_log
+from app.engine.game_state import GameState
 from app.utilities import file_utils
 
-from app.constants import WINWIDTH, WINHEIGHT, VERSION, FPS
+from app.constants import RIGHTWIDTH, TOTAL_WIDTH, WINWIDTH, WINHEIGHT, VERSION, FPS
 from app.engine import engine
 
 import app.engine.config as cf
@@ -87,7 +88,7 @@ def check_soft_reset(game, inp) -> bool:
         inp.is_pressed('SELECT') and inp.is_pressed('BACK') and \
         inp.is_pressed('START')
 
-def run(game):
+def run(game: GameState):
     from app.engine.sound import get_sound_thread
     from app.engine.game_counters import ANIMATION_COUNTERS
     from app.engine.input_manager import get_input_manager
@@ -98,7 +99,8 @@ def run(game):
     get_sound_thread().set_music_volume(cf.SETTINGS['music_volume'])
     get_sound_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
 
-    surf = engine.create_surface((WINWIDTH, WINHEIGHT))
+    surf = engine.create_surface((TOTAL_WIDTH, WINHEIGHT))
+    right_display = engine.create_simple_surface((RIGHTWIDTH, WINHEIGHT))
     clock = engine.Clock()
     fps_records = collections.deque(maxlen=FPS)
     inp = get_input_manager()
@@ -149,6 +151,8 @@ def run(game):
                 while repeat:  # Let's the game traverse through state chains
                     # print("Repeating States:\t", game.state.state)
                     surf, repeat = game.state.update([], surf)
+                right_display = game.right_display.draw(right_display)
+                surf.blit(right_display, (WINWIDTH, 0))
                 # print("States:\t\t\t", game.state.state)
 
                 if cf.SETTINGS['display_fps']:
