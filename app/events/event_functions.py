@@ -5,7 +5,7 @@ import json
 import random
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
-from app.constants import WINHEIGHT, WINWIDTH, FANCY_DIALOG_MODE
+from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.database.difficulty_modes import RNGOption
@@ -46,9 +46,7 @@ from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
 from app.utilities.type_checking import is_primitive_or_primitive_collection
 from app.utilities.typing import NID, Point
 from app.engine.source_type import SourceType
-
-if FANCY_DIALOG_MODE:
-    from app.engine import fancy_dialog
+from app.engine import fancy_dialog
 
 if TYPE_CHECKING:
     from app.events.event import Event
@@ -125,7 +123,9 @@ def change_special_music(self: Event, special_music_type: str, music: SongPrefab
     elif special_music_type == 'game_over':
         action.do(action.SetGameVar('_music_game_over', music_nid))
 
-def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None, expression_list: Optional[List[str]]=None, speed_mult: float=1.0, flags=None):
+def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None, 
+                 expression_list: Optional[List[str]] = None, speed_mult: float = 1.0, 
+                 flags=None):
     flags = flags or set()
 
     portrait_prefab, name = self._get_portrait(portrait)
@@ -153,7 +153,7 @@ def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None
 
     new_portrait = EventPortrait(portrait_prefab, position, priority, transition,
                                  slide, mirror, name, speed_mult=speed_mult)
-    if FANCY_DIALOG_MODE:
+    if 'low_saturation' in flags:
         new_portrait.saturation = 0
 
     self.portraits[name] = new_portrait
@@ -320,7 +320,7 @@ def say(self: Event, speaker_or_style: str, text: List[str], text_position: Poin
     speak(self, speaker_or_style, joined_text, text_position, width, style_nid, text_speed, font_color, font_type, dialog_box, num_lines, draw_cursor,
           message_tail, transparency, name_tag_bg, boop_sound, flags)
 
-def speak(self: Event, speaker_or_style: str, text, text_position: Point | Alignments=None, width=None, style_nid=None, text_speed=None,
+def speak(self: Event, speaker_or_style: str, text, text_position: Point | Alignments = None, width=None, style_nid=None, text_speed=None,
           font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
           message_tail=None, transparency=None, name_tag_bg=None, boop_sound=None, flags=None):
     flags = flags or set()
@@ -377,7 +377,7 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
     if self.do_skip and 'hold' not in flags:
         pass  # Skip me!
     else:
-        if FANCY_DIALOG_MODE:
+        if 'fancy' in flags:
             new_dialog = \
                 fancy_dialog.FancyDialog(text, portrait, self.dialog_background,
                                          speaker=portrait.name if portrait else speaker, 
@@ -392,7 +392,7 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
                               style_nid=style_nid, autosize=autosize, speed=style.speed,
                               font_color=style.font_color, font_type=style.font_type, num_lines=style.num_lines,
                               draw_cursor=style.draw_cursor, message_tail=style.message_tail, transparency=style.transparency,
-                          name_tag_bg=style.name_tag_bg, boop_sound=style.boop_sound, flags=flags)
+                              name_tag_bg=style.name_tag_bg, boop_sound=style.boop_sound, flags=flags)
         self.text_boxes.append(new_dialog)
 
         if self.do_skip:

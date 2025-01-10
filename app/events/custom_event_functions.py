@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from app.utilities.typing import Pos
@@ -9,7 +11,7 @@ from app.engine.objects.region import RegionObject
 from app.events import regions
 from app.utilities import utils
 
-from app.data.database import DB
+from app.data.database.database import DB
 
 if TYPE_CHECKING:
     from app.events.event import Event

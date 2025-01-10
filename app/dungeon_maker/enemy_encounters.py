@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Tuple, TYPE_CHECKING
 from dataclasses import dataclass
 from app.utilities.typing import NID, Pos
@@ -16,26 +18,15 @@ if TYPE_CHECKING:
     from app.dungeon_maker.terrain_generation import DungeonTileMap
 
 def calculate_cost(unit: UnitObject) -> float:
-    klass = unit.klass
-    costs = {
-        "Thief": 1,
-        "Myrmidon": 1.5,
-        "Samurai": 1.5,
-        "Errant": 1.5,
-        "Mercenary": 1.25,
-        "Sentinel": 1.5,
-        "Falcoknight": 1.25,
-        "Cavalier": 1,
-        "Soldier": 0.75,
-        "Skirmisher": 1.25,
-        "Fighter": 1,
-        "Raider": 0.75,
-        "Dracoknight": 1.5,
-        "Archer": 1,
-        "Nomad": 1.25,
-        "Mage": 1.25
-    }
-    return costs.get(klass, 1)
+    k = DB.classes.get(unit.klass)
+    if 'LowLevel' in k.tags:
+        return 0.75
+    elif 'MidLevel' in k.tags:
+        return 1
+    elif 'HighLevel' in k.tags:
+        return 1.5
+    else:
+        return 1
 
 def convert_level_to_item_tier(level: int) -> str:
     if 1 <= level <= 5:
@@ -91,6 +82,20 @@ def create_unit(game, klass: NID, level: int, ai_group: NID, rng: LCG) -> UnitOb
     unit.party = game.current_party
     return unit
 
+def get_valid_classes(level: int, tag: str = None) -> List[NID]:
+    if level <= 4:
+        level_tags = ["LowLevel",]
+    elif level <= 10:
+        level_tags = ["LowLevel", "MidLevel"]
+    else:
+        level_tags = ["LowLevel", "MidLevel", "HighLevel"]
+
+    klasses = []
+    for klass in DB.classes:
+        if any(t in klass.tags for t in level_tags) and tag in klass.tags:
+            klasses.append(klass.nid)
+    return klasses
+
 @dataclass
 class EnemyEncounter:
     nid: NID
@@ -127,7 +132,7 @@ class Basic(EnemyEncounter):
         Places the enemy encounter on the map
         Returns the positions placed at, plus the cost
         """
-        klass = rng.choice(valid_classes)
+        klass = rng.choice(get_valid_classes(enemy_level))
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Basic.nearby]
@@ -167,10 +172,10 @@ class TwoTypes(EnemyEncounter):
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
               tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
               ) -> Tuple[List[Pos], float]:
-        klasses = valid_classes.copy()
+        klasses = get_valid_classes(enemy_level).copy()
         klass1 = rng.choice(klasses)
         klasses.remove(klass1)
-        klass2 = rng.choice(valid_classes)
+        klass2 = rng.choice(get_valid_classes(enemy_level))
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= TwoTypes.nearby]
@@ -213,7 +218,7 @@ class Leader(EnemyEncounter):
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
               tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
               ) -> Tuple[List[Pos], float]:
-        klass = rng.choice(valid_classes)
+        klass = rng.choice(get_valid_classes())
         leader_klass = rng.choice(Leader.leader_classes)
 
         # Place units on board
@@ -251,7 +256,7 @@ class Elite(EnemyEncounter):
     def apply(game, pos: Pos, dungeon_tilemap: DungeonTileMap, 
               tilemap: TileMapObject, enemy_level: int, encounter_uid: int, rng: LCG
               ) -> Tuple[List[Pos], float]:
-        klass = rng.choice(valid_classes)
+        klass = rng.choice(get_valid_classes())
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Elite.nearby]

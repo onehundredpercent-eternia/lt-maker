@@ -207,14 +207,14 @@ class UIView():
                     if self.initiative_info_disp and game.cursor.position[1] < TILEY // 2 + game.camera.get_y():
                         surf.blit(self.tile_info_disp, (5 - offset, 0)) # Topleft
                     else:
-                    surf.blit(self.tile_info_disp, (5 - offset, WINHEIGHT - self.tile_info_disp.get_height() - 3)) # Bottomleft
+                        surf.blit(self.tile_info_disp, (5 - offset, WINHEIGHT - self.tile_info_disp.get_height() - 3)) # Bottomleft
                 else:
                     xpos = WINWIDTH - self.tile_info_disp.get_width() - 5 + offset
                     if self.initiative_info_disp and game.cursor.position[1] < TILEY // 2 + game.camera.get_y():
                         surf.blit(self.tile_info_disp, (xpos, 0))
                     else:
-                    ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
-                    surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
+                        ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
+                        surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
 
         # Only if we actually have a simple objective
         if self.obj_info_disp and not self.initiative_info_disp and game.level.objective['simple']:
@@ -243,7 +243,7 @@ class UIView():
                 ypos = WINHEIGHT - self.initiative_info_disp.get_height()
                 surf.blit(self.initiative_info_disp, (0, ypos))
             else:
-            surf.blit(self.initiative_info_disp, (0, 0))
+                surf.blit(self.initiative_info_disp, (0, 0))
 
         return surf
 

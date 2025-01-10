@@ -159,7 +159,7 @@ class SettingsMenuState(State):
             self.handle_mouse()
             if 'DOWN' in directions:
                 if self.current_menu.move_down(first_push):
-                get_sound_thread().play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
             elif 'UP' in directions:
                 if self.current_menu.get_current_index() <= 0:
                     self.current_menu.takes_input = False
@@ -167,7 +167,7 @@ class SettingsMenuState(State):
                         self.state = 'top_menu_left'
                     else:
                         self.state = 'top_menu_right'
-                get_sound_thread().play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
                 else:
                     if self.current_menu.move_up(first_push):
                         get_sound_thread().play_sfx('Select 6')
@@ -178,7 +178,7 @@ class SettingsMenuState(State):
                     self.update_sound()
             elif 'RIGHT' in directions:
                 if self.current_menu.move_right():
-                get_sound_thread().play_sfx('Select 6')
+                    get_sound_thread().play_sfx('Select 6')
                 if self.current_menu.get_current_option().name in ('music_volume', 'sound_volume'):
                     self.update_sound()
 

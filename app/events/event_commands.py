@@ -408,12 +408,13 @@ Extra flags:
 2. *low_priority*: Portrait will appear behind all other portraits on the screen.
 3. *immediate*: Portrait will not fade in.
 4. *no_block*: Portrait will fade in, but will not pause execution of event script while doing so.
+5. *low_saturation*: Portrait will spawn in with low saturation.
         """
 
     keywords = ['Portrait', 'ScreenPosition']
     optional_keywords = ['Slide', 'ExpressionList', 'SpeedMult']
     keyword_types = ['Portrait', 'ScreenPosition', 'Slide', 'ExpressionList', 'Float']
-    _flags = ["mirror", "low_priority", "immediate", "no_block"]
+    _flags = ["mirror", "low_priority", "immediate", "no_block", "low_saturation"]
 
 class MultiAddPortrait(EventCommand):
     nid = "multi_add_portrait"
@@ -542,7 +543,7 @@ NOTE: You can set the `__default` speak style, which will automatically apply to
     keywords = ['Style']
     optional_keywords = ['Speaker', 'Position', 'Width', 'Speed', 'FontColor', 'FontType', 'Background', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg', 'BoopSound']
     keyword_types = ['Nid', 'Speaker', 'AlignOrPosition', 'Width', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite', 'Sound']
-    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_talk', 'no_sound']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_talk', 'no_sound', 'fancy']
 
 class Speak(EventCommand):
     nid = "speak"
@@ -582,7 +583,7 @@ Extra flags:
     keywords = ['SpeakerOrStyle', 'Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg', 'BoopSound']
     keyword_types = ['Speaker', 'String', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite', 'Sound']
-    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound', 'fancy']
 
 class Say(EventCommand):
     nid = "say"
@@ -621,7 +622,7 @@ Extra flags:
     keywords = ['SpeakerOrStyle', '*Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg', 'BoopSound']
     keyword_types = ['Speaker', '*String', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite', 'Sound']
-    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound', 'fancy']
 
 class Unhold(EventCommand):
     nid = "unhold"

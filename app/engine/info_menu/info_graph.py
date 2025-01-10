@@ -55,24 +55,24 @@ class InfoGraph():
         # only display help if registry has help
         if self.registry:
             last_info_menu_bbs = [bb for bb in self.registry[self.current_state] if bb.aabb == self.last_bb_aabb]
-        if self.last_bb and self.last_bb.state == self.current_state:
+            if self.last_bb and self.last_bb.state == self.current_state:
                 # restore last bb selected before transition out
-            self.current_bb = self.last_bb
-            self.current_bb.help_box.set_transition_in()
+                self.current_bb = self.last_bb
+                self.current_bb.help_box.set_transition_in()
             elif last_info_menu_bbs:
                 # then check if last_bb_aabb exists in registry after last info menu transition
                 self.current_bb = last_info_menu_bbs[0]
                 self.current_bb.help_box.set_transition_in()
             else:
-            for bb in self.registry[self.current_state]:
-                if bb.first:
-                    self.current_bb = bb
+                for bb in self.registry[self.current_state]:
+                    if bb.first:
+                        self.current_bb = bb
+                        self.current_bb.help_box.set_transition_in()
+                        break
+                else:
+                    # For now, just use first help dialog
+                    self.current_bb = self.registry[self.current_state][0]
                     self.current_bb.help_box.set_transition_in()
-                    break
-            else:
-                # For now, just use first help dialog
-                self.current_bb = self.registry[self.current_state][0]
-                self.current_bb.help_box.set_transition_in()
         # reset last_bb_aabb, if it needs to be used it should have already been
         # prevents accidentally becoming valid again when transitioning info menus
         self.last_bb_aabb = None
