@@ -54,7 +54,7 @@ class MemoryBar():
         new_surf.blit(self.end, (10 + idx, 9))
 
         # Blit current amount of memory
-        FONT['number-smallwhite'].blit_right(str(int(num)), new_surf, (self.width - 4, 4))
+        FONT['number_small'].blit_right(str(int(num)), new_surf, (self.width - 4, 4))
         new_surf = image_mods.make_translucent(new_surf, 0.1)
 
         surf.blit(new_surf, pos)

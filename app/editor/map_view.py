@@ -72,7 +72,7 @@ class SimpleMapView(QGraphicsView):
         self.scene.clear()
 
     def update_view(self, _=None):
-        if(self.current_level and not self.current_map):
+        if self.current_level and not self.current_map:
             self.current_map = RESOURCES.tilemaps.get(
                 self.current_level.tilemap)
         if self.current_map:

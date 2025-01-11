@@ -87,10 +87,11 @@ class Treasure(NonEnemyEncounter):
               tilemap: TileMapObject, dungeon_palette: str, 
               enemy_level: int, encounter_uid: int, rng: LCG):
         x, y, width, height = rect
-        positions = sorted(utils.tuple_add((x, y), utils.itergrid(width, height)))
-
-        all_positions = rng.shuffle(positions)
-        position = next(all_positions)
+        positions = []
+        for (i, j) in utils.itergrid(width, height):
+            positions.append((x + i, y + j))
+        rng.shuffle(positions)
+        position = next(iter(positions))
 
         # Add Region
         x, y = position
@@ -153,10 +154,11 @@ def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObje
     for idx, section in enumerate(dungeon_tilemap.sections.values()):
         if section.has_full_room():
             valid_encounters = [e for e in ENCOUNTERS if e.requirements.meets(section.room.width, section.room.height, dungeon_theme, floor_level)]
-            encounter = static_random.weighted_choice([e.weight for e in valid_encounters], rng)
+            encounter_idx: int = static_random.weighted_choice([e.weight for e in valid_encounters], rng)
+            encounter = valid_encounters[encounter_idx]
             encounter.apply(game, section.room.get_rect(), dungeon_tilemap, tilemap, dungeon_palette, enemy_level, idx, rng)
     # Enemies
-    _place_enemies(game, dungeon_theme, tilemap, enemy_level, enemy_budget, enemy_tag, rng)
+    _place_enemies(game, dungeon_theme, dungeon_tilemap, tilemap, enemy_level, enemy_budget, enemy_tag, rng)
 
 ENCOUNTERS = [
     Empty,

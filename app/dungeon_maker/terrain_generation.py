@@ -18,6 +18,10 @@ from app.dungeon_maker.terrain import Terrain
 from app.dungeon_maker.floor_level import FloorLevel
 from app.dungeon_maker.dungeon_section import DungeonSection
 
+import logging
+
+PRINT = False
+
 def generate_terrain(theme: str, seed=-1) -> DungeonTileMap:
     set_random_seed(seed)
     theme: Theme = themes.get(theme)  # Convert str to Theme
@@ -148,13 +152,13 @@ class DungeonTileMap:
     def get_open_tiles(self) -> List[Pos]:
         return [pos for pos, terrain in self.terrain_grid.items() if terrain in Terrain.floor_terrain()]
 
-    def get_start(self) -> Optional[Pos]:
+    def get_start_pos(self) -> Optional[Pos]:
         for pos, terrain in self.terrain_grid.items():
             if terrain == Terrain.START:
                 return pos
         return None
 
-    def get_end(self) -> Optional[Pos]:
+    def get_end_pos(self) -> Optional[Pos]:
         for pos, terrain in self.terrain_grid.items():
             if terrain == Terrain.END:
                 return pos
@@ -210,8 +214,8 @@ class DungeonTileMap:
         if floor_tiles:
             self.print_terrain_grid()
             # There are some tiles that haven't been reached
-            print("Could not find these tiles:", sorted(floor_tiles))
-            print(sorted(can_reach))
+            logging.debug("Could not find these tiles:", sorted(floor_tiles))
+            logging.debug(sorted(can_reach))
             return False
         return True
 
@@ -283,7 +287,7 @@ class DungeonTileMap:
             for adj, direction in directions:
                 adj_section = self.sections.get(adj)
                 if adj_section and not adj_section.room:
-                    print(spos, adj, direction)
+                    logging.debug(spos, adj, direction)
                     section.connect_global(direction)
                     self.print_sections()
 
@@ -299,7 +303,7 @@ class DungeonTileMap:
         ]
         if len(available_sections) < 2:
             # Need at least a start and end room
-            print("Could not find both a start and end room")
+            logging.debug("Could not find both a start and end room")
             return False
 
         # Try to find a start position!
@@ -979,6 +983,8 @@ class DungeonTileMap:
             self.terrain_grid[pos] = Terrain.WATER
 
     def print_terrain_grid(self):
+        if not PRINT:
+            return
         print("   ", end='')
         for x in range(self.width):
             print("%1d" % (x % 10), end='')
@@ -1018,6 +1024,8 @@ class DungeonTileMap:
             print("\n", end='')
 
     def print_sections(self):
+        if not PRINT:
+            return
         all_hallways = utils.flatten_list([list(section.hallways.values()) for section in self.sections.values()])
         print("   ", end='')
         for x in range(self.width):

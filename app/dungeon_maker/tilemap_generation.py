@@ -51,7 +51,7 @@ def get_terrain_nid_from_dungeon_terrain(terrain: Terrain) -> NID:
         Terrain.STAIRS_LEFT: 'Stairs',
         Terrain.PILLAR: 'Pillar',
         Terrain.SPARSE_FOREST: 'Forest',
-        Terrain.GRASS: 'Plains',
+        Terrain.GRASS: 'Plain',
         Terrain.RUINS_LOWER: 'Floor',
         Terrain.RUINS_UPPER: 'Floor',
         Terrain.CHECKERBOARD_LOWER: 'Floor',
@@ -97,10 +97,7 @@ def generate_map(theme: str = 'default',
 
     true_terrain_grid = \
         {pos: get_terrain_nid_from_dungeon_terrain(terrain) for pos, terrain in dungeon_tilemap.terrain_grid.items()}
-    layers = {}
-    for nid, layer in dungeon_tilemap.layers:
-        layers[nid] = {pos: get_terrain_nid_from_dungeon_terrain(terrain) for pos, terrain in layer}
-    tilemap = TileMapObject.build_from_scratch("sample", size, true_terrain_grid, layers, surf, scratch_data)
+    tilemap = TileMapObject.build_from_scratch("sample", size, true_terrain_grid, surf, scratch_data)
     if save_screenshot:
         tilemap.save_screenshot(f'LT-{theme}-{palette_name}-{seed}.png')
     return tilemap, dungeon_tilemap

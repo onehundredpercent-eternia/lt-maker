@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 from app.utilities.typing import Pos
 
 from app.dungeon_maker import encounter_generation, tilemap_generation, utilities
-from app.engine import action, pathfinding
+from app.engine import action
+from app.engine.pathfinding import pathfinding
 
 from app.engine.objects.region import RegionObject
 from app.events import regions
@@ -58,25 +59,35 @@ def generate_dungeon(self: Event, chapter: NID, dungeon_theme: str,
     # Can't use turnwheel to go any further back
     self.game.action_log.set_first_free_action()
 
-def place_party(self: Event, position: Pos, party_size: int, flags=None):
+def place_party(self: Event, starting_position: Pos, party_size: int, flags=None):
+    _position = self._parse_pos(starting_position)
+    if not _position:
+        self.logger.error("move_cursor: Could not determine position from %s" % starting_position)
+        return
+
     members = self.game.get_all_units_in_party()
     for i in range(party_size):
         unit = members[i]
-        current_occupant = self.game.board.get_unit(position)
+        current_occupant = self.game.board.get_unit(_position)
         if current_occupant:
-            pos = self.game.target_system.get_closest_reachable_tile(unit, position)
+            pos = self.game.target_system.get_closest_reachable_tile(unit, _position)
             if not pos:
                 self.logger.warning("Somehow wasn't able to find a nearby open tile")
                 return None
         else:
-            pos = position
+            pos = _position
         # Actually place unit
-        action.do(action.ArriveOnMap(unit, position))
+        action.do(action.ArriveOnMap(unit, pos))
 
-def place_graves(self: Event, start_position: Pos, num: int, seed: int = None, flags=None):
+def place_graves(self: Event, starting_position: Pos, count: int, seed: int = None, flags=None):
     DISTANCE = 10
     if seed is None:
         seed = -1
+
+    _position = self._parse_pos(starting_position)
+    if not _position:
+        self.logger.error("move_cursor: Could not determine position from %s" % starting_position)
+        return
 
     grid = self.game.board.get_movement_grid(DB.mcost.unit_types[0])
     open_tiles = []
@@ -84,12 +95,12 @@ def place_graves(self: Event, start_position: Pos, num: int, seed: int = None, f
         if grid.get(pos) and grid.get(pos).cost <= 1:
             open_tiles.append(pos)
 
-    open_tiles = [pos for pos in open_tiles if utils.calculate_distance(pos, start_position) > DISTANCE]
-    counter = num
+    open_tiles = [pos for pos in open_tiles if utils.calculate_distance(pos, _position) > DISTANCE]
+    counter = count
     grave_tiles = []
     while counter > 0 and open_tiles:
         counter -= 1
-        tile = utilities.random_choice(open_tiles, start_position, seed, offset=counter)
+        tile = utilities.random_choice(open_tiles, _position, seed, offset=counter)
         grave_tiles.append(tile)
         open_tiles = [
             pos for pos in open_tiles 
@@ -107,6 +118,6 @@ def place_graves(self: Event, start_position: Pos, num: int, seed: int = None, f
         grave_region = RegionObject("Grave_%d" % idx, regions.RegionType.NORMAL)
         grave_region.position = tile_pos
         grave_region.size = (1, 1)
-        grave_region.time_left = get_grave_time(start_position, tile_pos)
+        grave_region.time_left = get_grave_time(_position, tile_pos)
         self.game.register_region(grave_region)
         action.do(action.AddRegion(grave_region))

@@ -273,6 +273,13 @@ class DungeonRoom:
         self.positions: List[Pos] = \
             [(x + self.offset[0], y + self.offset[1]) for x in range(self.width) for y in range(self.height)]
 
+    def get_rect(self) -> Tuple[int, int, int, int]:
+        """
+        Returns the left, top, width, and height of the room
+        """
+        x, y = self.get_true_offset()
+        return (x + 1, y + 1, self.width - 1, self.height - 1)
+
     def get_true_offset(self) -> Pos:
         """
         Returns the true top left position of the room

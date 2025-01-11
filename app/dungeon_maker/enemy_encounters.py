@@ -49,26 +49,27 @@ def get_items(game, klass: NID, level: int, rng: LCG) -> List[NID]:
 
     # Figure out what kind of weapon this unit can wield
     usable_weapon_types: List[NID] = []
-    for nid, wexp_gain in klass_prefab.wexp_gain:
+    for nid, wexp_gain in klass_prefab.wexp_gain.items():
         if wexp_gain.usable:
             usable_weapon_types.append(nid)
 
     weapon_type = rng.choice(usable_weapon_types)
 
     def is_weapon_type(item: ItemPrefab, weapon_type: NID):
-        return item.weapon_type == weapon_type or (item.item_prefab and DB.items.get(item.item_prefab.value).weapon_type == weapon_type)
+        return (item.weapon_type and item.weapon_type.value == weapon_type) \
+            or (item.item_prefab and DB.items.get(item.item_prefab.value).weapon_type 
+                and DB.items.get(item.item_prefab.value).weapon_type.value == weapon_type)
 
     item_prefabs = DB.items.values()
-    basic_item_prefabs = [
+    item_prefabs = [
         i for i in item_prefabs 
         if is_weapon_type(i, weapon_type)
-        and tier in i.item_tags and 'Basic' in i.item_tags
+        and i.item_tags
+        and tier in i.item_tags.value
     ]
-    # secondary_item_prefabs = [i for i in item_prefabs if is_weapon_type(i, weapon_type) and tier in i.item_tags and 'Secondary' in i.item_tags]
 
-    primary = rng.choice(basic_item_prefabs)
-    # secondary = rng.choice(secondary_item_prefabs)
-    return [primary] + []
+    primary = rng.choice(item_prefabs)
+    return [primary.nid]
 
 def create_unit(game, klass: NID, level: int, ai_group: NID, rng: LCG) -> UnitObject:
     """
@@ -82,7 +83,7 @@ def create_unit(game, klass: NID, level: int, ai_group: NID, rng: LCG) -> UnitOb
     unit.party = game.current_party
     return unit
 
-def get_valid_classes(level: int, tag: str = None) -> List[NID]:
+def get_valid_classes(level: int, tag: str) -> List[NID]:
     if level <= 4:
         level_tags = ["LowLevel",]
     elif level <= 10:
@@ -137,7 +138,8 @@ class Basic(EnemyEncounter):
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Basic.nearby]
-        all_positions = rng.shuffle(valid_positions)
+        rng.shuffle(valid_positions)
+        all_positions = iter(valid_positions)
 
         used_positions: List[Pos] = []
         total_cost: float = 0
@@ -180,7 +182,8 @@ class TwoTypes(EnemyEncounter):
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= TwoTypes.nearby]
-        all_positions = rng.shuffle(valid_positions)
+        rng.shuffle(valid_positions)
+        all_positions = iter(valid_positions)
 
         used_positions: List[Pos] = []
         total_cost: float = 0
@@ -224,7 +227,8 @@ class Leader(EnemyEncounter):
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Leader.nearby]
-        all_positions = rng.shuffle(valid_positions)
+        rng.shuffle(valid_positions)
+        all_positions = iter(valid_positions)
 
         used_positions: List[Pos] = []
         total_cost: float = 0
@@ -238,7 +242,7 @@ class Leader(EnemyEncounter):
 
         # Place leader 5 levels ahead
         position = next(all_positions)
-        unit = create_unit(game, leader_klass, enemy_level + 5, encounter_uid)
+        unit = create_unit(game, leader_klass, enemy_level + 5, encounter_uid, rng)
         action.do(action.RegisterUnit(unit))
         action.do(action.ArriveOnMap(unit, position))
         used_positions.append(position)
@@ -261,7 +265,8 @@ class Elite(EnemyEncounter):
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Elite.nearby]
-        all_positions = rng.shuffle(valid_positions)
+        rng.shuffle(valid_positions)
+        all_positions = iter(valid_positions)
 
         used_positions: List[Pos] = []
         total_cost: float = 0
@@ -299,7 +304,8 @@ class Weak(EnemyEncounter):
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= Weak.nearby]
-        all_positions = rng.shuffle(valid_positions)
+        rng.shuffle(valid_positions)
+        all_positions = iter(valid_positions)
 
         used_positions: List[Pos] = []
         total_cost: float = 0
