@@ -20,7 +20,7 @@ from app.dungeon_maker.dungeon_section import DungeonSection
 
 import logging
 
-PRINT = False
+PRINT = True
 
 def generate_terrain(theme: str, seed=-1) -> DungeonTileMap:
     set_random_seed(seed)
@@ -130,11 +130,14 @@ def _generate_terrain_process(theme: Theme) -> Optional[DungeonTileMap]:
 
     tilemap.print_terrain_grid()
 
+    print(f"RANDOM SEED: {get_random_seed()}")
+
     return tilemap
 
 class DungeonTileMap:
     def __init__(self, theme: Theme):
         self.random = static_random.LCG(get_random_seed())
+        print("Random Seed: %d" % get_random_seed())
         self.theme = theme
         self.width, self.height = theme.size
         self.terrain_grid: Dict[Pos, Terrain] = {}
@@ -819,7 +822,9 @@ class DungeonTileMap:
         to_swap = set()
         for pos, terrain in self.terrain_grid.items():
             if terrain == Terrain.FLOOR_LOWER:
-                if self.random.random() < self.theme.sparse_forest_chance:
+                rng = self.random.random()
+                print(rng, self.theme.sparse_forest_chance)
+                if rng < self.theme.sparse_forest_chance:
                     to_swap.add(pos)
         for pos in to_swap:
             self.terrain_grid[pos] = Terrain.SPARSE_FOREST

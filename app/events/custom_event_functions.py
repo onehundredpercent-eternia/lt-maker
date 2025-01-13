@@ -22,7 +22,8 @@ def generate_dungeon(self: Event, chapter: NID, dungeon_theme: str,
                      dungeon_palette: str, enemy_level: int, enemy_tag: NID,
                      seed: int = None, flags=None):
     if seed is None:
-        seed = -1
+        seed = self.game.game_vars['_random_seed']
+    print("Seed: %d" % seed)
     tilemap, dungeon_tilemap = \
         tilemap_generation.generate_map(dungeon_theme, dungeon_palette, seed)
     

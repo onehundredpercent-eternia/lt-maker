@@ -128,27 +128,38 @@ class Treasure(NonEnemyEncounter):
 def _place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap, 
                    tilemap: TileMapObject, enemy_level: int, enemy_budget: float, 
                    enemy_tag: str, rng: LCG):
+    START_DISTANCE = 5
+    ENEMY_DISTANCE = 6
     current_budget: float = enemy_budget
-    used_enemy_positions: Set[Pos] = {}
+    valid_enemy_positions: Set[Pos] = set(dungeon_tilemap.get_open_tiles())
+    valid_enemy_positions -= game.target_system.find_manhattan_spheres(range(START_DISTANCE + 1), *dungeon_tilemap.get_start_pos())
+    valid_enemy_positions: List[Pos] = list(sorted(valid_enemy_positions))
     encounter_uid = 0
-    while current_budget > 0:
+    while current_budget > 0 and valid_enemy_positions:
         # Pick a random enemy encounter type
         idx = static_random.weighted_choice([e.weight for e in enemy_encounters.ENEMY_ENCOUNTERS], rng)
         enemy_encounter_type = enemy_encounters.ENEMY_ENCOUNTERS[idx]
-        # Pick a random point on the tilemap that's far away from other points
-        pos = rng.choice(dungeon_tilemap.get_open_tiles())
+        # Pick a random point on the tilemap that's far away from other enemies / players
+        pos = rng.choice(valid_enemy_positions)
         positions, cost = enemy_encounter_type.apply(
                 game, pos, dungeon_tilemap, 
                 tilemap, enemy_level, encounter_uid, enemy_tag, rng)
-        used_enemy_positions |= set(positions)
+
+        # Remove the positions near this group as valid
+        valid_enemy_positions = set(valid_enemy_positions)
+        for position in positions:
+            valid_enemy_positions -= game.target_system.find_manhattan_spheres(range(ENEMY_DISTANCE + 1), *position)
+        valid_enemy_positions = list(sorted(valid_enemy_positions))
+
         current_budget -= cost
+        print(f"Type: {enemy_encounter_type}, Cost: {cost}, Remaining Budget: {current_budget}, Remaining Enemy Positions: {len(valid_enemy_positions)}")
 
 def place_encounters(game, dungeon_tilemap: DungeonTileMap, tilemap: TileMapObject,
                      enemy_level: int, floor_level: int, dungeon_theme: NID, 
                      enemy_tag: str, dungeon_palette: str, seed: int):
     rng = static_random.LCG(seed)
     num_open_tiles = len(dungeon_tilemap.get_open_tiles())
-    enemy_budget = 1 * (32 / 148) * num_open_tiles * (1 + enemy_level * 0.1) * (1 + floor_level * 0.1)
+    enemy_budget = 0.5 * (32 / 148) * num_open_tiles * (1 + enemy_level * 0.1) * (1 + floor_level * 0.1)
     print(f"Enemy Budget: {enemy_budget}")
     # Non-enemies
     for idx, section in enumerate(dungeon_tilemap.sections.values()):

@@ -1,5 +1,4 @@
 from __future__ import annotations
-import random
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -31,39 +30,39 @@ class DungeonSection:
         return self.room and self.room.width >= 3 and self.room.height >= 3
 
     def generate_room(self):
-        width = random.randint(self.tilemap.theme.room_size_min_x, self.width - 1)
-        height = random.randint(self.tilemap.theme.room_size_min_y, self.height - 1)
-        offset_x = random.randint(0, self.width - width - 1)
-        offset_y = random.randint(0, self.height - height - 1)
-        floor_level = FloorLevel.LOWER if random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
+        width = self.tilemap.random.randint(self.tilemap.theme.room_size_min_x, self.width - 1)
+        height = self.tilemap.random.randint(self.tilemap.theme.room_size_min_y, self.height - 1)
+        offset_x = self.tilemap.random.randint(0, self.width - width - 1)
+        offset_y = self.tilemap.random.randint(0, self.height - height - 1)
+        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
 
         self.room = DungeonRoom((width, height), (offset_x, offset_y), self, self.tilemap, floor_level)
 
     def generate_hallway_node(self):
-        size = 2 if random.random() < self.tilemap.theme.wide_hallway_chance else 1
-        offset_x = random.randint(0, self.width - size - 1)
-        offset_y = random.randint(0, self.height - size - 1)
-        floor_level = FloorLevel.LOWER if random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
+        size = 2 if self.tilemap.random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        offset_x = self.tilemap.random.randint(0, self.width - size - 1)
+        offset_y = self.tilemap.random.randint(0, self.height - size - 1)
+        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
 
         self.room = DungeonRoom((size, size), (offset_x, offset_y), self, self.tilemap, floor_level)
 
     def get_east_start(self) -> Tuple[int, int]:
-        random_point = random.randrange(self.room.height)
+        random_point = self.tilemap.random.randrange(self.room.height)
         start = random_point + self.offset[1] + self.room.offset[1]
         return random_point, start
 
     def get_west_start(self) -> Tuple[int, int]:
-        random_point = random.randrange(self.room.height)
+        random_point = self.tilemap.random.randrange(self.room.height)
         start = random_point + self.offset[1]
         return random_point, start
 
     def get_south_start(self) -> Tuple[int, int]:
-        random_point = random.randrange(self.room.width)
+        random_point = self.tilemap.random.randrange(self.room.width)
         start = random_point + self.offset[0] + self.room.offset[0]
         return random_point, start
 
     def get_north_start(self) -> Tuple[int, int]:
-        random_point = random.randrange(self.room.width)
+        random_point = self.tilemap.random.randrange(self.room.width)
         start = random_point + self.offset[0]
         return random_point, start
 
@@ -72,9 +71,9 @@ class DungeonSection:
         Connects to the global background room if there is no room normally in this direction
         """
         # Chance to skip connecting
-        if random.random() > self.tilemap.theme.connection_chance:
+        if self.tilemap.random.random() > self.tilemap.theme.connection_chance:
             return
-        hallway_width = 2 if random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        hallway_width = 2 if self.tilemap.random.random() < self.tilemap.theme.wide_hallway_chance else 1
         hallway = []
 
         if direction == Direction.EAST:
@@ -89,7 +88,7 @@ class DungeonSection:
             elif start_room_panel == 0:
                 hallway_side = 1
             else:
-                hallway_side = random.choice([-1, 1])
+                hallway_side = self.tilemap.random.choice([-1, 1])
 
             x = start
             hallway.append((x, start_on_wall))
@@ -109,7 +108,7 @@ class DungeonSection:
             elif start_room_panel == 0:
                 hallway_side = 1
             else:
-                hallway_side = random.choice([-1, 1])
+                hallway_side = self.tilemap.random.choice([-1, 1])
 
             x = start - 1
             hallway.append((x, start_on_wall))
@@ -129,7 +128,7 @@ class DungeonSection:
             elif start_room_panel == 0:
                 hallway_side = 1
             else:
-                hallway_side = random.choice([-1, 1])
+                hallway_side = self.tilemap.random.choice([-1, 1])
 
             y = start
             hallway.append((start_on_wall, y))
@@ -149,7 +148,7 @@ class DungeonSection:
             elif start_room_panel == 0:
                 hallway_side = 1
             else:
-                hallway_side = random.choice([-1, 1])
+                hallway_side = self.tilemap.random.choice([-1, 1])
 
             y = start - 1
             hallway.append((start_on_wall, y))
@@ -161,9 +160,9 @@ class DungeonSection:
 
     def connect(self, other: DungeonSection, direction: Direction):
         # Chance to skip connecting the two rooms
-        if random.random() > self.tilemap.theme.connection_chance:
+        if self.tilemap.random.random() > self.tilemap.theme.connection_chance:
             return
-        hallway_width = 2 if random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        hallway_width = 2 if self.tilemap.random.random() < self.tilemap.theme.wide_hallway_chance else 1
         hallway = []
 
         if direction == Direction.EAST:
@@ -181,16 +180,16 @@ class DungeonSection:
             elif start_room_panel == 0:
                 begin_side = 1
             else:
-                begin_side = random.choice([-1, 1])
+                begin_side = self.tilemap.random.choice([-1, 1])
 
-            middle_side = random.choice([-1, 1])
+            middle_side = self.tilemap.random.choice([-1, 1])
 
             if other_start_room_panel == other.room.height - 1:
                 end_side = -1
             elif other_start_room_panel == 0:
                 end_side = 1
             else:
-                end_side = random.choice([-1, 1])
+                end_side = self.tilemap.random.choice([-1, 1])
 
             for x in range(start, midpoint):
                 hallway.append((x, start_on_wall))
@@ -228,16 +227,16 @@ class DungeonSection:
             elif start_room_panel == 0:
                 begin_side = 1
             else:
-                begin_side = random.choice([-1, 1])
+                begin_side = self.tilemap.random.choice([-1, 1])
 
-            middle_side = random.choice([-1, 1])
+            middle_side = self.tilemap.random.choice([-1, 1])
 
             if other_start_room_panel == other.room.width - 1:
                 end_side = -1
             elif other_start_room_panel == 0:
                 end_side = 1
             else:
-                end_side = random.choice([-1, 1])
+                end_side = self.tilemap.random.choice([-1, 1])
 
             for y in range(start, midpoint):
                 hallway.append((start_on_wall, y))
