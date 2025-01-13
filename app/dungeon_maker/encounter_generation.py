@@ -141,14 +141,17 @@ def _place_enemies(game, dungeon_theme: NID, dungeon_tilemap: DungeonTileMap,
         enemy_encounter_type = enemy_encounters.ENEMY_ENCOUNTERS[idx]
         # Pick a random point on the tilemap that's far away from other enemies / players
         pos = rng.choice(valid_enemy_positions)
+        print(f"Enemy Position: {pos}")
         positions, cost = enemy_encounter_type.apply(
                 game, pos, dungeon_tilemap, 
                 tilemap, enemy_level, encounter_uid, enemy_tag, rng)
+        print(f"Enemy Positions: {positions}")
 
         # Remove the positions near this group as valid
         valid_enemy_positions = set(valid_enemy_positions)
         for position in positions:
-            valid_enemy_positions -= game.target_system.find_manhattan_spheres(range(ENEMY_DISTANCE + 1), *position)
+            nearby = game.target_system.find_manhattan_spheres(range(ENEMY_DISTANCE + 1), *position)
+            valid_enemy_positions -= nearby
         valid_enemy_positions = list(sorted(valid_enemy_positions))
 
         current_budget -= cost

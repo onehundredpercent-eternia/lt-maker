@@ -823,7 +823,6 @@ class DungeonTileMap:
         for pos, terrain in self.terrain_grid.items():
             if terrain == Terrain.FLOOR_LOWER:
                 rng = self.random.random()
-                print(rng, self.theme.sparse_forest_chance)
                 if rng < self.theme.sparse_forest_chance:
                     to_swap.add(pos)
         for pos in to_swap:

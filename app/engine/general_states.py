@@ -769,7 +769,6 @@ class MoveState(MapState):
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
                     get_sound_thread().play_sfx('Error')
                 else:
-                    xcom_moves = game.path_system.get_valid_xcom_moves(cur_unit, witch_warp=False)
                     cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                     # Immediately wait after the XCOM Move
                     game.state.clear()

@@ -50,7 +50,7 @@ def get_items(game, klass: NID, level: int, rng: LCG) -> List[NID]:
     # Figure out what kind of weapon this unit can wield
     usable_weapon_types: List[NID] = []
     for nid, wexp_gain in klass_prefab.wexp_gain.items():
-        if wexp_gain.usable:
+        if wexp_gain.usable and nid in DB.weapons.keys():
             usable_weapon_types.append(nid)
 
     weapon_type = rng.choice(usable_weapon_types)
@@ -61,6 +61,7 @@ def get_items(game, klass: NID, level: int, rng: LCG) -> List[NID]:
                 and DB.items.get(item.item_prefab.value).weapon_type.value == weapon_type)
 
     item_prefabs = DB.items.values()
+    print(tier, weapon_type)
     item_prefabs = [
         i for i in item_prefabs 
         if is_weapon_type(i, weapon_type)
@@ -68,6 +69,7 @@ def get_items(game, klass: NID, level: int, rng: LCG) -> List[NID]:
         and tier in i.item_tags.value
     ]
 
+    assert len(item_prefabs) > 0
     primary = rng.choice(item_prefabs)
     return [primary.nid]
 
@@ -178,7 +180,7 @@ class TwoTypes(EnemyEncounter):
         klasses = get_valid_classes(enemy_level, tag).copy()
         klass1 = rng.choice(klasses)
         klasses.remove(klass1)
-        klass2 = rng.choice(get_valid_classes(enemy_level, tag))
+        klass2 = rng.choice(klasses)
 
         # Place units on board
         valid_positions = [p for p in dungeon_tilemap.get_open_tiles() if utils.calculate_distance(p, pos) <= TwoTypes.nearby]
@@ -246,7 +248,7 @@ class Leader(EnemyEncounter):
         action.do(action.RegisterUnit(unit))
         action.do(action.ArriveOnMap(unit, position))
         used_positions.append(position)
-        total_cost += calculate_cost(unit)
+        total_cost += 2 * calculate_cost(unit)
 
         return used_positions, total_cost
 
@@ -276,7 +278,7 @@ class Elite(EnemyEncounter):
             action.do(action.RegisterUnit(unit))
             action.do(action.ArriveOnMap(unit, position))
             used_positions.append(position)
-            total_cost += calculate_cost(unit)
+            total_cost += 2 * calculate_cost(unit)
 
         return used_positions, total_cost
 
