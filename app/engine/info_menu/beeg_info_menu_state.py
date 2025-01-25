@@ -14,7 +14,7 @@ from app.engine import engine, help_menu, gui, \
 from app.engine.game_menus import menu_options
 from app.engine.game_state import game
 from app.engine.info_menu.info_menu_portrait import InfoMenuPortrait
-from app.utilities.enums import Alignments
+from app.utilities.enums import HAlignment
 
 from app.engine.info_menu import info_graph, info_menu_state
 from app.engine.graphics.ingame_ui.build_groove import build_groove
@@ -52,7 +52,9 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # Only create if we don't have one in memory
         if not self.portrait_surf:
             self.portrait_surf = self.create_portrait_section()
-        portrait_surf = self.portrait_surf.copy()
+        offset_x = max(4, 4 - self.scroll_offset_x)
+        portrait_surf = engine.subsurface(self.portrait_surf, (offset_x, 0, self.portrait_surf.get_width() - offset_x, WINHEIGHT))
+        surf.blit(portrait_surf, (max(0, 0 + self.scroll_offset_x), self.scroll_offset_y))
 
         # If no portrait for this unit, either create one or default to class card using icons.get_portrait
         if not self.current_portrait:
@@ -69,43 +71,38 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # Draw portrait onto the portrait surf
         if im:
             rect = (0, offset//2, im.get_width(), 76)
-            portrait_surf = engine.subsurface(im, rect)
-            surf.blit(portrait_surf, (100 + max((96 - im.get_width())//2, 0), 4))
-
-        # Stick it on the surface
-        if self.transparency:
-            im = image_mods.make_translucent(portrait_surf, self.transparency)
-            surf.blit(im, (0, self.scroll_offset_y))
-        else:
-            surf.blit(portrait_surf, (0, self.scroll_offset_y))
+            im = engine.subsurface(im, rect)
+            if self.transparency:
+                im = image_mods.make_translucent(im, self.transparency)
+            surf.blit(im, (98 + max((96 - im.get_width())//2, 0), 4 + self.scroll_offset_y))
 
         # Blit the unit's active/focus map sprite
         if not self.transparency:
             active_sprite = self.unit.sprite.create_image('active')
-            x_pos = 4 + 81 - active_sprite.get_width()//2
+            x_pos = 81 - active_sprite.get_width()//2
             y_pos = self.portrait_section_height - 61
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
     def create_portrait_section(self):
-        surf = engine.create_surface((WINWIDTH, 80), transparent=True)
-        surf.blit(SPRITES.get('info_unit'), (10, 44))
+        surf = engine.create_surface((WINWIDTH, self.portrait_section_height), transparent=True)
+        surf.blit(SPRITES.get('info_unit'), (6, 44))
 
         x_offset = 4
-        render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), Alignments.CENTER)
+        render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), HAlignment.CENTER)
         self.info_graph.register((x_offset + 24, 0, 52, 24), self.unit.desc, 'all')
         class_obj = DB.classes.get(self.unit.klass)
-        render_text(surf, ['text'], [class_obj.name], ['white'], (x_offset + 8, 24))
-        self.info_graph.register((x_offset + 8, 24, 72, 16), class_obj.desc, 'all')
-        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (x_offset + 38, 42), Alignments.RIGHT)
-        self.info_graph.register((x_offset + 8, 42, 30, 16), 'Level_desc', 'all')
-        render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (x_offset + 63, 42), Alignments.RIGHT)
-        self.info_graph.register((x_offset + 38, 42, 30, 16), 'Exp_desc', 'all')
-        render_text(surf, ['text'], [str(self.unit.get_hp())], ['blue'], (x_offset + 39, 58), Alignments.RIGHT)
-        self.info_graph.register((x_offset + 8, 58, 72, 16), 'HP_desc', 'all')
+        render_text(surf, ['text'], [class_obj.name], ['white'], (x_offset + 4, 24))
+        self.info_graph.register((x_offset + 4, 24, 72, 16), class_obj.desc, 'all')
+        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (x_offset + 34, 42), HAlignment.RIGHT)
+        self.info_graph.register((x_offset + 4, 42, 30, 16), 'Level_desc', 'all')
+        render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (x_offset + 59, 42), HAlignment.RIGHT)
+        self.info_graph.register((x_offset + 34, 42, 30, 16), 'Exp_desc', 'all')
+        render_text(surf, ['text'], [str(self.unit.get_hp())], ['blue'], (x_offset + 35, 58), HAlignment.RIGHT)
+        self.info_graph.register((x_offset + 4, 58, 72, 16), 'HP_desc', 'all')
         max_hp = equations.parser.hitpoints(self.unit)
-        render_text(surf, ['text'], [str(max_hp)], ['blue'], (x_offset + 63, 58), Alignments.RIGHT)
+        render_text(surf, ['text'], [str(max_hp)], ['blue'], (x_offset + 59, 58), HAlignment.RIGHT)
         # Blit the white status platform
-        surf.blit(SPRITES.get('status_platform'), (x_offset + 66, 53))
+        surf.blit(SPRITES.get('status_platform'), (x_offset + 62, 53))
         # Blit affinity
         affinity = DB.affinities.get(self.unit.affinity)
         if affinity:
@@ -131,7 +128,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         if DB.constants.value('crit'):
             render_text(surf, ['text'], ['Crit'], ['yellow'], (left + 4, top + 49))
             self.info_graph.register((left + 4, top + 49, 64, 16), 'Crit_desc', 'all')
-            render_text(surf, ['text'], ['Dodg'], ['yellow'], (left + 60, top + 49))
+            render_text(surf, ['text'], ['Dodge'], ['yellow'], (left + 60, top + 49))
             self.info_graph.register((left + 60, top + 49, 64, 16), 'Dodg_desc', 'all')
 
         weapon = self.unit.get_weapon()
@@ -150,14 +147,14 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         avo = str(combat_calcs.avoid(self.unit, weapon))
         attack_speed = str(combat_calcs.attack_speed(self.unit, weapon))
         ddg = str(combat_calcs.crit_avoid(self.unit, weapon))
-        render_text(surf, ['text'], [rng], ['blue'], (left + 116, top + 1), Alignments.RIGHT)
-        render_text(surf, ['text'], [dam], ['blue'], (left + 56, top + 17), Alignments.RIGHT)
-        render_text(surf, ['text'], [attack_speed], ['blue'], (left + 116, top + 17), Alignments.RIGHT)
-        render_text(surf, ['text'], [acc], ['blue'], (left + 56, top + 33), Alignments.RIGHT)
-        render_text(surf, ['text'], [avo], ['blue'], (left + 116, top + 33), Alignments.RIGHT)
+        render_text(surf, ['text'], [rng], ['blue'], (left + 116, top + 1), HAlignment.RIGHT)
+        render_text(surf, ['text'], [dam], ['blue'], (left + 56, top + 17), HAlignment.RIGHT)
+        render_text(surf, ['text'], [attack_speed], ['blue'], (left + 116, top + 17), HAlignment.RIGHT)
+        render_text(surf, ['text'], [acc], ['blue'], (left + 56, top + 33), HAlignment.RIGHT)
+        render_text(surf, ['text'], [avo], ['blue'], (left + 116, top + 33), HAlignment.RIGHT)
         if DB.constants.value('crit'):
-            render_text(surf, ['text'], [crt], ['blue'], (left + 56, top + 49), Alignments.RIGHT)
-            render_text(surf, ['text'], [ddg], ['blue'], (left + 116, top + 49), Alignments.RIGHT)
+            render_text(surf, ['text'], [crt], ['blue'], (left + 56, top + 49), HAlignment.RIGHT)
+            render_text(surf, ['text'], [ddg], ['blue'], (left + 116, top + 49), HAlignment.RIGHT)
 
         return surf
 
@@ -221,17 +218,17 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         max_stats = class_obj.max_stats
 
         left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
-        right_stats = left_stats[10:]  # Only first ten get to be on the left
+        right_stats = left_stats[8:]  # Only first eight get to be on the left
         right_stats += [stat.nid for stat in DB.stats if stat.position == 'right']
-        # Make sure we only display up to 10 on each
-        left_stats = left_stats[:10]
+        # Make sure we only display up to 8 on each
+        left_stats = left_stats[:8]
 
         stat_offset = 64
         for idx, stat_nid in enumerate(left_stats):
             curr_stat = DB.stats.get(stat_nid)
             # Value
-            x_idx = idx // 3
-            y_idx = idx % 3
+            x_idx = idx // 4
+            y_idx = idx % 4
             if growths:
                 icons.draw_growth(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx))
             else:
@@ -349,12 +346,12 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 charge = ' (%d/%d)' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
-            self.info_graph.register((4 + WINWIDTH//2 + left_pos + 8, WINHEIGHT - 52, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+            self.info_graph.register((4 + WINWIDTH//2 + left_pos + 8, WINHEIGHT - 36, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
 
         return surf
 
     def draw_class_skill_surf(self, surf):
-        surf.blit(self.class_skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 56))
+        surf.blit(self.class_skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 40))
 
     def create_support_surf(self):
         surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)
@@ -366,7 +363,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         else:
             pairs = []
 
-        pairs = pairs[:6] # max six supports displayed
+        pairs = pairs[:6]  # max six supports displayed
 
         top = 4
         for idx, pair in enumerate(pairs):

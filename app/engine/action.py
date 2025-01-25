@@ -207,6 +207,22 @@ class Move(Action):
 class CantoMove(Move):
     pass
 
+class XCOMMove(Move):
+    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0):
+        super().__init__(unit, new_pos, path, event, follow, speed)
+        self.has_attacked = HasAttacked(unit)
+
+    def do(self):
+        super().do()
+        self.has_attacked.execute()
+
+    def execute(self):
+        super().execute()
+        self.has_attacked.execute()
+
+    def reverse(self):
+        super().reverse()
+        self.has_attacked.reverse()
 
 class SimpleMove(Move):
     """
@@ -274,8 +290,8 @@ class Swap(Action):
         self.update_fow_action2.reverse()
         game.leave(self.unit1)
         game.leave(self.unit2)
-        game.arrive(self.unit2, self.pos1)
-        game.arrive(self.unit1, self.pos2)
+        game.arrive(self.unit2, self.pos2)
+        game.arrive(self.unit1, self.pos1)
 
 
 class Warp(SimpleMove):
@@ -3025,7 +3041,7 @@ class RemoveRegion(Action):
                 self.subactions.append(update_fow_action)
 
             if self.region.region_type == RegionType.TERRAIN:
-                _region_leave(self.region)
+                affected_units = _region_leave(self.region)
 
             for act in self.subactions:
                 act.do()
@@ -3039,14 +3055,15 @@ class RemoveRegion(Action):
                 for position in self.region.get_all_positions():
                     game.board.reset_pos(game.level.tilemap, position)
                 game.boundary.reset()
-                _region_arrive(self.region)
+                for unit, pos in affected_units:
+                    game.arrive(unit, pos)
         else:
             logging.error("RemoveRegion Action: Could not find region with nid %s", self.region.nid)
 
     def reverse(self):
         if self.did_remove:
             if self.region.region_type == RegionType.TERRAIN:
-                _region_leave(self.region)
+                affected_units = _region_leave(self.region)
 
             game.get_region_under_pos.cache_clear()
             game.level.regions.append(self.region)
@@ -3059,7 +3076,8 @@ class RemoveRegion(Action):
                 for position in self.region.get_all_positions():
                     game.board.reset_pos(game.level.tilemap, position)
                 game.boundary.reset()
-                _region_arrive(self.region)
+                for unit, pos in affected_units:
+                    game.arrive(unit, pos)
 
 class AddFogRegion(Action):
     def __init__(self, region):

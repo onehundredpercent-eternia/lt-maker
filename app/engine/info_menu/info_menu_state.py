@@ -329,7 +329,7 @@ class InfoMenuState(State):
                     self.scroll_offset_y = 16 if self.transition == 'DOWN' else -16
                 elif self.transition_counter < 8: # (5, 6, 7, 8):  # Pause for a bit
                     self.transparency = 1.
-                    self.scroll_offset_y = 160 if self.transition == 'DOWN' else -160
+                    self.scroll_offset_y = WINHEIGHT if self.transition == 'DOWN' else -160
                 else:
                     self.unit = self.next_unit  # Now transition in
                     self.reset_surfs(keep_last_info_graph_aabb=True)

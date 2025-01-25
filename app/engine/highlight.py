@@ -84,7 +84,7 @@ class HighlightController():
 
     def display_xcom_moves(self, valid_xcom_moves, light=False):
         name = 'possible_xcom_move' if light else 'xcom_move'
-        self.add_highlights(valid_xcom_moves, name)
+        self.add_highlights(valid_xcom_moves, name, allow_overlap=True)
 
     def display_possible_attacks(self, valid_attacks, light=False):
         name = 'splash' if light else 'attack'
@@ -105,12 +105,12 @@ class HighlightController():
             if guard:
                 valid_moves = {unit.position}
 
-        self.display_xcom_moves(valid_xcom_moves, light=light)
         valid_attacks = game.target_system.get_all_attackable_positions_spells(unit, valid_moves)
         self.display_possible_spell_attacks(valid_attacks, light=light)
         valid_attacks = game.target_system.get_all_attackable_positions_weapons(unit, valid_moves)
         self.display_possible_attacks(valid_attacks, light=light)
         self.display_moves(valid_moves, light=light)
+        self.display_xcom_moves(valid_xcom_moves, light=light)
         return valid_moves, valid_xcom_moves
 
     def display_aura_highlights(self, unit):
