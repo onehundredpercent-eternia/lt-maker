@@ -1,10 +1,15 @@
+from typing import Set
+
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtGui import QImage, QPainter, QPixmap, QColor
 
 from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES
 
 from app.map_maker.map_prefab import MapPrefab
-from app.map_maker.terrain_database import DB_terrain
+from app.map_maker.terrain import Terrain
+
+from app.map_maker.painter_database import PAINTERS
+from app.map_maker.qt_renderers.renderer_database import RENDERERS
 
 def get_tilemap_pixmap(tilemap) -> QPixmap:
     return QPixmap.fromImage(draw_tilemap(tilemap))
@@ -19,8 +24,8 @@ def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> QImage:
                    QImage.Format_ARGB32)
     image.fill(QColor(0, 0, 0, 0))
 
-    painter = QPainter()
-    painter.begin(image)
+    qpainter = QPainter()
+    qpainter.begin(image)
     ms = QDateTime.currentMSecsSinceEpoch()
 
     if autotile_fps:
@@ -31,20 +36,20 @@ def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> QImage:
 
     # Process terrain
     # a = time.time_ns() / 1e6
-    processed_nids = set()
+    processed_terrains: Set[Terrain] = set()
     for pos in sorted(tilemap.terrain_grid):
         # Determine what terrain is in this position
-        terrain_nid = tilemap.get_terrain(pos)
-        if not terrain_nid:
+        terrain = tilemap.get_terrain(pos)
+        if not terrain:
             continue
-        terrain = DB_terrain.get(terrain_nid)
 
         # Only process the ones that need to be updated
         if pos in tilemap.terrain_grid_to_update:
-            if terrain_nid not in processed_nids:
-                terrain.single_process(tilemap)
-                processed_nids.add(terrain_nid)
-            sprite = terrain.determine_sprite(tilemap, pos, autotile_num)
+            if terrain not in processed_terrains:
+                painter = PAINTERS.get(terrain)
+                painter.single_process(tilemap)
+                processed_terrains.add(terrain)
+            sprite = RENDERERS.get(terrain).determine_sprite(tilemap, pos, autotile_num)
             tilemap.tile_grid[pos] = sprite
 
     # b = time.time_ns() / 1e6
@@ -55,11 +60,10 @@ def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> QImage:
         for pos in sorted(tilemap.autotile_set):
             if pos not in tilemap.terrain_grid_to_update:
                 # Determine what terrain is in this position
-                terrain_nid = tilemap.get_terrain(pos)
-                if not terrain_nid:
+                terrain = tilemap.get_terrain(pos)
+                if not terrain:
                     continue
-                terrain = DB_terrain.get(terrain_nid)
-                sprite = terrain.determine_sprite(tilemap, pos, autotile_num)
+                sprite = RENDERERS.get(terrain).determine_sprite(tilemap, pos, autotile_num)
                 tilemap.tile_grid[pos] = sprite
         last_autotile_num = autotile_num
     # c = time.time_ns() / 1e6
@@ -68,10 +72,10 @@ def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> QImage:
     for pos, pix in tilemap.tile_grid.items():
         assert pix.width() == TILEWIDTH, pix.width()
         assert pix.height() == TILEHEIGHT, pix.height()
-        painter.drawPixmap(pos[0] * TILEWIDTH,
-                           pos[1] * TILEHEIGHT,
-                           pix)
-    painter.end()
+        qpainter.drawPixmap(pos[0] * TILEWIDTH,
+                            pos[1] * TILEHEIGHT,
+                            pix)
+    qpainter.end()
 
     # Make sure we don't need to update it anymore
     tilemap.terrain_grid_to_update.clear()
@@ -87,15 +91,15 @@ def simple_draw_tilemap(tilemap: MapPrefab) -> QImage:
                    QImage.Format_ARGB32)
     image.fill(QColor(0, 0, 0, 0))
 
-    painter = QPainter()
-    painter.begin(image)
+    qpainter = QPainter()
+    qpainter.begin(image)
 
     # Draw the tile grid
     for pos, pix in tilemap.tile_grid.items():
         assert pix.width() == TILEWIDTH, pix.width()
         assert pix.height() == TILEHEIGHT, pix.height()
-        painter.drawPixmap(pos[0] * TILEWIDTH,
-                           pos[1] * TILEHEIGHT,
-                           pix)
-    painter.end()
+        qpainter.drawPixmap(pos[0] * TILEWIDTH,
+                            pos[1] * TILEHEIGHT,
+                            pix)
+    qpainter.end()
     return image

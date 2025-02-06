@@ -1,5 +1,12 @@
 import random
 
+from typing import Set, TYPE_CHECKING
+
+from app.utilities.typing import Pos
+
+if TYPE_CHECKING:
+    from app.map_maker.terrain import Terrain
+
 RANDOM_SEED = 0
 
 def get_random_seed() -> int:
@@ -32,7 +39,16 @@ def edge_random(pos1: tuple, pos2: tuple, seed: int = None):
     random.seed(seed + pos1[0] * 1024**3 + pos1[1] * 1024**2 + pos2[0] * 1024 + pos2[1])
     return random.random()
 
-def flood_fill(tilemap, pos: tuple, diagonal: bool = False, match: set = None, match_set: set = None) -> set:
+def flood_fill(tilemap, pos: Pos, 
+               diagonal: bool = False, match: Set[Terrain] = None,
+               match_only_these_positions: Set[Pos] = None) -> Set[Pos]:
+    """
+    # tilemap - the Dungeon tilemap to work on
+    # pos - Which position to start the flood fill on 
+    # diagonal (optional) - Whether to flood fill diagonally in addition to cardinally
+    # match - Set of terrain that counts as a match
+    # match_only_these_positions - Set of positions that count as being valid to flood fill onto
+    """
     blob_positions = set()
     unexplored_stack = []
     # Get coords like current coord in current_layer
@@ -40,7 +56,7 @@ def flood_fill(tilemap, pos: tuple, diagonal: bool = False, match: set = None, m
         current_tile = tilemap.get_terrain(pos)
         match = {current_tile}
 
-    def find_similar(starting_pos: tuple, match: set):
+    def find_similar(starting_pos: Pos, match: set):
         unexplored_stack.append(starting_pos)
 
         counter = 0
@@ -51,8 +67,8 @@ def flood_fill(tilemap, pos: tuple, diagonal: bool = False, match: set = None, m
                 continue
             if not tilemap.check_bounds(current_pos):
                 continue
-            if match_set:  # Just check if it's in the set
-                if current_pos not in match_set:
+            if match_only_these_positions:  # Just check if it's in the set
+                if current_pos not in match_only_these_positions:
                     continue
             else:
                 nid = tilemap.get_terrain(current_pos)

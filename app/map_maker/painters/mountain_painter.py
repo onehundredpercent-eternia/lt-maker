@@ -1,3 +1,4 @@
+from typing import Dict, List, Optional, Set
 import functools
 
 try:
@@ -6,35 +7,40 @@ except ImportError:
     import pickle
 
 from PyQt5.QtCore import QThread
-from PyQt5.QtGui import QPixmap
+
+from app.utilities.typing import Pos
 
 from app.map_maker.utilities import random_choice, flood_fill
 from app.map_maker.terrain import Terrain
 from app.map_maker.mountain_process import NaiveBacktrackingThread, AlgorithmXThread
+from app.map_maker.painter_utils import Painter
 
-class MountainTerrain(Terrain):
-    terrain_like = ('Mountain',)
+class MountainPainter(Painter):
+    terrain_like = (Terrain.MOUNTAIN, )
     organization = {}
     current_threads = []  # Keeps track of the currently running threads
+
+    def __init__(self, base_coord: Optional[Pos] = None):
+        super().__init__(base_coord)
+        self._initial_process()
 
     @property
     def check_flood_fill(self):
         return True
 
-    def determine_sprite(self, tilemap, pos: tuple, autotile_num: int) -> QPixmap:
-        coord = self.organization[pos]  # Mountain Group Coord
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        coord = self.organization[pos]
         if coord == (12, 16):
             coord = random_choice([(12, 16), (11, 16)], pos)
-        pix = self.get_pixmap(coord, autotile_num)
-        return pix
+        return coord
 
-    def initial_process(self):
+    def _initial_process(self):
         self.quit_all_threads()
         data_loc = 'app/map_maker/mountain_data_generation/mountain_data.p'
         with open(data_loc, 'rb') as fp:
             self.mountain_data = pickle.load(fp)
-        self.border_dict = {}  # Coord: Index (0-15)
-        self.index_dict = {i: set() for i in range(16)}  # Index: Coord 
+        self.border_dict: Dict[Pos, int] = {}  # Coord: Index (0-15)
+        self.index_dict: Dict[int, Set[Pos]] = {i: set() for i in range(16)}  # Index: Coord 
         self.noneless_rules = {}
 
         for coord, rules in self.mountain_data.items():
@@ -57,14 +63,14 @@ class MountainTerrain(Terrain):
             print(index, sorted(coord))
 
     def single_process(self, tilemap):
-        positions: set = tilemap.get_all_terrain(self.nid)
+        positions: Set[Pos] = tilemap.get_all_terrain(self.nid)
         self.organization.clear()
-        groupings: list = [] # of sets
+        groupings: List[Set[Pos]] = []  # of sets
         counter: int = 0
         limit: int = int(1e6)
         while positions and counter < limit:
             pos = positions.pop()
-            near_positions: set = flood_fill(tilemap, pos)
+            near_positions: Set[Pos] = flood_fill(tilemap, pos)
             groupings.append(near_positions)
             for near_pos in near_positions:
                 positions.discard(near_pos)
@@ -81,13 +87,13 @@ class MountainTerrain(Terrain):
             # Quit out of threads that are already operating on this group
             for thread in self.current_threads[:]:
                 if thread.group & group:
-                    self.quit_thread(thread)
+                    self._quit_thread(thread)
             # Now we can process this group
-            self.process_group(tilemap, group)
+            self._process_group(tilemap, group)
 
-    def process_group(self, tilemap, group: set):
+    def _process_group(self, tilemap, group: Set[Pos]):
         # Just fill it up with generic pieces
-        self.generic_fill(group)
+        self._generic_fill(group)
         self.tilemap = tilemap
 
         # But then, start the thread
@@ -100,13 +106,13 @@ class MountainTerrain(Terrain):
         self.current_threads.append(thread)
         thread.start(QThread.LowPriority)
 
-    def generic_fill(self, group):
+    def _generic_fill(self, group: Set[Pos]):
         for pos in group:
             valid_coords = self.index_dict[15]
             valid_coord = random_choice(list(valid_coords), pos)
             self.organization[pos] = valid_coord
 
-    def quit_thread(self, thread):
+    def _quit_thread(self, thread: QThread):
         thread.stop()
         thread.wait()
         if thread in self.current_threads:
@@ -118,6 +124,7 @@ class MountainTerrain(Terrain):
             thread.wait()
         self.current_threads.clear()
 
+    # TODO(Threading stuff)
     def mountain_process_finished(self, thread):
         print("Finished", id(thread), thread.did_complete)
         if thread.did_complete:
@@ -131,6 +138,7 @@ class MountainTerrain(Terrain):
         if thread in self.current_threads:
             self.current_threads.remove(thread)
 
+    # TODO(Threading stuff)
     def mountain_processing(self, thread):
         print("Processing... %s" % id(thread))
         for pos, coord in thread.organization.items():

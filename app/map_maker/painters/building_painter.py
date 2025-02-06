@@ -1,8 +1,10 @@
-from app.map_maker.terrain import Terrain
+from typing import Set
+from app.utilities.typing import Pos
+
+from app.map_maker.painter_utils import Painter
 from app.map_maker.utilities import random_choice
 
-class BuildingTerrain(Terrain):
-    data = {}
+class BuildingPainter(Painter):
     organization = {}  # Key: position, value: type
 
     @property
@@ -12,12 +14,13 @@ class BuildingTerrain(Terrain):
     def single_process(self, tilemap):
         raise NotImplementedError
 
-    def _finalize(self, positions: set, position: tuple, sprite_type: str, offset: tuple):
+    def _finalize(self, positions: Set[Pos], position: Pos, sprite_type: str, offset: tuple):
         actual_position = (position[0] + offset[0], position[1] + offset[1])
         self.organization[actual_position] = (sprite_type, offset)
         positions.discard(actual_position)
 
-    def _fits_3x3(self, positions: set, position: tuple) -> bool:
+    @staticmethod
+    def _fits_3x3(positions: Set[Pos], position: Pos) -> bool:
         return \
             position in positions and \
             (position[0], position[1] + 1) in positions and \
@@ -29,7 +32,8 @@ class BuildingTerrain(Terrain):
             (position[0] + 2, position[1] + 1) in positions and \
             (position[0] + 2, position[1] + 2) in positions
 
-    def _fits_3x2(self, positions: set, position: tuple) -> bool:
+    @staticmethod
+    def _fits_3x2(positions: Set[Pos], position: Pos) -> bool:
         return \
             position in positions and \
             (position[0], position[1] + 1) in positions and \
@@ -38,31 +42,32 @@ class BuildingTerrain(Terrain):
             (position[0] + 2, position[1]) in positions and \
             (position[0] + 2, position[1] + 1) in positions
 
-    def _fits_2x2(self, positions: set, position: tuple) -> bool:
+    @staticmethod
+    def _fits_2x2(positions: Set[Pos], position: Pos) -> bool:
         return \
             position in positions and \
             (position[0], position[1] + 1) in positions and \
             (position[0] + 1, position[1]) in positions and \
             (position[0] + 1, position[1] + 1) in positions
 
-    def _fits_2x1(self, positions: set, position: tuple) -> bool:
+    @staticmethod
+    def _fits_2x1(positions: Set[Pos], position: Pos) -> bool:
         return \
             position in positions and \
             (position[0] + 1, position[1]) in positions
 
-    def determine_sprite(self, tilemap, pos: tuple, autotile_num: int):
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
         sprite_type, offset = self.organization[pos]
-        coords = [(c[0] + offset[0], c[1] + offset[1]) for c in self.data[sprite_type]]
+        coords = [(c[0] + offset[0], c[1] + offset[1]) for c in self.painter.data[sprite_type]]
 
         # So it always uses the same set of coords...
         base_pos = (pos[0] - offset[0], pos[1] - offset[1])
         coord = random_choice(coords, base_pos)
-        
-        pix = self.get_pixmap(coord, autotile_num)
-        return pix
+        return coord        
 
-class CastleTerrain(BuildingTerrain):
-    data = {'single': [(4, 27), (4, 29)], '3x3': [(13, 26), (10, 29), (19, 26), (22, 26), (25, 26), (28, 26)]}
+class CastlePainter(BuildingPainter):
+    data = {'single': [(4, 27), (4, 29)], 
+            '3x3': [(13, 26), (10, 29), (19, 26), (22, 26), (25, 26), (28, 26)]}
     organization = {}
 
     def single_process(self, tilemap):
@@ -86,8 +91,12 @@ class CastleTerrain(BuildingTerrain):
             else:
                 self._finalize(positions, position, 'single', (0, 0))
     
-class RuinsTerrain(BuildingTerrain):
-    data = {'single': [(3, 28), (3, 29)], '3x3': [(7, 28)], '2x2': [(1, 28)], '2x1': [(1, 29)], '3x2': [(28, 29)]}
+class RuinsPainter(BuildingPainter):
+    data = {'single': [(3, 28), (3, 29)], 
+            '3x3': [(7, 28)], 
+            '2x2': [(1, 28)], 
+            '2x1': [(1, 29)], 
+            '3x2': [(28, 29)]}
     organization = {}
 
     def single_process(self, tilemap):
@@ -126,8 +135,10 @@ class RuinsTerrain(BuildingTerrain):
             else:
                 self._finalize(positions, position, 'single', (0, 0))
 
-class HouseTerrain(BuildingTerrain):
-    data = {'single': [(4, 25)], '3x3': [(7, 25)], '3x2': [(10, 25)]}
+class HousePainter(BuildingPainter):
+    data = {'single': [(4, 25)], 
+            '3x3': [(7, 25)], 
+            '3x2': [(10, 25)]}
     organization = {}
 
     def single_process(self, tilemap):

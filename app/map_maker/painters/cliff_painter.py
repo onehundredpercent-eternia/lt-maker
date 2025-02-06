@@ -1,22 +1,25 @@
+from typing import List, Set, Tuple
+
 import math
 
-from PyQt5.QtGui import QPixmap, QPainter, qRgb
+from app.utilities.typing import Pos
 
-from app.constants import TILEWIDTH, TILEHEIGHT
 from app.map_maker.utilities import random_choice, edge_random, flood_fill
-from app.utilities import utils
-from app.map_maker.wang_terrain import WangCorner2Terrain
+from app.map_maker.terrain import Terrain
+from app.utilities.utils import distance
+# from app.map_maker.painters import WangCorner8Painter
+from app.map_maker.painter_utils import Painter
 
-class CliffTerrain(WangCorner2Terrain):
-    terrain_like = ('Cliff')
+class CliffPainter(Painter):
+    terrain_like = (Terrain.CLIFF,)
     second_start_px = 96
     organization = {}
 
     @property
-    def check_flood_fill(self):
+    def check_flood_fill(self) -> str:
         return 'diagonal'
 
-    def _find_longest_path(self, group: set) -> list:
+    def _find_longest_path(self, group: Set[Pos]) -> List[Pos]:
         # https://stackoverflow.com/questions/21880419/how-to-find-the-longest-simple-path-in-a-graph
         path = []
         best_path = []
@@ -47,7 +50,7 @@ class CliffTerrain(WangCorner2Terrain):
 
         return best_path
 
-    def _calc_corners(self, tilemap, pos: tuple, partners: list) -> tuple:
+    def _calc_corners(self, tilemap, pos: Pos, partners: list) -> Tuple[bool, bool, bool, bool]:
         corner_topleft = False
         corner_bottomleft = False
         corner_topright = False
@@ -109,7 +112,7 @@ class CliffTerrain(WangCorner2Terrain):
     def single_process(self, tilemap):
         positions: set = tilemap.get_all_terrain(self.nid)
         self.organization.clear()
-        groupings: list = [] # of sets
+        groupings: List[Set[Pos]] = []  # of sets
         counter: int = 0
         while positions and counter < 99999:
             pos = positions.pop()
@@ -148,7 +151,7 @@ class CliffTerrain(WangCorner2Terrain):
             else:
                 self.organization[longest_path[0]] = (True, False, False, True)  # Facing down
 
-    def _determine_index(self, tilemap, pos: tuple) -> tuple:
+    def _determine_index(self, tilemap, pos: Pos) -> Pos:
         corner_topright, corner_bottomright, corner_bottomleft, corner_topleft = self.organization[pos]
         index = 1 * corner_topright + \
             2 * corner_bottomright + \
@@ -156,35 +159,27 @@ class CliffTerrain(WangCorner2Terrain):
             8 * corner_topleft
         return index
 
-    def set_tileset(self):
-        super().set_tileset()
-        self.limits = {k: self._find_limit(k) for k in range(16)}
-        self.second_limits = {k: self._find_limit(k, self.second_start_px) for k in range(16)}
-        print(self.second_limits)
+    def _determine_cliff_vector(self, tilemap, pos: Pos) -> Tuple[bool, bool, bool]:
+        """
+        Determines chirality of the cliff position
+        """
+        closest_cliff_marker = list(sorted(tilemap.cliff_markers, key=lambda x: distance(pos, x)))[0]
+        x_diff = closest_cliff_marker[0] - (pos[0] + .5)
+        y_diff = closest_cliff_marker[1] - (pos[1] + .5)
+        angle = math.atan2(y_diff, x_diff)
+        if angle < 0:
+            angle += 2 * math.pi
+        bottom = angle >= math.pi  # vector points up
+        right = 0.5 * math.pi <= angle <= 1.5 * math.pi  # vector points left
+        # Tells you whether the angle is more horizontal or vertical
+        x_stronger = angle < 0.25 * math.pi or angle > 1.75 * math.pi or 0.75 * math.pi < angle < 1.25 * math.pi
+        # print("vert", pos, angle, right, bottom, x_stronger)
+        return right, bottom, x_stronger
 
-    def _find_limit(self, idx: int, offset: int = 0) -> int:
-        bg_color = qRgb(0, 0, 0)
-        img = self.tileset_pixmap.toImage()
-        x = idx * TILEWIDTH
-        for y in range(offset, img.height(), TILEHEIGHT):
-            current_color = img.pixel(x, y)
-            if current_color == bg_color:
-                return (y - offset) // TILEHEIGHT
-        return (img.height() // TILEHEIGHT)
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        index: Pos = self._determine_index(tilemap, pos)
+        right, bottom, x_stronger = self._determine_cliff_vector()
 
-    def get_display_pixmap(self):
-        if not self.display_pixmap:
-            main_pix = QPixmap(16, 16)
-            painter = QPainter()
-            painter.begin(main_pix)
-            painter.drawPixmap(0, 0, self.tileset_pixmap.copy(TILEWIDTH * 15, 0, TILEWIDTH, TILEHEIGHT))
-            painter.end()
-            self.display_pixmap = main_pix
-        return self.display_pixmap
-
-    def determine_sprite(self, tilemap, pos: tuple, autotile_num: int) -> QPixmap:
-        index = self._determine_index(tilemap, pos)
-        right, bottom, x_stronger = self._determine_cliff_vector(tilemap, pos)
         use_bottomright = True
         if index in (3, 12):
             use_bottomright = right
@@ -203,25 +198,7 @@ class CliffTerrain(WangCorner2Terrain):
         if use_bottomright:
             new_coords = [(index, k) for k in range(self.limits[index])]
         else:
-            new_coords = [(index, k + self.second_start_px//TILEHEIGHT) for k in range(self.second_limits[index])]
+            new_coords = [(index, k + self.second_start_px//16) for k in range(self.second_limits[index])]
 
         coord = random_choice(new_coords, pos)
-        pix = self.get_pixmap(coord, autotile_num)
-        return pix
-
-    def _determine_cliff_vector(self, tilemap, pos: tuple) -> tuple:
-        """
-        Determines chirality of the cliff position
-        """
-        closest_cliff_marker = list(sorted(tilemap.cliff_markers, key=lambda x: utils.distance(pos, x)))[0]
-        x_diff = closest_cliff_marker[0] - (pos[0] + .5)
-        y_diff = closest_cliff_marker[1] - (pos[1] + .5)
-        angle = math.atan2(y_diff, x_diff)
-        if angle < 0:
-            angle += 2 * math.pi
-        bottom = angle >= math.pi  # vector points up
-        right = 0.5*math.pi <= angle <= 1.5*math.pi  # vector points left
-        # Tells you whether the angle is more horizontal or vertical
-        x_stronger = angle < 0.25*math.pi or angle > 1.75*math.pi or 0.75*math.pi < angle < 1.25*math.pi
-        # print("vert", pos, angle, right, bottom, x_stronger)
-        return right, bottom, x_stronger
+        return coord

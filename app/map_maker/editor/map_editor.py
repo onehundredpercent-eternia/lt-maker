@@ -14,14 +14,17 @@ from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES
 from app.extensions.custom_gui import PropertyBox, ComboBox, Dialog
 from app.editor.settings import MainSettingsController
 
-from app.map_maker.resize_dialog import ResizeDialog
-from app.map_maker.terrain_painter_menu import TerrainPainterMenu
-from app.map_maker.map_editor_view import PaintTool, MapEditorView
-from app.map_maker.draw_tilemap import simple_draw_tilemap
+from .resize_dialog import ResizeDialog
+from .terrain_painter_menu import TerrainPainterMenu
+from .map_editor_view import PaintTool, MapEditorView
+from .draw_tilemap import simple_draw_tilemap
+from .palette_model import PaletteModel
 from app.map_maker.map_prefab import MapPrefab
-from app.map_maker import map_maker_palette
-from app.map_maker.terrain_database import DB_terrain
 import app.map_maker.utilities as map_utils
+from app.map_maker.palette_collection import \
+    PALETTES, get_current_palette_collection, set_current_palette_collection
+from app.map_maker.qt_renderers.renderer_database import RENDERERS
+from app.map_maker.painter_database import PAINTERS
 
 class NidDialog(Dialog):
     def __init__(self, parent=None):
@@ -161,11 +164,11 @@ class MapEditor(QMainWindow):
         self.toolbar.addWidget(self.random_seed_box)
 
         self.palette_selector = PropertyBox("Palette", ComboBox, self)
-        palette_model = map_maker_palette.PaletteModel(map_maker_palette.PALETTES, self)
+        palette_model = PaletteModel(PALETTES, self)
         self.palette_selector.edit.setModel(palette_model)
         self.palette_selector.edit.currentIndexChanged.connect(self.palette_changed)
         if self.current.current_palette:
-            idx = map_maker_palette.PALETTES.index(self.current.current_palette)
+            idx = PALETTES.index(self.current.current_palette)
             self.palette_changed(idx)
         else:
             self.palette_changed(0)  # Apply it for the current palette
@@ -199,7 +202,6 @@ class MapEditor(QMainWindow):
     def create_actions(self):
         theme = dark_theme.get_theme()
         icon_folder = theme.icon_dir()
-
 
         paint_group = QActionGroup(self)
         self.brush_action = QAction(QIcon(f"{icon_folder}/brush.png"), "Brush", self, shortcut="B", triggered=self.set_brush)
@@ -370,12 +372,12 @@ class MapEditor(QMainWindow):
         print("--- Seed Changed to %d ---" % val)
         self.current.reset_all()
 
-    def palette_changed(self, idx):
-        palette = map_maker_palette.PALETTES[idx]
+    def palette_changed(self, idx: int):
+        palette = PALETTES[idx]
         self.current.current_palette = palette.nid
-        for terrain in DB_terrain:
-            terrain.palette_path = palette.palette_path
-            terrain.set_tileset()
+        set_current_palette_collection(idx)
+        for terrain, renderer in RENDERERS.items():
+            renderer.set_palette(get_current_palette_collection().get(terrain))
         self.current.reset_all()
         self.terrain_painter_menu.reset()
 
@@ -429,11 +431,11 @@ class MapEditor(QMainWindow):
             all_autotile_positions = []
             for pos in sorted(self.current.terrain_grid):
                 # Determine what terrain is in this position
-                terrain_nid = self.current.get_terrain(pos)
-                if not terrain_nid:
+                terrain = self.current.get_terrain(pos)
+                if not terrain:
                     continue
-                terrain = DB_terrain.get(terrain_nid)
-                if terrain.has_autotiles():
+                painter = PAINTERS.get(terrain)
+                if painter.has_autotiles():
                     all_autotile_positions.append((pos, terrain))
 
             width = TILEWIDTH * len(all_autotile_positions)
@@ -441,14 +443,14 @@ class MapEditor(QMainWindow):
             autotile_image = QImage(width, height, QImage.Format_ARGB32)
             autotile_image.fill(QColor(255, 255, 255, 0))
 
-            painter = QPainter(autotile_image)
+            qpainter = QPainter(autotile_image)
             for idx, (pos, terrain) in enumerate(all_autotile_positions):
                 str_coord = "%d,%d" % (pos[0], pos[1])
                 s_dict['autotiles'][str_coord] = idx
                 for pidx in range(AUTOTILE_FRAMES):
                     sprite = terrain.determine_sprite(self.current, pos, pidx)
-                    painter.drawPixmap(idx * TILEWIDTH, pidx * TILEHEIGHT, sprite)
-            painter.end()
+                    qpainter.drawPixmap(idx * TILEWIDTH, pidx * TILEHEIGHT, sprite)
+            qpainter.end()
             autotile_image.save(autotile_path)
             # Completed creating autotiles
 
@@ -544,7 +546,7 @@ class MapEditor(QMainWindow):
                 s_dict = json.load(load_file)
                 self.current = MapPrefab.restore(s_dict)
         if self.current.current_palette:
-            idx = map_maker_palette.PALETTES.index(self.current.current_palette)
+            idx = PALETTES.index(self.current.current_palette)
             self.palette_selector.edit.setCurrentIndex(idx)
             self.palette_changed(idx)
         else:
@@ -564,7 +566,7 @@ class MapEditor(QMainWindow):
                           "<p>Check out <a href='https://lt-maker.readthedocs.io/'>https://lt-maker.readthedocs.io/</a> "
                           "for more information and helpful tutorials.</p>"
                           "<p>This program has been freely distributed under the MIT License.</p>"
-                          "<p>Copyright 2014-2023 rainlash.</p>")
+                          "<p>Copyright 2014-2025 rainlash.</p>")
 
     def display_help(self):
         QMessageBox.about(self, "Help for Lex Talionis Map Maker",
@@ -579,25 +581,3 @@ class MapEditor(QMainWindow):
     def save_geometry(self):
         self.settings.component_controller.set_geometry(self._type(), self.saveGeometry())
         # self.settings.component_controller.set_state(self._type(), (self.main_splitter.saveState(), self.right_frame.saveState()))
-
-# Testing
-# Run "python -m app.map_maker.map_editor" from main directory
-if __name__ == "__main__":
-    import sys
-    from PyQt5.QtWidgets import QApplication
-    from app import dark_theme
-
-    # For High DPI displays
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-
-    ap = QApplication(sys.argv)
-    ap.setWindowIcon(QIcon('favicon.ico'))
-    settings = MainSettingsController()
-    theme = dark_theme.get_theme()
-    dark_theme.set(ap, theme)
-    sample_tilemap = MapPrefab('sample')
-    # sample_tilemap = meta_generation.generate(sample_tilemap)
-    map_editor = MapEditor(current=sample_tilemap)
-    map_editor.show()
-    ap.exec_()

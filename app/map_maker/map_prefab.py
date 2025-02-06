@@ -1,45 +1,55 @@
+from typing import Dict, List, Set, Tuple
+
 from app.constants import TILEX, TILEY
+
+from app.utilities.typing import NID, Pos
 
 from app.utilities.data import Prefab
 import app.map_maker.utilities as map_utils
+from app.map_maker.terrain import Terrain
+from app.map_maker.palette_collection import PaletteCollection
+from app.map_maker.painter_database import PAINTERS
 
 class MapPrefab(Prefab):
-    def __init__(self, nid):
-        self.nid = nid
-        self.width, self.height = int(TILEX), int(TILEY)
-        self.autotile_fps = 29
+    def __init__(self, nid: NID):
+        self.nid: NID = nid
+        self.width, self.height = TILEX, TILEY
+        self.autotile_fps: int = 29
 
         self.pixmap = None
         
-        self.terrain_grid = {}  # Key: Position, Value: Terrain Nids
-        self.terrain_grid_to_update = set()  # Positions
+        self.terrain_grid: Dict[Pos, Terrain] = {}
+        self.terrain_grid_to_update: Set[Pos] = set()  # Positions
         self.tile_grid = {}  # Key: Position, Value: Tileset Coordinate (same size as terrain_grid)
-        self.autotile_set = set()  # Positions
+        self.autotile_set: Set[Pos] = set()  # Positions
 
-        self.cliff_markers = [(7, 5)]  # Markers for how to point cliffs
+        self.cliff_markers: List[Pos] = [(7, 5)]  # Markers for how to point cliffs
 
-        self.current_palette = None
+        self.current_palette: PaletteCollection = None
 
     def reset_all(self):
         for position in self.terrain_grid:
             self.terrain_grid_to_update.add(position)
 
-    def set(self, pos: tuple, old_terrain, new_terrain):
-        if old_terrain and old_terrain.check_flood_fill and pos not in self.terrain_grid_to_update:
-            self._update_flood_fill(pos, old_terrain.check_flood_fill == 'diagonal')  # Need to check flood fill both before and after changing terrain
-        self.terrain_grid[pos] = new_terrain.nid
+    def set(self, pos: Pos, old_terrain: Terrain, new_terrain: Terrain):
+        old_terrain_painter = PAINTERS.get(old_terrain)
+        new_terrain_painter = PAINTERS.get(new_terrain)
+        if old_terrain and old_terrain_painter.check_flood_fill and pos not in self.terrain_grid_to_update:
+            # Need to check flood fill both before and after changing terrain
+            self._update_flood_fill(pos, old_terrain_painter.check_flood_fill == 'diagonal')  
+        self.terrain_grid[pos] = new_terrain
         self.terrain_grid_to_update.add(pos)
         self._update_adjacent(pos)
         self._update_diagonal(pos)
-        if new_terrain.check_flood_fill:
-            self._update_flood_fill(pos, new_terrain.check_flood_fill == 'diagonal')
+        if new_terrain_painter.check_flood_fill:
+            self._update_flood_fill(pos, new_terrain_painter.check_flood_fill == 'diagonal')
 
-        if new_terrain.has_autotiles():
+        if new_terrain_painter.has_autotiles():
             self.autotile_set.add(pos)
         else:
             self.autotile_set.discard(pos)
 
-    def _update_adjacent(self, pos):
+    def _update_adjacent(self, pos: Pos):
         # Now ask to update all the adjacent ones as well
         north, east, south, west = (pos[0], pos[1] - 1), (pos[0] + 1, pos[1]), (pos[0], pos[1] + 1), (pos[0] - 1, pos[1])
         if self.check_bounds(north) and self.get_terrain(north):
@@ -51,7 +61,7 @@ class MapPrefab(Prefab):
         if self.check_bounds(west) and self.get_terrain(west):
             self.terrain_grid_to_update.add(west)
 
-    def _update_diagonal(self, pos):
+    def _update_diagonal(self, pos: Pos):
         # Now ask to update all the adjacent ones as well
         northeast, southeast, southwest, northwest = (pos[0] + 1, pos[1] - 1), (pos[0] + 1, pos[1] + 1), (pos[0] - 1, pos[1] + 1), (pos[0] - 1, pos[1] - 1)
         if self.check_bounds(northeast) and self.get_terrain(northeast):
@@ -63,17 +73,18 @@ class MapPrefab(Prefab):
         if self.check_bounds(northwest) and self.get_terrain(northwest):
             self.terrain_grid_to_update.add(northwest)
 
-    def _update_flood_fill(self, pos, diagonal=False):
+    def _update_flood_fill(self, pos: Pos, diagonal: bool = False):
         blob_positions = map_utils.flood_fill(self, pos, diagonal)
         for p in blob_positions:
             self.terrain_grid_to_update.add(p)
 
-    def get_terrain(self, pos: tuple) -> str:
+    def get_terrain(self, pos: Pos) -> Terrain:
         return self.terrain_grid.get(pos)
 
-    def erase_terrain(self, pos: tuple, old_terrain):
-        if old_terrain and old_terrain.check_flood_fill:
-            self._update_flood_fill(pos, old_terrain.check_flood_fill == 'diagonal')
+    def erase_terrain(self, pos: Pos, old_terrain: Terrain):
+        old_terrain_painter = PAINTERS.get(old_terrain)
+        if old_terrain and old_terrain_painter.check_flood_fill:
+            self._update_flood_fill(pos, old_terrain_painter.check_flood_fill == 'diagonal')
         if pos in self.terrain_grid:
             del self.terrain_grid[pos]
         self.autotile_set.discard(pos)
@@ -84,14 +95,14 @@ class MapPrefab(Prefab):
         self._update_adjacent(pos)
         self._update_diagonal(pos)
 
-    def get_cardinal_terrain(self, pos: tuple) -> tuple:
+    def get_cardinal_terrain(self, pos: Pos) -> Tuple[Terrain, Terrain, Terrain, Terrain]:
         north = self.get_terrain((pos[0], pos[1] - 1))
         east = self.get_terrain((pos[0] + 1, pos[1]))
         south = self.get_terrain((pos[0], pos[1] + 1))
         west = self.get_terrain((pos[0] - 1, pos[1]))
         return north, east, south, west
 
-    def get_diagonal_terrain(self, pos: tuple) -> tuple:
+    def get_diagonal_terrain(self, pos: Pos) -> Tuple[Terrain, Terrain, Terrain, Terrain]:
         northeast = self.get_terrain((pos[0] + 1, pos[1] - 1))
         southeast = self.get_terrain((pos[0] + 1, pos[1] + 1))
         southwest = self.get_terrain((pos[0] - 1, pos[1] + 1))
@@ -105,25 +116,25 @@ class MapPrefab(Prefab):
         self.tile_grid.clear()
         self.autotile_set.clear()
 
-    def check_bounds(self, pos: tuple):
+    def check_bounds(self, pos: Pos):
         return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
 
-    def get_all_terrain(self, terrain_nid: str) -> set:
+    def get_all_terrain(self, terrain: Terrain) -> Set[Pos]:
         all_positions = set()
-        for position, nid in self.terrain_grid.items():
-            if nid == terrain_nid:
+        for position, t in self.terrain_grid.items():
+            if t == terrain:
                 all_positions.add(position)
         return all_positions
 
-    def resize(self, width, height, x_offset, y_offset):
+    def resize(self, width: int, height: int, x_offset: int, y_offset: int):
         self.width = width
         self.height = height
 
         new_terrain_grid = {}
-        for pos, terrain_nid in self.terrain_grid.items():
+        for pos, terrain in self.terrain_grid.items():
             new_pos = pos[0] + x_offset, pos[1] + y_offset
             if self.check_bounds(new_pos):
-                new_terrain_grid[new_pos] = terrain_nid
+                new_terrain_grid[new_pos] = terrain
         self.terrain_grid = new_terrain_grid
 
         new_tile_grid = {}
@@ -148,9 +159,9 @@ class MapPrefab(Prefab):
         s_dict['autotile_fps'] = self.autotile_fps
         s_dict['cliff_markers'] = self.cliff_markers[:]
         s_dict['terrain_grid'] = {}
-        for coord, terrain_nid in self.terrain_grid.items():
+        for coord, terrain in self.terrain_grid.items():
             str_coord = "%d,%d" % (coord[0], coord[1])
-            s_dict['terrain_grid'][str_coord] = terrain_nid
+            s_dict['terrain_grid'][str_coord] = terrain
         s_dict['autotile_set'] = ["%d,%d" % (coord[0], coord[1]) for coord in self.autotile_set]
         s_dict['seed'] = map_utils.get_random_seed()
         s_dict['palette'] = self.current_palette
@@ -163,9 +174,9 @@ class MapPrefab(Prefab):
         self.autotile_fps = s_dict.get('autotile_fps', 29)
         self.cliff_markers = s_dict.get('cliff_markers', [(0, 0)])
         self.cliff_markers = [tuple(_) for _ in self.cliff_markers]
-        for str_coord, terrain_nid in s_dict['terrain_grid'].items():
+        for str_coord, terrain in s_dict['terrain_grid'].items():
             coord = tuple(int(_) for _ in str_coord.split(','))
-            self.terrain_grid[coord] = terrain_nid
+            self.terrain_grid[coord] = terrain
         self.autotile_set.clear()
         for str_coord in s_dict['autotile_set']:
             coord = tuple(int(_) for _ in str_coord.split(','))
