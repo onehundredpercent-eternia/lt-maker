@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import random
 
-from typing import Set, TYPE_CHECKING
+from typing import Any, List, Set, Tuple, TYPE_CHECKING
 
 from app.utilities.typing import Pos
 
@@ -16,19 +18,19 @@ def set_random_seed(val: int):
     global RANDOM_SEED
     RANDOM_SEED = val
 
-def random_choice(choices: list, pos: tuple, seed: int = None, offset: int = 0):
+def random_choice(choices: List[Any], pos: Pos, seed: int = None, offset: int = 0) -> Any:
     if seed is None:
         seed = RANDOM_SEED
     random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
     return random.choice(choices)
 
-def random_random(pos: tuple, seed: int = None, offset: int = 0):
+def random_random(pos: Pos, seed: int = None, offset: int = 0) -> float:
     if seed is None:
         seed = RANDOM_SEED
     random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
     return random.random()
 
-def edge_random(pos1: tuple, pos2: tuple, seed: int = None):
+def edge_random(pos1: Pos, pos2: Pos, seed: int = None) -> float:
     """
     Uses two positions (essentially the edge between these two positions)
     to seed the RNG
@@ -93,7 +95,7 @@ def flood_fill(tilemap, pos: Pos,
     find_similar(pos, match)
     return blob_positions
 
-def find_bounds(tilemap, group: set) -> tuple:
+def find_bounds(tilemap, group: Set[Pos]) -> Tuple[int, int, int, int, int, int, int, int]:
     left_most = min(p[0] for p in group)
     right_most = max(p[0] for p in group)
     top_most = min(p[1] for p in group)

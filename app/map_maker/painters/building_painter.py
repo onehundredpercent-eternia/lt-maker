@@ -66,6 +66,7 @@ class BuildingPainter(Painter):
         return coord        
 
 class CastlePainter(BuildingPainter):
+    base_coord = (4, 27)
     data = {'single': [(4, 27), (4, 29)], 
             '3x3': [(13, 26), (10, 29), (19, 26), (22, 26), (25, 26), (28, 26)]}
     organization = {}
@@ -92,6 +93,7 @@ class CastlePainter(BuildingPainter):
                 self._finalize(positions, position, 'single', (0, 0))
     
 class RuinsPainter(BuildingPainter):
+    base_coord = (3, 28)
     data = {'single': [(3, 28), (3, 29)], 
             '3x3': [(7, 28)], 
             '2x2': [(1, 28)], 
@@ -136,6 +138,7 @@ class RuinsPainter(BuildingPainter):
                 self._finalize(positions, position, 'single', (0, 0))
 
 class HousePainter(BuildingPainter):
+    base_coord = (4, 25)
     data = {'single': [(4, 25)], 
             '3x3': [(7, 25)], 
             '3x2': [(10, 25)]}

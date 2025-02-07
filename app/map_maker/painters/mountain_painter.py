@@ -12,11 +12,13 @@ from app.utilities.typing import Pos
 
 from app.map_maker.utilities import random_choice, flood_fill
 from app.map_maker.terrain import Terrain
-from app.map_maker.mountain_process import NaiveBacktrackingThread, AlgorithmXThread
 from app.map_maker.painter_utils import Painter
+from app.map_maker.mountain_processing_threads \
+    import NaiveBacktrackingThread, AlgorithmXThread
 
 class MountainPainter(Painter):
     terrain_like = (Terrain.MOUNTAIN, )
+    base_coord = (8, 23)
     organization = {}
     current_threads = []  # Keeps track of the currently running threads
 

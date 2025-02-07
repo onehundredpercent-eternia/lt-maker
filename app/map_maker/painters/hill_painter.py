@@ -4,6 +4,7 @@ from app.map_maker.painter_utils import Painter
 from app.map_maker.utilities import random_choice
 
 class HillPainter(Painter): 
+    base_coord = (13, 21)
     data = {
         'main': (12, 21), 
         'pair1': (13, 20), 

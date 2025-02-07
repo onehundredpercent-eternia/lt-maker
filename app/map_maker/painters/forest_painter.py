@@ -9,6 +9,7 @@ from app.utilities import utils
 
 class ForestPainter(Painter):
     forest_like = (Terrain.FOREST, Terrain.THICKET)
+    base_coord = (14, 0)
     
     @property
     def check_flood_fill(self):

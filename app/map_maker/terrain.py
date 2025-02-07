@@ -6,6 +6,25 @@ from enum import StrEnum
 
 class Terrain(StrEnum):
     GRASS = 'Grass'
+    LIGHT_GRASS = 'Light Grass'
+    NOISY_GRASS = 'Noisy Grass'
+    SAND = 'Sand'
+    ROAD = 'Road'
+    FOREST = 'Forest'
+    THICKET = 'Thicket'
+    CLIFF = 'Cliff'
+    HILL = 'Hill'
+    MOUNTAIN = 'Mountain'
+    RIVER = 'River'
+    SEA = 'Sea'
+    BRIDGEH = 'Bridge H'
+    BRIDGEV = 'Bridge V'
+    HOUSE = 'House'
+    CASTLE = 'Castle'
+    RUINS = 'Ruins'
+
+    # WALL_TOP = 'Wall Top'
+    # WALL_BOTTOM = 'Wall Bottom'
 
     @staticmethod
     def list() -> List["Terrain"]:

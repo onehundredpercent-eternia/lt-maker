@@ -1,7 +1,8 @@
 from typing import Dict, Tuple
 
 from app.utilities.typing import Pos
-from app.map_maker.painters import FloorPainter, WangCorner8Painter
+from app.map_maker.painter_utils import Painter
+from app.map_maker.painters import WangCorner8Painter
 from app.map_maker.painters.noise_interface import NoiseInterface
 from app.map_maker.utilities import random_choice
 from app.map_maker.terrain import Terrain
@@ -31,7 +32,7 @@ def handle_cliffs(tilemap, pos: Pos, new_coord1: Pos, new_coord2: Pos, new_coord
 
     return new_coord1, new_coord2, new_coord3, new_coord4
 
-class GrassPainter(FloorPainter):
+class GrassPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
         new_coord1 = random_choice([(0, k) for k in range(self.limit)], pos)
         new_coord2 = random_choice([(0, k) for k in range(self.limit)], pos, offset=1)
@@ -42,12 +43,13 @@ class GrassPainter(FloorPainter):
         new_coord1, new_coord2, new_coord3, new_coord4 = \
             handle_cliffs(tilemap, pos, new_coord1, new_coord2, new_coord3, new_coord4)
 
-        shading_coord = self.get_shading_coord(tilemap, pos)
+        # shading_coord = self.get_shading_coord(tilemap, pos)
 
-        return ((new_coord1, new_coord2, new_coord3, new_coord4), shading_coord)
+        return new_coord1, new_coord2, new_coord3, new_coord4
 
-class LightGrassPainter(WangCorner8Painter, FloorPainter):
+class LightGrassPainter(WangCorner8Painter, Painter):
     terrain_like = (Terrain.LIGHT_GRASS, )
+    base_coord = (15, 0)
     corner_chance = 0.8
     edge_chance = 0.6
     vertices: dict = {}
@@ -123,7 +125,7 @@ class LightGrassPainter(WangCorner8Painter, FloorPainter):
 
         return ((new_coord1, new_coord2, new_coord3, new_coord4), shading_coord)
 
-class NoisyGrassPainter(NoiseInterface, FloorPainter):
+class NoisyGrassPainter(NoiseInterface, Painter):
     """
     # Implements 8x8 Floor with Grass
     """

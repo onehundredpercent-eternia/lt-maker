@@ -43,9 +43,9 @@ class FloorPainter(Painter):
         return None
 
     @staticmethod
-    def get_shading(dungeon_tilemap, pos: Pos) -> Tuple[bool, bool, bool]:
-        north, _, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
-        _, _, _, northwest = dungeon_tilemap.get_diagonal_terrain(pos)
+    def get_shading(tilemap, pos: Pos) -> Tuple[bool, bool, bool]:
+        north, _, _, west = tilemap.get_cardinal_terrain(pos)
+        _, _, _, northwest = tilemap.get_diagonal_terrain(pos)
         top, left, corner = False, False, False
 
         if north in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
@@ -60,12 +60,12 @@ class FloorPainter(Painter):
             corner = True
         if northwest in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM) \
                 and west in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER) \
-                and FloorPainter.is_column_bottom(dungeon_tilemap, (pos[0] - 1, pos[1])):
+                and FloorPainter.is_column_bottom(tilemap, (pos[0] - 1, pos[1])):
             corner = True
         return top, left, corner
 
-    def get_shading_coord(self, dungeon_tilemap, pos: Pos) -> Pos:
-        top, left, corner = FloorPainter.get_shading(dungeon_tilemap, pos)
+    def get_shading_coord(self, tilemap, pos: Pos) -> Pos:
+        top, left, corner = self.get_shading(tilemap, pos)
 
         shading_coord = None
         if top and left:

@@ -12,6 +12,7 @@ class SandPainter(WangCorner8Painter):
         Terrain.SEA,
         Terrain.BRIDGEV,
         Terrain.BRIDGEH)
+    base_coord = (15, 0)
     corner_chance = 0.6
     edge_chance = 0.4
     vertices: dict = {}

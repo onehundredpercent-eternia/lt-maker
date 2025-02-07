@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import QLineEdit, QFrame, QVBoxLayout, \
 from PyQt5.QtCore import Qt, QDir
 from PyQt5.QtGui import QIcon, QImage, QPainter, QColor
 
+from app import dark_theme
+
 from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES
 
 from app.extensions.custom_gui import PropertyBox, ComboBox, Dialog

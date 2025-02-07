@@ -1,7 +1,5 @@
 from typing import Dict, List, Set, Tuple
 
-from app.constants import TILEX, TILEY
-
 from app.utilities.typing import NID, Pos
 
 from app.utilities.data import Prefab
@@ -9,6 +7,8 @@ import app.map_maker.utilities as map_utils
 from app.map_maker.terrain import Terrain
 from app.map_maker.palette_collection import PaletteCollection
 from app.map_maker.painter_database import PAINTERS
+
+TILEX, TILEY = 15, 10
 
 class MapPrefab(Prefab):
     def __init__(self, nid: NID):

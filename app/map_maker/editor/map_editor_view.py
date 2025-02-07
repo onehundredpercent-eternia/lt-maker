@@ -116,11 +116,11 @@ class MapEditorView(QGraphicsView):
         self.clear_scene()
         self.scene.addPixmap(self.working_image)
 
-    def draw_simple_cursor(self, painter):
+    def draw_simple_cursor(self, qpainter):
         mouse_pos = self.current_mouse_position
         # Fill with blue
         rect = QRect(mouse_pos[0] * TILEWIDTH, mouse_pos[1] * TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
-        painter.fillRect(rect, QColor(0, 255, 255, 96))
+        qpainter.fillRect(rect, QColor(0, 255, 255, 96))
 
     def draw_normal_cursor(self, qpainter):
         mouse_pos = self.current_mouse_position
@@ -129,12 +129,7 @@ class MapEditorView(QGraphicsView):
             return
 
         renderer = RENDERERS.get(terrain)
-        painter = PAINTERS.get(terrain)
-        if not renderer.display_pixmap:
-            renderer.tileset_pixmap = QPixmap(renderer.image)
-            renderer.display_pixmap = renderer.tileset_pixmap.copy(*painter.display_tile_coord, 16, 16)
-
-        im = renderer.display_pixmap.toImage()
+        im = renderer.get_display_pixmap().toImage()
         qpainter.drawImage(mouse_pos[0] * TILEWIDTH,
                            mouse_pos[1] * TILEHEIGHT,
                            im)
@@ -142,34 +137,29 @@ class MapEditorView(QGraphicsView):
         rect = QRect(mouse_pos[0] * TILEWIDTH, mouse_pos[1] * TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
         qpainter.fillRect(rect, QColor(0, 255, 255, 96))
 
-    def draw_right_cursor(self, painter):
+    def draw_right_cursor(self, qpainter):
         mouse_pos = self.current_mouse_position
         for coord, (true_coord, terrain) in self.right_selection.items():
             if not terrain:
                 return
 
             renderer = RENDERERS.get(terrain)
-            painter = PAINTERS.get(terrain)
-            if not renderer.display_pixmap:
-                renderer.tileset_pixmap = QPixmap(renderer.image)
-                renderer.display_pixmap = renderer.tileset_pixmap.copy(*painter.display_tile_coord, 16, 16)
-
             true_coord = mouse_pos[0] + coord[0], mouse_pos[1] + coord[1]
-            painter.drawImage(true_coord[0] * TILEWIDTH,
-                              true_coord[1] * TILEHEIGHT,
-                              renderer.display_pixmap.toImage())
+            qpainter.drawImage(true_coord[0] * TILEWIDTH,
+                               true_coord[1] * TILEHEIGHT,
+                               renderer.get_display_pixmap().toImage())
             # Fill with blue
             rect = QRect(true_coord[0] * TILEWIDTH, true_coord[1] * TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
-            painter.fillRect(rect, QColor(0, 255, 255, 96))
+            qpainter.fillRect(rect, QColor(0, 255, 255, 96))
 
-    def draw_selection(self, painter):
+    def draw_selection(self, qpainter):
         starting_pos = self.right_selecting
         if not starting_pos:
             return
         for coord, (true_coord, terrain) in self.right_selection.items():
             color = QColor(0, 255, 255, 128)
             rect = QRect(true_coord[0] * TILEWIDTH, true_coord[1] * TILEHEIGHT, TILEWIDTH, TILEHEIGHT)
-            painter.fillRect(rect, color)
+            qpainter.fillRect(rect, color)
 
     def create_right_selection(self):
         self.right_selection.clear()

@@ -12,6 +12,7 @@ from app.map_maker.painter_utils import Painter
 
 class CliffPainter(Painter):
     terrain_like = (Terrain.CLIFF,)
+    base_coord = (15, 0)
     second_start_px = 96
     organization = {}
 
