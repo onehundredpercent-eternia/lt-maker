@@ -27,8 +27,8 @@ RENDERERS[Terrain.SAND] = \
     LimitRenderer8(PAINTERS[Terrain.SAND],
                    pc().get(Terrain.SAND))
 RENDERERS[Terrain.ROAD] = \
-    SimpleRenderer8(PAINTERS[Terrain.ROAD],
-                    pc().get(Terrain.ROAD))
+    LimitRenderer8(PAINTERS[Terrain.ROAD],
+                   pc().get(Terrain.ROAD))
 RENDERERS[Terrain.RIVER] = \
     SimpleRenderer8(PAINTERS[Terrain.RIVER],
                     pc().get(Terrain.RIVER))

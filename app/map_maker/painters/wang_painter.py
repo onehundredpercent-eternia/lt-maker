@@ -69,9 +69,9 @@ class WangEdge8Painter(Painter):
     def get_coord(self, tilemap, position: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
         col_idx1, col_idx2, col_idx3, col_idx4 = self._determine_index(tilemap, position)
         coord1 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position)
-        coord2 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position, offset=1)
-        coord3 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position, offset=2)
-        coord4 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position, offset=3)
+        coord2 = random_choice([(col_idx2, k) for k in range(self.limit[col_idx2])], position, offset=1)
+        coord3 = random_choice([(col_idx3, k) for k in range(self.limit[col_idx3])], position, offset=2)
+        coord4 = random_choice([(col_idx4, k) for k in range(self.limit[col_idx4])], position, offset=3)
         return coord1, coord2, coord3, coord4
 
 class WangCorner8Painter(Painter):

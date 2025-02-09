@@ -5,7 +5,8 @@ from app.map_maker.terrain import Terrain
 from app.map_maker.utilities import \
     flood_fill, find_bounds, edge_random, random_choice
 
-from app.utilities import utils
+from app.utilities.algorithms.interpolation import lerp
+from app.utilities.utils import clamp
 
 class ForestPainter(Painter):
     forest_like = (Terrain.FOREST, Terrain.THICKET)
@@ -24,9 +25,9 @@ class ForestPainter(Painter):
         my_radius_height: float = abs(pos[1] + 0.5 - center_y)
         depth_w: float = (blob_width / 2) - my_radius_width
         depth_h: float = (blob_height / 2) - my_radius_height
-        chance_w: float = utils.lerp(1, 0, depth_w/4)
-        chance_h: float = utils.lerp(1, 0, depth_h/4)
-        chance_to_lose_adjacent_edges: float = utils.clamp(max(chance_w, chance_h), 0, 1)
+        chance_w: float = lerp(1, 0, depth_w/4)
+        chance_h: float = lerp(1, 0, depth_h/4)
+        chance_to_lose_adjacent_edges: float = clamp(max(chance_w, chance_h), 0, 1)
 
         north_edge = bool(north and north not in self.forest_like)  # Whether we don't border a forest
         if not north_edge and north and north != Terrain.THICKET:  # We border a forest

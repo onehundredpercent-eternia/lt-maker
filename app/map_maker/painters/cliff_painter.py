@@ -111,7 +111,7 @@ class CliffPainter(Painter):
         return topright, bottomright, bottomleft, topleft
 
     def single_process(self, tilemap):
-        positions: set = tilemap.get_all_terrain(self.nid)
+        positions: set = tilemap.get_all_terrain(Terrain.CLIFF)
         self.organization.clear()
         groupings: List[Set[Pos]] = []  # of sets
         counter: int = 0
