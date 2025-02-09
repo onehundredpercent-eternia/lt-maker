@@ -961,9 +961,9 @@ class Ending:
 
     solo_flag = True
     wait_time = 5000
-    background = SPRITES.get("endings_display")
 
     def __init__(self, portrait, title, text, unit):
+        self.background = SPRITES.get("endings_display")
         self.portrait = portrait
         self.title = title
         self.plain_text = text
@@ -1066,11 +1066,9 @@ class PairedEnding(Ending):
     """
     Contains a dialog
     """
-
-    background = SPRITES.get("paired_endings_display")
-
     def __init__(self, left_portrait, right_portrait, left_title, right_title, text,
                  left_unit, right_unit):
+        self.background = SPRITES.get("paired_endings_display")
         self.left_portrait = left_portrait
         self.right_portrait = right_portrait
         self.left_title = left_title

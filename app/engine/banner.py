@@ -231,9 +231,8 @@ class Pennant():
     """
 
     font = 'convo'
-    bg_surf = SPRITES.get('pennant_bg')
-
     def __init__(self, text):
+        self.bg_surf = SPRITES.get('pennant_bg')
         self.change_text(text)
 
         self.sprite_offset = 32

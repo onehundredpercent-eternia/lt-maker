@@ -7,7 +7,16 @@ from app.engine import engine
 class BasicSprite(object):
     full_path: str = None
     pixmap: str = None
-    image: engine.Surface = None
+    _image: engine.Surface = None
+
+    converted: bool = False
+
+    @property
+    def image(self):
+        if not self.converted:
+            self._image = self._image.convert_alpha()
+            self.converted = True
+        return self._image
 
 @dataclass
 class SpecialSprite(object):
