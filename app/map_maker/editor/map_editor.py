@@ -575,7 +575,7 @@ class MapEditor(QMainWindow):
                           "<p>Check out <a href='https://lt-maker.readthedocs.io/'>https://lt-maker.readthedocs.io/</a> "
                           "for information and helpful tutorials.</p>"
                           "<p>Or visit the LT community discord at <a href='https://discord.gg/dC6VWGh4sw'>https://discord.gg/dC6VWGh4sw</a> "
-                          "for answers to your questions and a helpful community..</p>")
+                          "for answers to your questions and a helpful community.</p>")
 
     def _type(self):
         return 'map_maker'

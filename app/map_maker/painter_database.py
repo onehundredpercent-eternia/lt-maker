@@ -33,7 +33,7 @@ PAINTERS[Terrain.THICKET] = Random8Painter()
 PAINTERS[Terrain.THICKET].data = [
    (17, 22), (18, 22), (19, 22), (17, 23), (18, 23), (19, 23), (18, 24), (19, 24), (18, 25)
 ]
-PAINTERS[Terrain.THICKET].base_coord = (34, 44)
+PAINTERS[Terrain.THICKET].base_coord = (17, 22)
 PAINTERS[Terrain.HILL] = HillPainter()
 PAINTERS[Terrain.MOUNTAIN] = MountainPainter()
 PAINTERS[Terrain.CLIFF] = CliffPainter()

@@ -34,10 +34,10 @@ def handle_cliffs(tilemap, pos: Pos, new_coord1: Pos, new_coord2: Pos, new_coord
 
 class GrassPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
-        new_coord1 = random_choice([(0, k) for k in range(self.limit)], pos)
-        new_coord2 = random_choice([(0, k) for k in range(self.limit)], pos, offset=1)
-        new_coord3 = random_choice([(0, k) for k in range(self.limit)], pos, offset=2)
-        new_coord4 = random_choice([(0, k) for k in range(self.limit)], pos, offset=3)
+        new_coord1 = random_choice([(0, k) for k in range(self.limit[0])], pos)
+        new_coord2 = random_choice([(0, k) for k in range(self.limit[0])], pos, offset=1)
+        new_coord3 = random_choice([(0, k) for k in range(self.limit[0])], pos, offset=2)
+        new_coord4 = random_choice([(0, k) for k in range(self.limit[0])], pos, offset=3)
 
         # Handle cliffs
         new_coord1, new_coord2, new_coord3, new_coord4 = \
@@ -111,19 +111,19 @@ class LightGrassPainter(WangCorner8Painter, Painter):
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         index1, index2, index3, index4 = self._determine_index(tilemap, pos)
 
-        new_coord1 = random_choice([(index1, k) for k in range(self.limits[index1])], pos)
-        new_coord2 = random_choice([(index2, k) for k in range(self.limits[index2])], pos, offset=1)
-        new_coord3 = random_choice([(index3, k) for k in range(self.limits[index3])], pos, offset=2)
-        new_coord4 = random_choice([(index4, k) for k in range(self.limits[index4])], pos, offset=3)
+        new_coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], pos)
+        new_coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], pos, offset=1)
+        new_coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], pos, offset=2)
+        new_coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], pos, offset=3)
 
         # Handle cliffs
         # Handle cliffs
         new_coord1, new_coord2, new_coord3, new_coord4 = \
             handle_cliffs(tilemap, pos, new_coord1, new_coord2, new_coord3, new_coord4)
 
-        shading_coord = self.get_shading_coord(tilemap, pos)
+        # shading_coord = self.get_shading_coord(tilemap, pos)
 
-        return ((new_coord1, new_coord2, new_coord3, new_coord4), shading_coord)
+        return new_coord1, new_coord2, new_coord3, new_coord4
 
 class NoisyGrassPainter(NoiseInterface, Painter):
     """
@@ -147,15 +147,15 @@ class NoisyGrassPainter(NoiseInterface, Painter):
         # the forest tiles
         n, e, s, w = tilemap.get_cardinal_terrain(pos)
         ne, se, sw, nw = tilemap.get_diagonal_terrain(pos)
-        north &= (all(k != Terrain.FOREST for k in (n, ne, nw, e, w)))
-        east &= (all(k != Terrain.FOREST for k in (e, ne, se, s, n)))
-        south &= (all(k != Terrain.FOREST for k in (s, se, sw, e, w)))
-        west &= (all(k != Terrain.FOREST for k in (w, nw, sw, s, n)))
-        northeast &= (all(k != Terrain.FOREST for k in (ne, n, e)))
-        southeast &= (all(k != Terrain.FOREST for k in (se, s, e)))
-        southwest &= (all(k != Terrain.FOREST for k in (sw, s, w)))
-        northwest &= (all(k != Terrain.FOREST for k in (nw, n, w)))
-        center &= (all(k != Terrain.FOREST for k in (n, e, s, w)))
+        north &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (n, ne, nw, e, w)))
+        east &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (e, ne, se, s, n)))
+        south &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (s, se, sw, e, w)))
+        west &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (w, nw, sw, s, n)))
+        northeast &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (ne, n, e)))
+        southeast &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (se, s, e)))
+        southwest &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (sw, s, w)))
+        northwest &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (nw, n, w)))
+        center &= (all(Terrain.light_grass_adjacent(k) or k is None for k in (n, e, s, w)))
 
         # Topleft
         index1 = 1 * north + \
@@ -186,6 +186,6 @@ class NoisyGrassPainter(NoiseInterface, Painter):
         coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], (pos[0] * 2 + 1, pos[1] * 2 + 1))
         coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], (pos[0] * 2, pos[1] * 2 + 1))
 
-        shading_coord = self.get_shading_coord(tilemap, pos)
+        # shading_coord = self.get_shading_coord(tilemap, pos)
 
-        return ((coord1, coord2, coord3, coord4), shading_coord)
+        return coord1, coord2, coord3, coord4

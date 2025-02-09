@@ -3,7 +3,8 @@ from app.map_maker.qt_renderers import (
     SimpleRenderer,
     SimpleRenderer8,
     SeaRenderer,
-    DisplayRenderer8
+    DisplayRenderer8,
+    LimitRenderer8,
 )
 from app.map_maker.palette_collection import \
     get_current_palette_collection
@@ -17,14 +18,14 @@ RENDERERS[Terrain.GRASS] = \
     SimpleRenderer8(PAINTERS[Terrain.GRASS], 
                     pc().get(Terrain.GRASS))
 RENDERERS[Terrain.LIGHT_GRASS] = \
-    SimpleRenderer8(PAINTERS[Terrain.LIGHT_GRASS], 
-                    pc().get(Terrain.LIGHT_GRASS))
+    LimitRenderer8(PAINTERS[Terrain.LIGHT_GRASS], 
+                   pc().get(Terrain.LIGHT_GRASS))
 RENDERERS[Terrain.NOISY_GRASS] = \
-    SimpleRenderer8(PAINTERS[Terrain.NOISY_GRASS], 
-                    pc().get(Terrain.NOISY_GRASS))
+    LimitRenderer8(PAINTERS[Terrain.NOISY_GRASS], 
+                   pc().get(Terrain.NOISY_GRASS))
 RENDERERS[Terrain.SAND] = \
-    SimpleRenderer8(PAINTERS[Terrain.SAND],
-                    pc().get(Terrain.SAND))
+    LimitRenderer8(PAINTERS[Terrain.SAND],
+                   pc().get(Terrain.SAND))
 RENDERERS[Terrain.ROAD] = \
     SimpleRenderer8(PAINTERS[Terrain.ROAD],
                     pc().get(Terrain.ROAD))

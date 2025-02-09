@@ -1,3 +1,5 @@
+from typing import Dict
+
 from app.utilities.typing import Pos
 
 from PyQt5.QtGui import QPixmap
@@ -52,3 +54,14 @@ class DisplayRenderer8(SimpleRenderer8):
         coord3 = self.painter.base_coord[0] + 1, self.painter.base_coord[1] + 1
         coord4 = self.painter.base_coord[0], self.painter.base_coord[1] + 1
         return self.palette.get_pixmap8(coord1, coord2, coord3, coord4, 0)
+
+class LimitRenderer8(SimpleRenderer8):
+    """
+    Finds the full vertical limit of the drawn part of the .png
+    for each column (0 - 15)
+    """
+    def __init__(self, painter: Painter, palette: QtPalette):
+        self.painter = painter
+        self.palette = palette
+        limit: Dict[int, int] = {i: find_limit8(palette.get_full_pixmap(), i) for i in range(16)}
+        self.painter.set_limit(limit)

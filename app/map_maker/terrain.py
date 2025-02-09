@@ -35,5 +35,9 @@ class Terrain(StrEnum):
         return [t.value for t in Terrain]
 
     @staticmethod
+    def light_grass_adjacent(terrain: "Terrain") -> bool:
+        return terrain in (Terrain.NOISY_GRASS, )
+
+    @staticmethod
     def cliff(terrain: "Terrain") -> bool:
         return terrain in (Terrain.CLIFF, )

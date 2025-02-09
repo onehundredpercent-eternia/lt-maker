@@ -28,7 +28,9 @@ class SandPainter(WangCorner8Painter):
             self.determine_vertex(tilemap, pos)
 
     def _determine_index(self, tilemap, pos: Pos) -> Tuple[int, int, int, int]:
-        center, left, right, top, bottom, topleft, topright, bottomleft, bottomright = self._pos_to_vertices(pos)
+        center, left, right, top, bottom, \
+            topleft, topright, bottomleft, bottomright = \
+            self._pos_to_vertices(pos)
         center_edge = True
         left_edge = bool(self.vertices[left][0])
         right_edge = bool(self.vertices[right][0])
@@ -41,10 +43,10 @@ class SandPainter(WangCorner8Painter):
 
         # If adjacent to non-sand, don't remove
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
-        force_north_edge = north in self.terrain_like and north != 'Sand'
-        force_south_edge = south in self.terrain_like and south != 'Sand'
-        force_east_edge = east in self.terrain_like and east != 'Sand'
-        force_west_edge = west in self.terrain_like and west != 'Sand'
+        force_north_edge = north in self.terrain_like and north != Terrain.SAND
+        force_south_edge = south in self.terrain_like and south != Terrain.SAND
+        force_east_edge = east in self.terrain_like and east != Terrain.SAND
+        force_west_edge = west in self.terrain_like and west != Terrain.SAND
 
         # Randomly determine some to remove
         if self.vertices[center][0] == 3 and self.vertices[center][1] < self.edge_chance:
