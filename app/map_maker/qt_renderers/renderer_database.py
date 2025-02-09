@@ -5,6 +5,8 @@ from app.map_maker.qt_renderers import (
     SeaRenderer,
     DisplayRenderer8,
     LimitRenderer8,
+    LimitRenderer16,
+    CliffRenderer,
 )
 from app.map_maker.palette_collection import \
     get_current_palette_collection
@@ -30,8 +32,8 @@ RENDERERS[Terrain.ROAD] = \
     LimitRenderer8(PAINTERS[Terrain.ROAD],
                    pc().get(Terrain.ROAD))
 RENDERERS[Terrain.RIVER] = \
-    SimpleRenderer8(PAINTERS[Terrain.RIVER],
-                    pc().get(Terrain.RIVER))
+    LimitRenderer8(PAINTERS[Terrain.RIVER],
+                   pc().get(Terrain.RIVER))
 RENDERERS[Terrain.SEA] = \
     SeaRenderer(PAINTERS[Terrain.SEA],
                 pc().get(Terrain.SEA))
@@ -48,14 +50,14 @@ RENDERERS[Terrain.MOUNTAIN] = \
     SimpleRenderer(PAINTERS[Terrain.MOUNTAIN],
                    pc().get(Terrain.MOUNTAIN))
 RENDERERS[Terrain.CLIFF] = \
-    SimpleRenderer(PAINTERS[Terrain.CLIFF],
-                   pc().get(Terrain.CLIFF))
+    CliffRenderer(PAINTERS[Terrain.CLIFF],
+                  pc().get(Terrain.CLIFF))
 RENDERERS[Terrain.BRIDGEH] = \
-    SimpleRenderer(PAINTERS[Terrain.BRIDGEH],
-                   pc().get(Terrain.BRIDGEH))
+    LimitRenderer16(PAINTERS[Terrain.BRIDGEH],
+                    pc().get(Terrain.BRIDGEH))
 RENDERERS[Terrain.BRIDGEV] = \
-    SimpleRenderer(PAINTERS[Terrain.BRIDGEV],
-                   pc().get(Terrain.BRIDGEV))
+    LimitRenderer16(PAINTERS[Terrain.BRIDGEV],
+                    pc().get(Terrain.BRIDGEV))
 RENDERERS[Terrain.CASTLE] = \
     SimpleRenderer(PAINTERS[Terrain.CASTLE],
                    pc().get(Terrain.CASTLE))

@@ -34,7 +34,7 @@ class MapPrefab(Prefab):
     def set(self, pos: Pos, old_terrain: Terrain, new_terrain: Terrain):
         old_terrain_painter = PAINTERS.get(old_terrain)
         new_terrain_painter = PAINTERS.get(new_terrain)
-        if old_terrain and old_terrain_painter.check_flood_fill and pos not in self.terrain_grid_to_update:
+        if old_terrain and old_terrain_painter.check_flood_fill:
             # Need to check flood fill both before and after changing terrain
             self._update_flood_fill(pos, old_terrain_painter.check_flood_fill == 'diagonal')  
         self.terrain_grid[pos] = new_terrain

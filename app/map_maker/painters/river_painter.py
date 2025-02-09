@@ -15,6 +15,9 @@ class RiverPainter(WangEdge16Painter):
         (1, 4): 44, (1, 5): 45, (2, 4): 46, (2, 5): 47, (4, 4): 48, (4, 5): 49, (8, 4): 50, (8, 5): 51
     }
 
+    def has_autotiles(self) -> bool:
+        return True
+
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
         northeast, southeast, southwest, northwest = tilemap.get_diagonal_terrain(pos)
@@ -115,10 +118,10 @@ class RiverPainter(WangEdge16Painter):
             index2 = 12 + 1 * north_edge + 2 * east_edge
             index3 = 9 + 4 * south_edge + 2 * east_edge
             index4 = 3 + 4 * south_edge + 8 * west_edge
-            new_coord1 = random_choice([(index1, k) for k in range(self.limits[index1])], pos)
-            new_coord2 = random_choice([(index2, k) for k in range(self.limits[index2])], pos, offset=1)
-            new_coord3 = random_choice([(index3, k) for k in range(self.limits[index3])], pos, offset=2)
-            new_coord4 = random_choice([(index4, k) for k in range(self.limits[index4])], pos, offset=3)
+            new_coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], pos)
+            new_coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], pos, offset=1)
+            new_coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], pos, offset=2)
+            new_coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], pos, offset=3)
             # Handle using the same set for vertical edges
             if index1 == 7:
                 new_coord1 = (index1, random_choice([0, 1, 2, 3, 4], pos)*2)

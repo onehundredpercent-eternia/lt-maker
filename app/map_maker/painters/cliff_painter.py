@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import math
 
@@ -15,10 +15,14 @@ class CliffPainter(Painter):
     base_coord = (15, 0)
     second_start_px = 96
     organization = {}
+    second_limit = {}
 
     @property
     def check_flood_fill(self) -> str:
         return 'diagonal'
+
+    def set_second_limit(self, limit: Dict[int, int]):
+        self.second_limit = limit
 
     def _find_longest_path(self, group: Set[Pos]) -> List[Pos]:
         # https://stackoverflow.com/questions/21880419/how-to-find-the-longest-simple-path-in-a-graph
@@ -179,7 +183,7 @@ class CliffPainter(Painter):
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         index: Pos = self._determine_index(tilemap, pos)
-        right, bottom, x_stronger = self._determine_cliff_vector()
+        right, bottom, x_stronger = self._determine_cliff_vector(tilemap, pos)
 
         use_bottomright = True
         if index in (3, 12):
@@ -197,9 +201,9 @@ class CliffPainter(Painter):
             else:
                 use_bottomright = bottom
         if use_bottomright:
-            new_coords = [(index, k) for k in range(self.limits[index])]
+            new_coords = [(index, k) for k in range(self.limit[index])]
         else:
-            new_coords = [(index, k + self.second_start_px//16) for k in range(self.second_limits[index])]
+            new_coords = [(index, k + self.second_start_px//16) for k in range(self.second_limit[index])]
 
         coord = random_choice(new_coords, pos)
         return coord

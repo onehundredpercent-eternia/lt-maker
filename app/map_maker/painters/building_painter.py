@@ -3,6 +3,7 @@ from app.utilities.typing import Pos
 
 from app.map_maker.painter_utils import Painter
 from app.map_maker.utilities import random_choice
+from app.map_maker.terrain import Terrain
 
 class BuildingPainter(Painter):
     organization = {}  # Key: position, value: type
@@ -58,7 +59,7 @@ class BuildingPainter(Painter):
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         sprite_type, offset = self.organization[pos]
-        coords = [(c[0] + offset[0], c[1] + offset[1]) for c in self.painter.data[sprite_type]]
+        coords = [(c[0] + offset[0], c[1] + offset[1]) for c in self.data[sprite_type]]
 
         # So it always uses the same set of coords...
         base_pos = (pos[0] - offset[0], pos[1] - offset[1])
@@ -73,7 +74,7 @@ class CastlePainter(BuildingPainter):
 
     def single_process(self, tilemap):
         self.organization.clear()
-        positions: set = tilemap.get_all_terrain(self.nid)
+        positions: set = tilemap.get_all_terrain(Terrain.CASTLE)
         order: list = sorted(positions)
         while order:
             position = order.pop(0)
@@ -103,7 +104,7 @@ class RuinsPainter(BuildingPainter):
 
     def single_process(self, tilemap):
         self.organization.clear()
-        positions: set = tilemap.get_all_terrain(self.nid)
+        positions: set = tilemap.get_all_terrain(Terrain.RUINS)
         order: list = sorted(positions)
         while order:
             position = order.pop(0)
@@ -146,7 +147,7 @@ class HousePainter(BuildingPainter):
 
     def single_process(self, tilemap):
         self.organization.clear()
-        positions: set = tilemap.get_all_terrain(self.nid)
+        positions: set = tilemap.get_all_terrain(Terrain.HOUSE)
         order: list = sorted(positions)
         while order:
             position = order.pop(0)
