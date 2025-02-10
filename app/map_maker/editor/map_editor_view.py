@@ -11,7 +11,6 @@ from app.utilities.typing import Pos
 from app.map_maker.editor.draw_tilemap import draw_tilemap
 import app.map_maker.utilities as map_utils
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
-from app.map_maker.painter_database import PAINTERS
 from app.editor import timer
 
 class PaintTool(IntEnum):
@@ -240,11 +239,16 @@ class MapEditorView(QGraphicsView):
             # Add new cliff marker on location
             elif self.window.current_tool == PaintTool.CliffMarker:
                 self.window.cliff_marker_widget.add_new_marker(tile_pos)
+
         # Select the current terrain under cursor
         elif event.button() == Qt.RightButton and self.tilemap.check_bounds(tile_pos):
             current_terrain = self.tilemap.get_terrain(tile_pos)
             if current_terrain:
-                self.window.terrain_painter_menu.set_current_terrain(current_terrain)
+                if current_terrain.outdoor:
+                    self.window.outdoor_terrain_painter_menu.set_current_terrain(current_terrain)
+                else:
+                    self.window.indoor_terrain_painter_menu.set_current_terrain(current_terrain)
+            
         # Move about the map
         elif event.button() == Qt.MiddleButton:
             self.old_middle_pos = event.pos()

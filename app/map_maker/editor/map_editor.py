@@ -1,11 +1,13 @@
+from typing import Optional
+
 import os
 import json
 
-from PyQt5.QtWidgets import QLineEdit, QFrame, QVBoxLayout, \
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, \
     QToolBar, QSpinBox, QAction, QMenu, QDockWidget, \
     QActionGroup, QWidget, QMainWindow, QLabel, QSizePolicy, \
     QDesktopWidget, QFileDialog, QHBoxLayout, QMessageBox, \
-    QDialogButtonBox, QDialog
+    QTabWidget
 from PyQt5.QtCore import Qt, QDir
 from PyQt5.QtGui import QIcon, QImage, QPainter, QColor
 
@@ -13,7 +15,7 @@ from app import dark_theme
 
 from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES
 
-from app.extensions.custom_gui import PropertyBox, ComboBox, Dialog
+from app.extensions.custom_gui import PropertyBox, ComboBox
 from app.editor.settings import MainSettingsController
 
 from .resize_dialog import ResizeDialog
@@ -21,44 +23,16 @@ from .terrain_painter_menu import TerrainPainterMenu
 from .map_editor_view import PaintTool, MapEditorView
 from .draw_tilemap import simple_draw_tilemap
 from .palette_model import PaletteModel
+from .new_dialog import NidDialog
+
 from app.map_maker.map_prefab import MapPrefab
 import app.map_maker.utilities as map_utils
 from app.map_maker.palette_collection import \
-    PALETTES, get_current_palette_collection, set_current_palette_collection
+    PALETTES, get_current_indoor_palette_collection, set_current_indoor_palette_collection, \
+    get_current_outdoor_palette_collection, set_current_outdoor_palette_collection
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
 from app.map_maker.painter_database import PAINTERS
-
-class NidDialog(Dialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Set Tileset Nid")
-        self.window = parent
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        self.new_nid_box = PropertyBox("Tileset Nid", QLineEdit, self)
-        self.new_nid_box.edit.setPlaceholderText("Give the tileset a unique nid")
-        self.new_nid_box.edit.textChanged.connect(self.text_changed)
-        layout.addWidget(self.new_nid_box)
-
-        layout.addWidget(self.buttonbox)
-        self.buttonbox.button(QDialogButtonBox.Ok).setEnabled(False)
-
-    def text_changed(self, text):
-        if self.new_nid_box.edit.text():
-            self.buttonbox.button(QDialogButtonBox.Ok).setEnabled(True)
-        else:
-            self.buttonbox.button(QDialogButtonBox.Ok).setEnabled(False)
-
-    @classmethod
-    def get(cls, parent=None):
-        dialog = cls(parent)
-        result = dialog.exec_()
-        if result == QDialog.Accepted:
-            return dialog.new_nid_box.edit.text()
-        else:
-            return None
+from app.map_maker.terrain import Terrain
 
 class CliffMarkerWidget(QWidget):
     def __init__(self, parent=None, tilemap=None):
@@ -84,8 +58,6 @@ class CliffMarkerWidget(QWidget):
 
         self.layout.addWidget(self.main_box)
         self.layout.addWidget(self.toolbar)
-        # self.layout.addWidget(self.add_button)
-        # self.layout.addWidget(self.remove_button)
 
     def set_current(self, current):
         self.tilemap = current
@@ -111,7 +83,7 @@ class CliffMarkerWidget(QWidget):
 class MapEditor(QMainWindow):
     title = "LT Map Maker"
 
-    def __init__(self, parent=None, current=None):
+    def __init__(self, parent=None, current: Optional[MapPrefab] = None):
         super().__init__(parent)
         self.window = parent
         self.setWindowTitle(self.title)
@@ -128,7 +100,8 @@ class MapEditor(QMainWindow):
         self.current_map_save_location = None
         self.current_tool = PaintTool.NoTool
 
-        self.terrain_painter_menu = TerrainPainterMenu(self)
+        self.outdoor_terrain_painter_menu = TerrainPainterMenu(Terrain.outdoor_terrain(), self)
+        self.indoor_terrain_painter_menu = TerrainPainterMenu(Terrain.indoor_terrain(), self)
 
         self.view = MapEditorView(self)
         self.view.set_current(current)
@@ -165,25 +138,48 @@ class MapEditor(QMainWindow):
         self.toolbar.addWidget(fixed_space)
         self.toolbar.addWidget(self.random_seed_box)
 
-        self.palette_selector = PropertyBox("Palette", ComboBox, self)
-        palette_model = PaletteModel(PALETTES, self)
-        self.palette_selector.edit.setModel(palette_model)
-        self.palette_selector.edit.currentIndexChanged.connect(self.palette_changed)
-        if self.current.current_palette:
-            idx = PALETTES.index(self.current.current_palette)
-            self.palette_changed(idx)
+        # Palette selectors
+        self.outdoor_palette_selector = PropertyBox("Palette", ComboBox, self)
+        outdoor_palette_model = PaletteModel(PALETTES.outdoor_palettes(), self)
+        self.outdoor_palette_selector.edit.setModel(outdoor_palette_model)
+        self.palette_selector.edit.currentIndexChanged.connect(self.outdoor_palette_changed)
+        if self.current.current_outdoor_palette:
+            idx = PALETTES.outdoor_palettes().index(self.current.current_outdoor_palette)
+            self.outdoor_palette_changed(idx)
         else:
-            self.palette_changed(0)  # Apply it for the current palette
+            self.outdoor_palette_changed(0)  # Apply it for the current palette
 
-        self.right_frame = QFrame(self)
-        right_layout = QVBoxLayout()
-        self.right_frame.setLayout(right_layout)
-        right_layout.addWidget(self.terrain_painter_menu)
-        right_layout.addWidget(self.palette_selector)
+        self.indoor_palette_selector = PropertyBox("Palette", ComboBox, self)
+        indoor_palette_model = PaletteModel(PALETTES.indoor_palettes(), self)
+        self.indoor_palette_selector.edit.setModel(indoor_palette_model)
+        self.palette_selector.edit.currentIndexChanged.connect(self.indoor_palette_changed)
+        if self.current.current_indoor_palette:
+            idx = PALETTES.indoor_palettes().index(self.current.current_indoor_palette)
+            self.indoor_palette_changed(idx)
+        else:
+            self.indoor_palette_changed(0)  # Apply it for the current palette
+
+        self.terrain_tab = QTabWidget(self)
+
+        # Outdoor
+        outdoor_frame = QFrame(self)
+        outdoor_layout = QVBoxLayout()
+        outdoor_frame.setLayout(outdoor_layout)
+        outdoor_layout.addWidget(self.outdoor_terrain_painter_menu)
+        outdoor_layout.addWidget(self.outdoor_palette_selector)
+        self.terrain_tab.addTab(outdoor_frame, "Outdoor Terrain")
+
+        # Indoor
+        indoor_frame = QFrame(self)
+        indoor_layout = QVBoxLayout()
+        indoor_frame.setLayout(indoor_layout)
+        indoor_layout.addWidget(self.indoor_terrain_painter_menu)
+        indoor_layout.addWidget(self.indoor_palette_selector)
+        self.terrain_tab.addTab(indoor_frame, "Indoor Terrain")
 
         self.terrain_dock = QDockWidget("Terrain", self)
         self.terrain_dock.setAllowedAreas(Qt.RightDockWidgetArea)
-        self.terrain_dock.setWidget(self.right_frame)
+        self.terrain_dock.setWidget(self.terrain_tab)
         self.terrain_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.terrain_dock)
 
@@ -200,6 +196,20 @@ class MapEditor(QMainWindow):
             self.restoreGeometry(geometry)
 
         self.view.update_view()
+
+    @property
+    def terrain_painter_menu(self):
+        if self.terrain_tab.current_index == 0:
+            return self.outdoor_terrain_painter_menu
+        else:
+            return self.indoor_terrain_painter_menu
+
+    @property
+    def palette_selector(self):
+        if self.terrain_tab.current_index == 0:
+            return self.outdoor_palette_selector
+        else:
+            return self.indoor_palette_selector
 
     def create_actions(self):
         theme = dark_theme.get_theme()
@@ -374,12 +384,21 @@ class MapEditor(QMainWindow):
         print("--- Seed Changed to %d ---" % val)
         self.current.reset_all()
 
-    def palette_changed(self, idx: int):
-        palette = PALETTES[idx]
-        self.current.current_palette = palette.nid
-        set_current_palette_collection(idx)
+    def indoor_palette_changed(self, idx: int):
+        palette = PALETTES.indoor_palettes()[idx]
+        self.current.current_indoor_palette = palette.nid
+        set_current_indoor_palette_collection(idx)
         for terrain, renderer in RENDERERS.items():
-            renderer.set_palette(get_current_palette_collection().get(terrain))
+            renderer.set_palette(get_current_indoor_palette_collection().get(terrain))
+        self.current.reset_all()
+        self.terrain_painter_menu.reset()
+
+    def outdoor_palette_changed(self, idx: int):
+        palette = PALETTES.outdoor_palettes()[idx]
+        self.current.current_outdoor_palette = palette.nid
+        set_current_outdoor_palette_collection(idx)
+        for terrain, renderer in RENDERERS.items():
+            renderer.set_palette(get_current_outdoor_palette_collection().get(terrain))
         self.current.reset_all()
         self.terrain_painter_menu.reset()
 
@@ -450,7 +469,7 @@ class MapEditor(QMainWindow):
                 str_coord = "%d,%d" % (pos[0], pos[1])
                 s_dict['autotiles'][str_coord] = idx
                 for pidx in range(AUTOTILE_FRAMES):
-                    sprite = terrain.determine_sprite(self.current, pos, pidx)
+                    sprite = RENDERERS.get(terrain).determine_sprite(self.current, pos, pidx)
                     qpainter.drawPixmap(idx * TILEWIDTH, pidx * TILEHEIGHT, sprite)
             qpainter.end()
             autotile_image.save(autotile_path)
@@ -547,12 +566,20 @@ class MapEditor(QMainWindow):
             with open(self.current_map_save_location) as load_file:
                 s_dict = json.load(load_file)
                 self.current = MapPrefab.restore(s_dict)
-        if self.current.current_palette:
-            idx = PALETTES.index(self.current.current_palette)
-            self.palette_selector.edit.setCurrentIndex(idx)
-            self.palette_changed(idx)
+
+        if self.current.current_indoor_palette:
+            idx = PALETTES.indoor_palette().index(self.current.current_indoor_palette)
+            self.indoor_palette_selector.edit.setCurrentIndex(idx)
+            self.indoor_palette_changed(idx)
         else:
-            self.palette_changed(0)  # Apply it for the current palette
+            self.indoor_palette_changed(0)  # Apply it for the current palette
+        if self.current.current_outdoor_palette:
+            idx = PALETTES.outdoor_palette().index(self.current.current_outdoor_palette)
+            self.outdoor_palette_selector.edit.setCurrentIndex(idx)
+            self.outdoor_palette_changed(idx)
+        else:
+            self.outdoor_palette_changed(0)  # Apply it for the current palette
+
         self.set_current(self.current)
 
     def closeEvent(self, event):

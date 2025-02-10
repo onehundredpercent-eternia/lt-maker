@@ -11,8 +11,10 @@ from app.map_maker.qt_renderers.renderer_utils import get_pixmap8, get_pixmap16
 class QtPalette:
     fn: str
     autotile_fn: str = None
+    shading_fn: str = None
     pixmap: QPixmap = None
     autotile_pixmap: QPixmap = None
+    shading_pixmap: QPixmap = None
 
     def get_full_pixmap(self) -> QPixmap:
         if not self.pixmap:
@@ -29,6 +31,11 @@ class QtPalette:
             return get_pixmap16(self.autotile_pixmap, (column, autotile_num))
         else:
             return get_pixmap16(self.pixmap, coord)
+
+    def get_shading_pixmap16(self, painter: Painter, coord: Pos) -> QPixmap:
+        if not self.shading_pixmap:
+            self.shading_pixmap = QPixmap(self.shading_fn)
+        return get_pixmap16(self.shading_pixmap, coord)
 
     def subsurface8(self, painter: Painter, coord: Pos, autotile_num: int) -> QPixmap:
         if not self.pixmap:

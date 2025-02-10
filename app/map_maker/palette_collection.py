@@ -22,6 +22,7 @@ class PaletteCollection:
 
     def load_palettes(self):
         self.palettes = {
+            # Outdoors
             Terrain.GRASS: QtPalette(os.path.join(self.palette_dir, 'grass.png')),
             Terrain.LIGHT_GRASS: QtPalette(os.path.join(self.palette_dir, 'grass.png')),
             Terrain.NOISY_GRASS: QtPalette(os.path.join(self.palette_dir, 'grass.png')),
@@ -39,10 +40,20 @@ class PaletteCollection:
             Terrain.CASTLE: QtPalette(os.path.join(self.palette_dir, 'main.png')),
             Terrain.HOUSE: QtPalette(os.path.join(self.palette_dir, 'main.png')),
             Terrain.RUINS: QtPalette(os.path.join(self.palette_dir, 'main.png')),
+            # Indoors
+            Terrain.VOID: QtPalette(os.path.join(self.palette_dir, 'void.png')),
+            Terrain.FLOOR_1: QtPalette(os.path.join(self.palette_dir, 'floor1.png'), shading_fn=os.path.join(self.palette_dir, 'floor1_shading.png')),
+            Terrain.FLOOR_2: QtPalette(os.path.join(self.palette_dir, 'floor2.png'), shading_fn=os.path.join(self.palette_dir, 'floor2_shading.png')),
         }
 
 class MapMakerPaletteCatalog(Data[PaletteCollection]):
     datatype = PaletteCollection
+
+    def outdoor_palettes(self) -> Data[PaletteCollection]:
+        return Data([p for p in self.values() if p.outdoor])
+
+    def indoor_palettes(self) -> Data[PaletteCollection]:
+        return Data([p for p in self.values() if not p.outdoor])
 
 def load_all_palettes():
     valid_palette_folders = glob.glob('app/map_maker/palettes/*')
@@ -66,11 +77,19 @@ def load_all_palettes():
 PALETTES = MapMakerPaletteCatalog()
 load_all_palettes()
 
-CURRENT_PALETTE = PALETTES[0]
+CURRENT_INDOOR_PALETTE = PALETTES.indoor_palettes()[0]
+CURRENT_OUTDOOR_PALETTE = PALETTES.outdoor_palettes()[0]
 
-def get_current_palette_collection():
-    return CURRENT_PALETTE
+def get_current_indoor_palette_collection():
+    return CURRENT_INDOOR_PALETTE
 
-def set_current_palette_collection(idx: int):
-    global CURRENT_PALETTE
-    CURRENT_PALETTE = PALETTES[idx]
+def get_current_outdoor_palette_collection():
+    return CURRENT_OUTDOOR_PALETTE
+
+def set_current_indoor_palette_collection(idx: int):
+    global CURRENT_INDOOR_PALETTE
+    CURRENT_INDOOR_PALETTE = PALETTES[idx]
+
+def set_current_outdoor_palette_collection(idx: int):
+    global CURRENT_OUTDOOR_PALETTE
+    CURRENT_OUTDOOR_PALETTE = PALETTES[idx]

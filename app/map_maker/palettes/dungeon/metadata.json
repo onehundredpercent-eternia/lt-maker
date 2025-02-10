@@ -1,0 +1,8 @@
+{
+    "author": "IS: FE8",
+    "name": "Dungeon",
+    "floor1": "default",
+    "floor2": "default",
+    "location": "Stronghold1.png",
+    "outdoor": false
+}
