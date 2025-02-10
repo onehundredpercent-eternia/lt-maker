@@ -10,27 +10,41 @@ from app.map_maker.terrain import Terrain
 CLIFF_COORDS = [(13, 9), (13, 10), (14, 9), (14, 10)]  # Topright, Bottomright, Bottomleft, Topleft
 
 def handle_cliffs(tilemap, pos: Pos, new_coord1: Pos, new_coord2: Pos, new_coord3: Pos, new_coord4: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
+    old_coord1, old_coord2, old_coord3, old_coord4 = new_coord1, new_coord2, new_coord3, new_coord4
     north, east, south, west = tilemap.get_cardinal_terrain(pos)
     northeast, southeast, southwest, northwest = tilemap.get_diagonal_terrain(pos)
+    num_swaps = 0  # Keeps track of how many cliff edges we have on grass
+    # Only allow up to 2
     if north and north == Terrain.CLIFF and east and east == Terrain.CLIFF and not (northeast and northeast == Terrain.CLIFF):
         new_coord2 = CLIFF_COORDS[1]
-    elif north and north == Terrain.CLIFF and west and west == Terrain.CLIFF and not (northwest and northwest == Terrain.CLIFF):
+        num_swaps += 1
+    if north and north == Terrain.CLIFF and west and west == Terrain.CLIFF and not (northwest and northwest == Terrain.CLIFF):
         new_coord1 = CLIFF_COORDS[3]
-    elif south and south == Terrain.CLIFF and east and east == Terrain.CLIFF and not (southeast and southeast == Terrain.CLIFF):
+        num_swaps += 1
+    if south and south == Terrain.CLIFF and east and east == Terrain.CLIFF and not (southeast and southeast == Terrain.CLIFF):
         new_coord3 = CLIFF_COORDS[0]
-    elif south and south == Terrain.CLIFF and west and west == Terrain.CLIFF and not (southwest and southwest == Terrain.CLIFF):
+        num_swaps += 1
+    if south and south == Terrain.CLIFF and west and west == Terrain.CLIFF and not (southwest and southwest == Terrain.CLIFF):
         new_coord4 = CLIFF_COORDS[2]
+        num_swaps += 1
     # Handle seacliffs
-    elif north and north == Terrain.SEA and east and east == Terrain.SEA and northeast and northeast == Terrain.SEA:
+    if north and north == Terrain.SEA and east and east == Terrain.SEA and northeast and northeast == Terrain.SEA:
         new_coord2 = CLIFF_COORDS[1]
-    elif north and north == Terrain.SEA and west and west == Terrain.SEA and northwest and northwest == Terrain.SEA:
+        num_swaps += 1
+    if north and north == Terrain.SEA and west and west == Terrain.SEA and northwest and northwest == Terrain.SEA:
         new_coord1 = CLIFF_COORDS[3]
-    elif south and south == Terrain.SEA and east and east == Terrain.SEA and southeast and southeast == Terrain.SEA:
+        num_swaps += 1
+    if south and south == Terrain.SEA and east and east == Terrain.SEA and southeast and southeast == Terrain.SEA:
         new_coord3 = CLIFF_COORDS[0]
-    elif south and south == Terrain.SEA and west and west == Terrain.SEA and southwest and southwest == Terrain.SEA:
+        num_swaps += 1
+    if south and south == Terrain.SEA and west and west == Terrain.SEA and southwest and southwest == Terrain.SEA:
         new_coord4 = CLIFF_COORDS[2]
+        num_swaps += 1
 
-    return new_coord1, new_coord2, new_coord3, new_coord4
+    if num_swaps <= 2:
+        return new_coord1, new_coord2, new_coord3, new_coord4
+    else:
+        return old_coord1, old_coord2, old_coord3, old_coord4
 
 class GrassPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos]:

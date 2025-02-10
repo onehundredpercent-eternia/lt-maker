@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Callable
 import functools
 
 try:
@@ -21,6 +21,8 @@ class MountainPainter(Painter):
     base_coord = (8, 23)
     organization = {}
     current_threads = []  # Keeps track of the currently running threads
+    mountain_process_finished: Callable = None
+    mountain_processing: Callable = None
 
     def __init__(self, base_coord: Optional[Pos] = None):
         super().__init__(base_coord)
@@ -65,7 +67,7 @@ class MountainPainter(Painter):
             print(index, sorted(coord))
 
     def single_process(self, tilemap):
-        positions: Set[Pos] = tilemap.get_all_terrain(self.nid)
+        positions: Set[Pos] = tilemap.get_all_terrain(Terrain.MOUNTAIN)
         self.organization.clear()
         groupings: List[Set[Pos]] = []  # of sets
         counter: int = 0
@@ -96,15 +98,14 @@ class MountainPainter(Painter):
     def _process_group(self, tilemap, group: Set[Pos]):
         # Just fill it up with generic pieces
         self._generic_fill(group)
-        self.tilemap = tilemap
 
         # But then, start the thread
         if len(group) < 12:
             thread = NaiveBacktrackingThread(tilemap, self.mountain_data, self.noneless_rules, group)
         else:
             thread = AlgorithmXThread(tilemap, self.mountain_data, self.noneless_rules, group)
-        thread.finished.connect(functools.partial(self.mountain_process_finished, thread))
-        thread.waiting.connect(functools.partial(self.mountain_processing, thread))
+        thread.finished.connect(functools.partial(self.mountain_process_finished, thread, tilemap))
+        thread.waiting.connect(functools.partial(self.mountain_processing, thread, tilemap))
         self.current_threads.append(thread)
         thread.start(QThread.LowPriority)
 
@@ -125,24 +126,3 @@ class MountainPainter(Painter):
             thread.stop()
             thread.wait()
         self.current_threads.clear()
-
-    # TODO(Threading stuff)
-    def mountain_process_finished(self, thread):
-        print("Finished", id(thread), thread.did_complete)
-        if thread.did_complete:
-            self.organization.update(thread.organization)
-            # Update the image since the user may not have requested a change -- this does it manually
-            for pos in thread.organization.keys():
-                sprite = self.determine_sprite(self.tilemap, pos, 0)
-                self.tilemap.tile_grid[pos] = sprite
-        else:
-            self.generic_fill(thread.group)
-        if thread in self.current_threads:
-            self.current_threads.remove(thread)
-
-    # TODO(Threading stuff)
-    def mountain_processing(self, thread):
-        print("Processing... %s" % id(thread))
-        for pos, coord in thread.organization.items():
-            sprite = self.get_pixmap(coord, 0)
-            self.tilemap.tile_grid[pos] = sprite

@@ -26,18 +26,22 @@ class CliffPainter(Painter):
 
     def _find_longest_path(self, group: Set[Pos]) -> List[Pos]:
         # https://stackoverflow.com/questions/21880419/how-to-find-the-longest-simple-path-in-a-graph
+        EARLY_STOP = 100000
         path = []
         best_path = []
         used = set()
+        counter = 0
 
         def find_path(pos):
             nonlocal path
             nonlocal best_path
+            nonlocal counter
+            counter += 1
             used.add(pos)
             adj = {(pos[0] - 1, pos[1] - 1), (pos[0], pos[1] - 1), (pos[0] + 1, pos[1] - 1),
                    (pos[0] - 1, pos[1]), (pos[0] + 1, pos[1]),
                    (pos[0] - 1, pos[1] + 1), (pos[0], pos[1] + 1), (pos[0] + 1, pos[1] + 1)}
-            for v in adj & group:
+            for v in (adj & group):
                 if v not in used:
                     path.append(v)
                     if len(path) > len(best_path):
@@ -50,6 +54,8 @@ class CliffPainter(Painter):
             path.append(pos)
             if len(path) > len(best_path):
                 best_path = path[:]
+            if counter > EARLY_STOP:
+                return best_path
             find_path(pos)
             path.pop()
 

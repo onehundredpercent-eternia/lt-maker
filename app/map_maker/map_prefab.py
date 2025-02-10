@@ -176,7 +176,7 @@ class MapPrefab(Prefab):
         self.cliff_markers = [tuple(_) for _ in self.cliff_markers]
         for str_coord, terrain in s_dict['terrain_grid'].items():
             coord = tuple(int(_) for _ in str_coord.split(','))
-            self.terrain_grid[coord] = terrain
+            self.terrain_grid[coord] = Terrain(terrain)
         self.autotile_set.clear()
         for str_coord in s_dict['autotile_set']:
             coord = tuple(int(_) for _ in str_coord.split(','))

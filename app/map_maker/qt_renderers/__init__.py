@@ -7,3 +7,4 @@ from .simple_renderer import (
 )
 from .sea_renderer import SeaRenderer
 from .cliff_renderer import CliffRenderer
+from .mountain_renderer import MountainRenderer

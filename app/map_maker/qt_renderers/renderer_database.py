@@ -7,6 +7,7 @@ from app.map_maker.qt_renderers import (
     LimitRenderer8,
     LimitRenderer16,
     CliffRenderer,
+    MountainRenderer,
 )
 from app.map_maker.palette_collection import \
     get_current_palette_collection
@@ -47,8 +48,8 @@ RENDERERS[Terrain.HILL] = \
     SimpleRenderer(PAINTERS[Terrain.HILL],
                    pc().get(Terrain.HILL))
 RENDERERS[Terrain.MOUNTAIN] = \
-    SimpleRenderer(PAINTERS[Terrain.MOUNTAIN],
-                   pc().get(Terrain.MOUNTAIN))
+    MountainRenderer(PAINTERS[Terrain.MOUNTAIN],
+                     pc().get(Terrain.MOUNTAIN))
 RENDERERS[Terrain.CLIFF] = \
     CliffRenderer(PAINTERS[Terrain.CLIFF],
                   pc().get(Terrain.CLIFF))

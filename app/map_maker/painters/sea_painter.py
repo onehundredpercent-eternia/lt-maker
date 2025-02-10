@@ -12,7 +12,7 @@ class SeaPainter(WangEdge16Painter):
     base_coord = (15, 0)
     serration_chance = 0.6
     sand_start_px = 144
-    sand_limits = {}
+    sand_limit = {}
 
     autotiles = {
         (0, 4): 0, (0, 5): 1, (0, 6): 2, (0, 7): 2, (0, 8): 3, (0, 9): 3, (0, 10): 3, (0, 11): 2, (0, 12): 4, (0, 13): 2, (0, 14): 5, (0, 15): 3, (0, 16): 2,
@@ -36,6 +36,9 @@ class SeaPainter(WangEdge16Painter):
 
     @property
     def check_flood_fill(self):
+        return True
+
+    def has_autotiles(self) -> bool:
         return True
 
     def _determine_index(self, tilemap, pos: Pos) -> int:
@@ -100,12 +103,12 @@ class SeaPainter(WangEdge16Painter):
                 # Measure distance to closest non sea, bridge terrain
                 new_coords = [(0, k) for k in range(2, 9)]
             else:
-                new_coords = [(index, k) for k in range(self.limits[index])]
+                new_coords = [(index, k) for k in range(self.limit[index])]
         else:
             if self._near_sand(tilemap, pos):
-                new_coords = [(index, k + self.sand_start_px//16) for k in range(self.sand_limits[index])]
+                new_coords = [(index, k + self.sand_start_px//16) for k in range(self.sand_limit[index])]
             else:
-                new_coords = [(index, k) for k in range(self.limits[index])]
+                new_coords = [(index, k) for k in range(self.limit[index])]
 
         coord = random_choice(new_coords, pos)
 

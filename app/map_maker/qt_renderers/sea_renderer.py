@@ -9,7 +9,7 @@ class SeaRenderer(SimpleRenderer8):
         self.painter = painter
         self.palette = palette
 
-        limits = {k: find_limit16(palette.get_full_pixmap(), k) for k in range(16)}
-        sand_limits = {k: find_limit16(palette.get_full_pixmap(), k, self.painter.sand_start_px) for k in range(16)}
-        self.painter.set_limit(limits)
-        self.painter.sand_limits = sand_limits
+        limit = {k: find_limit16(palette.get_full_pixmap(), k) for k in range(16)}
+        sand_limit = {k: find_limit16(palette.get_full_pixmap(), k, self.painter.sand_start_px) for k in range(16)}
+        self.painter.set_limit(limit)
+        self.painter.sand_limit = sand_limit
