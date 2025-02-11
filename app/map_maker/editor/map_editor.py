@@ -23,13 +23,11 @@ from .terrain_painter_menu import TerrainPainterMenu
 from .map_editor_view import PaintTool, MapEditorView
 from .draw_tilemap import simple_draw_tilemap
 from .palette_model import PaletteModel
-from .new_dialog import NidDialog
+from .nid_dialog import NidDialog
 
 from app.map_maker.map_prefab import MapPrefab
 import app.map_maker.utilities as map_utils
-from app.map_maker.palette_collection import \
-    PALETTES, get_current_indoor_palette_collection, set_current_indoor_palette_collection, \
-    get_current_outdoor_palette_collection, set_current_outdoor_palette_collection
+from app.map_maker.palette_collection import PALETTES
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
 from app.map_maker.painter_database import PAINTERS
 from app.map_maker.terrain import Terrain
@@ -142,9 +140,10 @@ class MapEditor(QMainWindow):
         self.outdoor_palette_selector = PropertyBox("Palette", ComboBox, self)
         outdoor_palette_model = PaletteModel(PALETTES.outdoor_palettes(), self)
         self.outdoor_palette_selector.edit.setModel(outdoor_palette_model)
-        self.palette_selector.edit.currentIndexChanged.connect(self.outdoor_palette_changed)
+        self.outdoor_palette_selector.edit.currentIndexChanged.connect(self.outdoor_palette_changed)
+
         if self.current.current_outdoor_palette:
-            idx = PALETTES.outdoor_palettes().index(self.current.current_outdoor_palette)
+            idx = [p.nid for p in PALETTES.outdoor_palettes()].index(self.current.current_outdoor_palette)
             self.outdoor_palette_changed(idx)
         else:
             self.outdoor_palette_changed(0)  # Apply it for the current palette
@@ -152,9 +151,10 @@ class MapEditor(QMainWindow):
         self.indoor_palette_selector = PropertyBox("Palette", ComboBox, self)
         indoor_palette_model = PaletteModel(PALETTES.indoor_palettes(), self)
         self.indoor_palette_selector.edit.setModel(indoor_palette_model)
-        self.palette_selector.edit.currentIndexChanged.connect(self.indoor_palette_changed)
+        self.indoor_palette_selector.edit.currentIndexChanged.connect(self.indoor_palette_changed)
+
         if self.current.current_indoor_palette:
-            idx = PALETTES.indoor_palettes().index(self.current.current_indoor_palette)
+            idx = [p.nid for p in PALETTES.indoor_palettes()].index(self.current.current_indoor_palette)
             self.indoor_palette_changed(idx)
         else:
             self.indoor_palette_changed(0)  # Apply it for the current palette
@@ -197,16 +197,14 @@ class MapEditor(QMainWindow):
 
         self.view.update_view()
 
-    @property
     def terrain_painter_menu(self):
-        if self.terrain_tab.current_index == 0:
+        if self.terrain_tab.currentIndex == 0:
             return self.outdoor_terrain_painter_menu
         else:
             return self.indoor_terrain_painter_menu
 
-    @property
     def palette_selector(self):
-        if self.terrain_tab.current_index == 0:
+        if self.terrain_tab.currentIndex == 0:
             return self.outdoor_palette_selector
         else:
             return self.indoor_palette_selector
@@ -387,20 +385,20 @@ class MapEditor(QMainWindow):
     def indoor_palette_changed(self, idx: int):
         palette = PALETTES.indoor_palettes()[idx]
         self.current.current_indoor_palette = palette.nid
-        set_current_indoor_palette_collection(idx)
         for terrain, renderer in RENDERERS.items():
-            renderer.set_palette(get_current_indoor_palette_collection().get(terrain))
+            if not terrain.outdoor:
+                renderer.set_palette(palette.get(terrain))
         self.current.reset_all()
-        self.terrain_painter_menu.reset()
+        self.indoor_terrain_painter_menu.reset()
 
     def outdoor_palette_changed(self, idx: int):
         palette = PALETTES.outdoor_palettes()[idx]
         self.current.current_outdoor_palette = palette.nid
-        set_current_outdoor_palette_collection(idx)
         for terrain, renderer in RENDERERS.items():
-            renderer.set_palette(get_current_outdoor_palette_collection().get(terrain))
+            if terrain.outdoor:
+                renderer.set_palette(palette.get(terrain))
         self.current.reset_all()
-        self.terrain_painter_menu.reset()
+        self.outdoor_terrain_painter_menu.reset()
 
     def export_as_png(self):
         if self.current:
@@ -568,13 +566,13 @@ class MapEditor(QMainWindow):
                 self.current = MapPrefab.restore(s_dict)
 
         if self.current.current_indoor_palette:
-            idx = PALETTES.indoor_palette().index(self.current.current_indoor_palette)
+            idx = PALETTES.indoor_palettes().index(self.current.current_indoor_palette)
             self.indoor_palette_selector.edit.setCurrentIndex(idx)
             self.indoor_palette_changed(idx)
         else:
             self.indoor_palette_changed(0)  # Apply it for the current palette
         if self.current.current_outdoor_palette:
-            idx = PALETTES.outdoor_palette().index(self.current.current_outdoor_palette)
+            idx = PALETTES.outdoor_palettes().index(self.current.current_outdoor_palette)
             self.outdoor_palette_selector.edit.setCurrentIndex(idx)
             self.outdoor_palette_changed(idx)
         else:

@@ -25,5 +25,6 @@ class MapTerrainModel(QAbstractListModel):
             return text
         elif role == Qt.DecorationRole:
             terrain = self._data[index.row()]
-            return QIcon(RENDERERS[terrain].get_display_pixmap().scaled(32, 32))
+            pix = RENDERERS[terrain].get_display_pixmap()
+            return QIcon(pix.scaled(32, 32))
         return None

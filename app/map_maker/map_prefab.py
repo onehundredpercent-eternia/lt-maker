@@ -25,7 +25,8 @@ class MapPrefab(Prefab):
 
         self.cliff_markers: List[Pos] = [(7, 5)]  # Markers for how to point cliffs
 
-        self.current_palette: PaletteCollection = None
+        self.current_indoor_palette: PaletteCollection = None
+        self.current_outdoor_palette: PaletteCollection = None
 
     def reset_all(self):
         for position in self.terrain_grid:
@@ -164,7 +165,8 @@ class MapPrefab(Prefab):
             s_dict['terrain_grid'][str_coord] = terrain
         s_dict['autotile_set'] = ["%d,%d" % (coord[0], coord[1]) for coord in self.autotile_set]
         s_dict['seed'] = map_utils.get_random_seed()
-        s_dict['palette'] = self.current_palette
+        s_dict['indoor_palette'] = self.current_indoor_palette
+        s_dict['outdoor_palette'] = self.current_outdoor_palette
         return s_dict
 
     @classmethod
@@ -182,5 +184,6 @@ class MapPrefab(Prefab):
             coord = tuple(int(_) for _ in str_coord.split(','))
             self.autotile_set.add(coord)
         map_utils.set_random_seed(s_dict.get('seed', 0))
-        self.current_palette = s_dict.get('palette')
+        self.current_indoor_palette = s_dict.get('indoor_palette')
+        self.current_outdoor_palette = s_dict.get('outdoor_palette')
         return self

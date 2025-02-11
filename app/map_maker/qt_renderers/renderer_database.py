@@ -10,90 +10,89 @@ from app.map_maker.qt_renderers import (
     MountainRenderer,
     FloorShadingRenderer,
 )
-from app.map_maker.palette_collection import \
-    get_current_outdoor_palette_collection, get_current_indoor_palette_collection
+from app.map_maker.palette_collection import PALETTES
 from app.map_maker.painter_database import PAINTERS
-
-pco = get_current_outdoor_palette_collection
-pci = get_current_outdoor_palette_collection
 
 RENDERERS = {}
 
 # Outdoor
 RENDERERS[Terrain.GRASS] = \
     SimpleRenderer8(PAINTERS[Terrain.GRASS], 
-                    pco().get(Terrain.GRASS))
+                    PALETTES.outdoor_palettes()[0].get(Terrain.GRASS))
 RENDERERS[Terrain.LIGHT_GRASS] = \
     LimitRenderer8(PAINTERS[Terrain.LIGHT_GRASS], 
-                   pco().get(Terrain.LIGHT_GRASS))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.LIGHT_GRASS))
 RENDERERS[Terrain.NOISY_GRASS] = \
     LimitRenderer8(PAINTERS[Terrain.NOISY_GRASS], 
-                   pco().get(Terrain.NOISY_GRASS))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.NOISY_GRASS))
 RENDERERS[Terrain.SAND] = \
     LimitRenderer8(PAINTERS[Terrain.SAND],
-                   pco().get(Terrain.SAND))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.SAND))
 RENDERERS[Terrain.ROAD] = \
     LimitRenderer8(PAINTERS[Terrain.ROAD],
-                   pco().get(Terrain.ROAD))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.ROAD))
 RENDERERS[Terrain.RIVER] = \
     LimitRenderer8(PAINTERS[Terrain.RIVER],
-                   pco().get(Terrain.RIVER))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.RIVER))
 RENDERERS[Terrain.SEA] = \
     SeaRenderer(PAINTERS[Terrain.SEA],
-                pco().get(Terrain.SEA))
+                PALETTES.outdoor_palettes()[0].get(Terrain.SEA))
 RENDERERS[Terrain.FOREST] = \
     DisplayRenderer8(PAINTERS[Terrain.FOREST],
-                     pco().get(Terrain.FOREST))
+                     PALETTES.outdoor_palettes()[0].get(Terrain.FOREST))
 RENDERERS[Terrain.THICKET] = \
     DisplayRenderer8(PAINTERS[Terrain.THICKET],
-                     pco().get(Terrain.THICKET))
+                     PALETTES.outdoor_palettes()[0].get(Terrain.THICKET))
 RENDERERS[Terrain.HILL] = \
     SimpleRenderer(PAINTERS[Terrain.HILL],
-                   pco().get(Terrain.HILL))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.HILL))
 RENDERERS[Terrain.MOUNTAIN] = \
     MountainRenderer(PAINTERS[Terrain.MOUNTAIN],
-                     pco().get(Terrain.MOUNTAIN))
+                     PALETTES.outdoor_palettes()[0].get(Terrain.MOUNTAIN))
 RENDERERS[Terrain.CLIFF] = \
     CliffRenderer(PAINTERS[Terrain.CLIFF],
-                  pco().get(Terrain.CLIFF))
+                  PALETTES.outdoor_palettes()[0].get(Terrain.CLIFF))
 RENDERERS[Terrain.BRIDGEH] = \
     LimitRenderer16(PAINTERS[Terrain.BRIDGEH],
-                    pco().get(Terrain.BRIDGEH))
+                    PALETTES.outdoor_palettes()[0].get(Terrain.BRIDGEH))
 RENDERERS[Terrain.BRIDGEV] = \
     LimitRenderer16(PAINTERS[Terrain.BRIDGEV],
-                    pco().get(Terrain.BRIDGEV))
+                    PALETTES.outdoor_palettes()[0].get(Terrain.BRIDGEV))
 RENDERERS[Terrain.CASTLE] = \
     SimpleRenderer(PAINTERS[Terrain.CASTLE],
-                   pco().get(Terrain.CASTLE))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.CASTLE))
 RENDERERS[Terrain.RUINS] = \
     SimpleRenderer(PAINTERS[Terrain.RUINS],
-                   pco().get(Terrain.RUINS))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.RUINS))
 RENDERERS[Terrain.HOUSE] = \
     SimpleRenderer(PAINTERS[Terrain.HOUSE],
-                   pco().get(Terrain.HOUSE))
+                   PALETTES.outdoor_palettes()[0].get(Terrain.HOUSE))
 
 # Indoors
 RENDERERS[Terrain.VOID] = \
     SimpleRenderer(PAINTERS[Terrain.VOID],
-                   pci().get(Terrain.VOID))
-RENDERERS[Terrain.FLOOR] = \
-    FloorShadingRenderer(PAINTERS[Terrain.FLOOR],
-                         pci().get(Terrain.FLOOR))
+                   PALETTES.indoor_palettes()[0].get(Terrain.VOID))
+RENDERERS[Terrain.FLOOR_1] = \
+    FloorShadingRenderer(PAINTERS[Terrain.FLOOR_1],
+                         PALETTES.indoor_palettes()[0].get(Terrain.FLOOR_1))
+RENDERERS[Terrain.FLOOR_2] = \
+    FloorShadingRenderer(PAINTERS[Terrain.FLOOR_2],
+                         PALETTES.indoor_palettes()[0].get(Terrain.FLOOR_2))
 RENDERERS[Terrain.WALL_TOP] = \
-    SimpleRenderer(PAINTERS[Terrain.WALL_TOP],
-                   pci().get(Terrain.WALL_TOP))
+    LimitRenderer16(PAINTERS[Terrain.WALL_TOP],
+                    PALETTES.indoor_palettes()[0].get(Terrain.WALL_TOP))
 RENDERERS[Terrain.WALL_BOTTOM] = \
     SimpleRenderer(PAINTERS[Terrain.WALL_BOTTOM],
-                   pci().get(Terrain.WALL_BOTTOM))
+                   PALETTES.indoor_palettes()[0].get(Terrain.WALL_BOTTOM))
 RENDERERS[Terrain.STAIRS_UPDOWN] = \
     SimpleRenderer(PAINTERS[Terrain.STAIRS_UPDOWN],
-                   pci().get(Terrain.STAIRS_UPDOWN))
+                   PALETTES.indoor_palettes()[0].get(Terrain.STAIRS_UPDOWN))
 RENDERERS[Terrain.STAIRS_LEFT] = \
     SimpleRenderer(PAINTERS[Terrain.STAIRS_LEFT],
-                   pci().get(Terrain.STAIRS_LEFT))
+                   PALETTES.indoor_palettes()[0].get(Terrain.STAIRS_LEFT))
 RENDERERS[Terrain.STAIRS_RIGHT] = \
     SimpleRenderer(PAINTERS[Terrain.STAIRS_RIGHT],
-                   pci().get(Terrain.STAIRS_RIGHT))
+                   PALETTES.indoor_palettes()[0].get(Terrain.STAIRS_RIGHT))
 RENDERERS[Terrain.PILLAR] = \
     SimpleRenderer(PAINTERS[Terrain.PILLAR],
-                   pci().get(Terrain.PILLAR))
+                   PALETTES.indoor_palettes()[0].get(Terrain.PILLAR))

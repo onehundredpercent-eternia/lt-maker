@@ -2,50 +2,39 @@ from __future__ import annotations
 
 from typing import List
 
-from enum import StrEnum
+from collections import namedtuple
+from enum import Enum
 
-class Terrain(StrEnum):
-    # Additional attribute
-    outdoor: bool
-
-    def __new__(
-        cls, title: str, outdoor: bool = True
-    ) -> Terrain:
-        obj = cls.__new__(cls, title)
-        obj._value_ = title
-
-        obj.outdoor = outdoor
-        return obj
-
+class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     # Outdoors
-    GRASS = 'Grass'
-    LIGHT_GRASS = 'Light Grass'
-    NOISY_GRASS = 'Noisy Grass'
-    SAND = 'Sand'
-    ROAD = 'Road'
-    FOREST = 'Forest'
-    THICKET = 'Thicket'
-    CLIFF = 'Cliff'
-    HILL = 'Hill'
-    MOUNTAIN = 'Mountain'
-    RIVER = 'River'
-    SEA = 'Sea'
-    BRIDGEH = 'Bridge H'
-    BRIDGEV = 'Bridge V'
-    HOUSE = 'House'
-    CASTLE = 'Castle'
-    RUINS = 'Ruins'
+    GRASS = 'Grass', True
+    LIGHT_GRASS = 'Light Grass', True
+    NOISY_GRASS = 'Noisy Grass', True
+    SAND = 'Sand', True
+    ROAD = 'Road', True
+    FOREST = 'Forest', True
+    THICKET = 'Thicket', True
+    CLIFF = 'Cliff', True
+    HILL = 'Hill', True
+    MOUNTAIN = 'Mountain', True
+    RIVER = 'River', True
+    SEA = 'Sea', True
+    BRIDGEH = 'Bridge H', True
+    BRIDGEV = 'Bridge V', True
+    HOUSE = 'House', True
+    CASTLE = 'Castle', True
+    RUINS = 'Ruins', True
 
     # Indoors
-    VOID = ('Void', False)
-    WALL_TOP = ('Wall Top', False)
-    WALL_BOTTOM = ('Wall Bottom', False)
-    FLOOR_1 = ('Floor 1', False)
-    FLOOR_2 = ('Floor 2', False)
-    STAIRS_UPDOWN = ('Stairs UpDown', False)
-    STAIRS_LEFT = ('Stairs Left', False)
-    STAIRS_RIGHT = ('Stairs Right', False)
-    PILLAR = ('Pillar', False)
+    VOID = 'Void', False
+    WALL_TOP = 'Wall Top', False
+    WALL_BOTTOM = 'Wall Bottom', False
+    FLOOR_1 = 'Floor 1', False
+    FLOOR_2 = 'Floor 2', False
+    STAIRS_UPDOWN = 'Stairs UpDown', False
+    STAIRS_LEFT = 'Stairs Left', False
+    STAIRS_RIGHT = 'Stairs Right', False
+    PILLAR = 'Pillar', False
 
     @staticmethod
     def list() -> List["Terrain"]:

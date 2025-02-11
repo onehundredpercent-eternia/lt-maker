@@ -123,7 +123,7 @@ class MapEditorView(QGraphicsView):
 
     def draw_normal_cursor(self, qpainter):
         mouse_pos = self.current_mouse_position
-        terrain = self.window.terrain_painter_menu.get_current_terrain()
+        terrain = self.window.terrain_painter_menu().get_current_terrain()
         if not terrain:
             return
 
@@ -180,7 +180,7 @@ class MapEditorView(QGraphicsView):
                     self.tilemap.set(true_pos, old_terrain, terrain)
 
         elif self.tilemap.check_bounds(tile_pos):
-            terrain = self.window.terrain_painter_menu.get_current_terrain()
+            terrain = self.window.terrain_painter_menu().get_current_terrain()
             old_terrain = self.tilemap.get_terrain(tile_pos)
             self.tilemap.set(tile_pos, old_terrain, terrain)
 
@@ -213,7 +213,7 @@ class MapEditorView(QGraphicsView):
                             new_terrain = self.right_selection[(new_coord_x, new_coord_y)][1]
                             self.tilemap.set((x, y), old_terrain, new_terrain)
         else:
-            new_terrain = self.window.terrain_painter_menu.get_current_terrain()
+            new_terrain = self.window.terrain_painter_menu().get_current_terrain()
             for pos in coords_to_replace:
                 old_terrain = self.tilemap.get_terrain(pos)
                 self.tilemap.set(pos, old_terrain, new_terrain)

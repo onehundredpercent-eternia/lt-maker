@@ -44,6 +44,12 @@ class PaletteCollection:
             Terrain.VOID: QtPalette(os.path.join(self.palette_dir, 'void.png')),
             Terrain.FLOOR_1: QtPalette(os.path.join(self.palette_dir, 'floor1.png'), shading_fn=os.path.join(self.palette_dir, 'floor1_shading.png')),
             Terrain.FLOOR_2: QtPalette(os.path.join(self.palette_dir, 'floor2.png'), shading_fn=os.path.join(self.palette_dir, 'floor2_shading.png')),
+            Terrain.WALL_TOP: QtPalette(os.path.join(self.palette_dir, 'wall_top.png')),
+            Terrain.WALL_BOTTOM: QtPalette(os.path.join(self.palette_dir, 'wall_bottom.png')),
+            Terrain.STAIRS_UPDOWN: QtPalette(os.path.join(self.palette_dir, 'stairs_updown.png')),
+            Terrain.STAIRS_LEFT: QtPalette(os.path.join(self.palette_dir, 'stairs_left.png')),
+            Terrain.STAIRS_RIGHT: QtPalette(os.path.join(self.palette_dir, 'stairs_right.png')),
+            Terrain.PILLAR: QtPalette(os.path.join(self.palette_dir, 'pillar.png')),
         }
 
 class MapMakerPaletteCatalog(Data[PaletteCollection]):
@@ -76,20 +82,3 @@ def load_all_palettes():
 
 PALETTES = MapMakerPaletteCatalog()
 load_all_palettes()
-
-CURRENT_INDOOR_PALETTE = PALETTES.indoor_palettes()[0]
-CURRENT_OUTDOOR_PALETTE = PALETTES.outdoor_palettes()[0]
-
-def get_current_indoor_palette_collection():
-    return CURRENT_INDOOR_PALETTE
-
-def get_current_outdoor_palette_collection():
-    return CURRENT_OUTDOOR_PALETTE
-
-def set_current_indoor_palette_collection(idx: int):
-    global CURRENT_INDOOR_PALETTE
-    CURRENT_INDOOR_PALETTE = PALETTES[idx]
-
-def set_current_outdoor_palette_collection(idx: int):
-    global CURRENT_OUTDOOR_PALETTE
-    CURRENT_OUTDOOR_PALETTE = PALETTES[idx]

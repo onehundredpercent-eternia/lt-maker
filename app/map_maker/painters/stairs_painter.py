@@ -1,17 +1,17 @@
 from app.utilities.typing import Pos
 
-from app.dungeon_maker.terrain_generation import DungeonTileMap, Terrain
-from app.dungeon_maker.painter_utils import Painter
+from app.map_maker.terrain import Terrain
+from app.map_maker.painter_utils import Painter
 
 class StairsUpDownPainter(Painter):
     """
     Determines which coordinate should be used for the stairs based
     on a small set of adjacency rules
     """
-    terrain_like = (Terrain.STAIRS_UP, Terrain.STAIRS_DOWN)
+    terrain_like = (Terrain.STAIRS_UPDOWN, )
 
-    def get_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Pos:
-        _, east, _, west = dungeon_tilemap.get_cardinal_terrain(pos)
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        _, east, _, west = tilemap.get_cardinal_terrain(pos)
         left, right = False, False
         if east not in self.terrain_like:
             right = True
@@ -35,8 +35,8 @@ class StairsLeftPainter(Painter):
     """
     terrain_like = (Terrain.STAIRS_LEFT, )
 
-    def get_coord(self, dungeon_tilemap: DungeonTileMap, pos: Pos) -> Pos:
-        north, _, south, _ = dungeon_tilemap.get_cardinal_terrain(pos)
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        north, _, south, _ = tilemap.get_cardinal_terrain(pos)
         if north not in self.terrain_like:
             coord = (0, 0)
         else:
