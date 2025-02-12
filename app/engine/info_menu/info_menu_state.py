@@ -31,6 +31,9 @@ class InfoMenuState(State):
     name = 'info_menu'
     in_level = False
     show_map = False
+    
+    def __init__(self, name='info_menu'):
+        self.unit: UnitObject = game.memory.get('current_unit')
 
     def create_background(self):
         panorama = RESOURCES.panoramas.get('info_menu_background')
@@ -106,6 +109,9 @@ class InfoMenuState(State):
     def build_arrows(self):
         self.left_arrow = gui.ScrollArrow('left', (103, 3))
         self.right_arrow = gui.ScrollArrow('right', (217, 3), 0.5)
+        
+    def get_unit(self):
+        return self.unit
 
     def switch_logo(self, name):
         if name == 'personal_data':
