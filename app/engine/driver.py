@@ -213,6 +213,7 @@ def run_in_isolation(obj):
     surf = engine.create_surface((WINWIDTH, WINHEIGHT))
     clock = engine.Clock()
     while True:
+        start = time.perf_counter_ns()
         engine.update_time()
 
         raw_events = engine.get_events()
@@ -230,6 +231,15 @@ def run_in_isolation(obj):
         save_screenshot(raw_events, surf)
 
         engine.update_display()
+
+        end = time.perf_counter_ns()
+        ms_elapsed = (end - start) / 1e6
+        if _profile and ms_elapsed > _profile_threshold:
+            if _profile_threshold != _default_profile_threshold:
+                print(f"Engine took longer than {_profile_threshold}ms: {ms_elapsed}", flush=True)
+            else:
+                print(f"Engine took: {ms_elapsed}", flush=True)
+
         clock.tick()
 
 def run_combat(mock_combat):
