@@ -11,15 +11,15 @@ from app.map_maker.qt_renderers.renderer_utils import find_limit8, find_limit16
 class SimpleRenderer:
     def __init__(self, painter: Painter, palette: QtPalette):
         self.painter = painter
+        self.set_palette(palette)
+
+    def set_palette(self, palette: QtPalette):
         self.palette = palette
         limit = find_limit16(palette.get_full_pixmap(), 0)
         self.painter.set_limit({0: limit})
 
     def get_display_pixmap(self) -> QPixmap:
         return self.palette.get_pixmap16(self.painter, self.painter.base_coord, 0)
-
-    def set_palette(self, palette: QtPalette):
-        self.palette = palette
 
     def determine_sprite(self, tilemap, position: Pos, autotile_num: int) -> QPixmap:
         coord = self.painter.get_coord(tilemap, position)
@@ -28,6 +28,8 @@ class SimpleRenderer:
 class SimpleRenderer8(SimpleRenderer):
     def __init__(self, painter: Painter, palette: QtPalette):
         self.painter = painter
+
+    def set_palette(self, palette: QtPalette):
         self.palette = palette
         limit = find_limit8(palette.get_full_pixmap(), 0)
         self.painter.set_limit({0: limit})
@@ -62,6 +64,9 @@ class LimitRenderer16(SimpleRenderer):
     """
     def __init__(self, painter: Painter, palette: QtPalette):
         self.painter = painter
+        self.set_palette(palette)
+
+    def set_palette(self, palette: QtPalette):
         self.palette = palette
         limit: Dict[int, int] = {i: find_limit16(palette.get_full_pixmap(), i) for i in range(16)}
         self.painter.set_limit(limit)
@@ -73,6 +78,9 @@ class LimitRenderer8(SimpleRenderer8):
     """
     def __init__(self, painter: Painter, palette: QtPalette):
         self.painter = painter
+        self.set_palette(palette)
+        
+    def set_palette(self, palette: QtPalette):
         self.palette = palette
         limit: Dict[int, int] = {i: find_limit8(palette.get_full_pixmap(), i) for i in range(16)}
         self.painter.set_limit(limit)

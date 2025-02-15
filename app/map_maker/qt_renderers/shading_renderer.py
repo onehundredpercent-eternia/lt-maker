@@ -2,6 +2,10 @@ from app.utilities.typing import Pos
 
 from PyQt5.QtGui import QPixmap, QPainter
 
+from app.map_maker.painter_utils import Painter
+from app.map_maker.painters import FloorPainter, RuinedFloorPainter
+from app.map_maker.qt_renderers.qt_palette import QtPalette
+from app.map_maker.qt_renderers.renderer_utils import find_limit16
 from app.map_maker.qt_renderers import SimpleRenderer
 
 class SimpleShadingRenderer(SimpleRenderer):
@@ -16,11 +20,35 @@ class SimpleShadingRenderer(SimpleRenderer):
 
         if shading_pix:
             qpainter = QPainter(base_pix)
-            qpainter.drawPixmap((0, 0), shading_pix)
+            qpainter.drawPixmap(0, 0, shading_pix)
             qpainter.end()
         return base_pix
 
-class FloorShadingRenderer(SimpleShadingRenderer):
+class FloorShadingRenderer(SimpleRenderer):
+    """
+    Floor Shading Renderer needs to be able to switch between painters at runtime
+    depending on which palette collection is selected
+    """
+    def __init__(self, metadata_arg: str, palette: QtPalette):
+        self.metadata_arg = metadata_arg
+        self.painters = {
+            'default': FloorPainter(),
+            'ruins': RuinedFloorPainter(),
+        }
+
+    def set_palette(self, palette: QtPalette):
+        self.palette = palette
+        zero_limit = find_limit16(palette.get_full_pixmap(), 0)
+        self.painters['default'].set_limit({0: zero_limit})
+        full_limit = {k: find_limit16(palette.get_full_pixmap(), k) for k in range(16)}
+        self.painters['ruins'].set_limit(full_limit)
+
+    @property
+    def painter(self) -> Painter:
+        palette_collection = self.palette.parent
+        floor_type = palette_collection.metadata.get(self.metadata_arg, 'default')
+        return self.painters.get(floor_type, self.painters['default'])
+
     def determine_sprite(self, tilemap, position: Pos, autotile_num: int) -> QPixmap:
         coord = self.painter.get_coord(tilemap, position)
         shading_coord = self.painter.get_shading_coord(tilemap, position)
@@ -40,9 +68,9 @@ class FloorShadingRenderer(SimpleShadingRenderer):
 
         qpainter = QPainter(base_pix)
         if shading_pix:
-            qpainter.drawPixmap((0, 0), shading_pix)
+            qpainter.drawPixmap(0, 0, shading_pix)
         if extra_pix:
-            qpainter.drawPixmap((0, 0), extra_pix)
+            qpainter.drawPixmap(0, 0, extra_pix)
         qpainter.end()
 
         return base_pix

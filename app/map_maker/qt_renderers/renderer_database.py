@@ -73,10 +73,10 @@ RENDERERS[Terrain.VOID] = \
     SimpleRenderer(PAINTERS[Terrain.VOID],
                    PALETTES.indoor_palettes()[0].get(Terrain.VOID))
 RENDERERS[Terrain.FLOOR_1] = \
-    FloorShadingRenderer(PAINTERS[Terrain.FLOOR_1],
+    FloorShadingRenderer('floor1',
                          PALETTES.indoor_palettes()[0].get(Terrain.FLOOR_1))
 RENDERERS[Terrain.FLOOR_2] = \
-    FloorShadingRenderer(PAINTERS[Terrain.FLOOR_2],
+    FloorShadingRenderer('floor2',
                          PALETTES.indoor_palettes()[0].get(Terrain.FLOOR_2))
 RENDERERS[Terrain.WALL_TOP] = \
     LimitRenderer16(PAINTERS[Terrain.WALL_TOP],
@@ -93,6 +93,9 @@ RENDERERS[Terrain.STAIRS_LEFT] = \
 RENDERERS[Terrain.STAIRS_RIGHT] = \
     SimpleRenderer(PAINTERS[Terrain.STAIRS_RIGHT],
                    PALETTES.indoor_palettes()[0].get(Terrain.STAIRS_RIGHT))
+RENDERERS[Terrain.STAIRS_CENTER] = \
+    SimpleRenderer(PAINTERS[Terrain.STAIRS_CENTER],
+                   PALETTES.indoor_palettes()[0].get(Terrain.STAIRS_CENTER))
 RENDERERS[Terrain.PILLAR] = \
     SimpleRenderer(PAINTERS[Terrain.PILLAR],
                    PALETTES.indoor_palettes()[0].get(Terrain.PILLAR))

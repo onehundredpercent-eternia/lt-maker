@@ -29,7 +29,6 @@ from app.map_maker.map_prefab import MapPrefab
 import app.map_maker.utilities as map_utils
 from app.map_maker.palette_collection import PALETTES
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
-from app.map_maker.painter_database import PAINTERS
 from app.map_maker.terrain import Terrain
 
 class CliffMarkerWidget(QWidget):
@@ -198,13 +197,13 @@ class MapEditor(QMainWindow):
         self.view.update_view()
 
     def terrain_painter_menu(self):
-        if self.terrain_tab.currentIndex == 0:
+        if self.terrain_tab.currentIndex() == 0:
             return self.outdoor_terrain_painter_menu
         else:
             return self.indoor_terrain_painter_menu
 
     def palette_selector(self):
-        if self.terrain_tab.currentIndex == 0:
+        if self.terrain_tab.currentIndex() == 0:
             return self.outdoor_palette_selector
         else:
             return self.indoor_palette_selector
@@ -453,7 +452,7 @@ class MapEditor(QMainWindow):
                 terrain = self.current.get_terrain(pos)
                 if not terrain:
                     continue
-                painter = PAINTERS.get(terrain)
+                painter = RENDERERS.get(terrain).painter
                 if painter.has_autotiles():
                     all_autotile_positions.append((pos, terrain))
 

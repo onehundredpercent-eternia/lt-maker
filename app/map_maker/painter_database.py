@@ -9,6 +9,7 @@ from app.map_maker.painters import (
     RiverPainter,
     SeaPainter,
     ForestPainter,
+    RandomPainter,
     Random8Painter,
     HillPainter,
     MountainPainter,
@@ -33,16 +34,18 @@ PAINTERS[Terrain.LIGHT_GRASS] = LightGrassPainter()
 PAINTERS[Terrain.NOISY_GRASS] = NoisyGrassPainter()
 PAINTERS[Terrain.SAND] = SandPainter()
 PAINTERS[Terrain.ROAD] = WangEdge8Painter()
-PAINTERS[Terrain.ROAD].terrain_like = (Terrain.ROAD, Terrain.SAND, Terrain.BRIDGEH, Terrain.BRIDGEV)
+PAINTERS[Terrain.ROAD].terrain_like = \
+   (Terrain.ROAD, Terrain.SAND, Terrain.BRIDGEH, Terrain.BRIDGEV,
+    Terrain.FLOOR_1, Terrain.FLOOR_2, Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT,
+    Terrain.STAIRS_UPDOWN)
 PAINTERS[Terrain.ROAD].base_coord = (15, 0)
 PAINTERS[Terrain.RIVER] = RiverPainter()
 PAINTERS[Terrain.SEA] = SeaPainter()
 PAINTERS[Terrain.FOREST] = ForestPainter()
 PAINTERS[Terrain.THICKET] = Random8Painter()
 PAINTERS[Terrain.THICKET].data = [
-   (17, 22), (18, 22), (19, 22), (17, 23), (18, 23), (19, 23), (18, 24), (19, 24), (18, 25)
+   (x, y) for x in range(3) for y in range(3)
 ]
-PAINTERS[Terrain.THICKET].base_coord = (17 * 2, 22 * 2)
 PAINTERS[Terrain.HILL] = HillPainter()
 PAINTERS[Terrain.MOUNTAIN] = MountainPainter()
 PAINTERS[Terrain.CLIFF] = CliffPainter()
@@ -63,4 +66,6 @@ PAINTERS[Terrain.FLOOR_2] = FloorPainter()
 PAINTERS[Terrain.STAIRS_UPDOWN] = StairsUpDownPainter()
 PAINTERS[Terrain.STAIRS_LEFT] = StairsLeftPainter()
 PAINTERS[Terrain.STAIRS_RIGHT] = StairsRightPainter()
+PAINTERS[Terrain.STAIRS_CENTER] = RandomPainter()
+PAINTERS[Terrain.STAIRS_CENTER].data = [(0, 0), (1, 0)]
 PAINTERS[Terrain.PILLAR] = Painter()

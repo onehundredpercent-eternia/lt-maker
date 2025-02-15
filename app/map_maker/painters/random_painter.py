@@ -5,6 +5,11 @@ from app.utilities.typing import Pos
 from app.map_maker.painter_utils import Painter
 from app.map_maker.utilities import random_choice
 
+class RandomPainter(Painter):
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        new_coord = random_choice(self.data, pos)
+        return new_coord
+
 class Random8Painter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
         new_coord1 = random_choice([(p[0]*2, p[1]*2) for p in self.data], pos)

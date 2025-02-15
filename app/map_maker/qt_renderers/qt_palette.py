@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from dataclasses import dataclass
 
 from PyQt5.QtGui import QPixmap, QPainter
@@ -6,9 +9,12 @@ from app.utilities.typing import Pos
 
 from app.map_maker.painter_utils import Painter
 from app.map_maker.qt_renderers.renderer_utils import get_pixmap8, get_pixmap16
+if TYPE_CHECKING:
+    from app.map_maker.palette_collection import PaletteCollection
 
 @dataclass
 class QtPalette:
+    parent: PaletteCollection
     fn: str
     autotile_fn: str = None
     shading_fn: str = None

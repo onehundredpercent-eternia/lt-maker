@@ -8,7 +8,6 @@ from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES
 from app.map_maker.map_prefab import MapPrefab
 from app.map_maker.terrain import Terrain
 
-from app.map_maker.painter_database import PAINTERS
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
 
 def get_tilemap_pixmap(tilemap) -> QPixmap:
@@ -46,7 +45,7 @@ def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> QImage:
         # Only process the ones that need to be updated
         if pos in tilemap.terrain_grid_to_update:
             if terrain not in processed_terrains:
-                painter = PAINTERS.get(terrain)
+                painter = RENDERERS.get(terrain).painter
                 painter.single_process(tilemap)
                 processed_terrains.add(terrain)
             sprite = RENDERERS.get(terrain).determine_sprite(tilemap, pos, autotile_num)

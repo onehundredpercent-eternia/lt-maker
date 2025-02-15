@@ -34,6 +34,7 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     STAIRS_UPDOWN = 'Stairs UpDown', False
     STAIRS_LEFT = 'Stairs Left', False
     STAIRS_RIGHT = 'Stairs Right', False
+    STAIRS_CENTER = 'Stairs Center', False
     PILLAR = 'Pillar', False
 
     @staticmethod
@@ -59,3 +60,13 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     @staticmethod
     def cliff(terrain: "Terrain") -> bool:
         return terrain in (Terrain.CLIFF, )
+
+    @staticmethod
+    def wall(terrain: "Terrain") -> bool:
+        return terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM)
+
+    @staticmethod
+    def floor(terrain: "Terrain") -> bool:
+        return terrain in (Terrain.FLOOR_1, Terrain.FLOOR_2)
+
+

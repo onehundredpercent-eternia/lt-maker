@@ -22,6 +22,8 @@ def _find_limit(pixmap: QPixmap, idx: int, skip: Tuple[int, int], offset: int = 
     bg_color = qRgb(0, 0, 0)
     img = pixmap.toImage()
     x = idx * skip[0]
+    if x >= img.width():
+        return 0
     for y in range(offset, img.height(), skip[1]):
         current_color = img.pixel(x, y)
         # If we've reached the bottom of the column in our image

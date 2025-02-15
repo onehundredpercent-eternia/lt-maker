@@ -246,8 +246,10 @@ class MapEditorView(QGraphicsView):
             if current_terrain:
                 if current_terrain.outdoor:
                     self.window.outdoor_terrain_painter_menu.set_current_terrain(current_terrain)
+                    self.window.terrain_tab.setCurrentIndex(0)
                 else:
                     self.window.indoor_terrain_painter_menu.set_current_terrain(current_terrain)
+                    self.window.terrain_tab.setCurrentIndex(1)
             
         # Move about the map
         elif event.button() == Qt.MiddleButton:

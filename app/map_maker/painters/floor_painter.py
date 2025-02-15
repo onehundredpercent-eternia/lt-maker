@@ -29,12 +29,12 @@ class FloorPainter(Painter):
         return False
 
     @staticmethod
-    def get_pillar_coord(dungeon_tilemap, pos: Pos) -> Optional[Pos]:
+    def get_pillar_coord(tilemap, pos: Pos) -> Optional[Pos]:
         """
         Returns coordinate on shading tileset for the bottom of the pillar
         """
-        north, _, _, _ = dungeon_tilemap.get_cardinal_terrain(pos)
-        _, left, corner = FloorPainter.get_shading(dungeon_tilemap, pos)
+        north, _, _, _ = tilemap.get_cardinal_terrain(pos)
+        _, left, corner = FloorPainter.get_shading(tilemap, pos)
         if north == Terrain.PILLAR:
             if left or corner:
                 return (6, 0)
@@ -48,18 +48,18 @@ class FloorPainter(Painter):
         _, _, _, northwest = tilemap.get_diagonal_terrain(pos)
         top, left, corner = False, False, False
 
-        if north in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+        if Terrain.wall(north):
             top = True
-        if west in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+        if Terrain.wall(west):
             left = True
         if northwest == Terrain.PILLAR:
             corner = True
         if west == Terrain.PILLAR:
             left = True
-        if west == Terrain.STAIRS_LEFT and northwest in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM):
+        if west == Terrain.STAIRS_LEFT and Terrain.wall(northwest):
             corner = True
-        if northwest in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM) \
-                and west in (Terrain.FLOOR_LOWER, Terrain.FLOOR_UPPER) \
+        if Terrain.wall(northwest) \
+                and Terrain.floor(west) \
                 and FloorPainter.is_column_bottom(tilemap, (pos[0] - 1, pos[1])):
             corner = True
         return top, left, corner
