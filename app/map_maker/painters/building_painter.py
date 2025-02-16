@@ -67,9 +67,9 @@ class BuildingPainter(Painter):
         return coord        
 
 class CastlePainter(BuildingPainter):
-    base_coord = (4, 27)
-    data = {'single': [(4, 27), (4, 29)], 
-            '3x3': [(13, 26), (10, 29), (19, 26), (22, 26), (25, 26), (28, 26)]}
+    base_coord = (0, 0)
+    data = {'single': [(0, 0), (0, 1)], 
+            '3x3': [(0, 2), (0, 5), (0, 8), (0, 11), (0, 14), (0, 17)]}
     organization = {}
 
     def single_process(self, tilemap):
@@ -94,12 +94,12 @@ class CastlePainter(BuildingPainter):
                 self._finalize(positions, position, 'single', (0, 0))
     
 class RuinsPainter(BuildingPainter):
-    base_coord = (3, 28)
-    data = {'single': [(3, 28), (3, 29)], 
-            '3x3': [(7, 28)], 
-            '2x2': [(1, 28)], 
-            '2x1': [(1, 29)], 
-            '3x2': [(28, 29)]}
+    base_coord = (0, 0)
+    data = {'single': [(0, 0), (1, 0)], 
+            '3x3': [(0, 3)], 
+            '2x2': [(0, 1)], 
+            '2x1': [(0, 2)], 
+            '3x2': [(0, 6)]}
     organization = {}
 
     def single_process(self, tilemap):
@@ -139,10 +139,10 @@ class RuinsPainter(BuildingPainter):
                 self._finalize(positions, position, 'single', (0, 0))
 
 class HousePainter(BuildingPainter):
-    base_coord = (4, 25)
-    data = {'single': [(4, 25)], 
-            '3x3': [(7, 25)], 
-            '3x2': [(10, 25)]}
+    base_coord = (0, 0)
+    data = {'single': [(0, 0)], 
+            '3x3': [(0, 1)], 
+            '3x2': [(0, 4)]}
     organization = {}
 
     def single_process(self, tilemap):
@@ -172,3 +172,14 @@ class HousePainter(BuildingPainter):
                 self._finalize(positions, position, '3x2', (2, 1))
             else:
                 self._finalize(positions, position, 'single', (0, 0))
+
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        sprite_type, offset = self.organization[pos]
+        coords = [(c[0] + offset[0], c[1] + offset[1]) for c in self.data[sprite_type]]
+
+        # So it always uses the same set of coords...
+        base_pos = (pos[0] - offset[0], pos[1] - offset[1])
+        coord = random_choice(coords, base_pos)
+        if coord == (0, 0) and sum([Terrain.sand_like(t) for t in tilemap.get_cardinal_terrain(pos)]) > 2:
+            coord = (1, 0)
+        return coord

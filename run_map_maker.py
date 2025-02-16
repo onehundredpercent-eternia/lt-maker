@@ -27,7 +27,6 @@ if __name__ == '__main__':
     
     try:
         sample_tilemap = MapPrefab('sample')
-        # sample_tilemap = meta_generation.generate(sample_tilemap)
         map_editor = MapEditor(current=sample_tilemap)
         map_editor.show()
         ap.exec_()

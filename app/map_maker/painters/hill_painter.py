@@ -5,12 +5,12 @@ from app.map_maker.utilities import random_choice
 from app.map_maker.terrain import Terrain
 
 class HillPainter(Painter): 
-    base_coord = (13, 21)
+    base_coord = (1, 1)
     data = {
-        'main': (12, 21), 
-        'pair1': (13, 20), 
-        'pair2': (14, 20), 
-        'alter1': (13, 21),
+        'main': (0, 1), 
+        'pair1': (1, 0), 
+        'pair2': (2, 0), 
+        'alter1': (1, 1),
     }
     
     @property

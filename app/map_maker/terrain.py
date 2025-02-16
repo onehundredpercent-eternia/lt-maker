@@ -69,4 +69,9 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     def floor(terrain: "Terrain") -> bool:
         return terrain in (Terrain.FLOOR_1, Terrain.FLOOR_2)
 
+    @staticmethod
+    def sand_like(terrain: "Terrain") -> bool:
+        return terrain in (Terrain.ROAD, Terrain.SAND)
+
+
 

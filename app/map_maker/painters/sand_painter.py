@@ -11,7 +11,10 @@ class SandPainter(WangCorner8Painter):
         Terrain.ROAD, 
         Terrain.SEA,
         Terrain.BRIDGEV,
-        Terrain.BRIDGEH)
+        Terrain.BRIDGEH,
+        Terrain.HOUSE,
+        Terrain.CASTLE,
+        )
     base_coord = (15, 0)
     corner_chance = 0.6
     edge_chance = 0.4

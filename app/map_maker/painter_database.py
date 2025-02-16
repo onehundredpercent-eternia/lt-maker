@@ -36,6 +36,7 @@ PAINTERS[Terrain.SAND] = SandPainter()
 PAINTERS[Terrain.ROAD] = WangEdge8Painter()
 PAINTERS[Terrain.ROAD].terrain_like = \
    (Terrain.ROAD, Terrain.SAND, Terrain.BRIDGEH, Terrain.BRIDGEV,
+      Terrain.HOUSE, Terrain.CASTLE,
     Terrain.FLOOR_1, Terrain.FLOOR_2, Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT,
     Terrain.STAIRS_UPDOWN)
 PAINTERS[Terrain.ROAD].base_coord = (15, 0)

@@ -47,6 +47,7 @@ class MountainPainter(Painter):
         self.index_dict: Dict[int, Set[Pos]] = {i: set() for i in range(16)}  # Index: Coord 
         self.noneless_rules = {}
 
+        print(sorted(self.mountain_data.keys()))
         for coord, rules in self.mountain_data.items():
             north_edge = None in rules['up']
             south_edge = None in rules['down']

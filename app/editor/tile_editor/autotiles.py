@@ -38,15 +38,6 @@ def similar_fast(p1: list, p2: list) -> int:
             mapping[i] = j
     return 0
 
-class Series(list):
-    def is_present(self, test) -> bool:
-        test_palette = test.palette
-        all_palettes = [im.palette for im in self]
-        return any(similar_fast(test_palette, palette) for palette in all_palettes)
-
-    def get_frames_with_color(self, color: tuple) -> list:
-        return [im for im in self if color in im.colors]
-
 class PaletteData():
     def __init__(self, im: QImage):
         self.im: QImage = im
@@ -60,6 +51,21 @@ class PaletteData():
             # Each pixel in the palette is assigned its color id
             self.palette[idx] = self.uniques.index(pixel)
             # So palette is a unique string of ints
+        self.hash_id = hash(tuple(self.palette))
+
+def check_hashes(p1: PaletteData, p2: PaletteData) -> bool:
+    """
+    Compares whether their hashes match
+    """
+    return p1.hash_id == p2.hash_id
+
+class Series(list):
+    def is_present(self, test: PaletteData) -> bool:
+        all_palettes = [im for im in self]
+        return any(check_hashes(test, palette) for palette in all_palettes)
+
+    def get_frames_with_color(self, color: tuple) -> list:
+        return [im for im in self if color in im.colors]
 
 class AutotileMaker():
     def __init__(self, parent=None, fast=True):
@@ -255,7 +261,7 @@ class AutotileMaker():
                         if len(map_tile.uniques) < 2:
                             continue
                         # If so, do those frames show up in the map sprite?
-                        if similar_fast(f.palette, map_tile.palette) == 0:
+                        if check_hashes(f, map_tile):
                             # If so, add to the color conversion
                             color_idx = f.colors.index(color)
                             new_color = map_tile.colors[color_idx]
