@@ -36,6 +36,8 @@ class MountainPainter(Painter):
         coord = self.organization[pos]
         if coord == (12, 6):
             coord = random_choice([(12, 6), (11, 6)], pos)
+        elif coord == (13, 3):
+            coord = random_choice([(13, 3), (12, 4), (12, 5)], pos)
         return coord
 
     def _initial_process(self):

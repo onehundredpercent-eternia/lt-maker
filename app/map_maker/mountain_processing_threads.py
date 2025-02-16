@@ -313,7 +313,7 @@ class AlgorithmXThread(QThread):
                 print("No valid solution!", flush=True)
                 return False  # No valid solutions
         if counter >= limit:
-            print("Infinite Loop detected!", flush=True)
+            print("Taking too long on this random seed!", flush=True)
             self.process_group(iteration + 1)
         return True
 

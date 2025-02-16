@@ -135,8 +135,8 @@ def assign_rules(palette_templates: Dict[Pos, MountainPaletteData], fns: List[st
                     mountain_match.rules['down'][down_palette.coord] += 1
                 else:
                     mountain_match.rules['down'][None] += 1
-                    if mountain_match.coord == (5, 8):
-                        print("Down None")
+                    if mountain_match.coord == (6, 13):
+                        print("Down None", position)
 
 def is_present(palette: QuadPaletteData, palette_templates: Dict[Pos, MountainPaletteData]) -> Optional[MountainPaletteData]:
     for coord, mountain in palette_templates.items():
@@ -271,6 +271,12 @@ def fuse_bright_palettes(mountain_palettes: Dict[Pos, MountainPaletteData]) -> D
     fuse(mountain_palettes, (12, 6), (11, 9))
     fuse(mountain_palettes, (12, 6), (12, 9))
     fuse(mountain_palettes, (12, 6), (12, 10))
+
+    # Dark sheet mountain
+    fuse(mountain_palettes, (13, 3), (12, 3))
+    fuse(mountain_palettes, (13, 3), (12, 4))
+    fuse(mountain_palettes, (13, 3), (12, 5))
+    fuse(mountain_palettes, (13, 3), (13, 4))
 
     return mountain_palettes
 
