@@ -14,12 +14,12 @@ class MountainRenderer(SimpleRenderer):
         print("Finished", id(thread), thread.did_complete)
         if thread.did_complete:
             self.painter.organization.update(thread.organization)
-            # Update the image since the user may not have requested a change -- this does it manually
-            for pos in thread.organization.keys():
-                sprite = self.determine_sprite(tilemap, pos, 0)
-                tilemap.tile_grid[pos] = sprite
         else:
             self.painter._generic_fill(thread.group)
+        # Update the image since the user may not have requested a change -- this does it manually
+        for pos in self.painter.organization.keys():
+            sprite = self.determine_sprite(tilemap, pos, 0)
+            tilemap.tile_grid[pos] = sprite
         if thread in self.painter.current_threads:
             self.painter.current_threads.remove(thread)
 

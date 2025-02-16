@@ -18,7 +18,7 @@ from app.map_maker.mountain_processing_threads \
 
 class MountainPainter(Painter):
     terrain_like = (Terrain.MOUNTAIN, )
-    base_coord = (8, 23)
+    base_coord = (8, 13)
     organization = {}
     current_threads = []  # Keeps track of the currently running threads
     mountain_process_finished: Callable = None
@@ -34,8 +34,8 @@ class MountainPainter(Painter):
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         coord = self.organization[pos]
-        if coord == (12, 16):
-            coord = random_choice([(12, 16), (11, 16)], pos)
+        if coord == (12, 6):
+            coord = random_choice([(12, 6), (11, 6)], pos)
         return coord
 
     def _initial_process(self):
@@ -47,7 +47,6 @@ class MountainPainter(Painter):
         self.index_dict: Dict[int, Set[Pos]] = {i: set() for i in range(16)}  # Index: Coord 
         self.noneless_rules = {}
 
-        print(sorted(self.mountain_data.keys()))
         for coord, rules in self.mountain_data.items():
             north_edge = None in rules['up']
             south_edge = None in rules['down']

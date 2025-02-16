@@ -44,7 +44,8 @@ class PaletteData():
         self.new_im: QImage = None
         self.colors: list = editor_utilities.get_full_palette(im)
         # Sort by most
-        self.uniques: list = sorted(set(self.colors), key=lambda x: self.colors.count(x), reverse=True)
+        # dict.fromkeys preserves order
+        self.uniques: list = sorted(dict.fromkeys(self.colors), key=lambda x: self.colors.count(x), reverse=True)
         self.palette: list = self.colors[:]
 
         for idx, pixel in enumerate(self.colors):

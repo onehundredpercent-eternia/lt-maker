@@ -37,9 +37,9 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
-    color_change_these_images = 'app/map_maker/palettes/witchfen/hill.png'
+    color_change_these_images = 'app/map_maker/palettes/sacred_fields/mountain.png'
     original_palette = 'app/map_maker/palettes/journey/main.png'
-    new_palette = 'app/map_maker/palettes/witchfen/main.png'
+    new_palette = 'app/map_maker/palettes/sacred_fields/main.png'
 
     change_images = glob.glob(color_change_these_images)
     print("Loading original palette...")

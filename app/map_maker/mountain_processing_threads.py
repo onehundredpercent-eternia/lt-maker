@@ -175,6 +175,7 @@ class NaiveBacktrackingThread(QThread):
         if not self.order:
             print("Major loop error! No valid solution")
             self.to_process.clear()
+            self.broke_out = True
             return False
 
         pos = self.order.pop()

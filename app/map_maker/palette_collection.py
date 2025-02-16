@@ -33,7 +33,7 @@ class PaletteCollection:
             Terrain.FOREST: QtPalette(self, os.path.join(self.palette_dir, 'forest.png')),
             Terrain.THICKET: QtPalette(self, os.path.join(self.palette_dir, 'thicket.png')),
             Terrain.HILL: QtPalette(self, os.path.join(self.palette_dir, 'hill.png')),
-            Terrain.MOUNTAIN: QtPalette(self, os.path.join(self.palette_dir, 'main.png')),
+            Terrain.MOUNTAIN: QtPalette(self, os.path.join(self.palette_dir, 'mountain.png')),
             Terrain.CLIFF: QtPalette(self, os.path.join(self.palette_dir, 'cliff.png')),
             Terrain.BRIDGEH: QtPalette(self, os.path.join(self.palette_dir, 'bridge_h.png')),
             Terrain.BRIDGEV: QtPalette(self, os.path.join(self.palette_dir, 'bridge_v.png')),
