@@ -1,0 +1,26 @@
+Compilation commands
+
+g++ -03 -Wall -shared -std=c++11 -fPIC main.cpp -o libmain.so
+g++ -03 -Wall -Werror -shared -std=c++11 -FPIC `python -m pybind11 --includes` -I /usr/include/python -I . pybind11_main.cpp -o pybind11_main`/home/miniconda3/bin/python3-config --extension-suffix` -L. -lmain -Wl,-rpath,'$ORIGIN/.'
+
+# pybind11_main.cpp
+
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
+
+#include <main.hpp>
+
+namespace py = pybind11;
+
+PYBIND11_MAKE_OPAQUE(bytearray)
+
+PYBIND11_MODULE(pybind11_main, m) {
+    m.doc() = "pybind11 main";
+    py::class_<Main>(m, "Main")
+        .def(py::init<bytearray &>())
+        .def("read", &Main::read)
+        .def("finished", &Main::finished);
+    py::bind_vector<bytearray>(m, "ArrayByte");
+    m.def("read_fn", &read_fn);
+}
