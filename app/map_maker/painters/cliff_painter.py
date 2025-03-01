@@ -46,6 +46,8 @@ class CliffPainter(Painter):
                     path.append(v)
                     if len(path) > len(best_path):
                         best_path = path[:]
+                    if counter > EARLY_STOP:
+                        return
                     find_path(v)
                     path.pop()
             used.discard(pos)

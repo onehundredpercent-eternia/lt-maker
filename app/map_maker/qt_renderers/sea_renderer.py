@@ -7,6 +7,9 @@ from app.map_maker.qt_renderers import SimpleRenderer8
 class SeaRenderer(SimpleRenderer8):
     def __init__(self, painter: Painter, palette: QtPalette):
         self.painter = painter
+        self.set_palette(palette)
+
+    def set_palette(self, palette: QtPalette):
         self.palette = palette
 
         limit = {k: find_limit16(palette.get_full_pixmap(), k) for k in range(16)}

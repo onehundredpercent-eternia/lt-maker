@@ -1,0 +1,20 @@
+# Map Maker ToDo List:
+
+Add additional outdoor and indoor palettes
+Add water support for indoor palettes
+Add ability to autogenerate outdoor maps
+ - Rivers
+ - Ocean
+ - Mountains
+ - Cliffs
+ - Towns
+ - Forest
+Add ability to autogenerate indoor maps
+Test speed of larger maps
+Merge in map maker changes into master
+Release
+
+Later:
+Snow
+Desert
+Lava

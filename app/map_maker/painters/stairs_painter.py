@@ -13,9 +13,9 @@ class StairsUpDownPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         _, east, _, west = tilemap.get_cardinal_terrain(pos)
         left, right = False, False
-        if east not in self.terrain_like:
+        if east and east not in self.terrain_like:
             right = True
-        if west not in self.terrain_like:
+        if west and west not in self.terrain_like:
             left = True
 
         if left and right:
@@ -37,7 +37,7 @@ class StairsLeftPainter(Painter):
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         north, _, south, _ = tilemap.get_cardinal_terrain(pos)
-        if north not in self.terrain_like:
+        if north and north not in self.terrain_like:
             coord = (0, 0)
         else:
             coord = (1, 0)

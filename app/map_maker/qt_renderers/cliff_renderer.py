@@ -11,6 +11,9 @@ class CliffRenderer(SimpleRenderer):
     """
     def __init__(self, painter: CliffPainter, palette: QtPalette):
         self.painter = painter
+        self.set_palette(palette)
+
+    def set_palette(self, palette: QtPalette):
         self.palette = palette
         limit: Dict[int, int] = {i: find_limit16(palette.get_full_pixmap(), i) for i in range(16)}
         self.painter.set_limit(limit)

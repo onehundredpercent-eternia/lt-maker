@@ -140,7 +140,7 @@ class MapPrefab(Prefab):
 
         new_tile_grid = {}
         for pos, tile_coord in self.tile_grid.items():
-            new_pos = pos[0] + x_offset * 2, pos[1] + y_offset * 2
+            new_pos = pos[0] + x_offset, pos[1] + y_offset
             if self.check_bounds(new_pos):
                 new_tile_grid[new_pos] = tile_coord
         self.tile_grid = new_tile_grid
