@@ -108,7 +108,6 @@ class ResizeDialog(Dialog):
             new_height = int(dialog.height_box.value())
             x_offset = int(dialog.x_box.value())
             y_offset = int(dialog.y_box.value())
-            print(new_width, new_height, x_offset, y_offset)
             tilemap_prefab.resize(new_width, new_height, x_offset, y_offset)
             return True
         else:

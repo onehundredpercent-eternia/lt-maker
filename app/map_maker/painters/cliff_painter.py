@@ -162,7 +162,7 @@ class CliffPainter(Painter):
                 self.organization[longest_path[0]] = self._chain_end_process(tilemap, longest_path[0], longest_path[1])
                 self.organization[longest_path[-1]] = self._chain_end_process(tilemap, longest_path[-1], longest_path[-2])
             else:
-                self.organization[longest_path[0]] = (True, False, False, True)  # Facing down
+                self.organization[longest_path[0]] = (True, True, True, True)  # Facing down
 
     def _determine_index(self, tilemap, pos: Pos) -> Pos:
         corner_topright, corner_bottomright, corner_bottomleft, corner_topleft = self.organization[pos]

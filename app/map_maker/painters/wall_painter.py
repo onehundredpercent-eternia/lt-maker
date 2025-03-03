@@ -1,11 +1,13 @@
 from app.utilities.typing import Pos
 
+from app.map_maker.painter_utils import Painter
 from app.map_maker.painters import WangEdge16Painter
 from app.map_maker.utilities import random_choice
 from app.map_maker.terrain import Terrain
 
 class WallTopPainter(WangEdge16Painter):
-    terrain_like = (Terrain.WALL_TOP,)
+    terrain_like = (Terrain.WALL_TOP, Terrain.COLUMN)
+    base_coord = (2, 0)
 
     @staticmethod
     def get_index(tilemap, pos: Pos) -> int:
@@ -36,7 +38,7 @@ class WallTopPainter(WangEdge16Painter):
         return coord
 
 class WallBottomPainter(WangEdge16Painter):
-    terrain_like = (Terrain.WALL_TOP, Terrain.WALL_BOTTOM)
+    terrain_like = (Terrain.WALL_TOP, Terrain.WALL_BOTTOM, Terrain.COLUMN)
 
     # Used by Floor Painter
     @staticmethod
@@ -61,17 +63,17 @@ class WallBottomPainter(WangEdge16Painter):
 
         if west == Terrain.WALL_TOP:
             shadow = True
-        elif sw in self.terrain_like:
+        elif sw == Terrain.WALL_TOP:
             shadow = True
         elif west == Terrain.PILLAR:
             shadow = True
 
-        if ends_on_left and ends_on_right:
-            north_pos = (pos[0], pos[1] - 1)
-            # If north has no adjacent friends
-            if north == Terrain.WALL_TOP and WallTopPainter.get_index(tilemap, north_pos) == 0:
-                index = 6  # Is a column
-            elif shadow:
+        north_pos = (pos[0], pos[1] - 1)
+        # If north has no adjacent friends
+        if north == Terrain.WALL_TOP and WallTopPainter.get_index(tilemap, north_pos) == 0:
+            index = 6  # Is a column
+        elif ends_on_left and ends_on_right:
+            if shadow:
                 index = 5  # shadowcast on a wall that ends on both right and left
             else:
                 index = 0  # Wall ends on both right and left
@@ -88,4 +90,34 @@ class WallBottomPainter(WangEdge16Painter):
             index = 3  # Wall does not end on either side
 
         coord = index, 0
+        return coord
+
+class ColumnPainter(Painter):
+    terrain_like = (Terrain.WALL_TOP, Terrain.WALL_BOTTOM, Terrain.COLUMN,)
+    column_index = 0
+
+    @property
+    def check_flood_fill(self):
+        return True
+
+    def single_process(self, tilemap):
+        self.column_index = random_choice([0, 1], (0, 0))
+
+    @staticmethod
+    def distance_to_column_top(tilemap, pos: Pos) -> int:
+        n, _, _, _ = tilemap.get_cardinal_terrain(pos)
+        if n == Terrain.COLUMN:
+            return 1 + ColumnPainter.distance_to_column_top(tilemap, (pos[0], pos[1] - 1))
+        return 0
+
+    def get_coord(self, tilemap, pos: Pos) -> Pos:
+        distance = ColumnPainter.distance_to_column_top(tilemap, pos)
+        if distance == 0:
+            coord = (self.column_index, 0)
+        elif distance == 1:
+            coord = (self.column_index, 1)
+        elif distance % 2:
+            coord = (self.column_index, 3)
+        else:
+            coord = (self.column_index, 2)
         return coord

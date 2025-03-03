@@ -3,7 +3,7 @@ from app.utilities.typing import Pos
 from PyQt5.QtGui import QPixmap, QPainter
 
 from app.map_maker.painter_utils import Painter
-from app.map_maker.painters import FloorPainter, RuinedFloorPainter
+from app.map_maker.painters import FloorPainter, RuinedFloorPainter, GrassFloorPainter
 from app.map_maker.qt_renderers.qt_palette import QtPalette
 from app.map_maker.qt_renderers.renderer_utils import find_limit16
 from app.map_maker.qt_renderers import SimpleRenderer
@@ -34,6 +34,7 @@ class FloorShadingRenderer(SimpleRenderer):
         self.painters = {
             'default': FloorPainter(),
             'ruins': RuinedFloorPainter(),
+            'grass': GrassFloorPainter(),
         }
 
     def set_palette(self, palette: QtPalette):
@@ -42,6 +43,7 @@ class FloorShadingRenderer(SimpleRenderer):
         self.painters['default'].set_limit({0: zero_limit})
         full_limit = {k: find_limit16(palette.get_full_pixmap(), k) for k in range(16)}
         self.painters['ruins'].set_limit(full_limit)
+        self.painters['grass'].set_limit(full_limit)
 
     @property
     def painter(self) -> Painter:

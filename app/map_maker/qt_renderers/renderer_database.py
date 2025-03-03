@@ -37,6 +37,9 @@ RENDERERS[Terrain.RIVER] = \
 RENDERERS[Terrain.SEA] = \
     SeaRenderer(PAINTERS[Terrain.SEA],
                 PALETTES.outdoor_palettes()[0].get(Terrain.SEA))
+RENDERERS[Terrain.SPARSE_FOREST] = \
+    SimpleRenderer(PAINTERS[Terrain.SPARSE_FOREST],
+                   PALETTES.outdoor_palettes()[0].get(Terrain.SPARSE_FOREST))
 RENDERERS[Terrain.FOREST] = \
     DisplayRenderer8(PAINTERS[Terrain.FOREST],
                      PALETTES.outdoor_palettes()[0].get(Terrain.FOREST))
@@ -78,12 +81,18 @@ RENDERERS[Terrain.FLOOR_1] = \
 RENDERERS[Terrain.FLOOR_2] = \
     FloorShadingRenderer('floor2',
                          PALETTES.indoor_palettes()[0].get(Terrain.FLOOR_2))
+RENDERERS[Terrain.FLOOR_3] = \
+    FloorShadingRenderer('floor3',
+                         PALETTES.indoor_palettes()[0].get(Terrain.FLOOR_3))
 RENDERERS[Terrain.WALL_TOP] = \
     LimitRenderer16(PAINTERS[Terrain.WALL_TOP],
                     PALETTES.indoor_palettes()[0].get(Terrain.WALL_TOP))
 RENDERERS[Terrain.WALL_BOTTOM] = \
     SimpleRenderer(PAINTERS[Terrain.WALL_BOTTOM],
                    PALETTES.indoor_palettes()[0].get(Terrain.WALL_BOTTOM))
+RENDERERS[Terrain.COLUMN] = \
+    SimpleRenderer(PAINTERS[Terrain.COLUMN],
+                   PALETTES.indoor_palettes()[0].get(Terrain.COLUMN))
 RENDERERS[Terrain.STAIRS_UPDOWN] = \
     SimpleRenderer(PAINTERS[Terrain.STAIRS_UPDOWN],
                    PALETTES.indoor_palettes()[0].get(Terrain.STAIRS_UPDOWN))

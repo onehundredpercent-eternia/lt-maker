@@ -2,6 +2,7 @@
 
 Add additional outdoor and indoor palettes
 Add water support for indoor palettes
+Add grass indoor floor
 Add ability to autogenerate outdoor maps
  - Rivers
  - Ocean

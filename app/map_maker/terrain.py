@@ -12,6 +12,7 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     NOISY_GRASS = 'Noisy Grass', True
     SAND = 'Sand', True
     ROAD = 'Road', True
+    SPARSE_FOREST = 'Sparse Forest', True
     FOREST = 'Forest', True
     THICKET = 'Thicket', True
     CLIFF = 'Cliff', True
@@ -29,8 +30,10 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     VOID = 'Void', False
     WALL_TOP = 'Wall Top', False
     WALL_BOTTOM = 'Wall Bottom', False
+    COLUMN = 'Column', False
     FLOOR_1 = 'Floor 1', False
     FLOOR_2 = 'Floor 2', False
+    FLOOR_3 = 'Floor 3', False
     STAIRS_UPDOWN = 'Stairs UpDown', False
     STAIRS_LEFT = 'Stairs Left', False
     STAIRS_RIGHT = 'Stairs Right', False
@@ -63,15 +66,25 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
 
     @staticmethod
     def wall(terrain: "Terrain") -> bool:
-        return terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM)
+        return terrain in (Terrain.WALL_TOP, Terrain.WALL_BOTTOM, Terrain.COLUMN)
 
     @staticmethod
     def floor(terrain: "Terrain") -> bool:
-        return terrain in (Terrain.FLOOR_1, Terrain.FLOOR_2)
+        return terrain in (Terrain.FLOOR_1, Terrain.FLOOR_2, Terrain.FLOOR_3)
 
     @staticmethod
     def sand_like(terrain: "Terrain") -> bool:
         return terrain in (Terrain.ROAD, Terrain.SAND)
 
+    @staticmethod
+    def get_all_floor() -> List[Terrain]:
+        return (Terrain.FLOOR_1, Terrain.FLOOR_2, Terrain.FLOOR_3)
 
+    @staticmethod
+    def get_all_wall() -> List[Terrain]:
+        return (Terrain.WALL_TOP, Terrain.WALL_BOTTOM, Terrain.COLUMN)
+
+    @staticmethod
+    def get_all_stairs() -> List[Terrain]:
+        return (Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT, Terrain.STAIRS_UPDOWN, Terrain.STAIRS_CENTER)
 

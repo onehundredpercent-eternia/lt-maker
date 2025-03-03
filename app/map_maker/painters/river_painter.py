@@ -5,7 +5,7 @@ from app.map_maker.terrain import Terrain
 from app.map_maker.utilities import random_choice
 
 class RiverPainter(WangEdge16Painter):
-    terrain_like = (Terrain.RIVER, Terrain.SEA, Terrain.BRIDGEH, Terrain.BRIDGEV)
+    terrain_like = (Terrain.RIVER, Terrain.SEA, Terrain.BRIDGEH, Terrain.BRIDGEV, *Terrain.get_all_wall())
     base_coord = (15, 0)
     autotiles = {
         (0, 8): 0, (0, 9): 1, (1, 6): 2, (1, 7): 3, (1, 8): 4, (1, 9): 5, (2, 6): 6, (2, 7): 7, (2, 8): 8, (2, 9): 9, (3, 0): 10, (3, 1): 11, (3, 2): 12,

@@ -21,6 +21,7 @@ from app.map_maker.painters import (
     FloorPainter,
     WallTopPainter,
     WallBottomPainter,
+    ColumnPainter,
     StairsUpDownPainter,
     StairsLeftPainter,
     StairsRightPainter,
@@ -36,12 +37,15 @@ PAINTERS[Terrain.SAND] = SandPainter()
 PAINTERS[Terrain.ROAD] = WangEdge8Painter()
 PAINTERS[Terrain.ROAD].terrain_like = \
    (Terrain.ROAD, Terrain.SAND, Terrain.BRIDGEH, Terrain.BRIDGEV,
-      Terrain.HOUSE, Terrain.CASTLE,
-    Terrain.FLOOR_1, Terrain.FLOOR_2, Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT,
-    Terrain.STAIRS_UPDOWN)
+    Terrain.HOUSE, Terrain.CASTLE,
+    Terrain.FLOOR_1, Terrain.FLOOR_2, Terrain.FLOOR_3,
+    Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT, Terrain.STAIRS_UPDOWN
+    )
 PAINTERS[Terrain.ROAD].base_coord = (15, 0)
 PAINTERS[Terrain.RIVER] = RiverPainter()
 PAINTERS[Terrain.SEA] = SeaPainter()
+PAINTERS[Terrain.SPARSE_FOREST] = RandomPainter()
+PAINTERS[Terrain.SPARSE_FOREST].data = [(0, 0), (0, 1), (0, 2)]
 PAINTERS[Terrain.FOREST] = ForestPainter()
 PAINTERS[Terrain.THICKET] = Random8Painter()
 PAINTERS[Terrain.THICKET].data = [
@@ -62,8 +66,10 @@ PAINTERS[Terrain.RUINS] = RuinsPainter()
 PAINTERS[Terrain.VOID] = Painter()
 PAINTERS[Terrain.WALL_TOP] = WallTopPainter()
 PAINTERS[Terrain.WALL_BOTTOM] = WallBottomPainter()
+PAINTERS[Terrain.COLUMN] = ColumnPainter()
 PAINTERS[Terrain.FLOOR_1] = FloorPainter()
 PAINTERS[Terrain.FLOOR_2] = FloorPainter()
+PAINTERS[Terrain.FLOOR_3] = FloorPainter()
 PAINTERS[Terrain.STAIRS_UPDOWN] = StairsUpDownPainter()
 PAINTERS[Terrain.STAIRS_LEFT] = StairsLeftPainter()
 PAINTERS[Terrain.STAIRS_RIGHT] = StairsRightPainter()

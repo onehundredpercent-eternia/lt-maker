@@ -3,6 +3,7 @@
     "name": "Dungeon",
     "floor1": "default",
     "floor2": "default",
+    "floor3": "default",
     "location": "Stronghold1.png",
     "outdoor": false
 }

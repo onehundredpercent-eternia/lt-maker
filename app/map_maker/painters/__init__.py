@@ -11,8 +11,8 @@ from .grass_painter import GrassPainter, LightGrassPainter, NoisyGrassPainter
 from .hill_painter import HillPainter
 from .mountain_painter import MountainPainter
 from .river_painter import RiverPainter
-from .ruined_floor_painter import RuinedFloorPainter
+from .ruined_floor_painter import RuinedFloorPainter, GrassFloorPainter
 from .sand_painter import SandPainter
 from .sea_painter import SeaPainter
 from .stairs_painter import StairsUpDownPainter, StairsLeftPainter, StairsRightPainter
-from .wall_painter import WallTopPainter, WallBottomPainter
+from .wall_painter import WallTopPainter, WallBottomPainter, ColumnPainter

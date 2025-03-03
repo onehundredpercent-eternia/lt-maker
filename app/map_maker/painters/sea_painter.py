@@ -8,7 +8,7 @@ from app.map_maker.terrain import Terrain
 from app.utilities import utils
 
 class SeaPainter(WangEdge16Painter):
-    terrain_like = (Terrain.SEA, Terrain.RIVER, Terrain.BRIDGEH, Terrain.BRIDGEV)
+    terrain_like = (Terrain.SEA, Terrain.RIVER, Terrain.BRIDGEH, Terrain.BRIDGEV, Terrain.WALL_TOP, Terrain.WALL_BOTTOM)
     base_coord = (15, 0)
     serration_chance = 0.6
     sand_start_px = 144
