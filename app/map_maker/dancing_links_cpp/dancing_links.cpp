@@ -16,25 +16,25 @@ class Cell() {
         this->up = this;
         this->down = this;
         this->left = this;
-        this->right =&this;
+        this->right =this;
     }
 }
 
-class HeaderCell(Cell) {
+class HeaderCell : public Cell {
   public:
     std::string name;
-    size_t size;
+    size_t size = 0;
     bool primary; // Whether this column must be included in the solution
-    bool is_first;
+    bool is_first = false;
 
-    HeaderCell(std::string name, bool primary) {
+    HeaderCell(std::string name, bool primary) : Cell() {
         super().Cell();
         this->name = name;
-        this->size = 0;
         this->primary = primary;
-        this->is_first = false;
     }
 }
+
+typedef std::unordered_set<Cell*> cell_set;
 
 class RainAlgorithmX() {
   private:
@@ -44,9 +44,11 @@ class RainAlgorithmX() {
     int num_rows = 0;
     int num_columns = 0;
 
+    HeaderCell* header;
+
     std::vector<std::string> row_headers;
     std::vector<Cell*> solution_rows;  // List of row cells
-    std::map<int, std::set<Cell*>> bad_solutions = new std::map<int, std::set<Cell*>>(); // Key: Depth, Value: Set of row cells
+    std::unordered_map<int, cell_set> bad_solutions = {}; // Key: Depth, Value: Set of row cells
 
     // Column header is string + bool
     // String is name of column
@@ -59,7 +61,7 @@ class RainAlgorithmX() {
         this->seed = seed;
         std::vector<HeaderCell> column_list;
 
-        this->header = HeaderCell("<H>", true);
+        this->header = new HeaderCell("<H>", true);
         this->header->is_first = true;
 
         // Add columns
