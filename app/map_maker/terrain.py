@@ -39,6 +39,9 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     STAIRS_RIGHT = 'Stairs Right', False
     STAIRS_CENTER = 'Stairs Center', False
     PILLAR = 'Pillar', False
+    POOL = 'Pool', False
+    POOL_BRIDGE = 'Pool Bridge', False
+    TREASURE = 'Treasure Chest', False
 
     @staticmethod
     def list() -> List["Terrain"]:
@@ -87,4 +90,3 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     @staticmethod
     def get_all_stairs() -> List[Terrain]:
         return (Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT, Terrain.STAIRS_UPDOWN, Terrain.STAIRS_CENTER)
-

@@ -1,3 +1,4 @@
+
 from typing import Any, Dict
 import glob, json, os
 
@@ -54,6 +55,12 @@ class PaletteCollection:
             Terrain.STAIRS_RIGHT: QtPalette(self, os.path.join(self.palette_dir, 'stairs_right.png')),
             Terrain.STAIRS_CENTER: QtPalette(self, os.path.join(self.palette_dir, 'stairs_center.png')),
             Terrain.PILLAR: QtPalette(self, os.path.join(self.palette_dir, 'pillar.png')),
+            Terrain.POOL: QtPalette(self, 
+                                    os.path.join(self.palette_dir, 'pool.png'), 
+                                    os.path.join(self.palette_dir, 'pool_autotiles.png'), 
+                                    shading_fn=os.path.join(self.palette_dir, 'pool_shading.png')),
+            Terrain.POOL_BRIDGE: QtPalette(self, os.path.join(self.palette_dir, 'pool_bridge.png')),
+            Terrain.TREASURE: QtPalette(self, os.path.join(self.palette_dir, 'treasure.png')),
         }
 
 class MapMakerPaletteCatalog(Data[PaletteCollection]):

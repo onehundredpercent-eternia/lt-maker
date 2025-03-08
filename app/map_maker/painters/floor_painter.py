@@ -24,9 +24,7 @@ class FloorPainter(Painter):
         Returns whether the position is the bottom of a wall column
         """
         north, _, _, _ = tilemap.get_cardinal_terrain(pos)
-        if north == Terrain.WALL_BOTTOM and WallBottomPainter.is_a_column(tilemap, (pos[0], pos[1] - 1)):
-            return True
-        return False
+        return north == Terrain.COLUMN
 
     @staticmethod
     def get_pillar_coord(tilemap, pos: Pos) -> Optional[Pos]:
@@ -55,6 +53,8 @@ class FloorPainter(Painter):
         if northwest == Terrain.PILLAR:
             corner = True
         if west == Terrain.PILLAR:
+            left = True
+        if west == Terrain.TREASURE:
             left = True
         if west == Terrain.STAIRS_LEFT and Terrain.wall(northwest):
             corner = True

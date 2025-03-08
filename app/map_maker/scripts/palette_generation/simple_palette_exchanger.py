@@ -37,27 +37,34 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
 
-    color_change_these_images = ['app/map_maker/palettes/monastery/floor1.png', 'app/map_maker/palettes/monastery/floor1_shading.png']
-    # color_change_these_images = ['app/map_maker/palettes/autumn_outdoors/bridge_h.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/bridge_v.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/castle.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/cliff.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/forest.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/grass.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/hill.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/house.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/mountain.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/river.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/river_autotiles.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/road.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/ruins.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/sand.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/sea.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/sea_autotiles.png',
-    #                              'app/map_maker/palettes/autumn_outdoors/thicket.png',
+    color_change_these_images = ['app/map_maker/palettes/monastery_outdoors/road.png',
+                                 'app/map_maker/palettes/monastery_outdoors/house.png',
+                                 'app/map_maker/palettes/monastery_outdoors/ruins.png',]
+    # color_change_these_images = ['app/map_maker/palettes/autumn_ruins/pool.png',
+    #                              'app/map_maker/palettes/autumn_ruins/pool_shading.png',
+    #                              'app/map_maker/palettes/autumn_ruins/pool_bridge.png',
+    #                              'app/map_maker/palettes/autumn_ruins/pool_autotiles.png']
+    # color_change_these_images = ['app/map_maker/palettes/monastery_outdoors/bridge_h.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/bridge_v.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/castle.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/cliff.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/forest.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/grass.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/hill.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/house.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/mountain.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/river.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/river_autotiles.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/road.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/ruins.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/sand.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/sea.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/sea_autotiles.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/sparse_forest.png',
+    #                              'app/map_maker/palettes/monastery_outdoors/thicket.png',
     #                              ]
-    original_palette = 'app/map_maker/palettes/autumn_ruins/main.png'
-    new_palette = 'app/map_maker/palettes/monastery/main.png'
+    original_palette = 'app/map_maker/palettes/autumn_outdoors/main.png'
+    new_palette = 'app/map_maker/palettes/monastery_outdoors/main.png'
 
     change_images = []
     for c in color_change_these_images:

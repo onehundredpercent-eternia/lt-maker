@@ -10,6 +10,7 @@ from .forest_painter import ForestPainter
 from .grass_painter import GrassPainter, LightGrassPainter, NoisyGrassPainter
 from .hill_painter import HillPainter
 from .mountain_painter import MountainPainter
+from .pool_painter import PoolPainter, PoolBridgePainter
 from .river_painter import RiverPainter
 from .ruined_floor_painter import RuinedFloorPainter, GrassFloorPainter
 from .sand_painter import SandPainter

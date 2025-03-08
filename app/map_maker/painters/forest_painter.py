@@ -49,10 +49,11 @@ class ForestPainter(Painter):
         index3 = 4 * south_edge + 2 * east_edge
         index4 = 4 * south_edge + 8 * west_edge
         if total_index == 15 and random_choice([1, 2, 3], pos) != 3:  # When by itself
-            new_coord1 = (14, 0)
-            new_coord2 = (15, 0)
-            new_coord3 = (15, 1)
-            new_coord4 = (14, 1)
+            y = random_choice([0, 2], pos)
+            new_coord1 = (14, y)
+            new_coord2 = (15, y)
+            new_coord3 = (15, y + 1)
+            new_coord4 = (14, y + 1)
         else:
             new_coord1 = (index1, {0: 0, 1: 0, 8: 0, 9: 0}[index1])
             new_coord2 = (index2, {0: 1, 1: 1, 2: 0, 3: 0}[index2])

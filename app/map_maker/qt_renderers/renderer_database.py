@@ -8,6 +8,8 @@ from app.map_maker.qt_renderers import (
     LimitRenderer16,
     CliffRenderer,
     MountainRenderer,
+    SimpleShadingRenderer,
+    PoolShadingRenderer,
     FloorShadingRenderer,
 )
 from app.map_maker.palette_collection import PALETTES
@@ -108,3 +110,12 @@ RENDERERS[Terrain.STAIRS_CENTER] = \
 RENDERERS[Terrain.PILLAR] = \
     SimpleRenderer(PAINTERS[Terrain.PILLAR],
                    PALETTES.indoor_palettes()[0].get(Terrain.PILLAR))
+RENDERERS[Terrain.POOL] = \
+    PoolShadingRenderer(PAINTERS[Terrain.POOL],
+                        PALETTES.indoor_palettes()[0].get(Terrain.POOL))
+RENDERERS[Terrain.POOL_BRIDGE] = \
+    SimpleShadingRenderer(PAINTERS[Terrain.POOL_BRIDGE],
+                          PALETTES.indoor_palettes()[0].get(Terrain.POOL_BRIDGE))
+RENDERERS[Terrain.TREASURE] = \
+    SimpleRenderer(PAINTERS[Terrain.TREASURE],
+                   PALETTES.indoor_palettes()[0].get(Terrain.TREASURE))

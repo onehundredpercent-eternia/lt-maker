@@ -25,6 +25,8 @@ from app.map_maker.painters import (
     StairsUpDownPainter,
     StairsLeftPainter,
     StairsRightPainter,
+    PoolPainter,
+    PoolBridgePainter,
 )
 
 PAINTERS = {}
@@ -76,3 +78,6 @@ PAINTERS[Terrain.STAIRS_RIGHT] = StairsRightPainter()
 PAINTERS[Terrain.STAIRS_CENTER] = RandomPainter()
 PAINTERS[Terrain.STAIRS_CENTER].data = [(0, 0), (1, 0)]
 PAINTERS[Terrain.PILLAR] = Painter()
+PAINTERS[Terrain.POOL] = PoolPainter()
+PAINTERS[Terrain.POOL_BRIDGE] = PoolBridgePainter()
+PAINTERS[Terrain.TREASURE] = Painter()

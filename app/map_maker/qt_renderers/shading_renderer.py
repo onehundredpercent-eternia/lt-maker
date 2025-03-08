@@ -1,3 +1,4 @@
+from typing import Dict
 from app.utilities.typing import Pos
 
 from PyQt5.QtGui import QPixmap, QPainter
@@ -23,6 +24,16 @@ class SimpleShadingRenderer(SimpleRenderer):
             qpainter.drawPixmap(0, 0, shading_pix)
             qpainter.end()
         return base_pix
+
+class PoolShadingRenderer(SimpleShadingRenderer):
+    """
+    Only difference is that limit is set to 2
+    To handle both open and non-open pool
+    """
+    def set_palette(self, palette: QtPalette):
+        self.palette = palette
+        limit: Dict[int, int] = {i: find_limit16(palette.get_full_pixmap(), i) for i in range(2)}
+        self.painter.set_limit(limit)
 
 class FloorShadingRenderer(SimpleRenderer):
     """

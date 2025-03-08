@@ -1,8 +1,7 @@
 # Map Maker ToDo List:
 
 Add additional outdoor and indoor palettes
-Add water support for indoor palettes
-Add grass indoor floor
+Add treasure to indoors
 Add ability to autogenerate outdoor maps
  - Rivers
  - Ocean
