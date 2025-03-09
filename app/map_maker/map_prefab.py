@@ -187,3 +187,15 @@ class MapPrefab(Prefab):
         self.current_indoor_palette = s_dict.get('indoor_palette')
         self.current_outdoor_palette = s_dict.get('outdoor_palette')
         return self
+
+    @classmethod
+    def from_terrain_grid(cls, nid: NID, width: int, height: int, terrain_grid: Dict[Pos, Terrain]):
+        self = cls(nid)
+        self.width, self.height = width, height
+        self.autotile_fps = 29
+        self.cliff_markers = [(0, 0)]
+        self.terrain_grid = terrain_grid
+        self.autotile_set.clear()
+        self.current_indoor_palette = PALETTES.indoor_palettes()[0]
+        self.current_outdoor_palette = PALETTES.outdoor_palettes()[0]
+        return self

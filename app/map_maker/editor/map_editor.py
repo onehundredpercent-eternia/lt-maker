@@ -24,6 +24,7 @@ from .map_editor_view import PaintTool, MapEditorView
 from .draw_tilemap import simple_draw_tilemap
 from .palette_model import PaletteModel
 from .nid_dialog import NidDialog
+from .autogenerate_indoor_map import AutogenerateIndoorMapDialog
 
 from app.map_maker.map_prefab import MapPrefab
 import app.map_maker.utilities as map_utils
@@ -247,6 +248,9 @@ class MapEditor(QMainWindow):
         self.quit_action = QAction(
             "&Quit", self, shortcut="Ctrl+Q", triggered=self.close)
 
+        self.autogenerate_indoor_map_action = QAction("Autogenerate Indoor Map...", self, triggered=self.autogenerate_indoor_map)
+        self.autogenerate_outdoor_map_action = QAction("Autogenerate Outdoor Map...", self, triggered=self.autogenerate_outdoor_map)
+
         self.about_action = QAction("About", self, triggered=self.about)
         self.help_action = QAction("Help", self, triggered=self.display_help)
 
@@ -281,6 +285,10 @@ class MapEditor(QMainWindow):
         edit_menu.addAction(self.show_gridlines_action)
         edit_menu.addAction(self.zoom_in_action)
         edit_menu.addAction(self.zoom_out_action)
+
+        auto_menu = QMenu("Auto", self)
+        auto_menu.addAction(self.autogenerate_indoor_map_action)
+        auto_menu.addAction(self.autogenerate_outdoor_map_action)
 
         extra_menu = QMenu("Extra", self)
         extra_menu.addAction(self.about_action)
@@ -398,6 +406,16 @@ class MapEditor(QMainWindow):
                 renderer.set_palette(palette.get(terrain))
         self.current.reset_all()
         self.outdoor_terrain_painter_menu.reset()
+
+    def autogenerate_indoor_map(self):
+        # Make the dialog modeless
+        dlg = AutogenerateIndoorMapDialog(self.current)
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def autogenerate_outdoor_map(self):
+        QMessageBox.information(self, self.title, "Not implemented yet!")
 
     def export_as_png(self):
         if self.current:
