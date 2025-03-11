@@ -22,6 +22,9 @@ class Cell() {
 
 class HeaderCell : public Cell {
   public:
+    HeaderCell* left;
+    HeaderCell* right;
+    
     std::string name;
     size_t size = 0;
     bool primary; // Whether this column must be included in the solution
@@ -48,15 +51,16 @@ class RainAlgorithmX() {
 
     std::vector<std::string> row_headers;
     std::vector<Cell*> solution_rows;  // List of row cells
-    std::unordered_map<int, cell_set> bad_solutions = {}; // Key: Depth, Value: Set of row cells
+    std::unordered_map<unsigned int, cell_set> bad_solutions = {}; // Key: Depth, Value: Set of row cells
 
     // Column header is string + bool
     // String is name of column
     // bool is whether this column must be included in the solution
   public:
     RainAlgorithmX(std::vector<std::pair<std::string, bool>> column_headers, 
-                   std::vector<std::string> row_headers, std::vector<std::vector<int>> rows,
-                   Pos pos, int seed) {
+                   std::vector<std::string> row_headers, 
+                   std::vector<std::vector<int>> rows,
+                   const Pos pos, const int seed) {
         this->pos = pos;
         this->seed = seed;
         std::vector<HeaderCell> column_list;
@@ -65,28 +69,28 @@ class RainAlgorithmX() {
         this->header->is_first = true;
 
         // Add columns
-        HeaderCell* previous = this->header;
-        HeaderCell* cell;
+        HeaderCell* previous_header_cell = this->header;
+        HeaderCell* header_cell;
         // Link every column together
         for(size_t i = 0; i < column_headers.size(); i++) {
             std::string name = column_headers[i].first;
             bool primary = column_headers[i].second;
-            cell = HeaderCell(name, primary);
-            cell->row = -1;
-            cell->col = this->num_columns;
+            header_cell = new HeaderCell(name, primary);
+            header_cell->row = -1;
+            header_cell->col = this->num_columns;
 
-            column_list.push_back(cell);
+            column_list.push_back(header_cell);
             if (primary) {
-                previous->right = cell;
-                cell->left = previous;
-                previous = cell;
+                previous_header_cell->right = header_cell;
+                header_cell->left = previous_header_cell;
+                previous_header_cell = header_cell;
             }
             this->num_columns++;
         }
 
         // At the end of the column, link back to the start of the column (the H cell)
-        previous->right = this->header;
-        this->header->left = previous;
+        previous_header_cell->right = this->header;
+        this->header->left = previous_header_cell;
 
         // Add rows
         this->row_headers = row_headers;
@@ -98,9 +102,9 @@ class RainAlgorithmX() {
             start = NULL;
             cell = NULL;
 
-            for (size_t j; j < rows[i].size(); j++) {
+            for (size_t j = 0; j < rows[i].size(); j++) {
                 int idx = rows[i][j];  // index of a valid option
-                cell = Cell();
+                cell = new Cell();
                 cell->row = this->num_rows;
                 cell->col = idx;
 
@@ -131,10 +135,10 @@ class RainAlgorithmX() {
 
     std::vector<std::string> get_solution() { 
         std::vector<std::string> solution;
-        for (unsigned int i = 0; i < this.solution_rows.size(); i++) {
-            solution.push_back(this->row_headers[self.solution_rows[i].indexes[0]])
+        for (size_t i = 0; i < this.solution_rows->size(); i++) {
+            solution.push_back(this->row_headers[self->solution_rows[i]->indexes[0]])
         }
-        std::sort(solution);
+        std::sort(solution.begin(), solution.end());
         return solution;
     }
 
@@ -236,7 +240,14 @@ class RainAlgorithmX() {
         }
 
         int depth = this->solution_rows.size();
-        std::set<Cell*> bad_row_cells = this->bad_solutions.get(depth, new std::set<Cell*>());
+        cell_set bad_row_cells;
+        // check whether the depth exists in the bad solution map
+        if (this->bad_solutions.find(depth) != this->bad_solutions.end()) {
+            bad_row_cells = this->bad_solutions.at(depth);
+        } else {
+            bad_row_cells = cell_set();
+        }
+
         std::vector<Cell*> possible_rows;
 
         for (down_cell = column_header_cell->down; down_cell != column_header_cell; down_cell = down_cell->down) {
