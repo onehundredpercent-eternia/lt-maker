@@ -1,6 +1,6 @@
-typedef std::pair<int, int> Pos;
-
 const unsigned int LIMIT = 10000;
+
+class HeaderCell; // Necessary so Cell knows what a header cell is on compilation
 
 class Cell() {
   public:
@@ -8,7 +8,7 @@ class Cell() {
     Cell *down;
     Cell *left;
     Cell *right;
-    Cell *header = NULL;
+    HeaderCell *header = NULL;
     int row;
     unsigned int col;
 
@@ -60,8 +60,7 @@ class RainAlgorithmX() {
     RainAlgorithmX(std::vector<std::pair<std::string, bool>> column_headers, 
                    std::vector<std::string> row_headers, 
                    std::vector<std::vector<int>> rows,
-                   const Pos pos, const int seed) {
-        this->pos = pos;
+                   const int seed) {
         this->seed = seed;
         std::vector<HeaderCell> column_list;
 
@@ -209,22 +208,24 @@ class RainAlgorithmX() {
         Call when the processing is unable to find any solutions at this level 
         */
         size_t depth = this->solution_rows.size();
-        if (std::contains(this->bad_solutions, depth)) {
+        if (this->bad_solutions.count(depth) > 0) {
             this->bad_solutions[depth].clear();
         }
 
         if (this->solution_rows.size() > 0) {
-            Cell* bad_row_cell = this->solution_rows.pop();
+            Cell* bad_row_cell = this->solution_rows.back();
+            this->solution_rows.pop_back();
             // Uncover the bad row cell since we are reverting ever using it
+            Cell* left_cell;
             for (left_cell = bad_row_cell->left; left_cell != bad_row_cell; left_cell = left_cell->left) {
                 this->uncover(left_cell->header);
             }
             this->uncover(bad_row_cell->header);
             // But make sure we remember that we did use it here so we don't try again
-            if (!std::contains(this->bad_solutions, depth - 1)) {
-                this->bad_solutions[depth - 1] = new std::set<Cell*>();
+            if (this->bad_solutions.count(depth - 1) == 0) {
+                this->bad_solutions[depth - 1] = cell_set();
             }
-            this->bad_solutions[depth - 1].add(bad_row_cell);
+            this->bad_solutions[depth - 1].insert(bad_row_cell);
             return true;
         } else {
             return false; // No valid solutions at all
@@ -251,7 +252,7 @@ class RainAlgorithmX() {
         std::vector<Cell*> possible_rows;
 
         for (down_cell = column_header_cell->down; down_cell != column_header_cell; down_cell = down_cell->down) {
-            if (!std::contains(bad_row_cells, down_cell)) {
+            if (bad_row_cells.count(down_cell) == 0) {
                 possible_rows.push_back(down_cell)
             }
         }
