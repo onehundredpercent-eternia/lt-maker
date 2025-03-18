@@ -170,7 +170,7 @@ class Move(Action):
     A basic, user-directed move
     """
 
-    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0):
+    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0, silent=False):
         self.unit: UnitObject = unit
         self.old_pos = self.unit.position
         self.new_pos = new_pos
@@ -183,11 +183,12 @@ class Move(Action):
         self.event = event
         self.follow = follow
         self.speed = speed or cf.SETTINGS['unit_speed']
+        self.silent = silent
 
     def do(self):
         if self.path is None:
             self.path = game.cursor.path[:]
-        game.movement.begin_move(self.unit, self.path, self.event, self.follow, speed=self.speed)
+        game.movement.begin_move(self.unit, self.path, self.event, self.follow, speed=self.speed, silent=self.silent)
 
     def execute(self):
         game.leave(self.unit)
@@ -1031,6 +1032,7 @@ class Separate(Action):
 
         if self.with_wait:
             self.droppee_wait_action.reverse()
+        if self.droppee.position:
         game.leave(self.droppee)
         self.unit.has_dropped = False
 
@@ -3527,6 +3529,9 @@ class AddSkill(Action):
             logging.info("Skill %s is at max stacks, removing oldest displaceable instance" % self.skill_obj.nid)
             self.subactions.append(RemoveSkill(self.unit, popped_skill_obj))
 
+        for action in self.subactions:
+            action.execute()
+
         # Actually add skill
         skill_system.before_add(self.unit, self.skill_obj)
         self.skill_obj.owner_nid = self.unit.nid
@@ -3539,9 +3544,6 @@ class AddSkill(Action):
             game.boundary.register_unit_auras(self.unit)
 
         skill_system.after_add(self.unit, self.skill_obj)
-
-        for action in self.subactions:
-            action.execute()
 
         self.did_something = True
 

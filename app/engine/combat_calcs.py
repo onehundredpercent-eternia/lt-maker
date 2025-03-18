@@ -113,6 +113,8 @@ def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
         return False
     if not item_system.can_counter(defender, dweapon):
         return False
+    if not skill_system.can_counter(defender):
+        return False
     if DB.constants.value('line_of_sight'):
         if not item_system.ignore_line_of_sight(defender, dweapon) and len(line_of_sight.line_of_sight([defender.position], [attacker.position], 99)) == 0:
             return False
@@ -186,7 +188,7 @@ def avoid(unit, item, item_to_avoid=None):
 
     if item:
         avoid += item_system.modify_avoid(unit, item)
-    avoid += skill_system.modify_avoid(unit, item_to_avoid)
+    avoid += skill_system.modify_avoid(unit, item)
     return avoid
 
 def crit_accuracy(unit, item=None):
@@ -239,7 +241,7 @@ def crit_avoid(unit, item, item_to_avoid=None):
 
     if item:
         avoid += item_system.modify_crit_avoid(unit, item)
-    avoid += skill_system.modify_crit_avoid(unit, item_to_avoid)
+    avoid += skill_system.modify_crit_avoid(unit, item)
     return avoid
 
 def damage(unit, item=None):
@@ -293,7 +295,7 @@ def defense(atk_unit, def_unit, item, item_to_avoid=None):
 
     if item:
         res += item_system.modify_resist(def_unit, item)
-    res += skill_system.modify_resist(def_unit, item_to_avoid)
+    res += skill_system.modify_resist(def_unit, item)
     return res
 
 def attack_speed(unit, item=None):
@@ -347,7 +349,7 @@ def defense_speed(unit, item, item_to_avoid=None):
 
     if item:
         speed += item_system.modify_defense_speed(unit, item)
-    speed += skill_system.modify_defense_speed(unit, item_to_avoid)
+    speed += skill_system.modify_defense_speed(unit, item)
 
     if not DB.constants.value('allow_negative_as') and speed < 0:
         speed = 0

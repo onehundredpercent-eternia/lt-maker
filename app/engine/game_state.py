@@ -7,6 +7,7 @@ from collections import Counter
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
 
 from app.engine.query_engine import GameQueryEngine
+from app.engine.utils import ltcache
 from app.utilities.primitive_counter import PrimitiveCounter
 
 if TYPE_CHECKING:
@@ -59,27 +60,27 @@ class GameState():
     It also keeps track of the current level, all game_vars and level_vars, the current difficulty mode, etc.
 
     Attributes you can access:
-        current_mode (DifficultyModeObject): The current difficulty mode of the game.
-        game_vars (Counter): A counter for storing game-wide variables. You can do `game.game_vars.get('Waffle')` to determine the value of the Waffle variable.
-        level_vars (Counter): A counter for storing level-specific variables.
-        playtime (int): The total playtime of the game in milliseconds.
-        current_save_slot (int): The current save slot.
-        unit_registry (Dict[NID, UnitObject]): A dictionary mapping unit NIDs to UnitObjects.
-        item_registry (Dict[UID, ItemObject]): A dictionary mapping item UIDs to ItemObjects.
-        skill_registry (Dict[UID, SkillObject]): A dictionary mapping skill UIDs to SkillObjects.
-        region_registry (Dict[NID, RegionObject]): A dictionary mapping region NIDs to RegionObjects.
-        overworld_registry (Dict[NID, OverworldObject]): A dictionary mapping overworld NIDs to OverworldObjects.
-        parties (Dict[NID, PartyObject]): A dictionary mapping party NIDs to PartyObjects.
-        unlocked_lore (List[NID]): A list of unlocked lore entries.
-        market_items (Dict[NID, int]): A dictionary mapping item NIDs to their stock quantity.
-        supports (supports.SupportController): The support controller.
-        records (records.Recordkeeper): The record keeper.
-        turncount (int): The current turn count.
-        talk_options (List[Tuple[NID, NID]]): A list of talk options.
-        board (game_board.GameBoard): The game board.
-        cursor (cursor.BaseCursor): The cursor.
-        camera (camera.Camera): The camera.
-        phase (phase.PhaseController): The phase controller. `game.phase.get_current_phase() == 'player'`
+        - current_mode (DifficultyModeObject): The current difficulty mode of the game.
+        - game_vars (Counter): A counter for storing game-wide variables. You can do `game.game_vars.get('Waffle')` to determine the value of the Waffle variable.
+        - level_vars (Counter): A counter for storing level-specific variables.
+        - playtime (int): The total playtime of the game in milliseconds.
+        - current_save_slot (int): The current save slot.
+        - unit_registry (Dict[NID, UnitObject]): A dictionary mapping unit NIDs to UnitObjects.
+        - item_registry (Dict[UID, ItemObject]): A dictionary mapping item UIDs to ItemObjects.
+        - skill_registry (Dict[UID, SkillObject]): A dictionary mapping skill UIDs to SkillObjects.
+        - region_registry (Dict[NID, RegionObject]): A dictionary mapping region NIDs to RegionObjects.
+        - overworld_registry (Dict[NID, OverworldObject]): A dictionary mapping overworld NIDs to OverworldObjects.
+        - parties (Dict[NID, PartyObject]): A dictionary mapping party NIDs to PartyObjects.
+        - unlocked_lore (List[NID]): A list of unlocked lore entries.
+        - market_items (Dict[NID, int]): A dictionary mapping item NIDs to their stock quantity.
+        - supports (supports.SupportController): The support controller.
+        - records (records.Recordkeeper): The record keeper.
+        - turncount (int): The current turn count.
+        - talk_options (List[Tuple[NID, NID]]): A list of talk options.
+        - board (game_board.GameBoard): The game board.
+        - cursor (cursor.BaseCursor): The cursor.
+        - camera (camera.Camera): The camera.
+        - phase (phase.PhaseController): The phase controller. `game.phase.get_current() == 'player'`
     """
     def __init__(self):
         # define all GameState properties
@@ -148,11 +149,13 @@ class GameState():
         self.target_system: TargetSystem = None
         self.path_system: PathSystem = None
 
+        # initialize game cache
+        ltcache.init()
+
         self.clear()
 
     def on_alter_game_state(self):
-        from app.engine import skill_system
-        skill_system.reset_cache()
+        ltcache.alter_state()
 
     def clear(self):
         self.game_vars = PrimitiveCounter()
