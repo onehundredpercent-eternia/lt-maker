@@ -1,3 +1,16 @@
+#include <utility>  // For std::pair
+#include <cstddef>  // for NULL
+#include <string>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <algorithm>  // for std::sort
+#include <stdexcept>  // for std::domain_error
+#include <iostream>  // for std::cout
+#include <random>
+#include <cassert>  // for assert
+#include <tuple>
+
 const unsigned int LIMIT = 10000;
 
 class HeaderCell; // Necessary so Cell knows what a header cell is on compilation
@@ -22,7 +35,7 @@ class Cell() {
 
 class HeaderCell : public Cell {
   public:
-    HeaderCell* left;
+    HeaderCell* left; // Header cells always have another header cell to their left or right
     HeaderCell* right;
     
     std::string name;
@@ -31,18 +44,23 @@ class HeaderCell : public Cell {
     bool is_first = false;
 
     HeaderCell(std::string name, bool primary) : Cell() {
-        super().Cell();
+        this->left = this;
+        this->right = this;
         this->name = name;
         this->primary = primary;
     }
+}
+
+std::ostream& operator <<(std::ostream& output_stream, const Cell& c) {
+    output_stream << c.row << " " << c.col;
+    return output_stream;
 }
 
 typedef std::unordered_set<Cell*> cell_set;
 
 class RainAlgorithmX() {
   private:
-    Pos pos;
-    int seed;
+    std::mt19937 rng;
 
     int num_rows = 0;
     int num_columns = 0;
@@ -61,8 +79,13 @@ class RainAlgorithmX() {
                    std::vector<std::string> row_headers, 
                    std::vector<std::vector<int>> rows,
                    const int seed) {
-        this->seed = seed;
-        std::vector<HeaderCell> column_list;
+        assert(row_headers.size() == rows.size());
+
+        this->rng.seed(seed);
+
+        this->row_headers = row_headers;
+
+        std::vector<HeaderCell*> column_list;
 
         this->header = new HeaderCell("<H>", true);
         this->header->is_first = true;
@@ -70,10 +93,12 @@ class RainAlgorithmX() {
         // Add columns
         HeaderCell* previous_header_cell = this->header;
         HeaderCell* header_cell;
+        std::string name;
+        bool primary;
         // Link every column together
-        for(size_t i = 0; i < column_headers.size(); i++) {
-            std::string name = column_headers[i].first;
-            bool primary = column_headers[i].second;
+        for (auto column_header : column_headers) {
+            name = column_header.first;
+            primary = column_header.second;
             header_cell = new HeaderCell(name, primary);
             header_cell->row = -1;
             header_cell->col = this->num_columns;
@@ -91,10 +116,7 @@ class RainAlgorithmX() {
         previous_header_cell->right = this->header;
         this->header->left = previous_header_cell;
 
-        // Add rows
-        this->row_headers = row_headers;
-
-        Cell *start, *last;
+        Cell *start, *last, *cell, *previous;
         HeaderCell* column_header_cell;
         for(size_t i = 0; i < rows.size(); i++) {
             previous = NULL;
@@ -134,8 +156,8 @@ class RainAlgorithmX() {
 
     std::vector<std::string> get_solution() { 
         std::vector<std::string> solution;
-        for (size_t i = 0; i < this.solution_rows->size(); i++) {
-            solution.push_back(this->row_headers[self->solution_rows[i]->indexes[0]])
+        for (auto solution_row : this->solution_rows) {
+            solution.push_back(this->row_headers[solution_row->row])
         }
         std::sort(solution.begin(), solution.end());
         return solution;
@@ -149,7 +171,7 @@ class RainAlgorithmX() {
         Runs rightward through each column finding the header cell with the smallest size
          */
         if (this->header->right->is_first) {
-            throw EmptyMatrixException();
+            throw std::domain_error("Matrix is empty!");
         }
         HeaderCell *h = this->header;
         HeaderCell *minimum_column = this->header->right;
@@ -261,7 +283,7 @@ class RainAlgorithmX() {
             return this->revert();
         }
 
-        Cell* row_cell = random_choice(possible_rows, this->pos, this->seed);
+        Cell* row_cell = this->random_choice(possible_rows);
 
         this->solution_rows.push_back(row_cell);
 
@@ -283,7 +305,7 @@ class RainAlgorithmX() {
         Cell *row_cell, *right_cell;
         // Move down the column and remove each row by traversing right
         for (row_cell = column_header_cell->down; row_cell != column_header_cell; row_cell = row_cell->down) {
-            for(right_cell = row_cell->right; right_cell != row_cell; right_cell = right_cell->right) {
+            for (right_cell = row_cell->right; right_cell != row_cell; right_cell = right_cell->right) {
                 right_cell->up->down = right_cell->down;
                 right_cell->down->up = right_cell->up;
 
@@ -301,11 +323,11 @@ class RainAlgorithmX() {
         Cell *row_cell, *left_cell;
         // Move up the column and link back each row by traversing left
         for (row_cell = column_header_cell->up; row_cell != column_header_cell; row_cell = row_cell->up) {
-            for(left_cell = row_cell->left; left_cell != row_cell; left_cell = left_cell->left) {
+            for (left_cell = row_cell->left; left_cell != row_cell; left_cell = left_cell->left) {
                 left_cell->up->down = left_cell;
                 left_cell->down->up = left_cell;
 
-                // After unlinking, decrement the size in the column header
+                // After unlinking, increment the size in the column header
                 left_cell->header->size += 1;
             }
         }
@@ -314,10 +336,19 @@ class RainAlgorithmX() {
         column_header_cell->left->right = column_header_cell;
         column_header_cell->right->left = column_header_cell;
     }
-}
 
-// Driver code
-int main() {
+    template<typename T>
+    T random_choice(std::vector<T> choices) {
+        std::uniform_int_distribution<std::mt19937::result_type> dist(0, choices.size() - 1);
+        return choices[dist(this->rng)];
+    }
+};
+
+std::tuple<
+    std::vector<std::pair<std::string, bool>>,
+    std::vector<std::vector<int>>,
+    std::vector<std::string>
+    > problem1() {
     /**
       A B C D E
     0   X X   X
@@ -326,7 +357,7 @@ int main() {
     3 X X X X X
 
     Try to cover each column with a set of rows, but you can't duplicate covering a column with two rows
-    Answer should be row3 or (row0, row2) or (row0, row1)
+    Answer should be row3 or (row0, row2)
     
      */
     std::vector<std::pair<std::string, bool>> columns;
@@ -343,12 +374,26 @@ int main() {
     rows.push_back(new std::vector<int>(0, 1, 2, 3, 4));
 
     std::vector<std::string> row_names = new std::vector<std::string>("row0", "row1", "row2", "row3");
+    return std::make_tuple(columns, rows, row_names);
+}
 
-    auto d = RainAlgorithmX(columns, row_names, rows, std::make_pair<int, int>(0, 0), 1);
-    bool output = d.solve();
-    if (output) {
-        std::cout<<d.get_solution()<<std::endl;
-    } else {
-        std::cout<<"No valid solution"<<std::endl;
+// Driver code
+int main() {
+    auto s = problem1();
+    auto columns = std::get<0>(s);
+    auto rows = std::get<1>(s);
+    auto row_names = std::get<2>(s);
+    
+    for (unsigned int i = 1; i < 20; i++) {
+        auto d = RainAlgorithmX(columns, row_names, rows, i);
+        bool did_solve = d.solve();
+        if (did_solve) {
+            auto solution = d.get_solution();
+            for (auto row : solution) {
+                std::cout<<row<<std::endl;
+            }
+        } else {
+            std::cout<<"No valid solution"<<std::endl;
+        }
     }
 }
