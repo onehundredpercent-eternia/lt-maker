@@ -445,11 +445,14 @@ class CombatPhaseSolver():
         if assist:
             item = attacker.get_weapon()
 
-        unclamped_hit = combat_calcs.compute_hit(attacker, defender, item, def_item, mode, attack_info, clamp_hit=False)
-        if game.rng_mode == RNGOption.FATES_HIT:
-            to_hit = self.calculate_fates_hit(utils.clamp(unclamped_hit, 0, 100))
-        else:
-            to_hit = utils.clamp(unclamped_hit, 0, 100)
+        if DB.constants.value('use_accuracy'):
+            unclamped_hit = combat_calcs.compute_hit(attacker, defender, item, def_item, mode, attack_info, clamp_hit=False)
+            if game.rng_mode == RNGOption.FATES_HIT:
+                to_hit = self.calculate_fates_hit(utils.clamp(unclamped_hit, 0, 100))
+            else:
+                to_hit = utils.clamp(unclamped_hit, 0, 100)
+        else:  # Always hit
+            to_hit = 100
 
         if self.current_command.lower() in ('hit1', 'hit2', 'crit1', 'crit2'):
             roll = -1
@@ -458,11 +461,23 @@ class CombatPhaseSolver():
         else:
             roll = self.generate_roll()
 
+        # Handle Pair Up Guard Hits
         guard_hit = False
         if DB.constants.value('pairup') and item_system.is_weapon(attacker, item) and skill_system.check_enemy(attacker, defender):
             if defender.get_guard_gauge() >= defender.get_max_guard_gauge() and defender.traveler:
                 guard_hit = True
                 roll = -1
+
+        # Handle posture system -- If we don't break their posture, it is essentially a miss and we subtract stagger from posture
+        # Otherwise it is a hit and we add stagger to posture
+        if DB.constants.value('use_posture') and skill_system.check_enemy(attacker, defender):
+            stagger = combat_calcs.compute_stagger(attacker, defender, item, def_item, mode, attack_info)
+            # check if we didn't breach the opponents posture as long as they have posture
+            if defender.get_posture() <= 0 or stagger < defender.get_posture():
+                roll = 101  # This is a miss
+                action.do(action.ChangePosture(defender, -stagger))
+            else:  # We do hit!
+                action.do(action.ChangePosture(defender, -defender.get_posture()))
 
         if roll < to_hit:
             crit = False

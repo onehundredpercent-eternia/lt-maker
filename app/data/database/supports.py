@@ -42,10 +42,12 @@ class SupportRankBonus(Prefab):
         self.dodge = float(effects[5])
         self.attack_speed = float(effects[6])
         self.defense_speed = float(effects[7])
+        self.stagger = float(effects[8])
+        self.poise = float(effects[9])
 
     @property
     def effects(self):
-        return (self.damage, self.resist, self.accuracy, self.avoid, self.crit, self.dodge, self.attack_speed, self.defense_speed)
+        return (self.damage, self.resist, self.accuracy, self.avoid, self.crit, self.dodge, self.attack_speed, self.defense_speed, self.stagger, self.poise)
 
     @classmethod
     def default(cls):
@@ -147,6 +149,8 @@ class SupportRankRequirement(SupportRankBonus):
         self.dodge = float(effects[5])
         self.attack_speed = float(effects[6])
         self.defense_speed = float(effects[7])
+        self.stagger = float(effects[8])
+        self.poise = float(effects[9])
 
     @classmethod
     def default(cls):

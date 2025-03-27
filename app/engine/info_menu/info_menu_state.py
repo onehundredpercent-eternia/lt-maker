@@ -858,49 +858,68 @@ class InfoMenuState(State):
         surf.blit(battle_surf, (left, top))
         # Populate battle info
         surf.blit(SPRITES.get('equipment_logo'), (14, top + 4))
-        render_text(surf, ['text'], [text_funcs.translate('Rng')], ['yellow'], (78, top))
-        rng_desc = text_funcs.translate_and_text_evaluate('Rng_desc', unit=self.unit)
-        self.info_graph.register((96 + 78, top, 56, 16), rng_desc, 'equipment')
-        render_text(surf, ['text'], [text_funcs.translate('Atk')], ['yellow'], (22, top + 16))
-        atk_desc = text_funcs.translate_and_text_evaluate('Atk_desc', unit=self.unit)
-        self.info_graph.register((96 + 14, top + 16, 64, 16), atk_desc, 'equipment')
-        render_text(surf, ['text'], [text_funcs.translate('Hit')], ['yellow'], (22, top + 32))
-        hit_desc = text_funcs.translate_and_text_evaluate('Hit_desc', unit=self.unit)
-        self.info_graph.register((96 + 14, top + 32, 64, 16), hit_desc, 'equipment')
-        if DB.constants.value('crit'):
-            render_text(surf, ['text'], [text_funcs.translate('Crit')], ['yellow'], (78, top + 16))
-            crit_desc = text_funcs.translate_and_text_evaluate('Crit_desc', unit=self.unit)
-            self.info_graph.register((96 + 78, top + 16, 56, 16), crit_desc, 'equipment')
-        else:
-            render_text(surf, ['text'], [text_funcs.translate('AS')], ['yellow'], (78, top + 16))
-            AS_desc = text_funcs.translate_and_text_evaluate('AS_desc', unit=self.unit)
-            self.info_graph.register((96 + 78, top + 16, 56, 16), AS_desc, 'equipment')
-        render_text(surf, ['text'], [text_funcs.translate('Avoid')], ['yellow'], (78, top + 32))
-        avoid_desc = text_funcs.translate_and_text_evaluate('Avoid_desc', unit=self.unit)
-        self.info_graph.register((96 + 78, top + 32, 56, 16), avoid_desc, 'equipment')
 
+        def render_derived_stat(title, value, position):
+            x, y = position
+            # Render the title
+            render_text(surf, ['text'], [text_funcs.translate(title), ['yellow'], position])
+            desc = text_funcs.translate_and_text_evaluate(f'{title}_desc', unit=self.unit)
+            self.info_graph.register((96 + x, y, 64,  16), desc, 'equipment')
+            # Render the value
+            render_text(surf, ['text'], [value], ['blue'], (x + 49, y), HAlignment.RIGHT)
+
+        # Calculate the values
         if weapon:
             rng = item_funcs.get_range_string(self.unit, weapon)
             dam = str(combat_calcs.damage(self.unit, weapon))
-            acc = str(combat_calcs.accuracy(self.unit, weapon))
+            acc = combat_calcs.accuracy(self.unit, weapon)
+            acc = '--' if acc is None else str(acc)
+            stg = combat_calcs.stagger(self.unit, weapon)
+            stg = '--' if stg is None else str(stg)
             crt = combat_calcs.crit_accuracy(self.unit, weapon)
-            if crt is None:
-                crt = '--'
-            else:
-                crt = str(crt)
+            crt = '--' if crt is None else str(crt)
         else:
-            rng, dam, acc, crt = '--', '--', '--', '--'
+            rng, dam, acc, stg, crt = '--', '--', '--', '--', '--'
 
         avo = str(combat_calcs.avoid(self.unit, weapon))
+        poise = str(combat_calcs.poise(self.unit, weapon))
         attack_speed = str(combat_calcs.attack_speed(self.unit, weapon))
-        render_text(surf, ['text'], [rng], ['blue'], (127, top), HAlignment.RIGHT)
-        render_text(surf, ['text'], [dam], ['blue'], (71, top + 16), HAlignment.RIGHT)
-        render_text(surf, ['text'], [acc], ['blue'], (71, top + 32), HAlignment.RIGHT)
-        if DB.constants.value('crit'):
-            render_text(surf, ['text'], [crt], ['blue'], (127, top + 16), HAlignment.RIGHT)
-        else:
-            render_text(surf, ['text'], [attack_speed], ['blue'], (127, top + 16), HAlignment.RIGHT)
-        render_text(surf, ['text'], [avo], ['blue'], (127, top + 32), HAlignment.RIGHT)
+
+        # Ordered by priority
+        orderings = [
+            ('Rng', rng),
+            ('Atk', dam),
+            ('Hit', acc),
+            ('Stg', stg),
+            ('Crit', crt),
+            ('Avo', avo),
+            ('Pse', poise),
+            ('AS', attack_speed),
+            ('--', '--'),
+            ('--', '--'),
+        ]
+
+        if not DB.constants.value('use_accuracy'):
+            orderings.remove(('Hit', acc))
+            orderings.remove(('Avo', avo))
+        if not DB.constants.value('crit'):
+            orderings.remove(('Crit', crt))
+        if not DB.constants.value('use_posture'):
+            orderings.remove(('Stg', stg))
+            orderings.remove(('Pse', poise))
+
+        positions = [
+            (78, top),
+            (22, top + 16),
+            (22, top + 32),
+            (78, top + 16),
+            (78, top + 32),
+        ]
+
+        assert len(orderings) >= len(positions)
+        for ordering, position in zip(orderings, positions):
+            title, value = ordering
+            render_derived_stat(title, value, position)
 
         return surf
 

@@ -186,6 +186,17 @@ class Crit(ItemComponent):
     def crit(self, unit, item):
         return self.value
 
+class Stagger(ItemComponent):
+    nid = 'stagger'
+    desc = "Item deals stagger damage to posture. If left off, item will always deal 0 stagger."
+    tag = ItemTags.WEAPON
+
+    expose = ComponentType.Int
+    value = 3
+
+    def stagger(self, unit, item):
+        return self.value
+
 class Weight(ItemComponent):
     nid = 'weight'
     desc = "Lowers attack speed. At first, subtracted from the CONSTITUTION equation. If negative, subtracts from overall attack speed."

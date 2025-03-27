@@ -68,6 +68,10 @@ class Defaults():
         return None
 
     @staticmethod
+    def stagger(unit: UnitObject, item: ItemObject) -> int:
+        return None
+
+    @staticmethod
     def exp(playback, unit: UnitObject, item: ItemObject) -> int:
         return 0
 

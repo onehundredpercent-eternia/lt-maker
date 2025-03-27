@@ -244,6 +244,59 @@ def crit_avoid(unit, item, item_to_avoid=None):
     avoid += skill_system.modify_crit_avoid(unit, item)
     return avoid
 
+def stagger(unit, item=None):
+    if not item:
+        item = unit.get_weapon()
+    if not item:
+        return None
+
+    stagger = item_system.stagger(unit, item)
+    if stagger is None:
+        return None
+
+    equation = resolve_offensive_formula(
+        unit, item,
+        item_system.stagger_formula, skill_system.stagger_formula,
+        item_system.stagger_formula_override, skill_system.stagger_formula_override,
+        skill_system.Defaults.stagger_formula)
+    stagger += equations.parser.get(equation, unit)
+
+    weapon_rank_bonus = get_weapon_rank_bonus(unit, item)
+    if weapon_rank_bonus:
+        stagger += int(weapon_rank_bonus.stagger)
+
+    support_rank_bonuses, support_allies = get_support_rank_bonus(unit)
+    for bonus in support_rank_bonuses:
+        stagger += float(bonus.stagger)
+    stagger = int(stagger)
+
+    stagger += item_system.modify_stagger(unit, item)
+    stagger += skill_system.modify_stagger(unit, item)
+
+    return stagger
+
+def poise(unit, item, item_to_avoid=None):
+    equation = resolve_defensive_formula(
+        unit, item, None, item_to_avoid,
+        item_system.poise_formula, skill_system.poise_formula,
+        item_system.poise_formula_override, skill_system.poise_formula_override,
+        skill_system.Defaults.poise_formula)
+    poise = equations.parser.get(equation, unit)
+
+    weapon_rank_bonus = get_weapon_rank_bonus(unit, item)
+    if weapon_rank_bonus:
+        poise += int(weapon_rank_bonus.poise)
+
+    support_rank_bonuses, support_allies = get_support_rank_bonus(unit)
+    for bonus in support_rank_bonuses:
+        poise += float(bonus.poise)
+    poise = int(poise)
+
+    if item:
+        poise += item_system.modify_poise(unit, item)
+    poise += skill_system.modify_poise(unit, item)
+    return poise
+
 def damage(unit, item=None):
     if not item:
         item = unit.get_weapon()
@@ -457,6 +510,53 @@ def compute_crit(unit, target, item, def_item, mode, attack_info):
     crit = int(crit)
 
     return utils.clamp(crit, 0, 100)
+
+def compute_stagger(unit, target, item, def_item, mode, attack_info):
+    if not item:
+        return None
+
+    stg = stagger(unit, item)
+    if stg is None:
+        return 0
+
+    hit += item_system.dynamic_stagger(unit, item, target, resolve_weapon(target), mode, attack_info, stg)
+
+    # Weapon Triangle
+    triangle_bonus = 0
+    adv = compute_advantage(unit, target, item, def_item)
+    disadv = compute_advantage(unit, target, item, def_item, False)
+    if adv:
+        triangle_bonus += int(adv.stagger)
+    if disadv:
+        triangle_bonus += int(disadv.stagger)
+
+    adv = compute_advantage(target, unit, def_item, item)
+    disadv = compute_advantage(target, unit, def_item, item, False)
+    if adv:
+        triangle_bonus -= int(adv.poise)
+    if disadv:
+        triangle_bonus -= int(disadv.poise)
+    stg += triangle_bonus
+
+    # Three Houses style support bonus (only works on attack)
+    if mode in ('attack', 'splash'):
+        # Attacker's accuracy bonus
+        support_rank_bonuses, support_allies = get_support_rank_bonus(unit, target)
+        for bonus in support_rank_bonuses:
+            stg += float(bonus.stagger)
+    if mode == 'defense':
+        # Attacker's avoid bonus
+        support_rank_bonuses, support_allies = get_support_rank_bonus(target, unit)
+        for bonus in support_rank_bonuses:
+            stg -= float(bonus.poise)
+    stg = int(stg)
+
+    stg -= poise(target, def_item, item)
+
+    stg += skill_system.dynamic_stagger(unit, item, target, resolve_weapon(target), mode, attack_info, stg)
+    stg -= skill_system.dynamic_poise(target, resolve_weapon(target), unit, item, mode, attack_info, stg)
+
+    return max(stg, 0)
 
 def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, assist=False):
     if not item:

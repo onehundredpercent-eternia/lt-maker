@@ -143,6 +143,14 @@ class Defaults():
         return 'CRIT_AVOID'
 
     @staticmethod
+    def stagger_formula(unit) -> str:
+        return 'STAGGER'
+
+    @staticmethod
+    def poise_formula(unit) -> str:
+        return 'POISE'
+
+    @staticmethod
     def attack_speed_formula(unit) -> str:
         return 'ATTACK_SPEED'
 

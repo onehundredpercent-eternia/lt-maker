@@ -2235,6 +2235,20 @@ class ChangeHP(Action):
     def reverse(self):
         self.unit.set_hp(self.old_hp)
 
+
+class ChangePosture(Action):
+    def __init__(self, unit, num):
+        self.unit = unit
+        self.num = num
+        self.old_posture = self.unit.get_posture()
+
+    def do(self):
+        self.old_posture = self.unit.get_posture()
+        self.unit.set_posture(self.old_posture + self.num)
+
+    def reverse(self):
+        self.unit.set_posture(self.old_posture)
+
 class SetName(Action):
     def __init__(self, unit, new_name):
         self.unit = unit

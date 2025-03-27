@@ -98,6 +98,8 @@ class SupportEffect():
     dodge: float = 0
     attack_speed: float = 0
     defense_speed: float = 0
+    stagger: float = 0
+    poise: float = 0
 
     def add_effect(self, effect: list):
         self.damage += effect[0]
@@ -108,6 +110,8 @@ class SupportEffect():
         self.dodge += effect[5]
         self.attack_speed += effect[6]
         self.defense_speed += effect[7]
+        self.stagger += effect[8]
+        self.poise += effect[9]
 
 
 class SupportController():

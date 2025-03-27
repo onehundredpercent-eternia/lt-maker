@@ -87,6 +87,7 @@ class UnitObject(Prefab):
     current_hp: int = 0
     current_mana: int = 0
     current_fatigue: int = 0
+    current_posture: int = 0
     _movement_left: int = 0
     current_guard_gauge: int = 0
 
@@ -240,6 +241,7 @@ class UnitObject(Prefab):
         self.current_hp = self.get_max_hp()
         self.current_mana = self.get_max_mana()
         self.current_fatigue = 0
+        self.current_posture = self.get_max_posture()
         self._movement_left = equations.parser.movement(self)
         self.current_guard_gauge = 0
 
@@ -327,6 +329,7 @@ class UnitObject(Prefab):
         # Reset these so max hp can be changed by skills and items
         self.current_hp = self.get_max_hp()
         self.current_mana = self.get_max_mana()
+        self.current_posture = self.get_max_posture()
 
         return self
 
@@ -380,6 +383,23 @@ class UnitObject(Prefab):
 
     def set_fatigue(self, val):
         self.current_fatigue = int(max(val, 0))
+
+    def get_max_posture(self) -> int:
+        """
+        Returns:
+            Unit's maximum Posture
+        """
+        return equations.parser.posture(self)
+
+    def get_posture(self) -> int:
+        """
+        Returns:
+            Unit's current Posture
+        """
+        return self.current_posture
+
+    def set_posture(self, val: int):
+        self.current_posture = int(utils.clamp(val, 0, equations.parser.posture(self)))
 
     def get_guard_gauge(self):
         return self.current_guard_gauge
@@ -917,6 +937,7 @@ class UnitObject(Prefab):
                   'current_hp': self.current_hp,
                   'current_mana': self.current_mana,
                   'current_fatigue': self.current_fatigue,
+                  'current_posture': self.curent_posture,
                   'traveler': self.traveler,
                   'current_guard_gauge': self.current_guard_gauge,
                   'built_guard': self.built_guard,
@@ -979,6 +1000,7 @@ class UnitObject(Prefab):
         self.current_hp = s_dict['current_hp']
         self.current_mana = s_dict['current_mana']
         self.current_fatigue = s_dict['current_fatigue']
+        self.curent_posture = s_dict['current_posture']
         self._movement_left = equations.parser.movement(self)
         self.current_guard_gauge = s_dict.get('current_guard_gauge', 0)
 

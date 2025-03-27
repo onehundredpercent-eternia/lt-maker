@@ -238,16 +238,23 @@ class ItemHelpDialog(HelpDialog):
                 weapon_rank = '--'
 
         might = item_system.damage(self.unit, self.item)
-        hit = item_system.hit(self.unit, self.item)
+        if DB.constants.value('use_accuracy'):
+            hit = item_system.hit(self.unit, self.item)
+        else:
+            hit = None
         if DB.constants.value('crit'):
             crit = item_system.crit(self.unit, self.item)
         else:
             crit = None
+        if DB.constants.value('use_posture'):
+            stg = item_system.stagger(self.unit, self.item)
+        else:
+            stg = None
         weight = self.item.weight.value if self.item.weight else None
         # Get range
         rng = item_funcs.get_range_string(self.unit, self.item)
 
-        self.vals = [weapon_rank, rng, weight, might, hit, crit]
+        self.vals = [weapon_rank, rng, weight, might, hit, stg, crit]
 
         desc = self.item.desc
         if self.item.desc:
@@ -317,7 +324,7 @@ class ItemHelpDialog(HelpDialog):
         name_positions.reverse()
         val_positions = [(100, 6), (144, 6), (50, 22), (100, 22), (144, 22)]
         val_positions.reverse()
-        names = ['Rng', 'Wt', 'Mt', 'Hit', 'Crit']
+        names = ['Rng', 'Wt', 'Mt', 'Hit', 'Stg', 'Crit']
         for v, n in zip(self.vals[1:], names):
             if v is not None:
                 name_pos = name_positions.pop()
