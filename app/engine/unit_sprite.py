@@ -185,6 +185,7 @@ class UnitSprite():
         self.map_sprite = load_map_sprite(self.unit, self.unit.team)
 
         self.health_bar = health_bar.MapHealthBar(self.unit)
+        self.posture_bar = health_bar.MapPostureBar(self.unit)
 
     def set_image_state(self, new_state: str):
         self.image_state = new_state
@@ -403,6 +404,7 @@ class UnitSprite():
         self.update_state()
         self.update_transition()
         self.health_bar.update()
+        self.posture_bar.update()
 
         # update animations
         self.animations = {k: v for (k, v) in self.animations.items() if not v.update()}
@@ -680,7 +682,8 @@ class UnitSprite():
            (cf.SETTINGS['hp_map_team'] == 'Ally' and self.unit.team in DB.teams.allies) or \
            (cf.SETTINGS['hp_map_team'] == 'Enemy' and self.unit.team in DB.teams.enemies):
             if (cf.SETTINGS['hp_map_cull'] == 'All') or \
-               (cf.SETTINGS['hp_map_cull'] == 'Wounded' and self.unit.get_hp() < equations.parser.hitpoints(self.unit)):
+               (cf.SETTINGS['hp_map_cull'] == 'Wounded' 
+                and (self.unit.get_hp() < self.unit.get_max_hp() or self.unit.get_posture() < self.unit.get_max_posture())):
                 return True
         return False
 
@@ -690,6 +693,8 @@ class UnitSprite():
 
         if not event and self.check_draw_hp():
             self.health_bar.draw(surf, left, top)
+            if DB.constants.value('use_posture'):
+                self.posture_bar.draw(surf, left, top + 3)
 
         if self.transition_state == 'normal' and not self.unit.is_dying and \
                 self.image_state in ('gray', 'passive') and int((current_time%450) // 150) in (1, 2):

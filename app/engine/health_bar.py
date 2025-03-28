@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import random
 from functools import lru_cache
 
-from typing import Tuple
+from typing import Tuple, Callable
 
 import app.utilities as utils
 from app.constants import (TILEHEIGHT, TILEWIDTH, TILEX, TILEY, WINHEIGHT,
@@ -15,44 +17,46 @@ from app.engine.game_state import game
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 
-
-class HealthBar():
+class AbstractBar:
     time_for_change_min = 200
-    speed = utils.frames2ms(1)   # 1 frame for each hp point
+    speed = utils.frames2ms(1)   # 1 frame for each point
 
-    def __init__(self, unit):
+    def __init__(self, unit, getter: Callable[None, int]):
         self.unit = unit
+        self.getter = getter
 
-        self.displayed_hp = self.unit.get_hp()
-        self.old_hp = self.displayed_hp
+        self.displayed_value = self.getter()
+        self.old_value = self.displayed_value
 
         self.transition_flag = False
         self.time_for_change = self.time_for_change_min
         self.last_update = 0
 
-    def set_hp(self, val):
-        self.displayed_hp = val
+    def get_value(self) -> int:
+        return self.displayed_value
+
+    def set_value(self, val):
+        self.displayed_value = val
 
     def update(self):
-        # print(self.displayed_hp, self.unit.get_hp(), self.transition_flag)
         # Check to see if we should begin showing transition
-        if self.displayed_hp != self.unit.get_hp() and not self.transition_flag:
+        if self.displayed_value != self.getter() and not self.transition_flag:
             self.transition_flag = True
-            self.time_for_change = max(self.time_for_change_min, abs(self.displayed_hp - self.unit.get_hp()) * self.speed)
+            self.time_for_change = max(self.time_for_change_min, abs(self.displayed_value - self.getter()) * self.speed)
             self.last_update = engine.get_time()
 
         # Check to see if we should update
         if self.transition_flag:
             time = (engine.get_time() - self.last_update) / self.time_for_change
-            new_val = int(utils.lerp(self.old_hp, self.unit.get_hp(), time))
-            self.set_hp(new_val)
+            new_val = int(utils.lerp(self.old_value, self.getter(), time))
+            self.set_value(new_val)
             if time >= 1:
-                self.set_hp(self.unit.get_hp())
-                self.old_hp = self.displayed_hp
+                self.set_value(self.getter())
+                self.old_value = self.displayed_value
                 self.transition_flag = False
 
 MAX_HP_PER_BAR = 40
-class CombatHealthBar(HealthBar):
+class CombatHealthBar(AbstractBar):
     colors = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1]
     speed = utils.frames2ms(2)
     time_for_change_min = 0
@@ -69,7 +73,7 @@ class CombatHealthBar(HealthBar):
         self.heal_sound_update = 0
 
     def update(self, skip=False):
-        if self.displayed_hp < self.unit.get_hp():
+        if self.get_value() < self.unit.get_hp():
             self.speed = utils.frames2ms(4)  # Slower speed when increasing hp
         else:
             self.speed = utils.frames2ms(2)
@@ -78,17 +82,17 @@ class CombatHealthBar(HealthBar):
 
     def set_hp(self, val):
         current_time = engine.get_time()
-        if self.displayed_hp < self.unit.get_hp() and current_time - self.heal_sound_update > self.speed:
+        if self.get_value() < self.unit.get_hp() and current_time - self.heal_sound_update > self.speed:
             self.heal_sound_update = current_time
             get_sound_thread().stop_sfx('HealBoop')
             get_sound_thread().play_sfx('HealBoop')
-        super().set_hp(val)
+        self.set_value(val)
 
     def big_number(self) -> bool:
-        return self.displayed_hp != self.unit.get_hp()
+        return self.get_value() != self.unit.get_hp()
 
     def done(self) -> bool:
-        return self.displayed_hp == self.unit.get_hp()
+        return self.get_value() == self.unit.get_hp()
 
     @lru_cache(1)
     def _create_hp_bar_surf(self, full_hp: int, actual_hp: int, overflow: int = 0) -> engine.Surface:
@@ -139,12 +143,12 @@ class CombatHealthBar(HealthBar):
         font = FONT['number_small2']
         if self.big_number():
             font = FONT['number_big2']
-        if self.displayed_hp <= 240:
-            font.blit_right(str(self.displayed_hp), surf, (left, top - 4))
+        if self.get_value() <= 240:
+            font.blit_right(str(self.get_value()), surf, (left, top - 4))
         else:
             font.blit_right('??', surf, (left, top - 4))
         max_hp = self.unit.get_max_hp()
-        curr_hp = self.displayed_hp
+        curr_hp = self.get_value()
         if max_hp <= MAX_HP_PER_BAR:
             hp_bar = self._create_hp_bar_surf(max_hp, curr_hp)
             surf.blit(hp_bar, (left + 5, top + 1))
@@ -156,7 +160,7 @@ class CombatHealthBar(HealthBar):
             double_hp_bars = self._create_double_hp_bar_surf(max_hp, curr_hp, overflow_level)
             surf.blit(double_hp_bars, (left + 5, top - 4))
 
-class MapHealthBar(HealthBar):
+class MapHealthBar(AbstractBar):
     time_for_change_min = 200
     speed = utils.frames2ms(1)
     health_outline = SPRITES.get('map_health_outline')
@@ -164,7 +168,7 @@ class MapHealthBar(HealthBar):
 
     def draw(self, surf, left, top):
         total = max(1, self.unit.get_max_hp())
-        fraction_hp = utils.clamp(self.displayed_hp / total, 0, 1)
+        fraction_hp = utils.clamp(self.get_value() / total, 0, 1)
         index_pixel = int(12 * fraction_hp) + 1
 
         surf.blit(self.health_outline, (left, top + 13))
@@ -174,13 +178,31 @@ class MapHealthBar(HealthBar):
 
         return surf
 
-class MapCombatHealthBar(HealthBar):
+class MapPostureBar(AbstractBar):
+    time_for_change_min = 100
+    speed = utils.frames2ms(2)
+    posture_outline = SPRITES.get('map_posture_outline')
+    posture_bar = SPRITES.get('map_posture_bar')
+
+    def draw(self, surf, left, top):
+        total = max(1, self.unit.get_max_posture())
+        fraction_posture = utils.clamp(self.get_value() / total, 0, 1)
+        index_pixel = int(10 * fraction_hp) + 1
+
+        surf.blit(self.posture_outline, (left, top + 13))
+        if fraction_postuer > 0:
+            bar = engine.subsurface(self.posture_bar, (0, 0, index_pixel, 1))
+            surf.blit(bar, (left + 2, top + 14))
+
+        return surf
+
+class MapCombatHealthBar(AbstractBar):
     display_numbers = True
     health_bar = SPRITES.get('health_bar')
 
     def draw(self, surf):
         total = max(1, self.unit.get_max_hp())
-        fraction_hp = utils.clamp(self.displayed_hp / total, 0, 1)
+        fraction_hp = utils.clamp(self.get_value() / total, 0, 1)
         index_pixel = int(50 * fraction_hp)
         position = 25, 22
         surf.blit(engine.subsurface(self.health_bar, (0, 0, index_pixel, 2)), position)
@@ -190,7 +212,7 @@ class MapCombatHealthBar(HealthBar):
             font = FONT['number_small2']
             if self.transition_flag:
                 font = FONT['number_big2']
-            s = str(self.displayed_hp)
+            s = str(self.get_value())
             position = 22 - font.size(s)[0], 15
             font.blit(s, surf, position)
 

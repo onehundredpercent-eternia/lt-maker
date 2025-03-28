@@ -408,19 +408,36 @@ class UIView():
             else:
                 FONT['text-blue'].blit_right(str(num), surf, (x_pos, y_pos))
 
+        accuracy_flag = DB.constants.value('use_accuracy')
         crit_flag = DB.constants.value('crit')
+        stagger_flag = DB.constants.value('use_posture')
         grandmaster = game.rng_mode == RNGOption.GRANDMASTER
         if grandmaster:  # Grandmaster takes precedence
             crit_flag = False
 
         # Choose attack info background
         prefix = 'attack_info_'
-        if grandmaster:
-            infix = 'grandmaster'
-        elif crit_flag:
-            infix = 'crit'
-        else:
-            infix = ''
+        infix = ''
+        if accuracy_flag:
+            infix += 'hit_'
+        if crit_flag:
+            infix += 'crit_'
+        if stagger_flag:
+            infix += 'stagger_'
+        # Determine the order from top to bottom they are drawn
+        hit_index = 1
+        stagger_index = 2
+        crit_index = 3
+        if not accuracy_flag:
+            hit_index = 0
+            stagger_index -= 1
+            crit_index -= 1
+        if not stagger_flag:
+            stagger_index = 0
+            crit_index -= 1
+        if not crit_flag:
+            crit_index = 0
+
 
         color = DB.teams.get(defender.team).combat_color
         final = prefix + infix + ('_' if infix else '') + color
@@ -432,12 +449,6 @@ class UIView():
             if a_assist:
                 # Background boxes
                 prefix = 'assist_info_'
-                if grandmaster:
-                    infix = 'grandmaster'
-                elif crit_flag:
-                    infix = 'crit'
-                else:
-                    infix = ''
                 color = DB.teams.get(attacker.team).combat_color
                 final = prefix + infix + ('_' if infix else '') + color
                 fallback_final = prefix + infix + ('_' if infix else '') + 'red'
@@ -449,23 +460,20 @@ class UIView():
                     blit_num(surf, int(mt * float(hit) / 100), 112, 35)
                 else:
                     blit_num(surf, mt, 112, 35)
-                    hit = combat_calcs.compute_hit(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
-                    blit_num(surf, hit, 112, 51)
-                    # Blit crit if applicable
-                    if crit_flag:
+                    if hit_index:
+                        hit = combat_calcs.compute_hit(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
+                        blit_num(surf, hit, 112, 35 + 16 * hit_index)
+                    if stagger_index:
+                        stagger = combat_calcs.compute_stagger(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
+                        blit_num(surf, stagger, 112, 35 + 16 * stagger_index)
+                    if crit_index:
                         c = combat_calcs.compute_crit(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
-                        blit_num(surf, c, 112, 67)
+                        blit_num(surf, c, 112, 35 + 16 * crit_index)
 
             if d_assist and defender.get_weapon() and \
                     combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
                 # Background boxes
                 prefix = 'assist_info_'
-                if grandmaster:
-                    infix = 'grandmaster'
-                elif crit_flag:
-                    infix = 'crit'
-                else:
-                    infix = ''
                 color = DB.teams.get(defender.team).combat_color
                 final = prefix + infix + ('_' if infix else '') + color
                 fallback_final = prefix + infix + ('_' if infix else '') + 'red'
@@ -477,12 +485,15 @@ class UIView():
                     blit_num(surf, int(mt * float(hit) / 100), 21, 35)
                 else:
                     blit_num(surf, mt, 21, 35)
-                    hit = combat_calcs.compute_hit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
-                    blit_num(surf, hit, 21, 51)
-                    # Blit crit if applicable
-                    if crit_flag:
+                    if hit_index:
+                        hit = combat_calcs.compute_hit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+                        blit_num(surf, hit, 21, 35 + 16 * hit_index)
+                    if stagger_index:
+                        stagger = combat_calcs.compute_stagger(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+                        blit_num(surf, stagger, 21, 35 + 16 * stagger_index)
+                    if crit_index:
                         c = combat_calcs.compute_crit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
-                        blit_num(surf, c, 21, 67)
+                        blit_num(surf, c, 21, 35 + 16 * crit_index)
         # Now make everything translucent
         surf = image_mods.make_translucent(surf, .1)
 
@@ -904,14 +915,20 @@ class ItemDescriptionPanel():
             left = 2
             affin_width = FONT['text'].width('Affin')
             FONT['text'].blit('Affin', bg_surf, (left + width//2 - 16//2 - affin_width//2, top + 4))
+
             FONT['text'].blit('Atk', bg_surf, (5 + left, top + 20))
-            FONT['text'].blit('Hit', bg_surf, (5 + left, top + 36))
+            if DB.constants.value('use_accuracy'):
+                FONT['text'].blit('Hit', bg_surf, (5 + left, top + 36))
+                FONT['text'].blit('Avo', bg_surf, (width//2 + 5 + left, top + 36))
+            elif DB.constants.value('use_posture'):
+                FONT['text'].blit('Stg', bg_surf, (5 + left, top + 36))
+                FONT['text'].blit('Pse', bg_surf, (width//2 + 5 + left, top + 36))
+
             if DB.constants.value('crit'):
                 FONT['text'].blit('Crit', bg_surf, (width//2 + 5 + left, top + 20))
             else:
                 FONT['text'].blit('AS', bg_surf, (width//2 + 5 + left, top + 20))
-            FONT['text'].blit('Avo', bg_surf, (width//2 + 5 + left, top + 36))
-
+            
             damage = combat_calcs.damage(self.unit, self.item)
             accuracy = combat_calcs.accuracy(self.unit, self.item)
             crit = combat_calcs.crit_accuracy(self.unit, self.item)
@@ -919,14 +936,22 @@ class ItemDescriptionPanel():
                 crit = '--'
             avoid = combat_calcs.avoid(self.unit, self.item)
             attack_speed = combat_calcs.attack_speed(self.unit, self.item)
+            stagger = combat_calcs.stagger(self.unit, self.item)
+            poise = combat_calcs.poise(self.unit, self.item)
 
             FONT['text-blue'].blit_right(str(damage), bg_surf, (left + width//2 - 3, top + 20))
-            FONT['text-blue'].blit_right(str(accuracy), bg_surf, (left + width//2 - 3, top + 36))
+            if DB.constants.value('use_accuracy'):
+                FONT['text-blue'].blit_right(str(accuracy), bg_surf, (left + width//2 - 3, top + 36))
+                FONT['text-blue'].blit_right(str(avoid), bg_surf, (left + width - 3, top + 36))
+            elif DB.constants.value('use_posture'):
+                FONT['text-blue'].blit_right(str(stagger), bg_surf, (left + width//2 - 3, top + 36))
+                FONT['text-blue'].blit_right(str(poise), bg_surf, (left + width - 3, top + 36))
+
             if DB.constants.value('crit'):
                 FONT['text-blue'].blit_right(str(crit), bg_surf, (left + width - 3, top + 20))
             else:
                 FONT['text-blue'].blit_right(str(attack_speed), bg_surf, (left + width - 3, top + 20))
-            FONT['text-blue'].blit_right(str(avoid), bg_surf, (left + width - 3, top + 36))
+            
 
             weapon_type = item_system.weapon_type(self.unit, self.item)
             if weapon_type:
@@ -987,13 +1012,22 @@ class ItemDescriptionPanel():
             elif is_curr_better == -1:
                 bg_surf.blit(down_arrow, (left + width//2 - 3, top + 24))
 
-            curr_accuracy = combat_calcs.accuracy(self.unit, current_weapon)
-            prev_accuracy = combat_calcs.accuracy(self.unit, self.reference_item)
-            is_curr_better = compare(curr_accuracy, prev_accuracy)
-            if is_curr_better == 1:
-                bg_surf.blit(up_arrow, (left + width//2 - 3, top + 40))
-            elif is_curr_better == -1:
-                bg_surf.blit(down_arrow, (left + width//2 - 3, top + 40))
+            if DB.constants.value('use_accuracy'):
+                curr_accuracy = combat_calcs.accuracy(self.unit, current_weapon)
+                prev_accuracy = combat_calcs.accuracy(self.unit, self.reference_item)
+                is_curr_better = compare(curr_accuracy, prev_accuracy)
+                if is_curr_better == 1:
+                    bg_surf.blit(up_arrow, (left + width//2 - 3, top + 40))
+                elif is_curr_better == -1:
+                    bg_surf.blit(down_arrow, (left + width//2 - 3, top + 40))
+            elif DB.constants.value('use_poise'):
+                curr_stagger = combat_calcs.stagger(self.unit, current_weapon)
+                prev_stagger = combat_calcs.stagger(self.unit, self.reference_item)
+                is_curr_better = compare(curr_stagger, prev_stagger)
+                if is_curr_better == 1:
+                    bg_surf.blit(up_arrow, (left + width//2 - 3, top + 40))
+                elif is_curr_better == -1:
+                    bg_surf.blit(down_arrow, (left + width//2 - 3, top + 40))
                           
             if DB.constants.value('crit'):
                 curr_crit = combat_calcs.crit_accuracy(self.unit, current_weapon)
