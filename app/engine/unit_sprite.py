@@ -682,8 +682,8 @@ class UnitSprite():
            (cf.SETTINGS['hp_map_team'] == 'Ally' and self.unit.team in DB.teams.allies) or \
            (cf.SETTINGS['hp_map_team'] == 'Enemy' and self.unit.team in DB.teams.enemies):
             if (cf.SETTINGS['hp_map_cull'] == 'All') or \
-               (cf.SETTINGS['hp_map_cull'] == 'Wounded' 
-                and (self.unit.get_hp() < self.unit.get_max_hp() or self.unit.get_posture() < self.unit.get_max_posture())):
+               (cf.SETTINGS['hp_map_cull'] == 'Wounded'
+                    and (self.unit.get_hp() < self.unit.get_max_hp() or self.unit.get_posture() < self.unit.get_max_posture())):
                 return True
         return False
 
@@ -692,12 +692,14 @@ class UnitSprite():
         left, top = self.get_topleft(cull_rect)
 
         if not event and self.check_draw_hp():
-            self.health_bar.draw(surf, left, top)
             if DB.constants.value('use_posture'):
-                self.posture_bar.draw(surf, left, top + 3)
+                self.health_bar.draw(surf, left, top - 1)
+                self.posture_bar.draw(surf, left, top + 1)
+            else:
+                self.health_bar.draw(surf, left, top)
 
         if self.transition_state == 'normal' and not self.unit.is_dying and \
-                self.image_state in ('gray', 'passive') and int((current_time%450) // 150) in (1, 2):
+                self.image_state in ('gray', 'passive') and int((current_time % 450) // 150) in (1, 2):
             icon = None
             if 'Boss' in self.unit.tags:
                 icon = SPRITES.get('boss_icon')

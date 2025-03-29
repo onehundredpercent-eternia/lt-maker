@@ -187,10 +187,10 @@ class MapPostureBar(AbstractBar):
     def draw(self, surf, left, top):
         total = max(1, self.unit.get_max_posture())
         fraction_posture = utils.clamp(self.get_value() / total, 0, 1)
-        index_pixel = int(10 * fraction_hp) + 1
+        index_pixel = int(10 * fraction_posture) + 1
 
         surf.blit(self.posture_outline, (left, top + 13))
-        if fraction_postuer > 0:
+        if fraction_posture > 0:
             bar = engine.subsurface(self.posture_bar, (0, 0, index_pixel, 1))
             surf.blit(bar, (left + 2, top + 14))
 
@@ -218,6 +218,18 @@ class MapCombatHealthBar(AbstractBar):
 
         return surf
 
+class MapCombatPostureBar(AbstractBar):
+    posture_bar = SPRITES.get('posture_bar')
+
+    def draw(self, surf):
+        total = max(1, self.unit.get_max_posture())
+        fraction_posture = utils.clamp(self.get_value() / total, 0, 1)
+        index_pixel = int(50 * fraction_posture)
+        position = 25, 26
+        surf.blit(engine.subsurface(self.posture_bar, (0, 0, index_pixel, 2)), position)
+
+        return surf
+
 class MapCombatInfo():
     blind_speed = 1/8.  # 8 frames to fade in
 
@@ -239,7 +251,8 @@ class MapCombatInfo():
         else:
             self.blinds = 1
 
-        self.hp_bar = MapCombatHealthBar(unit)
+        self.hp_bar = MapCombatHealthBar(unit, unit.get_hp)
+        self.posture_bar = MapCombatPostureBar(unit, unit.get_posture)
         self.unit = unit
         self.item = item
         if target:
@@ -249,6 +262,7 @@ class MapCombatInfo():
             self.mt = stats[1]
             self.crt = stats[2]
             self.grd = stats[3]
+            self.stg = stats[4]
 
         self.skill_icons.clear()
 
@@ -256,8 +270,12 @@ class MapCombatInfo():
         team = DB.teams.get(unit.team)
 
         self.stats_surf = None
-        self.bg_surf = SPRITES.get('health_' + team.combat_color).convert_alpha()
-        self.hit_and_mt_surf = SPRITES.get('combat_stats_' + team.combat_color).convert_alpha()
+        if DB.constants.value('use_posture'):
+            self.bg_surf = SPRITES.get('health_posture_' + team.combat_color).convert_alpha()
+            self.hit_and_mt_surf = SPRITES.get('combat_stats_stg_' + team.combat_color).convert_alpha()
+        else:
+            self.bg_surf = SPRITES.get('health_' + team.combat_color).convert_alpha()
+            self.hit_and_mt_surf = SPRITES.get('combat_stats_' + team.combat_color).convert_alpha()
         self.guard_surf = SPRITES.get('combat_stats_guard_' + team.combat_color).convert_alpha()
         self.gem = SPRITES.get('combat_gem_' + team.combat_color).convert_alpha()
 
@@ -266,6 +284,7 @@ class MapCombatInfo():
         self.true_position = None
 
         self.hp_bar = None
+        self.posture_bar = None
         self.unit = None
         self.item = None
         self.target = None
@@ -320,12 +339,18 @@ class MapCombatInfo():
 
     def _blit_hit_and_mt(self, surf):
         # Blit hit
-        if self.hit is not None:
-            hit = str(utils.clamp(self.hit, 0, 100))
+        if DB.constants.value('use_posture'):
+            if self.stg is not None:
+                val = str(self.stg)
+            else:
+                val = '--'
         else:
-            hit = '--'
-        position = surf.get_width() // 2 - FONT['number_small2'].size(hit)[0] - 1, -2
-        FONT['number_small2'].blit(hit, surf, position)
+            if self.hit is not None:
+                val = str(utils.clamp(self.hit, 0, 100))
+            else:
+                val = '--'
+        position = surf.get_width() // 2 - FONT['number_small2'].size(val)[0] - 1, -2
+        FONT['number_small2'].blit(val, surf, position)
         # Blit damage
         if self.mt is not None:
             damage = str(max(0, self.mt))
@@ -427,7 +452,7 @@ class MapCombatInfo():
             self.ordering = 'middle'
 
     def update_stats(self, stats: Tuple[int, int, int, int]):
-        self.hit, self.mt, self.crt, self.grd = stats
+        self.hit, self.mt, self.crt, self.grd, self.stg = stats
         self.stats_surf = None
 
     def update(self):
@@ -437,6 +462,7 @@ class MapCombatInfo():
         if self.unit and self.blinds >= 1:
             self.handle_shake()
             self.hp_bar.update()
+            self.posture_bar.update()
 
     def draw(self, surf):
         # Create background surface
@@ -444,7 +470,7 @@ class MapCombatInfo():
         
         if self.grd is not None:
             stat_height = height + self.guard_surf.get_height()
-        elif self.hit is not None or self.mt is not None:
+        elif self.hit is not None or self.mt is not None or self.stg is not None:
             stat_height = height + self.hit_and_mt_surf.get_height()
         else:
             stat_height = height
@@ -483,13 +509,15 @@ class MapCombatInfo():
         # End item
 
         bg_surf = self.hp_bar.draw(bg_surf)
+        if DB.constants.value('use_posture'):
+            bg_surf = self.posture_bar.draw(bg_surf)
 
         # Blit stat surf
         if self.grd is not None:
             if not self.stats_surf:
                 self.stats_surf = self.build_guard_surf()
             bg_surf.blit(self.stats_surf, (0, height))
-        elif self.hit is not None or self.mt is not None:
+        elif self.hit is not None or self.mt is not None or self.stg is not None:
             if not self.stats_surf:
                 self.stats_surf = self.build_hit_and_mt_surf()
             bg_surf.blit(self.stats_surf, (0, height))
