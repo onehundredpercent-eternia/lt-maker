@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from app.engine import (ai_controller, death,
         game_board, highlight, map_view, phase,
         promotion, ui_view, banner, boundary, camera, cursor,
-        initiative, records, supports, turnwheel, unit_sprite)
+        initiative, records, supports, turnwheel, unit_sprite, right_display_mug)
     from app.engine.combat.simple_combat import SimpleCombat
     from app.engine.movement import movement_system
     from app.engine.overworld.overworld_movement_manager import \
@@ -35,13 +35,13 @@ if TYPE_CHECKING:
     from app.engine.target_system import TargetSystem
     from app.engine.pathfinding.path_system import PathSystem
     from app.utilities.typing import NID, UID, Pos
-
 from app.constants import VERSION
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import DifficultyModePrefab, GrowthOption, PermadeathOption, RNGOption
 from app.events.regions import RegionType
 from app.events import speak_style
-from app.engine import config as cf, right_display_mug
+from app.engine import config as cf
+
 from app.engine import state_machine
 from app.engine.roam.roam_info import RoamInfo
 from app.utilities import static_random
@@ -85,7 +85,7 @@ class GameState():
         self.memory: Dict = {}
 
         self.state: state_machine.StateMachine = state_machine.StateMachine()
-        self.right_display: right_display_mug.RightDisplay = right_display_mug.RightDisplay()
+        self.right_display: right_display_mug.RightDisplay = None
 
         self.alerts: List[banner.Banner] = []
 
@@ -131,6 +131,7 @@ class GameState():
         self.board: game_board.GameBoard = None
         self.cursor: cursor.BaseCursor = None
         self.camera: camera.Camera = None
+        
         self.boundary: boundary.BoundaryInterface = None
         self.phase: phase.PhaseController = None
         self.highlight: highlight.HighlightController = None
@@ -249,7 +250,7 @@ class GameState():
         Done on loading a level, whether from overworld, last level, save_state, etc.
         """
         from app.engine import (ai_controller, camera, death, highlight,
-                                map_view, phase, ui_view)
+                                map_view, phase, ui_view, right_display_mug)
         from app.engine.movement import movement_system
         from app.engine.target_system import TargetSystem
         from app.engine.pathfinding.path_system import PathSystem
@@ -268,6 +269,7 @@ class GameState():
         self.ai = ai_controller.AIController()
         self.target_system = TargetSystem()
         self.path_system = PathSystem()
+        self.right_display = right_display_mug.RightDisplay(self)
 
         self.alerts.clear()
 

@@ -1,5 +1,5 @@
 from app.utilities import utils
-from app.constants import WINWIDTH, WINHEIGHT
+from app.constants import WINWIDTH, WINHEIGHT, TOTAL_WIDTH
 
 from app.engine import config as cf
 from app.engine.sprites import SPRITES
@@ -190,7 +190,7 @@ class ScreenSizeOption(SliderOption):
     def update_screen_size(self):
         n = self.get_value()
         true_n = min(n, 5)
-        requested_screensize = (WINWIDTH * true_n, WINHEIGHT * true_n)
+        requested_screensize = (TOTAL_WIDTH * true_n, WINHEIGHT * true_n)
         if n == self.values[-1]:
             cf.SETTINGS['fullscreen'] = 1
         else:

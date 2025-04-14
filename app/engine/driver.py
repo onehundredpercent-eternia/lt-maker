@@ -100,7 +100,7 @@ def run(game: GameState):
     get_sound_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
 
     surf = engine.create_surface((TOTAL_WIDTH, WINHEIGHT))
-    right_display = engine.create_simple_surface((RIGHTWIDTH, WINHEIGHT))
+    right_display_surf = engine.create_simple_surface((RIGHTWIDTH, WINHEIGHT))
     clock = engine.Clock()
     fps_records = collections.deque(maxlen=FPS)
     inp = get_input_manager()
@@ -151,8 +151,8 @@ def run(game: GameState):
                 while repeat:  # Let's the game traverse through state chains
                     # print("Repeating States:\t", game.state.state)
                     surf, repeat = game.state.update([], surf)
-                right_display = game.right_display.draw(right_display)
-                surf.blit(right_display, (WINWIDTH, 0))
+                right_display_surf = game.right_display.draw(right_display_surf)
+                surf.blit(right_display_surf, (WINWIDTH, 0))
                 # print("States:\t\t\t", game.state.state)
 
                 if cf.SETTINGS['display_fps']:
