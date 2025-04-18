@@ -34,6 +34,9 @@ class Parser():
     def fix(self, lhs, rhs, dic):
         rhs = [dic.get(n, n) for n in rhs]
         rhs = ''.join(rhs)
+        if 'float' in rhs:
+            pass  # Don't need to convert if you are turning it into a float
+        else:
         rhs = 'int(%s)' % rhs
         exec("def %s(equations, unit): return %s" % (lhs, rhs), self.equations)
 
@@ -48,6 +51,9 @@ class Parser():
         expr = self.tokenize(expr)
         expr = [self.replacement_dict.get(n, n) for n in expr]
         expr = ''.join(expr)
+        if 'float' in expr:
+            pass  # Don't need to convert if you are turning it into a float
+        else:
         expr = 'int(%s)' % expr
         equations = self.equations
         return eval(expr)
