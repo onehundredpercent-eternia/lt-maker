@@ -1033,7 +1033,7 @@ class Separate(Action):
         if self.with_wait:
             self.droppee_wait_action.reverse()
         if self.droppee.position:
-        game.leave(self.droppee)
+            game.leave(self.droppee)
         self.unit.has_dropped = False
 
         self.unit.lead_unit = True

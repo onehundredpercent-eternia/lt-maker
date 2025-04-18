@@ -937,7 +937,7 @@ class UnitObject(Prefab):
                   'current_hp': self.current_hp,
                   'current_mana': self.current_mana,
                   'current_fatigue': self.current_fatigue,
-                  'current_posture': self.curent_posture,
+                  'current_posture': self.current_posture,
                   'traveler': self.traveler,
                   'current_guard_gauge': self.current_guard_gauge,
                   'built_guard': self.built_guard,

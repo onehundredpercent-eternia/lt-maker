@@ -51,7 +51,7 @@ class SupportRankBonus(Prefab):
 
     @classmethod
     def default(cls):
-        return cls(None, [0]*8)
+        return cls(None, [0]*10)
 
     @classmethod
     def copy(cls, other):
@@ -154,7 +154,7 @@ class SupportRankRequirement(SupportRankBonus):
 
     @classmethod
     def default(cls):
-        return cls(None, 0, '', [0]*8)
+        return cls(None, 0, '', [0]*10)
 
     @classmethod
     def copy(cls, other):

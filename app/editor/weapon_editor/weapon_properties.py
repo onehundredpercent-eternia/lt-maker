@@ -54,9 +54,9 @@ class WeaponProperties(QWidget):
         self.hide_from_display_box.setToolTip(_("Hides this weapon type from the Convoy and the Info Menu displays. Useful for dummy or hidden weapon types."))
         name_section.addWidget(self.hide_from_display_box)
 
-        attrs = ('weapon_rank', 'damage', 'resist', 'accuracy', 'avoid', 'crit', 'dodge', 'attack_speed', 'defense_speed')
+        attrs = ('weapon_rank', 'damage', 'resist', 'accuracy', 'avoid', 'crit', 'dodge', 'attack_speed', 'defense_speed', 'stagger', 'poise')
         self.rank_bonus = AppendMultiListWidget(CombatBonusList(), _("Rank Bonus"), attrs, RankBonusDelegate, self)
-        attrs = ('weapon_type', 'weapon_rank', 'damage', 'resist', 'accuracy', 'avoid', 'crit', 'dodge', 'attack_speed', 'defense_speed')
+        attrs = ('weapon_type', 'weapon_rank', 'damage', 'resist', 'accuracy', 'avoid', 'crit', 'dodge', 'attack_speed', 'defense_speed', 'stagger', 'poise')
         self.advantage = AppendMultiListWidget(CombatBonusList(), _("Advantage versus"), attrs, CombatBonusDelegate, self)
         self.disadvantage = AppendMultiListWidget(CombatBonusList(), _("Disadvantage versus"), attrs, CombatBonusDelegate, self)
 

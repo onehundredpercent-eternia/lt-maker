@@ -32,7 +32,11 @@ class SupportPairProperties(QWidget):
         self.one_way_box.edit.stateChanged.connect(self.one_way_changed)
         main_layout.addWidget(self.one_way_box)
 
-        attrs = ('support_rank', 'requirement', 'gate', 'damage', 'resist', 'accuracy', 'avoid', 'crit', 'dodge', 'attack_speed', 'defense_speed')
+        attrs = (
+            'support_rank', 'requirement', 'gate', 'damage', 'resist', 
+            'accuracy', 'avoid', 'crit', 'dodge', 'attack_speed', 
+            'defense_speed', 'stagger', 'poise',
+            )
         self.rank_bonus = AppendMultiListWidget(
             SupportRankRequirementList(), "Rank Requirements & Personal Bonuses",
             attrs, SupportRankRequirementDelegate, self)

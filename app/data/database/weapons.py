@@ -28,7 +28,7 @@ class CombatBonus(Prefab):
 
     @classmethod
     def default(cls):
-        return cls(None, None, [0]*8)
+        return cls(None, None, [0]*10)
 
     @classmethod
     def copy(cls, other):

@@ -184,8 +184,8 @@ class UnitSprite():
 
         self.map_sprite = load_map_sprite(self.unit, self.unit.team)
 
-        self.health_bar = health_bar.MapHealthBar(self.unit)
-        self.posture_bar = health_bar.MapPostureBar(self.unit)
+        self.health_bar = health_bar.MapHealthBar(self.unit, unit.get_hp)
+        self.posture_bar = health_bar.MapPostureBar(self.unit, unit.get_posture)
 
     def set_image_state(self, new_state: str):
         self.image_state = new_state
