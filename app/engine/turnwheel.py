@@ -81,12 +81,16 @@ class ActionLog():
     def run_action_backward(self):
         action = self.actions[self.action_index]
         action.reverse()
+        if isinstance(action, Action.LockTurnwheel):
+            self.locked = self.get_last_lock()
         self.action_index -= 1
         return action
 
     def run_action_forward(self):
         self.action_index += 1
         action = self.actions[self.action_index]
+        if isinstance(action, Action.LockTurnwheel):
+            self.locked = action.lock
         action.execute()
         return action
 
@@ -107,10 +111,9 @@ class ActionLog():
 
     def set_up(self):
         """
-        Sets up the action groups list. Action groups come in basically three kinds.
+        Sets up the action groups list. Action groups come in basically two kinds.
         1. Move: Tells you where the unit's turn starts and ends (on Wait or Die). 
         2. Phase: Tells the turnwheel as it's iterating through that we are in a new phase now. 
-        3. Lock: Tells the turnwheel whether we should be allowed to turnwheel to the action groups following this lock
         """
         def finalize(move):
             if isinstance(move, self.Move) and move.end is None:
@@ -138,11 +141,6 @@ class ActionLog():
                     finalize(current_move)
                     current_move = None
                 self.action_groups.append(('Phase', action_index, action.phase_name))
-            elif isinstance(action, Action.LockTurnwheel):
-                if current_move:
-                    finalize(current_move)
-                    current_move = None
-                self.action_groups.append(('Lock', action_index, action.lock))
             elif isinstance(action, Action.MarkEndOfEvent):
                 if current_move:  # Don't need to do anything if we are currently inside a move
                     pass
@@ -250,12 +248,6 @@ class ActionLog():
                 game.cursor.autocursor()
             return ["Start of %s phase" % self.current_move[2].capitalize()]
 
-        elif self.current_move[0] == 'Lock':
-            while self.action_index >= self.current_move[1]:
-                action = self.run_action_backward()
-            self.locked = self.get_last_lock()
-            return self.backward()  # Go again
-
         elif self.current_move[0] == 'Extra':
             while self.action_index >= self.current_move[1]:
                 action = self.run_action_backward()
@@ -307,12 +299,6 @@ class ActionLog():
             if self.current_move[2] == 'player':
                 game.cursor.autocursor()
             return ["Start of %s phase" % self.current_move[2].capitalize()]
-
-        elif self.current_move[0] == 'Lock':
-            while self.action_index < self.current_move[1]:
-                action = self.run_action_forward()
-            self.locked = self.current_move[2]
-            return self.forward()  # Go again
 
         elif self.current_move[0] == 'Extra':
             while self.action_index < self.current_move[1]:

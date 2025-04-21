@@ -113,6 +113,9 @@ class EventState(State):
         logging.debug("Ending Event")
         if self.event and self.event.trigger and self.event.trigger.nid == 'on_turnwheel':
             game.action_log.start_recording()
+        # Only unlock if we are allowed to...
+        if not self.previous_turnwheel_lock:
+            action.do(action.LockTurnwheel(False))
         # Mark whether we just left a `unit_wait`, `unit_death`, or `combat_death` event
         # This is so the turnwheel can figure out that things happened directly after 
         # the unit would normally have ended their turn, and this needs to be included
@@ -120,9 +123,6 @@ class EventState(State):
         if self.event and self.event.trigger \
                 and self.event.trigger.nid in ('unit_wait', 'unit_death', 'combat_death'):
             action.do(action.MarkEndOfEvent(self.event.trigger.nid))
-        # Only unlock if we are allowed to...
-        if not self.previous_turnwheel_lock:
-            action.do(action.LockTurnwheel(False))
         game.events.end(self.event)
         if game.level_vars.get('_win_game') or self.is_handling_end_event:
             logging.info("Player Wins!")
