@@ -128,6 +128,8 @@ class ActionLog():
             action = self.actions[action_index]
             # Only regular moves, not CantoMove or other nonsense gets counted
             if type(action) == Action.Move or type(action) == Action.Teleport:
+                if type(action) == Action.Move and action.event:
+                    continue  # Don't consider this a real move...
                 if current_move:
                     finalize(current_move)
                 current_move = self.Move(action.unit, action_index)
