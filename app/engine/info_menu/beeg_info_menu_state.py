@@ -80,7 +80,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         if not self.transparency:
             active_sprite = self.unit.sprite.create_image('active')
             x_pos = 81 - active_sprite.get_width()//2
-            y_pos = self.portrait_section_height - 61
+            y_pos = self.portrait_section_height - 56
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
     def create_portrait_section(self):
@@ -93,16 +93,23 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         class_obj = DB.classes.get(self.unit.klass)
         render_text(surf, ['text'], [class_obj.name], ['white'], (x_offset + 4, 24))
         self.info_graph.register((x_offset + 4, 24, 72, 16), class_obj.desc, 'all')
-        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (x_offset + 34, 42), HAlignment.RIGHT)
-        self.info_graph.register((x_offset + 4, 42, 30, 16), 'Level_desc', 'all')
-        render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (x_offset + 59, 42), HAlignment.RIGHT)
-        self.info_graph.register((x_offset + 34, 42, 30, 16), 'Exp_desc', 'all')
+        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (x_offset + 90, 24), HAlignment.RIGHT)
+        self.info_graph.register((x_offset + 54, 24, 36, 16), 'Level_desc', 'all')
+        # render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (x_offset + 59, 42), HAlignment.RIGHT)
+        # self.info_graph.register((x_offset + 34, 42, 30, 16), 'Exp_desc', 'all')
+        # === HP ===
         render_text(surf, ['text'], [str(self.unit.get_hp())], ['blue'], (x_offset + 35, 58), HAlignment.RIGHT)
         self.info_graph.register((x_offset + 4, 58, 72, 16), 'HP_desc', 'all')
-        max_hp = equations.parser.hitpoints(self.unit)
+        max_hp = self.unit.get_max_hp()
         render_text(surf, ['text'], [str(max_hp)], ['blue'], (x_offset + 59, 58), HAlignment.RIGHT)
+        # === Posture
+        render_text(surf, ['text'], [str(self.unit.get_posture())], ['blue'], (x_offset + 35, 42), HAlignment.RIGHT)
+        self.info_graph.register((x_offset + 4, 42, 72, 16), 'Posture_desc', 'all')
+        max_posture = self.unit.get_max_posture(self.unit)
+        render_text(surf, ['text'], [str(max_posture)], ['blue'], (x_offset + 59, 42), HAlignment.RIGHT)
+        
         # Blit the white status platform
-        surf.blit(SPRITES.get('status_platform'), (x_offset + 62, 53))
+        surf.blit(SPRITES.get('status_platform'), (x_offset + 62, 56))
         # Blit affinity
         affinity = DB.affinities.get(self.unit.affinity)
         if affinity:
@@ -111,7 +118,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
 
         # Battle stats
         battle_surf = SPRITES.get('battle_info')
-        left, top = WINWIDTH - 122, 8
+        left, top = WINWIDTH - 122, 4
         surf.blit(battle_surf, (left, top))
         # Populate battle info
         surf.blit(SPRITES.get('equipment_logo'), (left + 2, top + 4))
@@ -169,8 +176,8 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         positions = [
             (left + 60, top + 1),
             (left + 4, top + 17),
-            (left + 4, top + 33),
             (left + 60, top + 17),
+            (left + 4, top + 33),
             (left + 60, top + 33),
         ]
 
@@ -272,12 +279,23 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
             contribution['Base Value'] = base_value
             desc_text = curr_stat.desc
             help_box = help_menu.StatDialog(desc_text or ('%s_desc' % stat_nid), contribution)
-            self.info_graph.register((WINWIDTH//2 + 4 + 8 + stat_offset * x_idx, self.portrait_section_height + 16 * y_idx, 64, 16), help_box, state, first=(idx == 0))
+            self.info_graph.register((WINWIDTH//2 + 20 + 8 + stat_offset * x_idx, self.portrait_section_height + 16 * y_idx, 64, 16), help_box, state, first=(idx == 0))
+
+        # TRV position
+        x_idx, y_idx = 1, 3
+        if self.unit.traveler:
+            trav = game.get_unit(self.unit.traveler)
+            render_text(surf, ['text'], [trav.name], ['blue'], (32 + stat_offset * x_idx, 16 * y_idx))
+        else:
+            render_text(surf, ['text'], ['--'], ['blue'], (32 + stat_offset * x_idx, 16 * y_idx))
+        render_text(surf, ['text'], [text_funcs.translate('Trv')], ['yellow'], (8 + stat_offset * x_idx, 16 * y_idx))
+        desc = text_funcs.translate_and_text_evaluate('Trv_desc', unit=self.unit)
+        self.info_graph.register((WINWIDTH//2 + 20 + 8 + stat_offset * x_idx, self.portrait_section_height + 16 * y_idx, 64, 16), desc, state)
 
         return surf
 
     def draw_personal_data_surf(self, surf):
-        surf.blit(self.personal_data_surf, (WINWIDTH//2 + 4, self.portrait_section_height))
+        surf.blit(self.personal_data_surf, (WINWIDTH//2 + 20, self.portrait_section_height))
 
     def draw_growths_surf(self, surf):
         surf.blit(self.growths_surf, (WINWIDTH//2 + 4, self.portrait_section_height))
@@ -291,7 +309,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # Blit items
         for idx, item in enumerate(self.unit.nonaccessories):
             if item.multi_item and any(subitem is weapon for subitem in item.subitems):
-                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 4))
+                surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 for subitem in item.subitems:
                     if subitem is weapon:
                         item_option = menu_options.FullItemOption(idx, subitem)
@@ -300,7 +318,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     item_option = menu_options.FullItemOption(idx, item)
             else:
                 if item is weapon:
-                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 4))
+                    surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 item_option = menu_options.FullItemOption(idx, item)
             item_option.draw(surf, 8, idx * 16)
             self.info_graph.register((4 + 8, idx * 16 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))

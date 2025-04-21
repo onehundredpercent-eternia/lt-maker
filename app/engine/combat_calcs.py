@@ -519,7 +519,7 @@ def compute_stagger(unit, target, item, def_item, mode, attack_info):
     if stg is None:
         return 0
 
-    hit += item_system.dynamic_stagger(unit, item, target, resolve_weapon(target), mode, attack_info, stg)
+    stg += item_system.dynamic_stagger(unit, item, target, resolve_weapon(target), mode, attack_info, stg)
 
     # Weapon Triangle
     triangle_bonus = 0

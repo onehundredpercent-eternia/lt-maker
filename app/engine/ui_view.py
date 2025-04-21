@@ -22,7 +22,7 @@ from typing import List
 from app.engine.combat.utils import resolve_weapon
 
 
-MEMORY_BAR_MODE = True
+MEMORY_BAR_MODE = False
 
 class MemoryBar():
     background = engine.subsurface(SPRITES.get('memorybar'), (0, 0, 136, 24))
