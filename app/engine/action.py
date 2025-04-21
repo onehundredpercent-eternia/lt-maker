@@ -476,13 +476,18 @@ class IncrementTurn(Action):
 
 
 class MarkPhase(Action):
-    def __init__(self, phase_name):
+    def __init__(self, phase_name: str):
         self.phase_name = phase_name
 
 
 class LockTurnwheel(Action):
-    def __init__(self, lock):
+    def __init__(self, lock: bool):
         self.lock = lock
+
+
+class MarkEndOfEvent(Action):
+    def __init__(self, event_trigger_nid: str):
+        self.event_trigger_nid = event_trigger_nid
 
 
 class ChangePhaseMusic(Action):

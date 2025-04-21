@@ -45,7 +45,7 @@ class ActionLog():
         self.hovered_unit = None
         self.current_move = None
         self.current_move_index = 0
-        self.unique_moves = []
+        self.action_groups = []
 
     def append(self, action):
         logging.debug("Add Action %d: %s", self.action_index + 1, action)
@@ -106,13 +106,19 @@ class ActionLog():
             return "Move: %s (%s %s)" % (self.unit.nid, self.begin, self.end)
 
     def set_up(self):
+        """
+        Sets up the action groups list. Action groups come in basically three kinds.
+        1. Move: Tells you where the unit's turn starts and ends (on Wait or Die). 
+        2. Phase: Tells the turnwheel as it's iterating through that we are in a new phase now. 
+        3. Lock: Tells the turnwheel whether we should be allowed to turnwheel to the action groups following this lock
+        """
         def finalize(move):
             if isinstance(move, self.Move) and move.end is None:
                 move.end = move.begin
-            self.unique_moves.append(move)
+            self.action_groups.append(move)
 
         # Pay attention to which actions the turnwheel actually has to know about
-        self.unique_moves.clear()
+        self.action_groups.clear()
         current_move = None
 
         for action_index in range(max(0, self._first_free_action), len(self.actions)):
@@ -131,12 +137,21 @@ class ActionLog():
                 if current_move:
                     finalize(current_move)
                     current_move = None
-                self.unique_moves.append(('Phase', action_index, action.phase_name))
+                self.action_groups.append(('Phase', action_index, action.phase_name))
             elif isinstance(action, Action.LockTurnwheel):
                 if current_move:
                     finalize(current_move)
                     current_move = None
-                self.unique_moves.append(('Lock', action_index, action.lock))
+                self.action_groups.append(('Lock', action_index, action.lock))
+            elif isinstance(action, Action.MarkEndOfEvent):
+                if current_move:  # Don't need to do anything if we are currently inside a move
+                    pass
+                else:
+                    # Find the last Move and add the action from the event to its end
+                    for previous_move in reversed(self.action_groups):
+                        if isinstance(previous_move, self.Move):
+                            previous_move.end = action_index
+                            break
 
         # Finalize an existing move if it was never ended by any other special
         # action (usually would be ended by a Wait or death of the unit)
@@ -152,26 +167,26 @@ class ActionLog():
         # be back to the previous point it was during Unit A's move, otherwise
         # you have screwed up the timeline. This handles those extra
         # actions at the end of the timeline not associated with a move
-        if self.unique_moves:
-            last_move = self.unique_moves[-1]
+        if self.action_groups:
+            last_move = self.action_groups[-1]
             last_action_index = len(self.actions) - 1
             if isinstance(last_move, self.Move):
                 if last_move.end < last_action_index:
-                    self.unique_moves.append(('Extra', last_move.end + 1, last_action_index))
+                    self.action_groups.append(('Extra', last_move.end + 1, last_action_index))
             elif last_move[1] < last_action_index:
-                self.unique_moves.append(('Extra', last_move[1] + 1, last_action_index))
+                self.action_groups.append(('Extra', last_move[1] + 1, last_action_index))
 
         logging.debug("*** Turnwheel Begin ***")
         # logging.debug(self.actions)
-        logging.debug(self.unique_moves)
+        logging.debug(self.action_groups)
 
-        self.current_move_index = len(self.unique_moves)
+        self.current_move_index = len(self.action_groups)
 
         # Determine starting lock
         self.locked = self.get_last_lock()
 
         # Get the text message
-        for move in reversed(self.unique_moves):
+        for move in reversed(self.action_groups):
             if isinstance(move, self.Move):
                 if move.end:
                     text_list = self.get_unit_turn(move.unit, move.end)
@@ -185,7 +200,7 @@ class ActionLog():
         if self.current_move_index < 1:
             return None
 
-        self.current_move = self.unique_moves[self.current_move_index - 1]
+        self.current_move = self.action_groups[self.current_move_index - 1]
         logging.debug("Backward %s %s %s", self.current_move_index, self.current_move, self.action_index)
         self.current_move_index -= 1
         action = None
@@ -247,10 +262,10 @@ class ActionLog():
             return self.backward()  # Go again
 
     def forward(self):
-        if self.current_move_index >= len(self.unique_moves):
+        if self.current_move_index >= len(self.action_groups):
             return None
 
-        self.current_move = self.unique_moves[self.current_move_index]
+        self.current_move = self.action_groups[self.current_move_index]
         logging.debug("Forward %s %s %s", self.current_move_index, self.current_move, self.action_index)
         self.current_move_index += 1
         action = None
@@ -267,8 +282,8 @@ class ActionLog():
                 logging.debug("In Forward %s %s %s", text_list, self.current_unit.name, action)
                 self.current_unit = None
                 # Extra Moves
-                if self.current_move_index < len(self.unique_moves):
-                    next_move = self.unique_moves[self.current_move_index]
+                if self.current_move_index < len(self.action_groups):
+                    next_move = self.action_groups[self.current_move_index]
                     if isinstance(next_move, tuple) and next_move[0] == 'Extra':
                         self.forward()  # Skip through the extra move
                 return text_list
