@@ -485,9 +485,9 @@ class LockTurnwheel(Action):
         self.lock = lock
 
 
-class MarkEndOfEvent(Action):
-    def __init__(self, event_trigger_nid: str):
-        self.event_trigger_nid = event_trigger_nid
+class MarkActionGroupStart(Action):
+    def __init__(self, state: str):
+        self.state = state
 
 
 class ChangePhaseMusic(Action):

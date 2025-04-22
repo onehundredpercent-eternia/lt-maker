@@ -120,9 +120,6 @@ class EventState(State):
         # This is so the turnwheel can figure out that things happened directly after 
         # the unit would normally have ended their turn, and this needs to be included
         # in the action group
-        if self.event and self.event.trigger \
-                and self.event.trigger.nid in ('unit_wait', 'unit_death', 'combat_death'):
-            action.do(action.MarkEndOfEvent(self.event.trigger.nid))
         game.events.end(self.event)
         if game.level_vars.get('_win_game') or self.is_handling_end_event:
             logging.info("Player Wins!")

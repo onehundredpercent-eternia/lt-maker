@@ -132,8 +132,8 @@ class ActionLog():
                 if current_move:
                     finalize(current_move)
                 current_move = self.Move(action.unit, action_index)
-            elif isinstance(action, Action.Wait) or isinstance(action, Action.Die):
-                if current_move and action.unit == current_move.unit:
+            elif isinstance(action, Action.MarkActionGroupStart):
+                if current_move:
                     current_move.end = action_index
                     finalize(current_move)
                     current_move = None
@@ -142,15 +142,6 @@ class ActionLog():
                     finalize(current_move)
                     current_move = None
                 self.action_groups.append(('Phase', action_index, action.phase_name))
-            elif isinstance(action, Action.MarkEndOfEvent):
-                if current_move:  # Don't need to do anything if we are currently inside a move
-                    pass
-                else:
-                    # Find the last Move and add the action from the event to its end
-                    for previous_move in reversed(self.action_groups):
-                        if isinstance(previous_move, self.Move):
-                            previous_move.end = action_index
-                            break
 
         # Finalize an existing move if it was never ended by any other special
         # action (usually would be ended by a Wait or death of the unit)

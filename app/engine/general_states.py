@@ -283,6 +283,8 @@ class FreeState(MapState):
                 game.boundary.recalculate_unit(unit)
         phase.fade_in_phase_music()
 
+        action.do(action.MarkActionGroupStart(self.name))
+
         # Auto-end turn
         autoend_turn = True
         if not cf.SETTINGS['autoend_turn']:
@@ -2508,6 +2510,7 @@ class AIState(MapState):
         super().update()
 
         if (not self.cur_unit or not self.cur_unit.position):
+            action.do(action.MarkActionGroupStart(self.name))
             self.cur_unit = self.get_next_unit()
             # Reset previous position
 
