@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import List, Tuple
+
 import math
 import logging
 from dataclasses import dataclass
@@ -78,6 +81,18 @@ class ActionLog():
         # self.actions = self.actions[:idx]
         logging.debug("New Action Index: %d", self.action_index)
 
+    def remove_hanging_mark_action_group_start(self):
+        """
+        When the player reverses their Move action by pressing B in the Menu State
+        you also need to remove the hanging MarkActionGroupStart action
+        """
+        top_action = self.actions[-1]
+        if isinstance(top_action, Action.MarkActionGroupStart):
+            top_action.reverse()
+            self.actions.remove(top_action)
+            self.action_index -= 1
+            logging.debug("New Action Index: %d after removing the action group start marker", self.action_index)
+
     def run_action_backward(self):
         action = self.actions[self.action_index]
         action.reverse()
@@ -109,30 +124,51 @@ class ActionLog():
         def __repr__(self):
             return "Move: %s (%s %s)" % (self.unit.nid, self.begin, self.end)
 
-    def set_up(self):
+    @dataclass
+    class Phase():
+        phase_nid: str = None
+        action_index: int = None
+
+        def __repr__(self):
+            return "Phase: %s (%d)" % (self.phase_nid, self.action_index)
+
+    @dataclass
+    class Extra():
+        last_move_index: int = None
+        action_index: int = None
+        
+        def __repr__(self):
+            return "Extra: %d (%d)" % (self.last_move_index, self.action_index)
+
+    # For typing
+    ActionGroup = Move | Phase | Extra
+
+    @staticmethod
+    def get_action_groups(actions: List[Action], first_free_action: int) -> List[ActionLog.ActionGroup]:
         """
-        Sets up the action groups list. Action groups come in basically two kinds.
+        Builds the action groups list. Action groups come in basically two kinds.
         1. Move: Tells you where the unit's turn starts and ends (on Wait or Die). 
         2. Phase: Tells the turnwheel as it's iterating through that we are in a new phase now. 
         """
-        def finalize(move):
-            if isinstance(move, self.Move) and move.end is None:
+        action_groups: List[ActionLog.ActionGroup] = []
+
+        def finalize(move: [ActionLog.ActionGroup]):
+            if isinstance(move, ActionLog.Move) and move.end is None:
                 move.end = move.begin
-            self.action_groups.append(move)
+            action_groups.append(move)
 
         # Pay attention to which actions the turnwheel actually has to know about
-        self.action_groups.clear()
-        current_move = None
+        current_move: ActionLog.Move = None
 
-        for action_index in range(max(0, self._first_free_action), len(self.actions)):
-            action = self.actions[action_index]
+        for action_index in range(max(0, first_free_action), len(actions)):
+            action = actions[action_index]
             # Only regular moves, not CantoMove or other nonsense gets counted
             # Event moves aren't considered a real move
-            if type(action) == Action.Move and not action.event:
+            if isinstance(action, Action.MarkActionGroupStart):
                 if current_move:
                     finalize(current_move)
-                current_move = self.Move(action.unit, action_index)
-            elif isinstance(action, Action.MarkActionGroupStart):
+                current_move = ActionLog.Move(action.unit, action_index)
+            elif isinstance(action, Action.MarkActionGroupEnd):
                 if current_move:
                     current_move.end = action_index
                     finalize(current_move)
@@ -141,7 +177,7 @@ class ActionLog():
                 if current_move:
                     finalize(current_move)
                     current_move = None
-                self.action_groups.append(('Phase', action_index, action.phase_name))
+                action_groups.append(ActionLog.Phase(action.phase_name, action_index))
 
         # Finalize an existing move if it was never ended by any other special
         # action (usually would be ended by a Wait or death of the unit)
@@ -157,14 +193,19 @@ class ActionLog():
         # be back to the previous point it was during Unit A's move, otherwise
         # you have screwed up the timeline. This handles those extra
         # actions at the end of the timeline not associated with a move
-        if self.action_groups:
-            last_move = self.action_groups[-1]
-            last_action_index = len(self.actions) - 1
-            if isinstance(last_move, self.Move):
+        if action_groups:
+            last_move = action_groups[-1]
+            last_action_index = len(actions) - 1
+            if isinstance(last_move, ActionLog.Move):
                 if last_move.end < last_action_index:
-                    self.action_groups.append(('Extra', last_move.end + 1, last_action_index))
-            elif last_move[1] < last_action_index:
-                self.action_groups.append(('Extra', last_move[1] + 1, last_action_index))
+                    action_groups.append(ActionLog.Extra(last_move.end + 1, last_action_index))
+            elif last_move.action_index < last_action_index:
+                action_groups.append(ActionLog.Extra(last_move.action_index + 1, last_action_index))
+
+        return action_groups
+
+    def set_up(self):
+        self.action_groups: List[self.ActionGroup] = ActionLog.get_action_groups(self.actions, self._first_free_action)
 
         logging.debug("*** Turnwheel Begin ***")
         # logging.debug(self.actions)
@@ -182,8 +223,8 @@ class ActionLog():
                     text_list = self.get_unit_turn(move.unit, move.end)
                     return text_list
                 return []
-            elif move[0] == 'Phase':
-                return ["Start of %s phase" % move[2].capitalize()]
+            elif isinstance(move, self.Phase):
+                return ["Start of %s phase" % move.phase_nid.capitalize()]
         return []
 
     def backward(self):
@@ -231,17 +272,17 @@ class ActionLog():
                     self.hover_on(self.current_unit)
                     return []
 
-        elif self.current_move[0] == 'Phase':
-            while self.action_index > self.current_move[1]:
+        elif isinstance(self.current_move, self.Phase):
+            while self.action_index > self.current_move.action_index:
                 action = self.run_action_backward()
             if self.hovered_unit:
                 self.hover_off()
-            if self.current_move[2] == 'player':
+            if self.current_move.phase_nid == 'player':
                 game.cursor.autocursor()
-            return ["Start of %s phase" % self.current_move[2].capitalize()]
+            return ["Start of %s phase" % self.current_move.phase_nid.capitalize()]
 
-        elif self.current_move[0] == 'Extra':
-            while self.action_index >= self.current_move[1]:
+        elif isinstance(self.current_move, self.Extra):
+            while self.action_index >= self.current_move.last_move_index:
                 action = self.run_action_backward()
             return self.backward()  # Go again
 
@@ -283,17 +324,17 @@ class ActionLog():
                 self.current_move_index -= 1  # Make sure we don't skip second half of this
                 return []
 
-        elif self.current_move[0] == 'Phase':
-            while self.action_index < self.current_move[1]:
+        elif isinstance(self.current_move, self.Phase):
+            while self.action_index < self.current_move.action_index:
                 action = self.run_action_forward()
             if self.hovered_unit:
                 self.hover_off()
-            if self.current_move[2] == 'player':
+            if self.current_move.phase_nid == 'player':
                 game.cursor.autocursor()
-            return ["Start of %s phase" % self.current_move[2].capitalize()]
+            return ["Start of %s phase" % self.current_move.phase_nid.capitalize()]
 
-        elif self.current_move[0] == 'Extra':
-            while self.action_index < self.current_move[1]:
+        elif isinstance(self.current_move, self.Extra):
+            while self.action_index < self.current_move.last_move_index:
                 action = self.run_action_forward()
             return []
 

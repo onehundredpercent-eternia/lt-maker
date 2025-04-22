@@ -114,6 +114,7 @@ class AIController():
                 game.state.change('movement')
                 # If we pass in speed=0 to Move it'll use your unit_speed setting
                 speedup = 10 if self.do_skip else 0
+                action.do(action.MarkActionGroupStart(self.unit, 'ai'))
                 action.do(action.Move(self.unit, self.goal_position, path, speed=speedup))
             return True
         else:

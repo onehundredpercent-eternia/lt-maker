@@ -486,6 +486,12 @@ class LockTurnwheel(Action):
 
 
 class MarkActionGroupStart(Action):
+    def __init__(self, unit: NID, state: str):
+        self.unit = unit
+        self.state = state
+
+
+class MarkActionGroupEnd(Action):
     def __init__(self, state: str):
         self.state = state
 

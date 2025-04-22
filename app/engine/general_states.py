@@ -283,7 +283,7 @@ class FreeState(MapState):
                 game.boundary.recalculate_unit(unit)
         phase.fade_in_phase_music()
 
-        action.do(action.MarkActionGroupStart(self.name))
+        action.do(action.MarkActionGroupEnd(self.name))
 
         # Auto-end turn
         autoend_turn = True
@@ -733,6 +733,7 @@ class MoveState(MapState):
                         cur_unit.wait()
                 else:
                     # Just move in place
+                    action.do(action.MarkActionGroupStart('free'))
                     cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                     action.execute(cur_unit.current_move)
                     game.state.change('menu')
@@ -750,9 +751,11 @@ class MoveState(MapState):
                             cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
                     elif game.cursor.position in witch_warp and game.cursor.position not in normal_moves:
+                        action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                         cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         game.state.change('menu')
                     else:
+                        action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                         cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                         game.state.change('menu')
                     game.state.change('movement')
@@ -821,6 +824,7 @@ class CantoWaitState(MapState):
                 action.reverse(self.cur_unit.current_move)
                 self.cur_unit.current_move = None
                 game.cursor.set_pos(self.cur_unit.position)
+                game.action_log.remove_hanging_mark_action_group_start()
             game.state.back()
 
     def update(self):
@@ -1005,6 +1009,7 @@ class MenuState(MapState):
                         logging.info("Reversing " + self.cur_unit.nid + "'s move")
                         action.reverse(self.cur_unit.current_move)
                         self.cur_unit.current_move = None
+                        game.action_log.remove_hanging_mark_action_group_start()
                     game.state.change('move')
                     game.cursor.construct_arrows(game.cursor.path[::-1])
 
@@ -2510,7 +2515,7 @@ class AIState(MapState):
         super().update()
 
         if (not self.cur_unit or not self.cur_unit.position):
-            action.do(action.MarkActionGroupStart(self.name))
+            action.do(action.MarkActionGroupEnd(self.name))
             self.cur_unit = self.get_next_unit()
             # Reset previous position
 
