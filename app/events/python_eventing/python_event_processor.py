@@ -36,7 +36,8 @@ class PythonEventProcessor():
             while command_idx is DO_NOT_EXECUTE_SENTINEL:
                 command_idx, next_command = next(self._executable)
             self.curr_cmd_idx = command_idx
-            return next_command
+            parameters, flags = event_commands.convert_parse(next_command)
+            return next_command.__class__(parameters, flags, next_command.display_values)
         except StopIteration:
             self.is_finished = True
             return None
