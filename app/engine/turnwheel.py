@@ -74,18 +74,12 @@ class ActionLog():
                 act.reverse()
                 self.actions.remove(act)
                 self.action_index -= 1
-        # self.actions.remove(action)
-        # self.action_index -= 1
-        # diff = len(self.actions) - idx
-        # self.action_index -= diff
-        # self.actions = self.actions[:idx]
         logging.debug("New Action Index: %d", self.action_index)
 
-    def remove_hanging_mark_action_group_start(self):
-        """
-        When the player reverses their Move action by pressing B in the Menu State
-        you also need to remove the hanging MarkActionGroupStart action
-        """
+    def reverse_move_to_action_group_start(self, action: Action.Move):
+        self.hard_remove(action)
+        # When the player reverses their Move action by pressing B in the Menu State
+        # you also need to remove the hanging MarkActionGroupStart action
         top_action = self.actions[-1]
         if isinstance(top_action, Action.MarkActionGroupStart):
             top_action.reverse()
@@ -146,9 +140,10 @@ class ActionLog():
     @staticmethod
     def get_action_groups(actions: List[Action], first_free_action: int) -> List[ActionLog.ActionGroup]:
         """
-        Builds the action groups list. Action groups come in basically two kinds.
+        Builds the action groups list. Action groups come in basically three kinds.
         1. Move: Tells you where the unit's turn starts and ends (on Wait or Die). 
         2. Phase: Tells the turnwheel as it's iterating through that we are in a new phase now. 
+        3. Extra: Handles any hanging actions that are not part of an action group (Equips, etc.)
         """
         action_groups: List[ActionLog.ActionGroup] = []
 
