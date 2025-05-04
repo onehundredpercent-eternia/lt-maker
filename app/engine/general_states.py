@@ -2552,7 +2552,6 @@ class AIState(MapState):
         super().update()
 
         if (not self.cur_unit or not self.cur_unit.position):
-            action.do(action.MarkActionGroupEnd(self.name))
             self.cur_unit = self.get_next_unit()
             # Reset previous position
 
@@ -2588,6 +2587,7 @@ class AIState(MapState):
                 self.cur_unit.has_run_ai = True
                 if did_something:  # Don't turn grey if didn't actually do anything
                     self.cur_unit.wait()
+                game.ai.finalize()
                 game.ai.reset()
                 self.cur_unit = None
         else:

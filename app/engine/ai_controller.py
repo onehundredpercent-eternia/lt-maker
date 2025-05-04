@@ -46,6 +46,10 @@ class AIController():
         self.attack_ai_complete = False
         self.canto_ai_complete = False
 
+    def finalize(self):
+        # Anything that needs to be done when the AI is finished with the unit
+        action.do(action.MarkActionGroupEnd('ai'))
+
     def load_unit(self, unit):
         self.reset()
         self.unit = unit
