@@ -2995,7 +2995,13 @@ def choice(self: Event, nid: NID, title: str, choices: TableRows, row_width: int
         scroll_bar = False
     backable = 'backable' in flags
 
-    # Automatically convert str to alignment
+    # Automatically convert str to alignment, orientation
+    if isinstance(orientation, str):
+        if orientation.lower() in ('h', 'horiz', 'horizontal'):
+            orientation = 'horizontal'
+        elif orientation.lower() in ('v', 'vert', 'vertical'):
+            orientation = 'vertical'
+        orientation = Orientation(orientation)
     if isinstance(alignment, str):
         alignment = Alignments(alignment)
 
