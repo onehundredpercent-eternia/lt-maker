@@ -85,7 +85,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
 
     def create_portrait_section(self):
         surf = engine.create_surface((WINWIDTH, self.portrait_section_height), transparent=True)
-        surf.blit(SPRITES.get('info_unit'), (6, 44))
+        surf.blit(SPRITES.get('info_unit'), (6, 28))
 
         x_offset = 4
         render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), HAlignment.CENTER)
@@ -105,7 +105,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # === Posture
         render_text(surf, ['text'], [str(self.unit.get_posture())], ['blue'], (x_offset + 35, 42), HAlignment.RIGHT)
         self.info_graph.register((x_offset + 4, 42, 72, 16), 'Posture_desc', 'all')
-        max_posture = self.unit.get_max_posture(self.unit)
+        max_posture = self.unit.get_max_posture()
         render_text(surf, ['text'], [str(max_posture)], ['blue'], (x_offset + 59, 42), HAlignment.RIGHT)
         
         # Blit the white status platform
@@ -118,7 +118,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
 
         # Battle stats
         battle_surf = SPRITES.get('battle_info')
-        left, top = WINWIDTH - 122, 4
+        left, top = WINWIDTH - 122, 0
         surf.blit(battle_surf, (left, top))
         # Populate battle info
         surf.blit(SPRITES.get('equipment_logo'), (left + 2, top + 4))
@@ -301,8 +301,8 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         surf.blit(self.growths_surf, (WINWIDTH//2 + 4, self.portrait_section_height))
 
     def create_equipment_surf(self):
-        surf = engine.create_surface((WINWIDTH//2 - 16, WINHEIGHT - self.portrait_section_height), transparent=True)
-
+        surf = engine.create_surface((WINWIDTH//2 - 16, 32), transparent=True)
+        left, top = WINWIDTH - 120, 48
         weapon = self.unit.get_weapon()
         accessory = self.unit.get_accessory()
 
@@ -321,7 +321,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 item_option = menu_options.FullItemOption(idx, item)
             item_option.draw(surf, 8, idx * 16)
-            self.info_graph.register((4 + 8, idx * 16 + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
+            self.info_graph.register((left, idx * 16 + top, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
 
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):
@@ -341,12 +341,12 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 item_option = menu_options.FullItemOption(aidx, item)
             item_option.draw(surf, 8, y_pos)
             first = (idx == 0 and not self.unit.nonaccessories)
-            self.info_graph.register((4 + 8, y_pos + self.portrait_section_height, 120, 16), item_option.get_help_box(), 'combat', first=first)
+            self.info_graph.register((left, y_pos + top, 120, 16), item_option.get_help_box(), 'combat', first=first)
 
         return surf
 
     def draw_equipment_surf(self, surf):
-        surf.blit(self.equipment_surf, (4, self.portrait_section_height))
+        surf.blit(self.equipment_surf, (WINWIDTH - 120, 48))
 
     def create_skill_surf(self):
         surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)

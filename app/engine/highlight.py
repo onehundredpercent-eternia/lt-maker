@@ -17,8 +17,8 @@ class HighlightController():
                        'splash': SPRITES.get('highlight_lightred'),
                        'possible_move': SPRITES.get('highlight_lightblue'),
                        'move': SPRITES.get('highlight_blue'),
-                       'possible_xcom_move': SPRITES.get('highlight_lightlightblue'),
-                       'xcom_move': SPRITES.get('highlight_lightblue'),
+                       'possible_xcom_move': SPRITES.get('highlight_lightyellow'),
+                       'xcom_move': SPRITES.get('highlight_yellow'),
                        'aura': SPRITES.get('highlight_lightpurple'),
                        'spell_splash': SPRITES.get('highlight_lightgreen')}
 

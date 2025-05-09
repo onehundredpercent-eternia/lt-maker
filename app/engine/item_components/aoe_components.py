@@ -1,3 +1,6 @@
+from typing import List, Set, Tuple
+from app.utilities.typing import Pos
+
 from app.data.database.item_components import ItemComponent, ItemTags
 from app.data.database.components import ComponentType
 
@@ -274,3 +277,50 @@ class LanceAOE(ItemComponent):
         diff_pos_y = position[1] - unit.position[1]
         splash = {(unit.position[0] + (diff_pos_x * i), unit.position[1] + (diff_pos_y * i)) for i in range(1, self.value + 1)}
         return splash
+
+class ConeAOE(ItemComponent):
+    nid = 'cone_aoe'
+    desc = "Cone extends outwards the specified number of tiles (X) in distance, and (X * 2 - 1) tiles in width."
+    tag = ItemTags.AOE
+
+    expose = ComponentType.Int  # Height
+    value = 3
+
+    def _get_power(self, unit) -> int:
+        empowered_splash = skill_system.empower_splash(unit)
+        return self.value + 1 + empowered_splash
+
+    def _get_splash(self, unit, position: Pos) -> Set[Pos]:
+        power = self._get_power(unit)
+        diff_pos_x = utils.clamp(position[0] - unit.position[0], -1, 1)
+        diff_pos_y = utils.clamp(position[1] - unit.position[1], -1, 1)
+        perpendicular_x = diff_pos_y
+        perpendicular_y = -diff_pos_x
+        splash = set()
+        for distance in range(1, power + 1):
+            for width in range(-distance + 1, distance):
+                pos = (diff_pos_x * distance + perpendicular_x * width, diff_pos_y * distance + perpendicular_y * width)
+                splash.add(pos)
+        # Now add the unit's position
+        splash = {(pos[0] + unit.position[0], pos[1] + unit.position[1]) for pos in splash}
+        # Now check bounds
+        splash = {pos for pos in splash if game.tilemap.check_bounds(pos)}
+        return splash
+
+    def splash(self, unit, item, position: Pos) -> Tuple[Pos, List[Pos]]:
+        splash = self._get_splash(unit, position)
+
+        from app.engine import item_system
+        if item_system.is_spell(unit, item):
+            # spell blast
+            splash = [game.board.get_unit(s) for s in splash]
+            splash = [s.position for s in splash if s]
+            return None, splash
+        else:
+            # regular blast
+            splash = [game.board.get_unit(s) for s in splash if s != position]
+            splash = [s.position for s in splash if s]
+            return position if game.board.get_unit(position) else None, splash
+
+    def splash_positions(self, unit, item, position) -> Set[Pos]:
+        return self._get_splash(unit, position)
