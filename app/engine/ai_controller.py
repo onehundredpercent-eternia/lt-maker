@@ -535,15 +535,44 @@ class PrimaryAI():
                 tp += total_priority
 
             if item_system.damage(self.unit, item):
-                accuracy = utils.clamp(combat_calcs.compute_hit(self.unit, target, item, target.get_weapon(), "attack", (0, 0))/100., 0, 1)
+                if DB.constants.value('use_accuracy'):
+                    accuracy = utils.clamp(combat_calcs.compute_hit(self.unit, target, item, target.get_weapon(), "attack", (0, 0))/100., 0, 1)
+                else:
+                    accuracy = 1.
+                if DB.constants.value('use_posture'):
+                    stagger = combat_calcs.compute_stagger(self.unit, target, item, target.get_weapon(), "attack", (0, 0))
+                else:
+                    stagger = 10.
                 raw_damage = combat_calcs.compute_damage(self.unit, target, item, target.get_weapon(), "attack", (0, 0))
                 lethality = utils.clamp(raw_damage / float(target.get_hp()), 0, 1)
-                ai_priority = 3 if lethality * accuracy >= 1 else lethality * accuracy
+                ai_priority = PrimaryAI.get_ai_priority(target, lethality, accuracy, stagger)
+
                 if skill_system.check_enemy(self.unit, target):
                     tp += ai_priority * ai_priority_multiplier
                 elif skill_system.check_ally(self.unit, target):
                     tp -= ai_priority * ai_priority_multiplier
         return tp
+
+    @staticmethod
+    def get_ai_priority(target: UnitObject, lethality: float, accuracy: float, stagger: int):
+        eff_stagger = utils.clamp(stagger/10., 0, 1)
+        if DB.constants.value('use_accuracy') and DB.constants.value('use_stagger'):
+            enemy_posture = target.get_posture()
+            if stagger >= enemy_posture:
+                ai_priority = 3 if lethality * accuracy >= 1 else lethality * accuracy
+            else:
+                ai_priority = eff_stagger * accuracy * 0.5
+        elif DB.constants.value('use_accuracy'):
+            ai_priority = 3 if lethality * accuracy >= 1 else lethality * accuracy
+        elif DB.constants.value('use_stagger'):
+            enemy_posture = target.get_posture()
+            if stagger >= enemy_posture:
+                ai_priority = 3 if lethality >= 1 else lethality
+            else:
+                ai_priority = eff_stagger * 0.5
+        else:
+            ai_priority = 3 if lethality >= 1 else lethality
+        return ai_priority
 
     def default_priority(self, main_target, item, move):
         # Default method
@@ -568,6 +597,11 @@ class PrimaryAI():
             crit_accuracy = utils.clamp(crit_comp/100., 0, 1)
         else:
             crit_accuracy = 0
+        stagger = combat_calcs.compute_stagger(self.unit, main_target, item, main_target.get_weapon(), "attack", (0, 0))
+        if stagger:
+            eff_stagger = utils.clamp(stagger/10., 0, 1)
+        else:
+            eff_stagger = 0
 
         # Determine if I would get countered
         # Even if I wouldn't get countered, check anyway how much damage I would take
@@ -580,26 +614,43 @@ class PrimaryAI():
         if not target_accuracy:
             target_accuracy = 0
         target_accuracy = utils.clamp(target_accuracy/100., 0, 1)
-        # If I wouldn't get counterattacked, much less important, so multiply by 10 %
+        target_stagger = combat_calcs.compute_stagger(main_target, self.unit, target_weapon, item, "defense", (0, 0))
+        if not target_stagger:
+            target_stagger = 0
+        target_eff_stagger = utils.clamp(target_stagger/10., 0, 1)
+        # If I wouldn't get counterattacked, much less important, so multiply by 30 %
         if not combat_calcs.can_counterattack(self.unit, item, main_target, target_weapon):
             target_damage *= 0.3
             target_accuracy *= 0.3
+            target_eff_stagger *= 0.3
 
         num_attacks = combat_calcs.compute_attack_phases(self.unit, main_target, item, target_weapon, "attack", (0, 0))
-        num_attacks *= combat_calcs.compute_multiattacks(self.unit, main_target, item, "attack", (0, 0))
-        first_strike = lethality * accuracy if lethality >= 1 else 0
+        # Calculate chance I actually get to strike more than once
+        if DB.constants.value('use_accuracy'):
+            first_strike = lethality * accuracy if lethality >= 1 else 0
+            if num_attacks > 1 and target_damage >= 1:
+                num_attacks -= (target_accuracy * (1 - first_strike))
+        if DB.constants.value('use_posture'):
+            if target_stagger >= self.unit.get_posture() and target_damage >= 1:
+                num_attacks = 1
 
-        if num_attacks > 1 and target_damage >= 1:
-            # Calculate chance I actually get to strike more than once
-            num_attacks -= (target_accuracy * (1 - first_strike))
-
-        offense_term += 3 if lethality * accuracy >= 1 else lethality * accuracy * num_attacks
-        crit_term = (crit_lethality - lethality) * crit_accuracy * accuracy * num_attacks
-        offense_term += crit_term
-        defense_term -= target_damage * target_accuracy * (1 - first_strike)
+        ai_priority = PrimaryAI.get_ai_priority(main_target, lethality, accuracy, stagger) * num_attacks
+        offense_term += ai_priority
+        if DB.constants.value('use_accuracy'):
+            crit_term = (crit_lethality - lethality) * crit_accuracy * accuracy * num_attacks
+            offense_term += crit_term
+        if DB.constants.value('use_accuracy'):
+            defense_term -= target_damage * target_accuracy * (1 - first_strike)
+        if DB.constants.value('use_posture'):
+            if target_stagger >= self.unit.get_posture():
+                defense_term -= target_damage
+            else:
+                defense_term -= target_stagger * 0.5
         if offense_term <= 0:
             if accuracy <= 0 and DB.constants.value('attack_zero_hit'):
                 logging.info("Accuracy is bad, but continuing with stupid AI")
+            elif eff_stagger <= 0 and DB.constants.value('attack_zero_hit'):
+                logging.info("Stagger is bad, but continuing with stupid AI")
             elif lethality <= 0 and DB.constants.value('attack_zero_dam'):
                 logging.info("Zero Damage, but continuing with stupid AI")
             else:
@@ -614,7 +665,7 @@ class PrimaryAI():
         else:
             distance_term = 1
 
-        logging.info("Damage: %.2f, Accuracy: %.2f, Crit Accuracy: %.2f", lethality, accuracy, crit_accuracy)
+        logging.info("Damage: %.2f, Accuracy: %.2f, Crit Accuracy: %.2f, Stagger: %.2f", lethality, accuracy, crit_accuracy, eff_stagger)
         logging.info("Offense: %.2f, Defense: %.2f, Distance: %.2f", offense_term, defense_term, distance_term)
         ai_prefab = DB.ai.get(self.unit.get_ai())
         offense_bias = ai_prefab.offense_bias
