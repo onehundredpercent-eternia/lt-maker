@@ -87,7 +87,7 @@ class PathSystem():
             pathfinder = pathfinding.AStar(start_pos, position, grid)
 
         limit = unit.movement_left if use_limit else None
-        path = pathfinder.process(can_move_through, limit=limit)
+        path = pathfinder.process(can_move_through, limit=limit)    
         if path is None:
             return []
         return path
