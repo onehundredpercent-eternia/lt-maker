@@ -106,59 +106,6 @@ class Database(object):
             # logging.info("Time taken: %s ms" % time2)
         return to_save
 
-    def serialize(self, proj_dir) -> bool:
-        # Returns whether we were successful
-        from app.editor.settings import MainSettingsController
-        main_settings = MainSettingsController()
-
-        data_dir = os.path.join(proj_dir, 'game_data')
-        if not os.path.exists(data_dir):
-            os.mkdir(data_dir)
-        logging.info("Serializing data in %s..." % data_dir)
-
-        import time
-        start = time.perf_counter() * 1000
-
-        to_save = self.save()
-        # This section is what takes so long!
-        try:
-            for key, value in to_save.items():
-                # divide save data into chunks based on key value
-                if key in self.save_as_chunks and main_settings.get_should_save_as_chunks():
-                    save_dir = os.path.join(data_dir, key)
-                    if os.path.exists(save_dir):
-                        shutil.rmtree(save_dir)
-                    os.mkdir(save_dir)
-                    orderkeys: List[str] = []
-                    for idx, subvalue in enumerate(value):
-                        # ordering
-                        name = subvalue['nid']
-                        name = re.sub(r'[\\/*?:"<>|]', "", name)
-                        name = name.replace(' ', '_')
-                        orderkeys.append(name)
-                        save_loc = Path(save_dir, name + '.json')
-                        # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
-                        save_json(save_loc, [subvalue])
-                    save_json(Path(save_dir, '.orderkeys'), orderkeys)
-                else:  # Save as a single file
-                    # Which means deleting the old directory
-                    save_dir = Path(data_dir, key)
-                    if os.path.exists(save_dir):
-                        shutil.rmtree(save_dir)
-                    save_loc = Path(data_dir, key + '.json')
-                    # logging.info("Serializing %s to %s" % (key, save_loc))
-                    save_json(save_loc, value)
-
-        except OSError as e:  # In case we ran out of memory
-            logging.error("Editor was unable to save your project. Free up memory in your hard drive or try saving somewhere else, otherwise progress will be lost when the editor is closed.")
-            logging.exception(e)
-            return False
-
-        end = time.perf_counter() * 1000
-        logging.info("Total Time Taken for Database: %s ms" % (end - start))
-        logging.info("Done serializing!")
-        return True
-
     def load(self, proj_dir: Path | str, version: int):
         proj_dir = Path(proj_dir)
         self.current_proj_dir = proj_dir

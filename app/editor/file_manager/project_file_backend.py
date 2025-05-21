@@ -5,6 +5,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 import shutil
 from datetime import datetime
 import traceback
@@ -31,6 +32,7 @@ from app.editor.settings import MainSettingsController
 from app.extensions.custom_gui import SimpleDialog
 from app.utilities import exceptions
 import app.utilities.platformdirs as appdirs
+from app.utilities.serialization import save_json
 
 if TYPE_CHECKING:
     from app.editor.main_editor import MainEditor
@@ -230,7 +232,7 @@ class ProjectFileBackend():
             return False
         self.save_progress.setValue(75)
 
-        success = DB.serialize(self.current_proj)
+        self.serialize_db(DB, Path(self.current_proj), as_chunks=self.settings.get_should_save_as_chunks())
         if not success:
             display_error("database")
             return False
@@ -368,7 +370,7 @@ class ProjectFileBackend():
         RESOURCES.autosave(self.current_proj, autosave_dir,
                            self.autosave_progress)
         self.autosave_progress.setValue(75)
-        DB.serialize(autosave_dir)
+        self.serialize_db(DB, Path(autosave_dir), as_chunks=self.settings.get_should_save_as_chunks())
         self.autosave_progress.setValue(99)
 
         # Save metadata
@@ -439,3 +441,135 @@ class ProjectFileBackend():
                             f.write(event_script)
         else:
             return False
+
+    def _serialize_db(self, db: Database, path: Path, as_chunks: bool = False):
+        """
+        Serializes the database to the given path.
+        """
+        data_dir = path / 'game_data'
+        if not data_dir.exists():
+            data_dir.mkdir(parents=True)
+        logging.info("Serializing data in %s..." % data_dir)
+
+        import time
+        start = time.perf_counter() * 1000
+
+        to_save = db.save()
+        for key, value in to_save.items():
+            # divide save data into chunks based on key value
+            if key in Database.save_as_chunks and as_chunks:
+                save_dir = os.path.join(data_dir, key)
+                if os.path.exists(save_dir):
+                    shutil.rmtree(save_dir)
+                os.mkdir(save_dir)
+                orderkeys: List[str] = []
+                for idx, subvalue in enumerate(value):
+                    # ordering
+                    name = subvalue['nid']
+                    name = re.sub(r'[\\/*?:"<>|]', "", name)
+                    name = name.replace(' ', '_')
+                    orderkeys.append(name)
+                    save_loc = Path(save_dir, name + '.json')
+                    # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
+                    save_json(save_loc, [subvalue])
+                save_json(Path(save_dir, '.orderkeys'), orderkeys)
+            else:  # Save as a single file
+                # Which means deleting the old directory
+                save_dir = Path(data_dir, key)
+                if os.path.exists(save_dir):
+                    shutil.rmtree(save_dir)
+                save_loc = Path(data_dir, key + '.json')
+                # logging.info("Serializing %s to %s" % (key, save_loc))
+                save_json(save_loc, value)
+
+        end = time.perf_counter() * 1000
+        logging.info("Total Time Taken for Database: %s ms" % (end - start))
+        logging.info("Done serializing!")
+
+    def serialize_resources(self, resources: Resources, path: Path, specific: Optional[List[str]] = None, as_chunks: bool = False):
+        """
+        Serializes the resources to the given path.
+        """
+        resource_dir = path / 'resources'
+        logging.info("Starting Resource Serialization for %s..." % path)
+        import time
+        start = time.time_ns()/1e6
+        if not resource_dir.exists():
+            resource_dir.mkdir(parents=True)
+
+        should_save_loose_files = False
+        if specific:
+            save_data_types = specific
+        else:
+            save_data_types = Resources.save_data_types
+            should_save_loose_files = True
+        to_save = self.save_as_data(save_data_types)
+        # serialize manifest data
+        try:
+            for key, value in to_save.items():
+                save_dir = Path(resource_dir, key)
+                # if chunks, delete the old directory
+                actual_save_dir = save_dir
+                if key in self.save_as_chunks:
+                    if key == 'tilemaps':
+                        actual_save_dir = Path(save_dir, 'tilemap_data')
+                    elif key == 'combat_palettes':
+                        actual_save_dir = Path(save_dir, 'palette_data')
+                    if os.path.exists(actual_save_dir):
+                        shutil.rmtree(actual_save_dir)
+                # divide save data into chunks based on key value
+                if not os.path.exists(actual_save_dir):
+                    os.makedirs(actual_save_dir)
+                if key in self.save_as_chunks and main_settings.get_should_save_as_chunks():
+                    orderkeys: List[str] = []
+                    for idx, subvalue in enumerate(value):
+                        # ordering
+                        if key == 'combat_palettes':
+                            name = subvalue[0]
+                        else:
+                            name = subvalue['nid']
+                        name = re.sub(r'[\\/*?:"<>|]', "", name)
+                        name = name.replace(' ', '_')
+                        orderkeys.append(name)
+                        save_loc = Path(actual_save_dir, name + '.json')
+                        # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
+                        save_json(save_loc, [subvalue])
+                    save_json(Path(actual_save_dir, '.orderkeys'), orderkeys)
+                else:  # Save as a single file
+                    save_loc = Path(actual_save_dir, key + '.json')
+                    # logging.info("Serializing %s to %s" % (key, save_loc))
+                    save_json(save_loc, value)
+        except OSError as e:  # In case we ran out of memory
+            logging.error("Editor was unable to save your project. Free up memory in your hard drive or try saving somewhere else, otherwise progress will be lost when the editor is closed.")
+            logging.exception(e)
+            return False
+
+        # copy resources
+        for idx, data_type in enumerate(save_data_types):
+            data_dir = os.path.join(resource_dir, data_type)
+            if not os.path.exists(data_dir):
+                os.mkdir(data_dir)
+            logging.info("Saving %s..." % data_type)
+            time1 = time.time_ns()/1e6
+            catalog: ManifestCatalog = getattr(self, data_type)
+            catalog.save_resources(data_dir)
+            time2 = time.time_ns()/1e6 - time1
+            logging.info("Time Taken: %s ms" % time2)
+            if progress:
+                progress.setValue(int(idx / len(save_data_types) * 75))
+        if should_save_loose_files and self.main_folder:
+            for loose_file_type in self.loose_file_types:
+                logging.info("Saving %s..." % loose_file_type)
+                time1 = time.time_ns()/1e6
+                target_dir = os.path.join(resource_dir, loose_file_type)
+                if not os.path.exists(target_dir) and os.path.exists(os.path.join(self.main_folder, loose_file_type)):
+                    shutil.copytree(os.path.join(self.main_folder, loose_file_type), target_dir)
+                time2 = time.time_ns()/1e6 - time1
+                logging.info("Time Taken: %s ms" % time2)
+                if progress:
+                    progress.setValue(80)
+
+        end = time.time_ns()/1e6
+        logging.info("Total Time Taken for Resources: %s ms" % (end - start))
+        logging.info('Done Resource Serializing!')
+        return True
