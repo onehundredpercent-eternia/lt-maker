@@ -10,6 +10,8 @@ from app.utilities import static_random
 from app.utilities.enums import Strike
 from app.engine.source_type import SourceType
 
+import logging
+
 class Aura(SkillComponent):
     nid = 'aura'
     desc = "Skill has an aura that gives off child skill"
@@ -145,6 +147,29 @@ class EndstepDamage(UpkeepDamage):
 
     def on_endstep(self, actions, playback, unit):
         hp_change = -self.value
+        actions.append(action.ChangeHP(unit, hp_change))
+        actions.append(action.TriggerCharge(unit, self.skill))
+        self._playback_processing(playback, unit, hp_change)
+        skill_system.after_take_strike(actions, playback, unit, None, None, None, 'defense', (0, 0), Strike.HIT)
+
+class EvalEndstepDamage(EndstepDamage):
+    nid = 'eval_endstep_damage'
+    desc = "Unit takes eval'd damage at endstep (eval'd at time of application)"
+    tag = SkillTags.STATUS
+
+    expose = ComponentType.String
+
+    def after_add(self, unit, skill):
+        from app.engine import evaluate
+        try:
+            val = int(evaluate.evaluate(self.value, unit, local_args={'skill': skill}))
+        except Exception as e:
+            logging.error("Couldn't evaluate %s conditional (%s)", self.value, e)
+            val = 0
+        self.data['damage'] = val
+
+    def on_endstep(self, actions, playback, unit):
+        hp_change = -self.data['damage']
         actions.append(action.ChangeHP(unit, hp_change))
         actions.append(action.TriggerCharge(unit, self.skill))
         self._playback_processing(playback, unit, hp_change)
