@@ -458,13 +458,14 @@ def transition(self: Event, direction=None, speed=None, color3=None, panorama=No
             self.wait_time = current_time + int(self.transition_speed * 1.33)
             self.state = 'waiting'
 
-def change_background(self: Event, panorama=None, flags=None):
+def change_background(self: Event, panorama=None, speed=50, flags=None):
     flags = flags or set()
     if not panorama:
         self.background = None
     elif RESOURCES.panoramas.get(panorama):
         if 'scroll' in flags:
             self.background = background.create_background(panorama, True)
+            self.background.scroll_speed = speed
         else:
             self.background = background.create_background(panorama, False)
 
@@ -2486,6 +2487,28 @@ def remove_talk(self: Event, unit1, unit2, flags=None):
         return
     action.do(action.RemoveTalk(u1.nid, u2.nid))
 
+def hide_talk(self: Event, unit1, unit2, flags=None):
+    u1 = self._get_unit(unit1)
+    if not u1:
+        self.logger.error("hide_talk: Couldn't find unit %s" % unit1)
+        return
+    u2 = self._get_unit(unit2)
+    if not u2:
+        self.logger.error("hide_talk: Couldn't find unit %s" % unit2)
+        return
+    action.do(action.HideTalk(u1.nid, u2.nid))
+
+def unhide_talk(self: Event, unit1, unit2, flags=None):
+    u1 = self._get_unit(unit1)
+    if not u1:
+        self.logger.error("unhide_talk: Couldn't find unit %s" % unit1)
+        return
+    u2 = self._get_unit(unit2)
+    if not u2:
+        self.logger.error("unhide_talk: Couldn't find unit %s" % unit2)
+        return
+    action.do(action.UnhideTalk(u1.nid, u2.nid))
+
 def add_lore(self: Event, lore, flags=None):
     action.do(action.AddLore(lore))
 
@@ -2603,7 +2626,7 @@ def remove_market_item(self: Event, item, stock: int=0, flags=None):
 def clear_market_items(self: Event, flags=None):
     self.game.market_items.clear()
 
-def add_region(self: Event, region, position, size: Tuple, region_type, string=None, time_left=None, flags=None):
+def add_region(self: Event, region, position, size: Tuple, region_type, string=None, time_left=None, hide_time=False, flags=None):
     flags = flags or set()
 
     if region in self.game.level.regions:
@@ -2620,6 +2643,7 @@ def add_region(self: Event, region, position, size: Tuple, region_type, string=N
     new_region.size = size
     new_region.sub_nid = sub_region_type
     new_region.time_left = time_left
+    new_region.hide_time = hide_time
 
     if 'only_once' in flags:
         new_region.only_once = True

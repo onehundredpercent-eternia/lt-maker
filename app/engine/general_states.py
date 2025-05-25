@@ -21,7 +21,7 @@ from app.engine import engine, action, menus, image_mods, \
     banner, save, phase, skill_system, item_system, \
     item_funcs, ui_view, base_surf, gui, background, dialog, \
     text_funcs, equations, evaluate, supports
-from app.engine.combat import interaction
+from app.engine.combat import base_combat, interaction
 from app.engine.selection_helper import SelectionHelper
 from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, TradeAbility, SupplyAbility
 from app.engine.input_manager import get_input_manager
@@ -286,6 +286,8 @@ class FreeState(MapState):
             if skill_system.has_dynamic_range(unit):
                 game.boundary.recalculate_unit(unit)
         phase.fade_in_phase_music()
+
+        action.do(action.MarkActionGroupEnd(self.name))
 
         # Auto-end turn
         autoend_turn = True
@@ -738,6 +740,7 @@ class MoveState(MapState):
                     game.state.change('canto_wait')
                 else:
                     # Just move in place
+                    action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                     cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                     action.execute(cur_unit.current_move)
                     game.state.change('menu')
@@ -755,9 +758,11 @@ class MoveState(MapState):
                             cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
                     elif game.cursor.position in witch_warp and game.cursor.position not in normal_moves:
+                        action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                         cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         game.state.change('menu')
                     else:
+                        action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                         cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                         game.state.change('menu')
                     game.state.change('movement')
@@ -877,7 +882,7 @@ class CantoWaitState(MapState):
 
         elif event == 'BACK':
             if self.cur_unit.current_move:
-                action.reverse(self.cur_unit.current_move)
+                game.action_log.reverse_move_to_action_group_start(self.cur_unit.current_move)
                 self.cur_unit.current_move = None
                 game.cursor.set_pos(self.cur_unit.position)
             game.state.back()
@@ -1063,7 +1068,7 @@ class MenuState(MapState):
                         game.cursor.cur_unit = u
                     if self.cur_unit.current_move:
                         logging.info("Reversing " + self.cur_unit.nid + "'s move")
-                        action.reverse(self.cur_unit.current_move)
+                        game.action_log.reverse_move_to_action_group_start(self.cur_unit.current_move)
                         self.cur_unit.current_move = None
                     game.state.change('move')
                     game.cursor.construct_arrows(game.cursor.path[::-1])
@@ -2456,6 +2461,18 @@ class CombatState(MapState):
                 surf = super().draw(surf)
         else:
             surf = super().draw(surf)
+
+        # handle drawing the base in a BaseCombat
+        # This must be done to prevent a single frame
+        # of the MapState from poking through
+        # during the frame this combat takes place in
+        if self.combat and type(self.combat) == base_combat.BaseCombat:
+            state_index = game.state.state.index(self)
+            prev_state_index = state_index - 1
+            if prev_state_index >= 0:
+                prev_state = game.state.state[prev_state_index]
+                surf = prev_state.draw(surf)
+
         if self.combat:
             self.combat.draw(surf)
         return surf
@@ -2606,6 +2623,7 @@ class AIState(MapState):
                 self.cur_unit.has_run_ai = True
                 if did_something:  # Don't turn grey if didn't actually do anything
                     self.cur_unit.wait()
+                game.ai.finalize()
                 game.ai.reset()
                 self.cur_unit = None
         else:
