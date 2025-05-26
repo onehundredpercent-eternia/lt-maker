@@ -2,6 +2,7 @@ from typing import Dict
 from app.data.resources.resources import RESOURCES
 from app.engine import bmpfont, image_mods
 from app.utilities.typing import NID
+from app.engine import engine
 
 NORMAL_FONT_COLORS = ['white', 'blue', 'green', 'red', 'orange', 'grey', 'yellow', 'brown', 'purple']
 
@@ -22,6 +23,8 @@ def load_fonts():
             else:
                 palette_map = {orig: new for orig, new in zip(map(tuple, font.palettes[font.default_color]), map(tuple, palette))}
                 paletted_surf = image_mods.color_convert_alpha(base_surf.copy(), palette_map)
+                engine.set_colorkey(paletted_surf, (0, 0, 0), rleaccel=True)
+
             bmp_font.surfaces[color_name] = paletted_surf
 
             # for ease of access

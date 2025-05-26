@@ -83,8 +83,8 @@ class BmpFont():
 
         self.default_color = font_info.default_color or 'default'
         self.surfaces: Dict[str, engine.Surface] = {}
-        self.surfaces[font_info.default_color or 'default'] = engine.image_load(self.png_path)
-        # engine.set_colorkey(self.surface, (0, 0, 0), rleaccel=True)
+        self.surfaces[self.default_color] = engine.image_load(self.png_path)
+        engine.set_colorkey(self.surfaces[self.default_color], (0, 0, 0), rleaccel=True)
 
     def get_base_surf(self) -> engine.Surface:
         return self.surfaces[self.default_color]

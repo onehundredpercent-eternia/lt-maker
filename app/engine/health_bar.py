@@ -159,8 +159,11 @@ class CombatHealthBar(HealthBar):
 class MapHealthBar(HealthBar):
     time_for_change_min = 200
     speed = utils.frames2ms(1)
-    health_outline = SPRITES.get('map_health_outline')
-    health_bar = SPRITES.get('map_health_bar')
+
+    def __init__(self, unit):
+        super().__init__(unit)
+        self.health_outline = SPRITES.get('map_health_outline')
+        self.health_bar = SPRITES.get('map_health_bar')
 
     def draw(self, surf, left, top):
         total = max(1, self.unit.get_max_hp())
@@ -176,7 +179,10 @@ class MapHealthBar(HealthBar):
 
 class MapCombatHealthBar(HealthBar):
     display_numbers = True
-    health_bar = SPRITES.get('health_bar')
+
+    def __init__(self, unit):
+        super().__init__(unit)
+        self.health_bar = SPRITES.get('health_bar')
 
     def draw(self, surf):
         total = max(1, self.unit.get_max_hp())

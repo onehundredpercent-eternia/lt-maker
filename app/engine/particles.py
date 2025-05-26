@@ -148,7 +148,8 @@ class MapParticleSystem(SimpleParticleSystem):
             particle.draw(surf, offset_x, offset_y)
 
 class Particle():
-    sprite = None
+    def __init__(self):
+        self.sprite = None
 
     def reset(self, pos):
         self.x, self.y = pos
@@ -163,8 +164,11 @@ class Particle():
         surf.blit(self.sprite, pos)
 
 class Raindrop(Particle):
-    sprite = SPRITES.get('particle_raindrop')
     speed = 3
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_raindrop')
 
     def update(self):
         self.x += self.speed
@@ -173,8 +177,11 @@ class Raindrop(Particle):
             self.remove_me_flag = True
 
 class Sand(Particle):
-    sprite = SPRITES.get('particle_sand')
     speed = 6
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_sand')
 
     def update(self):
         self.x += self.speed * 2
@@ -183,13 +190,16 @@ class Sand(Particle):
             self.remove_me_flag = True
 
 class Smoke(Particle):
-    sprite = SPRITES.get('particle_smoke')
-    if sprite:
-        bottom_sprite = engine.subsurface(sprite, (3, 0, 3, 4))
-        top_sprite = engine.subsurface(sprite, (0, 0, 3, 4))
-    else:
-        bottom_sprite = top_sprite = None
     speed = 6
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_smoke')
+        if self.sprite:
+            self.bottom_sprite = engine.subsurface(self.sprite, (3, 0, 3, 4))
+            self.top_sprite = engine.subsurface(self.sprite, (0, 0, 3, 4))
+        else:
+            self.bottom_sprite = self.top_sprite = None
 
     def update(self):
         self.x += random.randint(self.speed//2, self.speed)
@@ -208,12 +218,15 @@ class Smoke(Particle):
             sprite = self.bottom_sprite
         surf.blit(sprite, (self.x + offset_x, self.y + offset_y))
 
-_fire_sprite = SPRITES.get('particle_fire')
 class Fire(Particle):
-    if _fire_sprite:
-        sprites = [engine.subsurface(_fire_sprite, (0, i*2, 3, 2)) for i in range(6)]
-    else:
-        sprites = []
+    def __init__(self):
+        super().__init__()
+        _fire_sprite = SPRITES.get('particle_fire')
+        if _fire_sprite:
+            self.sprites = [engine.subsurface(_fire_sprite, (0, i*2, 3, 2)) for i in range(6)]
+        else:
+            self.sprites = []
+        self.sprite = self.sprites[-1]
 
     def reset(self, pos):
         super().reset(pos)
@@ -244,7 +257,9 @@ class Fire(Particle):
         surf.blit(self.sprite, (self.x, self.y))
 
 class Snow(Particle):
-    full_sprite = SPRITES.get('particle_snow')
+    def __init__(self):
+        super().__init__()
+        self.full_sprite = SPRITES.get('particle_snow')
 
     def reset(self, pos):
         super().reset(pos)
@@ -262,9 +277,11 @@ class Snow(Particle):
             self.remove_me_flag = True
 
 class WarpFlower(Particle):
-    sprite = SPRITES.get('particle_warp_flower')
     speed = 0
     angle = 0
+
+    def __init__(self):
+        self.sprite = SPRITES.get('particle_warp_flower')
 
     def reset(self, pos, speed, angle):
         super().reset(pos)
@@ -303,8 +320,11 @@ class ReverseWarpFlower(WarpFlower):
             self.remove_me_flag = True
 
 class LightMote(Particle):
-    sprite = SPRITES.get('particle_light_mote')
     speed = 0.16
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_light_mote')
 
     def reset(self, pos):
         super().reset(pos)
@@ -332,8 +352,10 @@ class LightMote(Particle):
         surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
 
 class DarkMote(LightMote):
-    sprite = SPRITES.get('particle_dark_mote')
     speed = -0.16
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_dark_mote')
 
 class Night(Particle):
     speed = 0
@@ -342,10 +364,13 @@ class Sunset(Particle):
     speed = 0
 
 class EventTileParticle(Particle):
-    sprite = SPRITES.get('particle_light_mote')
     x_speed = 0.16
     min_y_speed = 0.33
     y_speed = 1
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_light_mote')
 
     def reset(self, pos):
         super().reset(pos)
@@ -376,9 +401,12 @@ class EventTileParticle(Particle):
         surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
 
 class SwitchTileParticle(Particle):
-    sprite = SPRITES.get('particle_switch_tile')
     x_speed = 0
     y_speed = -0.5
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_switch_tile')
 
     def reset(self, pos):
         super().reset(pos)
@@ -399,7 +427,9 @@ class SwitchTileParticle(Particle):
         surf.blit(sprite, (self.x - offset_x, self.y - offset_y))
 
 class PurpleMote(Particle):
-    sprite = SPRITES.get('particle_purple_mote')
+    def __init__(self):
+        super().__init__()
+        self.sprite = SPRITES.get('particle_purple_mote')
 
     def reset(self, pos):
         super().reset(pos)
