@@ -3,6 +3,7 @@ from app.engine import skill_system, action, equations
 from app.engine.movement import movement_funcs
 from app.engine.game_state import game
 from app.events import triggers
+from app.utilities import utils
 
 class Ability():
     @staticmethod
@@ -206,6 +207,19 @@ class PairUpAbility(Ability):
 
         adj_allies = game.target_system.get_adj_allies(unit)
         adj = set([u.position for u in adj_allies if unit.team == u.team and not u.traveler])
+        return adj
+    
+    @staticmethod
+    def targets_within_movement(unit, valid_moves=None) -> set:
+        # Pair up not enabled
+        if not valid_moves:
+            valid_moves = [unit.position]
+        if not DB.constants.value('pairup') or DB.constants.value('attack_stance_only'):
+            return set()
+        if unit.traveler:
+            return set()
+        
+        adj = set([u.position for u in game.get_player_units() if not u.traveler and any([utils.calculate_distance(u.position, p) == 1 for p in valid_moves])])
         return adj
 
     @staticmethod

@@ -114,6 +114,7 @@ constants = ConstantCatalog([
     Constant('boss_crit', "Final blow on boss will use critical animation", ConstantType.BOOL, False, ConstantTag.AESTHETIC),
     Constant('battle_platforms', "Use battle platforms when battle backgrounds are on", ConstantType.BOOL, True, ConstantTag.AESTHETIC),
     Constant('roam_hide_hp', "Hide hp bars during free roam", ConstantType.BOOL, False, ConstantTag.AESTHETIC),
+    Constant('direct_attack_selection', "Enables directly selecting targets for attacks", ConstantType.BOOL, True, ConstantTag.AESTHETIC),
     Constant('autogenerate_grey_map_sprites', 'Automatically generate grey "wait" map sprites', ConstantType.BOOL, True, ConstantTag.AESTHETIC),
     Constant('translucent_unit_sprite', "A phantom of current unit will appear at cursor's position", ConstantType.BOOL, False, ConstantTag.AESTHETIC),
     Constant('talk_display', "If enough room, display who a unit can talk to in info menu", ConstantType.BOOL, False, ConstantTag.AESTHETIC),

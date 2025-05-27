@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 
 from typing import Callable, List, Literal, Optional, Tuple
 from collections import OrderedDict, defaultdict
@@ -23,12 +24,20 @@ from app.engine import engine, action, menus, image_mods, \
     text_funcs, equations, evaluate, supports
 from app.engine.combat import base_combat, interaction
 from app.engine.selection_helper import SelectionHelper
-from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, TradeAbility, SupplyAbility
+from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, AttackAbility, PairUpAbility, SpellAbility, TradeAbility, SupplyAbility
 from app.engine.input_manager import get_input_manager
 from app.engine.fluid_scroll import FluidScroll
 import threading
 
 import logging
+
+from app.utilities import utils
+
+class TargetType(Enum):
+    WEAPON = 'WeaponTargets'
+    SPELL = 'SpellTargets'
+    EXTRAABILITY = 'ExtraAbilityTargets'
+    PAIRUP = 'PairupTargets'
 
 class LoadingState(State):
     name = 'start_level_asset_loading'
@@ -694,6 +703,13 @@ class MoveState(MapState):
         else:
             self.valid_moves = game.highlight.display_highlights(cur_unit)
 
+        self.extra_abilities = list(skill_system.get_extra_abilities(cur_unit).values())
+
+        self.targets = self.direct_selection_targets(cur_unit)
+        self.all_targets = set()
+        for pos in self.targets.values():
+            self.all_targets |= pos
+
         # Fade in phase music if the unit has canto
         if cur_unit.has_attacked or cur_unit.has_traded:
             phase.fade_in_phase_music()
@@ -738,7 +754,12 @@ class MoveState(MapState):
 
             elif game.cursor.position in self.valid_moves:
                 if game.board.in_vision(game.cursor.position) and game.board.get_unit(game.cursor.position):
-                    get_sound_thread().play_sfx('Error')
+                    # If you try and select a tile with an ally
+                    if game.cursor.position in self.all_targets:
+                        # You've selected a unit that could be a target
+                        self.handle_direct_selection(cur_unit)
+                    else:
+                        get_sound_thread().play_sfx('Error')
                 else:
                     normal_moves = game.path_system.get_valid_moves(cur_unit, witch_warp=False)
                     witch_warp = set(skill_system.witch_warp(cur_unit))
@@ -758,8 +779,97 @@ class MoveState(MapState):
                         game.state.change('menu')
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
+
+            elif game.cursor.position in self.all_targets:
+                # You've selected a unit that could be a target
+                self.handle_direct_selection(cur_unit)
+
             else:
                 get_sound_thread().play_sfx('Error')
+
+    def handle_direct_selection(self, cur_unit: UnitObject):
+        # Determine position to move for attack
+        move_pos = None
+        # Includes skill-given abilities such as steal or dance
+        items_and_abilities = cur_unit.items + self.extra_abilities
+        for ability in items_and_abilities:
+            move_pos = game.target_system.get_direct_selection_possible_attack_positions(cur_unit, 
+                    game.cursor.position, self.valid_moves, ability)
+            if move_pos:
+                break
+
+        if not move_pos:
+            # Should never happen
+            get_sound_thread().play_sfx('Error')
+            return 
+
+        target_pos = game.cursor.position
+
+        # Figure out a good location nearest to the cursor path
+        if target_pos in self.targets[TargetType.PAIRUP]:
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, target_pos))[0]
+        elif game.cursor.path:
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, game.cursor.path[0]))[0]
+        else:
+            move_pos = sorted(move_pos, key=lambda pos: utils.calculate_distance(pos, cur_unit.position))[0]
+
+        game.cursor.position = move_pos
+
+        if not game.board.in_vision(target_pos):
+            get_sound_thread().play_sfx('Error')
+        else:
+            normal_moves = game.path_system.get_valid_moves(cur_unit, witch_warp=False)
+            witch_warp = set(skill_system.witch_warp(cur_unit))
+            if cur_unit.has_attacked:
+                get_sound_thread().play_sfx('Error')
+            elif move_pos in witch_warp and move_pos not in normal_moves:
+                cur_unit.current_move = action.Warp(cur_unit, move_pos, game.path_system.get_path(cur_unit, move_pos, use_limit=True))
+                self.direct_attack_state_setup(cur_unit, target_pos)
+            else:
+                cur_unit.current_move = action.Move(cur_unit, move_pos, game.path_system.get_path(cur_unit, move_pos, use_limit=True))
+                self.direct_attack_state_setup(cur_unit, target_pos)
+            game.state.change('movement')
+            action.do(cur_unit.current_move)
+
+    def direct_selection_targets(self, cur_unit: UnitObject) -> dict:
+        if not DB.constants.value('direct_attack_selection'):
+            return {}
+        return {TargetType.WEAPON: game.target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, game.target_system.get_weapons(cur_unit)),
+                TargetType.SPELL: game.target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, game.target_system.get_spells(cur_unit)),
+                TargetType.EXTRAABILITY: game.target_system.get_all_attacks_in_range(cur_unit, self.valid_moves, self.extra_abilities),
+                TargetType.PAIRUP: PairUpAbility.targets_within_movement(cur_unit, self.valid_moves)}
+
+    def direct_attack_state_setup(self, cur_unit: UnitObject, target_pos: tuple):
+        '''Adds the states needed for backing out of the attack to 
+        function correctly'''
+        if target_pos in self.targets[TargetType.WEAPON]:
+            game.memory['targets'] = AttackAbility.targets(cur_unit)
+            game.memory['ability'] = 'Attack'
+            game.memory['selection'] = target_pos
+            game.state.change('menu')
+            game.state.change('weapon_choice')
+        elif target_pos in self.targets[TargetType.SPELL]:
+            game.memory['targets'] = SpellAbility.targets(cur_unit)
+            game.memory['ability'] = 'Spells'
+            game.memory['selection'] = target_pos
+            game.state.change('menu')
+            game.state.change('spell_choice')
+        elif target_pos in self.targets[TargetType.EXTRAABILITY]:
+            item = [a for a in self.extra_abilities if target_pos in \
+                    item_system.valid_targets(cur_unit, a) and \
+                    item_system.target_restrict(cur_unit, a, *item_system.splash(cur_unit, a, target_pos))][0]
+            targets = game.target_system.get_valid_targets(cur_unit, item)
+            game.memory['targets'] = targets
+            game.memory['ability'] = item.name
+            game.memory['selection'] = target_pos
+            game.memory['item'] = item
+            game.state.change('menu')
+            game.state.change('combat_targeting')
+        elif target_pos in self.targets[TargetType.PAIRUP]:
+            game.memory['ability'] = PairUpAbility
+            game.memory['selection'] = target_pos
+            game.state.change('menu')
+            game.state.change('targeting')
 
     def end(self):
         game.cursor.remove_arrows()
@@ -1658,6 +1768,8 @@ class ItemDiscardState(MapState):
 
 class WeaponChoiceState(MapState):
     name = 'weapon_choice'
+    item_desc_panel = None
+    menu = None
 
     def get_options(self, unit) -> list:
         if game.memory.get('valid_weapons'):
@@ -1785,8 +1897,10 @@ class WeaponChoiceState(MapState):
 
     def draw(self, surf):
         surf = super().draw(surf)
-        surf = self.item_desc_panel.draw(surf)
-        surf = self.menu.draw(surf)
+        if self.item_desc_panel:
+            surf = self.item_desc_panel.draw(surf)
+        if self.menu:
+            surf = self.menu.draw(surf)
         return surf
 
     def end(self):
@@ -1942,6 +2056,8 @@ class AbilitySubmenuChoiceState(MapState):
 
 class TargetingState(MapState):
     name = 'targeting'
+    ability = None
+    pennant = None
 
     def start(self):
         self.cur_unit = game.cursor.cur_unit
@@ -1951,8 +2067,13 @@ class TargetingState(MapState):
         good_pos = self.ability.targets(self.cur_unit)
 
         self.selection = SelectionHelper(good_pos)
-        closest_pos = self.selection.get_closest(self.cur_unit.position)
-        game.cursor.set_pos(closest_pos)
+        preselect = game.memory.get('selection')
+        if preselect and preselect in good_pos:
+            game.cursor.set_pos(preselect)
+            game.memory['selection'] = None
+        else:
+            closest_pos = self.selection.get_closest(self.cur_unit.position)
+            game.cursor.set_pos(closest_pos)
 
         self.pennant = banner.Pennant(self.ability.name + '_desc')
 
@@ -2066,31 +2187,32 @@ class TargetingState(MapState):
 
     def draw(self, surf):
         surf = super().draw(surf)
-        if self.ability.name == 'Rescue':
-            rescuee = game.board.get_unit(game.cursor.position)
-            if rescuee:
-                self.draw_rescue_preview(rescuee, surf)
-        elif self.ability.name == 'Take':
-            holder = game.board.get_unit(game.cursor.position)
-            if holder and holder.traveler:
-                traveler = game.get_unit(holder.traveler)
-                if traveler:
-                    self.draw_rescue_preview(traveler, surf)
-        elif self.ability.name == 'Give':
-            if self.cur_unit.traveler:
-                give_to = game.board.get_unit(game.cursor.position)
-                traveler = game.get_unit(self.cur_unit.traveler)
-                if give_to and traveler:
-                    self.draw_give_preview(traveler, give_to, surf)
-        elif self.ability.name == 'Trade':
-            unit = game.cursor.get_hover() or self.cur_unit
-            if unit != self.cur_unit:
-                if self.traveler_mode:
+        if self.ability:
+            if self.ability.name == 'Rescue':
+                rescuee = game.board.get_unit(game.cursor.position)
+                if rescuee:
+                    self.draw_rescue_preview(rescuee, surf)
+            elif self.ability.name == 'Take':
+                holder = game.board.get_unit(game.cursor.position)
+                if holder and holder.traveler:
+                    traveler = game.get_unit(holder.traveler)
+                    if traveler:
+                        self.draw_rescue_preview(traveler, surf)
+            elif self.ability.name == 'Give':
+                if self.cur_unit.traveler:
+                    give_to = game.board.get_unit(game.cursor.position)
+                    traveler = game.get_unit(self.cur_unit.traveler)
+                    if give_to and traveler:
+                        self.draw_give_preview(traveler, give_to, surf)
+            elif self.ability.name == 'Trade':
+                unit = game.cursor.get_hover() or self.cur_unit
+                if unit != self.cur_unit:
+                    if self.traveler_mode:
+                        game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
+                    else:
+                        game.ui_view.draw_trade_preview(unit, surf)
+                elif unit and unit.traveler:
                     game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
-                else:
-                    game.ui_view.draw_trade_preview(unit, surf)
-            elif unit and unit.traveler:
-                game.ui_view.draw_trade_preview(game.get_unit(unit.traveler), surf)
 
         elif self.ability.name == 'Steal':
             unit = game.cursor.get_hover()
@@ -2103,6 +2225,7 @@ class TargetingState(MapState):
 class CombatTargetingState(MapState):
     name = 'combat_targeting'
     pennant = None
+    cur_unit = None
 
     def start(self):
         self.cur_unit = game.cursor.cur_unit
@@ -2131,10 +2254,18 @@ class CombatTargetingState(MapState):
 
         self.selection = SelectionHelper(positions)
         self.previous_mouse_pos = None
-        if self.item and item_funcs.is_heal(self.cur_unit, self.item):
-            closest_pos = self.selection.get_least_hp(game.cursor.position)
+        preselect = game.memory.get('selection')
+        if preselect and preselect in positions:
+            closest_pos = preselect
+            game.memory['selection'] = None
         else:
-            closest_pos = self.selection.get_closest(game.cursor.position)
+            if self.item and item_funcs.is_heal(self.cur_unit, self.item):
+                closest_pos = self.selection.get_least_hp(game.cursor.position)
+            else:
+                closest_pos = self.selection.get_closest(game.cursor.position)
+        # Prevents a crash if the cursor doesn't have a position
+        if not closest_pos:
+            closest_pos = self.cur_unit.position
         game.cursor.set_pos(closest_pos)
 
         # Sets dual strike variables and chooses attacker dual strike

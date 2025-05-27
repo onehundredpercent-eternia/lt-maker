@@ -147,6 +147,7 @@ class GameState():
         self.mana_instance: List[Tuple[UnitObject, int]] = []
         self.ai: ai_controller.AIController = None
         self.overworld_controller: OverworldManager = None
+        self.target_system: TargetSystem = None
 
         self.target_system: TargetSystem = None
         self.path_system: PathSystem = None
@@ -255,7 +256,7 @@ class GameState():
         Done on loading a level, whether from overworld, last level, save_state, etc.
         """
         from app.engine import (ai_controller, camera, death, highlight,
-                                map_view, phase, ui_view)
+                                map_view, phase, ui_view, target_system)
         from app.engine.movement import movement_system
         from app.engine.target_system import TargetSystem
         from app.engine.pathfinding.path_system import PathSystem
