@@ -288,13 +288,15 @@ class MapCombat(SimpleCombat):
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 crt = combat_calcs.compute_crit(
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
+                stg = combat_calcs.compute_stagger(
+                    self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 grd = self.attacker.get_guard_gauge() if self._show_guard_gauge() else None
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo(
-                        'p1', self.attacker, self.main_item, self.defender, (hit, mt, crt, grd))
+                        'p1', self.attacker, self.main_item, self.defender, (hit, mt, crt, grd, stg))
                     self.health_bars[self.attacker] = attacker_health
                 else:
-                    self.health_bars[self.attacker].update_stats((hit, mt, crt, grd))
+                    self.health_bars[self.attacker].update_stats((hit, mt, crt, grd, stg))
 
             # P1 on P2
             elif self.defender:
@@ -306,12 +308,14 @@ class MapCombat(SimpleCombat):
                 crt = combat_calcs.compute_crit(
                     self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 grd = self.attacker.get_guard_gauge() if self._show_guard_gauge() else None
+                stg = combat_calcs.compute_stagger(
+                    self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo(
-                        'p1', self.attacker, self.main_item, self.defender, (hit, mt, crt, grd))
+                        'p1', self.attacker, self.main_item, self.defender, (hit, mt, crt, grd, stg))
                     self.health_bars[self.attacker] = attacker_health
                 else:
-                    self.health_bars[self.attacker].update_stats((hit, mt, crt, grd))
+                    self.health_bars[self.attacker].update_stats((hit, mt, crt, grd, stg))
 
                 # Defender
                 if combat_calcs.can_counterattack(self.attacker, self.main_item, self.defender, self.def_item):
@@ -321,15 +325,17 @@ class MapCombat(SimpleCombat):
                         self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
                     crt = combat_calcs.compute_crit(
                         self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
+                    stg = combat_calcs.compute_stagger(
+                        self.defender, self.attacker, self.def_item, self.main_item, 'defense', self.state_machine.get_defense_info())
                 else:
-                    hit, mt, crt = None, None, None
+                    hit, mt, crt, stg = None, None, None, None
                 grd = self.defender.get_guard_gauge() if self._show_guard_gauge() else None
                 if self.defender not in self.health_bars:
                     defender_health = MapCombatInfo(
-                        'p2', self.defender, self.def_item, self.attacker, (hit, mt, crt, grd))
+                        'p2', self.defender, self.def_item, self.attacker, (hit, mt, crt, grd, stg))
                     self.health_bars[self.defender] = defender_health
                 else:
-                    self.health_bars[self.defender].update_stats((hit, mt, crt, grd))
+                    self.health_bars[self.defender].update_stats((hit, mt, crt, grd, stg))
 
             # P1 on single splash
             elif len(self.all_splash) == 1:
@@ -340,16 +346,18 @@ class MapCombat(SimpleCombat):
                     self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
                 crt = combat_calcs.compute_crit(
                     self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
+                stg = combat_calcs.compute_stagger(
+                    self.attacker, defender, self.main_item, None, 'attack', self.state_machine.get_attack_info())
                 if self.attacker not in self.health_bars:
                     attacker_health = MapCombatInfo(
-                        'p1', self.attacker, self.main_item, defender, (hit, mt, crt, None))
+                        'p1', self.attacker, self.main_item, defender, (hit, mt, crt, None, stg))
                     self.health_bars[self.attacker] = attacker_health
                 else:
-                    self.health_bars[self.attacker].update_stats((hit, mt, crt, None))
+                    self.health_bars[self.attacker].update_stats((hit, mt, crt, None, stg))
 
                 if defender not in self.health_bars:
                     splash_health = MapCombatInfo(
-                        'splash', defender, None, self.attacker, (None, None, None, None))
+                        'splash', defender, None, self.attacker, (None, None, None, None, None))
                     self.health_bars[defender] = splash_health
 
     def _handle_playback(self):

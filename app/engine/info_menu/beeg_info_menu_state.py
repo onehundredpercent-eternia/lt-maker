@@ -85,7 +85,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
 
     def create_portrait_section(self):
         surf = engine.create_surface((WINWIDTH, self.portrait_section_height), transparent=True)
-        surf.blit(SPRITES.get('info_unit'), (6, 28))
+        surf.blit(SPRITES.get('info_unit'), (6, 26))
 
         x_offset = 4
         render_text(surf, ['text'], [self.unit.name], ['white'], (x_offset + 44, 0), HAlignment.CENTER)
@@ -346,7 +346,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         return surf
 
     def draw_equipment_surf(self, surf):
-        surf.blit(self.equipment_surf, (WINWIDTH - 120, 48))
+        surf.blit(self.equipment_surf, (WINWIDTH - 128, 48))
 
     def create_skill_surf(self):
         surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)

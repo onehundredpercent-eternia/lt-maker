@@ -162,6 +162,20 @@ class Avoid(SkillComponent):
 
     def tile_avoid(self):
         return self.value
+
+class Poise(SkillComponent):
+    nid = 'poise'
+    desc = "Gives +X poise"
+    tag = SkillTags.COMBAT
+
+    expose = ComponentType.Int
+    value = 2
+
+    def modify_poise(self, unit, item):
+        return self.value
+
+    def tile_poise(self):
+        return self.value
         
 class EvalAvoid(SkillComponent):
     nid = 'eval_avoid'

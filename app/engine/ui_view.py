@@ -309,7 +309,7 @@ class UIView():
         else:
             bg_surf = SPRITES.get('tile_info_quick_opaque').copy()
             bg_surf = image_mods.make_translucent(bg_surf, .1)
-            tile_def, tile_avoid = 0, 0
+            tile_def, tile_avoid, tile_poise = 0, 0, 0
             if terrain.status:
                 status_prefab = DB.skills.get(terrain.status)
                 if status_prefab:
@@ -318,10 +318,15 @@ class UIView():
                             tile_def += component.tile_def()
                         if component.defines('tile_avoid'):
                             tile_avoid += component.tile_avoid()
+                        if component.defines('tile_poise'):
+                            tile_poise += component.tile_poise()
                 else:
                     logging.error("Could not find status %s for terrain %s", terrain.status, terrain.nid)
             render_text(bg_surf, ['small'], [str(tile_def)], [None], (bg_surf.get_width() - 4, 17), HAlignment.RIGHT)
-            render_text(bg_surf, ['small'], [str(tile_avoid)], [None], (bg_surf.get_width() - 4, 25), HAlignment.RIGHT)
+            if DB.constants.value('use_accuracy'):
+                render_text(bg_surf, ['small'], [str(tile_avoid)], [None], (bg_surf.get_width() - 4, 25), HAlignment.RIGHT)
+            elif DB.constants.value('use_posture'):
+                render_text(bg_surf, ['small'], [str(tile_poise)], [None], (bg_surf.get_width() - 4, 25), HAlignment.RIGHT)
 
         name = terrain.name
         width = text_width('text', name)
@@ -439,8 +444,8 @@ class UIView():
             crit_index = 0
 
         color = DB.teams.get(defender.team).combat_color
-        final_sprite = prefix + infix + ('_' if infix else '') + color
-        fallback_final = prefix + infix + ('_' if infix else '') + 'red'
+        final_sprite = prefix + infix + color
+        fallback_final = prefix + infix + 'red'
         surf = SPRITES.get(final_sprite, fallback_final).copy()
 
         if DB.constants.value('pairup') and \
@@ -449,8 +454,8 @@ class UIView():
                 # Background boxes
                 prefix = 'assist_info_'
                 color = DB.teams.get(attacker.team).combat_color
-                final_sprite = prefix + infix + ('_' if infix else '') + color
-                fallback_final = prefix + infix + ('_' if infix else '') + 'red'
+                final_sprite = prefix + infix + color
+                fallback_final = prefix + infix + 'red'
                 surf.blit(SPRITES.get(final_sprite, fallback_final).copy(), (92, 35))
 
                 mt = combat_calcs.compute_assist_damage(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
@@ -474,8 +479,8 @@ class UIView():
                 # Background boxes
                 prefix = 'assist_info_'
                 color = DB.teams.get(defender.team).combat_color
-                final_sprite = prefix + infix + ('_' if infix else '') + color
-                fallback_final = prefix + infix + ('_' if infix else '') + 'red'
+                final_sprite = prefix + infix + color
+                fallback_final = prefix + infix + 'red'
                 surf.blit(SPRITES.get(final_sprite, fallback_final).copy(), (1, 35))
 
                 mt = combat_calcs.compute_assist_damage(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
@@ -531,9 +536,9 @@ class UIView():
             if crit_index:
                 c = combat_calcs.compute_crit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
                 blit_num(surf, c, 88, 35 + 16 * crit_index)
-            if stagger_index:
-                stg = combat_calcs.compute_stagger(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
-                blit_num(surf, stg, 88, 35 + 16 * stagger_index)
+            # if stagger_index:
+            #     stg = combat_calcs.compute_stagger(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
+            #     blit_num(surf, stg, 88, 35 + 16 * stagger_index)
         # Enemy Hit and Mt
         if defender.get_weapon() and \
                 combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
@@ -546,15 +551,15 @@ class UIView():
                 e_crit = combat_calcs.compute_crit(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             else:
                 e_crit = 0
-            if stagger_flag:
-                e_stg = combat_calcs.compute_stagger(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
-            else:
-                e_stg = 0
+            # if stagger_flag:
+            #     e_stg = combat_calcs.compute_stagger(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
+            # else:
+            #     e_stg = 0
         else:
             e_mt = '--'
             e_hit = '--'
             e_crit = '--'
-            e_stg = '--'
+            # e_stg = '--'
 
         if grandmaster:
             if e_mt == '--' or e_hit == '--':
@@ -567,8 +572,8 @@ class UIView():
                 blit_num(surf, e_hit, 44, 35 + 16 * hit_index)
             if crit_index:
                 blit_num(surf, e_crit, 44, 35 + 16 * crit_index)
-            if stagger_index:
-                blit_num(surf, e_stg, 44, 35 + 16 * stagger_index)
+            # if stagger_index:
+                # blit_num(surf, e_stg, 44, 35 + 16 * stagger_index)
 
         return surf
 
@@ -648,7 +653,7 @@ class UIView():
             icon = icons.get_icon(eweapon)
             if icon:
                 icon = item_system.item_icon_mod(defender, eweapon, attacker, weapon, icon)
-                y_pos = topleft[1] + 83
+                y_pos = topleft[1] + 99
                 if not crit_flag:
                     y_pos -= 16
                 if grandmaster or not accuracy_flag:
@@ -671,13 +676,11 @@ class UIView():
 
             self.draw_adv_arrows(surf, defender, attacker, resolve_weapon(defender), weapon, (topleft[0] + 85, y_pos))
 
-        # Doubling
-        count = ANIMATION_COUNTERS.x2_counter.count
-        x2_pos_player = (topleft[0] + 83 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_enemy = (topleft[0] + 44 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_player_partner = (topleft[0] + 107 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_enemy_partner = (topleft[0] + 20 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
+        stagger_index = 2
+        if not accuracy_flag:
+            stagger_index -= 1
 
+        # Num attacks calculation
         num_phases = combat_calcs.compute_attack_phases(attacker, defender, weapon, resolve_weapon(defender), "attack", (0 , 0))
         num_attacks = num_phases
         for attack_phase in range(num_phases):
@@ -686,6 +689,29 @@ class UIView():
             pass  # If you can only lose one use at a time, no need to min this
         else:
             num_attacks = min(num_attacks, weapon.data.get('uses', 100), weapon.data.get('c_uses', 100))
+
+        def blit_stagger_num(surf, num, x_pos, y_pos, breaks_posture=False):
+            if num is None or num == '--':
+                # x_pos - 1 to center -- with general center of 2 digit numbers
+                FONT['text-blue'].blit_right('--', surf, (x_pos - 1, y_pos))
+                return
+            if breaks_posture:
+                icons.draw_glow(surf, FONT['text-red'], str(num), (x_pos, y_pos), HAlignment.RIGHT)
+            else:
+                FONT['text-blue'].blit_right(str(num), surf, (x_pos, y_pos))
+
+        # Stagger
+        if stagger_flag:
+            stg = combat_calcs.compute_stagger(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
+            breaks_posture = (stg * num_attacks >= defender.get_posture())
+            blit_stagger_num(surf, stg, topleft[0] + 88, topleft[1] + 35 + 16 * stagger_index, breaks_posture)
+
+        # Doubling
+        count = ANIMATION_COUNTERS.x2_counter.count
+        x2_pos_player = (topleft[0] + 83 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
+        x2_pos_enemy = (topleft[0] + 44 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
+        x2_pos_player_partner = (topleft[0] + 107 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
+        x2_pos_enemy_partner = (topleft[0] + 20 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
 
         if num_attacks > 1:
             surf.blit(SPRITES.get("x%d" % (num_attacks)), x2_pos_player)
@@ -702,13 +728,23 @@ class UIView():
             for e_attack_phase in range(e_num_phases):
                 e_num_attacks += combat_calcs.compute_multiattacks(defender, attacker, eweapon, 'defense', (e_attack_phase, 0)) - 1
             e_num_attacks = min(e_num_attacks, eweapon.data.get('uses', 100))
+        else:
+            e_num_attacks = 0
 
-            if e_num_attacks > 1:
-                surf.blit(SPRITES.get("x%d" % (e_num_attacks)), x2_pos_enemy)
+        if stagger_flag:
+            e_stg = combat_calcs.compute_stagger(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
+            if e_stg:
+                e_breaks_posture = (e_stg * e_num_attacks >= attacker.get_posture())
+                blit_stagger_num(surf, e_stg, topleft[0] + 44, topleft[1] + 35 + 16 * stagger_index, e_breaks_posture)
+            else:
+                blit_stagger_num(surf, '--', topleft[0] + 44, topleft[1] + 35 + 16 * stagger_index, False)
 
-            if d_assist:
-                if e_num_attacks > 1 and not DB.constants.value('limit_attack_stance'):
-                    surf.blit(SPRITES.get("x%d" % (e_num_attacks)), x2_pos_enemy_partner)
+        if e_num_attacks > 1:
+            surf.blit(SPRITES.get("x%d" % (e_num_attacks)), x2_pos_enemy)
+
+        if d_assist:
+            if e_num_attacks > 1 and not DB.constants.value('limit_attack_stance'):
+                surf.blit(SPRITES.get("x%d" % (e_num_attacks)), x2_pos_enemy_partner)
 
         # Turns off combat conditionals
         skill_system.test_off([], defender, resolve_weapon(defender), attacker, weapon, 'defense')
@@ -1006,7 +1042,7 @@ class ItemDescriptionPanel():
         return bg_surf
 
     def _draw_item_delta_info(self, bg_surf):
-        if not self.reference_item: # fail early
+        if not self.reference_item:  # fail early
             return
         
         is_weapon = item_system.is_weapon(self.unit, self.item)
@@ -1049,7 +1085,7 @@ class ItemDescriptionPanel():
                     bg_surf.blit(up_arrow, (left + width//2 - 3, top + 40))
                 elif is_curr_better == -1:
                     bg_surf.blit(down_arrow, (left + width//2 - 3, top + 40))
-            elif DB.constants.value('use_poise'):
+            elif DB.constants.value('use_posture'):
                 curr_stagger = combat_calcs.stagger(self.unit, current_weapon)
                 prev_stagger = combat_calcs.stagger(self.unit, self.reference_item)
                 is_curr_better = compare(curr_stagger, prev_stagger)

@@ -80,3 +80,16 @@ class HasTags(SkillComponent):
 
     def additional_tags(self, unit, skill):
         return self.value
+
+class SlottedSkill(SkillComponent):
+    nid = 'slotted_skill'
+    desc = "Skill has a slot it belongs to"
+    tag = SkillTags.ATTRIBUTE
+
+    expose = ComponentType.String
+
+    def init(self, skill):
+        self.skill.data['in_slot'] = False
+
+    def condition(self, unit, item):
+        return self.skill.data['in_slot']

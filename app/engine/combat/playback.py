@@ -316,6 +316,34 @@ class RestoreHit(PlaybackBrush):
     defender: UnitObject
 
 
+@dataclass
+class PostureBlock(PlaybackBrush):
+    """
+    Added to playback when an attack is blocked by a unit's posture
+    Also utilized to generate damage numbers
+    """
+    nid: ClassVar[str] = 'posture_block'
+    attacker: UnitObject
+    # The actual item used for this attack, which may not be the main item used for this combat (e.g., multi-items)
+    item: ItemObject
+    defender: UnitObject
+    stagger: int  # attempted stagger damage
+
+
+@dataclass
+class PostureBreak(PlaybackBrush):
+    """
+    Added to playback when an attack is breaks a unit's posture
+    """
+    nid: ClassVar[str] = 'posture_break'
+    attacker: UnitObject
+    # The actual item used for this attack, which may not be the main item used for this combat (e.g., multi-items)
+    item: ItemObject
+    defender: UnitObject
+    orig_posture: int  # original value of the defender's posture
+    stagger: int  # stagger damage
+
+
 # === mostly aesthetic brushes below ===
 
 # Most of these will be added to playback during a combat

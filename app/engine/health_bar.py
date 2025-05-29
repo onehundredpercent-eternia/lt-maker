@@ -62,7 +62,7 @@ class CombatHealthBar(AbstractBar):
     time_for_change_min = 0
 
     def __init__(self, unit):
-        super().__init__(unit)
+        super().__init__(unit, unit.get_hp)
         self.full_hp_blip = SPRITES.get('full_hp_blip')
         self.empty_hp_blip = SPRITES.get('empty_hp_blip')
         self.overflow_hp_blip = SPRITES.get('overflow_hp_blip')
@@ -180,7 +180,7 @@ class MapHealthBar(AbstractBar):
 
 class MapPostureBar(AbstractBar):
     time_for_change_min = 100
-    speed = utils.frames2ms(2)
+    speed = utils.frames2ms(3)
     posture_outline = SPRITES.get('map_posture_outline')
     posture_bar = SPRITES.get('map_posture_bar')
 
@@ -189,7 +189,7 @@ class MapPostureBar(AbstractBar):
         fraction_posture = utils.clamp(self.get_value() / total, 0, 1)
         index_pixel = int(10 * fraction_posture) + 1
 
-        surf.blit(self.posture_outline, (left, top + 13))
+        surf.blit(self.posture_outline, (left + 1, top + 13))
         if fraction_posture > 0:
             bar = engine.subsurface(self.posture_bar, (0, 0, index_pixel, 1))
             surf.blit(bar, (left + 2, top + 14))

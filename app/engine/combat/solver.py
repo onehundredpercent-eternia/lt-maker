@@ -442,14 +442,14 @@ class CombatPhaseSolver():
             unclamped_hit = combat_calcs.compute_hit(attacker, defender, item, def_item, mode, attack_info, clamp_hit=False)
             if game.rng_mode == RNGOption.FATES_HIT:
                 to_hit = self.calculate_fates_hit(utils.clamp(unclamped_hit, 0, 100))
-            # Recalculate unclamped hit so it matches fates to_hit
-            # Otherwise, unclamped hit could be 75 when fates to_hit is 85, which ruins
-            # the glancing hit calculation below.
-            unclamped_hit = self.calculate_fates_hit(unclamped_hit)
+                # Recalculate unclamped hit so it matches fates to_hit
+                # Otherwise, unclamped hit could be 75 when fates to_hit is 85, which ruins
+                # the glancing hit calculation below.
+                unclamped_hit = self.calculate_fates_hit(unclamped_hit)
             else:
                 to_hit = utils.clamp(unclamped_hit, 0, 100)
         else:  # Always hit
-            to_hit = 100
+            unclamped_hit = to_hit = 100
 
         if self.current_command.lower() in ('hit1', 'hit2', 'crit1', 'crit2'):
             roll = -1
@@ -472,9 +472,15 @@ class CombatPhaseSolver():
             # check if we didn't breach the opponents posture as long as they have posture
             if defender.get_posture() <= 0 or stagger < defender.get_posture():
                 roll = 101  # This is a miss
-                action.do(action.ChangePosture(defender, -stagger))
+                actions.append(action.ChangePosture(defender, -stagger))
+                playback.append(pb.PostureBlock(attacker, item, defender, defender.get_posture(), stagger))
             else:  # We do hit!
-                action.do(action.ChangePosture(defender, -defender.get_posture()))
+                orig_posture = defender.get_posture()
+                new_value = orig_posture - stagger
+                while new_value < 0:
+                    new_value += 10
+                actions.append(action.ChangePosture(defender, (new_value - orig_posture)))
+                playback.append(pb.PostureBreak(attacker, item, defender, orig_posture, stagger))
 
         if roll < to_hit:
             crit = False
