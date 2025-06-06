@@ -2,7 +2,7 @@
     {
         "nid": "Valkyrie",
         "name": "Valkyrie",
-        "desc": "Kind-hearted healers.",
+        "desc": "Battle maidens who wield both staves and light magic.",
         "tier": 2,
         "movement_group": "Heavy Cav",
         "promotes_from": "Troubadour",
@@ -78,12 +78,7 @@
             "LEAD": 60,
             "New Stat": 30
         },
-        "learned_skills": [
-            [
-                1,
-                "Canto"
-            ]
-        ],
+        "learned_skills": [],
         "wexp_gain": {
             "Sword": [
                 false,
@@ -111,8 +106,8 @@
                 251
             ],
             "Light": [
-                false,
-                0,
+                true,
+                31,
                 251
             ],
             "Anima": [
@@ -137,7 +132,7 @@
             0
         ],
         "map_sprite_nid": "Valkyrie",
-        "combat_anim_nid": null,
+        "combat_anim_nid": "Valkyrie",
         "fields": []
     }
 ]
