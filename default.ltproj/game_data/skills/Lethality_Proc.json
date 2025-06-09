@@ -2,7 +2,7 @@
     {
         "nid": "Lethality_Proc",
         "name": "Lethality",
-        "desc": "Proc rate: SKL/2%\nInstantly kills foe.",
+        "desc": "Proc rate: SKL/4%\nInstantly kills foe.",
         "icon_nid": "Skills",
         "icon_index": [
             7,
