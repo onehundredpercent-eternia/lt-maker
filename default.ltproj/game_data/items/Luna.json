@@ -73,8 +73,8 @@
                 2
             ],
             [
-                "status_on_equip",
-                "Luna_Proc"
+                "alternate_resist_formula",
+                "ZERO"
             ]
         ]
     }

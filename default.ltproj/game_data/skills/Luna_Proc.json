@@ -10,8 +10,8 @@
         ],
         "components": [
             [
-                "dynamic_damage_multiplier",
-                "combat_calcs.defense(unit, target, unit.get_weapon())"
+                "item_override",
+                "Luna_Proc"
             ]
         ]
     }
