@@ -1010,9 +1010,15 @@
             {
                 "nid": "LGang",
                 "units": [
+                    "L'arachel"
                     "Dozla"
                 ],
                 "positions": {
+                    "L'arachel": [
+                        10,
+                        5
+                    ],
+
                     "Dozla": [
                         11,
                         4
