@@ -126,6 +126,7 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     'battle_music':                         HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.UNIQUE),
     # events (runs all components, does not return anything)
     'on_death':                             HookInfo(['unit'], ResolvePolicy.NO_RETURN),
+    'on_wait':                              HookInfo(['unit', 'actively_chosen'], ResolvePolicy.NO_RETURN),
     # item events
     'on_add_item':                          HookInfo(['unit', 'item'], ResolvePolicy.NO_RETURN),
     'on_remove_item':                       HookInfo(['unit', 'item'], ResolvePolicy.NO_RETURN),
@@ -140,8 +141,6 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     # phase events
     'on_upkeep':                            HookInfo(['actions', 'playback', 'unit'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     'on_endstep':                           HookInfo(['actions', 'playback', 'unit'], ResolvePolicy.NO_RETURN, has_unconditional=True),
-    # wait events
-    'after_wait':                           HookInfo(['unit', 'actively_chosen'], ResolvePolicy.NO_RETURN),
     # combat events (as events but has unconditional variants)
     'start_combat':                         HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     'cleanup_combat':                       HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
@@ -151,6 +150,7 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     'test_on':                              HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     'test_off':                             HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     # list hooks (returns a list of all hook return values)
+    'combat_sprite_flicker_tint':           HookInfo(['unit'], ResolvePolicy.LIST),
     # union hooks (returns a set containing every unique hook return)
     'usable_wtypes':                        HookInfo(['unit'], ResolvePolicy.UNION),
     'forbidden_wtypes':                     HookInfo(['unit'], ResolvePolicy.UNION),

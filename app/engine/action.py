@@ -2311,6 +2311,8 @@ class SetNid(Action):
             if self.unit.nid in game.unit_registry:
                 del game.unit_registry[self.unit.nid]
             self.unit.nid = self.new_nid
+            if game.initiative:
+                game.initiative.replace_unit_nid(self.old_nid, self.new_nid)
             game.register_unit(self.unit)
             if orig_pos:
                 game.arrive(self.unit, orig_pos)
@@ -2323,6 +2325,8 @@ class SetNid(Action):
             if self.unit.nid in game.unit_registry:
                 del game.unit_registry[self.unit.nid]
             self.unit.nid = self.old_nid
+            if game.initiative:
+                game.initiative.replace_unit_nid(self.new_nid, self.old_nid)
             game.register_unit(self.unit)
             if orig_pos:
                 game.arrive(self.unit, orig_pos)
@@ -2845,12 +2849,15 @@ class AddTag(Action):
     def __init__(self, unit, tag):
         self.unit = unit
         self.tag = tag
+        self.did_add = False
 
     def do(self):
-        self.unit._tags.append(self.tag)
+        if self.tag not in self.unit._tags:
+            self.unit._tags.add(self.tag)
+            self.did_add = True
 
     def reverse(self):
-        if self.tag in self.unit._tags:
+        if self.did_add:
             self.unit._tags.remove(self.tag)
 
 
@@ -2867,7 +2874,7 @@ class RemoveTag(Action):
 
     def reverse(self):
         if self.did_remove:
-            self.unit._tags.append(self.tag)
+            self.unit._tags.add(self.tag)
 
 
 class AddTalk(Action):
