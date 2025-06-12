@@ -89,7 +89,7 @@ class SlottedSkill(SkillComponent):
     expose = ComponentType.String
 
     def init(self, skill):
-        self.skill.data['in_slot'] = False
+        self.skill.data['in_slot'] = 0
 
     def condition(self, unit, item):
         return self.skill.data['in_slot']

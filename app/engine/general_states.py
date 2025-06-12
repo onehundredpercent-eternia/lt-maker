@@ -1166,7 +1166,7 @@ class MenuState(MapState):
             # Handle abilities that are multi-items, you sick fuck (rain's words not mine)
             if item.multi_item:
                 all_weapons = [subitem for subitem in item.subitems if item_funcs.is_weapon_recursive(cur_unit, subitem) and
-                                game.target_system.get_valid_targets_recursive_with_availability_check(cur_unit, subitem)]
+                               game.target_system.get_valid_targets_recursive_with_availability_check(cur_unit, subitem)]
                 if all_weapons:
                     if item.multi_item_hides_unavailable:
                         game.memory['valid_weapons'] = [subitem for subitem in all_weapons if item_funcs.available(cur_unit, subitem)]
@@ -1175,7 +1175,7 @@ class MenuState(MapState):
                     game.state.change('weapon_choice')
                 else:  # multi item of spells?
                     all_spells = [subitem for subitem in item.subitems if item_funcs.is_spell_recursive(cur_unit, subitem) and
-                                    game.target_system.get_valid_targets_recursive_with_availability_check(cur_unit, subitem)]
+                                  game.target_system.get_valid_targets_recursive_with_availability_check(cur_unit, subitem)]
                     if item.multi_item_hides_unavailable:
                         game.memory['valid_spells'] = [subitem for subitem in all_spells if item_funcs.available(cur_unit, subitem)]
                     else:
@@ -1196,8 +1196,11 @@ class MenuState(MapState):
         elif selection in self.extra_abilities:
             # need submenu; construct args to dispatch to AbilitySubmenuChoiceState
             abilities = self.extra_abilities[selection]
-            options = [ability_name for ability_name in abilities]
-            info_desc = [abilities[ability_name].desc for ability_name in abilities]
+            abilities = {ability_name: ability for ability_name, ability in abilities.items() 
+                         if game.target_system.get_valid_targets_recursive_with_availability_check(self.cur_unit, ability)}
+            options = [ability for ability in abilities.values()]
+            info_desc = [text_funcs.translate_and_text_evaluate(abilities[ability_name].desc, self=self.cur_unit, unit=self.cur_unit) 
+                         for ability_name in abilities]
             game.memory['ability_submenu_choice'] = (abilities,
                                                      options, info_desc,
                                                      on_extra_ability_begin,

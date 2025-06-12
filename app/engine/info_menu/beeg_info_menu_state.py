@@ -1,3 +1,5 @@
+from typing import Optional
+
 from app.engine.graphics.text.text_renderer import render_text, text_width
 
 from app.constants import WINWIDTH, WINHEIGHT
@@ -9,11 +11,12 @@ from app.data.resources.resources import RESOURCES
 from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.engine import engine, help_menu, gui, \
-    icons, image_mods, item_funcs, equations, \
+    icons, image_mods, item_funcs, \
     combat_calcs, skill_system, text_funcs
 from app.engine.game_menus import menu_options
 from app.engine.game_state import game
 from app.engine.info_menu.info_menu_portrait import InfoMenuPortrait
+from app.engine.objects.skill import SkillObject
 from app.utilities.enums import HAlignment
 
 from app.engine.info_menu import info_graph, info_menu_state
@@ -79,8 +82,8 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # Blit the unit's active/focus map sprite
         if not self.transparency:
             active_sprite = self.unit.sprite.create_image('active')
-            x_pos = 81 - active_sprite.get_width()//2
-            y_pos = self.portrait_section_height - 56
+            x_pos = 77 - active_sprite.get_width()//2
+            y_pos = self.portrait_section_height - 54
             surf.blit(active_sprite, (x_pos, y_pos + self.scroll_offset_y))
 
     def create_portrait_section(self):
@@ -349,8 +352,11 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         surf.blit(self.equipment_surf, (WINWIDTH - 128, 48))
 
     def create_skill_surf(self):
+        """
+        For non-class skills, such as statuses
+        """
         surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)
-        skills = [skill for skill in self.unit.skills if not (skill.class_skill or skill_system.hidden(skill, self.unit))]
+        skills = [skill for skill in self.unit.skills if not skill.class_skill and not skill_system.hidden(skill, self.unit)]
         # stacked skills appear multiple times, but should be drawn only once
         skill_counter = {}
         unique_skills = []
@@ -369,30 +375,62 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 charge = ' %d / %d' % (skill.data['charge'], skill.data['total_charge'])
             else:
                 charge = ''
-            self.info_graph.register((WINWIDTH//2 + 4 + left_pos + 8, WINHEIGHT - 24, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+            self.info_graph.register((WINWIDTH//2 + 24 + left_pos + 8, WINHEIGHT - 24, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
 
         return surf
 
     def draw_skill_surf(self, surf):
-        surf.blit(self.skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 32))
+        surf.blit(self.skill_surf, (WINWIDTH//2 + 24, WINHEIGHT - 32))
 
     def create_class_skill_surf(self):
-        surf = engine.create_surface((WINWIDTH//2, 24), transparent=True)
-        class_skills = [skill for skill in self.unit.skills if skill.class_skill and not skill_system.hidden(skill, self.unit)][:6]
+        surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)
+        class_skills = [skill for skill in self.unit.skills if skill.class_skill and not skill_system.hidden(skill, self.unit)]
+        slotted_skills = [skill for skill in class_skills if skill.slotted_skill and skill.data['in_slot']]
 
-        for idx, skill in enumerate(class_skills):
-            left_pos = idx * 24
-            icons.draw_skill(surf, skill, (left_pos + 8, 4), grey=skill_system.is_grey(skill, self.unit))
-            if skill.data.get('total_charge'):
-                charge = ' (%d/%d)' % (skill.data['charge'], skill.data['total_charge'])
-            else:
-                charge = ''
-            self.info_graph.register((4 + WINWIDTH//2 + left_pos + 8, WINHEIGHT - 36, 16, 16), help_menu.HelpDialog(skill.desc, name=skill.name + charge), 'combat')
+        slot_order = [
+            ('A', 'Active Skills'),
+            ('B', 'Active Skills'),
+            ('C', 'Active Skills'),
+            ('P', 'Passive Skills'),
+            ('Q', 'Passive Skills'),
+            ('U',+ 'Ultimate')
+        ]
+
+        def get_skill_for_slot(slot_letter: str, slot_idx: int) -> Optional[SkillObject]:
+            """Given a slot type and slot idx for that slot type, get the skill that has been put in the slot"""
+            for skill in slotted_skills:
+                if skill.slotted_skill.value == slot_letter and skill.data['in_slot'] == slot_idx:
+                    return skill
+            return None
+
+        y_pos = 0
+        left_pos = 4
+        for slot_letter, slot_full_name in slot_order:
+            num_slots = int(self.unit.get_field(f'Slot {slot_letter}', 0))
+            
+            # Draw category title
+            if num_slots > 0:
+                y_pos += 16
+                render_text(surf, ['text'], [str(slot_full_name)], ['white'], (left_pos + 20, y_pos))
+
+            for idx in range(num_slots):
+                y_pos += 16
+                skill = get_skill_for_slot(slot_letter, idx)
+                if skill:
+                    skill_option = menu_options.SkillOption(idx, skill)
+                    skill_option.draw(surf, left_pos, y_pos)
+                    desc = text_funcs.translate_and_text_evaluate(
+                        skill.desc,
+                        unit=self.unit,
+                        self=skill)
+                    self.info_graph.register((left_pos, y_pos + self.portrait_section_height, 104, 16), help_menu.HelpDialog(desc, name=skill.name), 'combat')
+                else:
+                    self.info_graph.register((left_pos, y_pos + self.portrait_section_height, 104, 16), help_menu.HelpDialog('Empty'), 'combat')
 
         return surf
 
     def draw_class_skill_surf(self, surf):
-        surf.blit(self.class_skill_surf, (WINWIDTH//2 + 4, WINHEIGHT - 40))
+        surf.blit(self.class_skill_surf, (0, self.portrait_section_height))
 
     def create_support_surf(self):
         surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)

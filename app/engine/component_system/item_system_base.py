@@ -399,8 +399,8 @@ def on_miss(actions, playback: List[pb.PlaybackBrush], unit: UnitObject, item: I
                 component.on_miss(actions, playback, unit, item.parent_item, target, item2, target_pos, mode, attack_info)
 
     # Default playback
-    playback.append(pb.HitSound('Attack Miss 2'))
-    playback.append(pb.HitAnim('MapMiss', target))
+    # playback.append(pb.HitSound('Attack Miss 2'))
+    # playback.append(pb.HitAnim('MapMiss', target))
 
 def item_icon_mod(unit: UnitObject, item: ItemObject, target: UnitObject, item2: ItemObject, sprite):
     all_components = get_all_components(unit, item)

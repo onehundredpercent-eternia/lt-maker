@@ -470,17 +470,24 @@ class CombatPhaseSolver():
         if DB.constants.value('use_posture') and skill_system.check_enemy(attacker, defender):
             stagger = combat_calcs.compute_stagger(attacker, defender, item, def_item, mode, attack_info)
             # check if we didn't breach the opponents posture as long as they have posture
-            if defender.get_posture() <= 0 or stagger < defender.get_posture():
+            if stagger < defender.get_posture():
                 roll = 101  # This is a miss
+                old_posture = defender.get_posture()
                 actions.append(action.ChangePosture(defender, -stagger))
-                playback.append(pb.PostureBlock(attacker, item, defender, defender.get_posture(), stagger))
+                playback.append(pb.PostureBlock(attacker, item, defender, old_posture, stagger, old_posture - stagger))
+                playback.append(pb.HitSound('No Damage'))
+                playback.append(pb.HitAnim('No Damage', defender))
             else:  # We do hit!
                 orig_posture = defender.get_posture()
-                new_value = orig_posture - stagger
-                while new_value < 0:
-                    new_value += 10
-                actions.append(action.ChangePosture(defender, (new_value - orig_posture)))
-                playback.append(pb.PostureBreak(attacker, item, defender, orig_posture, stagger))
+                new_posture = orig_posture - stagger
+                # If the new value would break through posture twice,
+                # instead just leave resulting posture at 1
+                if new_posture <= -10:
+                    new_posture = 1
+                elif new_posture <= 0:
+                    new_posture += 10
+                actions.append(action.SetPosture(defender, new_posture))
+                playback.append(pb.PostureBreak(attacker, item, defender, orig_posture, stagger, new_posture))
 
         if roll < to_hit:
             crit = False

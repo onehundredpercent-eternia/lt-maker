@@ -415,6 +415,10 @@ class MapCombat(SimpleCombat):
                     d = gui.DamageNumber(int(num), idx, len(
                         str_damage), target.position, 'small_cyan')
                     target.sprite.damage_numbers.append(d)
+            elif brush.nid == 'posture_break':
+                new_posture = brush.new_posture
+                target = brush.defender
+                self.health_bars[target].posture_bar.set_posture_break(new_posture)
 
     def _apply_actions(self):
         """

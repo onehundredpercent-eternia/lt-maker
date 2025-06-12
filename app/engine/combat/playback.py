@@ -327,7 +327,9 @@ class PostureBlock(PlaybackBrush):
     # The actual item used for this attack, which may not be the main item used for this combat (e.g., multi-items)
     item: ItemObject
     defender: UnitObject
+    orig_posture: int  # Original posture
     stagger: int  # attempted stagger damage
+    new_posture: int  # New posture
 
 
 @dataclass
@@ -342,6 +344,7 @@ class PostureBreak(PlaybackBrush):
     defender: UnitObject
     orig_posture: int  # original value of the defender's posture
     stagger: int  # stagger damage
+    new_posture: int  # New posture
 
 
 # === mostly aesthetic brushes below ===

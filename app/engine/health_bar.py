@@ -220,6 +220,25 @@ class MapCombatHealthBar(AbstractBar):
 
 class MapCombatPostureBar(AbstractBar):
     posture_bar = SPRITES.get('posture_bar')
+    max_posture = 10
+
+    def set_posture_break(self, new_posture):
+        self.getter = lambda: 0
+        self.future_value = new_posture
+
+    def update(self):
+        super().update()
+        # If we will be breaking...
+        if self.displayed_value == 0 and not self.transition_flag:
+            # Display break animation!
+            # Set value to 10
+            self.set_value(self.max_posture)
+            self.old_value = self.max_posture
+            # Now transition to the new posture value
+            self.getter = lambda: self.future_value
+            self.transition_flag = True
+            self.time_for_change = max(self.time_for_change_min, abs(self.displayed_value - self.getter()) * self.speed)
+            self.last_update = engine.get_time()
 
     def draw(self, surf):
         total = max(1, self.unit.get_max_posture())
