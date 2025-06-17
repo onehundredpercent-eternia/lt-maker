@@ -13,6 +13,7 @@ from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.build_groove import build_groove
 from app.engine.graphics.text.text_renderer import render_text, text_width
 from app.engine.info_menu.info_graph import InfoGraph, info_states
+from app.engine.info_menu.mod_graph import ModGraph
 from app.engine.info_menu.info_menu_portrait import InfoMenuPortrait
 from app.engine.input_manager import get_input_manager
 from app.engine.objects.unit import UnitObject
@@ -86,6 +87,9 @@ class InfoMenuState(State):
         self.info_graph.set_current_state(self.state)
         self.reset_surfs()
 
+        self.mod_graph = ModGraph()
+        self.mod_flag = False
+
         # For transitions between states
         self.rescuer = None  # Keeps track of the rescuer if we are looking at the traveler
         self.next_unit = None
@@ -104,6 +108,8 @@ class InfoMenuState(State):
 
     def reset_surfs(self, keep_last_info_graph_aabb=False):
         self.info_graph.clear(keep_last_aabb=keep_last_info_graph_aabb)
+        self.mod_graph.clear()
+
         self.portrait_surf = None
         self.current_portrait = None
 

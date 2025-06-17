@@ -43,6 +43,9 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         self.draw_portrait(surf)
         self.draw_slide(surf)
 
+        if self.mod_graph.current_slot:
+            self.mod_graph.draw(surf)
+
         if self.info_graph.current_bb:
             self.info_graph.draw(surf)
 
@@ -324,7 +327,23 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     surf.blit(SPRITES.get('equipment_highlight'), (8, idx * 16 + 8))
                 item_option = menu_options.FullItemOption(idx, item)
             item_option.draw(surf, 8, idx * 16)
-            self.info_graph.register((left, idx * 16 + top, 120, 16), item_option.get_help_box(), 'combat', first=(idx == 0))
+
+            aabb = (left, idx * 16 + top, 120, 16)
+            self.info_graph.register(aabb, item_option.get_help_box(), 'combat', first=(idx == 0))
+            item_options = self.unit.get_field(f'W{idx}', '').split(',')
+            if item_options:
+                options = item_funcs.create_items(self.unit, item_options)
+                menu = menus.Choice(None, options, topleft=aabb[:2])
+                menu.set_limit(5)
+
+                def on_select(menu_selection):
+                    # Swap item with new item by pretending it's in the convoy and then trading with convoy
+                    game.party.convoy.append(menu_selection)
+                    action.do(action.TradeItemWithConvoy(self.unit, menu_selection, item))
+                    # Clean up old item
+                    action.do(action.RemoveItemFromConvoy(item))
+
+                self.mod_graph.register(aabb, menu, on_select, item_option.get_help_box(), first=(idx == 0))
 
         # Blit accessories
         for idx, item in enumerate(self.unit.accessories):
@@ -344,7 +363,9 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 item_option = menu_options.FullItemOption(aidx, item)
             item_option.draw(surf, 8, y_pos)
             first = (idx == 0 and not self.unit.nonaccessories)
-            self.info_graph.register((left, y_pos + top, 120, 16), item_option.get_help_box(), 'combat', first=first)
+            aabb = (left, y_pos + top, 120, 16)
+            self.info_graph.register(aabb, item_option.get_help_box(), 'combat', first=first)
+            self.mod_graph.register(aabb, item_option.get_help_box(), first=first)
 
         return surf
 
