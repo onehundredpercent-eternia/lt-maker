@@ -44,13 +44,21 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         self.draw_slide(surf)
 
         if self.mod_graph.current_slot:
-            self.mod_graph.draw(surf)
+            self.mod_graph.draw(surf, with_info=self.info_flag)
+        if self.current_mod_slot:
+            self.current_mod_slot.menu.update()
+            self.current_mod_slot.menu.draw(surf)
 
         if self.info_graph.current_bb:
             self.info_graph.draw(surf)
 
-        if not self.transition:
+        if not self.transition and len(self.scroll_units) > 1:
             self.mouse_indicator.draw(surf)
+
+        if self.use_mod_graph and not self.mod_flag:
+            pennant = base_surf.create_base_surf(100, 24, 'menu_bg_clear')
+            render_text(pennant, ['text'], ['Press <icon>A_button</> to modify'], ['white'], topleft=(4, 4))
+            surf.blit(pennant, (WINWIDTH//2 - 50, WINHEIGHT - 32))
 
         return surf
 
@@ -330,6 +338,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
 
             aabb = (left, idx * 16 + top, 120, 16)
             self.info_graph.register(aabb, item_option.get_help_box(), 'combat', first=(idx == 0))
+
             item_options = self.unit.get_field(f'W{idx}', '').split(',')
             if item_options:
                 options = item_funcs.create_items(self.unit, item_options)
@@ -342,6 +351,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     action.do(action.TradeItemWithConvoy(self.unit, menu_selection, item))
                     # Clean up old item
                     action.do(action.RemoveItemFromConvoy(item))
+                    self.reset_surfs(keep_last_info_graph_aabb=True)
 
                 self.mod_graph.register(aabb, menu, on_select, item_option.get_help_box(), first=(idx == 0))
 
@@ -404,6 +414,9 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         surf.blit(self.skill_surf, (WINWIDTH//2 + 24, WINHEIGHT - 32))
 
     def create_class_skill_surf(self):
+        """
+        For the unit's class skills, which are usually modifiable
+        """
         surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)
         class_skills = [skill for skill in self.unit.skills if skill.class_skill and not skill_system.hidden(skill, self.unit)]
         slotted_skills = [skill for skill in class_skills if skill.slotted_skill and skill.data['in_slot']]
@@ -424,6 +437,14 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     return skill
             return None
 
+        def get_possible_skills_for_slot(slot_letter: str) -> List[SkillObject]:
+            """Given a slot type, get the possible skills that could be in that slot"""
+            skills = []
+            for skill in class_skills:
+                if skill.slotted_skill and skill.slotted_skill.value == slot_letter:
+                    skills.append(skill)
+            return skills                    
+
         y_pos = 0
         left_pos = 4
         for slot_letter, slot_full_name in slot_order:
@@ -437,6 +458,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
             for idx in range(num_slots):
                 y_pos += 16
                 skill = get_skill_for_slot(slot_letter, idx)
+                aabb = (left_pos, y_pos + self.portrait_section_height, 104, 16)
                 if skill:
                     skill_option = menu_options.SkillOption(idx, skill)
                     skill_option.draw(surf, left_pos, y_pos)
@@ -444,9 +466,22 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                         skill.desc,
                         unit=self.unit,
                         self=skill)
-                    self.info_graph.register((left_pos, y_pos + self.portrait_section_height, 104, 16), help_menu.HelpDialog(desc, name=skill.name), 'combat')
+                    self.info_graph.register(aabb, help_menu.HelpDialog(desc, name=skill.name), 'combat')
+
+                    skill_options = get_possible_skills_for_slot(slot_letter)
+                    if skill_options:
+                        menu = menus.Choice(None, skill_options, topleft=aabb[:2])
+                        menu.set_limit(5)
+
+                        def on_select(menu_selection):
+                            # Swap skill in slot with this skill
+                            skill.data['in_slot'] = False
+                            menu_selection.data['in_slot'] = True   
+                            self.reset_surfs(keep_last_info_graph_aabb=True)                         
+
+                        self.mod_graph.register(aabb, menu, on_select, help_menu.HelpDialog(desc, name=skill.name))
                 else:
-                    self.info_graph.register((left_pos, y_pos + self.portrait_section_height, 104, 16), help_menu.HelpDialog('Empty'), 'combat')
+                    self.info_graph.register(aabb, help_menu.HelpDialog('Empty'), 'combat')
 
         return surf
 

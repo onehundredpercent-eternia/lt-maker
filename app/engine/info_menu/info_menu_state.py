@@ -70,6 +70,13 @@ class InfoMenuState(State):
         self.scroll_units = [unit for unit in self.scroll_units if 'Tile' not in unit.tags]
         game.memory['scroll_units'] = None
 
+        # Check whether we should be able to modify this unit
+        self.use_mod_graph = game.memory.get('use_mod_graph', False)
+        game.memory['use_mod_graph'] = False  # Reset
+        if self.use_mod_graph:
+            # If so, make sure we can't scroll away
+            self.scroll_units = [self.unit]
+
         self.state = game.memory.get('info_menu_state', info_states[0])
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.unit.notes):
             self.state = 'personal_data'
@@ -85,10 +92,12 @@ class InfoMenuState(State):
         self.info_graph = InfoGraph()
         self.info_flag = False
         self.info_graph.set_current_state(self.state)
-        self.reset_surfs()
 
         self.mod_graph = ModGraph()
-        self.mod_flag = False
+        self.mod_flag = False  # Whether we are in the modding substate
+        self.current_mod_slot = None  # The slot associated with the menu that appears
+
+        self.reset_surfs()
 
         # For transitions between states
         self.rescuer = None  # Keeps track of the rescuer if we are looking at the traveler
@@ -152,30 +161,97 @@ class InfoMenuState(State):
             game.cursor.set_pos(self.unit.position)
         game.state.change('transition_pop')
 
+    def _take_input_info_flag(directions):
+        if event == 'INFO' or event == 'BACK':
+            get_sound_thread().play_sfx('Info Out')
+            self.info_graph.set_transition_out()
+            self.info_flag = False
+            return
+
+        if 'RIGHT' in directions:
+            if self.info_graph.move_right():
+                get_sound_thread().play_sfx('Select 6')
+        elif 'LEFT' in directions:
+            if self.info_graph.move_left():
+                get_sound_thread().play_sfx('Select 6')
+        elif 'UP' in directions:
+            if self.info_graph.move_up():
+                get_sound_thread().play_sfx('Select 6')
+        elif 'DOWN' in directions:
+            if self.info_graph.move_down():
+                get_sound_thread().play_sfx('Select 6')
+
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
 
         self.handle_mouse()
-        if self.info_flag:
-            if event == 'INFO' or event == 'BACK':
-                get_sound_thread().play_sfx('Info Out')
-                self.info_graph.set_transition_out()
-                self.info_flag = False
-                return
 
-            if 'RIGHT' in directions:
-                if self.info_graph.move_right():
-                    get_sound_thread().play_sfx('Select 6')
-            elif 'LEFT' in directions:
-                if self.info_graph.move_left():
-                    get_sound_thread().play_sfx('Select 6')
-            elif 'UP' in directions:
-                if self.info_graph.move_up():
-                    get_sound_thread().play_sfx('Select 6')
-            elif 'DOWN' in directions:
-                if self.info_graph.move_down():
-                    get_sound_thread().play_sfx('Select 6')
+        # Handle the mod substate
+        if self.mod_flag:       
+            if self.current_mod_slot:
+                if 'DOWN' in directions:
+                    if self.current_mod_slot.menu.move_down(first_push):
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'UP' in directions:
+                    if self.current_mod_slot.menu.move_up(first_push):
+                        get_sound_thread().play_sfx('Select 6')
+
+                if event == 'BACK':
+                    get_sound_thread().play_sfx('Select 4')
+                    self.current_mod_slot = None
+
+                elif event == 'SELECT':
+                    selection = self.current_mod_slot.menu.get_current()
+                    self.current_mod_slot.on_select(selection)
+                    self.current_mod_slot = None
+
+                elif event == 'INFO':
+                    self.current_mod_slot.menu.toggle_info()
+
+            elif self.info_flag:
+                if event == 'INFO' or event == 'BACK':
+                    get_sound_thread().play_sfx('Info Out')
+                    self.info_flag = False
+
+                if 'RIGHT' in directions:
+                    if self.mod_graph.move_right():
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'LEFT' in directions:
+                    if self.mod_graph.move_left():
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'UP' in directions:
+                    if self.mod_graph.move_up():
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'DOWN' in directions:
+                    if self.mod_graph.move_down():
+                        get_sound_thread().play_sfx('Select 6')
+
+            else:
+                if event == 'INFO':
+                    get_sound_thread().play_sfx('Info In')
+                    self.info_flag = True
+                    return
+                elif event == 'BACK':
+                    self.mod_flag = False
+                elif event == 'SELECT':
+                    self.current_mod_slot = self.mod_graph.current_slot
+
+                if 'RIGHT' in directions:
+                    if self.mod_graph.move_right():
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'LEFT' in directions:
+                    if self.mod_graph.move_left():
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'UP' in directions:
+                    if self.mod_graph.move_up():
+                        get_sound_thread().play_sfx('Select 6')
+                elif 'DOWN' in directions:
+                    if self.mod_graph.move_down():
+                        get_sound_thread().play_sfx('Select 6')
+
+        elif self.info_flag:
+            self._take_input_info_flag(directions)
 
         elif not self.transition:  # Only takes input when not transitioning
             if event == 'INFO':
@@ -210,7 +286,10 @@ class InfoMenuState(State):
                     elif mouse_y >= WINHEIGHT - 16:
                         self.move_down()
                 if not self.transition:  # Some of the above move commands could cause transition
-                    if self.unit.traveler:
+                    if self.use_mod_graph:  # So no travelers
+                        self.mod_flag = True
+                        self.mod_graph.set_current_slot()
+                    elif self.unit.traveler:
                         self.move_traveler()
 
             if 'RIGHT' in directions:

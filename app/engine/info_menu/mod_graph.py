@@ -20,12 +20,10 @@ class ModGraph:
         self.current_slot: ModifiableSlot = None
         self.cursor = menus.Cursor()
         self.has_focus = False
-        self.display_info = False
 
     def clear(self):
         self.registry.clear()
         self.current_slot = None
-        self.display_info = False
 
     def register(self, aabb: Tuple[int, int, int, int], menu: menus.ChoiceMenu, 
                  on_select: Callable, help_box: help_menu.HelpDialog | str, first: bool = False):
@@ -77,7 +75,7 @@ class ModGraph:
                     and slot.aabb[1] <= y < slot.aabb[1] + slot.aabb[3]:
                 self.current_slot = slot
 
-    def draw(self, surf):
+    def draw(self, surf, with_info: bool = False):
         # Draw the slight translucent yellow effect over modifiable slots
         for slot in self.registry:
             s = engine.create_surface((slot.aabb[2], slot.aabb[3]), transparent=True)
@@ -94,6 +92,7 @@ class ModGraph:
                 self.cursor.update()
             self.cursor.draw(surf, *cursor_pos)
 
-            help_box_pos = (self.current_slot.aabb[0] - 32, self.current_slot.aabb[1] + 13)
-            self.current_slot.help_box.draw(surf, pos, False)
+            if with_info:
+                help_box_pos = (self.current_slot.aabb[0] - 32, self.current_slot.aabb[1] + 13)
+                self.current_slot.help_box.draw(surf, pos, False)
     
