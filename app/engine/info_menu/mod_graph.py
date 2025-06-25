@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import Callable, List, Tuple
 
 from dataclasses import dataclass
+import math
 
-from app.engine import help_menu, menus
+from app.engine import engine, help_menu, menus
+from app.engine.info_menu import info_graph
 
 @dataclass
 class ModifiableSlot:
@@ -30,7 +32,15 @@ class ModGraph:
         if isinstance(help_box, str):
             help_box = help_menu.HelpDialog(help_box)
 
-        self.registry.append(BoundingBox(aabb, menu, on_select, help_box, first))
+        self.registry.append(ModifiableSlot(aabb, menu, on_select, help_box, first))
+
+    def set_current_slot(self):
+        for slot in self.registry:
+            if slot.first:
+                self.current_slot = slot
+                return
+        if self.registry:
+            self.current_slot = self.registry[0]
 
     def _move(self, valid_slots: List[ModifiableSlot], horiz: bool = False) -> bool:
         """Move the current slot to the closest slot in the given direction
@@ -94,5 +104,4 @@ class ModGraph:
 
             if with_info:
                 help_box_pos = (self.current_slot.aabb[0] - 32, self.current_slot.aabb[1] + 13)
-                self.current_slot.help_box.draw(surf, pos, False)
-    
+                self.current_slot.help_box.draw(surf, help_box_pos, False)

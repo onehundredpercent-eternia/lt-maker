@@ -31,7 +31,7 @@ def find_closest(current_bb: BoundingBox, boxes: List[BoundingBox], horiz: bool)
     for bb in boxes:
         curr_topleft = current_bb.aabb[:2]
         other_topleft = bb.aabb[:2]
-        distance = horiz_penalty * (curr_topleft[0] - other_topleft[0])**2
+        distance = horiz_penalty * (curr_topleft[0] - other_topleft[0])**2 \
             + vert_penalty * (curr_topleft[1] - other_topleft[1])**2
         if distance < max_distance:
             max_distance = distance

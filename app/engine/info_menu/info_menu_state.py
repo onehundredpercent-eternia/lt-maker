@@ -71,7 +71,7 @@ class InfoMenuState(State):
         game.memory['scroll_units'] = None
 
         # Check whether we should be able to modify this unit
-        self.use_mod_graph = game.memory.get('use_mod_graph', False)
+        self.use_mod_graph = game.memory.get('use_mod_graph', True)
         game.memory['use_mod_graph'] = False  # Reset
         if self.use_mod_graph:
             # If so, make sure we can't scroll away
@@ -161,7 +161,7 @@ class InfoMenuState(State):
             game.cursor.set_pos(self.unit.position)
         game.state.change('transition_pop')
 
-    def _take_input_info_flag(directions):
+    def _take_input_info_flag(self, event, directions):
         if event == 'INFO' or event == 'BACK':
             get_sound_thread().play_sfx('Info Out')
             self.info_graph.set_transition_out()
@@ -251,7 +251,7 @@ class InfoMenuState(State):
                         get_sound_thread().play_sfx('Select 6')
 
         elif self.info_flag:
-            self._take_input_info_flag(directions)
+            self._take_input_info_flag(event, directions)
 
         elif not self.transition:  # Only takes input when not transitioning
             if event == 'INFO':
@@ -429,7 +429,7 @@ class InfoMenuState(State):
                 elif self.transition_counter == 4:
                     self.transparency = .75
                     self.scroll_offset_y = 16 if self.transition == 'DOWN' else -16
-                elif self.transition_counter < 8: # (5, 6, 7, 8):  # Pause for a bit
+                elif self.transition_counter < 8:  # (5, 6, 7, 8):  # Pause for a bit
                     self.transparency = 1.
                     self.scroll_offset_y = WINHEIGHT if self.transition == 'DOWN' else -160
                 else:
@@ -863,7 +863,7 @@ class InfoMenuState(State):
         wexp_to_draw: List[Tuple[str, int]] = []
         for weapon, wexp in self.unit.wexp.items():
             if wexp > 0 and weapon in unit_funcs.usable_wtypes(self.unit) \
-                and weapon in DB.weapons.get_visible_weapon_types():
+                    and weapon in DB.weapons.get_visible_weapon_types():
                 wexp_to_draw.append((weapon, wexp))
         width = (WINWIDTH - 102) // 2
         height = 16 * 2 + 4
@@ -1109,7 +1109,7 @@ class InfoMenuState(State):
         else:
             pairs = []
 
-        pairs = pairs[:6] # max six supports displayed
+        pairs = pairs[:6]  # max six supports displayed
 
         top = self.wexp_surf.get_height() + 24
         for idx, pair in enumerate(pairs):

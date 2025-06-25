@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from app.engine.graphics.text.text_renderer import render_text, text_width
 
@@ -11,8 +11,9 @@ from app.data.resources.resources import RESOURCES
 from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.engine import engine, help_menu, gui, \
-    icons, image_mods, item_funcs, \
-    combat_calcs, skill_system, text_funcs
+    icons, image_mods, item_funcs, base_surf, \
+    combat_calcs, skill_system, text_funcs, \
+    menus, action
 from app.engine.game_menus import menu_options
 from app.engine.game_state import game
 from app.engine.info_menu.info_menu_portrait import InfoMenuPortrait
@@ -132,7 +133,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
 
         # Battle stats
         battle_surf = SPRITES.get('battle_info')
-        left, top = WINWIDTH - 122, 0
+        left, top = WINWIDTH - 119, 0
         surf.blit(battle_surf, (left, top))
         # Populate battle info
         surf.blit(SPRITES.get('equipment_logo'), (left + 2, top + 4))
@@ -267,7 +268,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         # Make sure we only display up to 8 on each
         left_stats = left_stats[:8]
 
-        stat_offset = 64
+        stat_offset = 56
         for idx, stat_nid in enumerate(left_stats):
             curr_stat = DB.stats.get(stat_nid)
             # Value
@@ -279,7 +280,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 highest_stat = curr_stat.maximum
                 max_stat = max_stats.get(stat_nid, 30)
                 if max_stat > 0:
-                    total_length = int(max_stat / highest_stat * 42)
+                    total_length = int(max_stat / highest_stat * 34)
                     frac = utils.clamp(self.unit.stats.get(stat_nid) / max_stat, 0, 1)
                     build_groove(surf, (27 + stat_offset * x_idx, 16 * y_idx + 8), total_length, frac)
                 icons.draw_stat(surf, stat_nid, self.unit, (47 + stat_offset * x_idx, 16 * y_idx))
@@ -309,7 +310,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         return surf
 
     def draw_personal_data_surf(self, surf):
-        surf.blit(self.personal_data_surf, (WINWIDTH//2 + 20, self.portrait_section_height))
+        surf.blit(self.personal_data_surf, (WINWIDTH//2 + 28, self.portrait_section_height))
 
     def draw_growths_surf(self, surf):
         surf.blit(self.growths_surf, (WINWIDTH//2 + 4, self.portrait_section_height))
@@ -417,18 +418,9 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
         """
         For the unit's class skills, which are usually modifiable
         """
-        surf = engine.create_surface((WINWIDTH//2, WINHEIGHT - self.portrait_section_height), transparent=True)
+        surf = engine.create_surface((195, WINHEIGHT - self.portrait_section_height), transparent=True)
         class_skills = [skill for skill in self.unit.skills if skill.class_skill and not skill_system.hidden(skill, self.unit)]
         slotted_skills = [skill for skill in class_skills if skill.slotted_skill and skill.data['in_slot']]
-
-        slot_order = [
-            ('A', 'Active Skills'),
-            ('B', 'Active Skills'),
-            ('C', 'Active Skills'),
-            ('P', 'Passive Skills'),
-            ('Q', 'Passive Skills'),
-            ('U',+ 'Ultimate')
-        ]
 
         def get_skill_for_slot(slot_letter: str, slot_idx: int) -> Optional[SkillObject]:
             """Given a slot type and slot idx for that slot type, get the skill that has been put in the slot"""
@@ -445,43 +437,54 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                     skills.append(skill)
             return skills                    
 
-        y_pos = 0
-        left_pos = 4
-        for slot_letter, slot_full_name in slot_order:
+        def build_menu_for_slot(slot_letter: str, idx: int, x_pos: int, y_pos: int):
+            skill = get_skill_for_slot(slot_letter, idx)
+            aabb = (x_pos, y_pos, 104, 16)
+
+            if skill:
+                skill_option = menu_options.SkillOption(idx, skill)
+                skill_option.draw(surf, x_pos, y_pos)
+                desc = text_funcs.translate_and_text_evaluate(
+                    skill.desc,
+                    unit=self.unit,
+                    self=skill)
+                help_box = help_menu.HelpDialog(desc, name=skill.name)
+            else:
+                help_box = help_menu.HelpDialog('Empty')
+            self.info_graph.register(aabb, help_box, 'combat')
+
+            skill_options = get_possible_skills_for_slot(slot_letter)
+            if skill_options:
+                menu = menus.Choice(None, skill_options, topleft=aabb[:2])
+                menu.set_limit(5)
+
+                def on_select(menu_selection):
+                    # Swap skill in slot with this skill
+                    action.do(action.SetObjData(skill, 'in_slot', False))
+                    action.do(action.SetObjData(menu_selection, 'in_slot', True))
+                    self.reset_surfs(keep_last_info_graph_aabb=True)                         
+
+                self.mod_graph.register(aabb, menu, on_select, help_box)
+
+        # == Active Skills ===
+        render_text(surf, ['text'], ['Active Skills'], ['white'], (24, 0))
+
+        for slot_idx, slot_letter in enumerate(('A', 'B', 'C')):  # Active skill slots
             num_slots = int(self.unit.get_field(f'Slot {slot_letter}', 0))
-            
-            # Draw category title
-            if num_slots > 0:
-                y_pos += 16
-                render_text(surf, ['text'], [str(slot_full_name)], ['white'], (left_pos + 20, y_pos))
-
             for idx in range(num_slots):
-                y_pos += 16
-                skill = get_skill_for_slot(slot_letter, idx)
-                aabb = (left_pos, y_pos + self.portrait_section_height, 104, 16)
-                if skill:
-                    skill_option = menu_options.SkillOption(idx, skill)
-                    skill_option.draw(surf, left_pos, y_pos)
-                    desc = text_funcs.translate_and_text_evaluate(
-                        skill.desc,
-                        unit=self.unit,
-                        self=skill)
-                    self.info_graph.register(aabb, help_menu.HelpDialog(desc, name=skill.name), 'combat')
+                build_menu_for_slot(slot_letter, idx, 24, self.portrait_section_height + 16 + slot_idx * 16)
 
-                    skill_options = get_possible_skills_for_slot(slot_letter)
-                    if skill_options:
-                        menu = menus.Choice(None, skill_options, topleft=aabb[:2])
-                        menu.set_limit(5)
+        # == Passive Skills ===
+        render_text(surf, ['text'], ['Passive Skills'], ['white'], (24 + 92, 0))
 
-                        def on_select(menu_selection):
-                            # Swap skill in slot with this skill
-                            skill.data['in_slot'] = False
-                            menu_selection.data['in_slot'] = True   
-                            self.reset_surfs(keep_last_info_graph_aabb=True)                         
+        for slot_idx, slot_letter in enumerate(('P', 'Q')):  # Passive skill slots
+            num_slots = int(self.unit.get_field(f'Slot {slot_letter}', 0))
+            for idx in range(num_slots):
+                build_menu_for_slot(slot_letter, idx, 24 + 92, self.portrait_section_height + 16 + slot_idx * 16)
 
-                        self.mod_graph.register(aabb, menu, on_select, help_menu.HelpDialog(desc, name=skill.name))
-                else:
-                    self.info_graph.register(aabb, help_menu.HelpDialog('Empty'), 'combat')
+        # === Ultimate Skill ===
+        render_text(surf, ['text'], ['Ultimate Skill'], ['white'], (24 + 92, surf.get_height() - 48))
+        build_menu_for_slot('U', 0, 24 + 92, surf.get_height() - 32)
 
         return surf
 
@@ -516,7 +519,7 @@ class BeegInfoMenuState(info_menu_state.InfoMenuState, State):
                 self.info_graph.register((0 + x * width + 8, self.portrait_section_height + y * 16 + top, WINWIDTH//2, 16), affinity.desc, 'extra')
             render_text(surf, ['narrow'], [other_unit.name], [], (x * width + 22, y * 16 + top))
             highest_rank = pair.unlocked_ranks[-1]
-            render_text(surf, ['text'], [highest_rank], ['yellow'], (x * width + surf.get_width()/2 - 2, y * 16 + top), Alignments.RIGHT)
+            render_text(surf, ['text'], [highest_rank], ['yellow'], (x * width + surf.get_width()/2 - 2, y * 16 + top), HAlignment.RIGHT)
         return surf
 
     def draw_support_surf(self, surf):
