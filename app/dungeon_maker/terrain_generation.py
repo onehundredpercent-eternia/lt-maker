@@ -13,9 +13,9 @@ from app.utilities.typing import Pos, NID
 from app.utilities.direction import Direction, get_cardinal_positions, get_diagonal_positions
 from app.utilities import static_random
 
-from app.map_maker.utilities import get_random_seed, set_random_seed, flood_fill
+import app.map_maker.utilities as map_utils
 from app.map_maker.terrain import Terrain
-from app.dungeon_maker.themes import get_theme
+from app.dungeon_maker.themes import PillarArrangement
 from app.dungeon_maker.floor_level import FloorLevel
 from app.dungeon_maker.dungeon_section import DungeonSection
 
@@ -23,19 +23,17 @@ import logging
 
 PRINT = True
 
-def generate_terrain(seed=-1) -> DungeonTileMap:
-    set_random_seed(seed)
-    theme: Dict[NID, Any] = get_theme()  # Convert str to Theme
-
+def generate_terrain(theme: Dict[NID, Any], seed: int) -> DungeonTileMap:
     while True:
-        result = _generate_terrain_process(theme)
+        result = _generate_terrain_process(theme, seed)
+        seed += 1  # If that didn't work, try a different seed
         if result:
             break
 
     return result
 
-def _generate_terrain_process(theme: Dict[NID, Any]) -> Optional[DungeonTileMap]:
-    tilemap = DungeonTileMap(theme)
+def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[DungeonTileMap]:
+    tilemap = DungeonTileMap(theme, seed)
 
     # 1. Create a big old field of walls
     tilemap.reset_grid(Terrain.WALL_TOP)
@@ -118,14 +116,12 @@ def _generate_terrain_process(theme: Dict[NID, Any]) -> Optional[DungeonTileMap]
 
     tilemap.print_terrain_grid()
 
-    print(f"RANDOM SEED: {get_random_seed()}")
-
     return tilemap
 
 class DungeonTileMap:
-    def __init__(self, theme: Dict[NID, Any]):
-        self.random = static_random.LCG(get_random_seed())
-        print("Random Seed: %d" % get_random_seed())
+    def __init__(self, theme: Dict[NID, Any], seed: int):
+        self.random = static_random.LCG(seed)
+        print("Random Seed: %d" % seed)
         self.theme = theme
         self.width, self.height = theme["size"]
         self.terrain_grid: Dict[Pos, Terrain] = {}
@@ -186,7 +182,7 @@ class DungeonTileMap:
         floor_tiles = {pos for pos, terrain in self.terrain_grid.items() 
                        if terrain in floor_terrain}
         test_pos = floor_tiles.pop()
-        can_reach = flood_fill(self, test_pos, match=floor_terrain)
+        can_reach = map_utils.flood_fill(self, test_pos, match=floor_terrain)
         floor_tiles -= can_reach
         if floor_tiles:
             self.print_terrain_grid()
@@ -361,7 +357,7 @@ class DungeonTileMap:
             swap_to = self.theme["floor_lower"] \
                 if self.terrain_grid.get(test_pos) == self.theme["floor_upper"] \
                 else self.theme["floor_upper"]
-            friends = flood_fill(self, test_pos)
+            friends = map_utils.flood_fill(self, test_pos)
             if len(friends) <= self.theme["small_floor_section_area"]:  # Very conservative
                 # Section is too small, swap to other side
                 for pos in friends:
@@ -552,7 +548,7 @@ class DungeonTileMap:
         # Handle each of these walls in groups
         while bad_walls:
             test_pos = next(iter(bad_walls))
-            wall_group = flood_fill(self, test_pos, match_only_these_positions=bad_walls)
+            wall_group = map_utils.flood_fill(self, test_pos, match_only_these_positions=bad_walls)
             # Figure out which side (top or bottom) handles a wall addition better
             # If all of the positions south 2 tiles are exist and are not wall
             # Easy fix to make it lower by 1
@@ -689,7 +685,7 @@ class DungeonTileMap:
 
         while wall_tiles:
             test_pos = wall_tiles.pop()
-            can_reach = flood_fill(self, test_pos, match_only_these_positions=orig_wall_tiles)
+            can_reach = map_utils.flood_fill(self, test_pos, match_only_these_positions=orig_wall_tiles)
             wall_tiles -= can_reach
             new_floor_sections.append(can_reach)
 

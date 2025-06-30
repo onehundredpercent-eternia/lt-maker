@@ -50,6 +50,16 @@ class MapPrefab(Prefab):
         else:
             self.autotile_set.discard(pos)
 
+    def set_new_terrain_grid(self, size: Tuple[int, int], terrain_grid: Dict[Pos, Terrain]):
+        self.width, self.height = size
+        self.terrain_grid = terrain_grid
+        self.autotile_set.clear()
+        for pos, terrain in self.terrain_grid:
+            terrain_renderer = RENDERERS.get(terrain)
+            if terrain_renderer.has_autotiles():
+                self.autotile_set.add(pos)
+        self.reset_all()
+
     def _update_adjacent(self, pos: Pos):
         # Now ask to update all the adjacent ones as well
         north, east, south, west = (pos[0], pos[1] - 1), (pos[0] + 1, pos[1]), (pos[0], pos[1] + 1), (pos[0] - 1, pos[1])
@@ -188,14 +198,14 @@ class MapPrefab(Prefab):
         self.current_outdoor_palette = s_dict.get('outdoor_palette')
         return self
 
-    @classmethod
-    def from_terrain_grid(cls, nid: NID, width: int, height: int, terrain_grid: Dict[Pos, Terrain]):
-        self = cls(nid)
-        self.width, self.height = width, height
-        self.autotile_fps = 29
-        self.cliff_markers = [(0, 0)]
-        self.terrain_grid = terrain_grid
-        self.autotile_set.clear()
-        self.current_indoor_palette = PALETTES.indoor_palettes()[0]
-        self.current_outdoor_palette = PALETTES.outdoor_palettes()[0]
-        return self
+    # @classmethod
+    # def from_terrain_grid(cls, nid: NID, width: int, height: int, terrain_grid: Dict[Pos, Terrain]):
+    #     self = cls(nid)
+    #     self.width, self.height = width, height
+    #     self.autotile_fps = 29
+    #     self.cliff_markers = [(0, 0)]
+    #     self.terrain_grid = terrain_grid
+    #     self.autotile_set.clear()
+    #     self.current_indoor_palette = PALETTES.indoor_palettes()[0]
+    #     self.current_outdoor_palette = PALETTES.outdoor_palettes()[0]
+    #     return self

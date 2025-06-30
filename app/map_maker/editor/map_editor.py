@@ -32,6 +32,8 @@ from app.map_maker.palette_collection import PALETTES
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
 from app.map_maker.terrain import Terrain
 
+from app.dungeon_maker import terrain_generation
+
 class CliffMarkerWidget(QWidget):
     def __init__(self, parent=None, tilemap=None):
         super().__init__(parent)
@@ -112,7 +114,7 @@ class MapEditor(QMainWindow):
 
         self.random_seed_box = PropertyBox("RNG Seed", QSpinBox, self)
         self.random_seed_box.edit.setRange(0, 1023)
-        self.random_seed_box.edit.setValue(map_utils.RANDOM_SEED)
+        self.random_seed_box.edit.setValue(map_utils.get_random_seed())
         self.random_seed_box.setMaximumWidth(100)
         self.random_seed_box.edit.setAlignment(Qt.AlignRight)
         self.random_seed_box.edit.valueChanged.connect(self.random_seed_changed)
@@ -408,11 +410,12 @@ class MapEditor(QMainWindow):
         self.outdoor_terrain_painter_menu.reset()
 
     def autogenerate_indoor_map(self):
-        # Make the dialog modeless
-        dlg = AutogenerateIndoorMapDialog(self.current)
-        dlg.show()
-        dlg.raise_()
-        dlg.activateWindow()
+        theme = AutogenerateIndoorMapDialog.get_theme(self)
+        if not theme:
+            return
+        dungeon_tilemap = terrain_generation.generate_terrain(theme, map_utils.get_random_seed())
+        # Update the current with the dungeon tilemap values
+        self.current.set_new_terrain_grid(dungeon_tilemap.terrain_grid)
 
     def autogenerate_outdoor_map(self):
         QMessageBox.information(self, self.title, "Not implemented yet!")

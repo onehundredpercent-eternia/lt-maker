@@ -1,114 +1,127 @@
-from PyQt5.QtWidgets import QVBoxLayout, \
-    QDialog, QGroupBox, QFormLayout, QSpinBox
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPainter, QPixmap, QColor, QPen
+from typing import Any, Dict, Optional, Tuple
 
-from app.editor.icon_editor.icon_view import IconView
-from app.extensions.custom_gui import Dialog
+from PyQt5.QtWidgets import QDoubleSpinBox, \
+    QDialog, QGroupBox, QFormLayout, QSpinBox, \
+    QCheckBox
 
-class ResizeDialog(Dialog):
-    def __init__(self, current, parent=None):
+from app.utilities.typing import NID
+
+from app.extensions.custom_gui import ComboBox, Dialog
+from app.editor.settings import MainSettingsController
+
+from app.map_maker.terrain import Terrain
+
+from app.dungeon_maker import themes
+
+class AutogenerateIndoorMapDialog(Dialog):
+    def __init__(self, current: Dict[NID, Any], parent=None):
         super().__init__(parent)
         self.window = parent
-        self.setWindowTitle("Tilemap Resize")
-        self.layout = QVBoxLayout()
+        self.setWindowTitle("Autogenerate Indoor Map")
+
+        self.settings = MainSettingsController()
+
+        self.layout = QFormLayout()
         self.setLayout(self.layout)
 
-        self.current = current  # TilemapPrefab
+        self.current: Dict[NID, Any] = current  # Set of custom theme parameters
 
+        self.previous_theme = self.settings.component_controller.get_state(self.__class__.__name__)
+
+        self.theme_preset_combobox = ComboBox(self)
+        self.theme_presets = themes.theme_presets.keys()
+        self.theme_preset_combobox.addItems(self.theme_presets)
+        self.theme_preset_combobox.currentIndexChanged.connect(self.theme_preset_changed)
+
+        boxes = {}
+        for theme_parameter in themes.theme_parameters:
+            if theme_parameter._type == Tuple[int, int]:
+                editor, x_widget, y_widget = self._create_2d_editor(theme_parameter.name, theme_parameter.value)
+                boxes[theme_parameter.nid] = (x_widget, y_widget)
+            elif theme_parameter._type == float:
+                editor = QDoubleSpinBox(self)
+                editor.setMaximumWidth(60)
+                editor.setRange(-999, 999)
+                editor.setValue(theme_parameter.value)
+                boxes[theme_parameter.nid] = editor
+            elif theme_parameter._type == int:
+                editor = QSpinBox(self)
+                editor.setMaximumWidth(60)
+                editor.setRange(-999, 999)
+                editor.setValue(theme_parameter.value)
+                boxes[theme_parameter.nid] = editor
+            elif theme_parameter._type == bool:
+                editor = QCheckBox(self)
+                editor.setChecked(bool(theme_parameter.value))
+                boxes[theme_parameter.nid] = editor
+            elif theme_parameter._type == Terrain:
+                editor = ComboBox(self)
+                editor.addItems(Terrain.get_all_floor())
+                boxes[theme_parameter.nid] = editor
+
+            editor.setToolTip(theme_parameter.desc)
+            self.layout.addRow(theme_parameter.name, editor)
+
+        if self.previous_theme:
+            self.theme_presets.append("Previous")
+            self.theme_preset_combobox.addItem("Previous")
+            self.theme_preset_combobox.setValue("Previous")
+
+    def _create_2d_editor(self, title: str, value: Tuple[int, int]):
         size_section = QGroupBox(self)
-        size_section.setTitle("Size")
+        size_section.setTitle(title)
         size_layout = QFormLayout()
-        self.width_box = QSpinBox()
-        self.width_box.setValue(self.current.width)
-        self.width_box.setRange(15, 255)
-        self.width_box.valueChanged.connect(self.on_width_changed)
-        size_layout.addRow("Width:", self.width_box)
-        self.height_box = QSpinBox()
-        self.height_box.setValue(self.current.height)
-        self.height_box.setRange(10, 255)
-        self.height_box.valueChanged.connect(self.on_height_changed)
-        size_layout.addRow("Height:", self.height_box)
-        size_section.setLayout(size_layout)
-
-        offset_section = QGroupBox(self)
-        offset_section.setTitle("Offset")
-        offset_layout = QFormLayout()
         self.x_box = QSpinBox()
-        self.x_box.setValue(0)
-        self.x_box.setRange(0, 0)
-        self.x_box.valueChanged.connect(self.on_offset_changed)
-        # self.x_box.valueChanged.connect(self.on_x_changed)
-        offset_layout.addRow("X:", self.x_box)
+        self.x_box.setValue(value[0])
+        self.x_box.setRange(15, 255)
+        size_layout.addRow("X:", self.x_box)
         self.y_box = QSpinBox()
-        self.y_box.setValue(0)
-        self.y_box.setRange(0, 0)
-        self.y_box.valueChanged.connect(self.on_offset_changed)
-        # self.y_box.valueChanged.connect(self.on_y_changed)
-        offset_layout.addRow("Y:", self.y_box)
-        offset_section.setLayout(offset_layout)
+        self.y_box.setValue(value[1])
+        self.y_box.setRange(10, 255)
+        size_layout.addRow("Y:", self.y_box)
+        size_section.setLayout(size_layout)
+        return (size_section, self.width_box, self.height_box)
 
-        self.icon_view = IconView(self)
-        self.icon_view.scene.setBackgroundBrush(QColor(200, 200, 200, 255))
+    def theme_preset_changed(self, idx: int):
+        """
+        Called when the user selects a new theme preset
+        Overwrites the current value of every selection made so far
+        """
+        chosen_preset_nid = self.theme_presets[idx]
+        if chosen_preset_nid == "Previous":
+            chosen_preset = self.previous_theme
+        else:
+            chosen_preset = themes.get_theme(chosen_preset_nid)
+            
+        for nid, value in chosen_preset.items():
+            editor = self.boxes[nid]
+            if isinstance(editor, QCheckBox):
+                editor.setChecked(bool(value))
+            else:
+                editor.setValue(value)
 
-        self.layout.addWidget(size_section)
-        self.layout.addWidget(offset_section)
-        self.layout.addWidget(self.icon_view)
-        self.layout.addWidget(self.buttonbox)
-
-        self.draw_image()
-
-    def on_width_changed(self, val):
-        if val > self.current.width:
-            self.x_box.setMaximum(val - self.current.width)
-        elif val < self.current.width:
-            self.x_box.setMinimum(val - self.current.width)
-        self.draw_image()
-
-    def on_height_changed(self, val):
-        if val > self.current.height:
-            self.y_box.setMaximum(val - self.current.height)
-        elif val < self.current.height:
-            self.y_box.setMinimum(val - self.current.height)
-        self.draw_image()
-
-    def on_offset_changed(self, val):
-        self.draw_image()
-
-    def draw_image(self):
-        base_image = QImage(202, 202, QImage.Format_ARGB32)
-        base_image.fill(QColor(200, 200, 200, 255))
-        painter = QPainter()
-        painter.begin(base_image)
-        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-        # Draw regular square around
-        highest_dim = max([self.width_box.value(), self.height_box.value(),
-                           self.current.width, self.current.height])
-        new_offset_x = int(self.x_box.value() / highest_dim * 200)
-        new_offset_y = int(self.y_box.value() / highest_dim * 200)
-        new_width = int(self.width_box.value() / highest_dim * 200)
-        new_height = int(self.height_box.value() / highest_dim * 200)
-        painter.drawRect(1, 1, new_width, new_height)
-        painter.setPen(QPen(Qt.black, 2, Qt.DashLine))
-        new_width = int(self.current.width / highest_dim * 200)
-        new_height = int(self.current.height / highest_dim * 200)
-        painter.drawRect(1 + new_offset_x, 1 + new_offset_y, new_width, new_height)
-
-        painter.end()
-
-        self.icon_view.set_image(QPixmap.fromImage(base_image))
-        self.icon_view.show_image()
+    def get_parameters(self) -> Dict[NID, Any]:
+        """
+        Get the current set of parameters the user has chosen
+        using this dialog
+        """
+        theme_parameters = {}
+        for nid, editor in self.boxes:
+            if isinstance(editor, QCheckBox):
+                value = bool(editor.getChecked())
+            else:
+                value = editor.getValue()
+            theme_parameters[nid] = value
+        return theme_parameters
 
     @classmethod
-    def get_new_size(cls, tilemap_prefab, parent=None):
-        dialog = cls(tilemap_prefab, parent)
+    def get_theme(cls, parent=None) -> Optional[Dict[NID, Any]]:
+        default_theme_parameters = themes.get_default_theme()
+        dialog = cls(default_theme_parameters, parent)
         result = dialog.exec_()
         if result == QDialog.Accepted:
-            new_width = int(dialog.width_box.value())
-            new_height = int(dialog.height_box.value())
-            x_offset = int(dialog.x_box.value())
-            y_offset = int(dialog.y_box.value())
-            tilemap_prefab.resize(new_width, new_height, x_offset, y_offset)
-            return True
+            current_theme = dialog.get_parameters()
+            dialog.settings.component_controller.set_state(cls.__name__, current_theme)
+            return current_theme
         else:
-            return False
+            return None
