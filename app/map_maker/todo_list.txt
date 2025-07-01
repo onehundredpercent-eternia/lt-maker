@@ -8,7 +8,7 @@ Add ability to autogenerate outdoor maps
  - Cliffs
  - Towns
  - Forest
-Add ability to autogenerate indoor maps
+Test ability to autogenerate indoor maps
 Test speed of larger maps
 Merge in map maker changes into master
 Release
