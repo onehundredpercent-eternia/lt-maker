@@ -298,6 +298,7 @@ class MapEditor(QMainWindow):
 
         self.menuBar().addMenu(file_menu)
         self.menuBar().addMenu(edit_menu)
+        self.menuBar().addMenu(auto_menu)
         self.menuBar().addMenu(extra_menu)
 
     def create_toolbar(self):

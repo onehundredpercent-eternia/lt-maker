@@ -21,6 +21,7 @@ class SimpleDialog(QDialog):
     def edit(cls, parent):
         dialog = cls(parent)
         dialog.exec_()
+
 class Dialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
