@@ -108,34 +108,35 @@ def assign_rules(palette_templates: Dict[Pos, MountainPaletteData], fns: List[st
             down_palette = best_matches.get(down)
             # determine if those positions are in palette_templates
             # If they are, mark those coordinates in the list of valid coords
-            # If not, mark as end validity
+            # If not, mark as end validity\
+            should_never_be_none = ((5, 8), (13, 3), (13, 4), (12, 4), (12, 5), (11, 6), (12, 6), (11, 7), (12, 7), (11, 8), (12, 8), (11, 9), (12, 9), (12, 10))
             if left[0] >= 0:
                 if left_palette:
                     mountain_match.rules['left'][left_palette.coord] += 1
                 else:
                     mountain_match.rules['left'][None] += 1
-                    if mountain_match.coord == (5, 8):
-                        print("Left None")
+                    if mountain_match.coord in should_never_be_none:
+                        print("Left None", position)
             if right[0] < num_tiles_x:
                 if right_palette:
                     mountain_match.rules['right'][right_palette.coord] += 1
                 else:
                     mountain_match.rules['right'][None] += 1
-                    if mountain_match.coord == (5, 8):
-                        print("Right None")
+                    if mountain_match.coord in should_never_be_none:
+                        print("Right None", position)
             if up[1] >= 0:
                 if up_palette:
                     mountain_match.rules['up'][up_palette.coord] += 1
                 else:
                     mountain_match.rules['up'][None] += 1
-                    if mountain_match.coord == (5, 8):
-                        print("Up None")
+                    if mountain_match.coord in should_never_be_none:
+                        print("Up None", position)
             if down[1] < num_tiles_y:
                 if down_palette:
                     mountain_match.rules['down'][down_palette.coord] += 1
                 else:
                     mountain_match.rules['down'][None] += 1
-                    if mountain_match.coord == (6, 13):
+                    if mountain_match.coord in should_never_be_none + ((6, 13), (6, 14), (7, 13)):
                         print("Down None", position)
 
 def is_present(palette: QuadPaletteData, palette_templates: Dict[Pos, MountainPaletteData]) -> Optional[MountainPaletteData]:
@@ -152,14 +153,14 @@ def remove_connections_that_only_appear_once(mountain_palettes: Dict[Pos, Mounta
 
 def remove_infrequent_palettes(mountain_palettes: Dict[Pos, MountainPaletteData]) -> Dict[Pos, MountainPaletteData]:
     # Remove palettes that don't appear very often
-    useless_limit = 30
+    infrequent_limit = 15
     for coord in list(mountain_palettes.keys()):
         palette = mountain_palettes[coord]
         # Only bother with the ones that actually have rules
-        if sum(palette.rules['left'].values()) >= useless_limit or \
-                sum(palette.rules['right'].values()) >= useless_limit or \
-                sum(palette.rules['up'].values()) >= useless_limit or \
-                sum(palette.rules['down'].values()) >= useless_limit:
+        if sum(palette.rules['left'].values()) >= infrequent_limit or \
+                sum(palette.rules['right'].values()) >= infrequent_limit or \
+                sum(palette.rules['up'].values()) >= infrequent_limit or \
+                sum(palette.rules['down'].values()) >= infrequent_limit:
             pass
         else:
             del mountain_palettes[coord]
@@ -194,17 +195,19 @@ def fuse(mountain_palettes: Dict[Pos, MountainPaletteData], parent: Pos, child: 
                         palette.rules[direction][parent] += palette.rules[direction][child]
                     else:
                         palette.rules[direction][parent] = palette.rules[direction][child]
+                    del palette.rules[direction][child]
         del mountain_palettes[child]
     else:
         print(f"Could not find both {parent} and {child} in mountain_palettes")
     return mountain_palettes
 
-def fuse_bright_palettes(mountain_palettes: Dict[Pos, MountainPaletteData]) -> Dict[Pos, MountainPaletteData]:
+def fuse_palettes(mountain_palettes: Dict[Pos, MountainPaletteData]) -> Dict[Pos, MountainPaletteData]:
     """
     Mountains actually have two kinds of shading on their left side (towards the "sun")
     The Mountain solver does not like dealing with this level of discrimination
     so we just fuse the palettes that are completely bright into the 
     palettes that are a little shaded
+    Other fusions are done as needed
     """
     # Bright into shaded
     fuse(mountain_palettes, (1, 3), (0, 3))  # Fuse (0, 13) into (1, 13)
@@ -245,6 +248,14 @@ def fuse_bright_palettes(mountain_palettes: Dict[Pos, MountainPaletteData]) -> D
     fuse(mountain_palettes, (8, 7), (6, 6))
     fuse(mountain_palettes, (8, 7), (7, 6))
     fuse(mountain_palettes, (8, 7), (8, 6))
+
+    # Fuse topleft corner mountains
+    fuse(mountain_palettes, (0, 1), (15, 10))
+    fuse(mountain_palettes, (15, 8), (16, 13))
+
+    # Fuse topright corner mountains
+    fuse(mountain_palettes, (17, 5), (17, 6))
+    fuse(mountain_palettes, (17, 5), (17, 7))
 
     # Fuse slightly different dark right corner
     fuse(mountain_palettes, (5, 7), (2, 7))
@@ -323,7 +334,7 @@ if __name__ == '__main__':
     # print_rules(mountain_palettes)
     # We don't do this because it's sometimes useful to have palettes be adjacent to themselves
     # mountain_palettes = remove_adjacent_palettes(mountain_palettes)
-    mountain_palettes = fuse_bright_palettes(mountain_palettes)
+    mountain_palettes = fuse_palettes(mountain_palettes)
     # input()
     # print_rules(mountain_palettes)
     mountain_palettes = remove_connections_that_only_appear_once(mountain_palettes)

@@ -16,8 +16,15 @@ class WallTopPainter(WangEdge16Painter):
         south_edge = bool(south in WallTopPainter.terrain_like)
         east_edge = bool(east in WallTopPainter.terrain_like)
         west_edge = bool(west in WallTopPainter.terrain_like)
+        # Makes sure a wall going off the edge of the map appears to keep going off the edge
+        if not north and not east_edge and not west_edge:
+            north_edge = True
         if not south and not east_edge and not west_edge:
             south_edge = True
+        if not east and not north_edge and not south_edge:
+            east_edge = True
+        if not west and not north_edge and not south_edge:
+            west_edge = True
         index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
         return index
 

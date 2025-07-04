@@ -450,7 +450,7 @@ class MapEditor(QMainWindow):
 
             loc = os.path.join(fn, 'resources', 'tilesets')
             assert os.path.isdir(loc)
-            manifest = os.path.join(loc, 'tileset.json')
+            manifest = os.path.join(loc, 'tilesets.json')
             full_path = os.path.join(loc, nid + '.png')
             autotile_path = os.path.join(loc, nid + '_autotiles.png')
             image.save(full_path)
@@ -471,20 +471,21 @@ class MapEditor(QMainWindow):
                 if painter.has_autotiles():
                     all_autotile_positions.append((pos, terrain))
 
-            width = TILEWIDTH * len(all_autotile_positions)
-            height = TILEHEIGHT * AUTOTILE_FRAMES
-            autotile_image = QImage(width, height, QImage.Format_ARGB32)
-            autotile_image.fill(QColor(255, 255, 255, 0))
+            if all_autotile_positions:
+                autotile_width = TILEWIDTH * len(all_autotile_positions)
+                autotile_height = TILEHEIGHT * AUTOTILE_FRAMES
+                autotile_image = QImage(autotile_width, autotile_height, QImage.Format_ARGB32)
+                autotile_image.fill(QColor(255, 255, 255, 0))
 
-            qpainter = QPainter(autotile_image)
-            for idx, (pos, terrain) in enumerate(all_autotile_positions):
-                str_coord = "%d,%d" % (pos[0], pos[1])
-                s_dict['autotiles'][str_coord] = idx
-                for pidx in range(AUTOTILE_FRAMES):
-                    sprite = RENDERERS.get(terrain).determine_sprite(self.current, pos, pidx)
-                    qpainter.drawPixmap(idx * TILEWIDTH, pidx * TILEHEIGHT, sprite)
-            qpainter.end()
-            autotile_image.save(autotile_path)
+                qpainter = QPainter(autotile_image)
+                for idx, (pos, terrain) in enumerate(all_autotile_positions):
+                    str_coord = "%d,%d" % (pos[0], pos[1])
+                    s_dict['autotiles'][str_coord] = idx
+                    for pidx in range(AUTOTILE_FRAMES):
+                        sprite = RENDERERS.get(terrain).determine_sprite(self.current, pos, pidx)
+                        qpainter.drawPixmap(idx * TILEWIDTH, pidx * TILEHEIGHT, sprite)
+                qpainter.end()
+                autotile_image.save(autotile_path)
             # Completed creating autotiles
 
             # Modify the tileset manifest of the project

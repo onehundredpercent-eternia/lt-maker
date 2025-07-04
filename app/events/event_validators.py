@@ -1405,7 +1405,7 @@ class SaveSlot(Validator):
         return valids
 
 class DungeonTheme(OptionValidator):
-    valid = [k for k in themes.themes.keys()]
+    valid = [k for k in themes.theme_presets.keys()]
 
 class DungeonPalette(OptionValidator):
     valid = [os.path.split(f)[-1] for f in glob.glob('app/dungeon_maker/palettes/*') if os.path.isdir(f)]

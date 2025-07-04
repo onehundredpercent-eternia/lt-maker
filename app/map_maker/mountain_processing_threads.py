@@ -95,33 +95,40 @@ class NaiveBacktrackingThread(QThread):
         if not north_edge and not south_edge and not east_edge and not west_edge:
             valid_coords = \
                 [coord for coord in valid_coords if 
-                 None not in self.mountain_data[coord]['up'] and 
-                 None not in self.mountain_data[coord]['down'] and 
-                 None not in self.mountain_data[coord]['left'] and 
+                 None not in self.mountain_data[coord]['up'] or 
+                 None not in self.mountain_data[coord]['down'] or
+                 None not in self.mountain_data[coord]['left'] or
                  None not in self.mountain_data[coord]['right']]
         north_pos = (pos[0], pos[1] - 1)
         south_pos = (pos[0], pos[1] + 1)
         east_pos = (pos[0] + 1, pos[1])
         west_pos = (pos[0] - 1, pos[1])
         southwest_pos = (pos[0] - 1, pos[1] + 1)
-        # print("*Valid Coord", pos, self.order)
+        # print("==============")
+        # print(north_edge, south_edge, east_edge, west_edge)
+        # print("*Valid Coords:", pos, self.order)
         # print(sorted(valid_coords))
         # Remove locked coords
         if pos in self.locked_values and exact:
             # print("Locked", sorted(self.locked_values[pos]))
             valid_coords = [coord for coord in valid_coords if coord not in self.locked_values[pos]]
+
         if not north_edge and north_pos in self.organization:
             chosen_coord = self.organization[north_pos]
             valid_coords = [coord for coord in valid_coords if coord in self.mountain_data[chosen_coord]['down']]
+            # print("North", chosen_coord, valid_coords)
         if not south_edge and south_pos in self.organization:
             chosen_coord = self.organization[south_pos]
             valid_coords = [coord for coord in valid_coords if coord in self.mountain_data[chosen_coord]['up']]
+            # print("South", chosen_coord, valid_coords)
         if not east_edge and east_pos in self.organization:
             chosen_coord = self.organization[east_pos]
             valid_coords = [coord for coord in valid_coords if coord in self.mountain_data[chosen_coord]['left']]
+            # print("East", chosen_coord, valid_coords)
         if not west_edge and west_pos in self.organization:
             chosen_coord = self.organization[west_pos]
             valid_coords = [coord for coord in valid_coords if coord in self.mountain_data[chosen_coord]['right']]
+            # print("West", chosen_coord, valid_coords)
         # If there's already a position filled to the southwest, check that we can find a reasonable
         # choice for the 
         if southwest_pos in self.organization and south and south == Terrain.MOUNTAIN:
@@ -131,8 +138,9 @@ class NaiveBacktrackingThread(QThread):
             # check if any of that coordinate's southward connections match with the rightward coordinates
             # of the southwesst position
             valid_coords = [coord for coord in valid_coords if any(c in valid_right_coords for c in self.noneless_rules[coord]['down'])]
+            # print("Southwest", chosen_coord, valid_coords)
 
-        # print(sorted(valid_coords))
+        # print("**Reduced Valid Coords:", sorted(valid_coords))
         if not valid_coords and not exact:
             valid_coords = orig_valid_coords
         if not valid_coords:
@@ -334,9 +342,9 @@ class AlgorithmXThread(QThread):
         if not north_edge and not south_edge and not east_edge and not west_edge:
             valid_coords = \
                 [coord for coord in valid_coords if 
-                 None not in self.mountain_data[coord]['up'] and 
-                 None not in self.mountain_data[coord]['down'] and 
-                 None not in self.mountain_data[coord]['left'] and 
+                 None not in self.mountain_data[coord]['up'] or 
+                 None not in self.mountain_data[coord]['down'] or
+                 None not in self.mountain_data[coord]['left'] or
                  None not in self.mountain_data[coord]['right']]
         if not valid_coords:
             valid_coords = orig_valid_coords
