@@ -13,9 +13,11 @@ class WallTopPainter(WangEdge16Painter):
     def get_index(tilemap, pos: Pos) -> int:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
         north_edge = bool(north in WallTopPainter.terrain_like)
-        south_edge = not south or bool(south in WallTopPainter.terrain_like)
+        south_edge = bool(south in WallTopPainter.terrain_like)
         east_edge = bool(east in WallTopPainter.terrain_like)
         west_edge = bool(west in WallTopPainter.terrain_like)
+        if not south and not east_edge and not west_edge:
+            south_edge = True
         index = 1 * north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
         return index
 

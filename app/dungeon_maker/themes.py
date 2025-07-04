@@ -36,7 +36,7 @@ theme_parameters = Data([
     ThemeParameter('use_water_chance', "Pool Chance", 0, float, "Chance to use pool and pool bridge on lower floor"),
     ThemeParameter('room_size_min_x', "Minimum Width of Room", 3, int, "All rooms generated will have width >= value"),
     ThemeParameter('room_size_min_y', "Mimumum Height of Room", 3, int, "All rooms generated will have height >= value"),
-    ThemeParameter('small_floor_section_size', "Minimum Size of Floor", 2, int, "Swap any areas of floor smaller than this to the other floor"),
+    ThemeParameter('small_floor_section_area', "Minimum Size of Floor", 2, int, "Swap any areas of floor smaller than this to the other floor"),
     ThemeParameter('pillar_chance', "Pillar Chance", 0.5, float, "Chance that any room has pillars"),
     ThemeParameter('horiz_symmetry', "Horizontally Symmetric", False, bool),
     ThemeParameter('vert_symmetry', "Vertically Symmetric", False, bool),
@@ -68,7 +68,7 @@ theme_presets: Dict[str, Dict[NID, Any]] = {
         "wide_hallway_chance": 1.0,
         "floor_lower_chance": 0.25,
         "pillar_chance": 0.5,
-        "small_floor_section_size": 5,
+        "small_floor_section_area": 5,
         "fill_in_empty_areas": True,
     },
     "Enemy Complex": {
@@ -99,7 +99,7 @@ theme_presets: Dict[str, Dict[NID, Any]] = {
         "hallway_chance": 0.4,
         "connection_chance": 0.5,
         "pillar_chance": 0.25,
-        "small_floor_section_size": 4,
+        "small_floor_section_area": 4,
         "convert_void_to_water": True,
     },
     "Castle": {
@@ -109,7 +109,7 @@ theme_presets: Dict[str, Dict[NID, Any]] = {
         "wide_hallway_chance": 1.0,
         "room_size_min_y": 4,
         "pillar_chance": 0.4,
-        "small_floor_section_size": 4,
+        "small_floor_section_area": 4,
         "fill_in_empty_areas": True,
     },
 }
@@ -123,7 +123,7 @@ def get_default_theme() -> Dict[NID, Any]:
 def get_theme(preset: NID) -> Dict[NID, Any]:
     """Given a theme preset's nid, return the theme
     parameters for it"""
-    base_theme = get_theme("Default")
+    base_theme = get_default_theme()
     theme_preset = theme_presets[preset]
     base_theme.update(theme_preset)
     return base_theme

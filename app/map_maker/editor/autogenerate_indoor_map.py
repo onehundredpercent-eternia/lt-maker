@@ -1,25 +1,31 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QDoubleSpinBox, \
     QDialog, QGroupBox, QFormLayout, QSpinBox, \
-    QCheckBox, QVBoxLayout, QLabel
+    QCheckBox, QVBoxLayout, QLabel, \
+    QPushButton, QHBoxLayout
 
 from app.utilities.typing import NID
 
-from app.extensions.custom_gui import ComboBox, Dialog, QHLine
+from app.extensions.custom_gui import ComboBox, QHLine, PropertyBox
 from app.editor.settings import MainSettingsController
+
 
 from .map_terrain_model import MapTerrainModel
 from app.map_maker.terrain import Terrain
 
 from app.dungeon_maker import themes
+from app.dungeon_maker import terrain_generation
 
-class AutogenerateIndoorMapDialog(Dialog):
+class AutogenerateIndoorMap(QDialog):
     def __init__(self, current: Dict[NID, Any], parent=None):
         super().__init__(parent)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
         self.window = parent
         self.setWindowTitle("Autogenerate Indoor Map")
+
+        self.tilemap = parent.current
 
         self.settings = MainSettingsController()
 
@@ -29,9 +35,12 @@ class AutogenerateIndoorMapDialog(Dialog):
         self.current: Dict[NID, Any] = current  # Set of custom theme parameters
 
         self.previous_theme = self.settings.component_controller.get_state(self.__class__.__name__)
+        if self.previous_theme:
+            self.previous_theme['floor_lower'] = Terrain((self.previous_theme['floor_lower'], False))
+            self.previous_theme['floor_upper'] = Terrain((self.previous_theme['floor_upper'], False))
 
         self.theme_preset_combobox = ComboBox(self)
-        self.theme_presets = themes.theme_presets.keys()
+        self.theme_presets = list(themes.theme_presets.keys())
         self.theme_preset_combobox.addItems(self.theme_presets)
         self.theme_preset_combobox.currentIndexChanged.connect(self.theme_preset_changed)
         self.layout.addWidget(self.theme_preset_combobox)
@@ -42,11 +51,11 @@ class AutogenerateIndoorMapDialog(Dialog):
         form_layout = QFormLayout()
         self.layout.addLayout(form_layout)
 
-        boxes = {}
+        self.boxes = {}
         for theme_parameter in themes.theme_parameters:
             if theme_parameter._type == Tuple[int, int]:
                 editor, x_widget, y_widget = self._create_2d_editor(theme_parameter.name, theme_parameter.value)
-                boxes[theme_parameter.nid] = (x_widget, y_widget)
+                self.boxes[theme_parameter.nid] = (x_widget, y_widget)
             elif theme_parameter._type == float:
                 editor = QDoubleSpinBox(self)
                 editor.setAlignment(Qt.AlignRight)
@@ -55,32 +64,43 @@ class AutogenerateIndoorMapDialog(Dialog):
                 editor.setSingleStep(5)
                 editor.setSuffix(" %")
                 editor.setValue(theme_parameter.value * 100)
-                boxes[theme_parameter.nid] = editor
+                self.boxes[theme_parameter.nid] = editor
             elif theme_parameter._type == int:
                 editor = QSpinBox(self)
                 editor.setAlignment(Qt.AlignRight)
                 editor.setRange(0, 999)
                 editor.setValue(theme_parameter.value)
-                boxes[theme_parameter.nid] = editor
+                self.boxes[theme_parameter.nid] = editor
             elif theme_parameter._type == bool:
                 editor = QCheckBox(self)
                 editor.setStyleSheet("margin-left:50%; margin-right:50%;")
                 editor.setChecked(bool(theme_parameter.value))
-                boxes[theme_parameter.nid] = editor
+                self.boxes[theme_parameter.nid] = editor
             elif theme_parameter._type == Terrain:
                 editor = ComboBox(self)
                 model = MapTerrainModel(Terrain.get_all_floor(), self)
                 editor.setModel(model)
                 editor.setIconSize(QSize(32, 32))
-                editor.setValue(theme_parameter.value)
-                boxes[theme_parameter.nid] = editor
+                idx = Terrain.get_all_floor().index(theme_parameter.value)
+                editor.setCurrentIndex(idx)
+                self.boxes[theme_parameter.nid] = editor
 
             editor.setToolTip(theme_parameter.desc)
             name_label = QLabel(theme_parameter.name)
             name_label.setToolTip(theme_parameter.desc)
             form_layout.addRow(name_label, editor)
 
-        self.layout.addWidget(self.buttonbox)
+        generate_layout = QHBoxLayout()
+        generate_button = QPushButton("Generate")
+        generate_button.clicked.connect(self.generate)
+        self.random_seed_box = PropertyBox("Seed", QSpinBox, self)
+        self.random_seed_box.edit.setRange(0, 1023)
+        self.random_seed_box.edit.setValue(0)
+        self.random_seed_box.setMaximumWidth(60)
+        self.random_seed_box.edit.setAlignment(Qt.AlignRight)
+        generate_layout.addWidget(generate_button)
+        generate_layout.addWidget(self.random_seed_box)
+        self.layout.addLayout(generate_layout)
 
         if self.previous_theme:
             self.theme_presets.append("Previous")
@@ -126,6 +146,9 @@ class AutogenerateIndoorMapDialog(Dialog):
                 editor.setChecked(bool(value))
             elif isinstance(editor, QDoubleSpinBox):
                 editor.setValue(value * 100)
+            elif isinstance(editor, ComboBox):
+                idx = Terrain.get_all_floor().index(value)
+                editor.setCurrentIndex(idx)
             else:
                 editor.setValue(value)
 
@@ -135,29 +158,45 @@ class AutogenerateIndoorMapDialog(Dialog):
         using this dialog
         """
         theme_parameters = {}
-        for nid, editor in self.boxes:
+        for nid, editor in self.boxes.items():
             if isinstance(editor, tuple):
                 x_editor, y_editor = editor
-                x = x_editor.getValue()
-                y = y_editor.getValue()
+                x = x_editor.value()
+                y = y_editor.value()
                 value = (x, y)
             elif isinstance(editor, QCheckBox):
-                value = bool(editor.getChecked())
+                value = bool(editor.isChecked())
             elif isinstance(editor, QDoubleSpinBox):
-                value = editor.getValue() / 100.0
+                value = editor.value() / 100.0
+            elif isinstance(editor, QSpinBox):
+                value = editor.value()
+            elif isinstance(editor, ComboBox):
+                idx = editor.currentIndex()
+                value = Terrain.get_all_floor()[idx]
             else:
                 value = editor.getValue()
             theme_parameters[nid] = value
         return theme_parameters
 
+    def generate(self):
+        theme = self.get_parameters()
+        dungeon_tilemap = terrain_generation.generate_terrain(theme, self.random_seed_box.edit.value())
+        # Update the current with the dungeon tilemap values
+        self.tilemap.set_new_terrain_grid(
+            (dungeon_tilemap.width, dungeon_tilemap.height), dungeon_tilemap.terrain_grid)
+
     @classmethod
-    def get_theme(cls, parent=None) -> Optional[Dict[NID, Any]]:
+    def customize(cls, parent=None):
         default_theme_parameters = themes.get_default_theme()
         dialog = cls(default_theme_parameters, parent)
-        result = dialog.exec_()
-        if result == QDialog.Accepted:
-            current_theme = dialog.get_parameters()
-            dialog.settings.component_controller.set_state(cls.__name__, current_theme)
-            return current_theme
-        else:
-            return None
+        dialog.show()
+        dialog.raise_()
+        # dialog.exec_()
+        # Set previous
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        current_theme = self.get_parameters()
+        current_theme['floor_lower'] = current_theme['floor_lower'].value
+        current_theme['floor_upper'] = current_theme['floor_upper'].value
+        self.settings.component_controller.set_state(self.__class__.__name__, current_theme)

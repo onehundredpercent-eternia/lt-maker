@@ -24,15 +24,13 @@ from .map_editor_view import PaintTool, MapEditorView
 from .draw_tilemap import simple_draw_tilemap
 from .palette_model import PaletteModel
 from .nid_dialog import NidDialog
-from .autogenerate_indoor_map import AutogenerateIndoorMapDialog
+from .autogenerate_indoor_map import AutogenerateIndoorMap
 
 from app.map_maker.map_prefab import MapPrefab
 import app.map_maker.utilities as map_utils
 from app.map_maker.palette_collection import PALETTES
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
 from app.map_maker.terrain import Terrain
-
-from app.dungeon_maker import terrain_generation
 
 class CliffMarkerWidget(QWidget):
     def __init__(self, parent=None, tilemap=None):
@@ -411,12 +409,7 @@ class MapEditor(QMainWindow):
         self.outdoor_terrain_painter_menu.reset()
 
     def autogenerate_indoor_map(self):
-        theme = AutogenerateIndoorMapDialog.get_theme(self)
-        if not theme:
-            return
-        dungeon_tilemap = terrain_generation.generate_terrain(theme, map_utils.get_random_seed())
-        # Update the current with the dungeon tilemap values
-        self.current.set_new_terrain_grid(dungeon_tilemap.terrain_grid)
+        AutogenerateIndoorMap.customize(self)
 
     def autogenerate_outdoor_map(self):
         QMessageBox.information(self, self.title, "Not implemented yet!")

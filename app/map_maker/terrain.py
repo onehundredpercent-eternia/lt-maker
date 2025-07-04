@@ -90,3 +90,16 @@ class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
     @staticmethod
     def get_all_stairs() -> List[Terrain]:
         return (Terrain.STAIRS_LEFT, Terrain.STAIRS_RIGHT, Terrain.STAIRS_UPDOWN, Terrain.STAIRS_CENTER)
+
+    @staticmethod
+    def get_all_indoor_traversable() -> List[Terrain]:
+        return (Terrain.FLOOR_1,
+                Terrain.FLOOR_2,
+                Terrain.FLOOR_3,
+                Terrain.STAIRS_LEFT,
+                Terrain.STAIRS_RIGHT,
+                Terrain.STAIRS_UPDOWN,
+                Terrain.STAIRS_CENTER,
+                Terrain.PILLAR,
+                Terrain.POOL_BRIDGE,
+                )

@@ -34,7 +34,7 @@ class DungeonSection:
         height = self.tilemap.random.randint(self.tilemap.theme["room_size_min_y"], self.height - 1)
         offset_x = self.tilemap.random.randint(0, self.width - width - 1)
         offset_y = self.tilemap.random.randint(0, self.height - height - 1)
-        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
+        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme["floor_lower_chance"] else FloorLevel.UPPER
 
         self.room = DungeonRoom((width, height), (offset_x, offset_y), self, self.tilemap, floor_level)
 

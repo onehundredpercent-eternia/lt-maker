@@ -54,9 +54,9 @@ class MapPrefab(Prefab):
         self.width, self.height = size
         self.terrain_grid = terrain_grid
         self.autotile_set.clear()
-        for pos, terrain in self.terrain_grid:
+        for pos, terrain in self.terrain_grid.items():
             terrain_renderer = RENDERERS.get(terrain)
-            if terrain_renderer.has_autotiles():
+            if terrain_renderer.painter.has_autotiles():
                 self.autotile_set.add(pos)
         self.reset_all()
 
