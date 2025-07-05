@@ -73,6 +73,7 @@ class EventCommand(Prefab):
 
     def to_plain_text(self) -> str:
         as_string = [str(self.parameters.get(kwd) or "") for kwd in (self.keywords + self.optional_keywords)]
+        as_string += [flag for flag in self.chosen_flags]
         return ';'.join([self.nid] + as_string).rstrip(';')
 
     def __repr__(self):
@@ -464,6 +465,16 @@ Removes multiple portraits from the screen simultaneously.
     optional_keywords = ['Portrait3', 'Portrait4']
     keyword_types = ['Portrait', 'Portrait', 'Portrait', 'Portrait']
 
+class RemoveAllPortraits(EventCommand):
+    nid = "remove_all_portraits"
+    nickname = "rrr"
+    tag = Tags.PORTRAIT
+
+    desc = \
+        """
+Removes all portraits from the screen simultaneously.
+        """
+
 class MovePortrait(EventCommand):
     nid = "move_portrait"
     tag = Tags.PORTRAIT
@@ -491,10 +502,15 @@ class BopPortrait(EventCommand):
     desc = \
         """
 Causes a portrait to briefly bob up and down. Often used to illustrate a surprised or shocked reaction.
+
+*NumBops* determines how many bops to perform, and defaults to 2 bops in a row. 
+*Time* controls how long each bop will take. By default, this is 132 ms.
 If the *no_block* flag is set, portrait bopping will not pause execution of event script.
         """
 
     keywords = ['Portrait']
+    optional_keywords = ['NumBops', 'Time']
+    keyword_types = ['Portrait', 'PositiveInteger', 'Time']
     _flags = ["no_block"]
     
 class MirrorPortrait(EventCommand):
@@ -543,7 +559,7 @@ NOTE: You can set the `__default` speak style, which will automatically apply to
     keywords = ['Style']
     optional_keywords = ['Speaker', 'Position', 'Width', 'Speed', 'FontColor', 'FontType', 'Background', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg', 'BoopSound']
     keyword_types = ['Nid', 'Speaker', 'AlignOrPosition', 'Width', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite', 'Sound']
-    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_talk', 'no_sound', 'fancy']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_talk', 'no_sound', 'autogray']
 
 class Speak(EventCommand):
     nid = "speak"
@@ -578,12 +594,13 @@ Extra flags:
 5. *no_block*: the speak command will not block event execution.
 6. *no_talk*: The speaker's portrait will not "talk".
 7. *no_sound*: The normal boop sound of dialog will be turned off
+8. *autogray*: When a portrait is talking, fully saturate the talking portrait and desaturate all others
         """
 
     keywords = ['SpeakerOrStyle', 'Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg', 'BoopSound']
     keyword_types = ['Speaker', 'String', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite', 'Sound']
-    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound', 'fancy']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound', 'autogray']
 
 class Say(EventCommand):
     nid = "say"
@@ -617,12 +634,13 @@ Extra flags:
 5. *no_block*: the speak command will not block event execution.
 6. *no_talk*: The speaker's portrait will not "talk".
 7. *no_sound*: The normal boop sound of dialog will be turned off
+8. *autogray*: When a portrait is talking, fully saturate the talking portrait and desaturate all others
         """
 
     keywords = ['SpeakerOrStyle', '*Text']
     optional_keywords = ['TextPosition', 'Width', 'StyleNid', 'TextSpeed', 'FontColor', 'FontType', 'DialogBox', 'NumLines', 'DrawCursor', 'MessageTail', 'Transparency', 'NameTagBg', 'BoopSound']
     keyword_types = ['Speaker', '*String', 'AlignOrPosition', 'Width', 'DialogVariant', 'Float', 'FontColor', 'Font', 'MaybeSprite', 'WholeNumber', 'Bool', 'MaybeSprite', 'Float', 'MaybeSprite', 'Sound']
-    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound', 'fancy']
+    _flags = ['low_priority', 'hold', 'no_popup', 'fit', 'no_block', 'no_talk', 'no_sound', 'autogray']
 
 class Unhold(EventCommand):
     nid = "unhold"
@@ -704,12 +722,17 @@ class ChangeBackground(EventCommand):
     desc = \
         """
 Changes the dialogue scene's background image to *Panorama*. If no *Panorama* is specified,
-the current background is removed without being replaced.
+the current background is removed without being replaced. 
+
+*Speed* controls the moving speed when paired with *scroll* flag. 
+Higher speed makes it move slower. Exact meaning: milliseconds it takes to move 1 px.
+
 Displayed portraits are also removed unless the *keep_portraits* flag is set.
 The *Scroll* flag determines whether the background image will move.
         """
 
-    optional_keywords = ['Panorama']
+    optional_keywords = ['Panorama', 'Speed']
+    keyword_types = ['Panorama', 'WholeNumber']
     _flags = ["keep_portraits", "scroll"]
 
 class PauseBackground(EventCommand):
@@ -1069,6 +1092,8 @@ By default, the prompt for a battle save will not occur until the end of this ev
 The optional flag *immediately* will cause the prompt to appear immediately.
         """
 
+    optional_keywords = ['SaveName']
+    keyword_types = ['String']
     _flags = ["immediately"]
 
 class DeleteSave(EventCommand):
@@ -1282,7 +1307,7 @@ The *no_follow* flag prevents the camera from tracking the unit as it moves.
 
     keywords = ["Unit"]
     optional_keywords = ["Position", "MovementType", "Placement", "Speed"]
-    _flags = ['no_block', 'no_follow']
+    _flags = ['no_block', 'no_follow', 'silent']
 
 class RemoveUnit(EventCommand):
     nid = 'remove_unit'
@@ -1351,6 +1376,19 @@ The *immediate* flag will cause the combat to happen as quickly as possible, oft
     optional_keywords = ["CombatScript", "Ability", "Rounds"]
     keyword_types = ["Unit", "Position", "CombatScript", "Ability", "PositiveInteger"]
     _flags = ["arena", "force_animation", "force_no_animation", "immediate"]
+
+class PoseUnit(EventCommand):
+    nid = 'pose_unit'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = \
+        """
+Changes current pose (state) of unit's map sprite.
+        """
+
+    keywords = ["Unit", "Pose"]
+    optional_keywords = ["Direction"]
+    keyword_types = ["Unit", "SpritePose", "SpriteDirection"]
 
 class SetName(EventCommand):
     nid = 'set_name'
@@ -2376,6 +2414,30 @@ Removes the ability for the two indicated units to "Talk" in the current chapter
     keywords = ["Unit1", "Unit2"]
     keyword_types = ["Unit", "Unit"]
 
+class HideTalk(EventCommand):
+    nid = 'hide_talk'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Hides the "Talk" marker from maps matching the Unit1 and Unit2 selected, making it a secret conversation.
+        """
+
+    keywords = ["Unit1", "Unit2"]
+    keyword_types = ["Unit", "Unit"]
+
+class UnhideTalk(EventCommand):
+    nid = 'unhide_talk'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Removes the hidden flag for the "Talk" marker from maps matching the Unit1 and Unit2 selected, making it visible again.
+        """
+
+    keywords = ["Unit1", "Unit2"]
+    keyword_types = ["Unit", "Unit"]
+
 class AddLore(EventCommand):
     nid = 'add_lore'
     nickname = 'unlock_lore'
@@ -2529,8 +2591,8 @@ When set, the *only_once* flag applies only to event region, preventing them fro
         """
 
     keywords = ["Region", "Position", "Size", "RegionType"]
-    optional_keywords = ["String", "TimeLeft"]
-    keyword_types = ["Region", "Position", "Size", "RegionType", "String", "PositiveInteger"]
+    optional_keywords = ["String", "TimeLeft", "HideTime"]
+    keyword_types = ["Region", "Position", "Size", "RegionType", "String", "PositiveInteger", "Bool"]
     _flags = ["only_once", "interrupt_move"]
 
 class RegionCondition(EventCommand):
@@ -2981,12 +3043,13 @@ For instance, if nid was "tactician", use `{var:tactician}` anywhere in events t
 *String* is the text describing the choice, such as "Please enter a name."
 *PositiveInteger* is the character limit. If not set, defaults to 16.
 *StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
-
+*DefaultString* specifies an optional string already loaded into the menu when it starts. If this default string violates character limit or contains illegal characters, it won't work.
 If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
         """
 
     keywords = ['Nid', 'String']
-    optional_keywords = ['PositiveInteger', 'IllegalCharacterList']
+    optional_keywords = ['PositiveInteger', 'IllegalCharacterList', 'DefaultString']
+    keyword_types = ['Nid', 'String', 'PositiveInteger', 'IllegalCharacterList', 'String']
     _flags = ['force_entry']
 
 class ChapterTitle(EventCommand):
@@ -3102,6 +3165,23 @@ Displays the game's guide screen.
 
     _flags = ["immediate"]
 
+class OpenCredits(EventCommand):
+    nid = 'open_credits'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Displays the game's credits module.
+If given, uses the (*Panorama*) as the background image.
+The (*Scroll*) flag determines whether the background image will move.
+1. *immediate* flag skips the transition between screens
+2. *show_map* determines whether or not the background will simply be the map of the mission.
+        """
+
+    optional_keywords = ['Panorama']
+    keyword_types = ['Panorama']
+    _flags = ["immediate", "scroll", "show_map"]
+
 class OpenUnitManagement(EventCommand):
     nid = 'open_unit_management'
     tag = Tags.MISCELLANEOUS
@@ -3201,11 +3281,18 @@ class Ending(EventCommand):
 
     desc = \
         """
-Displays the epilogue text for a character. *Portrait* is the portrait to be displayed, *Title* is the name displayed (ex: "Marcus, Badass Paladin"), the *Text* is the block of text describing what happened to the character.
+Displays the epilogue text for a character. 
+*Portrait* is the portrait to be displayed, 
+*Title* is the name displayed (ex: "Marcus, Badass Paladin"), 
+the *Text* is the block of text describing what happened to the character.
+If *wait_for_input* flag is set, the dialog will wait for the player to press SELECT
+before preceding. Use this if you plan to have {w} or | commands in your text.
+Without the *wait_for_input* flag, the Ending will just wait 5 seconds after the first {w}.
         """
 
     keywords = ["Portrait", "Title", "Text"]
     keyword_types = ["Portrait", "String", "String"]
+    _flags = ['wait_for_input']
 
 class PairedEnding(EventCommand):
     nid = 'paired_ending'
@@ -3213,11 +3300,18 @@ class PairedEnding(EventCommand):
 
     desc = \
         """
-Displays paired epilogue text for two characters. *LeftPortrait* and *RightPortrait* are the portraits to be displayed, *LeftTitle* and *RightTitle* are the names displayed (ex: "Marcus, Badass Paladin"), the *Text* is the block of text describing what happened to the characters.
+Displays paired epilogue text for two characters. 
+*LeftPortrait* and *RightPortrait* are the portraits to be displayed, 
+*LeftTitle* and *RightTitle* are the names displayed (ex: "Marcus, Badass Paladin"), 
+the *Text* is the block of text describing what happened to the characters.
+If *wait_for_input* flag is set, the dialog will wait for the player to press SELECT
+before preceding. Use this if you plan to have {w} or | commands in your text.
+Without the *wait_for_input* flag, the Ending will just wait 5 seconds after the first {w}.
         """
 
     keywords = ["LeftPortrait", "RightPortrait", "LeftTitle", "RightTitle", "Text"]
     keyword_types = ["Portrait", "Portrait", "String", "String", "String"]
+    _flags = ['wait_for_input']
 
 class PopDialog(EventCommand):
     nid = 'pop_dialog'

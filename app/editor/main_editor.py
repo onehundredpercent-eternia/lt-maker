@@ -46,7 +46,7 @@ from app.editor.unit_editor.new_unit_tab import NewUnitDatabase
 from app.editor.team_editor.team_tab import TeamDatabase
 from app.editor.faction_editor.faction_tab import FactionDatabase
 from app.editor.party_editor.party_tab import PartyDatabase
-from app.editor.class_editor.class_tab import ClassDatabase
+from app.editor.class_editor.new_class_tab import NewClassDatabase
 from app.editor.weapon_editor.weapon_tab import WeaponDatabase
 from app.editor.item_editor.new_item_tab import NewItemDatabase
 from app.editor.skill_editor.new_skill_tab import NewSkillDatabase
@@ -63,6 +63,7 @@ from app.editor.equation_widget import EquationDialog
 from app.editor.event_editor.event_tab import EventDatabase
 from app.editor.lore_editor.lore_tab import LoreDatabase
 from app.editor.raw_editor.raw_data_tab import RawDataDatabase
+from app.editor.credit_editor.new_credit_tab import NewCreditDatabase
 
 # Resources
 from app.editor.icon_editor import icon_tab
@@ -235,7 +236,7 @@ class MainEditor(QMainWindow):
                             _("Teams"): TeamDatabase.edit,
                             _("Factions"): FactionDatabase.edit,
                             _("Parties"): PartyDatabase.edit,
-                            _("Classes"): ClassDatabase.edit,
+                            _("Classes"): NewClassDatabase.edit,
                             _("Tags"): self.edit_tags,
                             _("Game Vars"): self.edit_game_vars,
                             _("Weapon Types"): WeaponDatabase.edit,
@@ -251,7 +252,8 @@ class MainEditor(QMainWindow):
                             _("Supports"): self.edit_supports,
                             _("Lore"): LoreDatabase.edit,
                             _("Raw Data"): RawDataDatabase.edit,
-                            _("Translations"): self.edit_translations
+                            _("Translations"): self.edit_translations,
+                            _("Credit"): NewCreditDatabase.edit
                             }
         self.database_actions = {}
         for name, func in database_actions.items():

@@ -170,7 +170,6 @@ class SimpleCombat():
         
         self.attacker.built_guard = True
         if self.defender:
-            self.defender.strike_partner = None
             self.defender.built_guard = True
 
         self.handle_death(all_units)
@@ -241,14 +240,12 @@ class SimpleCombat():
         skill_system.end_combat(self.full_playback, self.attacker, self.main_item, self.defender, resolve_weapon(self.defender), 'attack')
         item_system.end_combat(self.full_playback, self.attacker, self.main_item, self.defender, resolve_weapon(self.defender), 'attack')
         if self.attacker.strike_partner:
-            skill_system.end_combat(self.full_playback, self.attacker.strike_partner, self.attacker.strike_partner.get_weapon(), self.defender, self.defender.get_weapon(), 'attack')
-            item_system.end_combat(self.full_playback, self.attacker.strike_partner, self.attacker.strike_partner.get_weapon(), self.defender, self.defender.get_weapon(), 'attack')
-            self.attacker.strike_partner = None
+            skill_system.end_combat(self.full_playback, self.attacker.strike_partner, self.attacker.strike_partner.get_weapon(), self.defender, resolve_weapon(self.defender), 'attack')
+            item_system.end_combat(self.full_playback, self.attacker.strike_partner, self.attacker.strike_partner.get_weapon(), self.defender, resolve_weapon(self.defender), 'attack')
         if self.defender:
             if self.defender.strike_partner:
                 skill_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.strike_partner.get_weapon(), self.attacker, self.main_item, 'defense')
                 item_system.end_combat(self.full_playback, self.defender.strike_partner, self.defender.strike_partner.get_weapon(), self.attacker, self.main_item, 'defense')
-                self.defender.strike_partner = None
         already_pre = [self.attacker]
         for idx, defender in enumerate(self.defenders):
             if defender and defender not in already_pre:
@@ -272,11 +269,15 @@ class SimpleCombat():
                 already_pre.append(defender)
                 def_item = self.def_items[idx]
                 skill_system.post_combat(self.full_playback, defender, def_item, self.attacker, self.main_item, 'defense')
-                if self.defender.strike_partner:
+                if defender.strike_partner:
                     skill_system.post_combat(self.full_playback, defender.strike_partner, defender.strike_partner.get_weapon(), \
-                                              self.attacker, self.main_item, 'defense')
+                                             self.attacker, self.main_item, 'defense')
         for unit in self.all_splash:
             skill_system.post_combat(self.full_playback, unit, None, self.attacker, self.main_item, 'defense')
+
+        self.attacker.strike_partner = None
+        if self.defender:
+            self.defender.strike_partner = None
 
         self.final_random_state = static_random.get_combat_random_state()
         action.do(action.RecordRandomState(self.initial_random_state, self.final_random_state))

@@ -170,7 +170,7 @@ class Move(Action):
     A basic, user-directed move
     """
 
-    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0):
+    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0, silent=False):
         self.unit: UnitObject = unit
         self.old_pos = self.unit.position
         self.new_pos = new_pos
@@ -183,11 +183,12 @@ class Move(Action):
         self.event = event
         self.follow = follow
         self.speed = speed or cf.SETTINGS['unit_speed']
+        self.silent = silent
 
     def do(self):
         if self.path is None:
             self.path = game.cursor.path[:]
-        game.movement.begin_move(self.unit, self.path, self.event, self.follow, speed=self.speed)
+        game.movement.begin_move(self.unit, self.path, self.event, self.follow, speed=self.speed, silent=self.silent)
 
     def execute(self):
         game.leave(self.unit)
@@ -491,13 +492,24 @@ class IncrementTurn(Action):
 
 
 class MarkPhase(Action):
-    def __init__(self, phase_name):
+    def __init__(self, phase_name: str):
         self.phase_name = phase_name
 
 
 class LockTurnwheel(Action):
-    def __init__(self, lock):
+    def __init__(self, lock: bool):
         self.lock = lock
+
+
+class MarkActionGroupStart(Action):
+    def __init__(self, unit: NID, state: str):
+        self.unit = unit
+        self.state = state
+
+
+class MarkActionGroupEnd(Action):
+    def __init__(self, state: str):
+        self.state = state
 
 
 class ChangePhaseMusic(Action):
@@ -713,7 +725,7 @@ class HasNotTraded(Reset):
 
 # === RESCUE ACTIONS ========================================================
 class Rescue(Action):
-    def __init__(self, unit, rescuee):
+    def __init__(self, unit: UnitObject, rescuee: UnitObject):
         self.unit = unit
         self.rescuee = rescuee
         self.old_pos = self.rescuee.position
@@ -725,7 +737,8 @@ class Rescue(Action):
         self.unit.traveler = self.rescuee.nid
         # TODO Add transition
 
-        game.leave(self.rescuee)
+        if self.rescuee.position:
+            game.leave(self.rescuee)
         self.unit.has_rescued = True
 
         if not skill_system.ignore_rescue_penalty(self.unit) and 'Rescue' in DB.skills:
@@ -738,7 +751,8 @@ class Rescue(Action):
     def execute(self):
         self.unit.traveler = self.rescuee.nid
 
-        game.leave(self.rescuee)
+        if self.rescuee.position:
+            game.leave(self.rescuee)
         self.unit.has_rescued = True
 
         for action in self.subactions:
@@ -746,7 +760,8 @@ class Rescue(Action):
         self.update_fow_rescuee.execute()
 
     def reverse(self):
-        game.arrive(self.rescuee, self.old_pos)
+        if self.old_pos:
+            game.arrive(self.rescuee, self.old_pos)
         self.unit.traveler = None
         self.unit.has_rescued = False
 
@@ -1031,7 +1046,8 @@ class Separate(Action):
 
         if self.with_wait:
             self.droppee_wait_action.reverse()
-        game.leave(self.droppee)
+        if self.droppee.position:
+            game.leave(self.droppee)
         self.unit.has_dropped = False
 
         self.unit.lead_unit = True
@@ -2148,6 +2164,7 @@ class GainWexp(Action):
                 if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
                     weapon_type = item_system.weapon_type(self.unit, self.item)
                     game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, weapon_type))
+                    game.events.trigger(triggers.UnitWeaponRankUp(self.unit, weapon_type, self.old_value, weapon_rank.rank))
                     game.state.change('alert')
                     break
 
@@ -2183,6 +2200,7 @@ class AddWexp(Action):
             for weapon_rank in reversed(DB.weapon_ranks):
                 if self.old_value < weapon_rank.requirement and self.current_value >= weapon_rank.requirement:
                     game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, self.weapon_type))
+                    game.events.trigger(triggers.UnitWeaponRankUp(self.unit, self.weapon_type, self.old_value, weapon_rank.rank))
                     game.state.change('alert')
                     break
 
@@ -2210,6 +2228,7 @@ class SetWexp(Action):
             for weapon_rank in reversed(DB.weapon_ranks):
                 if self.old_wexp < weapon_rank.requirement and self.wexp >= weapon_rank.requirement:
                     game.alerts.append(banner.GainWexp(self.unit, weapon_rank.rank, self.weapon_type))
+                    game.events.trigger(triggers.UnitWeaponRankUp(self.unit, self.weapon_type, self.old_wexp, weapon_rank.rank))
                     game.state.change('alert')
                     break
 
@@ -2281,6 +2300,8 @@ class SetNid(Action):
             if self.unit.nid in game.unit_registry:
                 del game.unit_registry[self.unit.nid]
             self.unit.nid = self.new_nid
+            if game.initiative:
+                game.initiative.replace_unit_nid(self.old_nid, self.new_nid)
             game.register_unit(self.unit)
             if orig_pos:
                 game.arrive(self.unit, orig_pos)
@@ -2293,6 +2314,8 @@ class SetNid(Action):
             if self.unit.nid in game.unit_registry:
                 del game.unit_registry[self.unit.nid]
             self.unit.nid = self.old_nid
+            if game.initiative:
+                game.initiative.replace_unit_nid(self.new_nid, self.old_nid)
             game.register_unit(self.unit)
             if orig_pos:
                 game.arrive(self.unit, orig_pos)
@@ -2815,12 +2838,15 @@ class AddTag(Action):
     def __init__(self, unit, tag):
         self.unit = unit
         self.tag = tag
+        self.did_add = False
 
     def do(self):
-        self.unit._tags.append(self.tag)
+        if self.tag not in self.unit._tags:
+            self.unit._tags.add(self.tag)
+            self.did_add = True
 
     def reverse(self):
-        if self.tag in self.unit._tags:
+        if self.did_add:
             self.unit._tags.remove(self.tag)
 
 
@@ -2837,7 +2863,7 @@ class RemoveTag(Action):
 
     def reverse(self):
         if self.did_remove:
-            self.unit._tags.append(self.tag)
+            self.unit._tags.add(self.tag)
 
 
 class AddTalk(Action):
@@ -2867,6 +2893,35 @@ class RemoveTalk(Action):
     def reverse(self):
         if self.did_remove:
             game.talk_options.append((self.unit1, self.unit2))
+
+
+class HideTalk(Action):
+    def __init__(self, unit1_nid, unit2_nid):
+        self.unit1 = unit1_nid
+        self.unit2 = unit2_nid
+
+    def do(self):
+        game.talk_hidden.add((self.unit1, self.unit2))
+
+    def reverse(self):
+        if (self.unit1, self.unit2) in game.talk_hidden:
+            game.talk_hidden.remove((self.unit1, self.unit2))
+
+
+class UnhideTalk(Action):
+    def __init__(self, unit1_nid, unit2_nid):
+        self.unit1 = unit1_nid
+        self.unit2 = unit2_nid
+        self.did_remove = False
+
+    def do(self):
+        if (self.unit1, self.unit2) in game.talk_hidden:
+            game.talk_hidden.remove((self.unit1, self.unit2))
+            self.did_remove = True
+
+    def reverse(self):
+        if self.did_remove:
+            game.talk_hidden.add((self.unit1, self.unit2))
 
 
 class AddLore(Action):
@@ -3527,6 +3582,9 @@ class AddSkill(Action):
             logging.info("Skill %s is at max stacks, removing oldest displaceable instance" % self.skill_obj.nid)
             self.subactions.append(RemoveSkill(self.unit, popped_skill_obj))
 
+        for action in self.subactions:
+            action.execute()
+
         # Actually add skill
         skill_system.before_add(self.unit, self.skill_obj)
         self.skill_obj.owner_nid = self.unit.nid
@@ -3539,9 +3597,6 @@ class AddSkill(Action):
             game.boundary.register_unit_auras(self.unit)
 
         skill_system.after_add(self.unit, self.skill_obj)
-
-        for action in self.subactions:
-            action.execute()
 
         self.did_something = True
 

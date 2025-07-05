@@ -239,7 +239,7 @@ class EventOnWait(SkillComponent):
 
     expose = ComponentType.Event
 
-    def after_wait(self, unit, actively_chosen):
+    def on_wait(self, unit, actively_chosen):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
             game.events.trigger_specific_event(event_prefab.nid, unit)

@@ -1,8 +1,8 @@
 [
     {
-        "nid": "Luna_proc",
+        "nid": "Luna_Proc",
         "name": "Luna",
-        "desc": "Adds target's resist to damage.",
+        "desc": "Ignores enemy defense and resistance.",
         "icon_nid": "Skills",
         "icon_index": [
             4,
@@ -10,24 +10,8 @@
         ],
         "components": [
             [
-                "hidden",
-                null
-            ],
-            [
-                "dynamic_damage",
-                "combat_calcs.defense(target, None, None)"
-            ],
-            [
-                "unit_flickering_tint",
-                [
-                    0,
-                    128,
-                    248
-                ]
-            ],
-            [
-                "alternate_battle_anim",
-                "Critical"
+                "item_override",
+                "Luna_Proc"
             ]
         ]
     }

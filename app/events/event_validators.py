@@ -378,9 +378,9 @@ class WholeNumber(Integer):
         return int(text)
 
 class Time(Integer):
-    desc = "indicates a duration"
+    desc = "Indicates a duration"
 class Volume(Float):
-    desc = "A number between greater than 0 (0 is muted, 1 is current volume)"
+    desc = "A number between 0 and 1 (0 is muted, 1 is current volume)"
 
 class String(Validator):
     """
@@ -1368,6 +1368,21 @@ class MaybeSprite(Validator):
         valids = [(sprite_name, sprite_name) for sprite_name in SPRITES.keys()]
         valids += [(None, "None")]
         return valids
+
+class SpritePose(OptionValidator):
+    desc = """
+Specify the pose the unit's sprite will take.
+Available options are (`normal`, `active`, `moving`, `stand_dir`, `start_cast`, `end_cast`).
+"""
+    valid = ['normal', 'active', 'moving', 'stand_dir', 'start_cast', 'end_cast']
+
+class SpriteDirection(OptionValidator):
+    desc = """
+Specify the direction moving or stand pose will take.
+Available options are (`up`, `left`, `right`, `down`).
+This has no effect unless the sprite pose is `moving` or `stand_dir`.
+"""
+    valid = ['up', 'left', 'right', 'down']
 
 class DifficultyMode(Validator):
     desc = 'accepts the nid of a difficulty mode.'

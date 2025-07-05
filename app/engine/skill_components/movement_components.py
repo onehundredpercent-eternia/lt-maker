@@ -196,7 +196,7 @@ class Galeforce(SkillComponent):
             self._did_something = True
             action.do(action.TriggerCharge(unit, self.skill))
 
-    def after_wait(self, unit, actively_chosen):
+    def on_wait(self, unit, actively_chosen):
         if self._did_something:
             action.do(action.Reset(unit))
         self._did_something = False
@@ -207,6 +207,28 @@ class SimpleGaleforce(SkillComponent):
     desc = "Unit can move again."
     tag = SkillTags.MOVEMENT
 
-    def after_wait(self, unit, actively_chosen):
+    def on_wait(self, unit, actively_chosen):
         action.do(action.TriggerCharge(unit, self.skill))
         action.do(action.Reset(unit))
+
+
+class ModernGaleforce(SkillComponent):
+    nid = 'modern_galeforce'
+    desc = "After killing an enemy on player phase, unit can move again. Allows `on_wait` event triggers and post-combat reposition skills that wrap `Canto` & variants to run before the unit is refreshed."
+    tag = SkillTags.MOVEMENT
+    
+    author = 'Eretein'
+    
+    _should_refresh: bool = False
+
+    def end_combat(self, playback, unit, item, target, item2, mode):
+        mark_playbacks = [p for p in playback if p.nid in ('mark_miss', 'mark_hit', 'mark_crit')]
+        if target and target.get_hp() <= 0 and \
+                any(p.main_attacker is unit for p in mark_playbacks):  # Unit is overall attacker
+            self._should_refresh = True
+    
+    def on_wait(self, unit, actively_chosen):
+        if self._should_refresh:
+            action.do(action.Reset(unit))
+            action.do(action.TriggerCharge(unit, self.skill))
+            self._should_refresh = False
