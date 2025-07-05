@@ -784,7 +784,7 @@ class DungeonTileMap:
                             self.floor_grid[pos] = FloorLevel.LOWER
                     elif (x, y + 1) in new_floor_sections[idx] and (x, y - 1) in outside_sections[idx]:
                         if self.floor_grid.get((x, y - 1)) == FloorLevel.UPPER:
-                            self.terrain_grid[pos] = Terrain.STAIRS_UP
+                            self.terrain_grid[pos] = Terrain.STAIRS_UPDOWN
                             self.floor_grid[pos] = None
                         else:
                             self.terrain_grid[pos] = self.theme["floor_lower"]
