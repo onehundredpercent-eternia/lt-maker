@@ -3,7 +3,7 @@
         "name": "FightBreguet",
         "trigger": "combat_start",
         "level_nid": "1",
-        "condition": "(unit.nid == \"Breguet\" and unit2.team == 'player') or (unit2.nid == \"Breguet\" and unit.team == 'player')",
+        "condition": "check_default(\"Breguet\",[])",
         "commands": [],
         "only_once": true,
         "priority": 20,

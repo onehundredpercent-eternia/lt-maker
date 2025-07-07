@@ -729,8 +729,8 @@
                     "effective_tags": [
                         "Armor"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 16,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -812,8 +812,8 @@
                     "effective_tags": [
                         "Dragon"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 16,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -895,8 +895,8 @@
                     "effective_tags": [
                         "Horse"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 12,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -1131,8 +1131,8 @@
                         "Horse",
                         "Armor"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 14,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -1450,8 +1450,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 18,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -1539,8 +1539,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 32,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -1622,8 +1622,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 36,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -2427,8 +2427,8 @@
                     "effective_tags": [
                         "Horse"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 14,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -2510,8 +2510,8 @@
                     "effective_tags": [
                         "Armor"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 18,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -2593,8 +2593,8 @@
                     "effective_tags": [
                         "Dragon"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 20,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -2762,8 +2762,8 @@
                         "Horse",
                         "Armor"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 20,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -2845,8 +2845,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 30,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -2930,8 +2930,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 34,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -3585,8 +3585,8 @@
                     "effective_tags": [
                         "Horse"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 20,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -3672,8 +3672,8 @@
                     "effective_tags": [
                         "Armor"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 20,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -3755,8 +3755,8 @@
                     "effective_tags": [
                         "Dragon"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 24,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -3996,8 +3996,8 @@
                     "effective_tags": [
                         "Sword"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 22,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4225,8 +4225,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 40,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4308,8 +4308,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 12,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4391,8 +4391,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 18,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4474,8 +4474,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 26,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4557,8 +4557,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 8,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4644,8 +4644,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 18,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4731,8 +4731,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 20,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4818,8 +4818,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 10,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4901,8 +4901,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 10,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -4985,8 +4985,8 @@
                         "Monster",
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 36,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -5075,8 +5075,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 16,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -5165,8 +5165,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 26,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -5255,8 +5255,8 @@
                     "effective_tags": [
                         "Flying"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 24,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -7106,8 +7106,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 34,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -7604,8 +7604,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 36,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
@@ -9573,8 +9573,8 @@
                     "effective_tags": [
                         "Monster"
                     ],
-                    "effective_multiplier": 1.0,
-                    "effective_bonus_damage": 32,
+                    "effective_multiplier": 3.0,
+                    "effective_bonus_damage": 0,
                     "show_effectiveness_flash": true,
                     "weapon_effectiveness_multiplied": true
                 }
