@@ -9,7 +9,7 @@
         "priority": 20,
         "_source": [
             "remove_unit;Placeholder;immediate",
-            "center_cursor;0,5",
+            "move_cursor;0,5",
             "add_unit;Colm;0,5",
             "flicker_cursor;Colm",
             "add_portrait;Colm;Left",

@@ -3,7 +3,7 @@
         "name": "FightBone",
         "trigger": "combat_start",
         "level_nid": "2",
-        "condition": "check_default(\"Bone\",[])",
+        "condition": "(unit.nid == \"Bone\" and unit2.team == 'player') or (unit2.nid == \"Bone\" and unit.team == 'player')",
         "commands": [],
         "only_once": false,
         "priority": 20,
