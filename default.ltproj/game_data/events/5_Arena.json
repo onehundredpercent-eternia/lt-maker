@@ -76,7 +76,7 @@
             "if;game.check_dead('{created_unit}')",
             "change_background;Arena",
             "transition;open",
-            "music;_Arena Victory",
+            "music;Arena Victory",
             "speak;;So you won, eh? Here's your prize. {e:2*game.level_vars['ArenaWager']} gold.;top_right;160;noir",
             "sound;GoldExchange",
             "give_money;{e:2*game.level_vars['ArenaWager']}",
