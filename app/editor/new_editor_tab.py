@@ -28,11 +28,12 @@ class NewEditorTab(QWidget, Generic[T]):
     catalog_type: Type[T] = None
     properties_type = None
     allow_rename = False
+    allow_duplicate = True
     allow_import_from_xml = False
     allow_import_from_csv = False
     allow_copy_and_paste = False
 
-    def __init__(self, parent, database: Database, resources: Resources) -> None:
+    def __init__(self, parent, database: Database, resources: Resources = None) -> None:
         QWidget.__init__(self, parent)
         self.setWindowTitle(_('%s Editor') % self.properties_type.title)
         self._db = database
@@ -43,7 +44,7 @@ class NewEditorTab(QWidget, Generic[T]):
         left_frame_layout = QVBoxLayout()
         self.left_frame.setLayout(left_frame_layout)
         self.tree_list = LTNestedList(self, self.data.keys(), self.categories, self.allow_rename,
-                                      self.get_icon, self.get_foreground,
+                                      self.allow_duplicate, self.get_icon, self.get_foreground,
                                       self.on_select, self.resort_db, self.on_begin_rename,
                                       self.delete_from_db, self.create_new, self.duplicate, self.rename)
         left_frame_layout.setContentsMargins(0, 0, 0, 0)
