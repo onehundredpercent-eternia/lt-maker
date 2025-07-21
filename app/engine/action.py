@@ -208,6 +208,22 @@ class Move(Action):
 class CantoMove(Move):
     pass
 
+class XCOMMove(Move):
+    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0):
+        super().__init__(unit, new_pos, path, event, follow, speed)
+        self.has_attacked = HasAttacked(unit)
+
+    def do(self):
+        super().do()
+        self.has_attacked.execute()
+
+    def execute(self):
+        super().execute()
+        self.has_attacked.execute()
+
+    def reverse(self):
+        super().reverse()
+        self.has_attacked.reverse()
 
 class SimpleMove(Move):
     """
