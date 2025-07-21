@@ -30,19 +30,19 @@ class DungeonSection:
         return self.room and self.room.width >= 3 and self.room.height >= 3
 
     def generate_room(self):
-        width = self.tilemap.random.randint(self.tilemap.theme.room_size_min_x, self.width - 1)
-        height = self.tilemap.random.randint(self.tilemap.theme.room_size_min_y, self.height - 1)
+        width = self.tilemap.random.randint(self.tilemap.theme["room_size_min_x"], self.width - 1)
+        height = self.tilemap.random.randint(self.tilemap.theme["room_size_min_y"], self.height - 1)
         offset_x = self.tilemap.random.randint(0, self.width - width - 1)
         offset_y = self.tilemap.random.randint(0, self.height - height - 1)
-        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
+        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme["floor_lower_chance"] else FloorLevel.UPPER
 
         self.room = DungeonRoom((width, height), (offset_x, offset_y), self, self.tilemap, floor_level)
 
     def generate_hallway_node(self):
-        size = 2 if self.tilemap.random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        size = 2 if self.tilemap.random.random() < self.tilemap.theme["wide_hallway_chance"] else 1
         offset_x = self.tilemap.random.randint(0, self.width - size - 1)
         offset_y = self.tilemap.random.randint(0, self.height - size - 1)
-        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme.floor_lower_chance else FloorLevel.UPPER
+        floor_level = FloorLevel.LOWER if self.tilemap.random.random() < self.tilemap.theme["floor_lower_chance"] else FloorLevel.UPPER
 
         self.room = DungeonRoom((size, size), (offset_x, offset_y), self, self.tilemap, floor_level)
 
@@ -71,9 +71,9 @@ class DungeonSection:
         Connects to the global background room if there is no room normally in this direction
         """
         # Chance to skip connecting
-        if self.tilemap.random.random() > self.tilemap.theme.connection_chance:
+        if self.tilemap.random.random() > self.tilemap.theme["connection_chance"]:
             return
-        hallway_width = 2 if self.tilemap.random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        hallway_width = 2 if self.tilemap.random.random() < self.tilemap.theme["wide_hallway_chance"] else 1
         hallway = []
 
         if direction == Direction.EAST:
@@ -160,9 +160,9 @@ class DungeonSection:
 
     def connect(self, other: DungeonSection, direction: Direction):
         # Chance to skip connecting the two rooms
-        if self.tilemap.random.random() > self.tilemap.theme.connection_chance:
+        if self.tilemap.random.random() > self.tilemap.theme["connection_chance"]:
             return
-        hallway_width = 2 if self.tilemap.random.random() < self.tilemap.theme.wide_hallway_chance else 1
+        hallway_width = 2 if self.tilemap.random.random() < self.tilemap.theme["wide_hallway_chance"] else 1
         hallway = []
 
         if direction == Direction.EAST:

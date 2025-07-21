@@ -2805,11 +2805,15 @@ Optional args:
 * *OtherOptions* is a list of strings (Option1, Option2, Option3) that specify additional option names to display in the base.
 * *OtherOptionsEnabled* is a list of string bools (e.g. true, false, false) that specify which of the OtherOptions are enabled. If blank, all OtherOptions will be enabled by default.
 * *OtherOptionsOnSelect* is a list of Event NIDs or Event Names. These events will be triggered when the corresponding OtherOptions are selected.
+* *OtherOptionsDesciption* is a list of strings that provide description to the Option in gba prep screen.
 
+Flags:
+* *gba* uses gba prep screen layout instead.
         """
 
-    optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect']
-    keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList"]
+    optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect', 'OtherOptionsDescription']
+    keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList", "StringList"]
+    _flags = ["gba"]
 
 
 class Base(EventCommand):
@@ -3043,12 +3047,13 @@ For instance, if nid was "tactician", use `{var:tactician}` anywhere in events t
 *String* is the text describing the choice, such as "Please enter a name."
 *PositiveInteger* is the character limit. If not set, defaults to 16.
 *StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
-
+*DefaultString* specifies an optional string already loaded into the menu when it starts. If this default string violates character limit or contains illegal characters, it won't work.
 If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
         """
 
     keywords = ['Nid', 'String']
-    optional_keywords = ['PositiveInteger', 'IllegalCharacterList']
+    optional_keywords = ['PositiveInteger', 'IllegalCharacterList', 'DefaultString']
+    keyword_types = ['Nid', 'String', 'PositiveInteger', 'IllegalCharacterList', 'String']
     _flags = ['force_entry']
 
 class ChapterTitle(EventCommand):

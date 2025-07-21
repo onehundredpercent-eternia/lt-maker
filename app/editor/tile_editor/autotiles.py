@@ -44,6 +44,7 @@ class PaletteData():
         self.new_im: QImage = None
         self.colors: list = editor_utilities.get_full_palette(im)
         # Sort by most
+        # dict.fromkeys preserves order
         self.uniques: list = sorted(dict.fromkeys(self.colors), key=lambda x: self.colors.count(x), reverse=True)
         self.palette: list = self.colors[:]
 
@@ -61,7 +62,8 @@ def check_hashes(p1: PaletteData, p2: PaletteData) -> bool:
 
 class Series(list):
     def is_present(self, test: PaletteData) -> bool:
-        return any(check_hashes(test, palette) for palette in self)
+        all_palettes = [im for im in self]
+        return any(check_hashes(test, palette) for palette in all_palettes)
 
     def get_frames_with_color(self, color: tuple) -> list:
         return [im for im in self if color in im.colors]
