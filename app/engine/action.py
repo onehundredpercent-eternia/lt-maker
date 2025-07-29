@@ -655,6 +655,17 @@ class ResetUnitVars(Action):
         self.unit.set_hp(self.old_current_hp)
         self.unit.set_mana(self.old_current_mana)
 
+class SetPosition(Action):
+    def __init__(self, unit: UnitObject, pos: Pos):
+        self.unit = unit
+        self.pos = pos
+        self.old_pos = self.unit.position
+
+    def do(self):
+        self.unit.position = self.pos
+
+    def reverse(self):
+        self.unit.position = self.old_pos
 
 class SetPreviousPosition(Action):
     def __init__(self, unit):
