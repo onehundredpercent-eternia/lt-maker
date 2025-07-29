@@ -863,6 +863,39 @@ Increments a game variable by one, or by a Python expression provided using the 
     optional_keywords = ["Expression"]
     keyword_types = ["GeneralVar", "Expression"]
 
+class ModifyGameVar(EventCommand):
+    nid = 'modify_game_var'
+    nickname = 'mgvar'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Mutates a game variable in-place, maintaining turnwheel compatibility and allowing scripts like:
+
+```
+game_var;GameVar;["A", "B", "C"]
+...
+game_var;Dummy;v('GameVar').remove("C")
+game_var;GameVar;v('GameVar')
+```
+
+To be written concisely:
+
+```
+game_var;GameVar;["A", "B", "C"]
+...
+modify_game_var;GameVar;it.remove("C")
+```
+
+The *Nid* is the variable's identifier, and the *Expression* mutates the variable in-place.
+You MUST refer to the variable as `it` inside the *Expression*. If the *Expression* does not
+mutate the variable in-place, this command does nothing.
+
+This command does not work in #pyev1.
+        """
+    keywords = ['Nid', 'Expression']
+    keyword_types = ["GeneralVar", "Expression"]
+    
 class LevelVar(EventCommand):
     nid = 'level_var'
     nickname = 'lvar'
@@ -891,6 +924,38 @@ Increments a level variable by one, or by a Python expression provided using the
 
     keywords = ["Nid"]
     optional_keywords = ["Expression"]
+    keyword_types = ["GeneralVar", "Expression"]
+
+class ModifyLevelVar(EventCommand):
+    nid = 'modify_level_var'
+    nickname = 'mlvar'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Mutates a level variable in-place, maintaining turnwheel compatibility and allowing scripts like:
+
+```
+level_var;LevelVar;["A", "B", "C"]
+...
+level_var;Dummy;v('LevelVar').remove("C")
+level_var;LevelVar;v('LevelVar')
+```
+
+To be written concisely:
+```
+level_var;LevelVar;["A", "B", "C"]
+...
+modify_level_var;LevelVar;it.remove("C")
+```
+
+The *Nid* is the variable's identifier, and the *Expression* mutates the variable in-place.
+You MUST refer to the variable as `it` inside the *Expression*. If the *Expression* does not
+mutate the variable in-place, this command does nothing.
+
+This command does not work in #pyev1.
+        """
+    keywords = ['Nid', 'Expression']
     keyword_types = ["GeneralVar", "Expression"]
 
 class SetNextChapter(EventCommand):
@@ -2758,11 +2823,13 @@ Optional args:
 
 Flags:
 * *gba* uses gba prep screen layout instead.
+* *no_chap_disp* removes chapter display when using gba mode
+* *no_obj_disp* removes objective display when using gba mode
         """
 
     optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect', 'OtherOptionsDescription']
     keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList", "StringList"]
-    _flags = ["gba"]
+    _flags = ["gba", "no_chap_disp", "no_obj_disp"]
 
 
 class Base(EventCommand):
@@ -3613,6 +3680,25 @@ The *Party* entries are existing parties (the second can be empty but still must
     optional_keywords = ["FixedUnits","Party1Name","Party2Name","Party1Limit","Party2Limit"]
     keyword_types = ["Party","Party","Expression","String","String","PositiveInteger","PositiveInteger"]
 
+class ChangeTeamPalette(EventCommand):
+    nid = 'change_team_palette'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Change the palettes of the given team.
+
+*MapSpritePalette* is the nid of combat palette for map sprites.
+*CombatVariantPalette* is the suffix for nid of combat palette for battle animation.
+*CombatColor* is the color for miscellaneous team-based assets, such as rescue icon, menu, combat display. 
+
+Example: change_team_palette;player;map_sprite_green;GenericGreen;green
+        """
+
+    keywords = ["Team"]
+    optional_keywords = ['MapSpritePalette', 'CombatVariantPalette', 'CombatColor']
+    keyword_types = ['Team', 'Palette', 'String', 'String']
+
 def get_commands():
     return EventCommand.__subclasses__()
 
@@ -3643,7 +3729,8 @@ ALL_EVENT_COMMANDS.update({
 
 
 FORBIDDEN_PYTHON_COMMANDS: List[EventCommand] = [Comment, If, Elif, Else,
-                                                 End, For, Endf, LoopUnits]
+                                                 End, For, Endf, LoopUnits,
+                                                 ModifyGameVar, ModifyLevelVar]
 FORBIDDEN_PYTHON_COMMAND_NIDS: List[str] = [cmd.nid for cmd in FORBIDDEN_PYTHON_COMMANDS] + [cmd.nickname for cmd in FORBIDDEN_PYTHON_COMMANDS]
 def get_all_event_commands(version: EventVersion) -> Dict[NID, Type[EventCommand]]:
     if version == EventVersion.EVENT:
