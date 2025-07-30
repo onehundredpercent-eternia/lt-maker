@@ -1,4 +1,5 @@
 from typing import Any, Dict, Optional
+import math
 
 from app.map_maker import simplex_noise
 
@@ -84,6 +85,37 @@ class WorldTileMap:
             assert len(values) == len(kernel)
             return [(value * k) ** 2 for value, k in zip(values, kernel)]
 
+        def non_max_suppression(gradient_magnitude: List[float], gradient_orientation: List[float]) -> List[float]:
+            output = [0] * len(gradient_magnitude)
+
+            # Ignore the border pixels
+            for x in range(1, self.width - 1):
+                for y in range(1, self.height - 1):
+                    # Will be between -pi and pi
+                    magnitude: float = gradient_magnitude[y + self.height * x]
+                    direction: float = gradient_orientation[y + self.height * x] 
+                    direction += math.pi  # Move to be between 0 and 2*pi
+
+                    if (0 <= direction < math.pi / 8) or (15 * math.pi / 8 <= direction <= 2 * math.pi):
+                        before_pixel = gradient_magnitude[y + self.height * (x - 1)]
+                        after_pixel = gradient_magnitude[y + self.height * (x + 1)]
+
+                    elif (math.pi / 8 <= direction < 3 * math.pi / 8) or (9 * math.pi / 8 <= direction < 11 * math.pi):
+                        before_pixel = gradient_magnitude[(y + 1) + self.height * (x - 1)]
+                        after_pixel = gradient_magnitude[(y - 1) + self.height * (x + 1)]
+
+                    elif (3 * math.pi / 8 <= direction < 5 * math.pi / 8) or (11 * math.pi / 8 <= direction < 13 * math.pi):
+                        before_pixel = gradient_magnitude[(y - 1) + self.height * x]
+                        after_pixel = gradient_magnitude[(y + 1) + self.height * x]
+
+                    else:
+                        before_pixel = gradient_magnitude[(y - 1) + self.height * (x - 1)]
+                        after_pixel = gradient_magnitude[(y + 1) + self.height * (x + 1)]
+
+                    if magnitude >= before_pixel and magnitude >= after_pixel:
+                        output[y + self.height * x] = magnitude
+            return output
+
         x_image, y_image = [], []
         # Do the convolution
         for x in range(self.width):
@@ -96,12 +128,13 @@ class WorldTileMap:
         
         # Now generate a single magnitude for each point
         gradient_magnitude = [math.sqrt(x**2 + y**2) for (x, y) in zip(x_image, y_image)]
+        gradient_orientation = [math.arctan2(y, x) for (x, y) in zip(x_image, y_image)]
         max_magnitude = max(gradient_magnitude)
         gradient_magnitude = [_ / max_magnitude for _ in gradient_magnitude]  # Now between 0 and 1
 
         for x in range(self.width):
             for y in range(self.height):
-                value: float = gradient_magnitude[x + self.height * y]
+                value: float = gradient_magnitude[y + self.height * x]
                 if self.get_terrain((x, y)) != Terrain.NOISY_GRASS:
                     continue  # Don't bother if not grass
                 
