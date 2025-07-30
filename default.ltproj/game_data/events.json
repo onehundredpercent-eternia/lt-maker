@@ -1491,7 +1491,8 @@
             "#music;None;2000",
             "#wait;5000",
             "#music;Attack;2000",
-            "#wait;5000"
+            "#wait;5000",
+            "prep;True"
         ],
         "nid": "DEBUG Test"
     },
