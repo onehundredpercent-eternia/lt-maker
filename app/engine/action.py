@@ -697,7 +697,7 @@ class Reset(Action):
 
     def do(self):
         self.unit.reset()
-        self.unit.movement_left = equations.parser.movement(self.unit)
+        self.unit.movement_left = self.unit.get_movement()
 
     def reverse(self):
         self.unit.set_action_state(self.action_state)

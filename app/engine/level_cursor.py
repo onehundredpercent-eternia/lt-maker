@@ -111,7 +111,7 @@ class LevelCursor(BaseCursor):
                     return self.path
 
         if not self.cur_unit.has_traded:
-            limit = self.cur_unit.movement_left + equations.parser.get_xcom_movement(self.cur_unit)
+            limit = self.cur_unit.movement_left + self.cur_unit.get_xcom_movement()
         else:
             limit = self.cur_unit.movement_left
         self.path = self.game.path_system.get_path(self.cur_unit, self._last_valid_position, use_limit=limit)

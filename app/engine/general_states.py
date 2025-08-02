@@ -766,10 +766,7 @@ class MoveState(MapState):
                 else:
                     action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                     cur_unit.current_move = action.XCOMMove(cur_unit, game.cursor.position)
-                    # Immediately wait after the XCOM Move
-                    game.state.clear()
-                    game.state.change('free')
-                    game.state.change('wait')
+                    game.state.change('canto_wait')
                     game.state.change('movement')
                     action.do(cur_unit.current_move)
 
@@ -878,6 +875,8 @@ class CantoWaitState(MapState):
                 game.action_log.reverse_move_to_action_group_start(self.cur_unit.current_move)
                 self.cur_unit.current_move = None
                 game.cursor.set_pos(self.cur_unit.position)
+                game.cursor.path.clear()
+                game.cursor.remove_arrows()
             game.state.back()
 
     def update(self):
