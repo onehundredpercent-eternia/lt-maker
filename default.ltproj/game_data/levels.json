@@ -4022,24 +4022,6 @@
                 "only_once": false,
                 "interrupt_move": false,
                 "hide_time": false
-            },
-            {
-                "nid": "formation",
-                "region_type": "formation",
-                "position": [
-                    2,
-                    6
-                ],
-                "size": [
-                    2,
-                    1
-                ],
-                "sub_nid": "",
-                "condition": "True",
-                "time_left": null,
-                "only_once": false,
-                "interrupt_move": false,
-                "hide_time": false
             }
         ],
         "unit_groups": [],
