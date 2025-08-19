@@ -193,7 +193,7 @@ class Shove(ItemComponent):
         mcost = movement_funcs.get_mcost(unit_to_move, new_position)
         if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
-                mcost <= equations.parser.movement(unit_to_move):
+                mcost <= unit_to_move.get_movement():
             return new_position
         return False
 
@@ -286,7 +286,7 @@ class Pivot(ItemComponent):
         mcost = movement_funcs.get_mcost(unit_to_move, new_position)
         if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
-                mcost <= equations.parser.movement(unit_to_move):
+                mcost <= unit_to_move.get_movement():
             return new_position
         return False
 
@@ -347,7 +347,7 @@ class DrawBack(ItemComponent):
 
         if game.board.check_bounds(new_position_user) and \
                 not game.board.get_unit(new_position_user) and \
-                mcost_user <= equations.parser.movement(user) and mcost_target <= equations.parser.movement(target):
+                mcost_user <= user.get_movement() and mcost_target <= target.get_movement():
             return new_position_user, new_position_target
         return None, None
 
@@ -501,7 +501,7 @@ class EventAfterCombatOnHit(ItemComponent):
         self.target_pos = target_pos
 
     def end_combat(self, playback, unit, item, target, item2, mode):
-        if self._did_hit and target:
+        if self._did_hit:
             event_prefab = DB.events.get_from_nid(self.value)
             if event_prefab:
                 local_args = {'target_pos': self.target_pos, 'item': item, 'item2': item2, 'mode': mode}
@@ -514,9 +514,15 @@ class EventAfterCombatEvenMiss(ItemComponent):
     tag = ItemTags.SPECIAL
 
     expose = ComponentType.Event
+    
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        self.target_pos = target_pos
 
+    def on_miss(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        self.target_pos = target_pos
+    
     def end_combat(self, playback, unit, item, target, item2, mode):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            local_args = {'item': item, 'item2': item2, 'mode': mode}
+            local_args = {'target_pos': self.target_pos, 'item': item, 'item2': item2, 'mode': mode}
             game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)

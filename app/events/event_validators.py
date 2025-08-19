@@ -994,7 +994,7 @@ class AlignOrPosition(OptionValidator):
         return Alignments(text)
 
 class GrowthMethod(OptionValidator):
-    valid = ["random", "fixed", "dynamic"]
+    valid = ["random", "fixed", "dynamic", "lucky"]
 
 class CombatScript(SequenceValidator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
@@ -1111,6 +1111,20 @@ class KlassList(SequenceValidator):
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(klass.name, klass.nid) for klass in self._db.classes.values()]
+        return valids
+
+class TagList(SequenceValidator):
+    desc = "accepts a comma-delimited list of tags."
+
+    def validate(self, text, level):
+        s_l = self.convert(text)
+        for entry in s_l:
+            if entry not in self._db.tags:
+                return None
+        return text
+
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        valids = [(None, tag.nid) for tag in self._db.tags.values()]
         return valids
 
 class ArgList(DictValidator):
