@@ -1539,6 +1539,7 @@ def give_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
                 action.do(action.GiveItem(unit, item))
                 self.game.memory['item_discard_current_unit'] = unit
                 self.game.memory['item_discard_new_item'] = item
+                self.game.memory['item_discard_force_give'] = True if 'force_give' in flags else False
                 self.game.state.change('item_discard')
                 self.state = 'paused'
                 if banner_flag:
@@ -2918,8 +2919,8 @@ def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | Song
 
     if 'gba' in flags:
         self.game.state.change('prep_gba_main')
-        self.game.memory['prep_gba_disp'] = ['' if 'no_obj_disp' in flags else self.game.level.objective['simple'],
-                                             '' if 'no_chap_disp' in flags else self.game.level.name]
+        self.game.game_vars['_prep_gba_disp'] = ['' if 'no_obj_disp' in flags else self.game.level.objective['simple'],
+                                                 '' if 'no_chap_disp' in flags else self.game.level.name]
     else:
         self.game.state.change('prep_main')
     self.state = 'paused'  # So that the message will leave the update loop
@@ -3230,12 +3231,13 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
-def text_entry(self: Event, nid: NID, string: str, positive_integer:int=16, illegal_character_list: Optional[List[str]]=None, default_string: Optional[str]=None, flags:Optional[set[str]]=None):
+def text_entry(self: Event, nid: NID, string: str, character_limit: int = 16, 
+               illegal_character_list: Optional[List[str]] = None, default_string: Optional[str] = None, 
+               minimum_character_limit: int = 1, flags: Optional[set[str]] = None):
     flags = flags or set()
     illegal_character_list = illegal_character_list or list()
 
     header = string
-    limit = positive_integer
     force_entry = 'force_entry' in flags
     
     # Check if the dev is violating their own established ruleset lmao
@@ -3247,7 +3249,7 @@ def text_entry(self: Event, nid: NID, string: str, positive_integer:int=16, ille
             self.logger.error(f"text_entry: default_string {default_string} violates established restrictions!")
             default_string = None
 
-    self.game.memory['text_entry'] = (nid, header, limit, illegal_character_list or [], force_entry, default_string)
+    self.game.memory['text_entry'] = (nid, header, character_limit, illegal_character_list or [], force_entry, default_string, minimum_character_limit)
     self.game.state.change('text_entry')
     self.state = 'paused'
 

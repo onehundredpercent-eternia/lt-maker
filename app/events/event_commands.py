@@ -1692,15 +1692,16 @@ class GiveItem(EventCommand):
 Gives a new copy of *Item* to *GlobalUnitOrConvoy*.
 If `convoy` is chosen as the recipient, may optionally specify a specific *Party*'s convoy.
 
- If the *no_banner* flag is set, there will not be a banner announcing that "X unit got a Y item!".
+If the *no_banner* flag is set, there will not be a banner announcing that "X unit got a Y item!".
 If the unit's inventory is full, the player will be given the option of which item to send to the convoy.
 If the *no_choice* flag is set, the new item will be automatically sent to the convoy in this case without prompting the player.
+If the *force_give* flag is set, the new item will be forced into the inventory and another must be discarded instead. *no_choice* takes priority over *force_give*.
 The *droppable* flag determines whether the item is set as a "droppable" item (generally only given to enemy units).
         """
 
     keywords = ["GlobalUnitOrConvoy", "Item"]
     optional_keywords = ["Party"]
-    _flags = ['no_banner', 'no_choice', 'droppable']
+    _flags = ['no_banner', 'no_choice', 'force_give', 'droppable']
 
 class EquipItem(EventCommand):
     nid = 'equip_item'
@@ -3061,15 +3062,16 @@ Presents the player with a menu in which they can enter text. An example use-cas
 *Nid* is the name of this entry, which can be checked later to recall the player's input.
 For instance, if nid was "tactician", use `{var:tactician}` anywhere in events to replace it with the user's entry.
 *String* is the text describing the choice, such as "Please enter a name."
-*PositiveInteger* is the character limit. If not set, defaults to 16.
+*CharacterLimit* is the maximum character limit. If not set, defaults to 16.
 *StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
 *DefaultString* specifies an optional string already loaded into the menu when it starts. If this default string violates character limit or contains illegal characters, it won't work.
+*MinimumCharacterLimit* is the minimum character limit. If not set, defaults to 1.
 If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
         """
 
     keywords = ['Nid', 'String']
-    optional_keywords = ['PositiveInteger', 'IllegalCharacterList', 'DefaultString']
-    keyword_types = ['Nid', 'String', 'PositiveInteger', 'IllegalCharacterList', 'String']
+    optional_keywords = ['CharacterLimit', 'IllegalCharacterList', 'DefaultString', 'MinimumCharacterLimit']
+    keyword_types = ['Nid', 'String', 'PositiveInteger', 'IllegalCharacterList', 'String', 'PositiveInteger']
     _flags = ['force_entry']
 
 class ChapterTitle(EventCommand):
