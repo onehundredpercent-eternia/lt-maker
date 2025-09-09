@@ -2841,7 +2841,7 @@ def merge_parties(self: Event, party1, party2, flags=None):
         if unit.party == guest:
             action.do(action.ChangeParty(unit, host))
     # Merge items
-    for item in guest_party.convoy:
+    for item in guest_party.convoy[:]:
         action.do(action.RemoveItemFromConvoy(item, guest))
         action.do(action.PutItemInConvoy(item, host))
     # Merge money
@@ -3233,7 +3233,7 @@ def remove_table(self: Event, nid, flags=None):
 
 def text_entry(self: Event, nid: NID, string: str, character_limit: int = 16, 
                illegal_character_list: Optional[List[str]] = None, default_string: Optional[str] = None, 
-               minimum_character_limit: int = 1, flags: Optional[set[str]] = None):
+               minimum_character_limit: int = 0, flags: Optional[set[str]] = None):
     flags = flags or set()
     illegal_character_list = illegal_character_list or list()
 
@@ -3245,7 +3245,7 @@ def text_entry(self: Event, nid: NID, string: str, character_limit: int = 16,
         all_illegal_characters = set().union(*[
             CharacterSet[name.upper()].charset for name in illegal_character_list
         ])
-        if (len(default_string) > limit or any(c in all_illegal_characters for c in default_string)):                
+        if (character_limit < len(default_string) < minimum_character_limit or any(c in all_illegal_characters for c in default_string)):                
             self.logger.error(f"text_entry: default_string {default_string} violates established restrictions!")
             default_string = None
 
