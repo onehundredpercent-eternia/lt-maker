@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (QGridLayout, QHBoxLayout,
 
 from app.data.database.database import DB, Database
 from app.data.resources.resources import RESOURCES, Resources
+from app.data.resources.base_catalog import ManifestCatalog
 from app.data.category import Categories, CategorizedCatalog
 from app.editor import timer
 from app.editor.data_editor import SingleDatabaseEditor
@@ -28,11 +29,12 @@ class NewEditorTab(QWidget, Generic[T]):
     catalog_type: Type[T] = None
     properties_type = None
     allow_rename = False
+    allow_duplicate = True
     allow_import_from_xml = False
     allow_import_from_csv = False
     allow_copy_and_paste = False
 
-    def __init__(self, parent, database: Database, resources: Resources) -> None:
+    def __init__(self, parent, database: Database, resources: Resources = None) -> None:
         QWidget.__init__(self, parent)
         self.setWindowTitle(_('%s Editor') % self.properties_type.title)
         self._db = database
@@ -43,7 +45,7 @@ class NewEditorTab(QWidget, Generic[T]):
         left_frame_layout = QVBoxLayout()
         self.left_frame.setLayout(left_frame_layout)
         self.tree_list = LTNestedList(self, self.data.keys(), self.categories, self.allow_rename,
-                                      self.get_icon, self.get_foreground,
+                                      self.allow_duplicate, self.get_icon, self.get_foreground,
                                       self.on_select, self.resort_db, self.on_begin_rename,
                                       self.delete_from_db, self.create_new, self.duplicate, self.rename)
         left_frame_layout.setContentsMargins(0, 0, 0, 0)
@@ -106,7 +108,10 @@ class NewEditorTab(QWidget, Generic[T]):
             QMessageBox.warning(self, 'Warning', 'ID %s already in use' % new_nid)
             return False
         self._on_nid_changed(old_nid, new_nid)
-        self.data.change_key(old_nid, new_nid)
+        if isinstance(self.data, ManifestCatalog):
+            self.data.update_nid(self.data.get(old_nid), new_nid)
+        else:
+            self.data.change_key(old_nid, new_nid)
         self.tree_list.update_nid(old_nid, new_nid)
         self.tree_list.on_filter_changed(self.tree_list.search_box.text())
         return True
@@ -165,7 +170,10 @@ class NewEditorTab(QWidget, Generic[T]):
             QMessageBox.warning(self, 'Warning', 'ID %s not found' % old_nid)
             return False
         self._on_nid_changed(old_nid, new_nid)
-        self.data.change_key(old_nid, new_nid)
+        if isinstance(self.data, ManifestCatalog):
+            self.data.update_nid(self.data.get(old_nid), new_nid)
+        else:
+            self.data.change_key(old_nid, new_nid)
         self.tree_list.on_filter_changed(self.tree_list.search_box.text())
         self.tree_list.select_item(new_nid)
         return True

@@ -1,0 +1,463 @@
+[
+    {
+        "nid": "1",
+        "name": "Chapter 1",
+        "tilemap": "Test",
+        "bg_tilemap": null,
+        "party": "Eirika",
+        "music": {
+            "player_phase": null,
+            "enemy_phase": null,
+            "other_phase": null,
+            "enemy2_phase": null,
+            "player_battle": null,
+            "enemy_battle": null,
+            "other_battle": null,
+            "enemy2_battle": null,
+            "boss_battle": null
+        },
+        "objective": {
+            "simple": "",
+            "win": "",
+            "loss": ""
+        },
+        "roam": false,
+        "roam_unit": "Eirika",
+        "go_to_overworld": false,
+        "should_record": true,
+        "tags": [],
+        "units": [
+            {
+                "nid": "Eirika",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    4,
+                    35
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "Seth",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    8,
+                    5
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "O'Neill",
+                "team": "enemy",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": null,
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "101",
+                "variant": null,
+                "level": 1,
+                "klass": "Thief",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Killing Edge",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    8,
+                    3
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "Tethys",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": null,
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "Artur",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    7,
+                    2
+                ],
+                "starting_traveler": "Tethys",
+                "generic": false
+            },
+            {
+                "nid": "Breguet",
+                "team": "enemy",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    6,
+                    5
+                ],
+                "starting_traveler": "O'Neill",
+                "generic": false
+            },
+            {
+                "nid": "Franz",
+                "team": "other",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    4,
+                    2
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "102",
+                "variant": null,
+                "level": 10,
+                "klass": "Myrmidon",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [
+                    "ArmorDefense"
+                ],
+                "team": "enemy",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    3,
+                    4
+                ],
+                "starting_traveler": null,
+                "generic": true
+            }
+        ],
+        "regions": [
+            {
+                "nid": "Village",
+                "region_type": "event",
+                "position": [
+                    31,
+                    5
+                ],
+                "size": [
+                    1,
+                    1
+                ],
+                "sub_nid": "Destructible",
+                "condition": "True",
+                "time_left": null,
+                "only_once": true,
+                "interrupt_move": false
+            },
+            {
+                "nid": "Test",
+                "region_type": "event",
+                "position": [
+                    9,
+                    1
+                ],
+                "size": [
+                    5,
+                    3
+                ],
+                "sub_nid": "Visit",
+                "condition": "True",
+                "time_left": null,
+                "only_once": false,
+                "interrupt_move": false
+            }
+        ],
+        "unit_groups": [],
+        "ai_groups": []
+    },
+    {
+        "nid": "0",
+        "name": "Prologueee",
+        "tilemap": "Prologue",
+        "bg_tilemap": null,
+        "party": "Eirika",
+        "music": {
+            "player_phase": "Distant Roads",
+            "enemy_phase": null,
+            "other_phase": null,
+            "enemy2_phase": null,
+            "player_battle": null,
+            "enemy_battle": null,
+            "other_battle": null,
+            "enemy2_battle": null
+        },
+        "objective": {
+            "simple": "Defeat boss",
+            "win": "Defeat boss",
+            "loss": "Eirika dies"
+        },
+        "roam": false,
+        "roam_unit": "Eirika",
+        "go_to_overworld": false,
+        "should_record": true,
+        "tags": [],
+        "units": [
+            {
+                "nid": "Eirika",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    4,
+                    5
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "Seth",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    4,
+                    4
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "101",
+                "variant": null,
+                "level": 1,
+                "klass": "Fighter",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Axe",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "enemy",
+                "ai": "Attack",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    9,
+                    6
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "102",
+                "variant": null,
+                "level": 2,
+                "klass": "Fighter",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Axe",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "enemy",
+                "ai": "Attack",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    8,
+                    6
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "O'Neill",
+                "team": "enemy",
+                "ai": "Guard",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    10,
+                    8
+                ],
+                "starting_traveler": null,
+                "generic": false
+            }
+        ],
+        "regions": [
+            {
+                "nid": "New Region",
+                "region_type": "normal",
+                "position": null,
+                "size": [
+                    1,
+                    1
+                ],
+                "sub_nid": "",
+                "condition": "True",
+                "time_left": null,
+                "only_once": false,
+                "interrupt_move": false
+            }
+        ],
+        "unit_groups": [
+            {
+                "nid": "Enemy1",
+                "units": [
+                    "101",
+                    "102"
+                ],
+                "positions": {
+                    "101": [
+                        14,
+                        7
+                    ],
+                    "102": [
+                        14,
+                        8
+                    ]
+                }
+            }
+        ],
+        "ai_groups": []
+    },
+    {
+        "nid": "1_1",
+        "name": "Chapter 1",
+        "tilemap": "Test",
+        "bg_tilemap": null,
+        "party": "Eirika",
+        "music": {
+            "player_phase": null,
+            "enemy_phase": null,
+            "other_phase": null,
+            "enemy2_phase": null,
+            "player_battle": null,
+            "enemy_battle": null,
+            "other_battle": null,
+            "enemy2_battle": null
+        },
+        "objective": {
+            "simple": "",
+            "win": "",
+            "loss": ""
+        },
+        "roam": false,
+        "roam_unit": "Eirika",
+        "go_to_overworld": false,
+        "should_record": true,
+        "tags": [],
+        "units": [
+            {
+                "nid": "Eirika",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    0,
+                    0
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "Seth",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    1,
+                    0
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "O'Neill",
+                "team": "enemy",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    6,
+                    5
+                ],
+                "starting_traveler": null,
+                "generic": false
+            }
+        ],
+        "regions": [
+            {
+                "nid": "Village",
+                "region_type": "event",
+                "position": [
+                    31,
+                    5
+                ],
+                "size": [
+                    1,
+                    1
+                ],
+                "sub_nid": "Destructible",
+                "condition": "True",
+                "time_left": null,
+                "only_once": true,
+                "interrupt_move": false
+            },
+            {
+                "nid": "Form1",
+                "region_type": "formation",
+                "position": [
+                    0,
+                    1
+                ],
+                "size": [
+                    2,
+                    3
+                ],
+                "sub_nid": "",
+                "condition": "True",
+                "time_left": null,
+                "only_once": false,
+                "interrupt_move": false
+            }
+        ],
+        "unit_groups": [],
+        "ai_groups": []
+    }
+]

@@ -1,0 +1,19 @@
+[
+    {
+        "nid": "FireEmblem",
+        "dtype": "list",
+        "svalue": "",
+        "kvvalue": [],
+        "oattrs": [
+            "nid"
+        ],
+        "lovalue": [
+            {
+                "nid": "Key"
+            },
+            {
+                "nid": "Key_1"
+            }
+        ]
+    }
+]

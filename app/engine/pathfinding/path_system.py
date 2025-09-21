@@ -40,7 +40,7 @@ class PathSystem():
         grid: BoundedGrid[Node] = self.game.board.get_movement_grid(mtype)
         start_pos = unit.position
         pathfinder = pathfinding.Djikstra(start_pos, grid)
-        movement_left = equations.parser.movement(unit) if force else unit.movement_left
+        movement_left = unit.get_movement() if force else unit.movement_left
 
         if skill_system.pass_through(unit):
             can_move_through = lambda adj: True
@@ -70,7 +70,7 @@ class PathSystem():
         grid: BoundedGrid[Node] = self.game.board.get_movement_grid(mtype)
         start_pos = unit.position
         pathfinder = pathfinding.Djikstra(start_pos, grid)
-        movement_left = equations.parser.movement(unit) + equations.parser.get_xcom_movement(unit)
+        movement_left = unit.get_movement() + unit.get_xcom_movement()
 
         if skill_system.pass_through(unit):
             can_move_through = lambda adj: True
@@ -131,7 +131,7 @@ class PathSystem():
         if unit.has_traded:
             movement = unit.movement_left
         else:
-            movement = unit.movement_left + equations.parser.get_xcom_movement(unit)
+            movement = unit.movement_left + unit.get_xcom_movement()
         prev_pos = None
         for pos in path[:-1]:  # Don't need to count the starting position
             if prev_pos and pos not in self.game.target_system.get_adjacent_positions(prev_pos):

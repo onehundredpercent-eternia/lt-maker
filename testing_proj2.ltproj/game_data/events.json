@@ -1,0 +1,87 @@
+[
+    {
+        "name": "Switch",
+        "trigger": "Switch",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [],
+        "only_once": false,
+        "priority": 20,
+        "_source": [
+            "alert;Switch Pulled!",
+            "has_attacked;{unit}"
+        ]
+    },
+    {
+        "name": "OnStartup",
+        "trigger": "on_startup",
+        "level_nid": null,
+        "condition": "True",
+        "commands": [],
+        "only_once": false,
+        "priority": 20,
+        "_source": [
+            "enable_turnwheel;t",
+            "add_market_item;Steel Sword",
+            "game_var;_convoy;True",
+            "update_achievement;Wow;Wow;very long description.txt so long it needs narrow font.",
+            ""
+        ]
+    },
+    {
+        "name": "Talk",
+        "trigger": "on_talk",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [],
+        "only_once": false,
+        "priority": 20,
+        "_source": [
+            "u;Eirika;Left;low_priority",
+            "s;Eirika;Talk",
+            "r;Eirika",
+            ""
+        ]
+    },
+    {
+        "name": "wow",
+        "trigger": "level_start",
+        "level_nid": "1_1",
+        "condition": "True",
+        "commands": [],
+        "only_once": false,
+        "priority": 20,
+        "_source": [
+            "prep;t",
+            ""
+        ]
+    },
+    {
+        "name": "give_item",
+        "trigger": "Visit",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [],
+        "only_once": false,
+        "priority": 20,
+        "_source": [
+            "give_item;Eirika;Steel Blade",
+            "has_traded;{unit}",
+            ""
+        ]
+    },
+    {
+        "name": "Convoy Test",
+        "trigger": "level_start",
+        "level_nid": "1",
+        "condition": "True",
+        "commands": [],
+        "only_once": false,
+        "priority": 20,
+        "_source": [
+            "level_var;SherrahWeapon;'A Rusty Dagger'",
+            "s;;Desperately Clutching {v:SherrahWeapon} as they rifle;center;NumLines=3;DialogBox=menu_bg_parchment;NumLines=3",
+            ""
+        ]
+    }
+]

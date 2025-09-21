@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import json
 import random
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
@@ -46,7 +47,6 @@ from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment,
 from app.utilities.type_checking import is_primitive_or_primitive_collection
 from app.utilities.typing import NID, Point
 from app.engine.source_type import SourceType
-from app.engine import fancy_dialog
 
 if TYPE_CHECKING:
     from app.events.event import Event
@@ -65,14 +65,6 @@ def wait(self: Event, time: int, flags=None):
 def end_skip(self: Event, flags=None):
     if not self.super_skip:
         self.do_skip = False
-
-def dialog_start(self: Event, flags=None):
-    self.dialog_background.start()
-
-def dialog_end(self: Event, flags=None):
-    self.dialog_background.end()
-    if self.text_boxes:
-        self.text_boxes[-1].end()
 
 def music(self: Event, music: SongPrefab | SongObject | NID, fade_in=400, flags=None):
     music_nid = self._resolve_nid(music)
@@ -334,8 +326,8 @@ def say(self: Event, speaker_or_style: str, text: List[str], text_position: Poin
     speak(self, speaker_or_style, joined_text, text_position, width, style_nid, text_speed, font_color, font_type, dialog_box, num_lines, draw_cursor,
           message_tail, transparency, name_tag_bg, boop_sound, flags)
 
-def speak(self: Event, speaker_or_style: str, text, text_position: Point | Alignments = None, width=None, style_nid=None, text_speed=None,
-          font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor: bool = None,
+def speak(self: Event, speaker_or_style: str, text, text_position: Point | Alignments=None, width=None, style_nid=None, text_speed=None,
+          font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor: bool=None,
           message_tail=None, transparency=None, name_tag_bg=None, boop_sound=None, flags=None):
     flags = flags or set()
     text = dialog.process_dialog_shorthand(text)
@@ -397,6 +389,7 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
                           name_tag_bg=style.name_tag_bg, boop_sound=style.boop_sound, flags=flags)
         if portrait and 'autogray' in flags:
             self._saturate_portrait(portrait)
+
         self.text_boxes.append(new_dialog)
 
         if self.do_skip:
@@ -425,7 +418,7 @@ def unpause(self: Event, nid=None, flags=None):
         # Just unpause the most recent text box
         box = self.text_boxes[-1]
         box.command_unpause()
-    
+
     else:
         for box in reversed(self.text_boxes):
             if box.speaker == nid:
@@ -612,6 +605,36 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
     else:
         action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + 1))
 
+def modify_game_var(self: Event, nid: NID, expression: str, flags:Optional[set[str]]=None):
+    """Does not work in #pyev1."""
+    flags = flags or set()
+    if nid not in self.game.game_vars:
+        self.logger.error(f"modify_game_var: {nid} does not exist as a game_var!")
+        return
+    
+    # Refer to the copy as `it` and (assume) the expression mutates the copy.
+    new_val = deepcopy(self.game.game_vars[nid])
+    self.it = new_val
+    self.text_evaluator.it = new_val
+    try:
+        maybe_result = self._eval_expr(expression, 'from_python' in flags)
+        if maybe_result is not None:
+            self.logger.warning(f"modify_game_var: {expression} has a return value of {maybe_result}: this value will be discarded. Perhaps you meant to use the `game_var` command instead?")
+    except:
+        self.logger.error(f"modify_game_var: cannot evaluate {expression}!")
+        self.it = None
+        self.text_evaluator.it = None
+        return
+    
+    if is_primitive_or_primitive_collection(new_val):
+        action.do(action.SetGameVar(nid, new_val))
+    else:
+        # If the new_val is invalid, simply do nothing - no turnwheel breakage!
+        self.logger.error(f"modify_game_var: {new_val} is not a valid variable!")
+    
+    self.it = None
+    self.text_evaluator.it = None
+    
 def level_var(self: Event, nid, expression, flags=None):
     val = self._eval_expr(expression, 'from_python' in flags)
     if is_primitive_or_primitive_collection(val):
@@ -629,6 +652,36 @@ def inc_level_var(self: Event, nid, expression=None, flags=None):
     else:
         action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + 1))
 
+def modify_level_var(self: Event, nid: NID, expression: str, flags:Optional[set[str]]=None):
+    """Does not work in #pyev1."""
+    flags = flags or set()
+    if nid not in self.game.level_vars:
+        self.logger.error(f"modify_level_var: {nid} does not exist as a level_var!")
+        return
+    
+    # Refer to the copy as `it` and (assume) the expression mutates the copy.
+    new_val = deepcopy(self.game.level_vars[nid])
+    self.it = new_val
+    self.text_evaluator.it = new_val
+    try:
+        maybe_result = self._eval_expr(expression, 'from_python' in flags)
+        if maybe_result is not None:
+            self.logger.warning(f"modify_level_var: {expression} has a return value of {maybe_result}: this value will be discarded. Perhaps you meant to use the `level_var` command instead?")
+    except:
+        self.logger.error(f"modify_level_var: cannot evaluate {expression}!")
+        self.it = None
+        self.text_evaluator.it = None
+        return
+    
+    if is_primitive_or_primitive_collection(new_val):
+        action.do(action.SetLevelVar(nid, new_val))
+    else:
+        # If the new_val is invalid, simply do nothing - no turnwheel breakage!
+        self.logger.error(f"modify_level_var: {new_val} is not a valid variable!")
+        
+    self.it = None
+    self.text_evaluator.it = None
+
 def set_next_chapter(self: Event, chapter, flags=None):
     if chapter not in DB.levels:
         self.logger.error("set_next_chapter: %s is not a valid chapter nid" % chapter)
@@ -637,7 +690,7 @@ def set_next_chapter(self: Event, chapter, flags=None):
 
 def enable_convoy(self: Event, activated: bool, flags=None):
     action.do(action.SetGameVar("_convoy", activated))
-    
+
 def enable_repair_shop(self: Event, activated: bool, flags=None):
     action.do(action.SetGameVar("_repair_shop", activated))
 
@@ -704,7 +757,7 @@ def activate_turnwheel(self: Event, force: bool = True, flags=None):
 def battle_save(self: Event, save_name: Optional[str] = None, flags=None):
     flags = flags or set()
     if save_name:
-        self.game.memory['save_name'] = save_name
+        self.game.game_vars['_save_name'] = save_name
     if 'immediately' in flags:
         self.state = 'paused'
         self.game.memory['save_kind'] = 'battle'
@@ -753,7 +806,7 @@ def change_tilemap(self: Event, tilemap, position_offset=None, load_tilemap=None
     reload_map = 'reload' in flags
     # For Overworld
     # just go back to the level
-    if reload_map and self.game.is_displaying_overworld():  
+    if reload_map and self.game.is_displaying_overworld():
         from app.engine import level_cursor, map_view
         from app.engine.movement import movement_system
         self.game.cursor = level_cursor.LevelCursor(self.game)
@@ -934,7 +987,7 @@ def create_unit(self: Event, unit, nid=None, level: Optional[int] = None, positi
 
     if 'copy_stats' in flags:
         new_unit.stats = unit.stats.copy()
-        
+
     new_unit.party = self.game.current_party
     # self.game.full_register(new_unit)
     action.do(action.RegisterUnit(new_unit))
@@ -1486,6 +1539,7 @@ def give_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
                 action.do(action.GiveItem(unit, item))
                 self.game.memory['item_discard_current_unit'] = unit
                 self.game.memory['item_discard_new_item'] = item
+                self.game.memory['item_discard_force_give'] = True if 'force_give' in flags else False
                 self.game.state.change('item_discard')
                 self.state = 'paused'
                 if banner_flag:
@@ -1707,43 +1761,6 @@ def break_item(self: Event, global_unit_or_convoy, item, flags=None):
         self.game.state.change('alert')
         self.state = 'paused'
 
-def give_grave_item(self: Event, global_unit, item, flags=None):
-    unit = self._get_unit(global_unit)
-    if not unit:
-        self.logger.error("give_grave_item: Could not find unit %s", global_unit)
-        return
-
-    # Get grave item
-    items = [item for item in unit.items if item.nid.startswith('Grave') or item.memento_remove_on_end_chapter]
-    if not items:
-        self.logger.error("give_grave_item: Major error, unit %s does not have any grave items", global_unit)
-    grave_item = items[0]
-
-    # Create new item to give
-    if not item or item == 'None':
-        # If item is None, instead get given a random valid weapon
-        from app.engine import rogue_emblem
-        item = rogue_emblem.get_random_grave('Weapon+', unit)
-    item_id = item
-    if item_id in DB.items.keys():
-        new_item = item_funcs.create_item(None, item_id)
-        self.game.register_item(new_item)
-    elif str_utils.is_int(item_id) and int(item_id) in self.game.item_registry:
-        new_item = self.game.item_registry[int(item_id)]
-    else:
-        self.logger.error("give_grave_item: Couldn't find item with nid %s" % item_id)
-        return
-
-    action.do(action.RemoveItem(unit, grave_item))
-    action.do(action.GiveItem(unit, new_item))
-    action.do(action.SetObjData(new_item, 'replace', grave_item.uid))
-    action.do(action.AddItemComponent(new_item, 'locked', None))
-    action.do(action.AddItemComponent(new_item, 'memento_remove_on_end_chapter', None))
-
-    self.game.alerts.append(banner.AcquiredItem(unit, new_item))
-    self.game.state.change('alert')
-    self.state = 'paused'
-
 def change_item_name(self: Event, global_unit_or_convoy, item, string, flags=None):
     unit, item = self._get_item_in_inventory(global_unit_or_convoy, item)
     if not unit or not item:
@@ -1782,17 +1799,17 @@ def add_item_to_multiitem(self: Event, global_unit_or_convoy, multi_item, child_
     else:
         # Otherwise create the item from a prefab
         subitem_prefab = DB.items.get(child_item)
-    if not subitem_prefab:
-        self.logger.error("add_item_to_multiitem: Couldn't find item with nid %s" % child_item)
-        return
-    if 'no_duplicate' in flags:
-        children = {item.nid for item in item.subitems}
-        if child_item in children:
-            self.logger.info("add_item_to_multiitem: Item %s already exists on multi-item %s on unit %s" % (child_item, item.nid, unit.nid))
+        if not subitem_prefab:
+            self.logger.error("add_item_to_multiitem: Couldn't find item with nid %s" % child_item)
             return
-    # Create subitem
-    subitem = item_funcs.create_item(unit, subitem_prefab.nid, assign_ownership=False)
-    self.game.register_item(subitem)
+        if 'no_duplicate' in flags:
+            children = {item.nid for item in item.subitems}
+            if child_item in children:
+                self.logger.info("add_item_to_multiitem: Item %s already exists on multi-item %s on unit %s" % (child_item, item.nid, unit.nid))
+                return
+        # Create subitem
+        subitem = item_funcs.create_item(unit, subitem_prefab.nid, assign_ownership=False)
+        self.game.register_item(subitem)
 
     action.do(action.AddItemToMultiItem(owner_nid, item, subitem))
     if 'equip' in flags and owner_nid:
@@ -1949,30 +1966,12 @@ def give_money(self: Event, money: int, party=None, flags=None):
     action.do(action.UpdateRecords('money', (party_nid, money)))
     if banner_flag:
         if money >= 0:
-            b = banner.Advanced('Got <blue>{money}</> gold.'.format(money=str(money)), 'Item')
+            b = banner.Advanced('Got <blue>{money}</> gold.'.format(money = str(money)), 'Item')
         else:
             b = banner.Advanced('Lost <blue>{money}</> gold.'.format(money = str(money * -1)), 'ItemBreak')
         self.game.alerts.append(b)
         self.game.state.change('alert')
         self.state = 'paused'
-
-def set_light_level(self: Event, light_level: int, party=None, flags=None):
-    flags = flags or set()
-
-    if party:
-        party_nid = party
-    else:
-        party_nid = self.game.current_party
-    action.do(action.SetLightLevel(party_nid, light_level))
-
-def inc_light_level(self: Event, light_level: int, party=None, flags=None):
-    flags = flags or set()
-
-    if party:
-        party_nid = party
-    else:
-        party_nid = self.game.current_party
-    action.do(action.IncLightLevel(party_nid, light_level))
 
 def give_bexp(self: Event, bexp: int, party=None, string=None, flags=None):
     flags = flags or set()
@@ -2388,7 +2387,7 @@ def promote(self: Event, global_unit, klass_list: Optional[List[NID]] = None, fl
     elif silent and new_klass:
         swap_class = action.Promote(unit, new_klass)
         action.do(swap_class)
-        # check for new class skill
+        #check for new class skill
         unit_klass = DB.classes.get(unit.klass)
         for level_needed, class_skill_nid in unit_klass.learned_skills:
             if unit.level == level_needed:
@@ -2417,7 +2416,7 @@ def promote(self: Event, global_unit, klass_list: Optional[List[NID]] = None, fl
         self.game.state.change('transition_out')
         self.state = 'paused'
 
-def change_class(self: Event, global_unit, klass_list: Optional[List[NID]] = None, flags=None):
+def change_class(self: Event, global_unit, klass_list: Optional[List[NID]]=None, flags=None):
     flags = flags or set()
 
     unit = self._get_unit(global_unit)
@@ -2842,7 +2841,7 @@ def merge_parties(self: Event, party1, party2, flags=None):
         if unit.party == guest:
             action.do(action.ChangeParty(unit, host))
     # Merge items
-    for item in guest_party.convoy:
+    for item in guest_party.convoy[:]:
         action.do(action.RemoveItemFromConvoy(item, guest))
         action.do(action.PutItemInConvoy(item, host))
     # Merge money
@@ -2878,7 +2877,8 @@ def arrange_formation(self: Event, flags=None):
             action.execute(action.Reset(unit))
 
 def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | SongObject | NID = None, other_options: List[str] = None,
-         other_options_enabled: List[Optional[bool]] = None, other_options_on_select: List[Optional[bool]] = None, flags=None):
+         other_options_enabled: List[Optional[bool]] = None, other_options_on_select: List[Optional[str]] = None, 
+         other_options_description: List[Optional[str]] = None, flags=None):
     action.do(action.SetLevelVar('_prep_pick', pick_units_enabled))
     music_nid = self._resolve_nid(music)
     if music_nid:
@@ -2888,9 +2888,10 @@ def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | Song
         options_list = other_options or []
         options_enabled = other_options_enabled or []
         options_events = other_options_on_select or []
+        options_descs = other_options_description or []
 
         if len(options_enabled) <= len(options_list):
-            options_enabled += [False] * (len(options_list) - len(options_events))
+            options_enabled += [False] * (len(options_list) - len(options_enabled))
             action.do(action.SetGameVar('_prep_options_enabled', options_enabled))
         else:
             self.logger.error("prep: too many bools in option enabled list: ", other_options_enabled)
@@ -2903,12 +2904,25 @@ def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | Song
             self.logger.error("prep: too many events in option event list: ", other_options_on_select)
             return
         action.do(action.SetGameVar('_prep_additional_options', options_list))
+
+        if len(options_descs) <= len(options_list):
+            options_descs += [''] * (len(options_list) - len(options_descs))
+            action.do(action.SetGameVar('_prep_options_info_descs', options_descs))
+        else:
+            self.logger.error("prep: too many strs in option description list: ", other_options_description)
+            return
     else:
         action.do(action.SetGameVar('_prep_options_enabled', []))
         action.do(action.SetGameVar('_prep_options_events', []))
+        action.do(action.SetGameVar('_prep_options_info_descs', []))
         action.do(action.SetGameVar('_prep_additional_options', []))
 
-    self.game.state.change('prep_main')
+    if 'gba' in flags:
+        self.game.state.change('prep_gba_main')
+        self.game.game_vars['_prep_gba_disp'] = ['' if 'no_obj_disp' in flags else self.game.level.objective['simple'],
+                                                 '' if 'no_chap_disp' in flags else self.game.level.name]
+    else:
+        self.game.state.change('prep_main')
     self.state = 'paused'  # So that the message will leave the update loop
 
 def base(self: Event, background: str, music: SongPrefab | SongObject | NID = None, other_options: List[str] = None,
@@ -3171,9 +3185,9 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
             self.logger.error('textbox: %s is not a valid python expression' % text)
         textbox = dialog.DynamicDialogWrapper(
             expr, background=box_bg, position=position, width=box_width,
-                      style_nid=style_nid, speed=speed,
-                      font_color=fcolor, font_type=ftype, num_lines=lines,
-                      draw_cursor=False, transparency=transparency)
+            style_nid=style_nid, speed=speed,
+            font_color=fcolor, font_type=ftype, num_lines=lines,
+            draw_cursor=False, transparency=transparency)
     elif callable(text):
         textbox = dialog.DynamicDialogWrapper(
             text, background=box_bg, position=position, width=box_width,
@@ -3187,9 +3201,9 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
         text = text.replace('{w}', '').replace('|', '{br}')
         textbox = \
             dialog.Dialog(text, background=box_bg, position=position, width=box_width,
-                        style_nid=style_nid, speed=speed,
-                        font_color=fcolor, font_type=ftype, num_lines=lines,
-                        draw_cursor=False, transparency=transparency)
+                          style_nid=style_nid, speed=speed,
+                          font_color=fcolor, font_type=ftype, num_lines=lines,
+                          draw_cursor=False, transparency=transparency)
     self.other_boxes.append((nid, textbox))
 
 def table(self: Event, nid: NID, table_data: str, title: str = None,
@@ -3217,11 +3231,13 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
-def text_entry(self: Event, nid: NID, string: str, positive_integer: int = 16, illegal_character_list: Optional[List[str]] = None, default_string: Optional[str] = None, flags: Optional[set[str]] = None):
+def text_entry(self: Event, nid: NID, string: str, character_limit: int = 16, 
+               illegal_character_list: Optional[List[str]] = None, default_string: Optional[str] = None, 
+               minimum_character_limit: int = 0, flags: Optional[set[str]] = None):
     flags = flags or set()
+    illegal_character_list = illegal_character_list or list()
 
     header = string
-    limit = positive_integer
     force_entry = 'force_entry' in flags
     
     # Check if the dev is violating their own established ruleset lmao
@@ -3229,15 +3245,15 @@ def text_entry(self: Event, nid: NID, string: str, positive_integer: int = 16, i
         all_illegal_characters = set().union(*[
             CharacterSet[name.upper()].charset for name in illegal_character_list
         ])
-        if (len(default_string) > limit or any(c in all_illegal_characters for c in default_string)):                
+        if (character_limit < len(default_string) < minimum_character_limit or any(c in all_illegal_characters for c in default_string)):                
             self.logger.error(f"text_entry: default_string {default_string} violates established restrictions!")
             default_string = None
 
-    self.game.memory['text_entry'] = (nid, header, limit, illegal_character_list or [], force_entry, default_string)
+    self.game.memory['text_entry'] = (nid, header, character_limit, illegal_character_list or [], force_entry, default_string, minimum_character_limit)
     self.game.state.change('text_entry')
     self.state = 'paused'
 
-def chapter_title(self: Event, music: SongPrefab | SongObject | NID = None, string=None, flags=None):
+def chapter_title(self: Event, music: SongPrefab | SongObject | NID=None, string=None, flags=None):
     custom_string = string
     self.game.memory['chapter_title_music'] = self._resolve_nid(music)
     self.game.memory['chapter_title_title'] = custom_string
@@ -3795,6 +3811,7 @@ def update_achievement(self: Event, achievement: str, name: str, description:str
 def complete_achievement(self: Event, achievement: str, completed: bool, flags=None):
     flags = flags or set()
     nid = achievement
+
     banner = 'banner' in flags
 
     complete = ACHIEVEMENTS.complete_achievement(nid, completed, banner)
@@ -3846,7 +3863,7 @@ def complete_achievement(self: Event, achievement: str, completed: bool, flags=N
             self.state = 'waiting'
             remove_overlay_sprite_command = event_commands.RemoveOverlaySprite({'Nid': anim_nid}, flags={'foreground'})
             self.command_queue.append(remove_overlay_sprite_command)
-    
+
 def clear_achievements(self: Event, flags=None):
     ACHIEVEMENTS.clear_achievements()
 
@@ -3907,6 +3924,17 @@ def party_transfer(self: Event, party1, party2, fixed_units = None, party1_name 
     self.game.memory['party_transfer'] = (top_party, bottom_party, fixed_list, top_party_name, bottom_party_name, top_party_limit, bottom_party_limit)
     self.game.state.change('party_transfer')
     self.state = 'paused'
+
+def change_team_palette(self: Event, team, map_sprite_palette = None, combat_variant_palette = None, combat_color = None, flags=None):
+    if not self.game.teams.get(team):
+        self.logger.error("change_team_palette: %s is not a valid team nid" % team)
+        return
+
+    if map_sprite_palette and not RESOURCES.combat_palettes.get(map_sprite_palette):
+        self.logger.error("change_team_palette: %s is not a valid combat palette nid" % map_sprite_palette)
+        return
+
+    action.do(action.ChangeTeamPalette(team, (map_sprite_palette, combat_variant_palette, combat_color)))
 
 def dump_vars(self: Event, flags:Optional[set[str]]=None):
     def is_json_serializable(obj: Any) -> bool:
@@ -3973,7 +4001,6 @@ def dump_vars(self: Event, flags:Optional[set[str]]=None):
     try:
         app_data_fman = file_manager_utils.get_app_data_fman()
 
-        from copy import deepcopy
         local_level_vars = deepcopy(self.game.level_vars)
         local_game_vars = deepcopy(self.game.game_vars)
 
@@ -3985,4 +4012,3 @@ def dump_vars(self: Event, flags:Optional[set[str]]=None):
         file_utils.startfile(app_data_fman.get_path('_vars.json'))
     except:
         self.logger.error("dump_vars: Could not dump vars", exc_info=1)
-

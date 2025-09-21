@@ -1,0 +1,334 @@
+[
+    {
+        "nid": "1",
+        "name": "Chapter 1",
+        "tilemap": "Test",
+        "bg_tilemap": null,
+        "party": "Eirika",
+        "music": {
+            "player_phase": null,
+            "enemy_phase": null,
+            "other_phase": null,
+            "enemy2_phase": null,
+            "player_battle": null,
+            "enemy_battle": null,
+            "other_battle": null,
+            "enemy2_battle": null
+        },
+        "objective": {
+            "simple": "",
+            "win": "",
+            "loss": ""
+        },
+        "roam": true,
+        "roam_unit": "Eirika",
+        "go_to_overworld": false,
+        "should_record": true,
+        "units": [
+            {
+                "nid": "Eirika",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    3,
+                    3
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "Seth",
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": null,
+                "starting_position": [
+                    6,
+                    1
+                ],
+                "starting_traveler": null,
+                "generic": false
+            },
+            {
+                "nid": "107",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "enemy2",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    7,
+                    7
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "109",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "enemy2",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    10,
+                    4
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "110",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "enemy",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    16,
+                    9
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "111",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "enemy",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    14,
+                    9
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "112",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    4,
+                    8
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "113",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    12,
+                    5
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "114",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    3,
+                    10
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "115",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    5,
+                    5
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "116",
+                "variant": null,
+                "level": 1,
+                "klass": "Revenant",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    11,
+                    9
+                ],
+                "starting_traveler": null,
+                "generic": true
+            },
+            {
+                "nid": "108",
+                "variant": null,
+                "level": 1,
+                "klass": "Cavalier",
+                "faction": "Soldier",
+                "starting_items": [
+                    [
+                        "Iron Sword",
+                        false
+                    ]
+                ],
+                "starting_skills": [],
+                "team": "player",
+                "ai": "None",
+                "roam_ai": null,
+                "ai_group": "",
+                "starting_position": [
+                    9,
+                    11
+                ],
+                "starting_traveler": null,
+                "generic": true
+            }
+        ],
+        "regions": [
+            {
+                "nid": "Village",
+                "region_type": "event",
+                "position": [
+                    31,
+                    5
+                ],
+                "size": [
+                    1,
+                    1
+                ],
+                "sub_nid": "Destructible",
+                "condition": "True",
+                "time_left": null,
+                "only_once": true,
+                "interrupt_move": false
+            },
+            {
+                "nid": "Switch",
+                "region_type": "event",
+                "position": [
+                    2,
+                    0
+                ],
+                "size": [
+                    7,
+                    5
+                ],
+                "sub_nid": "Switch",
+                "condition": "True",
+                "time_left": null,
+                "only_once": true,
+                "interrupt_move": false
+            }
+        ],
+        "unit_groups": [],
+        "ai_groups": []
+    }
+]

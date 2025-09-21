@@ -534,14 +534,21 @@ class SetGameVar(Action):
     def __init__(self, nid, val):
         self.nid = nid
         self.val = val
-        self.old_val = game.game_vars[self.nid]
+        if self.nid in game.game_vars:
+            self.old_val = game.game_vars[self.nid]
+            self.already_exists = True
+        else:
+            self.old_val = None
+            self.already_exists = False
 
     def do(self):
         game.game_vars[self.nid] = self.val
 
     def reverse(self):
-        game.game_vars[self.nid] = self.old_val
-
+        if self.already_exists:
+            game.game_vars[self.nid] = self.old_val
+        else:
+            game.game_vars.pop(self.nid, None)
 
 class SetLevelVar(Action):
     fog_nids = ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius', '_other_fog_of_war_radius', '_fog_of_war_type')
@@ -549,7 +556,12 @@ class SetLevelVar(Action):
     def __init__(self, nid, val):
         self.nid = nid
         self.val = val
-        self.old_val = game.level_vars[self.nid]
+        if self.nid in game.level_vars:
+            self.old_val = game.level_vars[self.nid]
+            self.already_exists = True
+        else:
+            self.old_val = None
+            self.already_exists = False
 
     def _update_fog_of_war(self):
         if self.nid in self.fog_nids:
@@ -563,7 +575,10 @@ class SetLevelVar(Action):
         self._update_fog_of_war()
 
     def reverse(self):
-        game.level_vars[self.nid] = self.old_val
+        if self.already_exists:
+            game.level_vars[self.nid] = self.old_val
+        else:
+            game.level_vars.pop(self.nid, None)
         self._update_fog_of_war()
 
 class SetMovementLeft(Action):
@@ -655,6 +670,17 @@ class ResetUnitVars(Action):
         self.unit.set_hp(self.old_current_hp)
         self.unit.set_mana(self.old_current_mana)
 
+class SetPosition(Action):
+    def __init__(self, unit: UnitObject, pos: Pos):
+        self.unit = unit
+        self.pos = pos
+        self.old_pos = self.unit.position
+
+    def do(self):
+        self.unit.position = self.pos
+
+    def reverse(self):
+        self.unit.position = self.old_pos
 
 class SetPreviousPosition(Action):
     def __init__(self, unit):
@@ -686,7 +712,7 @@ class Reset(Action):
 
     def do(self):
         self.unit.reset()
-        self.unit.movement_left = equations.parser.movement(self.unit)
+        self.unit.movement_left = self.unit.get_movement()
 
     def reverse(self):
         self.unit.set_action_state(self.action_state)
@@ -2698,7 +2724,7 @@ class ChangeAIGroup(Action):
     def __init__(self, unit, ai_group):
         self.unit = unit
         self.ai_group = ai_group
-        self.old_ai = self.unit.ai_group
+        self.old_ai_group = self.unit.ai_group
 
     def do(self):
         self.unit.ai_group = self.ai_group
@@ -3709,6 +3735,40 @@ class RemoveSkill(Action):
 
             skill_system.after_add(self.unit, skill)
         self.reset_action.reverse()
+
+class ChangeTeamPalette(Action):
+    def __init__(self, team, palettes):
+        self.team = team
+        self.new_palettes = palettes
+
+        team_obj = game.teams.get(team)
+        self.old_palettes = (team_obj.map_sprite_palette, 
+                             team_obj.combat_variant_palette, 
+                             team_obj.combat_color)
+
+    def do(self):
+        team_obj = game.teams.get(self.team)
+        team_obj.change_palettes(*self.new_palettes)
+
+        # Update map sprites
+        for key in game.map_sprite_registry.keys():
+            if key.split('_')[-1] == self.team:
+                game.map_sprite_registry[key] = None
+
+        for unit in game.get_team_units(self.team):
+            unit.sprite.load_sprites()
+
+    def reverse(self):
+        team_obj = game.teams.get(self.team)
+        team_obj.change_palettes(*self.old_palettes)
+
+        # Update map sprites
+        for key in game.map_sprite_registry.keys():
+            if key.split('_')[-1] == self.team:
+                game.map_sprite_registry[key] = None
+
+        for unit in game.get_team_units(self.team):
+            unit.sprite.load_sprites()
 
 
 # === Master Functions for adding to the action log ===

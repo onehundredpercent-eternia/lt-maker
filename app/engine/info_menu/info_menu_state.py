@@ -1,11 +1,12 @@
+
 import logging
 from typing import List, Tuple
 
-from app.constants import WINHEIGHT, WINWIDTH, BEEG_MODE
+from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.resources.resources import RESOURCES
 from app.engine import (background, combat_calcs, engine, equations, gui,
-                        help_menu, icons, image_mods, item_funcs, item_system, 
+                        help_menu, icons, image_mods, item_funcs, item_system,
                         skill_system, text_funcs, unit_funcs)
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.game_menus.icon_options import BasicItemOption, ItemOptionModes
@@ -24,11 +25,10 @@ from app.utilities import utils
 from app.utilities.enums import HAlignment
 from app.engine.fonts import FONT
 
-
 class InfoMenuState(State):
     name = 'info_menu'
     in_level = False
-    show_map = False
+    show_map = False 
 
     left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
     if len(left_stats) >= 7:
@@ -256,11 +256,6 @@ class InfoMenuState(State):
         else:
             return
         self.next_unit = self.scroll_units[new_index]
-
-        if self.state == 'extra' and self.next_unit.generic:
-            self.state = 'combat'
-            self.switch_logo('combat')
-
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.next_unit.notes):
             self.state = 'personal_data'
             self.switch_logo('personal_data')
@@ -275,13 +270,8 @@ class InfoMenuState(State):
             index = self.scroll_units.index(self.unit)
             new_index = (index - 1) % len(self.scroll_units)
         else:
-            return        
+            return
         self.next_unit = self.scroll_units[new_index]
-
-        if self.state == 'extra' and self.next_unit.generic:
-            self.state = 'combat'
-            self.switch_logo('combat')
-
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.next_unit.notes):
             self.state = 'personal_data'
             self.switch_logo('personal_data')
@@ -291,11 +281,6 @@ class InfoMenuState(State):
         get_sound_thread().play_sfx('Status_Character')
         self.rescuer = self.unit
         self.next_unit = game.get_unit(self.unit.traveler)
-
-        if self.state == 'extra' and self.next_unit.generic:
-            self.state = 'combat'
-            self.switch_logo('combat')
-
         if self.state == 'notes' and not (DB.constants.value('unit_notes') and self.next_unit.notes):
             self.state = 'personal_data'
             self.switch_logo('personal_data')
@@ -345,9 +330,9 @@ class InfoMenuState(State):
                 elif self.transition_counter == 4:
                     self.transparency = .75
                     self.scroll_offset_y = 16 if self.transition == 'DOWN' else -16
-                elif self.transition_counter < 8:  # (5, 6, 7, 8):  # Pause for a bit
+                elif self.transition_counter < 8: # (5, 6, 7, 8):  # Pause for a bit
                     self.transparency = 1.
-                    self.scroll_offset_y = WINHEIGHT if self.transition == 'DOWN' else -160
+                    self.scroll_offset_y = 160 if self.transition == 'DOWN' else -160
                 else:
                     self.unit = self.next_unit  # Now transition in
                     self.reset_surfs(keep_last_info_graph_aabb=True)
@@ -358,10 +343,7 @@ class InfoMenuState(State):
             self.transition_counter += 1
             # Transition in
             if self.next_state == self.state:
-                if BEEG_MODE:
-                    idxs = (208, 144, 112, 80, 48, 16)
-                else:
-                    idxs = (104, 72, 56, 40, 24, 8)
+                idxs = (104, 72, 56, 40, 24, 8)
                 counter = self.transition_counter - 1
                 if 0 <= counter < len(idxs):
                     self.scroll_offset_x = idxs[counter] if self.transition == 'RIGHT' else -idxs[counter]
@@ -371,18 +353,12 @@ class InfoMenuState(State):
                     self.next_state = None
                     self.transition_counter = 0
             else:
-                if BEEG_MODE:
-                    idxs = (-64, -112, -160, -192, -224)
-                else:
-                    idxs = (-32, -56, -80, -96, -112)
+                idxs = (-32, -56, -80, -96, -112)
                 counter = self.transition_counter - 1
                 if 0 <= counter < len(idxs):
                     self.scroll_offset_x = idxs[counter] if self.transition == 'RIGHT' else -idxs[counter]
                 else:
-                    if BEEG_MODE:
-                        self.scroll_offset_x = -280 if self.transition == 'RIGHT' else 280
-                    else:
-                        self.scroll_offset_x = -140 if self.transition == 'RIGHT' else 140
+                    self.scroll_offset_x = -140 if self.transition == 'RIGHT' else 140
                     self.state = self.next_state
                     self.info_graph.set_current_state(self.state)
                     self.transition_counter = 0
@@ -490,7 +466,7 @@ class InfoMenuState(State):
         render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (63, 120), HAlignment.RIGHT)
         desc = text_funcs.translate_and_text_evaluate('Exp_desc', unit=self.unit)
         self.info_graph.register((38, 120, 30, 16), desc, 'all')
-
+        
         # Draw HP
         current_hp = str(self.unit.get_hp())
         max_hp = str(self.unit.get_max_hp())
@@ -528,13 +504,10 @@ class InfoMenuState(State):
             self.logo.update()
             self.logo.draw(top_surf)
         # Blit page numbers
-        if 'notes' in info_states:
-            if DB.constants.value('unit_notes') and self.unit.notes:
-                num_states = len(info_states)
-            else:
-                num_states = len(info_states) - 1
-        else:
+        if DB.constants.value('unit_notes') and self.unit.notes:
             num_states = len(info_states)
+        else:
+            num_states = len(info_states) - 1
         page = str(info_states.index(self.state) + 1) + '/' + str(num_states)
         render_text(top_surf, ['small'], [page], [], (235, 12), HAlignment.RIGHT)
 
@@ -588,7 +561,7 @@ class InfoMenuState(State):
         surf.blit(main_surf, (max(96, 96 + self.scroll_offset_x), self.scroll_offset_y))
         if self.transparency:
             top_surf = image_mods.make_translucent(top_surf, self.transparency)
-        surf.blit(top_surf, (0, self.scroll_offset_y))
+        surf.blit(top_surf, (0, self.scroll_offset_y)) 
 
     def draw_stat_surf(self, surf):
         for idx, stat_nid in enumerate(self.left_stats):
@@ -642,10 +615,6 @@ class InfoMenuState(State):
 
         for idx, stat_nid in enumerate(self.right_stats):
             curr_stat = DB.stats.get(stat_nid)
-            if growths:
-                icons.draw_growth(surf, stat_nid, self.unit, (111, 16 * idx + 24))
-            else:
-                icons.draw_stat(surf, stat_nid, self.unit, (111, 16 * idx + 24))
 
             # Name
             name = curr_stat.name
@@ -691,7 +660,7 @@ class InfoMenuState(State):
                     trav = game.get_unit(self.unit.traveler)
                     render_text(surf, ['text'], [trav.name], ['blue'], (96, 16 * true_idx + 24))
                 else:
-                    render_text(surf, ['text'], ['--'], ['blue'], (96, 16 * true_idx + 24))
+                    render_text(surf, ['text'], ['--'], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
                 render_text(surf, ['text'], [text_funcs.translate('Trv')], ['yellow'], (72, 16 * true_idx + 24))
                 desc = text_funcs.translate_and_text_evaluate('Trv_desc', unit=self.unit)
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
@@ -768,7 +737,7 @@ class InfoMenuState(State):
                     icons.draw_growth(surf, 'LEAD', self.unit, (111, 16 * true_idx + 24))
                 else:
                     icons.draw_stat(surf, 'LEAD', self.unit, (111, 16 * true_idx + 24))
-                    lead_surf = engine.subsurface(SPRITES.get('lead_star'), (0, 16, 16, 16))
+                    lead_surf = engine.subsurface(SPRITES.get('lead_star'), (0, 0, 16, 16))
                     surf.blit(lead_surf, (111, 16 * true_idx + 24))
 
         return surf

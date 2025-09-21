@@ -872,6 +872,39 @@ Increments a game variable by one, or by a Python expression provided using the 
     optional_keywords = ["Expression"]
     keyword_types = ["GeneralVar", "Expression"]
 
+class ModifyGameVar(EventCommand):
+    nid = 'modify_game_var'
+    nickname = 'mgvar'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Mutates a game variable in-place, maintaining turnwheel compatibility and allowing scripts like:
+
+```
+game_var;GameVar;["A", "B", "C"]
+...
+game_var;Dummy;v('GameVar').remove("C")
+game_var;GameVar;v('GameVar')
+```
+
+To be written concisely:
+
+```
+game_var;GameVar;["A", "B", "C"]
+...
+modify_game_var;GameVar;it.remove("C")
+```
+
+The *Nid* is the variable's identifier, and the *Expression* mutates the variable in-place.
+You MUST refer to the variable as `it` inside the *Expression*. If the *Expression* does not
+mutate the variable in-place, this command does nothing.
+
+This command does not work in #pyev1.
+        """
+    keywords = ['Nid', 'Expression']
+    keyword_types = ["GeneralVar", "Expression"]
+
 class LevelVar(EventCommand):
     nid = 'level_var'
     nickname = 'lvar'
@@ -900,6 +933,38 @@ Increments a level variable by one, or by a Python expression provided using the
 
     keywords = ["Nid"]
     optional_keywords = ["Expression"]
+    keyword_types = ["GeneralVar", "Expression"]
+
+class ModifyLevelVar(EventCommand):
+    nid = 'modify_level_var'
+    nickname = 'mlvar'
+    tag = Tags.LEVEL_VARS
+
+    desc = \
+        """
+Mutates a level variable in-place, maintaining turnwheel compatibility and allowing scripts like:
+
+```
+level_var;LevelVar;["A", "B", "C"]
+...
+level_var;Dummy;v('LevelVar').remove("C")
+level_var;LevelVar;v('LevelVar')
+```
+
+To be written concisely:
+```
+level_var;LevelVar;["A", "B", "C"]
+...
+modify_level_var;LevelVar;it.remove("C")
+```
+
+The *Nid* is the variable's identifier, and the *Expression* mutates the variable in-place.
+You MUST refer to the variable as `it` inside the *Expression*. If the *Expression* does not
+mutate the variable in-place, this command does nothing.
+
+This command does not work in #pyev1.
+        """
+    keywords = ['Nid', 'Expression']
     keyword_types = ["GeneralVar", "Expression"]
 
 class SetNextChapter(EventCommand):
@@ -1636,15 +1701,16 @@ class GiveItem(EventCommand):
 Gives a new copy of *Item* to *GlobalUnitOrConvoy*.
 If `convoy` is chosen as the recipient, may optionally specify a specific *Party*'s convoy.
 
- If the *no_banner* flag is set, there will not be a banner announcing that "X unit got a Y item!".
+If the *no_banner* flag is set, there will not be a banner announcing that "X unit got a Y item!".
 If the unit's inventory is full, the player will be given the option of which item to send to the convoy.
 If the *no_choice* flag is set, the new item will be automatically sent to the convoy in this case without prompting the player.
+If the *force_give* flag is set, the new item will be forced into the inventory and another must be discarded instead. *no_choice* takes priority over *force_give*.
 The *droppable* flag determines whether the item is set as a "droppable" item (generally only given to enemy units).
         """
 
     keywords = ["GlobalUnitOrConvoy", "Item"]
     optional_keywords = ["Party"]
-    _flags = ['no_banner', 'no_choice', 'droppable']
+    _flags = ['no_banner', 'no_choice', 'force_give', 'droppable']
 
 class EquipItem(EventCommand):
     nid = 'equip_item'
@@ -2314,11 +2380,17 @@ class SetModeAutolevels(EventCommand):
     desc = \
         """
 Changes the number of additional levels that enemy units gain from the difficulty mode setting.
-This can be used to grant a higher number of bonus levels to enemies later in the game to maintain a resonable difficulty curve. *Level* specifies the number of levels to be granted. If the *hidden* flag is set, enemy units will still gain the effects of the indicated level-ups, but their actual level is not incremented. In other words, the units get more powerful but remains at the same level. 
-If the *boss* flag is included, this will only affect units with the "Boss" tag.
-This does not modify the value in the Difficulty Editor directly, but rather sets the value for the current
-game the player is playing. 
-The addition of this value and the value in the Difficulty Editor for the current difficulty will sum to the true value utilized when loading in new units.
+
+This can be used to increase enemy bonus levels later in the game to maintain a reasonable difficulty curve. *Level* specifies the number of levels to be granted.
+
+Enemies *loaded in after* this command gain stats based on the **sum** of visible and invisible levels you select.
+
+If the *hidden* flag is set, it sets the invisible level count. In other words, the units get more powerful but remain at the same level.
+
+If the *boss* flag is set, this will only affect units with the "Boss" tag (but applies even if they are not enemies). This stacks with the value for normal enemies.
+
+This does not modify values in the Difficulty Editor directly, but rather sets the value for the current game the player is playing.
+
 Cannot be undone by the turnwheel.
         """
 
@@ -2805,11 +2877,17 @@ Optional args:
 * *OtherOptions* is a list of strings (Option1, Option2, Option3) that specify additional option names to display in the base.
 * *OtherOptionsEnabled* is a list of string bools (e.g. true, false, false) that specify which of the OtherOptions are enabled. If blank, all OtherOptions will be enabled by default.
 * *OtherOptionsOnSelect* is a list of Event NIDs or Event Names. These events will be triggered when the corresponding OtherOptions are selected.
+* *OtherOptionsDesciption* is a list of strings that provide description to the Option in gba prep screen.
 
+Flags:
+* *gba* uses gba prep screen layout instead.
+* *no_chap_disp* removes chapter display when using gba mode
+* *no_obj_disp* removes objective display when using gba mode
         """
 
-    optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect']
-    keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList"]
+    optional_keywords = ['PickUnitsEnabled', 'Music', 'OtherOptions', 'OtherOptionsEnabled', 'OtherOptionsOnSelect', 'OtherOptionsDescription']
+    keyword_types = ["Bool", "Music", "StringList", "BoolList", "StringList", "StringList"]
+    _flags = ["gba", "no_chap_disp", "no_obj_disp"]
 
 
 class Base(EventCommand):
@@ -3041,15 +3119,16 @@ Presents the player with a menu in which they can enter text. An example use-cas
 *Nid* is the name of this entry, which can be checked later to recall the player's input.
 For instance, if nid was "tactician", use `{var:tactician}` anywhere in events to replace it with the user's entry.
 *String* is the text describing the choice, such as "Please enter a name."
-*PositiveInteger* is the character limit. If not set, defaults to 16.
+*CharacterLimit* is the maximum character limit. If not set, defaults to 16.
 *StringList* specifies which characters to ban. Only accepts 'uppercase', 'lowercase', 'uppercase_UTF8', 'lowercase_UTF8', 'numbers_and_punctuation'
 *DefaultString* specifies an optional string already loaded into the menu when it starts. If this default string violates character limit or contains illegal characters, it won't work.
+*MinimumCharacterLimit* is the minimum character limit. If not set, defaults to 1.
 If the force_entry flag is set, the player will not be able to exit text entry before assigning a value to the game variables. (i.e., they must hit 'Yes' in the entry confirmation to end text entry)
         """
 
     keywords = ['Nid', 'String']
-    optional_keywords = ['PositiveInteger', 'IllegalCharacterList', 'DefaultString']
-    keyword_types = ['Nid', 'String', 'PositiveInteger', 'IllegalCharacterList', 'String']
+    optional_keywords = ['CharacterLimit', 'IllegalCharacterList', 'DefaultString', 'MinimumCharacterLimit']
+    keyword_types = ['Nid', 'String', 'PositiveInteger', 'IllegalCharacterList', 'String', 'PositiveInteger']
     _flags = ['force_entry']
 
 class ChapterTitle(EventCommand):
@@ -3691,6 +3770,25 @@ class PlaceGraves(EventCommand):
     keyword_types = ["Position", "WholeNumber", "WholeNumber"]
 
 
+class ChangeTeamPalette(EventCommand):
+    nid = 'change_team_palette'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Change the palettes of the given team.
+
+*MapSpritePalette* is the nid of combat palette for map sprites.
+*CombatVariantPalette* is the suffix for nid of combat palette for battle animation.
+*CombatColor* is the color for miscellaneous team-based assets, such as rescue icon, menu, combat display. 
+
+Example: change_team_palette;player;map_sprite_green;GenericGreen;green
+        """
+
+    keywords = ["Team"]
+    optional_keywords = ['MapSpritePalette', 'CombatVariantPalette', 'CombatColor']
+    keyword_types = ['Team', 'Palette', 'String', 'String']
+
 def get_commands():
     return EventCommand.__subclasses__()
 
@@ -3721,7 +3819,8 @@ ALL_EVENT_COMMANDS.update({
 
 
 FORBIDDEN_PYTHON_COMMANDS: List[EventCommand] = [Comment, If, Elif, Else,
-                                                 End, For, Endf, LoopUnits]
+                                                 End, For, Endf, LoopUnits,
+                                                 ModifyGameVar, ModifyLevelVar]
 FORBIDDEN_PYTHON_COMMAND_NIDS: List[str] = [cmd.nid for cmd in FORBIDDEN_PYTHON_COMMANDS] + [cmd.nickname for cmd in FORBIDDEN_PYTHON_COMMANDS]
 def get_all_event_commands(version: EventVersion) -> Dict[NID, Type[EventCommand]]:
     if version == EventVersion.EVENT:
