@@ -1,16 +1,29 @@
-from typing import Any, Dict, Optional
-import math
+from __future__ import annotations
+from typing import Any, Dict, List, Optional
 
+import math
+import random
+import time
+
+from app.map_maker.terrain import Terrain
 from app.map_maker import simplex_noise
 
+from app.utilities import static_random
 from app.utilities.typing import NID, Pos
 
 def generate_terrain(theme: Dict[NID, Any], seed: int) -> WorldTileMap:
+    if seed == -1:  # Random seed
+        random.seed(time.time())
+        seed = random.randint(0, 999_999)
+        print("Random Seed: %d" % seed)
+    orig_seed = seed
     while True:
         result = _generate_terrain_process(theme, seed)
         seed += 1  # If that didn't work, try a different seed
         if result:
             break
+        if seed > orig_seed + 10:
+            return None
 
     return result
 
@@ -19,9 +32,15 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
 
     # 1. Generate a simplex noise field of the right size and parameters from the theme
     terrain_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
-        (tilemap.width, tilemap.height), seed, theme['starting_frequency'],
-        theme['starting_amplitude'], theme['octaves'], theme['lacunarity'],
+        (tilemap.width + 2, tilemap.height + 2), seed, theme['starting_frequency'],
+        1.0, theme['octaves'], theme['lacunarity'],
         theme['gain'])
+    terrain_noise_map = simplex_noise.normalize_noise_map(terrain_noise_map)
+    # Move noise map so it's topleft is (-1, -1)
+    new_terrain_noise_map = {}
+    for pos, value in terrain_noise_map.items():
+        new_terrain_noise_map[(pos[0] - 1, pos[1] - 1)] = value
+    terrain_noise_map = new_terrain_noise_map
 
     # 2. Assign terrain based on the simplex noise field
     tilemap.generate_terrain_grid_from_noise(terrain_noise_map)
@@ -34,8 +53,9 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
     # 5. Figure out where forests go
     forest_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
         (tilemap.width, tilemap.height), seed, theme['forest_starting_frequency'],
-        theme['forest_starting_amplitude'], theme['forest_octaves'], theme['forest_lacunarity'],
+        1.0, theme['forest_octaves'], theme['forest_lacunarity'],
         theme['forest_gain'])
+    forest_noise_map = simplex_noise.normalize_noise_map(forest_noise_map)
     tilemap.determine_forests_from_noise(forest_noise_map)
 
     # 6. Figure out where roads go
@@ -60,13 +80,13 @@ class WorldTileMap:
         for x in range(self.width):
             for y in range(self.height):
                 value: float = noise_map[(x, y)]
-                if value >= 0.95:
+                if value >= 0.75:
                     terrain = Terrain.MOUNTAIN
-                elif 0.95 > value >= 0.8:
+                elif 0.75 > value >= 0.70:
                     terrain = Terrain.HILL
-                elif 0.8 > value >= 0.4:
+                elif 0.70 > value >= 0.4:
                     terrain = Terrain.NOISY_GRASS
-                elif 0.4 > value >= 0.3:
+                elif 0.4 > value >= 0.35:
                     terrain = Terrain.SAND
                 else:
                     terrain = Terrain.SEA
@@ -81,9 +101,9 @@ class WorldTileMap:
               0, 0, 0,
               -1, -2, -1]
 
-        def convolve(values: List[float], kernel: List[int]):
+        def convolve(values: List[float], kernel: List[int]) -> float:
             assert len(values) == len(kernel)
-            return [(value * k) ** 2 for value, k in zip(values, kernel)]
+            return sum([(value * k) for value, k in zip(values, kernel)]) ** 2
 
         def non_max_suppression(gradient_magnitude: List[float], gradient_orientation: List[float]) -> List[float]:
             output = [0] * len(gradient_magnitude)
@@ -128,9 +148,12 @@ class WorldTileMap:
         
         # Now generate a single magnitude for each point
         gradient_magnitude = [math.sqrt(x**2 + y**2) for (x, y) in zip(x_image, y_image)]
-        gradient_orientation = [math.arctan2(y, x) for (x, y) in zip(x_image, y_image)]
+        print(gradient_magnitude)
+        gradient_orientation = [math.atan2(y, x) for (x, y) in zip(x_image, y_image)]
         max_magnitude = max(gradient_magnitude)
         gradient_magnitude = [_ / max_magnitude for _ in gradient_magnitude]  # Now between 0 and 1
+        print(max_magnitude)
+        print(gradient_magnitude)
 
         for x in range(self.width):
             for y in range(self.height):
@@ -147,9 +170,8 @@ class WorldTileMap:
                 value: float = noise_map[(x, y)]
                 if self.get_terrain((x, y)) != Terrain.NOISY_GRASS:
                     continue  # Don't bother if not grass
-                
-                if value >= (1 - self.theme['thick_forest_threshold']):
+                thick_forest_threshold = (1 - self.theme['thick_forest_threshold'])
+                if value >= thick_forest_threshold:
                     self.terrain_grid[(x, y)] = Terrain.THICKET
-                elif (1 - self.theme['thick_forest_threshold']) > value >= (1 - self.theme['forest_threshold']):
+                elif thick_forest_threshold > value >= (1 - self.theme['forest_threshold']):
                     self.terrain_grid[(x, y)] = Terrain.FOREST
-
