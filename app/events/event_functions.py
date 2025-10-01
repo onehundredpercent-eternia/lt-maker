@@ -3242,6 +3242,7 @@ def text_entry(self: Event, nid: NID, string: str, character_limit: int = 16,
                illegal_character_list: Optional[List[str]] = None, default_string: Optional[str] = None, 
                minimum_character_limit: int = 0, flags: Optional[set[str]] = None):
     flags = flags or set()
+    illegal_character_list = illegal_character_list or list()
 
     header = string
     force_entry = 'force_entry' in flags
