@@ -4,6 +4,7 @@ from app.data.database.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
+from app.engine.game_state import game
 from app.engine import engine, image_mods, item_system, item_funcs, skill_system
 
 from app.data.resources.combat_anims import CombatAnimation, WeaponAnimation, EffectAnimation
@@ -744,6 +745,13 @@ class BattleAnimation():
             if y_offset:
                 image = image_mods.make_anim_gray(image)
 
+            # Add tints from skills
+            if self.unit and self.parent == self: # Don't apply tint if this is combat effect or mock combat
+                current_time = engine.get_time()
+                flicker_tints = skill_system.combat_sprite_flicker_tint(self.unit)
+                flicker_tints = [image_mods.FlickerTint(*tint) for tint in flicker_tints]
+                image = image_mods.draw_flicker_tint(image, current_time, flicker_tints)
+
             # Actually blit
             if self.background and self.blend:
                 old_bg = self.background.copy()
@@ -859,7 +867,7 @@ def get_palette(anim_prefab: CombatAnimation, unit) -> tuple:
     palettes = anim_prefab.palettes
     palette_names = [palette[0] for palette in palettes]
     palette_nids = [palette[1] for palette in palettes]
-    team_obj = DB.teams.get(unit.team)
+    team_obj = game.teams.get(unit.team)
     team_palette = team_obj.combat_variant_palette if team_obj else None
     if unit.name in palette_names:
         idx = palette_names.index(unit.name)

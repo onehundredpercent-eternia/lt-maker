@@ -811,7 +811,7 @@ class AnimationCombat(BaseCombat, MockCombat):
         return self.right.team
 
     def get_color(self, team: NID) -> str:
-        return DB.teams.get(team).combat_color
+        return game.teams.get(team).combat_color
 
     def _set_stats(self, playback: List[PlaybackBrush]):
         a_hit = combat_calcs.compute_hit(self.attacker, self.defender, self.main_item, self.def_item, 'attack', self.state_machine.get_attack_info())
@@ -976,7 +976,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             if damage <= 0:
                 return
             str_damage = str(damage)
-            left = brush.defender == self.left
+            left = brush.defender == self.left or (self.left.strike_partner and brush.defender == self.left.strike_partner)
             for idx, num in enumerate(str_damage):
                 d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'red')
                 self.damage_numbers.append(d)
@@ -985,7 +985,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             if damage <= 0:
                 return
             str_damage = str(damage)
-            left = brush.defender == self.left
+            left = brush.defender == self.left or (self.left.strike_partner and brush.defender == self.left.strike_partner)
             for idx, num in enumerate(str_damage):
                 d = gui.DamageNumber(int(num), idx, len(str_damage), left, 'yellow')
                 self.damage_numbers.append(d)
@@ -1297,7 +1297,6 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         self.attacker.built_guard = True
         if self.defender:
-            self.defender.strike_partner = None
             self.defender.built_guard = True
 
         # Clean up battle anims so we can re-use them later

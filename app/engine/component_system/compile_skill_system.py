@@ -12,6 +12,7 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     'vantage':                              HookInfo(['unit'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'desperation':                          HookInfo(['unit'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'ignore_terrain':                       HookInfo(['unit'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    'ignore_terrain_traversal':             HookInfo(['unit', 'effect'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'crit_anyway':                          HookInfo(['unit'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'ignore_region_status':                 HookInfo(['unit'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'no_double':                            HookInfo(['unit'], ResolvePolicy.ALL_DEFAULT_FALSE),
@@ -47,6 +48,7 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     'witch_warp':                           HookInfo(['unit'], ResolvePolicy.UNIQUE, has_default_value=True, is_cached=True),
     # numeric accum (adds together all values. 0 if no values are defined)
     'sight_range':                          HookInfo(['unit'], ResolvePolicy.NUMERIC_ACCUM, has_default_value=True),
+    'xcom_movement':                        HookInfo(['unit'], ResolvePolicy.NUMERIC_ACCUM, has_default_value=True),
     # formula (as exclusive)
     'damage_formula':                       HookInfo(['unit'], ResolvePolicy.UNIQUE),
     'resist_formula':                       HookInfo(['unit'], ResolvePolicy.UNIQUE),
@@ -118,6 +120,7 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     'battle_music':                         HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.UNIQUE),
     # events (runs all components, does not return anything)
     'on_death':                             HookInfo(['unit'], ResolvePolicy.NO_RETURN),
+    'on_wait':                              HookInfo(['unit', 'actively_chosen'], ResolvePolicy.NO_RETURN),
     # item events
     'on_add_item':                          HookInfo(['unit', 'item'], ResolvePolicy.NO_RETURN),
     'on_remove_item':                       HookInfo(['unit', 'item'], ResolvePolicy.NO_RETURN),
@@ -141,6 +144,7 @@ SKILL_HOOKS: Dict[str, HookInfo] = {
     'test_on':                              HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     'test_off':                             HookInfo(['playback', 'unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.NO_RETURN, has_unconditional=True),
     # list hooks (returns a list of all hook return values)
+    'combat_sprite_flicker_tint':           HookInfo(['unit'], ResolvePolicy.LIST),
     # union hooks (returns a set containing every unique hook return)
     'usable_wtypes':                        HookInfo(['unit'], ResolvePolicy.UNION),
     'forbidden_wtypes':                     HookInfo(['unit'], ResolvePolicy.UNION),

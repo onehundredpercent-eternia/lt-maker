@@ -9,6 +9,7 @@ from app.engine.game_state import game
 
 from app.engine.graphics.text.text_renderer import render_text, text_width, rendered_text_width
 from app.utilities.enums import HAlignment
+from app.engine.game_menus.icon_options import UsesDisplayConfig
 
 class EmptyOption():
     def __init__(self, idx):
@@ -334,8 +335,14 @@ class ItemOption(BasicOption):
             main_font = 'narrow'
         uses_font = 'text'
         render_text(surf, [main_font], [self.item.name], [main_color], (x + 20, y))
+
+        # Draw Uses String
         uses_string = '--'
-        if self.item.uses:
+        custom_uses = UsesDisplayConfig.from_item(self.item)
+        if custom_uses:
+            uses_string = custom_uses.get_uses()
+            uses_color = custom_uses.get_color() or uses_color
+        elif self.item.uses:
             uses_string = str(self.item.data['uses'])
         elif self.item.parent_item and self.item.parent_item.uses and self.item.parent_item.data['uses']:
             uses_string = str(self.item.parent_item.data['uses'])
@@ -387,7 +394,14 @@ class FullItemOption(ItemOption):
 
         uses_string_a = '--'
         uses_string_b = '--'
-        if self.item.data.get('uses') is not None:
+        uses_delimiter = "/"
+        custom_uses = UsesDisplayConfig.from_item(self.item)
+        if custom_uses:
+            uses_string_a = custom_uses.get_uses()
+            uses_string_b = custom_uses.get_max() or uses_string_b
+            uses_color = custom_uses.get_color() or uses_color
+            uses_delimiter = custom_uses.delim
+        elif self.item.data.get('uses') is not None:
             uses_string_a = str(self.item.data['uses'])
             uses_string_b = str(self.item.data['starting_uses'])
         elif self.item.data.get('c_uses') is not None:
@@ -404,7 +418,7 @@ class FullItemOption(ItemOption):
             uses_string_b = str(self.item.data['starting_cooldown'])
         if not (uses_string_a == '--' and uses_string_b == '--'):
             render_text(surf, [uses_font], [uses_string_a], [uses_color], (x + 96, y), HAlignment.RIGHT)
-            render_text(surf, [uses_font], ["/"], [], (x + 98, y))
+            render_text(surf, [uses_font], [uses_delimiter], [], (x + 98, y))
             render_text(surf, [uses_font], [uses_string_b], [uses_color], (x + 120, y), HAlignment.RIGHT)
 
 class ValueItemOption(ItemOption):
@@ -428,7 +442,11 @@ class ValueItemOption(ItemOption):
         render_text(surf, [main_font], [self.item.name], [main_color], (x + 20, y))
 
         uses_string = '--'
-        if self.item.data.get('uses') is not None:
+        custom_uses = UsesDisplayConfig.from_item(self.item)
+        if custom_uses:
+            uses_string = custom_uses.get_uses()
+            uses_color = custom_uses.get_color() or uses_color
+        elif self.item.data.get('uses') is not None:
             uses_string = str(self.item.data['uses'])
         elif self.item.parent_item and self.item.parent_item.data.get('uses') is not None:
             uses_string = str(self.item.parent_item.data['uses'])
@@ -453,7 +471,7 @@ class ValueItemOption(ItemOption):
                 value_string = '--'
         elif self.disp_value == 'sell':
             value = item_funcs.sell_price(owner, self.item)
-            if value:
+            if self.item.value:
                 value_string = str(value)
                 value_color = 'blue'
             else:
@@ -633,3 +651,42 @@ class LoreOption(BasicOption):
         if width > 78:
             main_font = 'narrow'
         render_text(surf, [main_font], s, [main_color], (x + 6, y))
+
+class SkillOption(BasicOption):
+    def __init__(self, idx, skill):
+        self.idx = idx
+        self.skill = skill
+        self.help_box = None
+        self.font = 'text'
+        self.color = 'blue'
+        self.ignore = False
+
+    def get(self):
+        return self.skill
+
+    def set_text(self, text):
+        pass
+
+    def width(self):
+        return 104
+
+    def height(self):
+        return 16
+
+    def get_help_box(self):
+        text = text_funcs.translate_and_text_evaluate(
+               self.skill.desc,
+               unit=game.get_unit(self.skill.owner_nid),
+               self=self.skill)
+        return help_menu.HelpDialog(text, name=self.skill.name)
+
+    def draw(self, surf, x, y):
+        icon = icons.get_icon(self.skill)
+        if icon:
+            surf.blit(icon, (x + 2, y))
+        main_font = self.font
+        if text_width(main_font, self.skill.name) > 60:
+            main_font = 'narrow'
+        render_text(surf, [main_font], [self.skill.name], [self.color], (x + 20, y))
+        # left = x + 99
+        # render_text(surf, [uses_font], [uses_string], [uses_color], (left, y), HAlignment.RIGHT)

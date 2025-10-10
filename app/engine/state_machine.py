@@ -38,10 +38,10 @@ class StateMachine():
         from app.engine import (base, chapter_title, debug_mode, dialog_log,
                                 feat_choice, game_over, general_states,
                                 level_up, minimap, objective_menu,
-                                player_choice, prep, promotion,
+                                player_choice, prep, prep_gba, promotion,
                                 settings, status_upkeep, text_entry,
                                 title_screen, trade, transitions, turnwheel,
-                                victory_screen, party_transfer)
+                                victory_screen, party_transfer, credit_state)
         from app.engine.game_menus.menu_states import unit_menu_state
         from app.engine.info_menu import info_menu_state
         from app.engine.overworld import overworld_states
@@ -93,7 +93,8 @@ class StateMachine():
              'combat_trade': trade.CombatTradeState,
              'weapon_choice': general_states.WeaponChoiceState,
              'spell_choice': general_states.SpellChoiceState,
-             'combat_art_choice': general_states.CombatArtChoiceState,
+             'ability_multi_item_choice': general_states.AbilityMultiItemChoiceState,
+             'ability_submenu_choice': general_states.AbilitySubmenuChoiceState,
              'combat_targeting': general_states.CombatTargetingState,
              'item_targeting': general_states.ItemTargetingState,
              'combat': general_states.CombatState,
@@ -138,6 +139,8 @@ class StateMachine():
              'prep_restock': prep.PrepRestockState,
              'prep_use': prep.PrepUseState,
              'prep_market': prep.PrepMarketState,
+             'prep_gba_main': prep_gba.PrepGBAMainState,
+             'prep_gba_map': prep_gba.PrepGBAMapState,
              'base_main': base.BaseMainState,
              'base_market_select': base.BaseMarketSelectState,
              'base_bexp_select': base.BaseBEXPSelectState,
@@ -162,7 +165,8 @@ class StateMachine():
              'overworld_next_level': overworld_states.OverworldLevelTransition,
              'dialog_log': dialog_log.DialogLogState,
              'party_transfer': party_transfer.PartyTransferState,
-             'party_transfer_confirm': party_transfer.PartyTransferConfirmState
+             'party_transfer_confirm': party_transfer.PartyTransferConfirmState,
+             'credit': credit_state.CreditState
              }
 
         if starting_states:

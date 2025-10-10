@@ -9,7 +9,8 @@ from app.engine import (background, combat_calcs, engine, equations, gui,
                         help_menu, icons, image_mods, item_funcs, item_system,
                         skill_system, text_funcs, unit_funcs)
 from app.engine.fluid_scroll import FluidScroll
-from app.engine.game_menus.icon_options import BasicItemOption, ItemOptionModes
+from app.engine.game_menus.icon_options import BasicItemOption
+from app.engine.game_menus.uses_display_config import ItemOptionModes
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.build_groove import build_groove
 from app.engine.graphics.text.text_renderer import render_text, text_width
@@ -23,12 +24,29 @@ from app.engine.state import State
 from app.engine.text_evaluator import TextEvaluator
 from app.utilities import utils
 from app.utilities.enums import HAlignment
-
+from app.engine.fonts import FONT
 
 class InfoMenuState(State):
     name = 'info_menu'
     in_level = False
-    show_map = False
+    show_map = False 
+
+    left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
+    if len(left_stats) >= 7:
+        _extra_stat_row = True
+        # If we have 7 or more left stats, use 7 rows
+        right_stats = left_stats[7:]
+    else:  # Otherwise, just use the 6 rows
+        _extra_stat_row = False
+        right_stats = left_stats[6:]
+    right_stats += [stat.nid for stat in DB.stats if stat.position == 'right']
+    # Make sure we only display up to 6 or 7 on each
+    if _extra_stat_row:
+        left_stats = left_stats[:7]
+        right_stats = right_stats[:7]
+    else:
+        left_stats = left_stats[:6]
+        right_stats = right_stats[:6]
 
     def create_background(self):
         panorama = RESOURCES.panoramas.get('info_menu_background')
@@ -449,11 +467,20 @@ class InfoMenuState(State):
         render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (63, 120), HAlignment.RIGHT)
         desc = text_funcs.translate_and_text_evaluate('Exp_desc', unit=self.unit)
         self.info_graph.register((38, 120, 30, 16), desc, 'all')
-        render_text(surf, ['text'], [str(self.unit.get_hp())], ['blue'], (39, 136), HAlignment.RIGHT)
+        
+        # Draw HP
+        current_hp = str(self.unit.get_hp())
+        max_hp = str(self.unit.get_max_hp())
+        # 14 pixels is width of space available to draw current_hp or max_hp
+        if text_width('text', current_hp) > 14 or text_width('text', max_hp) > 14:
+            hp_font = 'narrow'
+        else:
+            hp_font = 'text'
+        render_text(surf, [hp_font], [current_hp], ['blue'], (39, 136), HAlignment.RIGHT)
         desc = text_funcs.translate_and_text_evaluate('HP_desc', unit=self.unit)
         self.info_graph.register((8, 136, 72, 16), desc, 'all')
-        max_hp = equations.parser.hitpoints(self.unit)
-        render_text(surf, ['text'], [str(max_hp)], ['blue'], (63, 136), HAlignment.RIGHT)
+        render_text(surf, [hp_font], [str(max_hp)], ['blue'], (63, 136), HAlignment.RIGHT)
+
         # Blit the white status platform
         surf.blit(SPRITES.get('status_platform'), (66, 131))
         # Blit affinity
@@ -496,6 +523,7 @@ class InfoMenuState(State):
             else:
                 if not self.personal_data_surf:
                     self.personal_data_surf = self.create_personal_data_surf()
+                self.draw_stat_surf(self.personal_data_surf)
                 self.draw_personal_data_surf(main_surf)
             if not self.class_skill_surf:
                 self.class_skill_surf = self.create_class_skill_surf()
@@ -534,7 +562,14 @@ class InfoMenuState(State):
         surf.blit(main_surf, (max(96, 96 + self.scroll_offset_x), self.scroll_offset_y))
         if self.transparency:
             top_surf = image_mods.make_translucent(top_surf, self.transparency)
-        surf.blit(top_surf, (0, self.scroll_offset_y))
+        surf.blit(top_surf, (0, self.scroll_offset_y)) 
+
+    def draw_stat_surf(self, surf):
+        for idx, stat_nid in enumerate(self.left_stats):
+            icons.draw_stat(surf, stat_nid, self.unit, (47, 16 * idx + 24))
+
+        for idx, stat_nid in enumerate(self.right_stats):
+            icons.draw_stat(surf, stat_nid, self.unit, (111, 16 * idx + 24))
 
     def create_personal_data_surf(self, growths=False):
         if growths:
@@ -545,24 +580,7 @@ class InfoMenuState(State):
         menu_size = WINWIDTH - 96, WINHEIGHT
         surf = engine.create_surface(menu_size, transparent=True)
 
-        left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
-        if len(left_stats) >= 7:
-            self._extra_stat_row = True
-            # If we have 7 or more left stats, use 7 rows
-            right_stats = left_stats[7:]
-        else:  # Otherwise, just use the 6 rows
-            self._extra_stat_row = False
-            right_stats = left_stats[6:]
-        right_stats += [stat.nid for stat in DB.stats if stat.position == 'right']
-        # Make sure we only display up to 6 or 7 on each
-        if self._extra_stat_row:
-            left_stats = left_stats[:7]
-            right_stats = right_stats[:7]
-        else:
-            left_stats = left_stats[:6]
-            right_stats = right_stats[:6]
-
-        for idx, stat_nid in enumerate(left_stats):
+        for idx, stat_nid in enumerate(self.left_stats):
             curr_stat = DB.stats.get(stat_nid)
             # Value
             if growths:
@@ -577,7 +595,6 @@ class InfoMenuState(State):
                     base_value += subtle_stat_bonus
                     frac = utils.clamp(base_value / max_stat, 0, 1)
                     build_groove(surf, (27, 16 * idx + 32), total_length, frac)
-                icons.draw_stat(surf, stat_nid, self.unit, (47, 16 * idx + 24))
 
             # Name
             name = curr_stat.name
@@ -597,12 +614,8 @@ class InfoMenuState(State):
             help_box = help_menu.StatDialog(desc_text or ('%s_desc' % stat_nid), contribution)
             self.info_graph.register((96 + 8, 16 * idx + 24, 64, 16), help_box, state, first=(idx == 0))
 
-        for idx, stat_nid in enumerate(right_stats):
+        for idx, stat_nid in enumerate(self.right_stats):
             curr_stat = DB.stats.get(stat_nid)
-            if growths:
-                icons.draw_growth(surf, stat_nid, self.unit, (111, 16 * idx + 24))
-            else:
-                icons.draw_stat(surf, stat_nid, self.unit, (111, 16 * idx + 24))
 
             # Name
             name = curr_stat.name
@@ -611,6 +624,7 @@ class InfoMenuState(State):
                 color = self.growth_colors(unit_funcs.growth_rate(self.unit, stat_nid))
             render_text(surf, ['text'], [name], [color], (72, 16 * idx + 24))
             if growths:
+                icons.draw_growth(surf, stat_nid, self.unit, (111, 16 * idx + 24))
                 contribution = unit_funcs.growth_contribution(self.unit, stat_nid)
             else:
                 base_value = self.unit.stats.get(stat_nid, 0)
@@ -637,17 +651,17 @@ class InfoMenuState(State):
         if DB.constants.value('lead'):
             other_stats.append('LEAD')
 
-        other_stats = other_stats[:6 - len(right_stats)]
+        other_stats = other_stats[:6 - len(self.right_stats)]
 
         for idx, stat in enumerate(other_stats):
-            true_idx = idx + len(right_stats)
+            true_idx = idx + len(self.right_stats)
 
             if stat == 'TRV':
                 if self.unit.traveler:
                     trav = game.get_unit(self.unit.traveler)
                     render_text(surf, ['text'], [trav.name], ['blue'], (96, 16 * true_idx + 24))
                 else:
-                    render_text(surf, ['text'], ['--'], ['blue'], (96, 16 * true_idx + 24))
+                    render_text(surf, ['text'], ['--'], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
                 render_text(surf, ['text'], [text_funcs.translate('Trv')], ['yellow'], (72, 16 * true_idx + 24))
                 desc = text_funcs.translate_and_text_evaluate('Trv_desc', unit=self.unit)
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
@@ -706,11 +720,11 @@ class InfoMenuState(State):
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
 
             elif stat == 'TALK':
-                if (len([talk for talk in game.talk_options if talk[0] == self.unit.nid]) != 0):
+                if (len([talk for talk in game.talk_options if talk[0] == self.unit.nid and talk not in game.talk_hidden]) != 0):
                     talkee = [talk for talk in game.talk_options if talk[0] == self.unit.nid][0][1]
                     render_text(surf, ['text'], [game.get_unit(talkee).name], ['blue'], (96, 16 * true_idx + 24))
                 else:
-                    render_text(surf, ['text'], ['--'], ['blue'], (98, 16 * true_idx + 24))
+                    render_text(surf, ['text'], ['--'], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
                 render_text(surf, ['text'], [text_funcs.translate('Talk')], ['yellow'], (72, 16 * true_idx + 24))
                 desc = text_funcs.translate_and_text_evaluate('Talk_desc', unit=self.unit)
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
@@ -724,7 +738,7 @@ class InfoMenuState(State):
                     icons.draw_growth(surf, 'LEAD', self.unit, (111, 16 * true_idx + 24))
                 else:
                     icons.draw_stat(surf, 'LEAD', self.unit, (111, 16 * true_idx + 24))
-                    lead_surf = engine.subsurface(SPRITES.get('lead_star'), (0, 16, 16, 16))
+                    lead_surf = engine.subsurface(SPRITES.get('lead_star'), (0, 0, 16, 16))
                     surf.blit(lead_surf, (111, 16 * true_idx + 24))
 
         return surf
@@ -767,7 +781,10 @@ class InfoMenuState(State):
                 build_groove(surf, (offset + 18, 10 + y), width - 24, perc)
                 # Add text
                 pos = (offset + 7 + width//2, 4 + y)
-                render_text(surf, ['text'], [weapon_rank.nid], ['blue'], pos, HAlignment.CENTER)
+                if FONT.get('rank'):
+                    render_text(surf, ['rank'], [weapon_rank.nid], ['blue'], pos, HAlignment.CENTER)
+                else:
+                    render_text(surf, ['text'], [weapon_rank.nid], ['blue'], pos, HAlignment.CENTER)
                 self.info_graph.register((96 + pos[0] - width//2 - 8, 24 + pos[1], width, 16), "%s mastery level: %d" % (DB.weapons.get(weapon).name, value), 'support_skills', first=(counter==0))
                 counter += 1
                 if counter >= len(wexp_to_draw):

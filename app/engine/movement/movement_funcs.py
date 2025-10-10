@@ -38,14 +38,14 @@ def check_traversable(unit_to_move: UnitObject, pos: Tuple[int, int]) -> bool:
     if not game.board.check_bounds(pos):
         return False
     mcost = get_mcost(unit_to_move, pos)
-    movement = equations.parser.movement(unit_to_move)
+    movement = unit_to_move.get_movement()
     return mcost <= movement
 
 def check_weakly_traversable(unit_to_move: UnitObject, pos: Tuple[int, int]) -> bool:
     if not game.board.check_bounds(pos):
         return False
     mcost = get_mcost(unit_to_move, pos)
-    movement = equations.parser.movement(unit_to_move)
+    movement = unit_to_move.get_movement()
     return mcost <= 5 or mcost <= movement
 
 def check_simple_traversable(pos: Tuple[int, int]) -> bool:
@@ -92,3 +92,16 @@ def check_region_interrupt(unit: UnitObject) -> List[RegionObject]:
         if unit.position and region.contains(unit.position) and region.interrupt_move and evaluate.evaluate(region.condition, unit, local_args={'region': region}):
             interrupts += [region]
     return interrupts
+    
+def handle_terrain_traversal(unit: UnitObject, next_position: Tuple, is_final_pos: Bool):
+    """
+    # Determine any effects which would occur upon entering the next tile, and apply them if valid.
+    """
+    terrain_nid = game.get_terrain_nid(game.tilemap, next_position)
+    terrain_status = DB.terrain.get(terrain_nid).status
+    if terrain_status:
+        status = DB.skills.get(terrain_status)
+        if not skill_system.ignore_terrain_traversal(unit, status):
+            for component in status.components:
+                if component.defines('terrain_move_effect'):
+                    component.terrain_move_effect(unit, next_position, is_final_pos)

@@ -4,7 +4,7 @@ from functools import lru_cache
 import random
 import time
 from collections import Counter
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Set, Iterable, List, Optional, Tuple
 
 from app.engine.query_engine import GameQueryEngine
 from app.engine.utils import ltcache
@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from app.engine.objects.region import RegionObject
     from app.engine.objects.ai_group import AIGroupObject
     from app.engine.objects.tilemap import TileMapObject
+    from app.engine.objects.team import TeamObject
     from app.data.database.klass import Klass
     from app.engine.dialog_log import DialogLog
     from app.events.event_manager import EventManager
@@ -71,12 +72,14 @@ class GameState():
         - region_registry (Dict[NID, RegionObject]): A dictionary mapping region NIDs to RegionObjects.
         - overworld_registry (Dict[NID, OverworldObject]): A dictionary mapping overworld NIDs to OverworldObjects.
         - parties (Dict[NID, PartyObject]): A dictionary mapping party NIDs to PartyObjects.
+        - teams (Dict[NID, TeamObject]): A dictionary mapping team NIDs to TeamObjects.
         - unlocked_lore (List[NID]): A list of unlocked lore entries.
         - market_items (Dict[NID, int]): A dictionary mapping item NIDs to their stock quantity.
         - supports (supports.SupportController): The support controller.
         - records (records.Recordkeeper): The record keeper.
         - turncount (int): The current turn count.
         - talk_options (List[Tuple[NID, NID]]): A list of talk options.
+        - talk_hidden (Set[Tuple[NID, NID]]): A set of talk options that won't be marked on the map or menu.
         - board (game_board.GameBoard): The game board.
         - cursor (cursor.BaseCursor): The cursor.
         - camera (camera.Camera): The camera.
@@ -106,6 +109,7 @@ class GameState():
         self.region_registry: Dict[NID, RegionObject] = {}
         self.overworld_registry: Dict[NID, OverworldObject] = {}
         self.parties: Dict[NID, PartyObject] = {}
+        self.teams: Dict[NID, TeamObject] = {}
         self.unlocked_lore: List[NID] = []
         self.dialog_log: DialogLog = None
         self.already_triggered_events: List[NID] = []
@@ -123,6 +127,7 @@ class GameState():
         self.turncount: int = 0
         self.roam_info: RoamInfo = RoamInfo()
         self.talk_options: List[Tuple[NID, NID]] = []
+        self.talk_hidden: Set[Tuple[NID, NID]] = set()
         self.base_convos: Dict[NID, bool] = {}
         self.action_log: turnwheel.ActionLog = None
         self.events: EventManager = None
@@ -215,6 +220,11 @@ class GameState():
             nid, name, leader = party_prefab.nid, party_prefab.name, party_prefab.leader
             self.parties[nid] = PartyObject(nid, name, leader)
 
+        # initialize all teams
+        from app.engine.objects.team import TeamObject
+        for team in DB.teams.values():
+            self.teams[team.nid] = TeamObject.from_prefab(team)
+
         # Initialize all overworlds and enter them into the registry
         from app.engine.objects.overworld import OverworldObject
         for overworld in DB.overworlds.values():
@@ -240,6 +250,7 @@ class GameState():
         self.level_vars = PrimitiveCounter()
         self.turncount = 0
         self.talk_options = []
+        self.talk_hidden = set()
         self.base_convos = {}
         self.action_log = turnwheel.ActionLog()
         self.events = event_manager.EventManager()
@@ -396,6 +407,7 @@ class GameState():
                   'game_vars': self.game_vars,
                   'level_vars': self.level_vars,
                   'current_mode': self.current_mode.save(),
+                  'teams': [team.save() for team in self.teams.values()],
                   'parties': [party.save() for party in self.parties.values()],
                   'current_party': self.current_party,
                   'state': self.state.save(),
@@ -409,6 +421,7 @@ class GameState():
                   'dialog_log': self.dialog_log.save(),
                   'already_triggered_events': self.already_triggered_events,
                   'talk_options': self.talk_options,
+                  'talk_hidden': self.talk_hidden,
                   'base_convos': self.base_convos,
                   'current_random_state': static_random.get_combat_random_state(),
                   'bounds': self.board.bounds if self.board else None,
@@ -444,6 +457,7 @@ class GameState():
         from app.engine.objects.skill import SkillObject
         from app.engine.objects.unit import UnitObject
         from app.engine.objects.region import RegionObject
+        from app.engine.objects.team import TeamObject
         from app.events import event_manager, speak_style
 
         logging.info("Loading Game...")
@@ -476,6 +490,11 @@ class GameState():
                 for component in subitem.components:
                     component.item = item
                 subitem.parent_item = item
+            if item.command_item_uid:
+                command_item = self.item_registry.get(item.command_item_uid)
+                for component in command_item.components:
+                    component.item = item
+                item.command_item = command_item
         # Handle subskill
         for skill in self.skill_registry.values():
             if skill.subskill_uid is not None:
@@ -490,7 +509,14 @@ class GameState():
 
         self.already_triggered_events = s_dict.get('already_triggered_events', [])
         self.talk_options = s_dict.get('talk_options', [])
+        self.talk_hidden = s_dict.get('talk_hidden', set())
         self.base_convos = s_dict.get('base_convos', {})
+
+        # load team objects, make sure it compatible with non-updated game saves
+        if s_dict.get('teams'):
+            self.teams = {team['nid']: TeamObject.restore(team) for team in s_dict['teams']}
+        else:
+            self.teams = {team.nid : TeamObject.from_prefab(team) for team in DB.teams.values()}
 
         # load all overworlds, or initialize them
         if 'overworlds' in s_dict:
@@ -851,6 +877,8 @@ class GameState():
         # For multi-items
         for subitem in item.subitems:
             self.register_item(subitem)
+        if item.command_item:
+            self.register_item(item.command_item)
 
     def unregister_item(self, item):
         logging.debug("Unregistering item %s as %s", item, item.uid)
@@ -858,6 +886,8 @@ class GameState():
         # For multi-items
         for subitem in item.subitems:
             self.unregister_item(subitem)
+        if item.command_item:
+            self.unregister_item(item.command_item)
 
     def register_skill(self, skill):
         logging.debug("Registering skill %s as %s", skill, skill.uid)

@@ -64,6 +64,18 @@ class PermanentGrowthChange(ItemComponent):
         actions.append(action.ApplyGrowthChanges(target, growth_changes))
         playback.append(pb.StatHit(unit, item, target))
 
+class PermanentPersonalStatCapChange(ItemComponent):
+    nid = 'permanent_statcap_change'
+    desc = "Using this item permanently changes the personal stat cap modifiers values of the target in the specified ways."
+    tag = ItemTags.SPECIAL
+
+    expose = (ComponentType.Dict, ComponentType.Stat)
+
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        statcap_changes = {k: v for (k, v) in self.value}
+        actions.append(action.ChangeStatCapModifiers(target, statcap_changes))
+        playback.append(pb.StatHit(unit, item, target))
+
 class WexpChange(ItemComponent):
     nid = 'wexp_change'
     desc = "Using this item permanently changes the WEXP of the target. Can specify individual amounts for different weapon types. Useful for Arms Scroll."
@@ -185,17 +197,7 @@ class Shove(ItemComponent):
     value = 1
 
     def _check_shove(self, unit_to_move, anchor_pos, magnitude):
-        offset_x = utils.clamp(unit_to_move.position[0] - anchor_pos[0], -1, 1)
-        offset_y = utils.clamp(unit_to_move.position[1] - anchor_pos[1], -1, 1)
-        new_position = (unit_to_move.position[0] + offset_x * magnitude,
-                        unit_to_move.position[1] + offset_y * magnitude)
-
-        mcost = movement_funcs.get_mcost(unit_to_move, new_position)
-        if game.board.check_bounds(new_position) and \
-                not game.board.get_unit(new_position) and \
-                mcost <= equations.parser.movement(unit_to_move):
-            return new_position
-        return False
+        return game.query_engine.check_shove(unit_to_move, anchor_pos, magnitude)
 
     def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
         if not skill_system.ignore_forced_movement(target):
@@ -213,8 +215,8 @@ class ShoveOnEndCombat(Shove):
     value = 1
 
     def end_combat(self, playback, unit, item, target, item2, mode):
-        if not skill_system.ignore_forced_movement(target) and mode:
-            new_position = self._check_shove(target, unit.position, self.value)
+        if target and not skill_system.ignore_forced_movement(target) and mode:
+            new_position = game.query_engine.check_shove(target, unit.position, self.value)
             if new_position:
                 action.do(action.ForcedMovement(target, new_position))
 
@@ -231,12 +233,12 @@ class ShoveTargetRestrict(Shove):
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
         defender = game.board.get_unit(def_pos)
-        if defender and self._check_shove(defender, unit.position, self.value) and \
+        if defender and game.query_engine.check_shove(defender, unit.position, self.value) and \
                 not skill_system.ignore_forced_movement(defender):
             return True
         for s_pos in splash:
             s = game.board.get_unit(s_pos)
-            if self._check_shove(s, unit.position, self.value) and \
+            if game.query_engine.check_shove(s, unit.position, self.value) and \
                     not skill_system.ignore_forced_movement(s):
                 return True
         return False
@@ -286,7 +288,7 @@ class Pivot(ItemComponent):
         mcost = movement_funcs.get_mcost(unit_to_move, new_position)
         if game.board.check_bounds(new_position) and \
                 not game.board.get_unit(new_position) and \
-                mcost <= equations.parser.movement(unit_to_move):
+                mcost <= unit_to_move.get_movement():
             return new_position
         return False
 
@@ -347,7 +349,7 @@ class DrawBack(ItemComponent):
 
         if game.board.check_bounds(new_position_user) and \
                 not game.board.get_unit(new_position_user) and \
-                mcost_user <= equations.parser.movement(user) and mcost_target <= equations.parser.movement(target):
+                mcost_user <= user.get_movement() and mcost_target <= target.get_movement():
             return new_position_user, new_position_target
         return None, None
 
@@ -501,7 +503,7 @@ class EventAfterCombatOnHit(ItemComponent):
         self.target_pos = target_pos
 
     def end_combat(self, playback, unit, item, target, item2, mode):
-        if self._did_hit and target:
+        if self._did_hit:
             event_prefab = DB.events.get_from_nid(self.value)
             if event_prefab:
                 local_args = {'target_pos': self.target_pos, 'item': item, 'item2': item2, 'mode': mode}
@@ -514,9 +516,18 @@ class EventAfterCombatEvenMiss(ItemComponent):
     tag = ItemTags.SPECIAL
 
     expose = ComponentType.Event
+    
+    target_pos = None
+    
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        self.target_pos = target_pos
 
+    def on_miss(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        self.target_pos = target_pos
+    
     def end_combat(self, playback, unit, item, target, item2, mode):
         event_prefab = DB.events.get_from_nid(self.value)
         if event_prefab:
-            local_args = {'item': item, 'item2': item2, 'mode': mode}
+            local_args = {'target_pos': self.target_pos, 'item': item, 'item2': item2, 'mode': mode}
             game.events.trigger_specific_event(event_prefab.nid, unit, target, unit.position, local_args)
+        self.target_pos = None

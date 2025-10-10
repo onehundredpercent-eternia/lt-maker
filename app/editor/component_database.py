@@ -14,10 +14,12 @@ from app.data.resources.resources import RESOURCES
 from app.editor.component_editor_delegates import (AffinityDelegate,
                                                    ClassDelegate, ItemDelegate,
                                                    SkillDelegate, StatDelegate,
+                                                   StatFloatDelegate, StatStringDelegate,
                                                    TagDelegate,
                                                    TerrainDelegate,
                                                    UnitDelegate,
-                                                   WeaponTypeDelegate)
+                                                   WeaponTypeDelegate,
+                                                   LoreDelegate)
 from app.editor.component_subcomponent_editors import get_editor_widget
 from app.editor.editor_constants import (DROP_DOWN_BUFFER, MAX_DROP_DOWN_WIDTH,
                                          MIN_DROP_DOWN_WIDTH)
@@ -33,6 +35,7 @@ from app.extensions.list_widgets import (AppendMultiListWidget,
                                          BasicMultiListWidget)
 from app.extensions.frame_layout import FrameLayout
 from app.extensions.widget_list import WidgetList
+from app.extensions.shape_dialog import ShapeIcon, ShapeDialog
 from app.utilities import utils
 
 from app.editor.auto_resizing_text_edit import AutoResizingTextEdit
@@ -270,6 +273,7 @@ class BetterOptionsItemComponent(BoolItemComponent):
         for field_name, component_type in options.items():
             editor = get_editor_widget(
                 field_name, component_type, self._data.value)
+            editor.resized.connect(self.updateGeometry)
             vbox.addWidget(editor)
         self.editors_widget.resize(self.editors_widget.sizeHint())
         self.collapsible_frame_layout.addWidget(self.editors_widget)
@@ -436,6 +440,36 @@ class SkillItemComponent(BoolItemComponent):
         hbox.addWidget(self.editor)
 
 
+class UnitItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        self.editor = ComboBox(self)
+        for unit in DB.units.values():
+            self.editor.addItem(unit.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width(
+        ) + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
+        if not self._data.value and DB.units:
+            self._data.value = DB.units[0].nid
+        self.editor.setValue(self._data.value)
+        self.editor.currentTextChanged.connect(self.on_value_changed)
+        hbox.addWidget(self.editor)
+        
+
+class LoreItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        self.editor = ComboBox(self)
+        for lore in DB.lore.values():
+            self.editor.addItem(lore.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width(
+        ) + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
+        if not self._data.value and DB.lore:
+            self._data.value = DB.lore[0].nid
+        self.editor.setValue(self._data.value)
+        self.editor.currentTextChanged.connect(self.on_value_changed)
+        hbox.addWidget(self.editor)
+
+
 class MusicItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
@@ -561,6 +595,18 @@ class StatItemComponent(BoolItemComponent):
     def on_value_changed(self):
         val = self.editor.currentText()
         self._data.value = val
+        
+class ShapeItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        if not self._data.value:
+            self._data.value = []
+        shape = self._data.value.copy()
+        self.shape = ShapeIcon(self, shape, 32)
+        self.shape.shapeChanged.connect(self.on_value_changed)
+        hbox.addWidget(self.shape)
+
+    def on_value_changed(self):
+        self._data.value = self.shape.shape()
 
 
 class EventItemComponent(BoolItemComponent):
@@ -682,6 +728,8 @@ def get_display_widget(component, parent):
         c = AIItemComponent(component, parent)
     elif component.expose == ComponentType.Stat:
         c = StatItemComponent(component, parent)
+    elif component.expose == ComponentType.Shape:
+        c = ShapeItemComponent(component, parent)
     elif component.expose == ComponentType.Event:
         c = EventItemComponent(component, parent)
     elif component.expose == ComponentType.MovementType:
@@ -690,7 +738,11 @@ def get_display_widget(component, parent):
         c = DeprecatedOptionsItemComponent(component, parent)
     elif component.expose == ComponentType.NewMultipleOptions:
         c = BetterOptionsItemComponent(component, parent)
-
+    elif component.expose == ComponentType.Unit:
+        c = UnitItemComponent(component, parent)
+    elif component.expose == ComponentType.Lore:
+        c = LoreItemComponent(component, parent)
+        
     elif isinstance(component.expose, tuple):
         delegate = None
         if component.expose[1] == ComponentType.Unit:
@@ -705,12 +757,18 @@ def get_display_widget(component, parent):
             delegate = ItemDelegate
         elif component.expose[1] == ComponentType.Stat:
             delegate = StatDelegate
+        elif component.expose[1] == ComponentType.StatFloat:
+            delegate = StatFloatDelegate
+        elif component.expose[1] == ComponentType.StatString:
+            delegate = StatStringDelegate
         elif component.expose[1] == ComponentType.WeaponType:
             delegate = WeaponTypeDelegate
         elif component.expose[1] == ComponentType.Skill:
             delegate = SkillDelegate
         elif component.expose[1] == ComponentType.Terrain:
             delegate = TerrainDelegate
+        elif component.expose[1] == ComponentType.Lore:
+            delegate = LoreDelegate
 
         if component.expose[0] == ComponentType.List:
             c = ListItemComponent(component, parent, delegate)

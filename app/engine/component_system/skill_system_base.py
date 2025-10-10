@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from app.engine.component_system import utils
@@ -104,6 +105,10 @@ class Defaults():
 
     @staticmethod
     def sight_range(unit):
+        return 0
+
+    @staticmethod
+    def xcom_movement(unit):
         return 0
 
     @staticmethod
@@ -363,22 +368,59 @@ def get_show_skill_icon(unit, skill) -> bool:
                 component.show_skill_icon(unit):
             return True
     return False
-
+    
+def get_shape(unit, skill) -> set[tuple]:
+    #Get a set of all tiles this skill should affect
+    for component in skill.components:
+        if component.defines('get_shape'):
+            return component.get_shape(unit, skill)
+    return None
+    
+def get_max_shape_range(skill) -> int:
+    #Get the maximum manhattan distance to tiles skill affects
+    for component in skill.components:
+        if component.defines('get_max_shape_range'):
+            return component.get_max_shape_range(skill)
+    return None
+    
 def trigger_charge(unit, skill):
     for component in skill.components:
         if component.defines('trigger_charge'):
             component.trigger_charge(unit, skill)
     return None
 
-def get_extra_abilities(unit):
-    abilities = {}
+def get_extra_abilities(unit: UnitObject, categorized: bool = False):
+    """Returns a dict of extra ability names to corresponding skill item.
+
+    Args:
+        unit (UnitObject): Unit extra ability belong to.
+        categorized (bool, optional): Whether to categorize extra abilities. Defaults to False.
+
+    Returns:
+        ExtraAbilityDict | CategorizedExtraAbilityDict: A dict that defines extra abilities,
+        or a dict with category names defined by a MenuCategory component that map to extra
+        abilities that belong in that category.
+    """
+    abilities = defaultdict(dict) if categorized else {}
     for skill in unit.skills:
+        ability_comps = [] # keep behavior from previous implementation
+        category = None
         for component in skill.components:
             if component.defines('extra_ability'):
                 if component.ignore_conditional or condition(skill, unit):
                     new_item = component.extra_ability(unit)
                     ability_name = new_item.name
+                    ability_comps.append((ability_name, new_item))
+            if component.defines('menu_category'):
+                category = component.menu_category()
+        if ability_comps:
+            for ability_name, new_item in ability_comps:
+                category = '_uncategorized' if category is None else category
+                if categorized:
+                    abilities[category][ability_name] = new_item
+                else:
                     abilities[ability_name] = new_item
+
     return abilities
 
 def ai_priority_multiplier(unit) -> float:
@@ -390,22 +432,36 @@ def ai_priority_multiplier(unit) -> float:
                     ai_priority_multiplier *= component.ai_priority_multiplier(unit)
     return ai_priority_multiplier
 
-def get_combat_arts(unit):
+def get_combat_arts(unit: UnitObject, categorized: bool = False):
+    """Returns a dict of combat art names to corresponding skill and weapons.
+
+    Args:
+        unit (UnitObject): Unit combat arts belong to.
+        categorized (bool, optional): Whether to categorize combat arts. Defaults to False.
+
+    Returns:
+        CombatArtDict | CategorizedCombatArtDict: A dict that defines combat arts, or a dict
+        with category names defined by a MenuCategory component that map to combat arts that
+        belong in that category.
+    """
     from app.engine import action, item_funcs
     from app.engine.game_state import game
-    combat_arts = {}
+    combat_arts = defaultdict(dict) if categorized else {}
     unit_skills = unit.skills[:]
     for skill in unit_skills:
         if not condition(skill, unit):
             continue
         combat_art = None
         combat_art_weapons = [item for item in item_funcs.get_all_items(unit) if item_funcs.available(unit, item)]
+        category = None
         for component in skill.components:
             if component.defines('combat_art'):
                 combat_art = component.combat_art(unit)
             if component.defines('weapon_filter'):
                 combat_art_weapons = \
                     [item for item in combat_art_weapons if component.weapon_filter(unit, item)]
+            if component.defines('menu_category'):
+                category = component.menu_category()
 
         if combat_art and combat_art_weapons:
             good_weapons = []
@@ -421,7 +477,11 @@ def get_combat_arts(unit):
                     good_weapons.append(weapon)
 
             if good_weapons:
-                combat_arts[skill.name] = (skill, good_weapons)
+                category = '_uncategorized' if category is None else category
+                if categorized:
+                    combat_arts[category][skill.name] = (skill, good_weapons)
+                else:
+                    combat_arts[skill.name] = (skill, good_weapons)
 
     return combat_arts
 
