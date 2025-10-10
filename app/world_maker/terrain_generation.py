@@ -11,6 +11,9 @@ from app.map_maker import simplex_noise
 from app.utilities import static_random
 from app.utilities.typing import NID, Pos
 
+MOUNTAIN_THRESHOLD = 0.75
+SEA_THRESHOLD = 0.35
+
 def generate_terrain(theme: Dict[NID, Any], seed: int) -> WorldTileMap:
     if seed == -1:  # Random seed
         random.seed(time.time())
@@ -45,10 +48,11 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
     # 2. Assign terrain based on the simplex noise field
     tilemap.generate_terrain_grid_from_noise(terrain_noise_map)
 
-    # 3. Figure out where cliffs go
-    tilemap.generate_cliffs_from_noise(terrain_noise_map)
+    # 3. Figure out where rivers go
+    tilemap.generate_rivers_from_noise(terrain_noise_map)
 
-    # 4. Figure out where rivers go
+    # 4. Figure out where cliffs go
+    tilemap.generate_cliffs_from_noise(terrain_noise_map)
 
     # 5. Figure out where forests go
     forest_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
@@ -56,7 +60,7 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
         1.0, theme['forest_octaves'], theme['forest_lacunarity'],
         theme['forest_gain'])
     forest_noise_map = simplex_noise.normalize_noise_map(forest_noise_map)
-    tilemap.determine_forests_from_noise(forest_noise_map)
+    tilemap.generate_forests_from_noise(forest_noise_map)
 
     # 6. Figure out where roads go
     # 7. Figure out where houses, castles, and ruins go
@@ -80,13 +84,13 @@ class WorldTileMap:
         for x in range(self.width):
             for y in range(self.height):
                 value: float = noise_map[(x, y)]
-                if value >= 0.75:
+                if value >= MOUNTAIN_THRESHOLD:
                     terrain = Terrain.MOUNTAIN
                 elif 0.75 > value >= 0.70:
                     terrain = Terrain.HILL
                 elif 0.70 > value >= 0.4:
                     terrain = Terrain.NOISY_GRASS
-                elif 0.4 > value >= 0.35:
+                elif 0.4 > value >= SEA_THRESHOLD:
                     terrain = Terrain.SAND
                 else:
                     terrain = Terrain.SEA
@@ -164,7 +168,7 @@ class WorldTileMap:
                 if value >= (1 - self.theme['cliff_threshold']):
                     self.terrain_grid[(x, y)] = Terrain.CLIFF         
 
-    def determine_forests_from_noise(self, noise_map: Dict[Pos, float]):
+    def generate_forests_from_noise(self, noise_map: Dict[Pos, float]):
         for x in range(self.width):
             for y in range(self.height):
                 value: float = noise_map[(x, y)]
@@ -175,3 +179,59 @@ class WorldTileMap:
                     self.terrain_grid[(x, y)] = Terrain.THICKET
                 elif thick_forest_threshold > value >= (1 - self.theme['forest_threshold']):
                     self.terrain_grid[(x, y)] = Terrain.FOREST
+
+    def generate_rivers_from_noise(self, noise_map: Dict[Pos, float]):
+        # Locate all locations near mountains, (high noise)
+        # Locate all locations near seas (low noise)
+        # based on a river incidence rate, draw connections between high noise tiles and low noise tiles, generally preferring low noise tile movement draw connections between the two
+        # Then remove any rivers which cross each other (use order or something), and remove any rivers which overlap a mountain after leaving a mountain
+
+        high_noise_locations: List[Pos] = []
+        low_noise_locations: List[Pos] = []
+        for x in range(self.width):
+            for y in range(self.height):
+                value: float = noise_map[(x, y)]
+                if value >= MOUNTAIN_THRESHOLD:
+                    high_noise_locations.append((x, y))
+                elif value < SEA_THRESHOLD:
+                    low_noise_locations.append((x, y))
+        
+        number_of_rivers = self.theme['river_incidence'] / 100 * self.width * self.height 
+        rivers: List[List[Pos]] = []
+        while len(rivers) < number_of_rivers:
+            starting_point = self.random.choice(high_noise_locations)
+            river: List[Pos] = [starting_point]
+            current_point = starting_point
+
+            # Build out river!
+            while True:
+                x, y = current_point
+                adjacent_points = [
+                    (x - 1, y - 1),
+                    (x, y - 1),
+                    (x + 1, y - 1),
+                    (x - 1, y),
+                    (x + 1, y),
+                    (x - 1, y + 1),
+                    (x, y + 1),
+                    (x + 1, y + 1),
+                ]
+                noise_values = [noise_map[pos] if self.check_bounds(pos) else 0.5 for pos in adjacent_points]
+                weight = [noise_map[starting_point] - val for val in noise_values]
+                choices = list(enumerate(weight))
+                idx = static_random.weighted_choice(choices, self.random)
+                current_point = choices[idx]
+                if noise_map[current_point] < SEA_THRESHOLD or not self.check_bounds(currrent_point):
+                    break
+                else:
+                    river.append(current_point)
+
+        # Check that rivers don't cross each other -- Later
+        # for river in rivers:
+
+        # Convert terrain
+        for river in rivers:
+            for pos in river:
+                current_terrain = self.get_terrain(pos)
+                if current_terrain in (Terrain.HILL, Terrain.NOISY_GRASS, Terrain.SAND):
+                    self.terrain_grid[pos] = Terrain.RIVER
