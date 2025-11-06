@@ -69,6 +69,10 @@
                 "'Tile' not in target.tags"
             ],
             [
+                "hit",
+                0
+            ],
+            [
                 "alternate_accuracy_formula",
                 "STATUS_STAFF_HIT"
             ],

@@ -5909,6 +5909,10 @@
                 "target.wexp['Light'] or target.wexp['Anima'] or target.wexp['Dark'] or target.wexp['Staff']"
             ],
             [
+                "hit",
+                0
+            ],
+            [
                 "alternate_accuracy_formula",
                 "STATUS_STAFF_HIT"
             ],
@@ -5992,6 +5996,10 @@
                 "'Tile' not in target.tags"
             ],
             [
+                "hit",
+                0
+            ],
+            [
                 "alternate_accuracy_formula",
                 "STATUS_STAFF_HIT"
             ],
@@ -6073,6 +6081,10 @@
             [
                 "eval_target_restrict_2",
                 "'Tile' not in target.tags"
+            ],
+            [
+                "hit",
+                0
             ],
             [
                 "alternate_accuracy_formula",

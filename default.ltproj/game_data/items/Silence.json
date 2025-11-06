@@ -69,6 +69,10 @@
                 "target.wexp['Light'] or target.wexp['Anima'] or target.wexp['Dark'] or target.wexp['Staff']"
             ],
             [
+                "hit",
+                0
+            ],
+            [
                 "alternate_accuracy_formula",
                 "STATUS_STAFF_HIT"
             ],
