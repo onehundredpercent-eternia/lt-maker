@@ -1579,7 +1579,7 @@
                 "-2 * utils.calculate_distance(unit.position, unit2.position)if unit.position and (utils.calculate_distance(unit.position, unit2.position) > 1) else 0"
             ],
             [
-                "condition",
+                "combat_condition",
                 "item_system.weapon_type(unit, item) == 'Staff'"
             ]
         ]
