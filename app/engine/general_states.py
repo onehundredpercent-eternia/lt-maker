@@ -1233,7 +1233,7 @@ class MenuState(MapState):
         info_desc = info_desc_ability + info_desc_art
         game.memory['ability_submenu_choice'] = (abilities + combat_arts,
                                                      options, info_desc,
-                                                     self.on_combat_art_begin, #Is there any harm in running this for abilities also?
+                                                     self.on_combat_art_begin,
                                                      on_ability_select)
         game.state.change('ability_submenu_choice')
     
