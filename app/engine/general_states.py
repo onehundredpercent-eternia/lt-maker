@@ -1016,7 +1016,7 @@ class MenuState(MapState):
                     options.insert(start_index, ability_name)
                     info_descs.insert(start_index, ability[0].desc)
                 for category_name in self.combat_arts:
-                    if category_name != '_uncategorized':
+                    if category_name != '_uncategorized' and (category_name not in options):
                         options.insert(start_index, category_name)
                         info_descs.insert(start_index, category_name + '_desc')
 
@@ -1148,65 +1148,49 @@ class MenuState(MapState):
                 if selection in ('Talk', 'Support'):
                     self.menu = None  # So it's not shown during the event
 
+    def on_extra_ability_select(self, cur_unit: UnitObject, ability: ItemObject):
+        item = ability
+        targets = game.target_system.get_valid_targets(cur_unit, item)
+        game.memory['targets'] = targets       
+        game.memory['ability'] = ability.name #selection
+        game.memory['item'] = item
+        # Handle abilities that are multi-items, you sick fuck (rain's words not mine)
+        if item.multi_item:
+            all_options = [subitem for subitem in item.subitems \
+                            if (item_funcs.is_spell_recursive(cur_unit, subitem) or 
+                                item_funcs.is_weapon_recursive(cur_unit, subitem)) and
+                            game.target_system.get_valid_targets_recursive_with_availability_check(cur_unit, subitem)]
+            if all_options:
+                game.memory['valid_options'] = all_options
+                game.state.change('ability_multi_item_choice')
+        elif item_funcs.can_use(cur_unit, item):
+            game.state.change('combat_targeting')
+        else:
+            # equip if possible
+            if cur_unit.can_equip(item):
+                action.do(action.EquipItem(cur_unit, item))
+            game.state.change('combat_targeting')
+            
+    def on_combat_art_begin(self, cur_unit: UnitObject):
+        skill_system.deactivate_all_combat_arts(cur_unit)
+
+    def on_combat_art_select(self, cur_unit: UnitObject, ability: Tuple[SkillObject, List[ItemObject]]):
+        skill = ability[0]
+        game.memory['ability'] = 'Combat Art'
+        game.memory['valid_weapons'] = ability[1]
+        skill_system.activate_combat_art(cur_unit, skill)
+        game.state.change('weapon_choice')
+        
     def _handle_extra_ability_selection(self, selection):
-        # setup for callbacks for extra abilities in AbilitySubmenuChoiceState if it ends up being used
-        def on_extra_ability_begin(cur_unit: UnitObject):
-            pass
-
-        def on_extra_ability_select(cur_unit: UnitObject, ability: ItemObject):
-            item = ability
-            targets = game.target_system.get_valid_targets(cur_unit, item)
-            game.memory['targets'] = targets
-            game.memory['ability'] = selection
-            game.memory['item'] = item
-            # Handle abilities that are multi-items, you sick fuck (rain's words not mine)
-            if item.multi_item:
-                all_options = [subitem for subitem in item.subitems \
-                                if (item_funcs.is_spell_recursive(cur_unit, subitem) or 
-                                    item_funcs.is_weapon_recursive(cur_unit, subitem)) and
-                                game.target_system.get_valid_targets_recursive_with_availability_check(cur_unit, subitem)]
-                if all_options:
-                    game.memory['valid_options'] = all_options
-                    game.state.change('ability_multi_item_choice')
-            elif item_funcs.can_use(cur_unit, item):
-                game.state.change('combat_targeting')
-            else:
-                # equip if possible
-                if cur_unit.can_equip(item):
-                    action.do(action.EquipItem(cur_unit, item))
-                game.state.change('combat_targeting')
-
         # handle selection
         if selection in self.extra_abilities.get('_uncategorized', {}):
             # handle directly
-            on_extra_ability_select(self.cur_unit, self.extra_abilities['_uncategorized'][selection])
+            self.on_extra_ability_select(self.cur_unit, self.extra_abilities['_uncategorized'][selection])
         elif selection in self.extra_abilities:  # Category in self.extra_abilities
             # need submenu; construct args to dispatch to AbilitySubmenuChoiceState
-            ability_dict = self.extra_abilities[selection]
-            ability_dict = {ability_name: ability for ability_name, ability in ability_dict.items() 
-                            if game.target_system.get_valid_targets_recursive_with_availability_check(self.cur_unit, ability)}
-            abilities: List[ItemObject] = list(ability_dict.values())
-            options = abilities
-            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=self.cur_unit, unit=self.cur_unit) 
-                         for option in options]
-            game.memory['ability_submenu_choice'] = (abilities,
-                                                     options, info_desc,
-                                                     on_extra_ability_begin,
-                                                     on_extra_ability_select)
-            game.state.change('ability_submenu_choice')
+            self._handle_ability_and_combat_art_submenus(selection)
 
     def _handle_combat_art_selection(self, selection):
-        # setup for callbacks for combat arts in AbilitySubmenuChoiceState if it ends up being used
-        def on_combat_art_begin(cur_unit: UnitObject):
-            skill_system.deactivate_all_combat_arts(cur_unit)
-
-        def on_combat_art_select(cur_unit: UnitObject, ability: Tuple[SkillObject, List[ItemObject]]):
-            skill = ability[0]
-            game.memory['ability'] = 'Combat Art'
-            game.memory['valid_weapons'] = ability[1]
-            skill_system.activate_combat_art(cur_unit, skill)
-            game.state.change('weapon_choice')
-
         # handle selection
         if selection == 'Combat Arts':
             # need submenu; construct args to dispatch to AbilitySubmenuChoiceState
@@ -1221,20 +1205,38 @@ class MenuState(MapState):
             game.state.change('ability_submenu_choice')
         elif selection in self.combat_arts.get('_uncategorized', {}):
             # handle directly
-            on_combat_art_select(self.cur_unit, self.combat_arts['_uncategorized'][selection])
+            self.on_combat_art_select(self.cur_unit, self.combat_arts['_uncategorized'][selection])
         elif selection in self.combat_arts:
             # need submenu; construct args to dispatch to AbilitySubmenuChoiceState
             # since combat arts category is unchecked, self.combat_arts is categorized
-            combat_art_dict = self.combat_arts[selection]  # get combat arts in category
-            combat_arts: List[Tuple[SkillObject, List[ItemObject]]] = list(combat_art_dict.values())
-            options = [combat_art[0] for combat_art in combat_arts]
-            info_desc = [option.desc for option in options]
-            game.memory['ability_submenu_choice'] = (combat_arts,
+            self._handle_ability_and_combat_art_submenus(selection)
+    
+    def _handle_ability_and_combat_art_submenus(self, selection):
+        def on_ability_select(cur_unit, ability):
+            if isinstance(ability, ItemObject): #Ability selected
+                self.on_extra_ability_select(cur_unit, ability)
+            else: #Combat Art
+                self.on_combat_art_select(cur_unit, ability)
+                
+        ability_dict = self.extra_abilities[selection]
+        ability_dict = {ability_name: ability for ability_name, ability in ability_dict.items() 
+                        if game.target_system.get_valid_targets_recursive_with_availability_check(self.cur_unit, ability)}
+        abilities: List[ItemObject] = list(ability_dict.values()) 
+        options_ability = abilities
+        info_desc_ability = [text_funcs.translate_and_text_evaluate(option.desc, self=self.cur_unit, unit=self.cur_unit) 
+                     for option in options_ability]
+        combat_art_dict = self.combat_arts[selection]
+        combat_arts: List[Tuple[SkillObject, List[ItemObject]]] = list(combat_art_dict.values())
+        options_art = [combat_art[0] for combat_art in combat_arts]
+        info_desc_art = [option.desc for option in options_art]
+        options = options_ability + options_art
+        info_desc = info_desc_ability + info_desc_art
+        game.memory['ability_submenu_choice'] = (abilities + combat_arts,
                                                      options, info_desc,
-                                                     on_combat_art_begin,
-                                                     on_combat_art_select)
-            game.state.change('ability_submenu_choice')
-
+                                                     self.on_combat_art_begin, #Is there any harm in running this for abilities also?
+                                                     on_ability_select)
+        game.state.change('ability_submenu_choice')
+    
     def update(self):
         super().update()
         if self.menu:
