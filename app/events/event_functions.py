@@ -284,21 +284,21 @@ def mirror_portrait(self: Event, portrait, speed_mult: float = 1.0, flags=None):
                 self.wait_time = engine.get_time() + event_portrait.transition_speed + 33
                 self.state = 'waiting'
 
-def bop_portrait(self: Event, portrait, num_bops: int = 2, time: int = None, flags=None):
+def bop_portrait(self: Event, portrait, num_bops: int = 2, time: int = utils.frames2ms(8), flags=None):
     flags = flags or set()
 
     _, name = self._get_portrait(portrait)
     event_portrait = self.portraits.get(name)
     if not event_portrait:
         return False
-    if time is not None:
-        event_portrait.bop(num=num_bops, speed=time)
-    else:
-        event_portrait.bop(num=num_bops)
+    event_portrait.bop(num=num_bops, speed=time)
     if 'no_block' in flags:
         pass
     else:
-        self.wait_time = engine.get_time() + 666
+        # Wait time is (1. no bop for time, 2. bop for time, 3. no bop for time, and so on for each bop)
+        # So if 1 bop, 3 * time worth of blocking
+        # If 2 bop, 5 * time worth of blocking, and so on
+        self.wait_time = engine.get_time() + (2 * num_bops * time + time)
         self.state = 'waiting'
 
 def expression(self: Event, portrait, expression_list: List[str], flags=None):
