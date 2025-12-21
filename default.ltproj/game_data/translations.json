@@ -256,6 +256,10 @@
         "text": "This is an armory.{w}{clear}Buy something, would ya?"
     },
     {
+        "nid": "armory_preview",
+        "text": "Welcome to the armory!{w}{clear}These are the weapons we have for sale."
+    },
+    {
         "nid": "armory_buy",
         "text": "What do ya need?"
     },
@@ -270,6 +274,10 @@
     {
         "nid": "vendor_opener",
         "text": "This is a general store. {w}{clear}How can I help you?"
+    },
+    {
+        "nid": "vendor_preview",
+        "text": "Welcome to the general store! {w}{clear}Here are all the items we have for sale."
     },
     {
         "nid": "vendor_buy",

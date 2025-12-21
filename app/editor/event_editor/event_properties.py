@@ -414,6 +414,8 @@ class EventProperties(QWidget):
                 for region in level.regions:
                     if region.region_type == RegionType.EVENT:
                         all_custom_triggers.add(region.sub_nid)
+                        if region.sub_nid in ("Armory", "Shop", "Vendor", "Forge"):
+                            all_custom_triggers.add(region.sub_nid+"Preview")
         all_items += list(all_custom_triggers)
         all_items += [trigger.nid for trigger in ALL_TRIGGERS]
         return all_items

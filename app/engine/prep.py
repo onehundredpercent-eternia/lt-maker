@@ -352,7 +352,7 @@ def _handle_info():
     region = game.cursor.get_previewable_region()
     if region:
         get_sound_thread().play_sfx('Select 1')
-        game.events.trigger(triggers.RegionTrigger(region.sub_nid, None, None, region, preview=True))
+        game.events.trigger(triggers.RegionTrigger(region.sub_nid+"Preview", None, None, region, preview=True))
     else:
         get_sound_thread().play_sfx('Select 3')
         game.boundary.toggle_all_enemy_attacks()
@@ -402,7 +402,7 @@ class PrepFormationState(MapState):
                 region = game.cursor.get_previewable_region()
                 if region:
                     get_sound_thread().play_sfx('Select 1')
-                    game.events.trigger(triggers.RegionTrigger(region.sub_nid, None, None, region, preview=True))
+                    game.events.trigger(triggers.RegionTrigger(region.sub_nid+"Preview", None, None, region, preview=True))
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 1')
