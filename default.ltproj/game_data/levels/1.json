@@ -353,7 +353,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+		        "preview": false
             },
             {
                 "nid": "House2",
@@ -371,7 +372,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+		        "preview": false
             },
             {
                 "nid": "Gate",
@@ -389,7 +391,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+		        "preview": false
             },
             {
                 "nid": "EnemyRein",
@@ -407,7 +410,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+		        "preview": false
             }
         ],
         "unit_groups": [

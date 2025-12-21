@@ -229,6 +229,10 @@ class ModifyRegionWidget(QWidget):
         self.hide_time_box.edit.stateChanged.connect(self.hide_time_changed)
         layout.addWidget(self.hide_time_box)
 
+        self.preview_box = PropertyCheckBox("Preview on info?", QCheckBox, self)
+        self.preview_box.edit.stateChanged.connect(self.preview_changed)
+        layout.addWidget(self.preview_box)
+
         self.status_box = SkillBox(self)
         self.status_box.edit.currentIndexChanged.connect(self.status_changed)
         layout.addWidget(self.status_box)
@@ -242,6 +246,7 @@ class ModifyRegionWidget(QWidget):
         self.only_once_box.hide()
         self.interrupt_move_box.hide()
         self.hide_time_box.hide()
+        self.preview_box.hide()
         self.status_box.hide()
         self.terrain_box.hide()
 
@@ -275,6 +280,7 @@ class ModifyRegionWidget(QWidget):
         self.interrupt_move_box.hide()
         self.status_box.hide()
         self.terrain_box.hide()
+        self.preview_box.hide()
         if self.current.region_type in (RegionType.NORMAL, RegionType.FORMATION):
             pass
         elif self.current.region_type == RegionType.STATUS:
@@ -287,6 +293,7 @@ class ModifyRegionWidget(QWidget):
             self.condition_box.show()
             self.only_once_box.show()
             self.interrupt_move_box.show()
+            self.preview_box.show()
         elif self.current.region_type in (RegionType.VISION, RegionType.FOG):
             self.sub_nid_box.label.setText("Range")
             self.sub_nid_box.show()
@@ -316,6 +323,9 @@ class ModifyRegionWidget(QWidget):
     def hide_time_changed(self, state):
         self.current.hide_time = bool(state)
 
+    def preview_changed(self, state):
+        self.current.preview = bool(state)
+
     def status_changed(self, index):
         self.current.sub_nid = self.status_box.edit.currentText()
         self.window.update_list()
@@ -334,6 +344,7 @@ class ModifyRegionWidget(QWidget):
         self.only_once_box.edit.setChecked(bool(current.only_once))
         self.interrupt_move_box.edit.setChecked(bool(current.interrupt_move))
         self.hide_time_box.edit.setChecked(bool(current.hide_time))
+        self.preview_box.edit.setChecked(bool(current.preview))
         if current.region_type == RegionType.STATUS:
             self.status_box.edit.setValue(str(current.sub_nid))
         elif current.region_type == RegionType.TERRAIN:

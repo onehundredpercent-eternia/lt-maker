@@ -169,7 +169,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": true
             },
             {
                 "nid": "Door1",
@@ -187,7 +188,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "FoWToggle",
@@ -205,7 +207,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "SecretShop",
@@ -223,7 +226,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             }
         ],
         "unit_groups": [],

@@ -28,6 +28,7 @@ class Region(Prefab):
         only_once (bool): Flag indicating if the region object triggers only once. Defaults to False.
         interrupt_move (bool): Flag indicating if the region object interrupts movement. Defaults to False. Set to True for things like an FE `Mine` or for Free Roam events
         hide_time (bool): Flag whether to hide the region's duration indicator.
+        preview (bool): Flag indicating if the region can trigger a preview event. Defaults to False. Set to True for things like prep screen shop previews.
     """
     def __init__(self, nid: NID):
         self.nid: NID = nid
@@ -42,6 +43,7 @@ class Region(Prefab):
         self.interrupt_move: bool = False
         
         self.hide_time: bool = False
+        self.preview: bool = False
 
     @classmethod
     def restore(cls, s_dict):

@@ -20,12 +20,13 @@ class RegionObject(Region):
         only_once (bool): Flag indicating if the region object triggers only once. Defaults to False.
         interrupt_move (bool): Flag indicating if the region object interrupts movement. Defaults to False. Set to True for things like an FE `Mine` or for Free Roam events
         hide_time (bool): Flag whether to hide the region's duration indicator.
+        preview (bool): Flag indicating if the region can trigger a preview event. Defaults to False. Set to True for things like prep screen shop previews.
     """
 
     def __init__(self, nid: NID, region_type: RegionType, 
                  position: Pos = None, size: Tuple[int, int] = [1, 1], 
                  sub_nid: str = None, condition: str = 'True', time_left: Optional[int] = None,
-                 only_once: bool = False, interrupt_move: bool = False, hide_time: bool = False):
+                 only_once: bool = False, interrupt_move: bool = False, hide_time: bool = False, preview: bool = False):
         self.nid = nid
         self.region_type = region_type
         self.position = tuple(position) if position else None
@@ -38,6 +39,7 @@ class RegionObject(Region):
         self.interrupt_move: bool = interrupt_move
         
         self.hide_time: bool = hide_time
+        self.preview: bool = preview
 
         self.data = {}
 
@@ -45,7 +47,7 @@ class RegionObject(Region):
     def from_prefab(cls, prefab):
         return cls(prefab.nid, prefab.region_type, prefab.position, prefab.size,
                    prefab.sub_nid, prefab.condition, prefab.time_left,
-                   prefab.only_once, prefab.interrupt_move, prefab.hide_time)
+                   prefab.only_once, prefab.interrupt_move, prefab.hide_time, prefab.preview)
 
     def save(self) -> dict:
         serial_dict = {}
@@ -59,6 +61,7 @@ class RegionObject(Region):
         serial_dict['only_once'] = self.only_once
         serial_dict['interrupt_move'] = self.interrupt_move
         serial_dict['hide_time'] = self.hide_time
+        serial_dict['preview'] = self.preview
 
         serial_dict['data'] = self.data
         return serial_dict
@@ -67,6 +70,6 @@ class RegionObject(Region):
     def restore(cls, dat: dict):
         self = cls(dat['nid'], dat['region_type'], dat['position'], dat['size'],
                    dat['sub_nid'], dat['condition'], dat['time_left'],
-                   dat['only_once'], dat['interrupt_move'], dat.get('hide_time', False))
+                   dat['only_once'], dat['interrupt_move'], dat.get('hide_time', False), dat.get('preview', False))
         self.data = dat['data']
         return self

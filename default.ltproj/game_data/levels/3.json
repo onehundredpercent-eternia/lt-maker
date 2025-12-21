@@ -489,7 +489,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Chest2",
@@ -507,7 +508,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Chest3",
@@ -525,7 +527,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Chest4",
@@ -543,7 +546,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Door1",
@@ -561,7 +565,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Door2",
@@ -579,7 +584,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Door3",
@@ -597,7 +603,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Seize",
@@ -615,7 +622,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             }
         ],
         "unit_groups": [

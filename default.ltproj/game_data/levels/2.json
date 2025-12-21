@@ -333,7 +333,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Village2",
@@ -351,7 +352,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Village3",
@@ -369,7 +371,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Armory",
@@ -387,7 +390,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": true
             },
             {
                 "nid": "DestroyVillage1",
@@ -405,7 +409,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "DestroyVillage2",
@@ -423,7 +428,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "DestroyVillage3",
@@ -441,7 +447,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             }
         ],
         "unit_groups": [

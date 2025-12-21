@@ -764,7 +764,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Village2",
@@ -782,7 +783,8 @@
                 "time_left": null,
                 "only_once": true,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "1",
@@ -800,7 +802,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "7",
@@ -818,7 +821,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "6",
@@ -836,7 +840,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "5",
@@ -854,7 +859,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "4",
@@ -872,7 +878,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "3",
@@ -890,7 +897,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "2",
@@ -908,7 +916,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             },
             {
                 "nid": "Trigger",
@@ -926,7 +935,8 @@
                 "time_left": null,
                 "only_once": false,
                 "interrupt_move": false,
-                "hide_time": false
+                "hide_time": false,
+				"preview": false
             }
         ],
         "unit_groups": [

@@ -60,7 +60,7 @@ class LevelCursor(BaseCursor):
 
     def get_previewable_region(self) -> Optional[RegionObject]:
         for region in self.game.level.regions:
-            if self.position in region.get_all_positions() and region.region_type == RegionType.EVENT and region.sub_nid in ("Armory", "Shop", "Vendor", "Forge"):
+            if self.position in region.get_all_positions() and region.region_type == RegionType.EVENT and region.preview:
                 return region
 
     def get_bounds(self) -> Tuple[int, int, int, int]:
