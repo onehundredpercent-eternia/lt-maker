@@ -2893,11 +2893,13 @@ Causes *Unit* to enter a shop that sells *ItemList* items.
 The optional *ShopFlavor* keyword determines whether the shop appears as a vendor, armory, or your own custom flavor.
 The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock.
 The optional *ShopId* keyword is available if you want to save what was bought from the shop in future shops. Memory will be preserved across shops with the same *ShopId*.
+The preview flag allows the player to look at the stock, but not to buy.
         """
 
     keywords = ["Unit", "ItemList"]
     optional_keywords = ["ShopFlavor", "StockList", "ShopId"]
     keyword_types = ["Unit", "ItemList", "ShopFlavor", "IntegerList", "Nid"]
+    _flags = ["preview"]
 
 class Choice(EventCommand):
     nid = 'choice'

@@ -145,9 +145,9 @@ def buy_price(unit: UnitObject, item: ItemObject) -> int:
         int: The buy price of the item.
     """
     value = item_system.buy_price(unit, item)
-    if value:
+    if value and unit:
         value *= skill_system.modify_buy_price(unit, item)
-    else:
+    elif not value:
         return 0
     return int(value)
 

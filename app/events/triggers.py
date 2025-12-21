@@ -393,6 +393,7 @@ class RegionTrigger(EventTrigger):
     position: Tuple[int, int] #: The position of the unit triggering the region
     region: RegionObject #: the name of the region that was triggered
     item: ItemObject = None #: the item used to trigger this region (used with unlock staves and keys)
+    preview: bool = False #: whether to consider this triggering as a preview (used for shop previews)
 
 @dataclass(init=True)
 class EventOnHit(EventTrigger):

@@ -348,6 +348,11 @@ def _handle_info():
         game.memory['next_state'] = 'info_menu'
         game.memory['current_unit'] = game.cursor.get_hover()
         game.state.change('transition_to')
+        return
+    region = game.cursor.get_previewable_region()
+    if region:
+        get_sound_thread().play_sfx('Select 1')
+        game.events.trigger(triggers.RegionTrigger(region.sub_nid, None, None, region, preview=True))
     else:
         get_sound_thread().play_sfx('Select 3')
         game.boundary.toggle_all_enemy_attacks()
@@ -393,6 +398,11 @@ class PrepFormationState(MapState):
                         game.boundary.toggle_unit(cur_unit)
                     else:
                         get_sound_thread().play_sfx('Error')
+            else:
+                region = game.cursor.get_previewable_region()
+                if region:
+                    get_sound_thread().play_sfx('Select 1')
+                    game.events.trigger(triggers.RegionTrigger(region.sub_nid, None, None, region, preview=True))
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 1')

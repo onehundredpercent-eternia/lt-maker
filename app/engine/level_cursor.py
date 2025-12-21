@@ -4,6 +4,9 @@ from typing import Optional, Tuple
 
 from app.engine.game_counters import ANIMATION_COUNTERS
 from app.engine.objects.unit import UnitObject
+from app.engine.objects.region import RegionObject
+from app.events.regions import RegionType
+
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.counters import GenericAnimCounter
 from app.data.database.database import DB
@@ -54,6 +57,11 @@ class LevelCursor(BaseCursor):
                 logging.error("Somehow, the unit %s has no position even though the engine thinks they are at %s", unit, self.position)
                 raise ValueError
         return None
+
+    def get_previewable_region(self) -> Optional[RegionObject]:
+        for region in self.game.level.regions:
+            if self.position in region.get_all_positions() and region.region_type == RegionType.EVENT and region.sub_nid in ("Armory", "Shop", "Vendor", "Forge"):
+                return region
 
     def get_bounds(self) -> Tuple[int, int, int, int]:
         self.game_board = self.game.board
