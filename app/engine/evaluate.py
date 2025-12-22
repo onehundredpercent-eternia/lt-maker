@@ -1,5 +1,9 @@
 import logging
 import math, random, re
+import pygame
+import pygame.image
+import pygame.time
+
 from typing import Any, Dict
 
 from app.utilities import utils, static_random
