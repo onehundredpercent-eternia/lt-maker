@@ -13,7 +13,7 @@ from app.data.database.difficulty_modes import RNGOption
 from app.data.resources.resources import RESOURCES
 from app.data.resources.sounds import SFXPrefab, SongPrefab
 from app.engine import (action, background, banner, base_surf, dialog, engine,
-                        icons, image_mods, item_funcs, item_system,
+                        gui, icons, image_mods, item_funcs, item_system,
                         save, skill_system, unit_funcs)
 from app.engine.game_board import FogOfWarType
 from app.engine.achievements import ACHIEVEMENTS
@@ -284,21 +284,21 @@ def mirror_portrait(self: Event, portrait, speed_mult: float = 1.0, flags=None):
                 self.wait_time = engine.get_time() + event_portrait.transition_speed + 33
                 self.state = 'waiting'
 
-def bop_portrait(self: Event, portrait, num_bops: int = 2, time: int = None, flags=None):
+def bop_portrait(self: Event, portrait, num_bops: int = 2, time: int = utils.frames2ms(8), flags=None):
     flags = flags or set()
 
     _, name = self._get_portrait(portrait)
     event_portrait = self.portraits.get(name)
     if not event_portrait:
         return False
-    if time is not None:
-        event_portrait.bop(num=num_bops, speed=time)
-    else:
-        event_portrait.bop(num=num_bops)
+    event_portrait.bop(num=num_bops, speed=time)
     if 'no_block' in flags:
         pass
     else:
-        self.wait_time = engine.get_time() + 666
+        # Wait time is (1. no bop for time, 2. bop for time, 3. no bop for time, and so on for each bop)
+        # So if 1 bop, 3 * time worth of blocking
+        # If 2 bop, 5 * time worth of blocking, and so on
+        self.wait_time = engine.get_time() + (2 * num_bops * time + time)
         self.state = 'waiting'
 
 def expression(self: Event, portrait, expression_list: List[str], flags=None):
@@ -1282,10 +1282,17 @@ def set_variant(self: Event, unit: NID, string: str = None, flags=None):
     action.do(action.SetVariant(actor, string))
 
 def set_current_hp(self: Event, unit, hp: int, flags=None):
+    flags = flags or set()
+
     actor = self._get_unit(unit)
     if not actor:
         self.logger.error("set_current_hp: Couldn't find unit %s" % unit)
         return
+
+    if 'damage_numbers' in flags and actor.position:
+        difference: int = unit.get_hp() - hp
+        actor.sprite.add_damage_number(difference)
+
     action.do(action.SetHP(actor, hp))
 
 def set_current_mana(self: Event, unit, mana: int, flags=None):
