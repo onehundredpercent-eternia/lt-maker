@@ -119,6 +119,10 @@ class Defaults():
         return 0
 
     @staticmethod
+    def unit_sprite_alpha_tint(unit) -> float:
+        return 0.0
+
+    @staticmethod
     def modify_buy_price(unit, item) -> float:
         return 1.0
 
@@ -421,7 +425,7 @@ def get_extra_abilities(unit: UnitObject, categorized: bool = False):
     """
     abilities = defaultdict(dict) if categorized else {}
     for skill in unit.skills:
-        ability_comps = [] # keep behavior from previous implementation
+        ability_comps = []  # keep behavior from previous implementation
         category = None
         for component in skill.components:
             if component.defines('extra_ability'):
@@ -438,7 +442,6 @@ def get_extra_abilities(unit: UnitObject, categorized: bool = False):
                     abilities[category][ability_name] = new_item
                 else:
                     abilities[ability_name] = new_item
-
     return abilities
 
 def ai_priority_multiplier(unit) -> float:
