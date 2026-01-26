@@ -138,7 +138,7 @@ class UnitPortrait(QPushButton):
                 return
             if not res.pixmap:
                 res.pixmap = QPixmap(res.full_path)
-            pixmap = res.pixmap.copy(0, 0, self.width, self.height)
+            pixmap = res.pixmap.copy(*res.get_face_frame())
             pic = QPixmap.fromImage(editor_utilities.convert_colorkey(pixmap.toImage()))
             pic = QIcon(pic)
             self.setIcon(pic)

@@ -97,8 +97,11 @@ def itergrid(width: int, height: int) -> List[Pos]:
 def dot_product(a: tuple, b: tuple) -> float:
     return sum(a[i] * b[i] for i in range(len(b)))
 
-def tuple_sub(a: tuple, b: tuple) -> tuple:
-    return tuple(map(sub, a, b))
+def tuple_sub(a: tuple, *b: tuple) -> tuple:
+    res = a
+    for next_tup in b:
+        res = tuple(map(sub, res, next_tup))
+    return res
 
 def tuple_add(a: tuple, *b: tuple) -> tuple:
     accum = a

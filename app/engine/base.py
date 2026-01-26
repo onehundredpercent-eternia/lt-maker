@@ -825,14 +825,20 @@ class LoreDisplay():
         return False
 
     def draw(self, surf):
+        bottom_right = (self.width, WINHEIGHT - 12)
+        topleft_pad = (2, 4)     # Paddings from the bg sprite
+        bottomright_pad = (1, 5)
         if self.lore:
             image = self.bg_surf.copy()
+            width, height = utils.tuple_sub(image.get_size(), topleft_pad, bottomright_pad)
             if game.get_unit(self.lore.nid):
-                unit = game.get_unit(self.lore.nid)
-                icons.draw_portrait(image, unit, (self.width - 96, WINHEIGHT - 12 - 80))
+                nid = game.get_unit(self.lore.nid).portrait_nid
             elif self.lore.nid in DB.units:
-                portrait, offset = icons.get_portrait_from_nid(DB.units.get(self.lore.nid).portrait_nid)
-                image.blit(portrait, (self.width - 96, WINHEIGHT - 12 - 80))
+                nid = DB.units.get(self.lore.nid).portrait_nid
+            if nid:
+                portrait = icons.get_best_portrait(nid, width, height).convert_alpha()
+                portrait = image_mods.make_translucent(portrait, 0.5)
+                image.blit(portrait, utils.tuple_sub(bottom_right, portrait.get_size()))
 
             render_text(image, ['text'], [self.lore.title], ['blue'], (self.width // 2, 4), HAlignment.CENTER)
 

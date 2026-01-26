@@ -317,7 +317,8 @@ class CreditDisplay():
         if self.portrait:
             self.portrait.update()
             im = self.portrait.create_image()
-            surf.blit(im, utils.tuple_add((self.width - 8 - 96, WINHEIGHT - 12 - 80), self.topleft))
+            # Blit from bottom right
+            surf.blit(im, utils.tuple_sub(utils.tuple_add((self.width - 8, WINHEIGHT - 12), self.topleft)), im.get_size())
 
         elif credit.credit_type == ResourceType.MAP_SPRITES:
             y_pos = 20

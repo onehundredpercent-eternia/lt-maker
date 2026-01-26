@@ -5,7 +5,7 @@ from app.utilities import utils
 from app.utilities.enums import HAlignment
 import app.utilities.algorithms.interpolation as interp
 
-from app.constants import COLORKEY
+from app.constants import COLORKEY, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 
@@ -134,10 +134,10 @@ def draw_faction(surf, faction, topleft):
 def get_portrait(unit) -> tuple:
     image = RESOURCES.portraits.get(unit.portrait_nid)
     if image:
-        offset = image.info_offset
+        offset = image.get_info_coord()
         if not image.image:
             image.image = engine.image_load(image.full_path)
-        image = engine.subsurface(image.image, (0, 0, 96, 80))
+        image = engine.subsurface(image.image, image.get_face_frame())
     else:  # Generic class portrait
         klass = DB.classes.get(unit.klass)
         image = RESOURCES.icons80.get(klass.icon_nid)
@@ -146,7 +146,7 @@ def get_portrait(unit) -> tuple:
         if not image.image:
             image.image = engine.image_load(image.full_path)
         image = engine.subsurface(image.image, (klass.icon_index[0] * 80, klass.icon_index[1] * 72, 80, 72))
-        offset = 0
+        offset = (0, 0)
 
     image = image.convert()
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
@@ -156,14 +156,14 @@ def get_portrait(unit) -> tuple:
 def get_portrait_from_nid(portrait_nid) -> tuple:
     image = RESOURCES.portraits.get(portrait_nid)
     if image:
-        offset = image.info_offset
+        offset = image.get_info_coord()
         if not image.image:
             image.image = engine.image_load(image.full_path)
-        image = engine.subsurface(image.image, (0, 0, 96, 80))
+        image = engine.subsurface(image.image, image.get_face_frame())
         image = image.convert()
         engine.set_colorkey(image, COLORKEY, rleaccel=True)
     else:
-        offset = 0
+        offset = (0, 0)
     return image, offset
 
 def draw_portrait(surf, unit, topleft=None, bottomright=None):
@@ -174,13 +174,39 @@ def draw_portrait(surf, unit, topleft=None, bottomright=None):
     if topleft:
         surf.blit(image, topleft)
     elif bottomright:
-        surf.blit(image, (bottomright[0] - 96, bottomright[1] - 80))
+        surf.blit(image, utils.tuple_sub(bottomright, image.get_size()))
     return surf
+
+def get_best_portrait(portrait_nid, width, height):
+    # Sub-surface out the best portion of the portrait given the size
+    prefab = RESOURCES.portraits.get(portrait_nid)
+    if prefab:
+        if not prefab.image:
+            prefab.image = engine.image_load(prefab.full_path)
+        im = engine.subsurface(prefab.image, prefab.get_face_frame())
+        x_offset = utils.clamp(prefab.get_info_coord()[0] + (INFO_PORTRAIT_WIDTH - width) // 2,
+                                0, prefab.face_size[0] - width)
+        y_offset = utils.clamp(prefab.get_info_coord()[1] + (INFO_PORTRAIT_HEIGHT - height) // 2,
+                                0, prefab.face_size[1] - height)
+    else:
+        klass = DB.classes.get(unit.klass)
+        prefab = RESOURCES.icons80.get(klass.icon_nid)
+        if not prefab:
+            return None
+        if not prefab.image:
+            prefab.image = engine.image_load(prefab.full_path)
+        im = engine.subsurface(prefab.image, (klass.icon_index[0] * 80, klass.icon_index[1] * 72, 80, 72))
+        x_offset = max(0, (80 - width) // 2)
+        y_offset = max(0, (72 - height)// 2)
+
+    portrait = engine.subsurface(im, (x_offset, y_offset, width, height)).convert()
+    engine.set_colorkey(portrait, COLORKEY, rleaccel=True)
+    return portrait
 
 def get_chibi(portrait):
     if not portrait.image:
         portrait.image = engine.image_load(portrait.full_path)
-    image = engine.subsurface(portrait.image, (portrait.image.get_width() - 32, 16, 32, 32))
+    image = engine.subsurface(portrait.image, portrait.get_minimug())
     image = image.convert()
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
     return image
@@ -194,7 +220,7 @@ def draw_chibi(surf, nid, topleft=None, bottomright=None):
     if topleft:
         surf.blit(image, topleft)
     elif bottomright:
-        surf.blit(image, (bottomright[0] - 32, bottomright[1] - 32))
+        surf.blit(image, utils.tuple_sub(bottomright, image.get_size()))
     return surf
 
 def draw_stat(surf, stat_nid, unit, topright, compact=False):

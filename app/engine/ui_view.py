@@ -4,7 +4,7 @@ from app.engine.graphics.text.text_renderer import fix_tags, render_text, text_w
 import logging
 from app.engine.text_evaluator import TextEvaluator
 import app.engine.config as cf
-from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import RNGOption
 from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
@@ -1062,11 +1062,12 @@ class ItemDescriptionPanel():
             cursor_left = True
             topleft = (8, WINHEIGHT - 8 - self.surf.get_height())
 
-        portrait, _ = icons.get_portrait(self.unit)
+        width = 96
+        height = topleft[1] + 4
+        portrait = icons.get_best_portrait(self.unit.portrait_nid, width, height)
         if portrait:
-            if cursor_left:
-                portrait = engine.flip_horiz(portrait)
-            surf.blit(portrait, (topleft[0] + 2, topleft[1] - 76))
+            surf.blit(portrait, (topleft[0] + 2 + (width - portrait.get_width()) // 2,
+                                 height - portrait.get_height()))
         copy_surf = self.surf.copy()
         self._draw_item_delta_info(copy_surf)
         surf.blit(copy_surf, topleft)
