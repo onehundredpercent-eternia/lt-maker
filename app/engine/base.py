@@ -831,14 +831,15 @@ class LoreDisplay():
         if self.lore:
             image = self.bg_surf.copy()
             width, height = utils.tuple_sub(image.get_size(), topleft_pad, bottomright_pad)
+            unit = None
             if game.get_unit(self.lore.nid):
-                nid = game.get_unit(self.lore.nid).portrait_nid
+                unit = game.get_unit(self.lore.nid)
             elif self.lore.nid in DB.units:
-                nid = DB.units.get(self.lore.nid).portrait_nid
-            if nid:
-                portrait = icons.get_best_portrait(nid, width, height).convert_alpha()
+                unit = DB.units.get(self.lore.nid)
+            if unit:
+                portrait = icons.get_portrait_by_size(unit, width, height).convert_alpha()
                 portrait = image_mods.make_translucent(portrait, 0.5)
-                image.blit(portrait, utils.tuple_sub(bottom_right, portrait.get_size()))
+                image.blit(portrait, (utils.tuple_sub(image.get_size(), portrait.get_size(), bottomright_pad)))
 
             render_text(image, ['text'], [self.lore.title], ['blue'], (self.width // 2, 4), HAlignment.CENTER)
 

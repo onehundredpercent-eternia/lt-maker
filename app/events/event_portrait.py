@@ -136,7 +136,7 @@ class EventPortrait():
         main_image = self.main_portrait.copy()
         # For smile image
         if "OpenMouth" in self.expressions:
-            idx = 0
+            idx = self.portrait.mouth_frames-1
         else:
             idx = self.talk_state
         mouth_image = engine.subsurface(self.portrait.image,

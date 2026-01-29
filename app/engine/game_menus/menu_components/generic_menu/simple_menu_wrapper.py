@@ -147,7 +147,7 @@ class SimpleMenuUI():
             return (get_icon(None), "ERR", "ERR")
 
     def parse_portrait(self, portrait_nid: NID) -> Tuple[engine.Surface, str, str]:
-        portrait, _ = get_portrait_from_nid(portrait_nid)
+        portrait, offset = get_portrait_from_nid(portrait_nid)
         if not portrait:
             portrait = engine.create_surface((INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT))
         else:

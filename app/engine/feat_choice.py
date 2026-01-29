@@ -131,7 +131,7 @@ class FeatChoiceState(MapState):
         self.menu.update()
 
     def draw_face(self, surf):
-        im = icons.get_best_portrait(self.unit.portrait_nid, 80, 72)
+        im = icons.get_portrait_by_size(self.unit, 80, 72)
         if im:
             topleft = self.menu.get_topleft()
             surf.blit(im, ((WINWIDTH - im.get_width())//2, topleft[1] - im.get_height()))

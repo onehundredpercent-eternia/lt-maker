@@ -166,6 +166,16 @@ def get_portrait_from_nid(portrait_nid) -> tuple:
         offset = (0, 0)
     return image, offset
 
+def get_portrait_by_size(unit, width, height):
+    # Sub-surface out the best portion of the portrait given the size
+    image, offset = get_portrait(unit)
+    x_offset = max(min(offset[0] + (min( INFO_PORTRAIT_WIDTH,  image.get_width()) -  width)//2,
+                        image.get_width() -  width), 0)
+    y_offset = max(min(offset[1] + (min(INFO_PORTRAIT_HEIGHT, image.get_height()) - height)//2,
+                        image.get_height()- height), 0)
+    portrait = engine.subsurface(image, (x_offset, y_offset, width, height))
+    return portrait
+
 def draw_portrait(surf, unit, topleft=None, bottomright=None):
     image, _ = get_portrait(unit)
     if not image:
@@ -176,32 +186,6 @@ def draw_portrait(surf, unit, topleft=None, bottomright=None):
     elif bottomright:
         surf.blit(image, utils.tuple_sub(bottomright, image.get_size()))
     return surf
-
-def get_best_portrait(portrait_nid, width, height):
-    # Sub-surface out the best portion of the portrait given the size
-    prefab = RESOURCES.portraits.get(portrait_nid)
-    if prefab:
-        if not prefab.image:
-            prefab.image = engine.image_load(prefab.full_path)
-        im = engine.subsurface(prefab.image, prefab.get_face_frame())
-        x_offset = utils.clamp(prefab.get_info_coord()[0] + (INFO_PORTRAIT_WIDTH - width) // 2,
-                                0, prefab.face_size[0] - width)
-        y_offset = utils.clamp(prefab.get_info_coord()[1] + (INFO_PORTRAIT_HEIGHT - height) // 2,
-                                0, prefab.face_size[1] - height)
-    else:
-        klass = DB.classes.get(unit.klass)
-        prefab = RESOURCES.icons80.get(klass.icon_nid)
-        if not prefab:
-            return None
-        if not prefab.image:
-            prefab.image = engine.image_load(prefab.full_path)
-        im = engine.subsurface(prefab.image, (klass.icon_index[0] * 80, klass.icon_index[1] * 72, 80, 72))
-        x_offset = max(0, (80 - width) // 2)
-        y_offset = max(0, (72 - height)// 2)
-
-    portrait = engine.subsurface(im, (x_offset, y_offset, width, height)).convert()
-    engine.set_colorkey(portrait, COLORKEY, rleaccel=True)
-    return portrait
 
 def get_chibi(portrait):
     if not portrait.image:

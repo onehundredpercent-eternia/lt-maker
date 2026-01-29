@@ -431,12 +431,11 @@ class InfoMenuState(State):
             self.current_portrait.update()
             im = self.current_portrait.create_image()
             offset = self.current_portrait.portrait.get_info_coord()
-            im = engine.subsurface(im, (*offset, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT))
         # Draw portrait onto the portrait surf
         if im:
-            x_pos = (im.get_width() - 80)//2
-            im_surf = engine.subsurface(im, (x_pos, 0, 80, 72))
-            portrait_surf.blit(im_surf, (8, 8))
+            im_surf = engine.subsurface(im, (*offset, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT))
+            portrait_surf.blit(im_surf, (8 + (INFO_PORTRAIT_WIDTH - im_surf.get_width()) // 2,
+                                         8 + (INFO_PORTRAIT_HEIGHT- im_surf.get_height())// 2))
 
         # Stick it on the surface
         if self.transparency:

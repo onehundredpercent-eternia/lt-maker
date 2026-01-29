@@ -55,7 +55,7 @@ def draw_unit_face(surf, topleft, unit, right):
     bottomright_pad = (1, 5)
     bg_surf_size = (104, 16 * DB.constants.total_items() + 8)   # Copied from above
     width, height = utils.tuple_sub(bg_surf_size, topleft_pad, bottomright_pad)
-    face_image = icons.get_best_portrait(unit.portrait_nid, width, height)
+    face_image = icons.get_portrait_by_size(unit, width, height)
     left = x + topleft_pad[0] + (width - face_image.get_width()) // 2           # blit at center
     top = y - bottomright_pad[1] + bg_surf_size[1] - face_image.get_height()    # blit from bottom
 
@@ -572,7 +572,7 @@ class Choice(Simple):
                         topleft_pad = (4, 8)     # Paddings from the bg sprite
                         bottomright_pad = (1, 5)
                         width, height = utils.tuple_sub(surf.get_size(), topleft_pad, bottomright_pad)
-                        portrait = icons.get_best_portrait(unit.portrait_nid, width, height)
+                        portrait = icons.get_portrait_by_size(unit, width, height).convert_alpha()
                         portrait = image_mods.make_translucent(portrait, 0.5)
                         surf.blit(portrait, (topleft_pad[0] + (width - portrait.get_width()) // 2,
                                              surf.get_height() - portrait.get_height() - bottomright_pad[1]))
@@ -976,12 +976,12 @@ class Trade(Simple):
         # Owner
         bg_surf_width = 104
         portrait_size = (96, 68)
-        owner_surf = icons.get_best_portrait(self.owner.portrait_nid, *portrait_size)
+        owner_surf = icons.get_portrait_by_size(self.owner, *portrait_size)
         owner_surf = engine.flip_horiz(owner_surf)
         surf.blit(owner_surf, (11 + (bg_surf_width - owner_surf.get_width()) // 2, 0))
 
         # Partner
-        partner_surf = icons.get_best_portrait(self.partner.portrait_nid, *portrait_size)
+        partner_surf = icons.get_portrait_by_size(self.partner, *portrait_size)
         surf.blit(partner_surf, (125 + (bg_surf_width - partner_surf.get_width()) // 2, 0))
 
         if self.menu1.info_flag:
@@ -1597,10 +1597,9 @@ class Convoy():
         # Draw Portrait to left of menu
         # Owner
         if not self.disp_value:
-            owner_surf, offset = icons.get_portrait(self.owner)
-            owner_surf = engine.subsurface(owner_surf, (*offset, 96, 68))
+            owner_surf = icons.get_portrait_by_size(self.owner, 96, 68)
             owner_surf = engine.flip_horiz(owner_surf)
-            surf.blit(owner_surf, (18, 0))
+            surf.blit(owner_surf, (18, 68 - owner_surf.get_height()))
 
         # Get item owner
         surf.blit(self.owner_surf, (156, 0))

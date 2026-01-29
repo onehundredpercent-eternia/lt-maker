@@ -1064,8 +1064,10 @@ class ItemDescriptionPanel():
 
         width = 96
         height = topleft[1] + 4
-        portrait = icons.get_best_portrait(self.unit.portrait_nid, width, height)
+        portrait = icons.get_portrait_by_size(self.unit, width, height)
         if portrait:
+            if cursor_left:
+                portrait = engine.flip_horiz(portrait)
             surf.blit(portrait, (topleft[0] + 2 + (width - portrait.get_width()) // 2,
                                  height - portrait.get_height()))
         copy_surf = self.surf.copy()

@@ -21,8 +21,12 @@ vertical_screen_positions = {'Top': 0,
                              'Middle': (WINHEIGHT - 80) // 2,
                              'Bottom': WINHEIGHT - 80}
 
-def parse_screen_position(pos: Tuple | str, portrait_y_pos: int = None) -> Tuple[Point, bool]:
+def parse_screen_position(pos: Tuple | str, portrait_height: int = 80) -> Tuple[Point, bool]:
     """Returns a tuple of Point (on screen) and bool (indicating if the portrait should be mirrored)"""
+    true_vert_screen_pos = {'Top': 0,
+                            'Middle': (WINHEIGHT - portrait_height) // 2,
+                            'Bottom': WINHEIGHT - portrait_height}
+
     if not isinstance(pos, tuple):
         pos = (pos,)
     def resolve_pos(p: int | str, horiz=True) -> int:
@@ -32,7 +36,7 @@ def parse_screen_position(pos: Tuple | str, portrait_y_pos: int = None) -> Tuple
             if horiz:
                 return horizontal_screen_positions.get(p, 0)
             else:
-                return vertical_screen_positions.get(p, 0)
+                return true_vert_screen_pos.get(p, 0)
     position = (0, 0)
 
     if len(pos) == 2:
@@ -40,9 +44,7 @@ def parse_screen_position(pos: Tuple | str, portrait_y_pos: int = None) -> Tuple
     else:
         pos = pos[0]
         if isinstance(pos, int) or pos in horizontal_screen_positions:
-            default_y = portrait_y_pos if portrait_y_pos is not None \
-                                else vertical_screen_positions['Bottom']
-            position = resolve_pos(pos), default_y
+            position = resolve_pos(pos), true_vert_screen_pos['Bottom']
         else:
             position = horizontal_screen_positions['Left'], resolve_pos(pos, False)
     return position, position[0] <= horizontal_screen_positions['CenterLeft']

@@ -38,7 +38,7 @@ from app.engine.persistent_records import RECORDS
 from app.engine.sound import SongObject, get_sound_thread
 from app.events import event_commands, regions, triggers
 from app.events.event_portrait import EventPortrait
-from app.events.screen_positions import parse_screen_position, horizontal_screen_positions
+from app.events.screen_positions import parse_screen_position
 from app.events.speak_style import SpeakStyle
 from app.events.utils import TableRows
 from app.sprites import SPRITES
@@ -127,8 +127,7 @@ def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None
         self.logger.error("add_portrait: Couldn't find portrait %s" % name)
         return False
 
-    position, mirror = parse_screen_position(screen_position,
-                            portrait_y_pos = WINHEIGHT - portrait_prefab.face_size[1])
+    position, mirror = parse_screen_position(screen_position, portrait_height=portrait_prefab.face_size[1])
 
     priority = self.priority_counter
     if 'low_priority' in flags:
@@ -228,8 +227,7 @@ def move_portrait(self: Event, portrait, screen_position: Tuple, speed_mult: flo
     if not event_portrait:
         return False
 
-    position, _ = parse_screen_position(screen_position,
-                            portrait_y_pos = event_portrait.position[1])
+    position, _ = parse_screen_position(screen_position, portrait_height=event_portrait.get_height())
 
     if 'immediate' in flags or self.do_skip:
         event_portrait.quick_move(position)

@@ -95,7 +95,7 @@ class PortraitPrefab(WithResources, Prefab):
                 *self.blink_size)
 
     def get_mouth_frame(self, idx: int, smile: bool = False) -> Tuple[int, int, int, int]:
-        return (self.full_size[0] - self.blink_size[0] - self.mouth_size[0]*(self.mouth_frames-idx+1),
+        return (self.full_size[0] - self.blink_size[0] - self.mouth_size[0]*(idx+2),
                 self.full_size[1] - self.mouth_size[1] * (2 if smile else 1),
                 *self.mouth_size)
 
