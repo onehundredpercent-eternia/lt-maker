@@ -8,7 +8,6 @@ from typing import Dict, Optional
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QPalette
 
-from app.editor.settings.main_settings_controller import MainSettingsController
 from app.engine.item_system import text_color
 
 WHITE = QColor(255, 255, 255)
@@ -402,6 +401,7 @@ THEMES: Dict[ThemeType, QPalette] = {
 }
 
 def get_theme(theme: Optional[ThemeType] = None) -> QLightPalette:
+    from app.editor.settings.main_settings_controller import MainSettingsController
     if not theme:
         settings = MainSettingsController()
         theme_idx = settings.get_theme(0)

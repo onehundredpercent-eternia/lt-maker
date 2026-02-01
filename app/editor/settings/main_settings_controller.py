@@ -5,6 +5,8 @@ from typing import List, Tuple
 from PyQt5.QtCore import QSettings, QDir
 from PyQt5.QtCore import Qt
 
+from app.editor.settings.preference_definitions import Preference
+
 from .project_history_controller import ProjectHistoryController, ProjectHistoryEntry
 from .component_settings_controller import ComponentSettingsController
 
@@ -66,7 +68,7 @@ class MainSettingsController():
 
     def set_code_font_in_boxes(self, value):
         self.state.setValue("code_font_in_boxes", value)
-        
+
     def get_code_font_in_boxes(self, fallback=True) -> bool:
         return self.state.value("code_font_in_boxes", fallback, type=bool)
 
@@ -112,28 +114,21 @@ class MainSettingsController():
     def get_default_anim_background(self, fallback=True):
         return self.state.value('default_anim_background', fallback, type=bool)
 
-    """========== General Control Settings =========="""
+    """========== Generic Preference Accessors =========="""
+    def get_preference(self, pref: Preference):
+        """
+        Generic getter that handles any Preference enum value.
+        """
+        from app.editor.settings.preference_definitions import PREFERENCE_TYPE_TO_STORAGE_TYPE
+        defn = pref.definition
+        # Determine storage type and default value for QSettings
+        storage_type = PREFERENCE_TYPE_TO_STORAGE_TYPE.get(defn.pref_type, str)
+        storage_default = defn.default_value
+        return self.state.value(defn.setting_name, storage_default, type=storage_type)
 
-    def set_place_button(self, value):
-        self.state.setValue("place_button", value)
-
-    def get_place_button(self, fallback=None):
-        return self.state.value('place_button', fallback, type=Qt.MouseButton)
-
-    def set_select_button(self, value):
-        self.state.setValue('select_button', value)
-
-    def get_select_button(self, fallback=None):
-        return self.state.value('select_button', fallback, type=Qt.MouseButton)
-
-    def set_autocomplete_button(self, value):
-        self.state.setValue('autocomplete_button', value)
-
-    def get_autocomplete_button(self, fallback=None):
-        return self.state.value('autocomplete_button', fallback, type=Qt.Key)
-
-    def set_editor_close_button(self, value):
-        self.state.setValue('editor_close_button', value)
-
-    def get_editor_close_button(self, fallback=Qt.Key_Escape):
-        return self.state.value('editor_close_button', fallback, type=Qt.Key)
+    def set_preference(self, pref: Preference, value):
+        """
+        Generic setter that handles any Preference enum value.
+        """
+        defn = pref.definition
+        self.state.setValue(defn.setting_name, value)

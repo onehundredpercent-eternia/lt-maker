@@ -17,6 +17,7 @@ from app import dark_theme
 from app.data.database.database import DB
 from app.data.resources.resources import RESOURCES
 from app.editor.settings import MainSettingsController
+from app.editor.settings.preference_definitions import Preference
 from app.events import event_commands, event_validators
 from app.events.event_version import EventVersion
 from app.events.event_structs import ParseMode
@@ -94,7 +95,7 @@ class EventScriptCompleter(QCompleter):
 
     def handleKeyPressEvent(self, event) -> bool:
         # If completer is up, Tab/Enter can auto-complete
-        if event.key() == self.settings.get_autocomplete_button(Qt.Key_Tab):
+        if event.key() == self.settings.get_preference(Preference.AUTOCOMPLETE_BUTTON):
             if self.popup().isVisible() and len(self.popup().selectedIndexes()) > 0:
                 choice = self.popup().selectedIndexes()[0]
                 self.do_complete(choice)
