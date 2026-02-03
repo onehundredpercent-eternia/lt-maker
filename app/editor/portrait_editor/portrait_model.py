@@ -37,7 +37,9 @@ def auto_frame_portrait(portrait: PortraitPrefab, progress_dialog: QProgressDial
         for x, y in utils.itergrid(*size):
             color1 = im1.pixel(x, y)  # Returns QRgb
             color2 = im2.pixel(x, y)
-            diff += color1 ^ color2
+            # If pixel is transparent then pixel is matching
+            if color1 != editor_utilities.qCOLORKEY:
+                diff += color1 ^ color2
         return diff
 
     if progress_dialog:
@@ -56,6 +58,7 @@ def auto_frame_portrait(portrait: PortraitPrefab, progress_dialog: QProgressDial
     best_mouth_pos = [0, 0]
 
     if progress_dialog:
+        progress_dialog.setLabelText("Auto-guessing Blink Frame Offset...")
         progress_dialog.setValue(10)
         if progress_dialog.wasCanceled():
             return
@@ -67,6 +70,7 @@ def auto_frame_portrait(portrait: PortraitPrefab, progress_dialog: QProgressDial
             best_blink_pos = (x, y)
 
     if progress_dialog:
+        progress_dialog.setLabelText("Auto-guessing Mouth Frame Offset...")
         progress_dialog.setValue(50)
         if progress_dialog.wasCanceled():
             return

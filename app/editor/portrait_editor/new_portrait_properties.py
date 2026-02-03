@@ -161,8 +161,6 @@ class NewPortraitProperties(QWidget):
         else:
             self.setEnabled(True)
             self.current = current
-            #self.raw_view.edit.set_image(self.current.pixmap)
-            #self.raw_view.edit.show_image()
 
             bo = self.current.blinking_offset
             so = self.current.smiling_offset
@@ -202,7 +200,7 @@ class NewPortraitProperties(QWidget):
         main_portrait = main_portrait.toImage()
 
         # Mouth
-        idx = self.current.mouth_frames - self.talk_state - 1
+        idx = self.talk_state
         mouth_image = self.current.pixmap.copy(*self.current.get_mouth_frame(idx, self.smile_on))
         mouth_image = mouth_image.toImage()
 
