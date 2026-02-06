@@ -1,6 +1,10 @@
+from difflib import SequenceMatcher
+
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import (QVBoxLayout, QApplication, QTabWidget,
-                              QWidget, QScrollArea)
+                              QWidget, QScrollArea, QLineEdit, QListWidget,
+                              QListWidgetItem)
+from PyQt5.QtCore import Qt
 
 from app import dark_theme
 from app.editor.settings import preference_definitions
@@ -12,6 +16,28 @@ from app.editor.settings.preference_components import (
     BooleanPreference, DoublePreference, ChoicePreference,
     FontPreference, KeybindingPreference, MousebindingPreference, PreferenceSection, PreferenceWidget
 )
+
+
+def fuzzy_contains(pattern: str, text: str) -> float:
+    """
+    Check if pattern is fuzzily contained within text using SequenceMatcher.
+    Returns a score (0.0 to 1.5) based on how much of the pattern is matched.
+    """
+    if not pattern:
+        return 0.0
+
+    pattern = pattern.lower()
+    text = text.lower()
+
+    # Exact substring match is best
+    if pattern in text:
+        start_bonus = 0.5 if text.startswith(pattern) or (' ' + pattern) in text else 0
+        return 1.0 + start_bonus
+
+    # Calculate how much of the pattern is covered by matching blocks
+    sm = SequenceMatcher(None, pattern, text)
+    matched_chars = sum(block.size for block in sm.get_matching_blocks())
+    return matched_chars / len(pattern)
 
 class TabbedPreferencesDialog(Dialog):
     """
@@ -31,6 +57,9 @@ class TabbedPreferencesDialog(Dialog):
         # Settings controller
         self.settings = MainSettingsController()
 
+        # Create search bar
+        self._create_search_bar()
+
         # Create tab widget
         self.tab_widget = QTabWidget(self)
         # Store references to keybinding widgets for event handling
@@ -47,6 +76,83 @@ class TabbedPreferencesDialog(Dialog):
 
         # default size
         self.resize(600, 500)
+
+    def _create_search_bar(self):
+        """Create the search bar and results list."""
+        # Search input
+        self.search_input = QLineEdit(self)
+        self.search_input.setPlaceholderText("Search preferences...")
+        self.search_input.setClearButtonEnabled(True)
+        self.search_input.textChanged.connect(self._on_search_changed)
+        self.layout.addWidget(self.search_input)
+
+        # Search results list (hidden by default)
+        self.search_results = QListWidget(self)
+        self.search_results.setMaximumHeight(200)
+        self.search_results.hide()
+        self.search_results.itemClicked.connect(self._on_search_result_clicked)
+        self.layout.addWidget(self.search_results)
+
+    def _on_search_changed(self, text: str):
+        """Handle search input changes."""
+        if not text.strip():
+            self.search_results.hide()
+            self.search_results.clear()
+            return
+
+        # Find matching preferences
+        matches = []
+        for pref in Preference:
+            defn = pref.definition
+            # Search in label, section name, and category
+            searchable = f"{defn.label} {defn.section or ''} {defn.category.value} {defn.setting_name} {defn.tooltip or ''}"
+            score = fuzzy_contains(text, searchable)
+            if score > 0.9:  # Threshold for relevance
+                matches.append((pref, score))
+
+        # Sort by score (highest first)
+        matches.sort(key=lambda x: x[1], reverse=True)
+
+        # Populate results
+        self.search_results.clear()
+        for pref, score in matches[:10]:  # Limit to 10 results
+            defn = pref.definition
+            item = QListWidgetItem(f"{defn.label}  [{defn.category.value} > {defn.section}]")
+            item.setData(Qt.UserRole, pref)
+            self.search_results.addItem(item)
+
+        if matches:
+            self.search_results.show()
+        else:
+            self.search_results.hide()
+
+    def _on_search_result_clicked(self, item: QListWidgetItem):
+        """Navigate to the clicked preference."""
+        pref = item.data(Qt.UserRole)
+        if pref is None:
+            return
+
+        defn = pref.definition
+
+        # Find the tab index for this category
+        for i, category in enumerate(PreferenceCategory):
+            if category == defn.category:
+                self.tab_widget.setCurrentIndex(i)
+                break
+
+        # Scroll to the preference widget
+        if pref in self._preference_widgets:
+            widget = self._preference_widgets[pref]
+            # Find the scroll area in the current tab
+            current_tab = self.tab_widget.currentWidget()
+            scroll_area = current_tab.findChild(QScrollArea)
+            if scroll_area:
+                # Ensure the widget is visible
+                scroll_area.ensureWidgetVisible(widget)
+
+        # Clear search after navigation
+        self.search_input.clear()
+        self.search_results.hide()
 
     def _create_scrollable_tab(self, title: str) -> tuple[QWidget, QVBoxLayout]:
         """Create a scrollable tab container."""
