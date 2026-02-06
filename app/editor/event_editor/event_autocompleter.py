@@ -141,7 +141,7 @@ class EventScriptCompleter(QCompleter):
 
         def initStyleOption(self, option: QStyleOptionViewItem, index: QModelIndex) -> None:
             super().initStyleOption(option, index)
-            option.font.setFamily(self.settings.get_code_font())
+            option.font.setFamily(self.settings.get_preference(Preference.CODE_FONT))
             option.font.setBold(True)
             completion: CompletionEntry = index.data(COMPLETION_DATA_ROLE)
 

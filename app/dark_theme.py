@@ -402,9 +402,10 @@ THEMES: Dict[ThemeType, QPalette] = {
 
 def get_theme(theme: Optional[ThemeType] = None) -> QLightPalette:
     from app.editor.settings.main_settings_controller import MainSettingsController
+    from app.editor.settings.preference_definitions import Preference
     if not theme:
         settings = MainSettingsController()
-        theme_idx = settings.get_theme(0)
+        theme_idx = int(settings.get_preference(Preference.THEME))
         return THEMES[ThemeType(theme_idx)]
     return THEMES[theme]
 

@@ -54,60 +54,6 @@ class MainSettingsController():
 
     """========== General UI Settings =========="""
 
-    def set_theme(self, value):
-        self.state.setValue("theme", value)
-
-    def get_theme(self, fallback=0):
-        return self.state.value("theme", fallback, type=int)
-
-    def set_code_font(self, value):
-        self.state.setValue("code_font", value)
-
-    def get_code_font(self, fallback='Courier New'):
-        return self.state.value("code_font", fallback, type=str)
-
-    def set_code_font_in_boxes(self, value):
-        self.state.setValue("code_font_in_boxes", value)
-
-    def get_code_font_in_boxes(self, fallback=True) -> bool:
-        return self.state.value("code_font_in_boxes", fallback, type=bool)
-
-    def set_event_autocomplete(self, value):
-        self.state.setValue("event_autocomplete", value)
-
-    def get_event_autocomplete(self, fallback=True):
-        return self.state.value("event_autocomplete", fallback, type=bool)
-
-    def set_autosave_time(self, value):
-        self.state.setValue("autosave_time", value)
-
-    def get_autosave_time(self, fallback=5):
-        return float(self.state.value("autosave_time", fallback, type=float))
-
-    def set_should_display_crash_logs(self, value):
-        self.state.setValue("should_display_crash_logs", value)
-
-    def get_should_display_crash_logs(self, fallback=True):
-        return self.state.value("should_display_crash_logs", fallback, type=bool)
-
-    def set_should_make_backup_save(self, value):
-        self.state.setValue("should_make_backup_save", value)
-
-    def get_should_make_backup_save(self, fallback=False):
-        return self.state.value("should_make_backup_save", fallback, type=bool)
-
-    def set_should_save_as_chunks(self, value):
-        self.state.setValue("should_save_as_chunks", value)
-
-    def get_should_save_as_chunks(self, fallback=False):
-        return self.state.value("should_save_as_chunks", fallback, type=bool)
-
-    def set_auto_open(self, value):
-        self.state.setValue('auto_open', value)
-
-    def get_auto_open(self, fallback=False):
-        return self.state.value('auto_open', fallback, type=bool)
-
     def set_default_anim_background(self, value):
         self.state.setValue('default_anim_background', value)
 

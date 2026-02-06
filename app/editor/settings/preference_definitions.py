@@ -247,10 +247,6 @@ class Preference(Enum):
 name_to_button = {'L-click': Qt.LeftButton, 'R-click': Qt.RightButton}
 button_to_name = {v: k for k, v in name_to_button.items()}
 
-key_to_button = {'Tab': Qt.Key_Tab, 'Enter': Qt.Key_Return}
-button_to_key = {v: k for k, v in key_to_button.items()}
-
-
 # Storage type mapping for QSettings
 # Maps PreferenceType to the Python type used for QSettings storage
 PREFERENCE_TYPE_TO_STORAGE_TYPE = {
