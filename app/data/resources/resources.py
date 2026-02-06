@@ -25,7 +25,6 @@ from app.data.resources.tiles import TileSetCatalog, TileMapCatalog
 from app.data.resources.sounds import SFXCatalog, MusicCatalog
 from app.data.resources.combat_palettes import PaletteCatalog
 from app.data.resources.combat_anims import CombatCatalog, CombatEffectCatalog
-
 from PyQt5.QtGui import QColor
 
 import logging
