@@ -9,7 +9,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Seth",
@@ -21,7 +42,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Franz",
@@ -33,7 +75,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Gilliam",
@@ -45,7 +108,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Moulder",
@@ -57,7 +141,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Vanessa",
@@ -69,7 +174,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Garcia",
@@ -81,7 +207,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Ross",
@@ -93,7 +240,28 @@
             24,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Neimi",
@@ -105,7 +273,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Colm",
@@ -117,7 +306,28 @@
             24,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Artur",
@@ -129,7 +339,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Lute",
@@ -141,7 +372,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Joshua",
@@ -153,7 +405,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Natasha",
@@ -165,7 +438,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Ephraim",
@@ -177,7 +471,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Forde",
@@ -189,7 +504,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Kyle",
@@ -201,7 +537,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Orson",
@@ -213,7 +570,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Tana",
@@ -225,7 +603,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Innes",
@@ -237,7 +636,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Amelia",
@@ -249,7 +669,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "L'arachel",
@@ -261,7 +702,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Dozla",
@@ -273,7 +735,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Rennac",
@@ -285,7 +768,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Cormag",
@@ -297,7 +801,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Gerik",
@@ -309,7 +834,28 @@
             16,
             32
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Tethys",
@@ -321,7 +867,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Marisa",
@@ -333,7 +900,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Saleh",
@@ -345,7 +933,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Ewan",
@@ -357,7 +966,28 @@
             24,
             56
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Duessel",
@@ -369,7 +999,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Mercenary1",
@@ -381,7 +1032,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Breguet",
@@ -393,7 +1065,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Bone",
@@ -405,7 +1098,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Bazba",
@@ -417,7 +1131,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Saar",
@@ -429,7 +1164,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Bandit1",
@@ -441,7 +1197,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Selena",
@@ -453,7 +1230,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Valter",
@@ -465,7 +1263,28 @@
             16,
             32
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Caellach",
@@ -477,7 +1296,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Riev",
@@ -489,7 +1329,28 @@
             16,
             56
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Glen",
@@ -501,7 +1362,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Hayden",
@@ -513,7 +1395,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Man1",
@@ -525,7 +1428,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Man2",
@@ -537,7 +1461,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Man3",
@@ -549,7 +1494,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Woman1",
@@ -561,7 +1527,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Woman2",
@@ -573,7 +1560,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "OldMan1",
@@ -585,7 +1593,28 @@
             16,
             56
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "SoldierBlue",
@@ -597,7 +1626,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "SoldierRed",
@@ -609,7 +1659,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "EphraimSepia",
@@ -621,7 +1692,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "EirikaSepia",
@@ -633,7 +1725,28 @@
             16,
             48
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "VigardeHealthy",
@@ -645,7 +1758,28 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     },
     {
         "nid": "Lyon",
@@ -657,6 +1791,27 @@
             16,
             40
         ],
-        "info_offset": 0
+        "info_offset": [
+            8,
+            0
+        ],
+        "full_size": [
+            160,
+            112
+        ],
+        "face_size": [
+            96,
+            80
+        ],
+        "blink_size": [
+            32,
+            16
+        ],
+        "mouth_size": [
+            32,
+            16
+        ],
+        "blink_frames": 2,
+        "mouth_frames": 3
     }
 ]
