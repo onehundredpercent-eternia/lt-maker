@@ -81,8 +81,8 @@ def auto_frame_portrait(portrait: PortraitPrefab, progress_dialog: QProgressDial
             best_mouth_similarity = mouth_similarity
             best_mouth_pos = (x, y)
 
-    portrait.blinking_offset = utils.tuple_sub(portrait.face_size, portrait.blink_size, best_blink_pos)
-    portrait.smiling_offset =  utils.tuple_sub(portrait.face_size, portrait.mouth_size, best_mouth_pos)
+    portrait.blinking_offset = best_blink_pos
+    portrait.smiling_offset = best_mouth_pos
     if progress_dialog:
         progress_dialog.setValue(100)
 

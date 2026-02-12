@@ -2,16 +2,16 @@
     {
         "nid": "Eirika",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -35,16 +35,16 @@
     {
         "nid": "Seth",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -68,16 +68,16 @@
     {
         "nid": "Franz",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -101,16 +101,16 @@
     {
         "nid": "Gilliam",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -134,16 +134,16 @@
     {
         "nid": "Moulder",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -167,16 +167,16 @@
     {
         "nid": "Vanessa",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -200,16 +200,16 @@
     {
         "nid": "Garcia",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -233,16 +233,16 @@
     {
         "nid": "Ross",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            40,
-            16
+            24,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -266,16 +266,16 @@
     {
         "nid": "Neimi",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -299,16 +299,16 @@
     {
         "nid": "Colm",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            40,
+            24,
             24
         ],
+        "smiling_offset": [
+            24,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -332,16 +332,16 @@
     {
         "nid": "Artur",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -365,16 +365,16 @@
     {
         "nid": "Lute",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -398,16 +398,16 @@
     {
         "nid": "Joshua",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -431,16 +431,16 @@
     {
         "nid": "Natasha",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -464,16 +464,16 @@
     {
         "nid": "Ephraim",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -497,16 +497,16 @@
     {
         "nid": "Forde",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -530,16 +530,16 @@
     {
         "nid": "Kyle",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -563,16 +563,16 @@
     {
         "nid": "Orson",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -596,16 +596,16 @@
     {
         "nid": "Tana",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -629,16 +629,16 @@
     {
         "nid": "Innes",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -662,16 +662,16 @@
     {
         "nid": "Amelia",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -695,16 +695,16 @@
     {
         "nid": "L'arachel",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -728,16 +728,16 @@
     {
         "nid": "Dozla",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -761,16 +761,16 @@
     {
         "nid": "Rennac",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -794,16 +794,16 @@
     {
         "nid": "Cormag",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -827,16 +827,16 @@
     {
         "nid": "Gerik",
         "blinking_offset": [
-            40,
-            48
+            24,
+            16
         ],
         "smiling_offset": [
-            48,
+            16,
             32
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -860,16 +860,16 @@
     {
         "nid": "Tethys",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -893,16 +893,16 @@
     {
         "nid": "Marisa",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -926,16 +926,16 @@
     {
         "nid": "Saleh",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -959,16 +959,16 @@
     {
         "nid": "Ewan",
         "blinking_offset": [
-            40,
-            24
+            24,
+            40
         ],
         "smiling_offset": [
-            40,
-            8
+            24,
+            56
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -992,16 +992,16 @@
     {
         "nid": "Duessel",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1025,16 +1025,16 @@
     {
         "nid": "Mercenary1",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1058,16 +1058,16 @@
     {
         "nid": "Breguet",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1091,16 +1091,16 @@
     {
         "nid": "Bone",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1124,16 +1124,16 @@
     {
         "nid": "Bazba",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1157,16 +1157,16 @@
     {
         "nid": "Saar",
         "blinking_offset": [
-            48,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            16,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1190,16 +1190,16 @@
     {
         "nid": "Bandit1",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1223,16 +1223,16 @@
     {
         "nid": "Selena",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1256,16 +1256,16 @@
     {
         "nid": "Valter",
         "blinking_offset": [
-            40,
-            48
+            24,
+            16
         ],
         "smiling_offset": [
-            48,
+            16,
             32
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1289,16 +1289,16 @@
     {
         "nid": "Caellach",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1322,16 +1322,16 @@
     {
         "nid": "Riev",
         "blinking_offset": [
-            48,
-            24
+            16,
+            40
         ],
         "smiling_offset": [
-            48,
-            8
+            16,
+            56
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1355,16 +1355,16 @@
     {
         "nid": "Glen",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1388,16 +1388,16 @@
     {
         "nid": "Hayden",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1421,16 +1421,16 @@
     {
         "nid": "Man1",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1454,16 +1454,16 @@
     {
         "nid": "Man2",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1487,16 +1487,16 @@
     {
         "nid": "Man3",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1520,16 +1520,16 @@
     {
         "nid": "Woman1",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1553,16 +1553,16 @@
     {
         "nid": "Woman2",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1586,16 +1586,16 @@
     {
         "nid": "OldMan1",
         "blinking_offset": [
-            40,
-            24
+            24,
+            40
         ],
         "smiling_offset": [
-            48,
-            8
+            16,
+            56
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1619,16 +1619,16 @@
     {
         "nid": "SoldierBlue",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1652,16 +1652,16 @@
     {
         "nid": "SoldierRed",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1685,16 +1685,16 @@
     {
         "nid": "EphraimSepia",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1718,16 +1718,16 @@
     {
         "nid": "EirikaSepia",
         "blinking_offset": [
-            40,
+            24,
             32
         ],
         "smiling_offset": [
-            48,
-            16
+            16,
+            48
         ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1751,16 +1751,16 @@
     {
         "nid": "VigardeHealthy",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,
@@ -1784,16 +1784,16 @@
     {
         "nid": "Lyon",
         "blinking_offset": [
-            40,
-            40
-        ],
-        "smiling_offset": [
-            48,
+            24,
             24
         ],
+        "smiling_offset": [
+            16,
+            40
+        ],
         "info_offset": [
-            0,
-            8
+            8,
+            0
         ],
         "full_size": [
             160,

@@ -108,10 +108,10 @@ class PortraitPrefab(WithResources, Prefab):
                 *self.mouth_size)
 
     def get_blink_coord(self) -> Tuple[int, int]:
-        return utils.tuple_sub(self.face_size, self.blink_size, self.blinking_offset)
+        return self.blinking_offset
 
     def get_mouth_coord(self) -> Tuple[int, int]:
-        return utils.tuple_sub(self.face_size, self.mouth_size, self.smiling_offset)
+        return self.smiling_offset
 
     def get_wink(self, left_wink: bool = True) -> Tuple[int, int, int, int]:
         return (self.full_size[0] - (self.blink_size[0] if left_wink else self.blink_size[0]//2),
@@ -120,12 +120,11 @@ class PortraitPrefab(WithResources, Prefab):
                 self.blink_size[1])
 
     def get_wink_coord(self, left_wink: bool = True) -> Tuple[int, int]:
-        return utils.tuple_sub(self.face_size, self.blink_size, self.blinking_offset,
-                                (0 if left_wink else -self.blink_size[0]//2, 0))
+        return (self.blinking_offset[0] + (0 if left_wink else self.blink_size[0]//2),
+                self.blinking_offset[1])
 
     def get_info_coord(self) -> Tuple[int, int]:
-        return utils.tuple_sub(self.face_size, self.info_offset,
-                                (INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT))
+        return self.info_offset
 
 class PortraitCatalog(ManifestCatalog[PortraitPrefab], CategorizedCatalog[PortraitPrefab]):
     manifest = 'portraits.json'

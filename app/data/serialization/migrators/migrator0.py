@@ -39,9 +39,7 @@ class Migrator0(MigratorBase):
             engine.save_surface(new_im, fn)
 
             # Update data
-            portrait['blinking_offset'] = utils.tuple_sub((64, 64), portrait.get('blinking_offset'))
-            portrait['smiling_offset'] = utils.tuple_sub((64, 64), portrait.get('smiling_offset'))
-            portrait['info_offset'] = (8, 8 - portrait.get('info_offset'))
+            portrait['info_offset'] = (8, portrait.get('info_offset'))
             portrait['full_size'] = (160, 112)
             portrait['face_size'] = (96, 80)
             portrait['blink_size'] = (32, 16)
