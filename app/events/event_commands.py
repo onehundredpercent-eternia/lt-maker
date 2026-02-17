@@ -1593,6 +1593,20 @@ Sets the unit's state as having already traded this turn. The unit can still att
 
     keywords = ['Unit']
 
+class HasVisited(EventCommand):
+    nid = 'has_visited'
+    tag = Tags.MODIFY_UNIT_PROPERTIES
+
+    desc = \
+        """
+Sets the unit's state as having already traded this turn, then triggers Canto if the unit has Canto. Once Canto is completed, or if the unit does not have Canto, the unit will be grayed out.
+
+If the *attacked* flag is set, the unit's state is set as having already attacked this turn. As such, canto will only work if the unit has CantoPlus. This is useful for the arena or similar situations.
+        """
+
+    keywords = ['Unit']
+    _flags = ["attacked"]
+
 class HasFinished(EventCommand):
     nid = 'has_finished'
     tag = Tags.MODIFY_UNIT_PROPERTIES
@@ -2897,11 +2911,15 @@ Causes *Unit* to enter a shop that sells *ItemList* items.
 The optional *ShopFlavor* keyword determines whether the shop appears as a vendor, armory, or your own custom flavor.
 The optional *StockList* keyword determines if an item should have a limited stock. The order will be the same as ItemList. Use -1 for unlimited stock.
 The optional *ShopId* keyword is available if you want to save what was bought from the shop in future shops. Memory will be preserved across shops with the same *ShopId*.
+
+Flags:
+*preview* determines whether this shop interaction will be treated as a preview shop. In a preview shop, the player will be able to look at the stock, but not buy or sell. Usually used only with a Preview Trigger.
         """
 
     keywords = ["Unit", "ItemList"]
     optional_keywords = ["ShopFlavor", "StockList", "ShopId"]
     keyword_types = ["Unit", "ItemList", "ShopFlavor", "IntegerList", "Nid"]
+    _flags = ["preview"]
 
 class Choice(EventCommand):
     nid = 'choice'
@@ -3282,6 +3300,22 @@ Opens the achivements screen with the given background.
 
     keywords = ["Background"]
     keyword_types = ['Panorama']
+
+class Soundroom(EventCommand):
+    nid = 'soundroom'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Displays the game's sound room. Last song being played in the sound room can be accessed through game var '_soundroom_choice'.
+If given, uses the (*Panorama*) as the background image.
+1. *immediate* flag skips the transition between screens
+        """
+
+    optional_keywords = ['Panorama']
+    keyword_types = ['Panorama']
+
+    _flags = ["immediate"]
 
 class LocationCard(EventCommand):
     nid = 'location_card'
@@ -3673,6 +3707,14 @@ class UnlockDifficulty(EventCommand):
 
     keywords = ['DifficultyMode']
     keyword_types = ['DifficultyMode']
+
+class UnlockSong(EventCommand):
+    nid = 'unlock_song'
+    tag = Tags.PERSISTENT_RECORDS
+    desc = ("Unlocks the specified song to be viewed in the Sound Room.")
+
+    keywords = ['Music']
+    keyword_types = ['Music']
 
 class PartyTransfer(EventCommand):
     nid = 'party_transfer'
