@@ -423,6 +423,7 @@ class Choice(Simple):
                     self.options.append(option)
                 elif isinstance(option, SkillObject):
                     option = menu_options.SkillOption(idx, option)
+                    option.help_box = option.get_help_box()
                     self.options.append(option)
                 elif isinstance(option, lore.Lore):
                     option = menu_options.LoreOption(idx, option)
@@ -2062,10 +2063,12 @@ class PrepGBA(Choice):
     def move_up(self, first_push=True):
         if super().move_up(first_push):
             self._update_info_desc()
+            return True
 
     def move_down(self, first_push=True):
         if super().move_down(first_push):
             self._update_info_desc()
+            return True
 
     def get_menu_width(self):
         return 64
