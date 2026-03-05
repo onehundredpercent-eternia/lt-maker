@@ -39,6 +39,7 @@ class PortraitPrefab(WithResources, Prefab):
         self.smiling_offset = [0, 0]
         self.info_offset = (0, 0)
 
+        self.chibi_coord = (128, 80)
         self.full_size = (160, 112)
         self.face_size = (96, 80)
         self.blink_size = (32, 16)
@@ -61,6 +62,7 @@ class PortraitPrefab(WithResources, Prefab):
         s_dict['smiling_offset'] = self.smiling_offset
         s_dict['info_offset'] = self.info_offset
 
+        s_dict['chibi_coord'] = self.chibi_coord
         s_dict['full_size'] = self.full_size
         s_dict['face_size'] = self.face_size
         s_dict['blink_size'] = self.blink_size
@@ -76,6 +78,7 @@ class PortraitPrefab(WithResources, Prefab):
         self.smiling_offset = [int(_) for _ in s_dict['smiling_offset']]
         self.info_offset = tuple(int(_) for _ in s_dict['info_offset'])
 
+        self.chibi_coord = tuple(int(_) for _ in s_dict['chibi_coord'])
         self.full_size = tuple(int(_) for _ in s_dict['full_size'])
         self.face_size = tuple(int(_) for _ in s_dict['face_size'])
         self.blink_size = tuple(int(_) for _ in s_dict['blink_size'])
@@ -100,7 +103,7 @@ class PortraitPrefab(WithResources, Prefab):
                 *self.mouth_size)
 
     def get_minimug(self) -> Tuple[int, int, int, int]:
-        return (*utils.tuple_sub(self.full_size, (32, 32)), 32, 32)
+        return (*self.chibi_coord, 32, 32)
 
     def get_neutral_mouth(self) -> Tuple[int, int, int, int]:
         return (self.full_size[0] - self.blink_size[0] - self.mouth_size[0],

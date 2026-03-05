@@ -94,11 +94,12 @@ class NewPortraitProperties(QWidget):
         self.auto_colorkey_button = QPushButton("Automatically colorkey")
         self.auto_colorkey_button.clicked.connect(self.auto_colorkey)
         right_section.addWidget(self.auto_frame_button, 4, 0)
-        right_section.addWidget(self.auto_colorkey_button, 4, 1)
+        right_section.addWidget(self.auto_colorkey_button, 5, 0)
 
         self.face_size = PropertyBox("Face Frame Size", SpinBoxXY, self)
         self.blink_size = PropertyBox("Blink Frame Size", SpinBoxXY, self)
         self.mouth_size = PropertyBox("Mouth Frame Size", SpinBoxXY, self)
+        self.chibi_coord = PropertyBox("Chibi Frame Coordinates", SpinBoxXY, self)
         self.blink_frames = PropertyBox("Number of Blink Frames", QSpinBox, self)
         self.mouth_frames = PropertyBox("Number of Mouth Frames", QSpinBox, self)
         self.blink_size.edit.setMinimum(32, 16)
@@ -108,6 +109,7 @@ class NewPortraitProperties(QWidget):
         self.face_size.edit.coordsChanged.connect(self.face_size_changed)
         self.blink_size.edit.coordsChanged.connect(self.blink_size_changed)
         self.mouth_size.edit.coordsChanged.connect(self.mouth_size_changed)
+        self.chibi_coord.edit.coordsChanged.connect(self.chibi_coord_changed)
         self.blink_frames.edit.valueChanged.connect(self.blink_frames_changed)
         self.mouth_frames.edit.valueChanged.connect(self.mouth_frames_changed)
         right_section.addWidget(self.face_size, 3, 1)
@@ -115,11 +117,12 @@ class NewPortraitProperties(QWidget):
         right_section.addWidget(self.mouth_size, 1, 1)
         right_section.addWidget(self.blink_frames, 2, 0)
         right_section.addWidget(self.mouth_frames, 2, 1)
+        right_section.addWidget(self.chibi_coord, 4, 1, 2, 1)
 
         self.bound_box = PropertyCheckBox("Display bounding boxes in Raw View?", QCheckBox, self)
         self.bound_box.edit.setChecked(True)
         self.bound_box.edit.stateChanged.connect(self.bound_box_clicked)
-        right_section.addWidget(self.bound_box, 5, 0, 1, 2)
+        right_section.addWidget(self.bound_box, 6, 0, 1, 2)
         right_section.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
         left_frame = QFrame(self)
@@ -171,6 +174,7 @@ class NewPortraitProperties(QWidget):
             self.face_size.edit.set_current(*current.face_size)
             self.blink_size.edit.set_current(*current.blink_size)
             self.mouth_size.edit.set_current(*current.mouth_size)
+            self.chibi_coord.edit.set_current(*current.chibi_coord)
             self.blink_frames.edit.setValue(current.blink_frames)
             self.mouth_frames.edit.setValue(current.mouth_frames)
 
@@ -267,6 +271,10 @@ class NewPortraitProperties(QWidget):
         self.blink_update = time.time()*1000
         self.blink_on = checked
 
+    def chibi_coord_changed(self, x, y):
+        self.current.chibi_coord = (x, y)
+        self.draw_raw_image()
+
     def face_size_changed(self, x, y):
         self.current.face_size = (x, y)
         self.draw_raw_image()
@@ -318,6 +326,10 @@ class NewPortraitProperties(QWidget):
             for i in range(self.current.mouth_frames):
                 painter.drawRect(*self.current.get_mouth_frame(i))
                 painter.drawRect(*self.current.get_mouth_frame(i, smile=True))
+
+            # Chibi Frame
+            painter.setPen(QPen(Qt.red, 2, Qt.DotLine))
+            painter.drawRect(*self.current.get_minimug())
             painter.end()
 
         final_pix = QPixmap.fromImage(raw_image)

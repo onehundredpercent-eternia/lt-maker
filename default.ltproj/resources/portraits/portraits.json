@@ -13,6 +13,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -45,6 +49,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -79,6 +87,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -111,6 +123,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -145,6 +161,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -177,6 +197,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -211,6 +235,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -243,6 +271,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -277,6 +309,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -309,6 +345,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -343,6 +383,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -375,6 +419,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -409,6 +457,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -441,6 +493,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -475,6 +531,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -507,6 +567,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -541,6 +605,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -573,6 +641,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -607,6 +679,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -639,6 +715,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -673,6 +753,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -705,6 +789,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -739,6 +827,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -771,6 +863,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -805,6 +901,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -837,6 +937,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -871,6 +975,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -903,6 +1011,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -937,6 +1049,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -969,6 +1085,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1003,6 +1123,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1035,6 +1159,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1069,6 +1197,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1101,6 +1233,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1135,6 +1271,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1167,6 +1307,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1201,6 +1345,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1233,6 +1381,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1267,6 +1419,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1299,6 +1455,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1333,6 +1493,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1365,6 +1529,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1399,6 +1567,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1431,6 +1603,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1465,6 +1641,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1497,6 +1677,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1531,6 +1715,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1563,6 +1751,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1597,6 +1789,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1629,6 +1825,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1663,6 +1863,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1695,6 +1899,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,
@@ -1729,6 +1937,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1762,6 +1974,10 @@
             8,
             0
         ],
+        "chibi_coord": [
+            128,
+            80
+        ],
         "full_size": [
             160,
             112
@@ -1794,6 +2010,10 @@
         "info_offset": [
             8,
             0
+        ],
+        "chibi_coord": [
+            128,
+            80
         ],
         "full_size": [
             160,

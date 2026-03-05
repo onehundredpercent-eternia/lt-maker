@@ -40,6 +40,7 @@ class Migrator0(MigratorBase):
 
             # Update data
             portrait['info_offset'] = (8, portrait.get('info_offset'))
+            portrait['chibi_coord'] = (128, 80)
             portrait['full_size'] = (160, 112)
             portrait['face_size'] = (96, 80)
             portrait['blink_size'] = (32, 16)
