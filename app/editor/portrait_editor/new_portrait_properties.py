@@ -104,6 +104,7 @@ class NewPortraitProperties(QWidget):
         self.mouth_frames = PropertyBox("Number of Mouth Frames", QSpinBox, self)
         self.blink_size.edit.setMinimum(32, 16)
         self.mouth_size.edit.setMinimum(32, 16)
+        self.chibi_coord.edit.setSingleStep(8)
         self.blink_frames.edit.setMinimum(1)
         self.mouth_frames.edit.setMinimum(1)
         self.face_size.edit.coordsChanged.connect(self.face_size_changed)

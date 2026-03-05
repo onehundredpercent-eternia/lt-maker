@@ -159,6 +159,7 @@ def create_new(window):
                         new_portrait.full_size = (pix.width(), pix.height())
                         new_portrait.face_size = (pix.width() - new_portrait.blink_size[0],
                                                   pix.height() - new_portrait.mouth_size[1]*2)
+                        new_portrait.chibi_coord = utils.tuple_sub(new_portrait.full_size, (32, 32))
                     new_portraits.append(new_portrait)
                 else:
                     QMessageBox.critical(window, "Error", "Image is not correct size (at least 128x112 px)")
