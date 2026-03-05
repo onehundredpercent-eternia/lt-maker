@@ -44,9 +44,16 @@ class LoadingState(State):
         # magic number, adjust at will
         self.loading_threads: List[threading.Thread] = []
 
+        # stop current music before loading new assets to prevent
+        # audio stutter caused by pygame.mixer.Sound() acquiring the
+        # SDL audio lock in the background thread while music is playing
+        # it didn't make sense that we originally tried to persist
+        # bgm while we transitioned, which led to annoying stutters
+        # it had no front-facing advantage for the player, afaik
+        get_sound_thread().clear()
         # unload used assets
         # unload music
-        get_sound_thread().flush(False)
+        get_sound_thread().flush()
         get_sound_thread().set_music_volume(cf.SETTINGS['music_volume'])
         get_sound_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
 
@@ -3031,7 +3038,7 @@ class ShopState(State):
         elif event == 'BACK':
             if self.state == 'open' or self.state == 'close':
                 get_sound_thread().play_sfx('Select 4')
-                if self.unit.has_traded:
+                if self.unit and self.unit.has_traded:
                     action.do(action.HasAttacked(self.unit))
                 game.state.change('transition_pop')
 
