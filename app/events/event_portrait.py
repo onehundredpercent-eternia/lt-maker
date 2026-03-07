@@ -80,7 +80,7 @@ class EventPortrait():
         return self.portrait.face_size[1]
 
     def set_expression(self, expression_list):
-        self.expressions = expression_list
+        self.expressions = set(expression_list)
 
     def saturate(self):
         self.saturation_direction = 1
@@ -139,6 +139,10 @@ class EventPortrait():
             idx = self.portrait.mouth_frames-1
         else:
             idx = self.talk_state
+            for expression in self.expressions:
+                if expression.startswith('MouthFrame'):
+                    idx = min(int(expression[10:]), self.portrait.mouth_frames-1)
+                    break
         mouth_image = engine.subsurface(self.portrait.image,
             self.portrait.get_mouth_frame(idx, smile="Smile" in self.expressions))
 
@@ -151,8 +155,13 @@ class EventPortrait():
             idx = self.portrait.blink_frames // 2 - 1
         elif "OpenEyes" in self.expressions:
             idx = None
-        elif self.blink_counter.count:
-            idx = self.blink_counter.count - 1
+        else:
+            if self.blink_counter.count:
+                idx = self.blink_counter.count - 1
+            for expression in self.expressions:
+                if expression.startswith('BlinkFrame'):
+                    idx = min(int(expression[10:]), self.portrait.blink_frames-1)
+                    break
         if idx is not None:
             blink_image = engine.subsurface(self.portrait.image, self.portrait.get_blink_frame(idx))
         

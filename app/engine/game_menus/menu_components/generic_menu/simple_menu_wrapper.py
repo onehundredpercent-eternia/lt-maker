@@ -17,7 +17,6 @@ from app.engine.graphics.ui_framework.ui_framework_layout import convert_align
 from app.engine.icons import draw_chibi, get_icon, get_icon_by_nid, get_portrait_from_nid
 from app.engine.objects.item import ItemObject
 from app.engine.objects.unit import UnitObject
-from app.events.event_portrait import EventPortrait
 from app.sprites import SPRITES
 from app.utilities.enums import Alignments, HAlignment, Orientation
 from app.utilities.typing import NID
