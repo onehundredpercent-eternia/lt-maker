@@ -253,7 +253,7 @@
     },
     {
         "nid": "MANA_desc",
-        "text": "Mana points. Can be removed from the info menu by setting to 0 in the Equations editor."
+        "text": "Mana points. Can be removed from the info menu by deleting MANA in the Equations editor."
     },
     {
         "nid": "armory_opener",
