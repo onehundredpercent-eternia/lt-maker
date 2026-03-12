@@ -587,6 +587,15 @@ class SupportDisplay():
         return idxs, rects
 
 class ExtrasSupportDisplay(SupportDisplay):
+    def __init__(self, fully_unlocked: bool = False):
+        super().__init__()
+        self.fully_unlocked = fully_unlocked
+
+    def get_num_ranks(self, other_unit_nid) -> int:
+        if self.fully_unlocked or RECORDS.check_unit_loaded(other_unit_nid):
+            return super().get_num_ranks(other_unit_nid)
+        return 0
+
     def get_background(self, bg_name: str = 'support_room_bg'):
         if (imgs := RESOURCES.panoramas.get(bg_name)):
             bg = background.PanoramaBackground(imgs)
@@ -639,7 +648,7 @@ class ExtrasSupportDisplay(SupportDisplay):
     def _process_support_partner(self, other_unit_nid: str, hover: bool) -> SupportPartner:
         other_unit_prefab = DB.units.get(other_unit_nid)
 
-        if not RECORDS.check_unit_loaded(other_unit_nid):
+        if not (self.fully_unlocked or RECORDS.check_unit_loaded(other_unit_nid)):
             map_sprite = load_map_sprite(other_unit_prefab, 'black')
             image = map_sprite.passive.get_frame()
             return SupportPartner('---', None, image, {})
@@ -657,7 +666,7 @@ class ExtrasSupportDisplay(SupportDisplay):
             prefab = prefabs[0]
             for bonus in prefab.requirements:
                 rank = bonus.support_rank
-                if RECORDS.check_support_unlocked(prefab.nid, rank):
+                if self.fully_unlocked or RECORDS.check_support_unlocked(prefab.nid, rank):
                     ranks[rank] = None
                 else:
                     ranks[rank] = 'grey'
@@ -677,9 +686,10 @@ class BaseSupportsState(State):
             self.display = SupportDisplay()
 
         elif self.name == 'extras_supports':
-            self.units = [unit for nid, unit in DB.units.items() if RECORDS.check_unit_loaded(nid) and \
+            fully_unlocked = DB.constants.value('title_full_support')
+            self.units = [unit for nid, unit in DB.units.items() if (fully_unlocked or RECORDS.check_unit_loaded(nid)) and \
                             any(prefab.unit1 == unit.nid or prefab.unit2 == unit.nid for prefab in DB.support_pairs)]
-            self.display = ExtrasSupportDisplay()
+            self.display = ExtrasSupportDisplay(fully_unlocked)
 
         if not self.units:
             # Empty table, let's quickly bail
