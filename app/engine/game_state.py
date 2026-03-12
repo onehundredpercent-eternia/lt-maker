@@ -868,7 +868,7 @@ class GameState():
     def register_unit(self, unit):
         logging.debug("Registering unit %s as %s", unit, unit.nid)
         self.unit_registry[unit.nid] = unit
-        RECORDS.unlock_unit(unit.nid)
+        RECORDS.mark_unit_as_loaded(unit.nid)
 
     def unregister_unit(self, unit):
         logging.debug("Unregistering unit %s as %s", unit, unit.nid)

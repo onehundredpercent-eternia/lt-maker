@@ -593,6 +593,8 @@ class ExtrasSupportDisplay(SupportDisplay):
         elif (imgs := RESOURCES.panoramas.get('default_background')):
             bg = background.ScrollingBackground(imgs)
             bg.scroll_speed = 50
+        else:
+            bg = None
         return bg
 
     def trigger(self, trigger: triggers.EventTrigger):
@@ -613,7 +615,7 @@ class ExtrasSupportDisplay(SupportDisplay):
         sorted_events = sorted(triggered_events, key=lambda x: x.priority)
         game.memory['mock_events'] = []
         for event_prefab in sorted_events:
-            mock_event = MockEvent('who needs nid anyways', event_prefab)
+            mock_event = MockEvent('extra_support', event_prefab)
             if not mock_event.background:
                 mock_event.background = default_bg
             game.memory['mock_events'].append(mock_event)
@@ -637,7 +639,7 @@ class ExtrasSupportDisplay(SupportDisplay):
     def _process_support_partner(self, other_unit_nid: str, hover: bool) -> SupportPartner:
         other_unit_prefab = DB.units.get(other_unit_nid)
 
-        if not RECORDS.check_unit_unlocked(other_unit_nid):
+        if not RECORDS.check_unit_loaded(other_unit_nid):
             map_sprite = load_map_sprite(other_unit_prefab, 'black')
             image = map_sprite.passive.get_frame()
             return SupportPartner('---', None, image, {})
@@ -675,7 +677,7 @@ class BaseSupportsState(State):
             self.display = SupportDisplay()
 
         elif self.name == 'extras_supports':
-            self.units = [unit for nid, unit in DB.units.items() if RECORDS.check_unit_unlocked(nid) and \
+            self.units = [unit for nid, unit in DB.units.items() if RECORDS.check_unit_loaded(nid) and \
                             any(prefab.unit1 == unit.nid or prefab.unit2 == unit.nid for prefab in DB.support_pairs)]
             self.display = ExtrasSupportDisplay()
 

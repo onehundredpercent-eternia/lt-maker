@@ -98,8 +98,8 @@ class PersistentRecordManager(Data):
         else:
             return False
 
-    def unlock_unit(self, unit_nid: str):
-        key = 'loaded_units'
+    def mark_unit_as_loaded(self, unit_nid: str):
+        key = '_loaded_units'
         if key not in self:
             self.append(PersistentRecord(key, []))
         loaded_units = super().get(key).value
@@ -111,18 +111,18 @@ class PersistentRecordManager(Data):
             loaded_units.append(unit_nid)
         persistent_data.serialize(self.location, self.save())
 
-    def check_unit_unlocked(self, unit_nid: str):
-        key = 'loaded_units'
+    def check_unit_loaded(self, unit_nid: str):
+        key = '_loaded_units'
         if key in self:
             return unit_nid in super().get(key).value
         else:
             return False
 
     def unlock_support_room(self):
-        self.create('support_room_unlocked', True)
+        self.create('_support_room_unlocked', True)
 
     def check_support_room_unlocked(self):
-        return self.get('support_room_unlocked')
+        return self.get('_support_room_unlocked')
 
 def reset():
     game_id = str(DB.constants.value('game_nid'))
