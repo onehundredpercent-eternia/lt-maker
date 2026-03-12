@@ -99,24 +99,15 @@ class PersistentRecordManager(Data):
             return False
 
     def mark_unit_as_loaded(self, unit_nid: str):
-        key = '_loaded_units'
-        if key not in self:
-            self.append(PersistentRecord(key, []))
-        loaded_units = super().get(key).value
-
-        if unit_nid in loaded_units:
+        if unit_nid in self:
             logging.info("Unit with nid of %s already unlocked" % unit_nid)
             return
         else:
-            loaded_units.append(unit_nid)
+            self.append(PersistentRecord(unit_nid, True))
         persistent_data.serialize(self.location, self.save())
 
     def check_unit_loaded(self, unit_nid: str):
-        key = '_loaded_units'
-        if key in self:
-            return unit_nid in super().get(key).value
-        else:
-            return False
+        return self.get(unit_nid)
 
     def unlock_support_room(self):
         self.create('_support_room_unlocked', True)
