@@ -19,7 +19,7 @@ from app.utilities import utils
 
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
-from app.engine import engine, image_mods, gui, health_bar, equations
+from app.engine import engine, image_mods, gui, equations
 from app.engine import item_funcs, item_system, skill_system, particles
 import app.engine.config as cf
 from app.engine.animations import Animation
@@ -214,7 +214,7 @@ class UnitSprite():
 
         self.map_sprite = load_map_sprite(self.unit, self.unit.team)
 
-        self.health_bar = health_bar.MapHealthBar(self.unit)
+        self.stat_bars = item_funcs.get_map_bars(self.unit, self.unit.get_weapon())
 
     def set_image_state(self, new_state: str):
         self.image_state = new_state
@@ -450,7 +450,7 @@ class UnitSprite():
     def update(self):
         self.update_state()
         self.update_transition()
-        self.health_bar.update()
+        self.stat_bars.update()
 
         # update animations
         self.animations = {k: v for (k, v) in self.animations.items() if not v.update()}
@@ -731,7 +731,7 @@ class UnitSprite():
         left, top = self.get_topleft(cull_rect)
 
         if not event and self.check_draw_hp():
-            self.health_bar.draw(surf, left, top)
+            self.stat_bars.draw(surf, left, top)
 
         if self.transition_state == 'normal' and not self.unit.is_dying and \
                 self.image_state in ('gray', 'passive') and int((current_time%450) // 150) in (1, 2):

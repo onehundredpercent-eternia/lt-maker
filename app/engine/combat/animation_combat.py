@@ -20,7 +20,7 @@ from app.engine.combat.mock_combat import MockCombat
 from app.engine.combat.solver import CombatPhaseSolver
 from app.engine.fonts import FONT
 from app.engine.game_state import game
-from app.engine.health_bar import CombatHealthBar
+from app.engine.health_bar import CombatBar
 from app.engine.objects.item import ItemObject
 from app.engine.objects.unit import UnitObject
 from app.engine.sound import get_sound_thread
@@ -95,8 +95,8 @@ class AnimationCombat(BaseCombat, MockCombat):
             self.bg_black = None
             self.bg_black_progress = 1
 
-        self.left_hp_bar = CombatHealthBar(self.left)
-        self.right_hp_bar = CombatHealthBar(self.right)
+        self.left_hp_bar = CombatBar(self.left)
+        self.right_hp_bar = CombatBar(self.right)
 
         self._skip = False
         self.full_playback = []
