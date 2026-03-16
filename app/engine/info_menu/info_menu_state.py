@@ -16,6 +16,7 @@ from app.engine.game_menus.uses_display_config import ItemOptionModes
 from app.engine.game_state import game
 from app.engine.graphics.ingame_ui.build_groove import build_groove
 from app.engine.graphics.text.text_renderer import render_text, text_width
+from app.engine.health_bar import BarType
 from app.engine.info_menu.info_graph import InfoGraph, info_states
 from app.engine.info_menu.info_menu_portrait import InfoMenuPortrait
 from app.engine.input_manager import get_input_manager
@@ -474,35 +475,36 @@ class InfoMenuState(State):
         return color
 
     def create_portrait_section(self):
+        add_mana_bar = DB.constants.value('add_mana_bar')
+
         surf = engine.create_surface((96, WINHEIGHT), transparent=True)
-        surf.blit(SPRITES.get('info_unit'), (8, 122))
+        offset = 0
+        if add_mana_bar:
+            surf.blit(SPRITES.get('info_unit_mp'), (6, 114))
+            offset = -8
+        else:
+            surf.blit(SPRITES.get('info_unit'), (8, 122))
 
         render_text(surf, ['text'], [self.unit.name], ['white'], (48, 80), HAlignment.CENTER)
         unit_desc = text_funcs.translate_and_text_evaluate(self.unit.desc, self=self.unit, unit=self.unit)
         self.info_graph.register((24, 80, 52, 24), unit_desc, 'all')
         class_obj = DB.classes.get(self.unit.klass)
-        render_text(surf, ['text'], [class_obj.name], ['white'], (8, 104))
+        render_text(surf, ['text'], [class_obj.name], ['white'], (8, 104 + offset))
         class_desc = text_funcs.translate_and_text_evaluate(class_obj.desc, self=class_obj, unit=self.unit)
-        self.info_graph.register((8, 104, 72, 16), class_desc, 'all')
-        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (39, 120), HAlignment.RIGHT)
+        self.info_graph.register((8, 104 + offset, 72, 16), class_desc, 'all')
+        render_text(surf, ['text'], [str(self.unit.level)], ['blue'], (39, 120 + offset), HAlignment.RIGHT)
         desc = text_funcs.translate_and_text_evaluate('Level_desc', unit=self.unit)
-        self.info_graph.register((8, 120, 30, 16), desc, 'all')
-        render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (63, 120), HAlignment.RIGHT)
+        self.info_graph.register((8, 120 + offset, 30, 16), desc, 'all')
+        render_text(surf, ['text'], [str(self.unit.exp)], ['blue'], (63, 120 + offset), HAlignment.RIGHT)
         desc = text_funcs.translate_and_text_evaluate('Exp_desc', unit=self.unit)
-        self.info_graph.register((38, 120, 30, 16), desc, 'all')
+        self.info_graph.register((38, 120 + offset, 30, 16), desc, 'all')
         
         # Draw HP
-        current_hp = str(self.unit.get_hp())
-        max_hp = str(self.unit.get_max_hp())
-        # 14 pixels is width of space available to draw current_hp or max_hp
-        if text_width('text', current_hp) > 14 or text_width('text', max_hp) > 14:
-            hp_font = 'narrow'
-        else:
-            hp_font = 'text'
-        render_text(surf, [hp_font], [current_hp], ['blue'], (39, 136), HAlignment.RIGHT)
-        desc = text_funcs.translate_and_text_evaluate('HP_desc', unit=self.unit)
-        self.info_graph.register((8, 136, 72, 16), desc, 'all')
-        render_text(surf, [hp_font], [str(max_hp)], ['blue'], (63, 136), HAlignment.RIGHT)
+        self.draw_stat_row(surf, 136 + offset)
+
+        # Draw MP if Enabled
+        if add_mana_bar:
+            self.draw_stat_row(surf, 144, BarType.MANA)
 
         # Blit the white status platform
         surf.blit(SPRITES.get('status_platform'), (66, 131))
@@ -513,6 +515,20 @@ class InfoMenuState(State):
             affinity_desc = text_funcs.translate_and_text_evaluate(affinity.desc, self=affinity, unit=self.unit)
             self.info_graph.register((76, 80, 16, 16), affinity_desc, 'all')
         return surf
+
+    def draw_stat_row(self, surf, y, bar = BarType.HP):
+        # Stat Type
+        stats = bar(self.unit)
+
+        # 14 pixels is width of space available to draw current_hp or max_hp
+        if text_width('text', str(stats.current)) > 14 or text_width('text', str(stats.max)) > 14:
+            font = 'narrow'
+        else:
+            font = 'text'
+        render_text(surf, [font], [str(stats.current)], ['blue'], (39, y), HAlignment.RIGHT)
+        desc = text_funcs.translate_and_text_evaluate(stats.desc, unit=self.unit)
+        self.info_graph.register((8, y, 72, 16), desc, 'all')
+        render_text(surf, [font], [str(stats.max)], ['blue'], (63, y), HAlignment.RIGHT)
 
     def draw_top_arrows(self, surf):
         self.left_arrow.draw(surf)
@@ -669,7 +685,7 @@ class InfoMenuState(State):
         else:
             other_stats.insert(0, 'AID')
             other_stats.insert(0, 'TRV')
-        if self.unit.get_max_mana() > 0:
+        if self.unit.get_max_mana() > 0 and not DB.constants.value('add_mana_bar'):
             other_stats.insert(0, 'MANA')
         if DB.constants.value('pairup') and not DB.constants.value('attack_stance_only'):
             other_stats.insert(2, 'GAUGE')

@@ -7,6 +7,7 @@ from app.data.database.database import DB
 from app.engine import item_system, skill_system, text_funcs
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
+from app.engine.health_bar import BarType
 from app.utilities import utils
 
 from app.engine.game_state import game
@@ -59,8 +60,70 @@ def is_heal(unit: UnitObject, item: ItemObject) -> bool:
     Returns:
         bool: True if the item is a healing item, False otherwise.
     """
-    if item.heal or item.magic_heal:
+    if item.heal or item.magic_heal or item.equation_heal:
         return True
+    return False
+
+def is_mana_restore(unit: UnitObject, item: ItemObject) -> bool:
+    """
+    Determines if an item is a mana restore item.
+
+    Args:
+        unit (UnitObject): The unit attempting to use the item.
+        item (ItemObject): The item to check.
+
+    Returns:
+        bool: True if the item is a mana restoring item, False otherwise.
+    """
+    if item.mana_restore or item.equation_mana_restore:
+        return True
+    return False
+
+def get_stat_bars(unit: UnitObject, item: ItemObject) -> List[BarType]:
+    """
+    Returns the bar types based on provided items. (Determines stat bars that will display.)
+
+    Args:
+        unit (UnitObject): The unit attempting to use the item.
+        item (ItemObject): The item to check.
+
+    Returns:
+        List: List of bars to use. If both heal and mana restore exists, or if add mana bar is enabled, hp and mp will both be included.
+    """
+    # Initialize Types
+    types = [BarType.HP]
+
+    # If Add Mana Bar, Use both
+    if DB.constants.value('add_mana_bar'):
+        types.append(BarType.MANA)
+    # If Mana Restore Enabled, Use MP
+    elif is_mana_restore(unit, item):
+        # If ONLY Mana, Remove HP
+        if not is_heal(unit, item):
+            types = []
+        types.append(BarType.MANA)
+    return types
+
+def can_heal_target(unit: UnitObject, item: ItemObject) -> bool:
+    """
+    Determines if unit can be healed with the given item. (Includes all methods that can heal!)
+
+    Args:
+        unit (UnitObject): The unit attempting to be healed by the item.
+        item (ItemObject): The item to check.
+
+    Returns:
+        True if unit can be healed by any healing method.
+    """
+    # Get Stat Bars
+    stats = get_stat_bars(unit, item)
+
+    # Loop Stat Bars
+    for bar in stats:
+        stat = bar(unit)
+        if stat.get() < stat.get_max():
+            return True
+
     return False
 
 def available(unit: UnitObject, item: ItemObject) -> bool:

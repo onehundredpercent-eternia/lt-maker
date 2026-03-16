@@ -214,7 +214,7 @@ class UnitSprite():
 
         self.map_sprite = load_map_sprite(self.unit, self.unit.team)
 
-        self.health_bar = health_bar.MapHealthBar(self.unit)
+        self.health_bar = health_bar.MapBar(self.unit)
 
     def set_image_state(self, new_state: str):
         self.image_state = new_state
