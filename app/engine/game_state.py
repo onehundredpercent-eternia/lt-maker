@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from app.engine.target_system import TargetSystem
     from app.engine.pathfinding.path_system import PathSystem
     from app.utilities.typing import NID, UID, Pos
+    from app.data.database.terrain import Terrain
 
 from app.constants import VERSION
 from app.data.database.database import DB
@@ -159,10 +160,10 @@ class GameState():
 
         self.clear()
 
-    def on_alter_game_state(self):
+    def on_alter_game_state(self) -> None:
         ltcache.alter_state()
 
-    def clear(self):
+    def clear(self) -> None:
         self.game_vars = PrimitiveCounter()
         self.memory = {}
 
@@ -1510,6 +1511,13 @@ class GameState():
         else:
             terrain_nid = tilemap.get_terrain(position)
         return terrain_nid
+
+    def get_terrain(self, tilemap: TileMapObject, position: Pos) -> Terrain:
+        terrain_nid = self.get_terrain_nid(tilemap, position)
+        terrain = DB.terrain.get(terrain_nid)
+        if not terrain:
+            terrain = DB.terrain[0]
+        return terrain
 
     def get_all_formation_spots(self) -> List[Pos]:
         """
