@@ -375,9 +375,7 @@ class SupportDisplay():
         prefabs = DB.support_pairs.get_pairs(self.unit_nid, other_unit_nid)
         if prefabs:
             prefab = prefabs[0]
-            if prefab.nid not in game.supports.support_pairs:
-                game.supports.create_pair(prefab.nid)
-            pair = game.supports.support_pairs[prefab.nid]
+            pair = game.supports.create_pair(prefab.nid)
             bonus = prefab.requirements[self.rank_idx]
             rank = bonus.support_rank
             if rank in pair.unlocked_ranks:
@@ -491,9 +489,7 @@ class SupportDisplay():
                 prefabs = DB.support_pairs.get_pairs(self.unit_nid, other_unit_nid)
                 if prefabs:
                     prefab = prefabs[0]
-                    if prefab.nid not in game.supports.support_pairs:
-                        game.supports.create_pair(prefab.nid)
-                    pair = game.supports.support_pairs[prefab.nid]
+                    pair = game.supports.create_pair(prefab.nid)
                     for ridx, bonus in enumerate(prefab.requirements):
                         rank = bonus.support_rank
                         if rank in pair.locked_ranks:
