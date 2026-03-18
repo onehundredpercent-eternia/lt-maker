@@ -211,7 +211,7 @@ class NewPortraitProperties(QWidget):
 
         # Blink
         time_passed = time.time()*1000 - self.blink_update
-        blink_state = int(time_passed) // 120
+        blink_state = int(time_passed) // 60
         if self.blink_on:
             idx = min(blink_state, self.current.blink_frames-1)
             blink_image = self.current.pixmap.copy(*self.current.get_blink_frame(idx))

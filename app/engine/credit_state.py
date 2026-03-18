@@ -313,7 +313,7 @@ class CreditDisplay():
 
         if credit.credit_type == ResourceType.PORTRAITS and not self.portrait:
             portrait = RESOURCES.portraits.get(credit.sub_nid)
-            self.portrait = InfoMenuPortrait(portrait, True) if portrait else None
+            self.portrait = InfoMenuPortrait(portrait, DB.constants.value('info_menu_blink')) if portrait else None
 
         if self.portrait:
             width, height = (self.width - 8, WINHEIGHT - 12)
