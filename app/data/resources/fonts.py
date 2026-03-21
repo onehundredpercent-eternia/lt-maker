@@ -121,7 +121,7 @@ class FontIndex:
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class Font(WithResources, Prefab):
     nid: str                                                                             #: NID of the font.
     fallback_ttf: str = None                                                             #: name of the .ttf file (in this directory) to be used as a fallback if the main font cannot render anything
