@@ -11,7 +11,7 @@
         "components": [
             [
                 "armsthrift",
-                -3
+                -2
             ],
             [
                 "hit",
@@ -20,6 +20,10 @@
             [
                 "damage",
                 5
+            ],
+            [
+                "cannot_double",
+                null
             ]
         ]
     }
