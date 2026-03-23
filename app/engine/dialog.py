@@ -170,7 +170,8 @@ class Dialog:
                     pos_x += 4
                 if pos_x == 0:
                     pos_x = 4
-            pos_y = (WINHEIGHT - self.height - self.portrait.get_height() - 4)
+            # Prevent speechbox from going out-of-frame due to portrait's absurd height
+            pos_y = max(WINHEIGHT - self.height - self.portrait.get_height() - 4, 4)
         else:
             pos_x = 4
             pos_y = WINHEIGHT - self.height - 4

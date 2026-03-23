@@ -73,6 +73,9 @@ class EventPortrait():
         self.saturation = 1.
         self.saturation_direction = 0
 
+    def get_size(self):
+        return self.portrait.face_size
+
     def get_width(self):
         return self.portrait.face_size[0]
 
@@ -141,6 +144,8 @@ class EventPortrait():
             idx = self.talk_state
             for expression in self.expressions:
                 if expression.startswith('MouthFrame'):
+                    # `expression` should be a str of format 'MouthFrameX' where X is a non-negative integer,
+                    #  so get X using string slice at 10th index `expression[10:]`
                     idx = min(int(expression[10:]), self.portrait.mouth_frames-1)
                     break
         mouth_image = engine.subsurface(self.portrait.image,
@@ -160,6 +165,8 @@ class EventPortrait():
                 idx = self.blink_counter.count - 1
             for expression in self.expressions:
                 if expression.startswith('BlinkFrame'):
+                    # `expression` should be a str of format 'BlinkFrameX' where X is a non-negative integer,
+                    #  so get X using string slice at 10th index `expression[10:]`
                     idx = min(int(expression[10:]), self.portrait.blink_frames-1)
                     break
         if idx is not None:
