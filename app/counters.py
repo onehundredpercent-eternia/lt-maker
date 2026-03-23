@@ -171,9 +171,9 @@ class BlinkCounter():
         self.last_update = 0
         self.reverse = False
 
+        self.update_times = update_times
         for i in range(max_count+1 - len(update_times)):
             update_times.append(update_times[-1])
-        self.update_times = update_times
 
     def update(self, current_time):
         if current_time - self.last_update > self.update_times[self.count]:

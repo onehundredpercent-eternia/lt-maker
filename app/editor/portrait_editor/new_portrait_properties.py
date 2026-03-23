@@ -15,7 +15,7 @@ from app.editor import timer
 from app.editor.icon_editor.icon_view import IconView
 from app.editor.portrait_editor import portrait_model
 from app.editor.component_editor_types import T
-from app.data.resources.portraits import _update_talk
+from app.data.resources.portraits import update_talk
 from app.utilities import utils
 from app.utilities.typing import NID
 import app.editor.utilities as editor_utilities
@@ -191,7 +191,7 @@ class NewPortraitProperties(QWidget):
         if self.talk_on and current_time - self.last_talk_update > self.next_talk_update:
             self.last_talk_update = current_time
             self.talk_state, self.next_talk_update, self.reverse = \
-                _update_talk(self.talk_state, self.current.mouth_frames, self.reverse)
+                update_talk(self.talk_state, self.current.mouth_frames, self.reverse)
         if not self.talk_on:
             self.talk_state = 0
             self.reverse = False

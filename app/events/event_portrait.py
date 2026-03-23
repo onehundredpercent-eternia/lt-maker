@@ -3,7 +3,7 @@ import random
 from typing import Optional
 
 from app.utilities.typing import Point
-from app.data.resources.portraits import PortraitPrefab, _update_talk
+from app.data.resources.portraits import PortraitPrefab, update_talk
 
 from app import counters
 from app.utilities import utils
@@ -127,7 +127,7 @@ class EventPortrait():
         if self.talk_on and current_time - self.last_talk_update > self.next_talk_update:
             self.last_talk_update = current_time
             self.talk_state, self.next_talk_update, self.reverse = \
-                _update_talk(self.talk_state, self.portrait.mouth_frames, self.reverse)
+                update_talk(self.talk_state, self.portrait.mouth_frames, self.reverse)
         if not self.talk_on:
             self.talk_state = 0
             self.reverse = False

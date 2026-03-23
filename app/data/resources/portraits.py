@@ -10,7 +10,7 @@ from app.data.resources.resource_prefab import WithResources
 from app.utilities import utils
 from app.utilities.data import Prefab
 
-def _update_talk(talk_state: int, max_state: int, reverse: bool = True) -> Tuple[int, int, bool]:
+def update_talk(talk_state: int, max_state: int, reverse: bool = True) -> Tuple[int, int, bool]:
     if talk_state == 0 or talk_state == max_state-1:
         reverse = not reverse
         next_update = random.randint(70, 160)
