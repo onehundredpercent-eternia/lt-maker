@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import math
 import random
@@ -8,7 +8,7 @@ import time
 from app.map_maker.terrain import Terrain
 from app.map_maker import simplex_noise
 
-from app.utilities import static_random
+from app.utilities import direction, static_random, utils
 from app.utilities.typing import NID, Pos
 
 MOUNTAIN_THRESHOLD = 0.75
@@ -45,6 +45,17 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
         new_terrain_noise_map[(pos[0] - 1, pos[1] - 1)] = value
     terrain_noise_map = new_terrain_noise_map
 
+    # 1.5 Fill any sinks with the lowest average of the adjacent tiles
+    new_terrain_noise_map = {}
+    for pos, value in terrain_noise_map.items():
+        adjacent_positions = [adj for adj in direction.get_cardinal_positions(pos) if adj in terrain_noise_map]
+        lowest_average = min(terrain_noise_map[adj] for adj in adjacent_positions)
+        if value < lowest_average:
+            new_terrain_noise_map[pos] = lowest_average
+        else:
+            new_terrain_noise_map[pos] = value
+    terrain_noise_map = new_terrain_noise_map
+
     # 2. Assign terrain based on the simplex noise field
     tilemap.generate_terrain_grid_from_noise(terrain_noise_map)
 
@@ -61,9 +72,6 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
         theme['forest_gain'])
     forest_noise_map = simplex_noise.normalize_noise_map(forest_noise_map)
     tilemap.generate_forests_from_noise(forest_noise_map)
-
-    # 6. Figure out where roads go
-    # 7. Figure out where houses, castles, and ruins go
 
     return tilemap
 
@@ -152,12 +160,12 @@ class WorldTileMap:
         
         # Now generate a single magnitude for each point
         gradient_magnitude = [math.sqrt(x**2 + y**2) for (x, y) in zip(x_image, y_image)]
-        print(gradient_magnitude)
         gradient_orientation = [math.atan2(y, x) for (x, y) in zip(x_image, y_image)]
         max_magnitude = max(gradient_magnitude)
-        gradient_magnitude = [_ / max_magnitude for _ in gradient_magnitude]  # Now between 0 and 1
-        print(max_magnitude)
-        print(gradient_magnitude)
+        if max_magnitude > 0:
+            gradient_magnitude = [_ / max_magnitude for _ in gradient_magnitude]  # Now between 0 and 1
+        else:
+            gradient_magnitude = [0 for _ in gradient_magnitude]
 
         for x in range(self.width):
             for y in range(self.height):
@@ -181,50 +189,79 @@ class WorldTileMap:
                     self.terrain_grid[(x, y)] = Terrain.FOREST
 
     def generate_rivers_from_noise(self, noise_map: Dict[Pos, float]):
-        # Locate all locations near mountains, (high noise)
-        # Locate all locations near seas (low noise)
+        # Locate all locations near mountains, (high terrain noise)
+        # Locate all locations near seas (low terrain noise)
         # based on a river incidence rate, draw connections between high noise tiles and low noise tiles, generally preferring low noise tile movement draw connections between the two
         # Then remove any rivers which cross each other (use order or something), and remove any rivers which overlap a mountain after leaving a mountain
 
-        high_noise_locations: List[Pos] = []
-        low_noise_locations: List[Pos] = []
-        for x in range(self.width):
-            for y in range(self.height):
-                value: float = noise_map[(x, y)]
-                if value >= MOUNTAIN_THRESHOLD:
-                    high_noise_locations.append((x, y))
-                elif value < SEA_THRESHOLD:
-                    low_noise_locations.append((x, y))
-        
-        number_of_rivers = self.theme['river_incidence'] / 100 * self.width * self.height 
+        def get_start_and_end_candidates(high_limit: float, low_limit: float) -> Tuple[List[Pos], List[Pos]]:
+            high_noise_locations: List[Pos] = []
+            low_noise_locations: List[Pos] = []
+            for x in range(self.width):
+                for y in range(self.height):
+                    value: float = noise_map[(x, y)]
+                    if value >= high_limit:
+                        high_noise_locations.append((x, y))
+                    elif value < low_limit:
+                        low_noise_locations.append((x, y))
+            return high_noise_locations, low_noise_locations
+
+        # Figure out which positions should be used as start and end positions
+        high_limit = MOUNTAIN_THRESHOLD
+        low_limit = SEA_THRESHOLD
+        high_noise_locations, low_noise_locations = \
+            get_start_and_end_candidates(high_limit, low_limit)
+        while not high_noise_locations or not low_noise_locations:
+            high_limit -= 0.05
+            low_limit += 0.05
+            high_noise_locations, low_noise_locations = \
+                get_start_and_end_candidates(high_limit, low_limit)
+
+        number_of_rivers = self.theme['river_incidence'] * self.width * self.height 
         rivers: List[List[Pos]] = []
-        while len(rivers) < number_of_rivers:
+        while len(utils.flatten_list(rivers)) < number_of_rivers and high_noise_locations:
             starting_point = self.random.choice(high_noise_locations)
+            # Remove the starting point from the high noise locations
+            high_noise_locations.remove(starting_point)
+
             river: List[Pos] = [starting_point]
             current_point = starting_point
 
             # Build out river!
+            directions = []
             while True:
-                x, y = current_point
-                adjacent_points = [
-                    (x - 1, y - 1),
-                    (x, y - 1),
-                    (x + 1, y - 1),
-                    (x - 1, y),
-                    (x + 1, y),
-                    (x - 1, y + 1),
-                    (x, y + 1),
-                    (x + 1, y + 1),
-                ]
-                noise_values = [noise_map[pos] if self.check_bounds(pos) else 0.5 for pos in adjacent_points]
-                weight = [noise_map[starting_point] - val for val in noise_values]
-                choices = list(enumerate(weight))
-                idx = static_random.weighted_choice(choices, self.random)
-                current_point = choices[idx]
-                if noise_map[current_point] < SEA_THRESHOLD or not self.check_bounds(currrent_point):
+                adjacent_points = direction.get_cardinal_positions(current_point)
+                # Make sure we don't go backwards
+                adjacent_points = [pos for pos in adjacent_points if pos not in river]
+                # Make sure we don't go in the same direction four times in row
+                adjacent_points = [pos for pos in adjacent_points if len(river) < 4 
+                                   or direction.Direction.determine(current_point, pos) != direction.Direction.determine(river[-2], river[-1])
+                                   or direction.Direction.determine(current_point, pos) != direction.Direction.determine(river[-3], river[-2])
+                                   or direction.Direction.determine(current_point, pos) != direction.Direction.determine(river[-4], river[-3])
+                                   ]
+                # Make sure we only go downhill
+                adjacent_points = [pos for pos in adjacent_points if (noise_map[pos] if self.check_bounds(pos) else 0.2) <= noise_map[river[-1]]]
+
+                if not adjacent_points:
+                    # This is not a valid river, ignore it
+                    river = []
+                    break
+
+                noise_values = [noise_map[pos] if self.check_bounds(pos) else 0.2 for pos in adjacent_points]
+                min_index = noise_values.index(min(noise_values))
+                directions.append(direction.Direction.determine(current_point, adjacent_points[min_index]))
+                current_point = adjacent_points[min_index]
+                # If reach sea, we are done
+                # If reach the edge of the map, we are done
+                # If reach another river, we are done
+                if noise_map[current_point] < SEA_THRESHOLD \
+                        or not self.check_bounds(current_point) \
+                        or current_point in utils.flatten_list(rivers):  
                     break
                 else:
                     river.append(current_point)
+            river = [pos for pos in river if self.get_terrain(pos) in (Terrain.HILL, Terrain.NOISY_GRASS, Terrain.SAND)]
+            rivers.append(river)
 
         # Check that rivers don't cross each other -- Later
         # for river in rivers:
