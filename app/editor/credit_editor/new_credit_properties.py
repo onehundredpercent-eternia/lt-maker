@@ -262,7 +262,7 @@ class CreditPushableIcon(PushableIcon16):
             self.change_icon(res.nid, icon_index)
             self.sourceChanged.emit(self._nid, self.x, self.y)
 
-class CreditPortraitIcon(UnitPortrait):
+class PortraitIcon(UnitPortrait):
     sourceChanged = pyqtSignal(str, int, int)
 
     def change_icon(self, nid, index=None):
@@ -278,7 +278,7 @@ class IconDesc(QWidget):
         self.layout = QVBoxLayout()
 
         if credit_type == ResourceType.PORTRAITS:
-            self.icon_box = PropertyBox("Contribution", CreditPortraitIcon, self)
+            self.icon_box = PropertyBox("Contribution", PortraitIcon, self)
         else:
             self.icon_box = PropertyBox("Contribution", CreditPushableIcon, self)
             self.icon_box.edit.setType(credit_type)

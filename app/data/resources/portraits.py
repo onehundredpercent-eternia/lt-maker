@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 from typing_extensions import override
 
 from app.data.category import CategorizedCatalog
@@ -8,6 +10,10 @@ from app.data.resources.resource_prefab import WithResources
 from app.utilities import utils
 from app.utilities.data import Prefab
 from app.utilities.typing import NID, Rect
+
+if TYPE_CHECKING:
+    from PyQt5.QtGui import QPixmap
+    from app.engine import engine
 
 # CONSTANTS
 CHIBI_WIDTH, CHIBI_HEIGHT = 32, 32
@@ -18,8 +24,8 @@ class PortraitPrefab(WithResources, Prefab):
     def __init__(self, nid, full_path=None, pix=None):
         self.nid:       NID = nid
         self.full_path: str = full_path
-        self.image  = None      # Optional[engine.Surface]
-        self.pixmap = pix       # Optional[PyQt5.QtGui.QPixmap]
+        self.image:     Optional[engine.Surface] = None
+        self.pixmap:    Optional[QPixmap] = pix
 
         self.blinking_offset:   Tuple[int, int] = [0, 0]
         self.smiling_offset:    Tuple[int, int] = [0, 0]
