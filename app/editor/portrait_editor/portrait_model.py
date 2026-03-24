@@ -5,9 +5,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QProgressDialog
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QIcon, QImage, QColor, QPainter
 
-from app.constants import PORTRAIT_WIDTH, PORTRAIT_HEIGHT
-
-from app.data.resources.portraits import PortraitPrefab
+from app.data.resources.portraits import PortraitPrefab, GBA_PORTRAIT_WIDTH, GBA_PORTRAIT_HEIGHT
 from app.data.resources.resources import RESOURCES
 
 from app.utilities.data import Data
@@ -148,9 +146,9 @@ def create_new(window):
                 pix = QPixmap(fn)
                 existing_nids = [d.nid for d in RESOURCES.portraits] + [p.nid for p in new_portraits]
                 nid = str_utils.get_next_name(nid, existing_nids)
-                if pix.width() >= PORTRAIT_WIDTH and pix.height() >= PORTRAIT_HEIGHT:
+                if pix.width() >= GBA_PORTRAIT_WIDTH and pix.height() >= GBA_PORTRAIT_HEIGHT:
                     new_portrait = PortraitPrefab(nid, fn, pix)
-                    if pix.width() == PORTRAIT_WIDTH and pix.height() == PORTRAIT_HEIGHT:   # must be GBA format
+                    if pix.width() == GBA_PORTRAIT_WIDTH and pix.height() == GBA_PORTRAIT_HEIGHT:   # must be GBA format then
                         # Swap to use colorkey color if it's not
                         auto_colorkey(new_portrait)
                         import_gba_portrait(new_portrait)

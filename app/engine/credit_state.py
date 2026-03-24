@@ -1,8 +1,8 @@
-from app.constants import WINHEIGHT, WINWIDTH, COLORKEY,\
-                            INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
+from app.constants import WINHEIGHT, WINWIDTH, COLORKEY
 
 from app.data.database.database import DB
 from app.data.database.credit import CreditEntry, CreditCatalog
+from app.data.resources.portraits import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.resources.resources import RESOURCES
 from app.data.resources.resource_types import ResourceType
 

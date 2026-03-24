@@ -4,8 +4,9 @@ from __future__ import annotations
 import logging
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
-from app.constants import WINHEIGHT, WINWIDTH, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
+from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
+from app.data.resources.portraits import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.resources.resources import RESOURCES
 from app.engine import (background, combat_calcs, engine, equations, gui,
                         help_menu, icons, image_mods, item_funcs, item_system,

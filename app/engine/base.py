@@ -837,7 +837,7 @@ class LoreDisplay():
             elif self.lore.nid in DB.units:
                 unit = DB.units.get(self.lore.nid)
             if unit:
-                portrait = icons.get_portrait_by_size(unit, width, height).convert_alpha()
+                portrait = icons.get_portrait_with_size(unit, width, height).convert_alpha()
                 portrait = image_mods.make_translucent(portrait, 0.5)
                 image.blit(portrait, (utils.tuple_sub(image.get_size(), portrait.get_size(), bottomright_pad)))
 

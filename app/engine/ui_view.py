@@ -4,7 +4,7 @@ from app.engine.graphics.text.text_renderer import fix_tags, render_text, text_w
 import logging
 from app.engine.text_evaluator import TextEvaluator
 import app.engine.config as cf
-from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH, INFO_PORTRAIT_HEIGHT
+from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.difficulty_modes import RNGOption
 from app.engine import (base_surf, combat_calcs, engine, equations, evaluate,
@@ -1064,7 +1064,7 @@ class ItemDescriptionPanel():
 
         width = 96
         height = topleft[1] + 4
-        portrait = icons.get_portrait_by_size(self.unit, width, height)
+        portrait = icons.get_portrait_with_size(self.unit, width, height)
         if portrait:
             if cursor_left:
                 portrait = engine.flip_horiz(portrait)

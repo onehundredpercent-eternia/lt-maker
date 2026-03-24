@@ -1,15 +1,33 @@
 import math
 import random
-from typing import Optional
+from typing import Optional, Tuple
 
 from app.utilities.typing import Point
-from app.data.resources.portraits import PortraitPrefab, update_talk
+from app.data.resources.portraits import PortraitPrefab
 
 from app import counters
 from app.utilities import utils
-from app.constants import PORTRAIT_WIDTH, PORTRAIT_HEIGHT, COLORKEY
+from app.constants import COLORKEY
 
 from app.engine import engine, image_mods
+
+def update_talk(talk_state: int, max_state: int, reverse: bool = True) -> Tuple[int, int, bool]:
+    if talk_state == 0 or talk_state == max_state-1:
+        reverse = not reverse
+        next_update = random.randint(70, 160)
+    else:
+        next_update = random.randint(30, 50)
+        if random.randint(1, 10) == 1:  # 10% chance to reverse
+            reverse = not reverse
+
+    mt = 2 if random.randint(1, 10) == 1 else 1    # 10% chance to skip a frame
+    if reverse:
+        next_state = talk_state - mt
+    else:
+        next_state = talk_state + mt
+    next_state = utils.clamp(next_state, 0, max_state-1)
+
+    return next_state, next_update, reverse
 
 class EventPortrait():
     base_transition_speed = utils.frames2ms(14)

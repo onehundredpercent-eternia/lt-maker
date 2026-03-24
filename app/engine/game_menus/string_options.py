@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, Generic, Optional, TypeVar
 
-from app.constants import COLORKEY, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
+from app.constants import COLORKEY
+from app.data.resources.portraits import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.resources.resources import RESOURCES
 from app.engine import engine, help_menu, icons, text_funcs
 from app.engine.game_state import game

@@ -8,14 +8,14 @@ from PyQt5.QtWidgets import QMessageBox, QWidget, QHBoxLayout, QSpinBox, \
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QPixmap, QPainter, QIcon, QPen
 
-from app.constants import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
+from app.data.resources.portraits import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.extensions.spinbox_xy import SpinBoxXY
 from app.extensions.custom_gui import PropertyBox, PropertyCheckBox
 from app.editor import timer
 from app.editor.icon_editor.icon_view import IconView
 from app.editor.portrait_editor import portrait_model
 from app.editor.component_editor_types import T
-from app.data.resources.portraits import update_talk
+from app.events.event_portrait import update_talk
 from app.utilities import utils
 from app.utilities.typing import NID
 import app.editor.utilities as editor_utilities

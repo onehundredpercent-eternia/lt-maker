@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Callable, List, Tuple
 
-from app.constants import COLORKEY, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
+from app.constants import COLORKEY
 from app.data.database.database import DB
 from app.data.database.items import ItemPrefab
 from app.data.database.klass import Klass
 from app.data.database.skills import SkillPrefab
+from app.data.resources.portraits import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT, CHIBI_HEIGHT
 from app.data.resources.resources import RESOURCES
 from app.engine import engine
 from app.engine.game_menus.menu_components.generic_menu.simple_menu import \
@@ -22,7 +23,6 @@ from app.utilities.enums import Alignments, HAlignment, Orientation
 from app.utilities.typing import NID
 
 ICON_HEIGHT = 16
-CHIBI_HEIGHT = 32
 
 HEIGHT_DATA_TYPE_MAP = {
     'type_base_item': ICON_HEIGHT,

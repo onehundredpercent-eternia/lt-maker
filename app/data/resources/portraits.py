@@ -1,54 +1,40 @@
-import random
 from pathlib import Path
 from typing import List, Optional, Set, Tuple
 from typing_extensions import override
 
-from app.constants import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.category import CategorizedCatalog
 from app.data.resources.base_catalog import ManifestCatalog
 from app.data.resources.resource_prefab import WithResources
 from app.utilities import utils
 from app.utilities.data import Prefab
+from app.utilities.typing import NID, Rect
 
-def update_talk(talk_state: int, max_state: int, reverse: bool = True) -> Tuple[int, int, bool]:
-    if talk_state == 0 or talk_state == max_state-1:
-        reverse = not reverse
-        next_update = random.randint(70, 160)
-    else:
-        next_update = random.randint(30, 50)
-        if random.randint(1, 10) == 1:  # 10% chance to reverse
-            reverse = not reverse
-
-    mt = 2 if random.randint(1, 10) == 1 else 1    # 10% chance to skip a frame
-    if reverse:
-        next_state = talk_state - mt
-    else:
-        next_state = talk_state + mt
-    next_state = utils.clamp(next_state, 0, max_state-1)
-
-    return next_state, next_update, reverse
+# CONSTANTS
+CHIBI_WIDTH, CHIBI_HEIGHT = 32, 32
+INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT = 80, 72
+GBA_PORTRAIT_WIDTH, GBA_PORTRAIT_HEIGHT = 128, 112
 
 class PortraitPrefab(WithResources, Prefab):
     def __init__(self, nid, full_path=None, pix=None):
-        self.nid = nid
-        self.full_path = full_path
-        self.image = None
-        self.pixmap = pix
+        self.nid:       NID = nid
+        self.full_path: str = full_path
+        self.image  = None      # Optional[engine.Surface]
+        self.pixmap = pix       # Optional[PyQt5.QtGui.QPixmap]
 
-        self.blinking_offset = [0, 0]
-        self.smiling_offset = [0, 0]
-        self.info_offset = (0, 0)
+        self.blinking_offset:   Tuple[int, int] = [0, 0]
+        self.smiling_offset:    Tuple[int, int] = [0, 0]
+        self.info_offset:       Tuple[int, int] = (0, 0)
 
-        self.chibi_coord = (128, 80)
-        self.full_size = (160, 112)
-        self.face_size = (96, 80)
-        self.blink_size = (32, 16)
-        self.mouth_size = (32, 16)
-        self.blink_frames = 2
-        self.mouth_frames = 3
+        self.chibi_coord:   Tuple[int, int] = (128, 80)
+        self.full_size:     Tuple[int, int] = (160, 112)
+        self.face_size:     Tuple[int, int] = (96, 80)
+        self.blink_size:    Tuple[int, int] = (32, 16)
+        self.mouth_size:    Tuple[int, int] = (32, 16)
+        self.blink_frames:  int = 2
+        self.mouth_frames:  int = 3
 
     @override
-    def set_full_path(self, full_path):
+    def set_full_path(self, full_path: str):
         self.full_path = full_path
 
     @override
@@ -87,25 +73,25 @@ class PortraitPrefab(WithResources, Prefab):
         self.mouth_frames = int(s_dict.get('mouth_frames', 0))
         return self
 
-    def get_face_frame(self) -> Tuple[int, int, int, int]:
+    def get_face_frame(self) -> Rect:
         return (self.full_size[0] - self.face_size[0] - self.blink_size[0],
                 self.full_size[1] - self.face_size[1] - self.mouth_size[1]*2,
                 *self.face_size)
 
-    def get_blink_frame(self, idx: int) -> Tuple[int, int, int, int]:
+    def get_blink_frame(self, idx: int) -> Rect:
         return (self.full_size[0] - self.blink_size[0],
                 self.full_size[1] - self.mouth_size[1]*2 - self.blink_size[1]*(self.blink_frames-idx),
                 *self.blink_size)
 
-    def get_mouth_frame(self, idx: int, smile: bool = False) -> Tuple[int, int, int, int]:
+    def get_mouth_frame(self, idx: int, smile: bool = False) -> Rect:
         return (self.full_size[0] - self.blink_size[0] - self.mouth_size[0]*(idx+2),
                 self.full_size[1] - self.mouth_size[1] * (2 if smile else 1),
                 *self.mouth_size)
 
-    def get_minimug(self) -> Tuple[int, int, int, int]:
-        return (*self.chibi_coord, 32, 32)
+    def get_minimug(self) -> Rect:
+        return (*self.chibi_coord, CHIBI_WIDTH, CHIBI_HEIGHT)
 
-    def get_neutral_mouth(self) -> Tuple[int, int, int, int]:
+    def get_neutral_mouth(self) -> Rect:
         return (self.full_size[0] - self.blink_size[0] - self.mouth_size[0],
                 self.full_size[1] - self.mouth_size[1]*2,
                 *self.mouth_size)
@@ -116,7 +102,7 @@ class PortraitPrefab(WithResources, Prefab):
     def get_mouth_coord(self) -> Tuple[int, int]:
         return self.smiling_offset
 
-    def get_wink(self, left_wink: bool = True) -> Tuple[int, int, int, int]:
+    def get_wink(self, left_wink: bool = True) -> Rect:
         return (self.full_size[0] - (self.blink_size[0] if left_wink else self.blink_size[0]//2),
                 self.full_size[1] - self.mouth_size[1]*2 - self.blink_size[1],
                 self.blink_size[0] // 2,
