@@ -287,6 +287,9 @@ def import_gba_map_sprite(standing_pix: QPixmap, moving_pix: QPixmap, gba_overha
     painter.drawPixmap(8 + 48 * 3, 128, up4)
     painter.end()
 
+    new_s = editor_utilities.convert_default_palette_pixmap(new_s)
+    new_m = editor_utilities.convert_default_palette_pixmap(new_m)
+
     return new_s, new_m
 
 class MapSpriteModel(ResourceCollectionModel):
