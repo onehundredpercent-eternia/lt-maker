@@ -1449,7 +1449,7 @@ class ItemChildState(MapState):
         options = []
         if not game.memory['is_subitem_child_menu']:
             if item in self.cur_unit.items and self.cur_unit.can_equip(item):
-                options.append("Equip")
+                options.append("Unequip") if self.cur_unit.can_unequip(item) else options.append("Equip")
             if item.multi_item and \
                     item in self.cur_unit.items:
                 options.append("Expand")
@@ -1516,8 +1516,11 @@ class ItemChildState(MapState):
                         game.memory['item'] = item
                         game.state.change('combat_targeting')
 
-            elif selection == 'Equip':
-                action.do(action.EquipItem(self.cur_unit, item))
+            elif selection == 'Unequip' or selection == 'Equip':
+                if selection == 'Unequip':
+                    action.do(action.UnequipItem(self.cur_unit, item, True))
+                else:
+                    action.do(action.EquipItem(self.cur_unit, item))
                 if not game.memory['is_subitem_child_menu']:
                     if item in self.cur_unit.items:
                         action.do(action.BringToTopItem(self.cur_unit, item))

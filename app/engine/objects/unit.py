@@ -104,6 +104,7 @@ class UnitObject(Prefab):
     items: List[ItemObject] = field(default_factory=list)  #: List of ItemObjects currently held by the unit
     equipped_weapon: ItemObject = None
     equipped_accessory: ItemObject = None
+    is_unequipped: bool = False  #: Whether the unit is currently unequipped. If true, disables autoequip unless disabled
 
     _skills: List[UnitSkill] = field(default_factory=list)
     _visible_skills_cache: List[SkillObject] = field(default_factory=list)
@@ -698,13 +699,17 @@ class UnitObject(Prefab):
         """Return True if the unit can equip *item*"""
         return item_system.equippable(self, item) and item_funcs.available(self, item)
 
+    def can_unequip(self, item: ItemObject) -> bool:
+        """Return True if the unit can unequip *item*"""
+        return self.can_equip(item) and DB.constants.value('can_unequip') and (item is self.equipped_weapon or item is self.equipped_accessory)
+
     def autoequip(self):
         logging.debug("Autoequipping...")
         all_items = item_funcs.get_all_items(self)
         # Do an an initial check that the weapon is still good
         if self.equipped_weapon and not self.can_equip(self.equipped_weapon):
             self.unequip(self.equipped_weapon)
-        if not self.equipped_weapon:
+        if not self.equipped_weapon and not self.is_unequipped:
             for item in all_items:
                 if not item_system.is_accessory(self, item):
                     if self.can_equip(item):

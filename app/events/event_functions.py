@@ -1635,6 +1635,31 @@ def equip_item(self: Event, global_unit, item, flags=None):
     else:
         self.logger.error("equip_item: %s is not an item that can be equipped" % item.nid)
 
+def unequip_item(self: Event, global_unit, item, flags=None):
+    flags = flags or set()
+    recursive_flag = 'recursive' in flags
+    item_input = item
+    unit = self._get_unit(global_unit)
+    if not unit:
+        self.logger.error("unequip_item: Couldn't find unit with nid %s" % global_unit)
+        return
+    unit, item = self._get_item_in_inventory(global_unit, item, recursive=recursive_flag)
+    if not unit or not item:
+        self.logger.error("unequip_item: Item %s was invalid, see above" % item_input)
+        return
+    if item.multi_item:
+        for subitem in item.subitems:
+            if unit.equipped_weapon == subitem:
+                unequip_action = action.UnequipItem(unit, subitem, False)
+                action.do(unequip_action)
+                return
+        self.logger.error("unequip_item: No valid subitem to unequip in %s" % item.nid)
+    elif unit.equipped_weapon == item:
+        unequip_action = action.UnequipItem(unit, item, False)
+        action.do(unequip_action)
+    else:
+        self.logger.error("unequip_item: %s is not currently equipped" % item.nid)
+
 def remove_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
     flags = flags or set()
     global_unit = global_unit_or_convoy
