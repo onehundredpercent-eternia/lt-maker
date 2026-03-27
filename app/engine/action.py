@@ -1432,13 +1432,12 @@ class EquipItem(Action):
 
     def do(self):
         self.unit.equip(self.item)
-        self.unit.is_unequipped = False
 
     def reverse(self):
         self.unit.unequip(self.item)
+        self.unit.is_unequipped = self.is_unequipped
         if self.current_equipped:
             self.unit.equip(self.current_equipped)
-        self.unit.is_unequipped = self.is_unequipped
 
 
 class UnequipItem(Action):
@@ -1499,6 +1498,8 @@ class TradeItem(Action):
         self.item2 = item2
         self.item_index1 = unit1.items.index(item1) if item1 else DB.constants.total_items() - 1
         self.item_index2 = unit2.items.index(item2) if item2 else DB.constants.total_items() - 1
+        self.is_unequipped1 = self.unit1.is_unequipped
+        self.is_unequipped2 = self.unit2.is_unequipped
 
     def swap(self, unit1, unit2, item1, item2, item_index1, item_index2):
         # Do the swap
@@ -1510,16 +1511,25 @@ class TradeItem(Action):
             unit1.insert_item(item_index1, item2)
 
     def do(self):
+        self.unit1.is_unequipped = False
+        self.unit2.is_unequipped = False
         self.swap(self.unit1, self.unit2, self.item1, self.item2, self.item_index1, self.item_index2)
 
         recalc_unit(self.unit1)
         recalc_unit(self.unit2)
 
     def reverse(self):
+        self.unit1.is_unequipped = self.is_unequipped1
+        self.unit2.is_unequipped = self.is_unequipped2
         self.swap(self.unit1, self.unit2, self.item2, self.item1, self.item_index2, self.item_index1)
 
         recalc_unit(self.unit1)
         recalc_unit(self.unit2)
+
+        if self.unit1.is_unequipped:
+            self.unit1.equipped_weapon = None
+        if self.unit2.is_unequipped:
+            self.unit2.equipped_weapon = None
 
 class RepairItem(Action):
     def __init__(self, item):

@@ -740,6 +740,7 @@ class UnitObject(Prefab):
             if self.equipped_weapon:
                 self.unequip(self.equipped_weapon, item)
             self.equipped_weapon = item
+            self.is_unequipped = False
         item_system.on_equip_item(self, item)
         skill_system.on_equip_item(self, item)
 
