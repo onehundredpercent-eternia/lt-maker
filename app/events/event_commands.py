@@ -370,7 +370,8 @@ Plays the *Sound* once.
         """
 
     keywords = ['Sound']
-    optional_keywords = ['Volume']
+    optional_keywords = ['Volume',"Loop"]
+    keyword_types = ["Sound","Volume","Bool"]
 
 class StopSound(EventCommand):
     nid = "stop_sound"
