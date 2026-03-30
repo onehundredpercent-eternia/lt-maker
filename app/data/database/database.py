@@ -81,6 +81,7 @@ class Database(object):
         for team in self.teams:
             keys.append("%s_battle" % team.nid)
         keys.append("boss_battle")
+        keys.append("ambient")
         return keys
 
     # === Saving and loading important data functions ===

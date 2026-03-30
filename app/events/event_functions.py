@@ -35,7 +35,7 @@ from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.persistent_records import RECORDS
-from app.engine.sound import SongObject, get_sound_thread
+from app.engine.sound import SongObject, get_sound_thread, get_ambient_thread
 from app.events import event_commands, regions, triggers
 from app.events.event_portrait import EventPortrait
 from app.events.screen_positions import parse_screen_position
@@ -75,6 +75,17 @@ def music(self: Event, music: SongPrefab | SongObject | NID, fade_in=400, flags=
     else:
         get_sound_thread().fade_in(music_nid, fade_in=fade_in)
 
+def ambient_music(self: Event, music: SongPrefab | SongObject | NID, fade_in=400, flags=None):
+    music_nid = self._resolve_nid(music)
+    if self.do_skip:
+        fade_in = 0
+    if music_nid == 'None':
+        get_ambient_thread().fade_to_pause(fade_out=fade_in)
+        action.do(action.ChangePhaseMusic("ambient", None))
+    else:
+        get_ambient_thread().fade_in(music_nid, fade_in=fade_in)
+        action.do(action.ChangePhaseMusic("ambient", music_nid))
+
 def music_fade_back(self: Event, fade_out=400, flags=None):
     if self.do_skip:
         fade_out = 0
@@ -88,9 +99,9 @@ def music_clear(self: Event, fade_out=0, flags=None):
     else:
         get_sound_thread().clear()
 
-def sound(self: Event, sound: SFXPrefab | NID, volume: float=1.0, flags=None):
+def sound(self: Event, sound: SFXPrefab | NID, volume: float=1.0, loop=False, flags=None):
     sound_nid = self._resolve_nid(sound)
-    get_sound_thread().play_sfx(sound_nid, volume=volume)
+    get_sound_thread().play_sfx(sound_nid, volume=volume, loop=loop)
 
 def stop_sound(self: Event, sound: SFXPrefab | NID, flags=None):
     sound_nid = self._resolve_nid(sound)
