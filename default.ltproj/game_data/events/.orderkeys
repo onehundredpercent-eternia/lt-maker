@@ -113,9 +113,6 @@
     "Global_Summon_Phantom",
     "Global_Summon_Soldiers",
     "Global_Support_Gain",
-<<<<<<< HEAD
-    "5_Arena"
-=======
     "Global_Torch_Staff",
     "DEBUG_FoW_Toggle",
     "Global_SupportEirikaSethC",
@@ -130,5 +127,4 @@
     "Global_SupportSethFranzA",
     "Global_SupportEirikaSethB",
     "Global_SupportEirikaSethA"
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
 ]

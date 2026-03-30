@@ -9,10 +9,7 @@
         "priority": 20,
         "_source": [
             "# Get the NIDs and positions of all units on the map and store them into variables. This will be used to put the units back after the arena battle.",
-<<<<<<< HEAD
-=======
             "# NOTE: Destructible tiles will NOT respawn on the map after entering the arena. It is highly recommend you put all destructible tiles in a unit group and add an 'add_group' event command at the end of the code to reinsert any destructible tiles.",
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
             "level_var;SavedUnitNids;[unit.nid for unit in game.get_all_units()]",
             "level_var;SavedUnitPositions;[unit.position for unit in game.get_all_units()]",
             "# Changes terrain to Arena terrain. Add an Arena layer to the tilemap in the Tilemap editor to chapters with an arena.",
@@ -39,34 +36,6 @@
             "# Spawn enemy",
             "make_generic;;{v:ArenaEnemyKlass};{v:EnemyLevel};enemy;None;Enemy",
             "add_unit;{created_unit};{unit};immediate;closest",
-<<<<<<< HEAD
-            "# Equip enemy with weapon. Determines what weapons are available to equip based on WEXP defined in the Class Editor.",
-            "if;game.get_unit('{created_unit}').wexp['Sword'] > 0",
-            "give_item;{created_unit};Iron_Sword;no_banner",
-            "end",
-            "if;game.get_unit('{created_unit}').wexp['Lance'] > 0",
-            "give_item;{created_unit};Iron_Lance;no_banner",
-            "end",
-            "if;game.get_unit('{created_unit}').wexp['Axe'] > 0",
-            "give_item;{created_unit};Iron_Axe;no_banner",
-            "end",
-            "if;game.get_unit('{created_unit}').wexp['Bow'] > 0",
-            "give_item;{created_unit};Iron_Bow;no_banner",
-            "end",
-            "if;game.get_unit('{created_unit}').wexp['Anima'] > 0",
-            "give_item;{created_unit};Fire;no_banner",
-            "end",
-            "if;game.get_unit('{created_unit}').wexp['Light'] > 0",
-            "give_item;{created_unit};Lightning;no_banner",
-            "end",
-            "if;game.get_unit('{created_unit}').wexp['Dark'] > 0",
-            "give_item;{created_unit};Flux;no_banner",
-            "end",
-            "# Randomly choose which weapon to equip.",
-            "level_var;InventorySlot;game.get_random(1,len(unit.items))",
-            "equip_item;{created_unit};{e:game.get_unit('{created_unit}').items[{v:InventorySlot}]}",
-            "#Moves the enemy away from the player unit so they can retaliate if equipped with a bow.",
-=======
             "# Equip enemy with weapon. Determines what weapons are available to equip based on usability defined in the Class Editor.",
             "level_var;WeaponDict;{'Sword':'Iron_Sword','Lance':'Iron_Lance','Axe':'Iron_Axe','Bow':'Iron_Bow','Anima':'Fire','Light':'Lightning','Dark':'Flux'}",
             "for;LoadItem;[w for w in DB.classes.get(game.get_unit('{created_unit}').klass).wexp_gain if DB.classes.get(game.get_unit('{created_unit}').klass).wexp_gain[w].usable == True]",
@@ -77,7 +46,6 @@
             "level_var;InventorySlot;game.get_random(0,len(game.get_unit('{created_unit}').items) - 1)",
             "equip_item;{created_unit};{e:game.get_unit('{created_unit}').items[{v:InventorySlot}]}",
             "#Moves the unit away from the player unit so they can retaliate if equipped with a bow.",
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
             "if;game.get_unit('{created_unit}').get_weapon().weapon_type.value == 'Bow'",
             "move_unit;{created_unit};{e:game.get_unit('{unit}').position[0] - 1},{e:game.get_unit('{unit}').position[1] - 1};immediate;stack",
             "end",
@@ -88,15 +56,9 @@
             "transition;open",
             "music;Arena Entrance",
             "if;game.get_money() == 0",
-<<<<<<< HEAD
-            "speak;;What! You don't have any money! Get out of here!;64,8;160;noir",
-            "elif;unit.get_weapon()",
-            "speak;;Welcome to the arena!;64,8;160;noir",
-=======
             "speak;;What! You don't have any money! Get out of here!;top_right;160;noir",
             "elif;unit.get_weapon()",
             "speak;;Welcome to the arena!;top_right;160;noir",
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
             "# Get name of class to display on table",
             "level_var;ArenaEnemyKlass;DB.classes.get(game.get_unit('{created_unit}').klass).name",
             "level_var;ArenaItem;game.get_unit('{created_unit}').get_weapon().name",
@@ -106,41 +68,22 @@
             "sound;GoldExchange",
             "give_money;{e:-game.level_vars['ArenaWager']};no_banner",
             "change_music;player_battle;Arena Battle",
-<<<<<<< HEAD
-            "speak;;Good luck. Don't get yourself killed.|Fight 'til defeat or press B to yield.;64,8;160;noir",
-            "remove_table;OpponentStats",
-            "transition;close",
-=======
             "speak;;Good luck. Don't get yourself killed.|Fight 'til defeat or press B to yield.;top_right;160;noir",
             "remove_table;OpponentStats",
             "transition;close",
             "change_background",
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
             "interact_unit;{unit};{created_unit};;;20;arena;force_animation",
             "end_skip",
             "if;game.check_dead('{created_unit}')",
             "change_background;Arena",
             "transition;open",
             "music;Arena Victory",
-<<<<<<< HEAD
-            "speak;;So you won, eh? Here's your prize. {e:2*game.level_vars['ArenaWager']} gold.;64,8;160;noir",
-=======
             "speak;;So you won, eh? Here's your prize. {e:2*game.level_vars['ArenaWager']} gold.;top_right;160;noir",
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
             "sound;GoldExchange",
             "give_money;{e:2*game.level_vars['ArenaWager']}",
             "music_fade_back;100",
             "end",
             "change_music;player_battle;Attack",
-<<<<<<< HEAD
-            "has_attacked;{unit}",
-            "else",
-            "speak;;What are you wasting my time for?;64,8;160;noir",
-            "remove_table;OpponentStats",
-            "end",
-            "else",
-            "speak;;What! You don't have a weapon! Get out of here!;64,8;160;noir",
-=======
             "has_visited;{unit};attacked",
             "else",
             "speak;;What are you wasting my time for?;top_right;160;noir",
@@ -148,7 +91,6 @@
             "end",
             "else",
             "speak;;What! You don't have a weapon! Get out of here!;top_right;160;noir",
->>>>>>> 3babc0b6fce5ac3491d26ee2c613684da2745692
             "end",
             "transition;close",
             "# Clean up after a round at the arena.",
