@@ -88,9 +88,9 @@ def music_clear(self: Event, fade_out=0, flags=None):
     else:
         get_sound_thread().clear()
 
-def sound(self: Event, sound: SFXPrefab | NID, volume: float=1.0, flags=None):
+def sound(self: Event, sound: SFXPrefab | NID, volume: float=1.0, loop=False, flags=None):
     sound_nid = self._resolve_nid(sound)
-    get_sound_thread().play_sfx(sound_nid, volume=volume)
+    get_sound_thread().play_sfx(sound_nid, volume=volume, loop=loop)
 
 def stop_sound(self: Event, sound: SFXPrefab | NID, flags=None):
     sound_nid = self._resolve_nid(sound)

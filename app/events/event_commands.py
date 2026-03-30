@@ -353,11 +353,12 @@ class Sound(EventCommand):
 
     desc = \
         """
-Plays the *Sound* once.
+Plays the *Sound*. Plays once by default. Sound will repeat with the optional "Loop" argument set to True.
         """
 
     keywords = ['Sound']
-    optional_keywords = ['Volume']
+    optional_keywords = ['Volume',"Loop"]
+    keyword_types = ["Sound","Volume","Bool"]
 
 class StopSound(EventCommand):
     nid = "stop_sound"
