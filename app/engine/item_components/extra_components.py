@@ -88,12 +88,7 @@ class EffectiveDamage(ItemComponent):
         if self._check_effective(target):
             might = item_system.damage(unit, item) or 0
             if self.weapon_effectiveness_multiplied:
-                adv = combat_calcs.compute_advantage(unit, target, item, item2)
-                disadv = combat_calcs.compute_advantage(unit, target, item, item2, False)
-                if adv:
-                    might += int(adv.damage)
-                if disadv:
-                    might += int(disadv.damage)
+                might += combat_calcs.compute_advantage_attr(unit, target, item, item2, 'damage')
             return int((self.multiplier - 1.0) * might + self.bonus_damage)
         return 0
 
@@ -162,6 +157,21 @@ class Eclipse(ItemComponent):
 
     def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
         true_damage = damage = target.get_hp()//2
+        actions.append(action.ChangeHP(target, -damage))
+
+        # For animation
+        playback.append(pb.DamageHit(unit, item, target, damage, true_damage))
+        if true_damage == 0:
+            playback.append(pb.HitSound('No Damage'))
+            playback.append(pb.HitAnim('MapNoDamage', target))
+
+class EclipseFE7(ItemComponent):
+    nid = 'eclipse_fe7'
+    desc = "Reduces target's HP to 1"
+    tag = ItemTags.EXTRA
+
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        true_damage = damage = target.get_hp() - 1
         actions.append(action.ChangeHP(target, -damage))
 
         # For animation

@@ -27,6 +27,8 @@ class MultiSkill(SkillComponent):
         tag = SkillTags.HIDDEN
 
         expose = ComponentType.Int
+
+        ignore_conditional = True
         
         def condition(self, unit, item):
             parent_skill = game.get_skill(self.value)
@@ -149,7 +151,7 @@ class AllowedWeapons(SkillComponent):
     def weapon_filter(self, unit, item) -> bool:
         from app.engine import evaluate
         try:
-            return bool(evaluate.evaluate(self.value, unit, local_args={'item': item}))
+            return bool(evaluate.evaluate(self.value, unit, local_args={'item': item, 'skill': self.skill}))
         except Exception as e:
             print("Couldn't evaluate conditional {%s} %s" % (self.value, e))
         return False

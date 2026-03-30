@@ -4,9 +4,10 @@ from app.utilities.typing import NID
 
 import functools
 import logging
+import pickle
 import sys
 import app.engine.config as cf
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 from app.constants import TILEHEIGHT, TILEWIDTH
 from app.data.database.database import DB
@@ -20,48 +21,46 @@ from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.region import RegionObject
+from app.engine.persistent_records import RECORDS
 from app.engine import engine
 from app.utilities import utils, static_random
 from app.utilities.typing import Pos
 from app.engine.source_type import SourceType
 
-def alters_game_state(func):
+def alters_game_state(func: Callable[..., Any]) -> Callable[..., None]:
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> None:
         func(*args, **kwargs)
         game.on_alter_game_state()
     return wrapper
 
-def wrap_do_exec_reverse(_cls):
+def wrap_do_exec_reverse(_cls: Type[Action]) -> Type[Action]:
     for func in ['do', 'execute', 'reverse']:
         setattr(_cls, func, alters_game_state(getattr(_cls, func)))
-        
-    def wrapper():
-        return _cls()
-    return wrapper
+    return _cls
 
 class Action():
     persist_through_menu_cancel = False
 
-    def __init_subclass__(cls, **kwargs):
-        return wrap_do_exec_reverse(_cls=cls)
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        wrap_do_exec_reverse(_cls=cls)
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     # When used normally
-    def do(self):
+    def do(self) -> None:
         pass
 
     # When put in forward motion by the turnwheel
-    def execute(self):
+    def execute(self) -> None:
         self.do()
 
     # When put in reverse motion by the turnwheel
-    def reverse(self):
+    def reverse(self) -> None:
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         s = "%s: " % self.__class__.__name__
         for attr in self.__dict__.items():
             name, value = attr
@@ -70,7 +69,7 @@ class Action():
         return s
 
     @staticmethod
-    def save_obj(value):
+    def save_obj(value: Any) -> Tuple[str, Any]:
         if isinstance(value, UnitObject):
             value = ('unit', value.nid)
         elif isinstance(value, ItemObject):
@@ -84,11 +83,25 @@ class Action():
         elif isinstance(value, Action):
             value = ('action', value.save())
         else:
-            value = ('generic', value)
+            # verify value can be pickled
+            # complex objects (e.g., PlaybackBrush containing game objects
+            # with cached pygame surfaces) may not be picklable
+            # so we just fail gracefully - nothing of value has been lost
+            # becase the GenericTrigger on the restore path ditches
+            # the list of PlaybackBrush in the old impl anyway
+            # if pickling these objects is desired, then that burden falls upon
+            # the impl of the class itself, not in this routine
+            try:
+                pickle.dumps(value)
+                value = ('generic', value)
+            # shouldn't happen with our guard upstream, but just in case
+            except (TypeError, pickle.PicklingError, AttributeError):
+                logging.error(f"save_obj: dropping unpicklable value of type {type(value).__name__}: {value}")
+                value = ('generic', None)
         return value
 
-    def save(self):
-        ser_dict = {}
+    def save(self) -> Tuple[str, Dict[str, Tuple[str, Any]]]:
+        ser_dict: Dict[str, Tuple[str, Any]] = {}
         for attr in self.__dict__.items():
             name, value = attr
             value = self.save_obj(value)
@@ -96,7 +109,7 @@ class Action():
         return (self.__class__.__name__, ser_dict)
 
     @staticmethod
-    def restore_obj(value):
+    def restore_obj(value: Tuple[str, Any]) -> Any:
         if value[0] == 'unit':
             return game.get_unit(value[1])
         elif value[0] == 'item':
@@ -115,13 +128,13 @@ class Action():
             return value[1]
 
     @classmethod
-    def restore(cls, ser_dict):
+    def restore(cls, ser_dict: Dict[str, Tuple[str, Any]]) -> Action:
         self = cls.__new__(cls)
         for name, value in ser_dict.items():
             setattr(self, name, self.restore_obj(value))
         return self
 
-def recalc_unit(unit):
+def recalc_unit(unit: UnitObject) -> None:
     # Currently Equipped Item may have changed
     unit.autoequip()
     if unit.position and game.tilemap:
@@ -139,9 +152,9 @@ def recalc_unit(unit):
             if game.boundary:
                 game.boundary.reset_fog_of_war()
 
-def recalculate_unit(func):
+def recalculate_unit(func: Callable[..., Any]) -> Callable[..., None]:
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> None:
         func(*args, **kwargs)
         self = args[0]
         recalc_unit(self.unit)
@@ -208,6 +221,22 @@ class Move(Action):
 class CantoMove(Move):
     pass
 
+class XCOMMove(Move):
+    def __init__(self, unit, new_pos, path=None, event=False, follow=True, speed=0):
+        super().__init__(unit, new_pos, path, event, follow, speed)
+        self.has_attacked = HasAttacked(unit)
+
+    def do(self):
+        super().do()
+        self.has_attacked.execute()
+
+    def execute(self):
+        super().execute()
+        self.has_attacked.execute()
+
+    def reverse(self):
+        super().reverse()
+        self.has_attacked.reverse()
 
 class SimpleMove(Move):
     """
@@ -252,6 +281,10 @@ class ForcedMovement(SimpleMove):
         game.arrive(self.unit, self.new_pos)
         self.update_fow_action.do()
 
+    def execute(self):
+        game.leave(self.unit)
+        game.arrive(self.unit, self.new_pos)
+        self.update_fow_action.do()
 
 class Swap(Action):
     def __init__(self, unit1: UnitObject, unit2: UnitObject):
@@ -518,14 +551,21 @@ class SetGameVar(Action):
     def __init__(self, nid, val):
         self.nid = nid
         self.val = val
-        self.old_val = game.game_vars[self.nid]
+        if self.nid in game.game_vars:
+            self.old_val = game.game_vars[self.nid]
+            self.already_exists = True
+        else:
+            self.old_val = None
+            self.already_exists = False
 
     def do(self):
         game.game_vars[self.nid] = self.val
 
     def reverse(self):
-        game.game_vars[self.nid] = self.old_val
-
+        if self.already_exists:
+            game.game_vars[self.nid] = self.old_val
+        else:
+            game.game_vars.pop(self.nid, None)
 
 class SetLevelVar(Action):
     fog_nids = ('_fog_of_war', '_fog_of_war_radius', '_ai_fog_of_war_radius', '_other_fog_of_war_radius', '_fog_of_war_type')
@@ -533,7 +573,12 @@ class SetLevelVar(Action):
     def __init__(self, nid, val):
         self.nid = nid
         self.val = val
-        self.old_val = game.level_vars[self.nid]
+        if self.nid in game.level_vars:
+            self.old_val = game.level_vars[self.nid]
+            self.already_exists = True
+        else:
+            self.old_val = None
+            self.already_exists = False
 
     def _update_fog_of_war(self):
         if self.nid in self.fog_nids:
@@ -547,7 +592,10 @@ class SetLevelVar(Action):
         self._update_fog_of_war()
 
     def reverse(self):
-        game.level_vars[self.nid] = self.old_val
+        if self.already_exists:
+            game.level_vars[self.nid] = self.old_val
+        else:
+            game.level_vars.pop(self.nid, None)
         self._update_fog_of_war()
 
 class SetMovementLeft(Action):
@@ -639,6 +687,17 @@ class ResetUnitVars(Action):
         self.unit.set_hp(self.old_current_hp)
         self.unit.set_mana(self.old_current_mana)
 
+class SetPosition(Action):
+    def __init__(self, unit: UnitObject, pos: Pos):
+        self.unit = unit
+        self.pos = pos
+        self.old_pos = self.unit.position
+
+    def do(self):
+        self.unit.position = self.pos
+
+    def reverse(self):
+        self.unit.position = self.old_pos
 
 class SetPreviousPosition(Action):
     def __init__(self, unit):
@@ -670,7 +729,7 @@ class Reset(Action):
 
     def do(self):
         self.unit.reset()
-        self.unit.movement_left = equations.parser.movement(self.unit)
+        self.unit.movement_left = self.unit.get_movement()
 
     def reverse(self):
         self.unit.set_action_state(self.action_state)
@@ -709,7 +768,7 @@ class HasNotTraded(Reset):
 
 # === RESCUE ACTIONS ========================================================
 class Rescue(Action):
-    def __init__(self, unit, rescuee):
+    def __init__(self, unit: UnitObject, rescuee: UnitObject):
         self.unit = unit
         self.rescuee = rescuee
         self.old_pos = self.rescuee.position
@@ -721,7 +780,8 @@ class Rescue(Action):
         self.unit.traveler = self.rescuee.nid
         # TODO Add transition
 
-        game.leave(self.rescuee)
+        if self.rescuee.position:
+            game.leave(self.rescuee)
         self.unit.has_rescued = True
 
         if not skill_system.ignore_rescue_penalty(self.unit) and 'Rescue' in DB.skills:
@@ -734,7 +794,8 @@ class Rescue(Action):
     def execute(self):
         self.unit.traveler = self.rescuee.nid
 
-        game.leave(self.rescuee)
+        if self.rescuee.position:
+            game.leave(self.rescuee)
         self.unit.has_rescued = True
 
         for action in self.subactions:
@@ -742,7 +803,8 @@ class Rescue(Action):
         self.update_fow_rescuee.execute()
 
     def reverse(self):
-        game.arrive(self.rescuee, self.old_pos)
+        if self.old_pos:
+            game.arrive(self.rescuee, self.old_pos)
         self.unit.traveler = None
         self.unit.has_rescued = False
 
@@ -1009,7 +1071,8 @@ class Separate(Action):
                                           (self.unit.position[1] - self.pos[1]) * TILEHEIGHT]
 
     def execute(self):
-        game.arrive(self.droppee, self.pos)
+        if self.pos:
+            game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.with_wait:
             self.droppee_wait_action.execute()
@@ -2535,6 +2598,9 @@ class UnlockSupportRank(Action):
             game.supports.create_pair(self.nid)
 
     def do(self):
+        # Yea, this one can't be turnwheel-ed lol
+        RECORDS.unlock_support_rank(self.nid, self.rank)
+
         self.was_locked = False
         pair = game.supports.support_pairs[self.nid]
         if self.rank in pair.locked_ranks:
@@ -2646,7 +2712,7 @@ class ChangeAIGroup(Action):
     def __init__(self, unit, ai_group):
         self.unit = unit
         self.ai_group = ai_group
-        self.old_ai = self.unit.ai_group
+        self.old_ai_group = self.unit.ai_group
 
     def do(self):
         self.unit.ai_group = self.ai_group
@@ -3656,6 +3722,40 @@ class RemoveSkill(Action):
 
             skill_system.after_add(self.unit, skill)
         self.reset_action.reverse()
+
+class ChangeTeamPalette(Action):
+    def __init__(self, team, palettes):
+        self.team = team
+        self.new_palettes = palettes
+
+        team_obj = game.teams.get(team)
+        self.old_palettes = (team_obj.map_sprite_palette, 
+                             team_obj.combat_variant_palette, 
+                             team_obj.combat_color)
+
+    def do(self):
+        team_obj = game.teams.get(self.team)
+        team_obj.change_palettes(*self.new_palettes)
+
+        # Update map sprites
+        for key in game.map_sprite_registry.keys():
+            if key.split('_')[-1] == self.team:
+                game.map_sprite_registry[key] = None
+
+        for unit in game.get_team_units(self.team):
+            unit.sprite.load_sprites()
+
+    def reverse(self):
+        team_obj = game.teams.get(self.team)
+        team_obj.change_palettes(*self.old_palettes)
+
+        # Update map sprites
+        for key in game.map_sprite_registry.keys():
+            if key.split('_')[-1] == self.team:
+                game.map_sprite_registry[key] = None
+
+        for unit in game.get_team_units(self.team):
+            unit.sprite.load_sprites()
 
 
 # === Master Functions for adding to the action log ===

@@ -3,7 +3,7 @@ from app.data.resources.resources import RESOURCES
 from app.engine import bmpfont, image_mods
 from app.utilities.typing import NID
 
-NORMAL_FONT_COLORS = ['white', 'blue', 'green', 'red', 'orange', 'grey', 'yellow', 'brown', 'purple']
+NORMAL_FONT_COLORS = ['white', 'blue', 'green', 'red', 'orange', 'grey', 'yellow', 'brown', 'purple', 'navy']
 
 # Load in default, uncolored fonts
 FONT: Dict[NID, bmpfont.BmpFont] = {}
@@ -30,3 +30,9 @@ def load_fonts():
             FONT[font_name_with_color].default_color = color_name
             FONT[font_name_with_color].surfaces[color_name] = paletted_surf
     NORMAL_FONT_COLORS = RESOURCES.fonts.get("text").palettes.keys()
+
+def get_text_color_options() -> list[str]:
+    text_font = RESOURCES.fonts.get('text')
+    if not text_font or not text_font.palettes:
+        return ['white']
+    return list(text_font.palettes.keys())

@@ -505,9 +505,7 @@ class MapEditorView(DraggableTileImageView):
             if self.window.current_tool == PaintTool.Brush:
                 self.right_selecting = tile_pos
                 self.right_selection.clear()
-                if self.window.terrain_mode:
-                    self.window.terrain_painter_menu.set_current_nid(None)
-                else:
+                if not self.window.terrain_mode:
                     self.window.void_tileset_selection()
             else:
                 current_nid = self.tilemap.get_terrain(tile_pos)
@@ -555,6 +553,14 @@ class MapEditorView(DraggableTileImageView):
             elif event.button() == Qt.RightButton:
                 if self.right_selecting:
                     self.find_coords()
+                    if self.window.terrain_mode:
+                        if len(self.right_selection) < 2:
+                            current_nid = self.tilemap.get_terrain(self.right_selecting)
+                            if current_nid:
+                                self.window.terrain_painter_menu.set_current_nid(current_nid)
+                            self.window.void_right_selection()
+                        else:
+                            self.window.terrain_painter_menu.set_current_nid(None)
                     self.right_selecting = False
         elif self.window.current_tool == PaintTool.Erase:
             if event.button() == Qt.LeftButton:
@@ -1149,7 +1155,12 @@ class TileSetMenu(QWidget):
 
         self.tab_clear()
         for nid in self.current.tilesets:
-            self.tab_bar.addTab(nid)
+            tileset = RESOURCES.tilesets.get(nid)
+            if tileset:
+                self.tab_bar.addTab(nid)
+            else:
+                # If a tileset somehow doesn't exist, remove it!
+                self.current.tilesets.remove(nid)
 
         if self.current.tilesets:
             self.load_tileset(self.current.tilesets[0])
@@ -1158,6 +1169,9 @@ class TileSetMenu(QWidget):
 
     def load_tileset(self, tileset_nid):
         tileset = RESOURCES.tilesets.get(tileset_nid)
+        if not tileset:
+            self.empty_tileset()
+            return
         if not tileset.pixmap:
             tileset.set_pixmap(QPixmap(tileset.full_path))
         self.current_tileset = tileset

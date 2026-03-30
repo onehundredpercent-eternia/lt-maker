@@ -18,6 +18,15 @@ from app.engine.sprites import SPRITES
 from app.engine.state import MapState, State
 from app.events import triggers
 
+def setup_units():
+    # Force place any required units
+    for unit in game.get_units_in_party():
+        possible_position = game.get_next_formation_spot()
+        if 'Required' in unit.tags and possible_position and not unit.position:
+            action.ArriveOnMap(unit, possible_position).do()
+
+    # Force reset all units
+    action.do(action.ResetAll([unit for unit in game.units if not unit.dead]))
 
 class PrepMainState(MapState):
     name = 'prep_main'
@@ -51,7 +60,7 @@ class PrepMainState(MapState):
         events = events[:option_idx] + additional_events + events[option_idx:]
         return options, ignore, events
 
-    def start(self):
+    def _prep_start(self):
         prep_music = game.game_vars.get('_prep_music')
         if prep_music:
             get_sound_thread().fade_in(prep_music)
@@ -69,18 +78,12 @@ class PrepMainState(MapState):
         self.menu.set_limit(max_num_options)
         self.menu.set_ignore(ignore)
 
-        # Force place any required units
-        for unit in game.get_units_in_party():
-            possible_position = game.get_next_formation_spot()
-            if 'Required' in unit.tags and possible_position and not unit.position:
-                action.ArriveOnMap(unit, possible_position).do()
-
-        # Force reset all units
-        action.do(action.ResetAll([unit for unit in game.units if not unit.dead]))
-
         self.fade_out = False
         self.last_update = 0
 
+    def start(self):
+        setup_units()
+        self._prep_start()
         game.events.trigger(triggers.OnPrepStart())
 
     def begin(self):
@@ -345,6 +348,11 @@ def _handle_info():
         game.memory['next_state'] = 'info_menu'
         game.memory['current_unit'] = game.cursor.get_hover()
         game.state.change('transition_to')
+    elif region := game.cursor.get_previewable_region():
+        get_sound_thread().play_sfx('Select 1')
+        did_trigger = game.events.trigger(triggers.Preview(game.cursor.position, region))
+        if did_trigger and region.only_once:
+            action.do(action.RemoveRegion(region))
     else:
         get_sound_thread().play_sfx('Select 3')
         game.boundary.toggle_all_enemy_attacks()
@@ -390,6 +398,11 @@ class PrepFormationState(MapState):
                         game.boundary.toggle_unit(cur_unit)
                     else:
                         get_sound_thread().play_sfx('Error')
+            elif region := game.cursor.get_previewable_region():
+                get_sound_thread().play_sfx('Select 1')
+                did_trigger = game.events.trigger(triggers.Preview(game.cursor.position, region))
+                if did_trigger and region.only_once:
+                    action.do(action.RemoveRegion(region))
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 1')
@@ -871,6 +884,9 @@ class PrepManageSelectState(State):
                 tradeable_items = item_funcs.get_all_tradeable_items(self.unit)
                 for item in tradeable_items:
                     convoy_funcs.store_item(item, self.unit)
+                # Could have given away an item that would let us Restock/Repair/Use etc.
+                # Recheck what should be ignored
+                self.select_menu.set_ignore(self.get_ignore())
             elif choice == 'Items':
                 if self.name.startswith('base'):
                     game.memory['next_state'] = 'base_items'

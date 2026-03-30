@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import json
 import random
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
@@ -12,7 +13,7 @@ from app.data.database.difficulty_modes import RNGOption
 from app.data.resources.resources import RESOURCES
 from app.data.resources.sounds import SFXPrefab, SongPrefab
 from app.engine import (action, background, banner, base_surf, dialog, engine,
-                        icons, image_mods, item_funcs, item_system,
+                        gui, icons, image_mods, item_funcs, item_system,
                         save, skill_system, unit_funcs)
 from app.engine.game_board import FogOfWarType
 from app.engine.achievements import ACHIEVEMENTS
@@ -42,7 +43,7 @@ from app.events.speak_style import SpeakStyle
 from app.events.utils import TableRows
 from app.sprites import SPRITES
 from app.utilities import file_manager_utils, file_utils, str_utils, utils
-from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment
+from app.utilities.enums import Alignments, HAlignment, Orientation, VAlignment, CharacterSet
 from app.utilities.type_checking import is_primitive_or_primitive_collection
 from app.utilities.typing import NID, Point
 from app.engine.source_type import SourceType
@@ -114,7 +115,7 @@ def change_special_music(self: Event, special_music_type: str, music: SongPrefab
     elif special_music_type == 'game_over':
         action.do(action.SetGameVar('_music_game_over', music_nid))
 
-def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None, 
+def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None,
                  expression_list: Optional[List[str]] = None, speed_mult: float = 1.0, flags=None):
     flags = flags or set()
 
@@ -283,21 +284,21 @@ def mirror_portrait(self: Event, portrait, speed_mult: float = 1.0, flags=None):
                 self.wait_time = engine.get_time() + event_portrait.transition_speed + 33
                 self.state = 'waiting'
 
-def bop_portrait(self: Event, portrait, num_bops: int = 2, time: int = None, flags=None):
+def bop_portrait(self: Event, portrait, num_bops: int = 2, time: int = utils.frames2ms(8), flags=None):
     flags = flags or set()
 
     _, name = self._get_portrait(portrait)
     event_portrait = self.portraits.get(name)
     if not event_portrait:
         return False
-    if time is not None:
-        event_portrait.bop(num=num_bops, speed=time)
-    else:
-        event_portrait.bop(num=num_bops)
+    event_portrait.bop(num=num_bops, speed=time)
     if 'no_block' in flags:
         pass
     else:
-        self.wait_time = engine.get_time() + 666
+        # Wait time is (1. no bop for time, 2. bop for time, 3. no bop for time, and so on for each bop)
+        # So if 1 bop, 3 * time worth of blocking
+        # If 2 bop, 5 * time worth of blocking, and so on
+        self.wait_time = engine.get_time() + (2 * num_bops * time + time)
         self.state = 'waiting'
 
 def expression(self: Event, portrait, expression_list: List[str], flags=None):
@@ -326,21 +327,17 @@ def say(self: Event, speaker_or_style: str, text: List[str], text_position: Poin
           message_tail, transparency, name_tag_bg, boop_sound, flags)
 
 def speak(self: Event, speaker_or_style: str, text, text_position: Point | Alignments=None, width=None, style_nid=None, text_speed=None,
-          font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor=None,
+          font_color=None, font_type=None, dialog_box=None, num_lines=None, draw_cursor: bool=None,
           message_tail=None, transparency=None, name_tag_bg=None, boop_sound=None, flags=None):
     flags = flags or set()
     text = dialog.process_dialog_shorthand(text)
 
     if 'no_block' in flags:
         text += '{no_wait}'
-
-    if draw_cursor:
-        cursor = draw_cursor.lower() in self.true_vals
-    else:
-        cursor = None
+    cursor = True if draw_cursor is None else draw_cursor
 
     manual_style = SpeakStyle(None, None, text_position, width, text_speed, font_color,
-                              font_type, dialog_box, num_lines, cursor, message_tail, 
+                              font_type, dialog_box, num_lines, cursor, message_tail,
                               transparency, name_tag_bg, boop_sound, flags)
 
     style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
@@ -608,6 +605,36 @@ def inc_game_var(self: Event, nid, expression=None, flags=None):
     else:
         action.do(action.SetGameVar(nid, self.game.game_vars.get(nid, 0) + 1))
 
+def modify_game_var(self: Event, nid: NID, expression: str, flags:Optional[set[str]]=None):
+    """Does not work in #pyev1."""
+    flags = flags or set()
+    if nid not in self.game.game_vars:
+        self.logger.error(f"modify_game_var: {nid} does not exist as a game_var!")
+        return
+    
+    # Refer to the copy as `it` and (assume) the expression mutates the copy.
+    new_val = deepcopy(self.game.game_vars[nid])
+    self.it = new_val
+    self.text_evaluator.it = new_val
+    try:
+        maybe_result = self._eval_expr(expression, 'from_python' in flags)
+        if maybe_result is not None:
+            self.logger.warning(f"modify_game_var: {expression} has a return value of {maybe_result}: this value will be discarded. Perhaps you meant to use the `game_var` command instead?")
+    except:
+        self.logger.error(f"modify_game_var: cannot evaluate {expression}!")
+        self.it = None
+        self.text_evaluator.it = None
+        return
+    
+    if is_primitive_or_primitive_collection(new_val):
+        action.do(action.SetGameVar(nid, new_val))
+    else:
+        # If the new_val is invalid, simply do nothing - no turnwheel breakage!
+        self.logger.error(f"modify_game_var: {new_val} is not a valid variable!")
+    
+    self.it = None
+    self.text_evaluator.it = None
+    
 def level_var(self: Event, nid, expression, flags=None):
     val = self._eval_expr(expression, 'from_python' in flags)
     if is_primitive_or_primitive_collection(val):
@@ -624,6 +651,36 @@ def inc_level_var(self: Event, nid, expression=None, flags=None):
             self.logger.error("inc_level_var: %s is not a valid variable", val)
     else:
         action.do(action.SetLevelVar(nid, self.game.level_vars.get(nid, 0) + 1))
+
+def modify_level_var(self: Event, nid: NID, expression: str, flags:Optional[set[str]]=None):
+    """Does not work in #pyev1."""
+    flags = flags or set()
+    if nid not in self.game.level_vars:
+        self.logger.error(f"modify_level_var: {nid} does not exist as a level_var!")
+        return
+    
+    # Refer to the copy as `it` and (assume) the expression mutates the copy.
+    new_val = deepcopy(self.game.level_vars[nid])
+    self.it = new_val
+    self.text_evaluator.it = new_val
+    try:
+        maybe_result = self._eval_expr(expression, 'from_python' in flags)
+        if maybe_result is not None:
+            self.logger.warning(f"modify_level_var: {expression} has a return value of {maybe_result}: this value will be discarded. Perhaps you meant to use the `level_var` command instead?")
+    except:
+        self.logger.error(f"modify_level_var: cannot evaluate {expression}!")
+        self.it = None
+        self.text_evaluator.it = None
+        return
+    
+    if is_primitive_or_primitive_collection(new_val):
+        action.do(action.SetLevelVar(nid, new_val))
+    else:
+        # If the new_val is invalid, simply do nothing - no turnwheel breakage!
+        self.logger.error(f"modify_level_var: {new_val} is not a valid variable!")
+        
+    self.it = None
+    self.text_evaluator.it = None
 
 def set_next_chapter(self: Event, chapter, flags=None):
     if chapter not in DB.levels:
@@ -700,7 +757,7 @@ def activate_turnwheel(self: Event, force: bool = True, flags=None):
 def battle_save(self: Event, save_name: Optional[str] = None, flags=None):
     flags = flags or set()
     if save_name:
-        self.game.memory['save_name'] = save_name
+        self.game.game_vars['_save_name'] = save_name
     if 'immediately' in flags:
         self.state = 'paused'
         self.game.memory['save_kind'] = 'battle'
@@ -958,10 +1015,17 @@ def add_unit(self: Event, unit, position=None, entry_type=None, placement=None, 
         self.logger.error("add_unit: Unit is dead!")
         return
     # If the unit is already on the map as a traveler
-    for u in self.game.get_all_units():
+    for u in self.game.get_all_units(False):
         if u.traveler == unit.nid:
-            self.logger.error("add_unit: Unit is already traveling with %s", u.nid)
-            return
+            if u.position:
+                self.logger.error("add_unit: Unit is already traveling with %s", u.nid)
+                return
+
+            if DB.constants.value('pairup'):
+                action.do(action.Separate(u, unit, None, False))
+            else:
+                action.do(action.RemovePartner(u))
+            break
 
     position = self._parse_pos(position) if position else unit.starting_position
     if not position:
@@ -1218,10 +1282,17 @@ def set_variant(self: Event, unit: NID, string: str = None, flags=None):
     action.do(action.SetVariant(actor, string))
 
 def set_current_hp(self: Event, unit, hp: int, flags=None):
+    flags = flags or set()
+
     actor = self._get_unit(unit)
     if not actor:
         self.logger.error("set_current_hp: Couldn't find unit %s" % unit)
         return
+
+    if 'damage_numbers' in flags and actor.position:
+        difference: int = actor.get_hp() - hp
+        actor.sprite.add_damage_number(difference)
+
     action.do(action.SetHP(actor, hp))
 
 def set_current_mana(self: Event, unit, mana: int, flags=None):
@@ -1307,6 +1378,44 @@ def has_traded(self: Event, unit, flags=None):
         self.logger.error("has_traded: Couldn't find unit %s" % unit)
         return
     action.do(action.HasTraded(actor))
+
+def has_visited(self: Event, unit, flags=None):
+    actor = self._get_unit(unit)
+    if not actor:
+        self.logger.error("has_visited: Couldn't find unit %s" % unit)
+        return
+    
+    # Set the appropriate action state
+    if 'attacked' in flags:
+        action.do(action.HasAttacked(actor))
+    else:
+        action.do(action.HasTraded(actor))
+    
+    # Check if the level has ended or is ending to prevent crashes
+    if (self.game.level_vars.get('_win_game') or 
+        self.game.level_vars.get('_lose_game') or 
+        self.game.level_vars.get('_level_end_triggered')):
+        self.logger.info("has_visited: Level ending, skipping action for unit %s" % unit)
+        return
+    
+    # Check if the unit is still alive and valid
+    if not self.game.check_alive(unit):
+        self.logger.info("has_visited: Unit %s is no longer alive, skipping action" % unit)
+        return
+    
+    # Handle canto properly - follow the Rescue/Drop pattern exactly
+    if skill_system.has_canto(actor, None):
+        # Critical: Set the cursor unit so MoveState recognizes this as a canto situation
+        self.game.cursor.cur_unit = actor
+        self.game.cursor.set_pos(actor.position)
+        action.do(action.SetMovementLeft(actor, skill_system.canto_movement(actor, None)))
+        self.game.cursor.place_arrows()
+        self.game.level_vars['_go_to_state'] = 'move'
+    else:
+        # Use the action system for proper turnwheel recording
+        self.game.state.change('free')
+        self.game.cursor.set_pos(actor.position)
+        action.do(action.Wait(actor))
 
 def has_finished(self: Event, unit, flags=None):
     actor = self._get_unit(unit)
@@ -1482,6 +1591,7 @@ def give_item(self: Event, global_unit_or_convoy, item, party=None, flags=None):
                 action.do(action.GiveItem(unit, item))
                 self.game.memory['item_discard_current_unit'] = unit
                 self.game.memory['item_discard_new_item'] = item
+                self.game.memory['item_discard_force_give'] = True if 'force_give' in flags else False
                 self.game.state.change('item_discard')
                 self.state = 'paused'
                 if banner_flag:
@@ -1944,7 +2054,8 @@ def give_exp(self: Event, global_unit, experience: int, flags=None):
         return
     exp = utils.clamp(experience, -100, 100)
     klass = DB.classes.get(unit.klass)
-    max_exp = 100 * (klass.max_level - unit.level) - unit.exp
+    max_lvl = klass.max_level + 1 if exp_funcs.can_give_exp(unit, exp) else klass.max_level
+    max_exp = 100 * (max_lvl - unit.level) - unit.exp
     exp = min(exp, max_exp)
     if 'silent' in flags:
         old_exp = unit.exp
@@ -2599,7 +2710,7 @@ def remove_market_item(self: Event, item, stock: int=0, flags=None):
 def clear_market_items(self: Event, flags=None):
     self.game.market_items.clear()
 
-def add_region(self: Event, region, position, size: Tuple, region_type, string=None, time_left=None, hide_time=False, flags=None):
+def add_region(self: Event, region, position, size: Tuple, region_type, string=None, time_left=None, hide_time=False, highlight = None, flags=None):
     flags = flags or set()
 
     if region in self.game.level.regions:
@@ -2615,6 +2726,12 @@ def add_region(self: Event, region, position, size: Tuple, region_type, string=N
     new_region.position = position
     new_region.size = size
     new_region.sub_nid = sub_region_type
+    new_region.highlight = None
+    if highlight is not None and highlight != regions.RegionHighlight.NONE:
+        if highlight in list(regions.RegionHighlight):
+            new_region.highlight = highlight
+        else:
+            self.logger.warning("Could not find highlight anim %s%s", "highlight_", highlight)
     new_region.time_left = time_left
     new_region.hide_time = hide_time
 
@@ -2783,7 +2900,7 @@ def merge_parties(self: Event, party1, party2, flags=None):
         if unit.party == guest:
             action.do(action.ChangeParty(unit, host))
     # Merge items
-    for item in guest_party.convoy:
+    for item in guest_party.convoy[:]:
         action.do(action.RemoveItemFromConvoy(item, guest))
         action.do(action.PutItemInConvoy(item, host))
     # Merge money
@@ -2819,7 +2936,8 @@ def arrange_formation(self: Event, flags=None):
             action.execute(action.Reset(unit))
 
 def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | SongObject | NID = None, other_options: List[str] = None,
-         other_options_enabled: List[Optional[bool]] = None, other_options_on_select: List[Optional[bool]] = None, flags=None):
+         other_options_enabled: List[Optional[bool]] = None, other_options_on_select: List[Optional[str]] = None, 
+         other_options_description: List[Optional[str]] = None, flags=None):
     action.do(action.SetLevelVar('_prep_pick', pick_units_enabled))
     music_nid = self._resolve_nid(music)
     if music_nid:
@@ -2829,9 +2947,10 @@ def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | Song
         options_list = other_options or []
         options_enabled = other_options_enabled or []
         options_events = other_options_on_select or []
+        options_descs = other_options_description or []
 
         if len(options_enabled) <= len(options_list):
-            options_enabled += [False] * (len(options_list) - len(options_events))
+            options_enabled += [False] * (len(options_list) - len(options_enabled))
             action.do(action.SetGameVar('_prep_options_enabled', options_enabled))
         else:
             self.logger.error("prep: too many bools in option enabled list: ", other_options_enabled)
@@ -2844,12 +2963,25 @@ def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | Song
             self.logger.error("prep: too many events in option event list: ", other_options_on_select)
             return
         action.do(action.SetGameVar('_prep_additional_options', options_list))
+
+        if len(options_descs) <= len(options_list):
+            options_descs += [''] * (len(options_list) - len(options_descs))
+            action.do(action.SetGameVar('_prep_options_info_descs', options_descs))
+        else:
+            self.logger.error("prep: too many strs in option description list: ", other_options_description)
+            return
     else:
         action.do(action.SetGameVar('_prep_options_enabled', []))
         action.do(action.SetGameVar('_prep_options_events', []))
+        action.do(action.SetGameVar('_prep_options_info_descs', []))
         action.do(action.SetGameVar('_prep_additional_options', []))
 
-    self.game.state.change('prep_main')
+    if 'gba' in flags:
+        self.game.state.change('prep_gba_main')
+        self.game.game_vars['_prep_gba_disp'] = ['' if 'no_obj_disp' in flags else self.game.level.objective['simple'],
+                                                 '' if 'no_chap_disp' in flags else self.game.level.name]
+    else:
+        self.game.state.change('prep_main')
     self.state = 'paused'  # So that the message will leave the update loop
 
 def base(self: Event, background: str, music: SongPrefab | SongObject | NID = None, other_options: List[str] = None,
@@ -2929,17 +3061,25 @@ def set_custom_options(self: Event, custom_options: List[str], custom_options_en
     action.do(action.SetGameVar('_custom_additional_options', options_list))
 
 def shop(self: Event, unit, item_list: List[str], shop_flavor=None, stock_list: List[int]=None, shop_id=None, flags=None):
+    flags = flags or set()
+
     new_unit = self._get_unit(unit)
-    if not new_unit:
+    is_preview = "preview" in flags
+
+    if not new_unit and not is_preview:
         self.logger.error("shop: Must have a unit visit the shop!")
         return
     unit = new_unit
     if shop_id is None:
         shop_id = self.nid
     self.game.memory['shop_id'] = shop_id
-    self.game.memory['current_unit'] = unit
+    if unit:
+        self.game.memory['current_unit'] = unit
+    else:
+        self.game.memory['current_unit'] = unit
     shop_items = item_funcs.create_items(unit, item_list)
     self.game.memory['shop_items'] = shop_items
+    self.game.memory['preview'] = is_preview
 
     if shop_flavor:
         self.game.memory['shop_flavor'] = shop_flavor.lower()
@@ -3158,14 +3298,25 @@ def table(self: Event, nid: NID, table_data: str, title: str = None,
 def remove_table(self: Event, nid, flags=None):
     self.other_boxes = [(bnid, box) for (bnid, box) in self.other_boxes if bnid != nid]
 
-def text_entry(self: Event, nid, string, positive_integer: int=16, illegal_character_list: Optional[List[str]]=None, flags=None):
+def text_entry(self: Event, nid: NID, string: str, character_limit: int = 16, 
+               illegal_character_list: Optional[List[str]] = None, default_string: Optional[str] = None, 
+               minimum_character_limit: int = 0, flags: Optional[set[str]] = None):
     flags = flags or set()
+    illegal_character_list = illegal_character_list or list()
 
     header = string
-    limit = positive_integer
     force_entry = 'force_entry' in flags
+    
+    # Check if the dev is violating their own established ruleset lmao
+    if default_string is not None:
+        all_illegal_characters = set().union(*[
+            CharacterSet[name.upper()].charset for name in illegal_character_list
+        ])
+        if (character_limit < len(default_string) < minimum_character_limit or any(c in all_illegal_characters for c in default_string)):                
+            self.logger.error(f"text_entry: default_string {default_string} violates established restrictions!")
+            default_string = None
 
-    self.game.memory['text_entry'] = (nid, header, limit, illegal_character_list or [], force_entry)
+    self.game.memory['text_entry'] = (nid, header, character_limit, illegal_character_list or [], force_entry, default_string, minimum_character_limit)
     self.game.state.change('text_entry')
     self.state = 'paused'
 
@@ -3425,6 +3576,18 @@ def open_achievements(self: Event, background: str, flags=None):
     self.game.memory['next_state'] = 'base_achievement'
     self.game.state.change('transition_to')
 
+def soundroom(self: Event, panorama = "default_background", flags=None):
+    bg = background.create_background(panorama, False)
+    self.game.memory['base_bg'] = bg
+
+    flags = flags or set()
+    self.state = "paused"
+    if 'immediate' in flags:
+        self.game.state.change('event_sound_room')
+    else:
+        self.game.memory['next_state'] = 'event_sound_room'
+        self.game.state.change('transition_to')
+
 def location_card(self: Event, string, flags=None):
     new_location_card = dialog.LocationCard(string)
     self.other_boxes.append((None, new_location_card))
@@ -3497,8 +3660,8 @@ def paired_ending(self: Event, left_portrait, right_portrait, left_title, right_
         return False
 
     new_ending = \
-        dialog.PairedEnding(left_portrait, right_portrait, left_title, right_title, 
-                            text, left_unit, right_unit, 
+        dialog.PairedEnding(left_portrait, right_portrait, left_title, right_title,
+                            text, left_unit, right_unit,
                             wait_for_input='wait_for_input' in flags)
     self.text_boxes.append(new_ending)
     self.state = 'dialog'
@@ -3810,6 +3973,12 @@ def delete_record(self: Event, nid: str, flags=None):
 def unlock_difficulty(self: Event, difficulty_mode: str, flags=None):
     RECORDS.unlock_difficulty(difficulty_mode)
 
+def unlock_song(self: Event, music: str, flags=None):
+    RECORDS.unlock_song(music)
+
+def unlock_support_room(self: Event, flags=None):
+    RECORDS.unlock_support_room()
+
 def hide_combat_ui(self: Event, flags=None):
     self.game.game_vars["_hide_ui"] = True
 
@@ -3841,7 +4010,18 @@ def party_transfer(self: Event, party1, party2, fixed_units = None, party1_name 
     self.game.state.change('party_transfer')
     self.state = 'paused'
 
-def dump_vars(self: Event, flags:set[str]=None) -> None:
+def change_team_palette(self: Event, team, map_sprite_palette = None, combat_variant_palette = None, combat_color = None, flags=None):
+    if not self.game.teams.get(team):
+        self.logger.error("change_team_palette: %s is not a valid team nid" % team)
+        return
+
+    if map_sprite_palette and not RESOURCES.combat_palettes.get(map_sprite_palette):
+        self.logger.error("change_team_palette: %s is not a valid combat palette nid" % map_sprite_palette)
+        return
+
+    action.do(action.ChangeTeamPalette(team, (map_sprite_palette, combat_variant_palette, combat_color)))
+
+def dump_vars(self: Event, flags:Optional[set[str]]=None):
     def is_json_serializable(obj: Any) -> bool:
         """
             Return True if obj can be serialized by json.dumps, False otherwise.
@@ -3852,7 +4032,7 @@ def dump_vars(self: Event, flags:set[str]=None) -> None:
             return True
         except (TypeError, OverflowError):
             return False
-        
+
     def sanitize_vars(data: Any, path: str = "") -> Any:
         """
         Recursively sanitize data so that the result is JSON-serializable.
@@ -3902,17 +4082,16 @@ def dump_vars(self: Event, flags:set[str]=None) -> None:
             else:
                 self.logger.error(f"dump_vars: {path or '<root>'} value {data!r} is not JSON-serializable; replacing with None... Perhaps try casting into a serializable type?")
                 return None
-           
+
     try:
         app_data_fman = file_manager_utils.get_app_data_fman()
-        
-        from copy import deepcopy
+
         local_level_vars = deepcopy(self.game.level_vars)
         local_game_vars = deepcopy(self.game.game_vars)
 
         clean_level_vars = sanitize_vars(local_level_vars, path="level_vars")
         clean_game_vars  = sanitize_vars(local_game_vars, path="game_vars")
-        
+
         all_vars = {'level_vars': clean_level_vars, 'game_vars': clean_game_vars}
         app_data_fman.save('_vars.json', json.dumps(all_vars), True)
         file_utils.startfile(app_data_fman.get_path('_vars.json'))

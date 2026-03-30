@@ -1297,6 +1297,10 @@
             [
                 "magic",
                 null
+            ],
+            [
+                "status_on_equip",
+                "LightOverride"
             ]
         ]
     },
@@ -1376,6 +1380,10 @@
             [
                 "battle_cast_anim",
                 "Nosferatu"
+            ],
+            [
+                "status_on_equip",
+                "DarkOverride"
             ]
         ]
     },
@@ -1459,6 +1467,10 @@
             [
                 "battle_cast_anim",
                 "Gustblade"
+            ],
+            [
+                "status_on_equip",
+                "AnimaOverride"
             ]
         ]
     },
@@ -5895,6 +5907,22 @@
             [
                 "eval_target_restrict_2",
                 "target.wexp['Light'] or target.wexp['Anima'] or target.wexp['Dark'] or target.wexp['Staff']"
+            ],
+            [
+                "hit",
+                0
+            ],
+            [
+                "alternate_accuracy_formula",
+                "STATUS_STAFF_HIT"
+            ],
+            [
+                "alternate_avoid_formula",
+                "STATUS_STAFF_AVOID"
+            ],
+            [
+                "status_on_hold",
+                "Distance_Debuff"
             ]
         ]
     },
@@ -5962,6 +5990,26 @@
             [
                 "target_enemy",
                 null
+            ],
+            [
+                "eval_target_restrict_2",
+                "'Tile' not in target.tags"
+            ],
+            [
+                "hit",
+                0
+            ],
+            [
+                "alternate_accuracy_formula",
+                "STATUS_STAFF_HIT"
+            ],
+            [
+                "alternate_avoid_formula",
+                "STATUS_STAFF_AVOID"
+            ],
+            [
+                "status_on_hold",
+                "Distance_Debuff"
             ]
         ]
     },
@@ -6029,6 +6077,26 @@
             [
                 "target_enemy",
                 null
+            ],
+            [
+                "eval_target_restrict_2",
+                "'Tile' not in target.tags"
+            ],
+            [
+                "hit",
+                0
+            ],
+            [
+                "alternate_accuracy_formula",
+                "STATUS_STAFF_HIT"
+            ],
+            [
+                "alternate_avoid_formula",
+                "STATUS_STAFF_AVOID"
+            ],
+            [
+                "status_on_hold",
+                "Distance_Debuff"
             ]
         ]
     },
@@ -6171,6 +6239,77 @@
             [
                 "target_enemy",
                 null
+            ]
+        ]
+    },
+    {
+        "nid": "Torch_Staff",
+        "name": "Torch",
+        "desc": "Lights an area.",
+        "icon_nid": "Staff",
+        "icon_index": [
+            0,
+            11
+        ],
+        "components": [
+            [
+                "spell",
+                null
+            ],
+            [
+                "value",
+                1000
+            ],
+            [
+                "min_range",
+                1
+            ],
+            [
+                "max_equation_range",
+                "MAGIC_RANGE"
+            ],
+            [
+                "weapon_type",
+                "Staff"
+            ],
+            [
+                "weapon_rank",
+                "D"
+            ],
+            [
+                "uses",
+                10
+            ],
+            [
+                "uses_options",
+                {
+                    "lose_uses_on_miss": false,
+                    "one_loss_per_combat": false
+                }
+            ],
+            [
+                "exp",
+                5
+            ],
+            [
+                "target_tile",
+                null
+            ],
+            [
+                "target_fog_of_war",
+                null
+            ],
+            [
+                "event_on_hit",
+                "Global Torch Staff"
+            ],
+            [
+                "eval_available",
+                "v('_fog_of_war')"
+            ],
+            [
+                "eval_target_restrict_2",
+                "not game.get_region_under_pos(target_pos, 'vision')"
             ]
         ]
     },
@@ -7769,8 +7908,8 @@
                 2
             ],
             [
-                "status_on_equip",
-                "Luna_Proc"
+                "alternate_resist_formula",
+                "ZERO"
             ]
         ]
     },
@@ -7936,6 +8075,10 @@
             ],
             [
                 "no_double",
+                null
+            ],
+            [
+                "eclipse",
                 null
             ]
         ]
@@ -10822,6 +10965,342 @@
         ]
     },
     {
+        "nid": "Black_Gem",
+        "name": "Black Gem",
+        "desc": "An expensive gem worth 15000 gold.",
+        "icon_nid": "Valuable",
+        "icon_index": [
+            0,
+            6
+        ],
+        "components": [
+            [
+                "value",
+                30000
+            ]
+        ]
+    },
+    {
+        "nid": "Gold_Gem",
+        "name": "Gold Gem",
+        "desc": "An expensive gem worth 20000 gold.",
+        "icon_nid": "Valuable",
+        "icon_index": [
+            0,
+            7
+        ],
+        "components": [
+            [
+                "value",
+                40000
+            ]
+        ]
+    },
+    {
+        "nid": "Member_Card",
+        "name": "Member Card",
+        "desc": "If someone with this card stops in a suspicious space...",
+        "icon_nid": "Valuable",
+        "icon_index": [
+            0,
+            4
+        ],
+        "components": [
+            [
+                "value",
+                6000
+            ],
+            [
+                "hover_description",
+                "Grants access to secret shops."
+            ]
+        ]
+    },
+    {
+        "nid": "Silver_Card",
+        "name": "Silver Card",
+        "desc": "A special card that reduces the cost of all items by half.",
+        "icon_nid": "Valuable",
+        "icon_index": [
+            0,
+            5
+        ],
+        "components": [
+            [
+                "value",
+                4000
+            ],
+            [
+                "hover_description",
+                "Reduces the cost of items."
+            ],
+            [
+                "status_on_hold",
+                "Bargain"
+            ]
+        ]
+    },
+    {
+        "nid": "Ninis_s_Grace",
+        "name": "Refresh",
+        "desc": "A dance that increases allies' defenses for a turn.",
+        "icon_nid": "Ring",
+        "icon_index": [
+            0,
+            0
+        ],
+        "components": [
+            [
+                "map_cast_sfx",
+                "RefreshDanceMap"
+            ],
+            [
+                "min_range",
+                1
+            ],
+            [
+                "max_range",
+                1
+            ],
+            [
+                "exp",
+                11
+            ],
+            [
+                "target_ally",
+                null
+            ],
+            [
+                "spell",
+                null
+            ],
+            [
+                "no_map_hp_display",
+                null
+            ],
+            [
+                "map_cast_pose",
+                null
+            ],
+            [
+                "uses",
+                15
+            ],
+            [
+                "uses_options",
+                {
+                    "lose_uses_on_miss": false,
+                    "one_loss_per_combat": false
+                }
+            ],
+            [
+                "status_after_combat_on_hit",
+                "Ninis_s_Grace"
+            ],
+            [
+                "prf_class",
+                [
+                    "Dancer"
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "Filla_s_Might",
+        "name": "Refresh",
+        "desc": "A dance that increases allies' attack for a turn.",
+        "icon_nid": "Ring",
+        "icon_index": [
+            0,
+            1
+        ],
+        "components": [
+            [
+                "map_cast_sfx",
+                "RefreshDanceMap"
+            ],
+            [
+                "min_range",
+                1
+            ],
+            [
+                "max_range",
+                1
+            ],
+            [
+                "exp",
+                11
+            ],
+            [
+                "target_ally",
+                null
+            ],
+            [
+                "spell",
+                null
+            ],
+            [
+                "no_map_hp_display",
+                null
+            ],
+            [
+                "map_cast_pose",
+                null
+            ],
+            [
+                "uses",
+                15
+            ],
+            [
+                "uses_options",
+                {
+                    "lose_uses_on_miss": false,
+                    "one_loss_per_combat": false
+                }
+            ],
+            [
+                "status_after_combat_on_hit",
+                "Filla_s_Might"
+            ],
+            [
+                "prf_class",
+                [
+                    "Dancer"
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "Thor_s_Ire",
+        "name": "Refresh",
+        "desc": "A dance that increases allies' critical hit % for a turn.",
+        "icon_nid": "Ring",
+        "icon_index": [
+            0,
+            2
+        ],
+        "components": [
+            [
+                "map_cast_sfx",
+                "RefreshDanceMap"
+            ],
+            [
+                "min_range",
+                1
+            ],
+            [
+                "max_range",
+                1
+            ],
+            [
+                "exp",
+                11
+            ],
+            [
+                "target_ally",
+                null
+            ],
+            [
+                "spell",
+                null
+            ],
+            [
+                "no_map_hp_display",
+                null
+            ],
+            [
+                "map_cast_pose",
+                null
+            ],
+            [
+                "uses",
+                15
+            ],
+            [
+                "uses_options",
+                {
+                    "lose_uses_on_miss": false,
+                    "one_loss_per_combat": false
+                }
+            ],
+            [
+                "status_after_combat_on_hit",
+                "Thor_s_Ire"
+            ],
+            [
+                "prf_class",
+                [
+                    "Dancer"
+                ]
+            ]
+        ]
+    },
+    {
+        "nid": "Set_s_Litany",
+        "name": "Refresh",
+        "desc": "A dance that increases allies' evasion for a turn.",
+        "icon_nid": "Ring",
+        "icon_index": [
+            0,
+            3
+        ],
+        "components": [
+            [
+                "map_cast_sfx",
+                "RefreshDanceMap"
+            ],
+            [
+                "min_range",
+                1
+            ],
+            [
+                "max_range",
+                1
+            ],
+            [
+                "exp",
+                11
+            ],
+            [
+                "target_ally",
+                null
+            ],
+            [
+                "spell",
+                null
+            ],
+            [
+                "no_map_hp_display",
+                null
+            ],
+            [
+                "map_cast_pose",
+                null
+            ],
+            [
+                "uses",
+                15
+            ],
+            [
+                "uses_options",
+                {
+                    "lose_uses_on_miss": false,
+                    "one_loss_per_combat": false
+                }
+            ],
+            [
+                "status_after_combat_on_hit",
+                "Set_s_Litany"
+            ],
+            [
+                "prf_class",
+                [
+                    "Dancer"
+                ]
+            ]
+        ]
+    },
+    {
         "nid": "Steal",
         "name": "Steal",
         "desc": "Steal items from enemies.",
@@ -11089,6 +11568,70 @@
             [
                 "multi_target",
                 3
+            ]
+        ]
+    },
+    {
+        "nid": "Luna_Proc",
+        "name": "Luna",
+        "desc": "(Item override for the Luna skill.)",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            3
+        ],
+        "components": [
+            [
+                "alternate_resist_formula",
+                "ZERO"
+            ]
+        ]
+    },
+    {
+        "nid": "LightOverride",
+        "name": "LightOverride",
+        "desc": "",
+        "icon_nid": "wexp_icons",
+        "icon_index": [
+            0,
+            5
+        ],
+        "components": [
+            [
+                "weapon_triangle_override",
+                "Light"
+            ]
+        ]
+    },
+    {
+        "nid": "AnimaOverride",
+        "name": "AnimaOverride",
+        "desc": "",
+        "icon_nid": "wexp_icons",
+        "icon_index": [
+            0,
+            6
+        ],
+        "components": [
+            [
+                "weapon_triangle_override",
+                "Anima"
+            ]
+        ]
+    },
+    {
+        "nid": "DarkOverride",
+        "name": "DarkOverride",
+        "desc": "",
+        "icon_nid": "wexp_icons",
+        "icon_index": [
+            0,
+            7
+        ],
+        "components": [
+            [
+                "weapon_triangle_override",
+                "Dark"
             ]
         ]
     }

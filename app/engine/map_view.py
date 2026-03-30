@@ -60,7 +60,12 @@ class MapView():
             unit.sprite.update()
             unit.sound.update(volume=norm_dist_from_center)
 
-        pos_units = [unit for unit in update_units if unit is not game.cursor.cur_unit and unit.sprite.position]
+        # Determine main unit
+        cur_unit = game.cursor.cur_unit or game.cursor.get_hover()
+        if cur_unit and (cur_unit.team != 'player' or cur_unit.finished or not cur_unit.sprite.position):
+            cur_unit = None
+
+        pos_units = [unit for unit in update_units if not (unit is cur_unit) and unit.sprite.position]
         # Only draw units within 2 tiles of cull_rect
         culled_units = [unit for unit in pos_units if unit.sprite.draw_anyway() or
                         (cull_rect[0] - TILEWIDTH*2 < unit.sprite.position[0] * TILEWIDTH < cull_rect[0] + cull_rect[2] + TILEWIDTH*2 and
@@ -81,8 +86,7 @@ class MapView():
         game.cursor.draw_arrows(unit_surf, topleft)
 
         # Draw the main unit
-        cur_unit = game.cursor.cur_unit
-        if cur_unit and cur_unit.sprite.position:
+        if cur_unit:
             cur_unit.sprite.draw(unit_surf, topleft)
             cur_unit.sprite.draw_hp(unit_surf, topleft, event)
             if not event:
@@ -182,8 +186,8 @@ class MapView():
             if not region.hide_time and region.time_left is not None and region.position:
                 text = str(region.time_left)
                 w = font.width(text)
-                pos = (region.center[0] * TILEWIDTH - cull_rect[0], region.center[1] * TILEHEIGHT - cull_rect[1])
-                pos = (pos[0] + TILEWIDTH//2 - w//2, pos[1] - TILEHEIGHT//2 - 1 + 2 * math.sin(current_time//500))
+                pos = (region.draw_center()[0] * TILEWIDTH - cull_rect[0], region.draw_center()[1] * TILEHEIGHT - cull_rect[1])
+                pos = (pos[0] - w//2 - 1, pos[1] - 12 + 2 * math.sin(current_time//500))
                 font.blit(text, surf, pos)
 
     def draw_grid(self, surf, cull_rect):

@@ -38,7 +38,7 @@ class StateMachine():
         from app.engine import (base, chapter_title, debug_mode, dialog_log,
                                 feat_choice, game_over, general_states,
                                 level_up, minimap, objective_menu,
-                                player_choice, prep, promotion,
+                                player_choice, prep, prep_gba, promotion,
                                 settings, status_upkeep, text_entry,
                                 title_screen, trade, transitions, turnwheel,
                                 victory_screen, party_transfer, credit_state)
@@ -46,7 +46,7 @@ class StateMachine():
         from app.engine.info_menu import info_menu_state
         from app.engine.overworld import overworld_states
         from app.engine.roam import free_roam_state, free_roam_rationalize
-        from app.events import event_state
+        from app.events import event_state, mock_event_state
         self.all_states = \
             {'title_start': title_screen.TitleStartState,
              'title_main': title_screen.TitleMainState,
@@ -93,6 +93,7 @@ class StateMachine():
              'combat_trade': trade.CombatTradeState,
              'weapon_choice': general_states.WeaponChoiceState,
              'spell_choice': general_states.SpellChoiceState,
+             'ability_multi_item_choice': general_states.AbilityMultiItemChoiceState,
              'ability_submenu_choice': general_states.AbilitySubmenuChoiceState,
              'combat_targeting': general_states.CombatTargetingState,
              'item_targeting': general_states.ItemTargetingState,
@@ -113,6 +114,7 @@ class StateMachine():
              'game_over': game_over.GameOverState,
              'chapter_title': chapter_title.ChapterTitleState,
              'event': event_state.EventState,
+             'mock_event': mock_event_state.MockEventState,
              'player_choice': player_choice.PlayerChoiceState,
              'text_entry': text_entry.TextEntryState,
              'text_confirm': text_entry.TextConfirmState,
@@ -138,6 +140,8 @@ class StateMachine():
              'prep_restock': prep.PrepRestockState,
              'prep_use': prep.PrepUseState,
              'prep_market': prep.PrepMarketState,
+             'prep_gba_main': prep_gba.PrepGBAMainState,
+             'prep_gba_map': prep_gba.PrepGBAMapState,
              'base_main': base.BaseMainState,
              'base_market_select': base.BaseMarketSelectState,
              'base_bexp_select': base.BaseBEXPSelectState,
@@ -148,9 +152,11 @@ class StateMachine():
              'base_library': base.BaseLibraryState,
              'base_guide': base.BaseGuideState,
              'base_records': base.BaseRecordsState,
-             'base_sound_room': base.BaseSoundRoomState,
              'base_achievement': base.BaseAchievementState,
+             'base_sound_room': base.BaseSoundRoomState,
+             'event_sound_room': base.BaseSoundRoomState,
              'extras_sound_room': base.BaseSoundRoomState,
+             'extras_supports': base.BaseSupportsState,
              'free_roam': free_roam_state.FreeRoamState,
              'free_roam_rationalize': free_roam_rationalize.FreeRoamRationalizeState,
              'debug': debug_mode.DebugState,

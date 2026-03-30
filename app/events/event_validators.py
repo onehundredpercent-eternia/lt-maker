@@ -18,7 +18,7 @@ from app.sprites import SPRITES
 from app.utilities import str_utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
-from app.events.regions import RegionType as RegionTypeEnum
+from app.events.regions import RegionType as RegionTypeEnum, RegionHighlight as HighlightTypeEnum
 
 class Validator():
     desc = ""
@@ -567,8 +567,8 @@ class Orientation(OptionValidator):
         return o.VERTICAL
 
 class ExpressionList(SequenceValidator):
-    valid_expressions = ["NoSmile", "Smile", "NormalBlink", "CloseEyes", "HalfCloseEyes", "OpenEyes", "OpenMouth"]
-    desc = "expects a comma-delimited list of expressions. Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `OpenEyes`, `OpenMouth`). Example: `Smile,CloseEyes`"
+    valid_expressions = ["NoSmile", "Smile", "NormalBlink", "CloseEyes", "HalfCloseEyes", "LeftWink", "RightWink", "FarWink", "NearWink", "OpenEyes", "OpenMouth"]
+    desc = "expects a comma-delimited list of expressions. Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `LeftWink`, `RightWink`, `FarWink`, `NearWink`, `OpenEyes`, `OpenMouth`). Example: `Smile,CloseEyes`"
 
     def validate(self, text, level):
         text = text.split(',')
@@ -964,9 +964,14 @@ class RemoveType(OptionValidator):
 
 class RegionType(OptionValidator):
     valid = [r.value for r in RegionTypeEnum]
+    
+class HighlightType(OptionValidator):
+    valid = [r.value for r in HighlightTypeEnum]
 
 class Weather(OptionValidator):
-    valid = ["rain", "sand", "snow", "fire", "light", "purple", "dark", "smoke", "night", "sunset", "event_tile", "switch_tile"]
+    valid = ["rain", "sand", "snow", "fire", "light", 
+             "purple", "dark", "smoke", "night", "sunset", 
+             "event_tile", "switch_tile", "fire_pillar"]
 
 class Align(EnumValidator):
     enum_type = Alignments
@@ -994,7 +999,7 @@ class AlignOrPosition(OptionValidator):
         return Alignments(text)
 
 class GrowthMethod(OptionValidator):
-    valid = ["random", "fixed", "dynamic"]
+    valid = ["random", "fixed", "dynamic", "lucky", "bexp"]
 
 class CombatScript(SequenceValidator):
     valid_commands = ['hit1', 'hit2', 'crit1', 'crit2', 'miss1', 'miss2', '--', 'end']
@@ -1111,6 +1116,20 @@ class KlassList(SequenceValidator):
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(klass.name, klass.nid) for klass in self._db.classes.values()]
+        return valids
+
+class TagList(SequenceValidator):
+    desc = "accepts a comma-delimited list of tags."
+
+    def validate(self, text, level):
+        s_l = self.convert(text)
+        for entry in s_l:
+            if entry not in self._db.tags:
+                return None
+        return text
+
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        valids = [(None, tag.nid) for tag in self._db.tags.values()]
         return valids
 
 class ArgList(DictValidator):
@@ -1338,6 +1357,18 @@ class OverworldEntity(Validator):
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         valids = [(party.name, party.nid) for party in self._db.parties.values()]
+        return valids
+
+class Palette(Validator):
+    desc = 'accepts the NID of any palette in the project.'
+
+    def validate(self, text: NID, level: NID):
+        if text in RESOURCES.combat_palettes:
+            return text
+        return None
+
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        valids = [(combat_palette.nid, combat_palette.nid) for combat_palette in RESOURCES.combat_palettes]
         return valids
 
 class Sprite(Validator):

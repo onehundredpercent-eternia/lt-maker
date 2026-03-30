@@ -4,6 +4,7 @@ from app.data.database.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
+from app.engine.game_state import game
 from app.engine import engine, image_mods, item_system, item_funcs, skill_system
 
 from app.data.resources.combat_anims import CombatAnimation, WeaponAnimation, EffectAnimation
@@ -498,6 +499,13 @@ class BattleAnimation():
             self.owner.spell_hit()
             self.owner.hit_modifiers()
             self.partner_anim.damaged()
+        elif command.nid == 'spell_hit_2':
+            self.state = 'wait'
+            self.processing = False
+            self.owner._shake(4)
+            self.owner.spell_hit()
+            self.owner.hit_modifiers()
+            self.partner_anim.damaged()
 
         elif command.nid == 'effect':
             effect = values[0]
@@ -649,6 +657,8 @@ class BattleAnimation():
             self.owner.platform_shake()
         elif command.nid == 'screen_shake':
             self.owner._shake(1)
+        elif command.nid == 'screen_shake_2':
+            self.owner._shake(4)
         elif command.nid == 'darken':
             self.owner.darken()
         elif command.nid == 'lighten':
@@ -866,7 +876,7 @@ def get_palette(anim_prefab: CombatAnimation, unit) -> tuple:
     palettes = anim_prefab.palettes
     palette_names = [palette[0] for palette in palettes]
     palette_nids = [palette[1] for palette in palettes]
-    team_obj = DB.teams.get(unit.team)
+    team_obj = game.teams.get(unit.team)
     team_palette = team_obj.combat_variant_palette if team_obj else None
     if unit.name in palette_names:
         idx = palette_names.index(unit.name)
