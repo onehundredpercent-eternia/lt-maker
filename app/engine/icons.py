@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Tuple, Optional, Protocol, runtime_checkable
 
 from app.utilities import utils
 from app.utilities.enums import HAlignment
@@ -17,9 +17,14 @@ from app.engine.fonts import FONT
 from app.engine import engine, skill_system, image_mods, unit_funcs
 
 if TYPE_CHECKING:
-    from app.data.database import factions, items, klass, skills, supports, units, weapons
-    from app.engine.objects import item, skill, unit
+    from app.data.database import factions, skills, units
+    from app.engine.objects import skill, unit
     from app.engine.bmpfont import BmpFont
+
+@runtime_checkable
+class HasIcon(Protocol):
+    icon_nid: str
+    icon_index: Tuple[int, int]
 
 def get_icon_by_name(name: str) -> Optional[engine.Surface]:
     image, index = None, None
@@ -48,10 +53,7 @@ def get_icon_by_nid(nid: str, x: int, y: int) -> Optional[engine.Surface]:
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
     return image
 
-def get_icon(item: Optional[item.ItemObject     | items.ItemPrefab |
-                            skill.SkillObject   | skills.SkillPrefab |
-                            factions.Faction    | klass.Klass |
-                            supports.Affinity   | weapons.WeaponType]) -> Optional[engine.Surface]:
+def get_icon(item: Optional[HasIcon]) -> Optional[engine.Surface]:
     # Basically `item` can be any Prefab with `icon_nid` attribute
     if not item:
         return None
@@ -66,10 +68,7 @@ def get_icon(item: Optional[item.ItemObject     | items.ItemPrefab |
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
     return image
 
-def draw_item(surf: engine.Surface, item:  Optional[item.ItemObject     | items.ItemPrefab |
-                                                    skill.SkillObject   | skills.SkillPrefab |
-                                                    factions.Faction    | klass.Klass |
-                                                    supports.Affinity   | weapons.WeaponType],
+def draw_item(surf: engine.Surface, item: Optional[HasIcon],
               topleft: Tuple[int, int], cooldown:bool=False) -> Optional[engine.Surface]:
     # Basically `item` can be any Prefab with `icon_nid` attribute
     image = get_icon(item)
