@@ -366,7 +366,7 @@ class Sound(EventCommand):
 
     desc = \
         """
-Plays the *Sound* once.
+Plays the *Sound*. Repeat defaults to false, causing the *Sound* to play once.
         """
 
     keywords = ['Sound']
