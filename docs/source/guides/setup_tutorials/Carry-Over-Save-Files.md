@@ -2,7 +2,7 @@
 
 _last updated 2026-04-01_
 
-If the game gets an update and you would like to transfer your saves from an old version to a new version, follow these steps:
+If an LT game you're currently playing gets an update and you would like to transfer your saves to its newer version, follow these steps:
 
 1. Open the GAMENAME folder of the older version.
 2. Open the saves folder.
