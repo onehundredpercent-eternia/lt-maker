@@ -63,9 +63,9 @@ if __name__ == '__main__':
     #                              'app/map_maker/palettes/monastery_outdoors/sparse_forest.png',
     #                              'app/map_maker/palettes/monastery_outdoors/thicket.png',
     #            
-    color_change_these_images = ['app/map_maker/palettes/greysnow_outdoors/*.png']
+    color_change_these_images = ['app/map_maker/palettes/greysnow/*.png']
     original_palette = 'app/map_maker/palettes/monastery_outdoors/main.png'
-    new_palette = 'app/map_maker/palettes/Snow_Ruins.png'
+    new_palette = 'app/map_maker/palettes/greysnow_outdoors/Snow_Ruins.png'
 
     change_images = []
     for c in color_change_these_images:
