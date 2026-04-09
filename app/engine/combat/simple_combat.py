@@ -134,6 +134,11 @@ class SimpleCombat():
 
     def clean_up1(self):
         all_units = self._all_units()
+        
+        game.state.back()
+
+        # attacker has attacked
+        action.do(action.HasAttacked(self.attacker))
 
         # Handle changing the sprite back
         for unit in all_units:
@@ -144,6 +149,8 @@ class SimpleCombat():
 
         self.handle_unusable_items()
         self.handle_broken_items()
+
+        self.handle_state_stack()
         
         # handle wexp & skills
         if not self.attacker.is_dying:
@@ -170,17 +177,10 @@ class SimpleCombat():
     def clean_up2(self):
         all_units = self._all_units()
         
-        game.state.back()
-
-        # attacker has attacked
-        action.do(action.HasAttacked(self.attacker))
-        
         self.handle_records(self.full_playback, all_units)
 
         self.handle_messages()
         self.turnwheel_death_messages(all_units)
-
-        self.handle_state_stack()
         
         game.events.trigger(triggers.CombatEnd(self.attacker, self.defender, self.attacker.position, self.main_item, self.full_playback))
 
