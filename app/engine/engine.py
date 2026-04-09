@@ -41,7 +41,7 @@ def build_display(size):
         if cf.SETTINGS['fullscreen']:
             return pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
-            return pygame.display.set_mode(size, pygame.RESIZABLE | pygame.DOUBLEBUF)
+            return pygame.display.set_mode(size, pygame.RESIZABLE)
     except pygame.error as e:
         logging.exception(e)
         logging.error(
