@@ -45,21 +45,3 @@ class CreditCatalog(CategorizedCatalog[CreditEntry]):
         new_credit = CreditEntry(nid, sub_nid)
         self.append(new_credit)
         return new_credit
-
-    def check_credits_enabled(self) -> bool:
-        """Check if credits should be shown on title screen.
-        
-        Returns True if:
-        1. _show_credits game var is True (override), OR
-        2. title_credits constant is True (global setting)
-        """
-        # Import here to avoid circular imports
-        from app.data.database.database import DB
-        from app.engine.game_state import game
-        
-        # Check override first - if explicitly forced, show credits
-        if game.game_vars.get('_show_credits', False):
-            return True
-            
-        # Check global constant setting
-        return DB.constants.value('title_credits')
