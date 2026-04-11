@@ -703,9 +703,6 @@ def enable_turnwheel(self: Event, activated: bool, flags=None):
 def enable_fog_of_war(self: Event, activated: bool, flags=None):
     action.do(action.SetLevelVar("_fog_of_war", activated))
 
-def enable_credits(self: Event, activated: bool, flags=None):
-    action.do(action.SetGameVar("_enable_credits", activated))
-
 def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Optional[int] = None, other_radius: Optional[int] = None, flags=None):
     fowt = fog_of_war_type.lower()
     if fowt == 'gba':

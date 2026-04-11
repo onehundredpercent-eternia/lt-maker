@@ -3722,15 +3722,6 @@ class UnlockSupportRoom(EventCommand):
     desc = ("Allows Support Room to be viewed from Title Screen > Extras."
             "Once unlocked, Support Room will remain opened permanently across all save files.")
 
-class EnableCredits(EventCommand):
-    nid = 'enable_credits'
-    tag = Tags.GAME_VARS
-    desc = ("Enables Credits to be shown on the title screen, overriding the title_credits constant. "
-            "This is stored as a game variable and persists for the current save file.")
-
-    keywords = ["Activated"]
-    keyword_types = ['Bool']
-
 class PartyTransfer(EventCommand):
     nid = 'party_transfer'
     tag = Tags.MISCELLANEOUS

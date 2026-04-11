@@ -752,7 +752,7 @@ class TitleExtrasState(TitleLoadState):
         self.particles = game.memory['title_particles']
 
         options = ['Options']
-        if (v if (v := game.game_vars.get('_enable_credits')) is not None else DB.constants.value('title_credits')):
+        if DB.constants.value('title_credits'):
             options.append('Credits')
         if DB.constants.value('title_sound'):
             options.append('Sound Room')
