@@ -51,8 +51,7 @@ class CreditCatalog(CategorizedCatalog[CreditEntry]):
         
         Returns True if:
         1. _show_credits game var is True (override), OR
-        2. title_credits constant is True (global setting), AND
-        3. Credits actually exist (either event or credit database entries)
+        2. title_credits constant is True (global setting)
         """
         # Import here to avoid circular imports
         from app.data.database.database import DB
@@ -60,28 +59,7 @@ class CreditCatalog(CategorizedCatalog[CreditEntry]):
         
         # Check override first - if explicitly forced, show credits
         if game.game_vars.get('_show_credits', False):
-            return self.check_credits_exist()
-            
-        # Check global constant setting
-        if not DB.constants.value('title_credits'):
-            return False
-            
-        # Finally check if credits actually exist
-        return self.check_credits_exist()
-    
-    def check_credits_exist(self) -> bool:
-        """Check if credits actually exist in the game.
-        
-        Returns True if either:
-        1. A 'Global Credits' event exists, OR
-        2. The credits database has entries
-        """
-        # Import here to avoid circular imports
-        from app.data.database.database import DB
-        
-        # Check for Global Credits event
-        if DB.events.get_from_nid('Global Credits'):
             return True
             
-        # Check if credits database has any entries
-        return len(self) > 0
+        # Check global constant setting
+        return DB.constants.value('title_credits')
