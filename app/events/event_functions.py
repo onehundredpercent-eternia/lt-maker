@@ -3987,6 +3987,9 @@ def unlock_song(self: Event, music: str, flags=None):
 def unlock_support_room(self: Event, flags=None):
     RECORDS.unlock_support_room()
 
+def show_credits(self: Event, flags=None):
+    action.do(action.SetGameVar("_show_credits", True))
+
 def hide_combat_ui(self: Event, flags=None):
     self.game.game_vars["_hide_ui"] = True
 
