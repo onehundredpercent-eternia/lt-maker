@@ -316,7 +316,7 @@ class OnTitleScreen(EventTrigger):
 @dataclass(init=True)
 class OnStartup(EventTrigger):
     """
-    Occurs whenever the engine starts.
+    Occurs whenever the engine starts, before `OnTitleScreen`.
     """
     nid: ClassVar[NID] = 'on_startup'
 
