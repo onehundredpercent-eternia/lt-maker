@@ -310,6 +310,7 @@ class OnTurnwheel(EventTrigger):
 class OnTitleScreen(EventTrigger):
     """
     Occurs before the title screen is shown.
+    Title cutscenes should be here instead of `OnStartup`.
     """
     nid: ClassVar[NID] = 'on_title_screen'
 
@@ -317,6 +318,7 @@ class OnTitleScreen(EventTrigger):
 class OnStartup(EventTrigger):
     """
     Occurs whenever the engine starts, before `OnTitleScreen`.
+    Should not have any cutscenes.
     """
     nid: ClassVar[NID] = 'on_startup'
 

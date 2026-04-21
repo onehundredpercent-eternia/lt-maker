@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List
 
 from app.data.database.database import DB
+
 from app.engine import engine
 from app.events import speak_style, event_commands
 from app.events.event import Event
