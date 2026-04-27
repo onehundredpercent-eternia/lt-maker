@@ -45,10 +45,14 @@ class SoundTab(QWidget):
         hbox.addWidget(self.button)
 
         self.modify_button = QPushButton("Modify Current %s..." % self.title)
+        self.modify_button.setEnabled(False)
         self.modify_button.clicked.connect(self.modify)
         hbox.addWidget(self.modify_button)
 
         self.layout.addLayout(hbox)
+
+        selection_model = self.view.selectionModel()
+        selection_model.selectionChanged.connect(self.enable_modify_button)
 
     def append(self):
         last_index = self.model.append()
@@ -65,6 +69,10 @@ class SoundTab(QWidget):
         select = self.display.selectionModel()
         indices = select.selectedRows()
         return [self._data[self.proxy_model.mapToSource(index).row()] for index in indices]
+    
+    def enable_modify_button(self):
+        has_selection = self.view.selectionModel().hasSelection()
+        self.modify_button.setEnabled(has_selection)
 
     def modify(self, index):
         proxy_indices = self.display.selectionModel().selectedRows()
