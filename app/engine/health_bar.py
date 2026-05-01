@@ -92,6 +92,7 @@ class HealthBar(GenericBar):
     bar_sprite = 'health_bar'
 
     def starting_vals(self):
+        self.displayed_val = self.unit.get_hp()
         self.current_val = self.unit.get_hp()
         self.old_val = self.current_val
         self.max_val = self.unit.get_max_hp()
