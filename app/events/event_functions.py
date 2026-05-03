@@ -4029,6 +4029,17 @@ def change_team_palette(self: Event, team, map_sprite_palette = None, combat_var
 
     action.do(action.ChangeTeamPalette(team, (map_sprite_palette, combat_variant_palette, combat_color)))
 
+def set_combat_script(self: Event, combat_script: List[str], flags=None):
+    flags = flags or set()
+
+    # Currently in 'event' state, 'combat' state should be preceding
+    combat_state = self.game.state.get_prev_state()
+    if combat_state.name != 'combat':
+        self.logger.error("set_combat_script: Current game state is not combat state")
+        return
+
+    combat_state.combat.state_machine.script = list(reversed(combat_script))
+
 def dump_vars(self: Event, flags:Optional[set[str]]=None):
     def is_json_serializable(obj: Any) -> bool:
         """

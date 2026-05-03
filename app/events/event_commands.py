@@ -3759,6 +3759,14 @@ Example: change_team_palette;player;map_sprite_green;GenericGreen;green
     optional_keywords = ['MapSpritePalette', 'CombatVariantPalette', 'CombatColor']
     keyword_types = ['Team', 'Palette', 'String', 'String']
 
+class SetCombatScript(EventCommand):
+    nid = 'set_combat_script'
+    tag = Tags.MISCELLANEOUS
+
+    desc = "Modify the current combat with a combat script."
+
+    keywords = ["CombatScript"]
+
 def get_commands():
     return EventCommand.__subclasses__()
 
