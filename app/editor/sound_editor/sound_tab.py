@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, \
     QDialog, QAbstractItemView, QHBoxLayout
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QHeaderView
 
 from app.data.resources.resources import RESOURCES
 from app.extensions.custom_gui import ResourceTableView, MultiselectTableView
@@ -31,6 +32,9 @@ class SoundTab(QWidget):
         self.view.setSelectionMode(QAbstractItemView.SingleSelection)
         self.view.setModel(self.proxy_model)
         self.view.setSortingEnabled(True)
+        self.view.resizeColumnsToContents()
+        self.view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
+        self.view.horizontalHeader().setMaximumSectionSize(250)
         # Remove edit on double click
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.sortByColumn(0, Qt.AscendingOrder)
@@ -40,11 +44,11 @@ class SoundTab(QWidget):
 
         hbox = QHBoxLayout()
 
-        self.button = QPushButton("Add New %s..." % self.title)
+        self.button = QPushButton("Add Track (.ogg)")
         self.button.clicked.connect(self.append)
         hbox.addWidget(self.button)
 
-        self.modify_button = QPushButton("Modify Current %s..." % self.title)
+        self.modify_button = QPushButton("Modify Track")
         self.modify_button.setEnabled(False)
         self.modify_button.clicked.connect(self.modify)
         hbox.addWidget(self.modify_button)
@@ -104,8 +108,6 @@ class MusicDatabase(SoundTab):
         self.autofill_button.clicked.connect(self.autofill)
         self.autofill_button.setToolTip('Assign consecutive, unique, positive values to all the Sound Room Numbers that are currently 0.')
         self.layout.addWidget(self.autofill_button)
-
-        self.view.setColumnWidth(2, 200)
 
     def autofill(self):
         self.model.autofill()
