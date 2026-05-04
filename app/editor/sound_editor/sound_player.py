@@ -13,8 +13,9 @@ class SoundPlayer:
 
         pygame.mixer.init()
 
-        # Audio state
+        # Audio states
         self.current_track = None
+        self.current_track_name : str | None = None
         self.duration = 0
         self.start_time = 0
         self.pause_time = 0
@@ -62,24 +63,43 @@ class SoundPlayer:
         self.timer.timeout.connect(self.update_position)
         self.timer.start(100)
 
+    def load_track(self, file_path: str):
+        try:
+            self.current_track = pygame.mixer.Sound(file_path)
+            self.duration = int(self.current_track.get_length() * 1000)
+        except pygame.error as e:
+            QMessageBox.critical(
+                self,
+                "Audio Error",
+                f"Failed to load audio file:\n{file_path}\n\n{e}"
+            )
+            self.current_track = None
+
     def handle_audio_player_on_select(self, has_selection: bool, selected_track):
         self.audio_player_widget.setEnabled(has_selection)
 
         if not has_selection or not selected_track:
-            pygame.mixer.stop()
-            self.current_track = None
+            self.stop_current_track()
+            self.clear_track_states()
             self.reset_audio_states()
             self.clear_audio_ui_states()
             return
 
         file_path = selected_track.full_path
-        name = getattr(selected_track, "nid", "Unknown")
+        selected_track_name = getattr(selected_track, "nid", "Unknown")
+
+        if self.current_track_name and self.current_track_name != selected_track_name:
+            self.stop_current_track()
+            self.clear_track_states()
+            self.reset_audio_states()
+            self.clear_audio_ui_states()
 
         if not os.path.exists(file_path):
             self.file_label.setText("❌ File not found")
             return
-
-        self.file_label.setText(f"Track name: {name}\nFile path: {file_path}")
+        
+        self.current_track_name = selected_track_name
+        self.file_label.setText(f"Track name: {self.current_track_name}\nFile path: {file_path}")
         self.load_track(file_path)
         self.update_time_label(0, self.duration)
 
@@ -111,19 +131,36 @@ class SoundPlayer:
         self.start_time = 0
         self.pause_time = 0
 
+    def clear_track_states(self):
+        self.current_track = None
+        self.current_track_name = None
+
     def clear_audio_ui_states(self):
+        """
+        Clear audio ui states back to non-selection
+        """
+
         self.file_label.setText("No track selected")
         self.play_pause_button.setText("Play")
+        self.progress.setValue(0)
         self.current_time_label.setText("--:--")
         self.duration_label.setText("--:--")
 
     def reset_audio_ui_states(self):
+        """
+        Reset audio ui state while on selection
+        """
+
         self.play_pause_button.setText("Play")
         self.progress.setValue(0)
         self.update_time_label(0, self.duration)
 
+    def stop_current_track(self):
+        if self.current_track:
+            self.current_track.stop()
+
     def stop_audio(self):
-        pygame.mixer.stop()
+        self.stop_current_track()
         self.reset_audio_states()
         self.reset_audio_ui_states()
 
@@ -133,11 +170,12 @@ class SoundPlayer:
         Add this function to Qwidget.closeEvent
         """
 
-        pygame.mixer.stop()
-
+        self.stop_current_track()
 
     def update_position(self):
-        """Track audio player progress and update audio states"""
+        """
+        Track audio player progress and update audio states
+        """
 
         # Check if track exists
         if not self.is_playing or not self.current_track:
@@ -183,15 +221,3 @@ class SoundPlayer:
     def update_time_label(self, position: int, duration: int):
         self.current_time_label.setText(self.fmt_time(position))
         self.duration_label.setText(self.fmt_time(duration))
-
-    def load_track(self, file_path: str):
-        try:
-            self.current_track = pygame.mixer.Sound(file_path)
-            self.duration = int(self.current_track.get_length() * 1000)
-        except pygame.error as e:
-            QMessageBox.critical(
-                self,
-                "Audio Error",
-                f"Failed to load audio file:\n{file_path}\n\n{e}"
-            )
-            self.current_track = None
