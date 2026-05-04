@@ -8,6 +8,8 @@ from app.extensions.custom_gui import ResourceTableView, MultiselectTableView
 from app.editor.data_editor import SingleResourceEditor, MultiResourceEditor
 from app.editor.sound_editor.sound_model import SFXModel, MusicModel
 from app.editor import table_model
+from app.editor.sound_editor.sound_player import SoundPlayer
+
 
 class SoundTab(QWidget):
     def __init__(self, data, title, model, view, parent=None):
@@ -42,21 +44,25 @@ class SoundTab(QWidget):
 
         self.layout.addWidget(self.view)
 
-        hbox = QHBoxLayout()
+        # Sound Player UI
+        self.sound_player_widget = SoundPlayer(self.view, self.layout)
+
+        # Add or Mofidy UI
+        hboxItem = QHBoxLayout()
 
         self.button = QPushButton("Add Track (.ogg)")
         self.button.clicked.connect(self.append)
-        hbox.addWidget(self.button)
+        hboxItem.addWidget(self.button)
 
         self.modify_button = QPushButton("Modify Track")
         self.modify_button.setEnabled(False)
         self.modify_button.clicked.connect(self.modify)
-        hbox.addWidget(self.modify_button)
+        hboxItem.addWidget(self.modify_button)
 
-        self.layout.addLayout(hbox)
+        self.layout.addLayout(hboxItem)
 
         selection_model = self.view.selectionModel()
-        selection_model.selectionChanged.connect(self.enable_modify_button)
+        selection_model.selectionChanged.connect(self.on_select)
 
     def append(self):
         last_index = self.model.append()
@@ -74,16 +80,28 @@ class SoundTab(QWidget):
         indices = select.selectedRows()
         return [self._data[self.proxy_model.mapToSource(index).row()] for index in indices]
     
-    def enable_modify_button(self):
-        has_selection = self.view.selectionModel().hasSelection()
-        self.modify_button.setEnabled(has_selection)
-
     def modify(self, index):
         proxy_indices = self.display.selectionModel().selectedRows()
         if proxy_indices:
             real_indices = [self.proxy_model.mapToSource(index) for index in proxy_indices]
             self.model.modify(real_indices)
 
+    def on_select(self):
+        has_selection = self.view.selectionModel().hasSelection()
+        self.modify_button.setEnabled(has_selection)
+        
+        selected_track = None
+        selected_candidates = self.get_selected()
+
+        if len(selected_candidates) > 0:
+            selected_track = selected_candidates[0]
+
+        self.sound_player_widget.handle_audio_player_on_select(has_selection, selected_track)
+
+    def closeEvent(self, event):
+        self.sound_player_widget.stop_audio_on_close_event()
+        return super().closeEvent(event)
+  
 class SFXDatabase(SoundTab):
     @classmethod
     def create(cls, parent=None):
