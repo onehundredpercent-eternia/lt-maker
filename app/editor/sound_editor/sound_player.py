@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QLabel, QProgressBar
-import pygame
+from app.editor.sound_editor.audio_controller import AudioController
 import os
-import time
 
 
 class SoundPlayer:
@@ -11,213 +10,207 @@ class SoundPlayer:
         self.view = view
         self.layout = parent_layout
 
-        pygame.mixer.init()
+        self.audio_controller = AudioController()
+        self.audio_controller.init()    # Init audio mixer 
 
-        # Audio states
-        self.current_track = None
-        self.current_track_name : str | None = None
-        self.duration = 0
-        self.start_time = 0
-        self.pause_time = 0
-        self.is_playing = False
-        self.is_paused = False
+        self.current_track_name = None  # To assign track name through ui
+        self.is_track_loaded = False    # To check if audio file is loaded
 
-        # Audio player UI
+        self.init_ui()
+        self.connect_signals_ui()
+
+    # ----- UI Init -----
+    def init_ui(self):
+        # Main Widget
         self.audio_player_widget = QWidget()
-        player_layout = QVBoxLayout(self.audio_player_widget)
+        self.layout.addWidget(self.audio_player_widget)
+        self.audio_player_widget.setEnabled(False)
+        self.player_layout = QVBoxLayout(self.audio_player_widget)
 
+        # Info Labels
         self.file_label = QLabel("No track selected")
-        player_layout.addWidget(self.file_label)
+        self.file_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.player_layout.addWidget(self.file_label)
 
-        # Init time and progress widget
-        progress_row = QHBoxLayout()
+        # Progress bar
+        self.init_progress_ui()
+        self.init_progress_timer()
+
+        # Control buttons
+        self.init_controls_ui()
+
+    def init_progress_ui(self):
         self.current_time_label = QLabel("--:--")
         self.duration_label = QLabel("--:--")
+
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
         self.progress.setTextVisible(False)
         self.progress.setFixedHeight(6)
-        progress_row.addWidget(self.current_time_label)
-        progress_row.addWidget(self.progress, 1)  # stretch = 1 (fills space)
-        progress_row.addWidget(self.duration_label)
-        player_layout.addLayout(progress_row)
 
-        # Init control buttons
-        controls = QHBoxLayout()
+        progress_row = QHBoxLayout()
+        progress_row.addWidget(self.current_time_label)
+        progress_row.addWidget(self.progress, 1)
+        progress_row.addWidget(self.duration_label)
+
+        self.player_layout.addLayout(progress_row)
+    
+    def init_controls_ui(self):
         self.play_pause_button = QPushButton("Play")
         self.stop_button = QPushButton("Stop")
 
+        controls = QHBoxLayout()
         controls.addWidget(self.play_pause_button)
         controls.addWidget(self.stop_button)
-        player_layout.addLayout(controls)
+        self.player_layout.addLayout(controls)
 
-        self.layout.addWidget(self.audio_player_widget)
-        self.audio_player_widget.setEnabled(False)
-
-        # Connect control button signals
+    def connect_signals_ui(self):
+        # Control buttons
         self.play_pause_button.clicked.connect(self.toggle_play_pause)
-        self.stop_button.clicked.connect(self.stop_audio)
+        self.stop_button.clicked.connect(self.stop_track)
 
-        # Timer for progress
+        # Progress timer
+        self.timer.timeout.connect(self.update_progress_ui)
+
+    def init_progress_timer(self):
         self.timer = QTimer()
-        self.timer.timeout.connect(self.update_position)
         self.timer.start(100)
 
+    # ----- UI Update -----
+    def update_progress_ui(self):
+        if not self.current_track_name:
+            return
+
+        current = self.audio_controller.get_position()
+
+        if self.duration > 0:
+            current = max(0, min(current, self.duration))
+            percent = int((current / self.duration) * 100)
+            self.progress.setValue(percent)
+
+        self.update_time_label(current, self.duration)
+
+        if self.duration > 0 and current >= self.duration:
+            self.audio_controller.reset()
+            self.reset_ui_track_loaded()
+
+    def update_time_label(self, position: int, duration: int):
+        self.current_time_label.setText(self._fmt_time(position))
+        self.duration_label.setText(self._fmt_time(duration))
+
+    # ----- Load audio file and its metadata -----
     def load_track(self, file_path: str):
         try:
-            self.current_track = pygame.mixer.Sound(file_path)
-            self.duration = int(self.current_track.get_length() * 1000)
-        except pygame.error as e:
-            QMessageBox.critical(
-                self,
-                "Audio Error",
-                f"Failed to load audio file:\n{file_path}\n\n{e}"
-            )
-            self.current_track = None
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Audio file not found: {file_path}")
+
+            meta = self.audio_controller.get_metadata(file_path)
+
+            self.duration = meta["duration"]
+            self.is_track_loaded = True
+
+            self.audio_controller.load(file_path)
+
+        except Exception as e:
+            QMessageBox.critical(self.view, "Audio Error", str(e))
+            self.reset_to_no_track()
 
     def handle_audio_player_on_select(self, has_selection: bool, selected_track):
+        """
+        Handle audio selection from user interactions on ui.
+        Including: select, unselect, select another
+        """
+
         self.audio_player_widget.setEnabled(has_selection)
 
         if not has_selection or not selected_track:
-            self.stop_current_track()
-            self.clear_track_states()
-            self.reset_audio_states()
-            self.clear_audio_ui_states()
+            self.reset_to_no_track()
             return
 
         file_path = selected_track.full_path
-        selected_track_name = getattr(selected_track, "nid", "Unknown")
+        track_name = getattr(selected_track, "nid", "Unknown")
 
-        if self.current_track_name and self.current_track_name != selected_track_name:
-            self.stop_current_track()
-            self.clear_track_states()
-            self.reset_audio_states()
-            self.clear_audio_ui_states()
+        if self.current_track_name and self.current_track_name != track_name:
+            # Check if a new track is selected
+            self.reset_to_no_track()
 
         if not os.path.exists(file_path):
-            self.file_label.setText("❌ File not found")
+            self.file_label.setText("File not found")
             return
-        
-        self.current_track_name = selected_track_name
-        self.file_label.setText(f"Track name: {self.current_track_name}\nFile path: {file_path}")
+
+        self.current_track_name = track_name
+        self.file_label.setText(
+            f"Track name: {self.current_track_name}\nFile path: {file_path}"
+        )
+
         self.load_track(file_path)
         self.update_time_label(0, self.duration)
 
+    # ----- Audio Controls -----
     def toggle_play_pause(self):
-        if not self.current_track:
+        if not self.current_track_name:
             return
 
-        if not self.is_paused and self.play_pause_button.text() == "Pause":
-            pygame.mixer.pause()
-            self.is_paused = True
-            self.pause_time = self.get_time_now_ms()
-            self.play_pause_button.setText("Play")
+        if not self.audio_controller.is_playing and not self.audio_controller.is_paused:
+            self.play_track()
+            return
+
+        if self.audio_controller.is_paused:
+            self.unpause_track()
         else:
-            if self.is_paused:
-                pygame.mixer.unpause()
-                paused_duration = self.get_time_now_ms() - self.pause_time
-                self.start_time += paused_duration
-                self.is_paused = False
-            else:
-                self.current_track.play()
-                self.start_time = self.get_time_now_ms()
-                self.is_playing = True
+            self.pause_track()
 
-            self.play_pause_button.setText("Pause")
+    def play_track(self):
+        if not self.current_track_name:
+            return
 
-    def reset_audio_states(self):
-        self.is_playing = False
-        self.is_paused = False
-        self.start_time = 0
-        self.pause_time = 0
+        self.audio_controller.play()
+        self.play_pause_button.setText("Pause")
 
-    def clear_track_states(self):
-        self.current_track = None
+    def pause_track(self):
+        self.audio_controller.pause()
+        self.play_pause_button.setText("Play")
+
+    def unpause_track(self):
+        self.audio_controller.resume()
+        self.play_pause_button.setText("Pause")
+
+    def stop_track(self):
+        self.audio_controller.stop()
+        self.reset_ui_track_loaded()
+
+    def stop_track_on_close_event(self):
+        """
+        Stop track when closing parent ui. 
+        Used this function inside closeEvent() for Qt SoundTab
+        """
+        
+        self.audio_controller.shutdown()
+            
+    # ----- State reset handlers -----
+    def reset_to_no_track(self):
+        self.audio_controller.stop()
+        self.audio_controller.unload()
+
         self.current_track_name = None
+        self.is_track_loaded = False
 
-    def clear_audio_ui_states(self):
-        """
-        Clear audio ui states back to non-selection
-        """
+        self.reset_ui_no_track()
 
+    def reset_ui_no_track(self):
         self.file_label.setText("No track selected")
         self.play_pause_button.setText("Play")
         self.progress.setValue(0)
         self.current_time_label.setText("--:--")
         self.duration_label.setText("--:--")
 
-    def reset_audio_ui_states(self):
-        """
-        Reset audio ui state while on selection
-        """
-
+    def reset_ui_track_loaded(self):
         self.play_pause_button.setText("Play")
         self.progress.setValue(0)
         self.update_time_label(0, self.duration)
 
-    def stop_current_track(self):
-        if self.current_track:
-            self.current_track.stop()
-
-    def stop_audio(self):
-        self.stop_current_track()
-        self.reset_audio_states()
-        self.reset_audio_ui_states()
-
-    def stop_audio_on_close_event(self):
-        """
-        Stop audio when the parent UI closes.
-        Add this function to Qwidget.closeEvent
-        """
-
-        self.stop_current_track()
-
-    def update_position(self):
-        """
-        Track audio player progress and update audio states
-        """
-
-        # Check if track exists
-        if not self.is_playing or not self.current_track:
-            return
-
-        now = self.get_time_now_ms()
-
-        # Compute current play time
-        if self.is_paused:
-            current = self.pause_time - self.start_time
-        else:
-            current = now - self.start_time
-
-        if self.duration > 0:
-            current = max(0, min(current, self.duration))
-            percent = int((current / self.duration) * 100)
-
-            # Update progress widget
-            self.progress.setValue(percent)
-            self.progress.update()
-        else:
-            QMessageBox.critical(
-                self,
-                "Audio Error",
-                "Duration is 0 (audio not loaded correctly)"
-            )
-
-        self.update_time_label(int(current), self.duration)
-
-        # Check if the track finishes
-        if self.duration > 0 and current >= self.duration:
-            self.reset_audio_states()
-            self.reset_audio_ui_states()
-
-    def get_time_now_ms(self) -> int:
-        current = time.monotonic() * 1000
-        return int(current)
-
-    def fmt_time(self, milisec : int) -> str:
-        s = milisec // 1000
-        return f"{s//60:02}:{s%60:02}"
-
-    def update_time_label(self, position: int, duration: int):
-        self.current_time_label.setText(self.fmt_time(position))
-        self.duration_label.setText(self.fmt_time(duration))
+    # ----- Utils -----
+    def _fmt_time(self, ms: int) -> str:
+        s, ms = divmod(ms, 1000)
+        m, s = divmod(s, 60)
+        return f"{m:02}:{s:02}.{ms:03}"
