@@ -37,21 +37,18 @@ class SoundModel(TableModel):
             d = self._data[index.row()]
             str_attr = self.rows[index.column()]
             if str_attr == 'extra':
+                variants = []
                 if d.intro_full_path:
-                    return 'Intro'
-                elif d.battle_full_path:
-                    return 'Battle'
-                else:
-                    return None
+                    variants.append('Intro')
+                if d.battle_full_path:
+                    variants.append('Battle')
+                if getattr(d, 'battle_intro_full_path', None):
+                    variants.append('Battle Intro')
+                return ' + '.join(variants) if variants else None
             attr = getattr(d, str_attr)
-            # if str_attr == 'length' and attr is not None:
-            #     minutes = int(attr / 60)
-            #     seconds = math.ceil(attr % 60)
-            #     return "%02d:%02d" % (minutes, seconds)
             return attr
         elif role == Qt.TextAlignmentRole:
             str_attr = self.rows[index.column()]
-            # if str_attr == 'length':
             if str_attr == 'soundroom_idx':
                 return Qt.AlignRight + Qt.AlignVCenter
         return None
@@ -146,6 +143,10 @@ class MusicModel(SoundModel):
                 c.intro_full_path = saved_d[idx][1]
                 c.battle_full_path = saved_d[idx][2]
                 c.soundroom_idx = saved_d[idx][3]
+                if len(saved_d[idx]) > 4:
+                    c.battle_intro_full_path = saved_d[idx][4]
+                else:
+                    c.battle_intro_full_path = None
                 self._data.update_nid(c, c.nid)
 
     def autofill(self):

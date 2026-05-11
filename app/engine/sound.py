@@ -18,6 +18,7 @@ class SongObject(HasNid):
         self.song = pygame.mixer.Sound(prefab.full_path)
         self.battle = pygame.mixer.Sound(prefab.battle_full_path) if prefab.battle_full_path else None
         self.intro = pygame.mixer.Sound(prefab.intro_full_path) if prefab.intro_full_path else None
+        self.battle_intro = pygame.mixer.Sound(prefab.battle_intro_full_path) if hasattr(prefab, 'battle_intro_full_path') and prefab.battle_intro_full_path else None
 
         self.channel = None
 
@@ -80,6 +81,7 @@ class Channel():
 
         self.current_song = None
         self.played_intro = False
+        self.played_battle_intro = False
         self.num_plays = -1
 
         self.last_state = "stopped"  # stopped, paused, playing
@@ -95,9 +97,8 @@ class Channel():
             pass
         if self.state in self.playing_states:
             for event in event_list:
-                if event.type == self._channel.get_endevent():
-                    if current_time - self.last_play > 32:
-                        self._play()
+                if event.type == self._channel.get_endevent() and current_time - self.last_play > 32:
+                    self._play()
         if self.state == "paused":
             pass
         if self.state in ("fade_out", "crossfade_out"):
@@ -154,7 +155,13 @@ class Channel():
 
         if self.name == "battle":
             if self.current_song.battle:
-                self._channel.play(self.current_song.battle, 0)
+                if self.current_song.battle_intro and not self.played_battle_intro:
+                    # logging.debug("Playing Battle Intro %s", self.current_song.battle_intro)
+                    self._channel.play(self.current_song.battle_intro, 0)
+                    self.played_battle_intro = True
+                else:
+                    # logging.debug("Playing %s", self.current_song.battle)
+                    self._channel.play(self.current_song.battle, 0)
                 self.reset_volume()
         else:
             if self.current_song.intro and not self.played_intro:
@@ -170,6 +177,7 @@ class Channel():
         self.current_song = song
         self.num_plays = num_plays
         self.played_intro = False
+        self.played_battle_intro = False
 
     def set_fade_in_time(self, fade_in):
         self.fade_in_time = max(fade_in, 1)
@@ -183,8 +191,12 @@ class Channel():
         self.current_song = None
         self.num_plays = 0
         self.played_intro = False
+        self.played_battle_intro = False
+        self.local_volume = 0
+        self.crossfade_volume = 1
         self.last_state = "stopped"
         self.state = "stopped"
+        self.reset_volume()
 
     def fade_in(self):
         logging.debug("%s Fade In: %s", self.nid, self.last_state)
@@ -255,11 +267,11 @@ class Channel():
 
 class ChannelPair():
     def __init__(self, nid):
-        event = pygame.USEREVENT + nid//2  # 24, 25, 26, 27
+        event = pygame.USEREVENT + nid  # unique event per channel
 
         self.nid = nid
         self.channel = Channel("music", nid, event)
-        self.battle = Channel("battle", nid + 1, event)
+        self.battle = Channel("battle", nid + 1, event + 1)
 
         self.battle_mode = False
         self.battle.crossfade_volume = 0
@@ -289,10 +301,16 @@ class ChannelPair():
         logging.debug("%s Crossfade", self.nid)
         if self.battle_mode:
             self.battle_mode = False
+            # If the battle intro already played, the regular version should skip its intro
+            if self.battle.played_battle_intro:
+                self.channel.played_intro = True
             self.channel.crossfade_in()
             self.battle.crossfade_out()
         else:
             self.battle_mode = True
+            # If the regular version has already played its intro, the battle variant should skip its intro
+            if self.channel.played_intro:
+                self.battle.played_battle_intro = True
             self.channel.crossfade_out()
             self.battle.crossfade_in()
 
@@ -310,8 +328,11 @@ class ChannelPair():
         if self.current_song:
             self.current_song.channel = None
         self.current_song = None
+        self.battle_mode = False
         self.channel.clear()
         self.battle.clear()
+        self.battle.crossfade_volume = 0
+        self.battle.reset_volume()
 
     def fade_in(self):
         self.channel.fade_in()
