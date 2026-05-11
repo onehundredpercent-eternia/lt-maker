@@ -8,9 +8,9 @@ class AudioController:
     def __init__(self):
         self.is_playing = False
         self.is_paused = False
-        self.start_time = 0
-        self.pause_time = 0
-        self.duration = 0
+        self.start_ms = 0
+        self.current_ms = 0
+        self.duration_ms = 0
 
     def init(self):
         """
@@ -51,20 +51,22 @@ class AudioController:
         pygame.mixer.quit()
 
     def play(self):
-        pygame.mixer.music.play()
-        self.start_time = self._now()
+        pygame.mixer.music.play(start=self.current_ms / 1000)
+        self.start_ms = self._now() - self.current_ms
         self.is_playing = True
         self.is_paused = False
 
     def pause(self):
         pygame.mixer.music.pause()
+        self.current_ms = self._now() - self.start_ms
         self.is_paused = True
-        self.pause_time = self._now()
+        self.is_playing = False
 
     def resume(self):
         pygame.mixer.music.unpause()
+        self.start_ms = self._now() - self.current_ms
         self.is_paused = False
-        self.start_time += self._now() - self.pause_time
+        self.is_playing = True
 
     def stop(self):
         """
@@ -81,50 +83,65 @@ class AudioController:
         
         self.is_playing = False
         self.is_paused = False
-        self.start_time = 0
-        self.pause_time = 0
+        self.start_ms = 0
+        self.current_ms = 0
 
     def get_position(self):
         """
         Get audio position
         """
 
-        if not self.is_playing:
-            return 0
+        if self.is_paused:
+            return self.current_ms
 
-        now = self._now()
-        return (self.pause_time - self.start_time) if self.is_paused else (now - self.start_time)
+        if self.is_playing:
+            return self._now() - self.start_ms
 
-    def _now(self):
-        return int(time.monotonic() * 1000)
+        return self.current_ms
+    
+    def seek(self, position_ms: int):
+        """
+        Seek audio to specific position in milliseconds
+        """
+
+        if self.duration_ms <= 0:
+            return
+
+        position_ms = max(0, min(position_ms, self.duration_ms))
+
+        self.current_ms = position_ms
+
+        # only move playback if currently active
+        if self.is_playing:
+            pygame.mixer.music.play(start=position_ms / 1000)
+            self.start_ms = self._now() - position_ms
+            self.is_playing = True
+            self.is_paused = False
+
+        elif self.is_paused:
+            pygame.mixer.music.play(start=position_ms / 1000)
+            pygame.mixer.music.pause()
     
     def get_metadata(self, file_path: str):
         """
         Get metadata from audio file.
-        Return a dict: {title:str, duration:int}
+        Return a dict: { duration_ms:int }  (add more attributes if needed in the future)
         """
 
         # Read metadata
         track = MutagenFile(file_path)  
 
-        # Extract audio duration through mutagen file object
-        duration = getattr(getattr(track, "info", None), "length", 0)
+        # Extract audio duration_ms through mutagen file object
+        duration_ms = getattr(getattr(track, "info", None), "length", 0)
 
-        if not duration:
+        if not duration_ms:
             try:
-                # Use Sound as fallback mechanic to acquire audio duration
-                duration = pygame.mixer.Sound(file_path).get_length()
+                # Use Sound as fallback mechanic to acquire audio duration_ms
+                duration_ms = pygame.mixer.Sound(file_path).get_length()
             except Exception:
-                duration = 0
+                duration_ms = 0
 
-        title = None
-        if track and track.tags:
-            # Get track title through mutagen file object
-            title = track.tags.get("title", [None])[0]
-        else:
-            title = os.path.basename(file_path)
-
-        return {
-            "duration": int(duration * 1000),
-            "title": title
-        }
+        return {"duration": int(duration_ms * 1000)}
+    
+    def _now(self):
+        return int(time.monotonic() * 1000)
