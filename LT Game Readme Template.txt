@@ -111,10 +111,26 @@ F) ADVANCED INSTALLATIONS - BUILD FROM SOURCE (LINUX), MACOS & ANDROID (!!NOTE T
 
 ==================================
 LINUX - BUILD FROM SOURCE
-NOTE: Most developer(s) will ship the blank .exe engine with their game files attached. If this is the case, the game can be built from source. However, if the developer(s) have included engine hacking in their project without hosting a python version of their engine, this method WILL NOT WORK. If you are unsure, please contact the developer(s) of the LT game you want to play.
 
-1) Install the following programs (preferred versions if possible);
-    python==3.11*
+Building Lex Talionis games from source is possible under the following circumstances:
+- The developer(s) have published a repository of the python version of their game with all engine hacking/changes included.
+- The developer(s) have published the .exe engine, and have NOT modified the engine.
+
+Building Lex Talionis games from source is NOT possible under the following circumstances:
+- The developer(s) have only published the .exe engine, which includes engine hacking/changes.
+
+If you are unsure, contact the developer(s) of the LT game you wish to play.
+
+1) Install a version of Python 3.11*;
+Linux distributions often ship with newer versions of Python. This means you will need to install python 3.11 on your device without interfering with other python versions. This can be accomplished with pyenv:
+https://github.com/pyenv/pyenv/
+
+Follow the instructions on the github page to install the program. Depending on your distribution, you may need to install additional dependencies. You can see these dependencies here:
+https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+
+*LT is potentially unstable or will not boot on newer versions of python. While using python 3.12 or newer can work, functionality is not guaranteed. Use at your own risk.
+
+2) Install the following programs (preferred versions if possible);
     python3pip
     pygame-ce==2.3.2
     pyinstaller==6.2.0
@@ -122,17 +138,20 @@ NOTE: Most developer(s) will ship the blank .exe engine with their game files at
     PyQt5==5.15.10**
     mypy==1.8.0
     mypy-extensions==1.0.0
-        *LT is potentially unstable or will not boot on newer versions of python. Ubuntu LTS 24.04 has python 3.12 installed by default, which should work just fine. While there have been little to no reports of major issues on Linux (Ubuntu 24.04 distros specifically, like Linux Mint), do keep that in mind.
-        **Some Linux distributions (mainly Ubuntu and Ubuntu-based distributions) may have trouble installing PyQt5. In that case, try: "sudo apt-get install python3-pyqt5".
+        **Some Linux distributions (mainly Ubuntu and Ubuntu-based distributions) may have trouble installing PyQt5. In that case, try "sudo apt-get install python3-pyqt5".
 
-2) Clone the following repository to your prefered storage location;
-    https://gitlab.com/rainlash/lt-maker.git***
-        ***If the creator has their own repository set up, clone that instead. You can skip step 3.
+3.1) If the developer(s) have only published the .exe engine:
+Clone the following repository to your preferred storage location;
+    https://gitlab.com/rainlash/lt-maker.git
+Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
 
-3) Grab the folder named "GAMETITLE.ltproj" from the windows version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
+3.2) If the developer(s) have published the python version of their game:
+Download that repository and store it in your preferred storage location.
 
-4) Open a terminal window in the folder where "GAMETITLE.ltproj" is stored and type "python3 run_engine.py". The engine should now boot up with the desired game.**** You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
-    ****If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
+4) Open a terminal window in the folder where the game is stored, and type "pyenv local 3.11.XX" (with XX being the specific python 3.11 version you installed. You can check which versions you have installed at any time with "pyenv versions"). To check if the correct version of python is now active in the game folder, type "python3 --version".
+
+5) Open a terminal window in the folder where "GAMETITLE.ltproj" is stored and type "python3 run_engine.py". The engine should now boot up with the desired game.*** You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
+    ***If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
 
 =================
 MacOS - WINE
