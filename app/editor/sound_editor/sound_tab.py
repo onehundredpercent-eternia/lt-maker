@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, \
     QDialog, QAbstractItemView, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHeaderView
-
 from app.data.resources.resources import RESOURCES
 from app.extensions.custom_gui import ResourceTableView, MultiselectTableView
 from app.editor.data_editor import SingleResourceEditor, MultiResourceEditor
@@ -64,6 +63,10 @@ class SoundTab(QWidget):
         selection_model = self.view.selectionModel()
         selection_model.selectionChanged.connect(self.on_select)
 
+        # Stop audio player whenever closing SoundTab
+        if self.window:
+            self.window.finished.connect(self.sound_player_widget.stop_track_on_close_event)
+
     def append(self):
         last_index = self.model.append()
         if last_index:
@@ -97,10 +100,6 @@ class SoundTab(QWidget):
             selected_track = selected_candidates[0]
 
         self.sound_player_widget.handle_audio_player_on_select(has_selection, selected_track)
-
-    def closeEvent(self, event):
-        self.sound_player_widget.stop_audio_on_close_event()
-        return super().closeEvent(event)
   
 class SFXDatabase(SoundTab):
     @classmethod
