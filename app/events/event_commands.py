@@ -1433,6 +1433,14 @@ The *immediate* flag will cause the combat to happen as quickly as possible, oft
     keyword_types = ["Unit", "Position", "CombatScript", "Ability", "PositiveInteger"]
     _flags = ["arena", "force_animation", "force_no_animation", "immediate"]
 
+class SetCombatScript(EventCommand):
+    nid = 'set_combat_script'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = "Modify the current combat with a combat script."
+
+    keywords = ["CombatScript"]
+
 class PoseUnit(EventCommand):
     nid = 'pose_unit'
     tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
@@ -3758,14 +3766,6 @@ Example: change_team_palette;player;map_sprite_green;GenericGreen;green
     keywords = ["Team"]
     optional_keywords = ['MapSpritePalette', 'CombatVariantPalette', 'CombatColor']
     keyword_types = ['Team', 'Palette', 'String', 'String']
-
-class SetCombatScript(EventCommand):
-    nid = 'set_combat_script'
-    tag = Tags.MISCELLANEOUS
-
-    desc = "Modify the current combat with a combat script."
-
-    keywords = ["CombatScript"]
 
 def get_commands():
     return EventCommand.__subclasses__()
