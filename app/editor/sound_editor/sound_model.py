@@ -42,10 +42,10 @@ class SoundModel(TableModel):
                     variants.append('Intro')
                 if d.battle_full_path:
                     variants.append('Battle')
-                if getattr(d, 'battle_intro_full_path', None):
+                if d.battle_intro_full_path:
                     variants.append('Battle Intro')
                 return ' + '.join(variants) if variants else None
-            attr = getattr(d, str_attr)
+            attr = d.str_attr
             return attr
         elif role == Qt.TextAlignmentRole:
             str_attr = self.rows[index.column()]

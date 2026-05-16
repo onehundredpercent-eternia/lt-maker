@@ -18,7 +18,7 @@ class SongObject(HasNid):
         self.song = pygame.mixer.Sound(prefab.full_path)
         self.battle = pygame.mixer.Sound(prefab.battle_full_path) if prefab.battle_full_path else None
         self.intro = pygame.mixer.Sound(prefab.intro_full_path) if prefab.intro_full_path else None
-        self.battle_intro = pygame.mixer.Sound(prefab.battle_intro_full_path) if hasattr(prefab, 'battle_intro_full_path') and prefab.battle_intro_full_path else None
+        self.battle_intro = pygame.mixer.Sound(prefab.battle_intro_full_path) if prefab.battle_intro_full_path else None
 
         self.channel = None
 

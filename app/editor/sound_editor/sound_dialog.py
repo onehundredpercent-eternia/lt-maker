@@ -121,7 +121,7 @@ class ModifyMusicDialog(Dialog):
         if self.current.intro_full_path:
             name = os.path.split(self.current.intro_full_path[:-4])[-1]
             self.intro_box.edit.setText("%s" % name)
-        if getattr(self.current, 'battle_intro_full_path', None):
+        if self.current.battle_intro_full_path:
             name = os.path.split(self.current.battle_intro_full_path[:-4])[-1]
             self.battle_intro_box.edit.setText("%s" % name)
 

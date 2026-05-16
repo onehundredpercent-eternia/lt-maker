@@ -15,7 +15,6 @@ class SongPrefab(HasNid, WithResources, Prefab):
         self.full_path = full_path
         # self.length = None
 
-        # Mutually exclusive. Can't have both start and battle versions
         self.intro_full_path = None
         self.battle_full_path = None
         self.battle_intro_full_path = None
