@@ -469,7 +469,7 @@ class PrepFormationSelectState(MapState):
                 # Else if duo unit
                 # Swap us
                 elif hovered_unit and hovered_unit.traveler:
-                    game.memory['child_menu'] = menus.Choice(self.unit, ['Switch Partner', 'Swap'])
+                    game.memory['child_menu'] = menus.Choice(self.unit, ['Switch', 'Swap'])
                     game.state.change('prep_formation_menu')
                 # Else if solo unit and can pair-up
                 # Give option between pair up and swap
@@ -638,12 +638,6 @@ class PrepFormationMenuState(MapState):
                 game.state.back()
                 game.state.back()
 
-            elif selection == 'Switch Partner':
-                # guaranteed that we are hovering over a duo unit on a formation
-                swap_duo_unit(hovered_unit)
-                game.state.back()
-                game.state.back()
-
             elif selection == 'Continue':
                 # guaranteed that we are hovering over a duo unit on a formation
                 game.state.back()
@@ -651,8 +645,15 @@ class PrepFormationMenuState(MapState):
 
             elif selection == 'Switch':
                 # guaranteed that we are hovering over a duo unit on a formation
-                action.do(action.SwitchPaired(game.get_rescuer(self.unit), self.unit))
-                game.state.back()
+                if hovered_unit.traveler is self.unit.nid:
+                    # currently at [Continue, Switch] option menu after select a duo unit
+                    action.do(action.SwitchPaired(game.get_rescuer(self.unit), self.unit))
+                    game.state.back()
+                else:
+                    # currently at [Switch, Swap] option menu after hover over a duo unit
+                    swap_duo_unit(hovered_unit)
+                    game.state.back()
+                    game.state.back()
 
     def update(self):
         super().update()
