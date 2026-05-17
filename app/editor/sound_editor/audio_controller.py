@@ -1,7 +1,6 @@
-from mutagen import File as MutagenFile
-import os
 import pygame
 import time
+import logging
 
 
 class AudioController:
@@ -46,7 +45,7 @@ class AudioController:
         try:
             pygame.mixer.music.stop()
         except pygame.error as e:
-            print("Audio Controller | Error", e)
+            logging.error("Audio Controller | Error", e)
 
         pygame.mixer.quit()
 
@@ -125,21 +124,17 @@ class AudioController:
     def get_metadata(self, file_path: str):
         """
         Get metadata from audio file.
-        Return a dict: { duration_ms:int }  (add more attributes if needed in the future)
+        (add more attributes if needed in the future)
+
+        Return: 
+            dict: { duration:int }  (duration is in miliseconds)
         """
 
-        # Read metadata
-        track = MutagenFile(file_path)  
-
-        # Extract audio duration_ms through mutagen file object
-        duration_ms = getattr(getattr(track, "info", None), "length", 0)
-
-        if not duration_ms:
-            try:
-                # Use Sound as fallback mechanic to acquire audio duration_ms
-                duration_ms = pygame.mixer.Sound(file_path).get_length()
-            except Exception:
-                duration_ms = 0
+        try:
+            duration_ms = pygame.mixer.Sound(file_path).get_length()
+        except Exception as e:
+            logging.error(f"Fail to load sound file '{file_path}': {e}\nAssign var duration_ms = 0")
+            duration_ms = 0
 
         return {"duration": int(duration_ms * 1000)}
     
