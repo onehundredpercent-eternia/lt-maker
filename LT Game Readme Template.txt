@@ -40,8 +40,8 @@ LINUX - WINE
 2) Install your preferred version of Wine from the WineHQ website;
     https://www.winehq.org/
         It is recommended to install Wine manually, as the package distributed by many package managers are outdated. Version 11.0 is known to run LT games in a stable manner. Older versions are untested.
-3) Run "winecfg" in your terminal to make sure Wine functions as intended. You do not need to make any changes.
-4) Open "GAMENAME.exe" with Wine.
+3) Run "winecfg" in your terminal to make sure Wine functions as intended. You do not need to make any changes, and can close the window that pops up.
+4) Open "GAMENAME.exe" with Wine (right-click, open with > Wine Windows Program Loader).
 
 ==================================
 
@@ -121,6 +121,8 @@ Building Lex Talionis games from source is NOT possible under the following circ
 
 If you are unsure, contact the developer(s) of the LT game you wish to play.
 
+========
+
 1) Install a version of Python 3.11*;
 Linux distributions often ship with newer versions of Python. This means you will need to install python 3.11 on your device without interfering with other python versions. This can be accomplished with pyenv:
 https://github.com/pyenv/pyenv/
@@ -155,32 +157,43 @@ Download that repository and store it in your preferred storage location.
 
 =================
 MacOS - WINE
-NOTE: Most developer(s) will ship the blank .exe engine with their game files attached. For maximum stability, you need the python version of the engine to run in Wine. You can manually extract the game data from the .exe download to run the game, but if the developer(s) have included engine hacking, THIS METHOD WILL NOT WORK. For this reason, unless the developers(s) have a python version of their game available, it is not recommended to run LT projects on MacOS. If you are unsure, please contact the developer(s) of the LT game you want to play.
 
-How to play:
-1) Download and extract the game folder from its archive file to a desired location.*
-    *If the developer(s) have a python version available, you can skip steps 2 and 3.
-2) Download the LT repository and place it in desired location;
+Building Lex Talionis games from source is possible under the following circumstances:
+- The developer(s) have published a repository of the python version of their game with all engine hacking/changes included.
+- The developer(s) have published the .exe engine, and have NOT modified the engine.
+
+Building Lex Talionis games from source is NOT possible under the following circumstances:
+- The developer(s) have only published the .exe engine, which includes engine hacking/changes.
+
+MacOS requires the native python versions of LT games for maximum stability. If this is not available, running LT games on MacOS is not recommended. If you are unsure, contact the developer(s) of the LT game you wish to play.
+
+========
+
+1.1) If the developer(s) have only published the .exe engine:
+Clone the following repository to your preferred storage location;
     https://gitlab.com/rainlash/lt-maker.git
-3) Grab the "GAMENAME.ltproj" folder and place it into the "lt-maker" folder. Remove the "default.ltproj" folder from the "lt-maker" folder.
+Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
 
-4) Install Homebrew
+1.2) If the developer(s) have published the python version of their game:
+Download that repository and store it in your preferred storage location.
+
+2) Install Homebrew
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-5) Install Wine
+3) Install Wine
     brew install wine-stable
-6) Install Miniconda
+4) Install Miniconda
     brew install --cask miniconda
-7) Initialize conda in your shell
+5) Initialize conda in your shell
     conda init "$(basename "${SHELL}")"
 
-8) Execute the following commands before first boot;
+6) Execute the following commands before first boot;
     cd lt-maker
     conda create -n fe-i-lt python=3.11.7
     conda activate fe-i-lt
-9) Setup Windows Python;
+7) Setup Windows Python;
     curl -O https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe
     wine python-3.11.7-amd64.exe
-10) Install the following requirements IN Wine Python;
+8) Install the following requirements IN Wine Python;
     wine pip install -r
     python3pip
     pygame-ce==2.3.2
@@ -190,7 +203,7 @@ How to play:
     mypy==1.8.0
     mypy-extensions==1.0.0
 
-11) Execute the following commands;
+9) Execute the following commands;
     cd lt-maker
     conda activate fe-i-lt
     wine python run_engine.py
