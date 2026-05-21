@@ -8,11 +8,16 @@ class FogOfWarType(IntEnum):
     GBA = 1
     THRACIA = 2
     HYBRID = 3
-
+    
+class FogOfWarColor(IntEnum):
+    BLACK = 0
+    WHITE = 1
+    
 @dataclass
 class FogOfWarLevelConfig:
     is_active: bool
     mode: FogOfWarType
+    color: FogOfWarColor
     default_radius: int
     ai_radius: int
     other_radius: int
