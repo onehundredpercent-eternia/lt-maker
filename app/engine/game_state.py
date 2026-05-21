@@ -46,7 +46,7 @@ from app.events.regions import RegionType
 from app.events import speak_style
 from app.engine import config as cf
 from app.engine import state_machine
-from app.engine.fog_of_war import FogOfWarType, FogOfWarLevelConfig
+from app.engine.fog_of_war import FogOfWarType, FogOfWarColor, FogOfWarLevelConfig
 from app.engine.roam.roam_info import RoamInfo
 from app.utilities import static_random
 from app.data.resources.resources import RESOURCES
@@ -131,6 +131,7 @@ class GameState():
         self.talk_options: List[Tuple[NID, NID]] = []
         self.talk_hidden: Set[Tuple[NID, NID]] = set()
         self.base_convos: Dict[NID, bool] = {}
+        self.base_tasks: Dict[NID, bool] = {}
         self.action_log: turnwheel.ActionLog = None
         self.events: EventManager = None
         self.map_sprite_registry: Dict[NID, unit_sprite.MapSprite] = {}
@@ -254,6 +255,7 @@ class GameState():
         self.talk_options = []
         self.talk_hidden = set()
         self.base_convos = {}
+        self.base_tasks = {}
         self.action_log = turnwheel.ActionLog()
         self.events = event_manager.EventManager()
         if not self.dialog_log:
@@ -425,6 +427,7 @@ class GameState():
                   'talk_options': self.talk_options,
                   'talk_hidden': self.talk_hidden,
                   'base_convos': self.base_convos,
+                  'base_tasks': self.base_tasks,
                   'current_random_state': static_random.get_combat_random_state(),
                   'bounds': self.board.bounds if self.board else None,
                   'fog_state': self.board.previously_visited_tiles if self.board else None,
@@ -513,6 +516,7 @@ class GameState():
         self.talk_options = s_dict.get('talk_options', [])
         self.talk_hidden = s_dict.get('talk_hidden', set())
         self.base_convos = s_dict.get('base_convos', {})
+        self.base_tasks = s_dict.get('base_tasks', {})
 
         # load team objects, make sure it compatible with non-updated game saves
         if s_dict.get('teams'):
@@ -1286,6 +1290,7 @@ class GameState():
         return FogOfWarLevelConfig(
             self.level_vars.get('_fog_of_war', False),
             self.level_vars.get('_fog_of_war_type', FogOfWarType.GBA_DEPRECATED),
+            self.level_vars.get('_fog_of_war_color', FogOfWarColor.BLACK),
             self.level_vars.get('_fog_of_war_radius', 0),
             ai_fog_of_war_radius,
             self.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius))
