@@ -701,6 +701,9 @@ class Chapter(Validator):
 class FogOfWarType(OptionValidator):
     valid = ['gba', 'thracia', 'hybrid']
 
+class FogOfWarColor(OptionValidator):
+    valid = ['black', 'white']
+
 class ShakeType(OptionValidator):
     valid = ['default', 'combat', 'kill', 'random', 'celeste']
 
