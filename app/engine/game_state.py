@@ -131,7 +131,6 @@ class GameState():
         self.talk_options: List[Tuple[NID, NID]] = []
         self.talk_hidden: Set[Tuple[NID, NID]] = set()
         self.base_convos: Dict[NID, bool] = {}
-        self.base_tasks: Dict[NID, bool] = {}
         self.action_log: turnwheel.ActionLog = None
         self.events: EventManager = None
         self.map_sprite_registry: Dict[NID, unit_sprite.MapSprite] = {}
