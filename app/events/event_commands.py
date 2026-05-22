@@ -2512,17 +2512,6 @@ Unlocks a base conversation specified by *Nid* for later viewing by the player.
 
     keywords = ["Nid"]
 
-class AddBaseTask(EventCommand):
-    nid = 'add_base_task'
-    tag = Tags.LEVEL_VARS
-
-    desc = \
-        """
-Unlocks a base task specified by *Nid* to give a new otion to the player.
-        """
-
-    keywords = ["Nid"]
-
 class IgnoreBaseConvo(EventCommand):
     nid = 'ignore_base_convo'
     tag = Tags.LEVEL_VARS
@@ -2530,19 +2519,6 @@ class IgnoreBaseConvo(EventCommand):
     desc = \
         """
 Sets the base conversation specified by *Nid* to unselectable and greyed-out, but still visible. You usually want to use this at the end of a base convo to prevent the player from viewing it again.
-        """
-
-    keywords = ["Nid"]
-    optional_keywords = ["Ignore"]
-    keyword_types = ["Nid", "Bool"]
-
-class IgnoreBaseTask(EventCommand):
-    nid = 'ignore_base_task'
-    tag = Tags.LEVEL_VARS
-
-    desc = \
-        """
-Sets the base task specified by *Nid* to unselectable and greyed-out, but still visible. You usually want to use this at the end of a base task to prevent the player from doing it again.
         """
 
     keywords = ["Nid"]
