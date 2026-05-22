@@ -20,4 +20,4 @@ class FogOfWarLevelConfig:
     default_radius: int
     ai_radius: int
     other_radius: int
-   color: FogOfWarColor
+    color: FogOfWarColor
