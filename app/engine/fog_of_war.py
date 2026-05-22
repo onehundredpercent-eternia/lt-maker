@@ -17,7 +17,7 @@ class FogOfWarColor(IntEnum):
 class FogOfWarLevelConfig:
     is_active: bool
     mode: FogOfWarType
-    color: FogOfWarColor
     default_radius: int
     ai_radius: int
     other_radius: int
+   color: FogOfWarColor
