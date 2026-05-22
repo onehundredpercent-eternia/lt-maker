@@ -720,14 +720,11 @@ def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Op
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', ai_radius))
     if other_radius is not None:
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', other_radius))
-    if fog_of_war_color is not None:
-        fowc = fog_of_war_color.lower()
-        if fowc == 'white':
-        fowc = FogOfWarColor.WHITE
-        elif fowc == 'black':
-        fowc = FogOfWarColor.BLACK
+    fowc = fog_of_war_color.lower()
+    if fowc == 'white':
+    fowc = FogOfWarColor.WHITE
     else:
-        fowc = FogOfWarColor.BLACK
+    fowc = FogOfWarColor.BLACK
     action.do(action.SetLevelVar('_fog_of_war_color', fowc))
 
 def end_turn(self: Event, team: NID = None, flags=None):
