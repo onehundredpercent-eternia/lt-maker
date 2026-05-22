@@ -1289,10 +1289,10 @@ class GameState():
         return FogOfWarLevelConfig(
             self.level_vars.get('_fog_of_war', False),
             self.level_vars.get('_fog_of_war_type', FogOfWarType.GBA_DEPRECATED),
-            self.level_vars.get('_fog_of_war_color', FogOfWarColor.BLACK),
             self.level_vars.get('_fog_of_war_radius', 0),
             ai_fog_of_war_radius,
             self.level_vars.get('_other_fog_of_war_radius', ai_fog_of_war_radius))
+            self.level_vars.get('_fog_of_war_color', FogOfWarColor.BLACK)
 
     def check_dead(self, nid: NID) -> bool:
         """
