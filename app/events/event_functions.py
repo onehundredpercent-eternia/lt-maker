@@ -2611,13 +2611,6 @@ def remove_lore(self: Event, lore, flags=None):
 def add_base_convo(self: Event, nid, flags=None):
     self.game.base_convos[nid] = False
 
-def add_base_task(self: Event, nid, flags=None):
-    self.game.base_tasks[nid] = False
-
-def ignore_base_task(self: Event, nid,ignore: bool=True, flags=None):
-    if nid in self.game.base_tasks:
-        self.game.base_tasks[nid] = ignore
-
 def ignore_base_convo(self: Event, nid, ignore: bool=True, flags=None):
     if nid in self.game.base_convos:
         self.game.base_convos[nid] = ignore
