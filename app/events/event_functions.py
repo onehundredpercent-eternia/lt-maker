@@ -728,7 +728,7 @@ def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Op
         fowc = FogOfWarColor.BLACK
     else:
         fowc = FogOfWarColor.BLACK
-    action.do(action.SetLevelVar('_fog_of_war_color', fowc))
+        action.do(action.SetLevelVar('_fog_of_war_color', fowc))
 
 def end_turn(self: Event, team: NID = None, flags=None):
     self.logger.info('Force end of turn.')
