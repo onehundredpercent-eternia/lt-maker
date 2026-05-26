@@ -185,3 +185,8 @@ class Nihil(SkillComponent):
     def test_off(self, playback, unit, item, target, item2, mode):
         game.on_alter_game_state()
         self._condition = True
+
+class IgnoreFogLOS(SkillComponent):
+    nid = 'ignore_fog_los'
+    desc = 'Unit ignores line of sight when determining fog of war. Only has an effect if both fog of war and fog of war line of sight are enabled.'
+    tag = SkillTags.CUSTOM
