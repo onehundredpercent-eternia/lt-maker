@@ -49,7 +49,6 @@ def simple_check(dest_pos: Pos, team: NID, default_range: int, fow_vantage_point
             for skill in unit.skills:
                 for nid in skill.components.keys():
                     if nid == 'ignore_fog_los':
-                        # God this workaround is awful
                         if utils.calculate_distance(dest_pos, s_pos) <= default_range + skill_system.sight_range(unit):
                             return True
     return False
