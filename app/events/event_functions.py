@@ -1228,6 +1228,17 @@ def interact_unit(self: Event, unit, position, combat_script: Optional[List[str]
         arena='arena' in flags, force_animation='force_animation' in flags, force_no_animation='force_no_animation' in flags)
     self.state = "paused"
 
+def set_combat_script(self: Event, combat_script: List[str], flags=None):
+    flags = flags or set()
+
+    # Currently in 'event' state, 'combat' state should be preceding
+    combat_state = self.game.state.get_prev_state()
+    if combat_state.name != 'combat':
+        self.logger.error("set_combat_script: Current game state is not combat state")
+        return
+
+    combat_state.combat.state_machine.script = list(reversed(combat_script))
+
 def pose_unit(self: Event, unit, pose, direction=None, flags=None):
     from app.events.event_validators import SpritePose, SpriteDirection
     flags = flags or set()
@@ -2801,7 +2812,7 @@ def remove_weather(self: Event, weather, position=None, flags=None):
     pos = self._parse_pos(position) if position else None
     action.do(action.RemoveWeather(nid, pos))
 
-def change_objective_simple(self: Event, evaluable_string, flags=None):
+def change_objective_simple(self: Event, evaluable_string="", flags=None):
     action.do(action.ChangeObjective('simple', evaluable_string))
 
 def change_objective_win(self: Event, evaluable_string, flags=None):

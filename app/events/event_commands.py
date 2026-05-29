@@ -549,8 +549,8 @@ Automatically formats all `speak` commands with NID equal to the style's NID wit
 
 A style consists of all parameters that one can apply to individual speak commands, including flags.
 
-NOTE: Speak styles persist through events. If you load your speak styles in the `on_title_screen` trigger, you will be able to use them
-throughout the entire game.
+NOTE: Speak styles persist through events. It's recommended to load your speak styles in the `on_startup` trigger,
+so you will be able to use them throughout the entire game, even during *Test Event* or *Support Room*.
 
 NOTE: You can set the `__default` speak style, which will automatically apply to all speak commands thereafter.
 """
@@ -1432,6 +1432,14 @@ The *immediate* flag will cause the combat to happen as quickly as possible, oft
     optional_keywords = ["CombatScript", "Ability", "Rounds"]
     keyword_types = ["Unit", "Position", "CombatScript", "Ability", "PositiveInteger"]
     _flags = ["arena", "force_animation", "force_no_animation", "immediate"]
+
+class SetCombatScript(EventCommand):
+    nid = 'set_combat_script'
+    tag = Tags.ADD_REMOVE_INTERACT_WITH_UNITS
+
+    desc = "Modify the current combat with a combat script."
+
+    keywords = ["CombatScript"]
 
 class PoseUnit(EventCommand):
     nid = 'pose_unit'
@@ -2724,7 +2732,7 @@ class ChangeObjectiveSimple(EventCommand):
 Changes the simple version of the chapter's objective text to *EvaluableString*.
         """
 
-    keywords = ["EvaluableString"]
+    optional_keywords = ["EvaluableString"]
 
 class ChangeObjectiveWin(EventCommand):
     nid = 'change_objective_win'
