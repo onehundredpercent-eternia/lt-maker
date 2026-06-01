@@ -6,6 +6,7 @@ from typing import Optional, Union
 from app.data.database.level_units import GenericUnit, UniqueUnit, UnitGroup
 from app.data.database.ai_groups import AIGroup
 from app.events.regions import Region
+from app.data.cities import City
 from app.utilities.data import Data, Prefab
 
 OBJECTIVE_KEYS = ['simple', 'win', 'loss']
@@ -15,7 +16,7 @@ class LevelPrefab(Prefab):
         self.nid = nid
         self.name = name
         self.tilemap: Optional[NID] = None  # Tilemap Nid
-        self.bg_tilemap: Optional[NID] = None # bg tilemap nid
+        self.bg_tilemap: Optional[NID] = None  # bg tilemap nid
         self.party: NID = None  # Party Prefab Nid
         self.music = OrderedDict()
 
@@ -29,20 +30,15 @@ class LevelPrefab(Prefab):
 
         self.units = Data[Union[UniqueUnit, GenericUnit]]()
         self.regions = Data[Region]()
+        self.cities = Data[City]()
         self.unit_groups = Data[UnitGroup]()
         self.ai_groups = Data[AIGroup]()  # Each AI Group is Level Specific
 
     def save_attr(self, name, value):
-        if name == 'units':
-            value = [unit.save() for unit in value]
-        elif name == 'unit_groups':
-            value = [unit_group.save() for unit_group in value]
-        elif name == 'regions':
-            value = [region.save() for region in value]
+        if name in ['units', 'unit_groups', 'regions', 'cities', 'ai_groups']:
+            value = [v.save() for v in value]
         elif name == 'objective':
             value = value.copy()  # Must make a copy so we don't keep a reference to the same one
-        elif name == 'ai_groups':
-            value = [ai_group.save() for ai_group in value]
         else:
             value = super().save_attr(name, value)
         return value
@@ -55,6 +51,8 @@ class LevelPrefab(Prefab):
             value = Data([UnitGroup.restore(val) for val in value])
         elif name == 'regions':
             value = Data([Region.restore(val) for val in value])
+        elif name == 'cities':
+            value = Data([City.restore(val) for val in value])
         elif name == 'music':
             value = {k: value.get(k) for k in value.keys()}
         elif name == 'ai_groups':

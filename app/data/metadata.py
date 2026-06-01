@@ -17,7 +17,7 @@ class Metadata():
     def save(self) -> dict[str, Any]:
         return asdict(self)
     
-    def update(self, updates:dict[str, Any]) -> dict[str, Any]:
+    def update(self, updates: dict[str, Any]) -> dict[str, Any]:
         base = self.save()
         base.update(updates)
         return base

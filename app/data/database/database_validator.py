@@ -9,8 +9,7 @@ from app.data.resources.resource_types import ResourceType as RType
 from app.data.resources.resources import Resources
 from app.utilities.data import Data
 from app.utilities.typing import NID
-import re
-from typing import Any, Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List
 
 @dataclass
 class ValidationError():

@@ -14,7 +14,7 @@ from app.data.database.database import DB
 from app.events.regions import RegionType
 from app.events import triggers
 from app.data.resources.resources import RESOURCES
-from app.engine import (aura_funcs, banner, equations, item_funcs, item_system,
+from app.engine import (aura_funcs, banner, building_system, equations, item_funcs, item_system,
                         particles, skill_system, unit_funcs, animations)
 from app.engine.game_state import game
 from app.engine.objects.item import ItemObject
@@ -1846,6 +1846,45 @@ class GiveBexp(Action):
         party.bexp = self.old_bexp
 
 
+class ChangeCityFood(Action):
+    def __init__(self, city, food):
+        self.city = city
+        self.food = food
+        self.old_food = city.food
+
+    def do(self):
+        self.city.food += self.food
+
+    def reverse(self):
+        self.city.food = self.old_food
+
+
+class ChangeCityProduction(Action):
+    def __init__(self, city, production):
+        self.city = city
+        self.production = production
+        self.old_production = city.production
+
+    def do(self):
+        self.city.production += self.production
+
+    def reverse(self):
+        self.city.production = self.old_production
+
+
+class ChangeTeamGold(Action):
+    def __init__(self, team, gold):
+        self.team = team
+        self.gold = gold
+        self.old_gold = team.gold
+
+    def do(self):
+        self.team.gold += self.gold
+
+    def reverse(self):
+        self.team.gold = self.old_gold
+
+
 class GainExp(Action):
     def __init__(self, unit, exp_gain):
         self.unit = unit
@@ -3076,6 +3115,7 @@ class ChangeRegionCondition(Action):
     def reverse(self):
         self.region.condition = self.old_condition
 
+
 class DecrementTimeRegion(Action):
     def __init__(self, region):
         self.region = region
@@ -3085,6 +3125,7 @@ class DecrementTimeRegion(Action):
 
     def reverse(self):
         self.region.time_left = int(self.region.time_left) + 1
+
 
 class RemoveRegion(Action):
     def __init__(self, region):
@@ -3148,6 +3189,7 @@ class RemoveRegion(Action):
                 for unit, pos in affected_units:
                     game.arrive(unit, pos)
 
+
 class AddFogRegion(Action):
     def __init__(self, region):
         self.region = region
@@ -3159,6 +3201,7 @@ class AddFogRegion(Action):
     def reverse(self):
         game.board.remove_fog_region(self.region)
         game.boundary.reset_fog_of_war()
+
 
 class RemoveFogRegion(Action):
     def __init__(self, region):
@@ -3172,6 +3215,7 @@ class RemoveFogRegion(Action):
         game.board.add_fog_region(self.region)
         game.boundary.reset_fog_of_war()
 
+
 class AddVisionRegion(Action):
     def __init__(self, region):
         self.region = region
@@ -3183,6 +3227,7 @@ class AddVisionRegion(Action):
     def reverse(self):
         game.board.remove_vision_region(self.region)
         game.boundary.reset_fog_of_war()
+
 
 class RemoveVisionRegion(Action):
     def __init__(self, region):
@@ -3196,6 +3241,7 @@ class RemoveVisionRegion(Action):
         game.board.add_vision_region(self.region)
         game.boundary.reset_fog_of_war()
 
+
 def _leave(layer) -> List[Tuple[UnitObject, Pos]]:
     # Force all affected units to leave
     affected_units = []
@@ -3205,6 +3251,53 @@ def _leave(layer) -> List[Tuple[UnitObject, Pos]]:
             affected_units.append((unit, unit.position))
             game.leave(unit)
     return affected_units
+
+
+class AddBuilding(Action):
+    def __init__(self, city, building):
+        self.city = city
+        self.building = building
+        if building.uid not in game.building_registry:
+            game.register_building(building)
+        self.did_add = False
+        self.subactions = []
+
+    def do(self):
+        self.subactions.clear()
+        self.city.buildings.append(self.building)
+
+        self.did_add = True
+        building_system.after_add(self.city, self.building)
+
+    def reverse(self):
+        if self.did_add:
+            self.city.buildings.remove(self.building)
+            for act in self.subactions:
+                act.reverse()
+            building_system.after_remove(self.city, self.building)
+
+
+class RemoveBuilding(Action):
+    def __init__(self, city, building):
+        self.city = city
+        self.building = building
+        self.did_remove = False
+        self.subactions = []
+
+    def do(self):
+        self.subactions.clear()
+        self.city.buildings.remove(self.building)
+
+        self.did_remove = True
+        building_system.after_remove(self.city, self.building)
+
+    def reverse(self):
+        if self.did_remove:
+            self.city.buildings.append(self.building)
+            for act in self.subactions:
+                act.reverse()
+            building_system.after_add(self.city, self.building)
+
 
 class ShowLayer(Action):
     def __init__(self, layer_nid, transition):
@@ -3284,6 +3377,7 @@ class HideLayer(Action):
         game.board.reset_tile_grids(game.level.tilemap)
         game.boundary.reset()
 
+
 class ChangeBGTileMap(Action):
     def __init__(self, new_tilemap_nid):
         self.new_tilemap_nid = new_tilemap_nid
@@ -3299,7 +3393,6 @@ class ChangeBGTileMap(Action):
             game.level.bg_tilemap = TileMapObject.from_prefab(tilemap_prefab)
         else:
             game.level.bg_tilemap = None
-
 
 
 class AddWeather(Action):
@@ -3334,6 +3427,7 @@ class RemoveWeather(Action):
             new_ps = particles.create_system(self.weather_nid, game.tilemap.width, game.tilemap.height, self.position)
             game.tilemap.weather.append(new_ps)
 
+
 class AddMapAnim(Action):
     def __init__(self, nid: NID, pos: Tuple[int, int], speed_mult: float, blend_mode: engine.BlendMode, upper_layer: bool=False):
         self.nid: NID = nid
@@ -3363,6 +3457,7 @@ class AddMapAnim(Action):
                     game.tilemap.animations.remove(anim)
                     break
 
+
 class RemoveMapAnim(Action):
     def __init__(self, nid, pos, upper_layer: bool = False):
         self.nid = nid
@@ -3388,7 +3483,6 @@ class RemoveMapAnim(Action):
                     game.tilemap.animations.remove(anim)
                     self.did_remove = True
 
-
     def reverse(self):
         if self.did_remove:
             if self.is_upper_layer:
@@ -3402,6 +3496,7 @@ class RemoveMapAnim(Action):
                 anim = animations.MapAnimation(anim, self.pos, loop=True, speed_adj=self.speed_mult)
                 anim.set_tint(self.blend)
                 game.tilemap.animations.append(anim)
+
 
 class AddAnimToUnit(Action):
     def __init__(self, nid, unit: UnitObject, speed_mult, blend):
@@ -3421,6 +3516,7 @@ class AddAnimToUnit(Action):
         if self.did_add:
             self.unit.sprite.remove_animation(self.nid)
 
+
 class RemoveAnimFromUnit(Action):
     def __init__(self, nid, unit: UnitObject):
         self.nid = nid
@@ -3438,6 +3534,7 @@ class RemoveAnimFromUnit(Action):
             anim = RESOURCES.animations.get(self.nid)
             anim = animations.MapAnimation(anim, (-16, -16), loop=True, speed_adj=self.speed_mult)
             self.unit.sprite.add_animation(anim)
+
 
 class ChangeObjective(Action):
     def __init__(self, key, string):

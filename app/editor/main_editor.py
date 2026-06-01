@@ -51,6 +51,7 @@ from app.editor.class_editor.new_class_tab import NewClassDatabase
 from app.editor.weapon_editor.weapon_tab import WeaponDatabase
 from app.editor.item_editor.new_item_tab import NewItemDatabase
 from app.editor.skill_editor.new_skill_tab import NewSkillDatabase
+from app.editor.building_editor.new_building_tab import NewBuildingDatabase
 from app.editor.terrain_editor.terrain_tab import TerrainDatabase
 from app.editor.stat_editor.stat_tab import StatTypeDatabase
 from app.editor.ai_editor.ai_tab import AIDatabase
@@ -243,6 +244,7 @@ class MainEditor(QMainWindow):
                             _("Weapon Types"): WeaponDatabase.edit,
                             _("Items"): NewItemDatabase.edit,
                             _("Skills"): NewSkillDatabase.edit,
+                            _("Building"): NewBuildingDatabase.edit,
                             "AI": AIDatabase.edit,
                             _("Terrain"): TerrainDatabase.edit,
                             _("Movement Costs"): self.edit_mcost,
@@ -607,7 +609,7 @@ class MainEditor(QMainWindow):
                           "<p>Check out <a href='https://lt-maker.readthedocs.io/'>https://lt-maker.readthedocs.io/</a> "
                           "for more information and helpful tutorials.</p>"
                           "<p>This program has been freely distributed under the MIT License.</p>"
-                          "<p>Copyright 2014-2023 rainlash.</p>")
+                          "<p>Copyright 2014-2026 rainlash.</p>")
 
     def check_for_updates(self):
         # Only check for updates in frozen version

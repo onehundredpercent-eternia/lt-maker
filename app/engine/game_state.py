@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import random
 import time
-from collections import Counter
 from typing import TYPE_CHECKING, Dict, Set, Iterable, List, Optional, Tuple
 
 from app.engine.query_engine import GameQueryEngine
@@ -26,8 +25,10 @@ if TYPE_CHECKING:
     from app.engine.objects.overworld import OverworldObject
     from app.engine.objects.party import PartyObject
     from app.engine.objects.skill import SkillObject
+    from app.engine.objects.building import BuildingObject
     from app.engine.objects.unit import UnitObject
     from app.engine.objects.region import RegionObject
+    from app.engine.objects.city import CityObject
     from app.engine.objects.ai_group import AIGroupObject
     from app.engine.objects.tilemap import TileMapObject
     from app.engine.objects.team import TeamObject
@@ -107,8 +108,10 @@ class GameState():
         self.unit_registry: Dict[NID, UnitObject] = {}
         self.item_registry: Dict[UID, ItemObject] = {}
         self.skill_registry: Dict[UID, SkillObject] = {}
+        self.building_registry: Dict[UID, BuildingObject] = {}
         self.terrain_status_registry: Dict[Tuple[int, int, NID], UID] = {}
         self.region_registry: Dict[NID, RegionObject] = {}
+        self.city_registry: Dict[NID, CityObject] = {}
         self.overworld_registry: Dict[NID, OverworldObject] = {}
         self.parties: Dict[NID, PartyObject] = {}
         self.teams: Dict[NID, TeamObject] = {}
@@ -197,8 +200,10 @@ class GameState():
         self.unit_registry = {}
         self.item_registry = {}
         self.skill_registry = {}
+        self.building_registry = {}
         self.terrain_status_registry = {}
         self.region_registry = {}
+        self.city_registry = {}
 
         self.current_mode = self._default_mode()
 
@@ -306,6 +311,8 @@ class GameState():
                 unit.party = self.current_party
         self.set_up_game_board(self._current_level.tilemap)
 
+        for city in self._current_level.cities:
+            self.register_city(city)
         for region in self._current_level.regions:
             self.register_region(region)
 
@@ -400,8 +407,10 @@ class GameState():
         s_dict = {'units': [unit.save() for unit in self.unit_registry.values()],
                   'items': [item.save() for item in self.item_registry.values()],
                   'skills': [skill.save() for skill in self.skill_registry.values()],
+                  'buildings': [building.save() for building in self.building_registry.values()],
                   'terrain_status_registry': self.terrain_status_registry,
                   'regions': [region.save() for region in self.region_registry.values()],
+                  'cities': [city.save() for city in self.city_registry.values()],
                   'level': self._current_level.save() if self._current_level else None,
                   'overworlds': [overworld.save() for overworld in self.overworld_registry.values()],
                   'turncount': self.turncount,
@@ -479,10 +488,12 @@ class GameState():
 
         self.item_registry = {item['uid']: ItemObject.restore(item) for item in s_dict['items']}
         self.skill_registry = {skill['uid']: SkillObject.restore(skill) for skill in s_dict['skills']}
+        self.building_registry = {building['uid']: BuildingObject.restore(building) for building in s_dict['buildings']}
         save.set_next_uids(self)
         self.terrain_status_registry = s_dict.get('terrain_status_registry', {})
         self.unit_registry = {unit['nid']: UnitObject.restore(unit, self) for unit in s_dict['units']}
         self.region_registry = {region['nid']: RegionObject.restore(region) for region in s_dict.get('regions', [])}
+        self.city_registry = {city['nid']: CityObject.restore(city, self) for city in s_dict.get('cities', [])}
 
         # Handle subitems
         for item in self.item_registry.values():
@@ -518,7 +529,7 @@ class GameState():
         if s_dict.get('teams'):
             self.teams = {team['nid']: TeamObject.restore(team) for team in s_dict['teams']}
         else:
-            self.teams = {team.nid : TeamObject.from_prefab(team) for team in DB.teams.values()}
+            self.teams = {team.nid: TeamObject.from_prefab(team) for team in DB.teams.values()}
 
         # load all overworlds, or initialize them
         if 'overworlds' in s_dict:
@@ -645,6 +656,7 @@ class GameState():
         if full:
             self.terrain_status_registry.clear()
             self.region_registry.clear()
+            self.city_registry.clear()
 
             # Remove all non-persistent units
             self.unit_registry = {k: v for (k, v) in self.unit_registry.items() if v.persistent}
@@ -674,6 +686,9 @@ class GameState():
                             break
                     else:  # No party ever found
                         del self.item_registry[k]
+
+            # Remove all buildings
+            self.building_registry.clear()
         # End If
 
         # Handle player death
@@ -865,6 +880,16 @@ class GameState():
         """
         return list(self.region_registry.values())
 
+    @property
+    def cities(self) -> List[CityObject]:
+        """
+        Gets a list of all registered city objects.
+
+        Returns:
+            List[CityObject]: A list of all registered city objects.
+        """
+        return list(self.city_registry.values())
+
     def register_unit(self, unit):
         logging.debug("Registering unit %s as %s", unit, unit.nid)
         self.unit_registry[unit.nid] = unit
@@ -906,6 +931,14 @@ class GameState():
         if skill.subskill:
             del self.skill_registry[skill.subskill.uid]
 
+    def register_building(self, building):
+        logging.debug("Registering building %s as %s", building, building.uid)
+        self.building_registry[building.uid] = building
+
+    def unregister_building(self, building):
+        logging.debug("Unregistering building %s as %s", building, building.uid)
+        del self.building_registry[building.uid]
+
     def register_terrain_status(self, key: Tuple[int, int, NID], skill_uid: UID):
         logging.debug("Registering terrain status %s", skill_uid)
         self.terrain_status_registry[key] = skill_uid
@@ -913,6 +946,10 @@ class GameState():
     def register_region(self, region: RegionObject):
         logging.debug("Registering region %s", region.nid)
         self.region_registry[region.nid] = region
+
+    def register_city(self, city: CityObject):
+        logging.debug("Registering city %s", city.nid)
+        self.city_registry[city.nid] = city
 
     def get_data(self, raw_data_nid: NID):
         """
@@ -1032,6 +1069,19 @@ class GameState():
             for region in self.level.regions.values():
                 if (not region_type or region.region_type == region_type) and region.contains(pos):
                     return region
+
+    def get_city(self, city_nid: NID) -> Optional[CityObject]:
+        """
+        Gets a city object by its NID.
+
+        Args:
+            city_nid (NID): The NID of the city.
+
+        Returns:
+            CityObject: The city object with the given NID.
+        """
+        city = self.city_registry.get(city_nid)
+        return city
 
     def get_ai_group(self, ai_group_nid: NID) -> Optional[AIGroupObject]:
         """

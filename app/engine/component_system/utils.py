@@ -12,6 +12,8 @@ ARG_TYPE_MAP: Dict[str, str] = {
     'target': "UnitObject",
     'item2': "ItemObject",
     'skill': "SkillObject",
+    'building': "BuildingObject",
+    'city': "CityObject",
 }
 
 class ResolvePolicy(Enum):

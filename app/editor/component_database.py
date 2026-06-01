@@ -445,6 +445,21 @@ class SkillItemComponent(BoolItemComponent):
         hbox.addWidget(self.editor)
 
 
+class BuildingItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        self.editor = ComboBox(self)
+        for building in DB.building.values():
+            self.editor.addItem(building.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width(
+        ) + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
+        if not self._data.value and DB.buildings:
+            self._data.value = DB.buildings[0].nid
+        self.editor.setValue(self._data.value)
+        self.editor.currentTextChanged.connect(self.on_value_changed)
+        hbox.addWidget(self.editor)
+
+
 class UnitItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
         self.editor = ComboBox(self)
@@ -518,6 +533,7 @@ class MapAnimationItemComponent(BoolItemComponent):
         self.editor.setValue(self._data.value)
         self.editor.currentTextChanged.connect(self.on_value_changed)
         hbox.addWidget(self.editor)
+
 
 class CombatAnimationItemComponent(BoolItemComponent):
     def create_editor(self, hbox):
@@ -717,6 +733,8 @@ def get_display_widget(component, parent):
         c = ItemItemComponent(component, parent)
     elif component.expose == ComponentType.Skill:
         c = SkillItemComponent(component, parent)
+    elif component.expose == ComponentType.Building:
+        c = BuildingItemComponent(component, parent)
     elif component.expose == ComponentType.MapAnimation:
         c = MapAnimationItemComponent(component, parent)
     elif component.expose == ComponentType.CombatAnimation:

@@ -14,6 +14,7 @@ from app.data.database.database import DB
 import app.engine.config as cf
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
+from app.engine.objects.building import BuildingObject
 
 import logging
 
@@ -184,8 +185,13 @@ def set_next_uids(game_state):
         SkillObject.next_uid = max(game_state.skill_registry.keys()) + 1
     else:
         SkillObject.next_uid = 100
+    if game_state.building_registry:
+        BuildingObject.next_uid = max(game_state.building_registry.keys()) + 1
+    else:
+        BuildingObject.next_uid = 100
     logging.info("Setting next item uid: %d" % ItemObject.next_uid)
     logging.info("Setting next skill uid: %d" % SkillObject.next_uid)
+    logging.info("Setting next building uid: %d" % BuildingObject.next_uid)
 
 def load_saves():
     save_slots = []

@@ -17,6 +17,7 @@ from app.editor.settings import MainSettingsController
 from .property_menu import PropertiesMenu
 from .unit_painter_menu import UnitPainterMenu
 from .region_painter_menu import RegionMenu
+from .city_painter_menu import CityMenu
 from .unit_group_painter_menu import UnitGroupMenu
 
 from app.editor.map_view import NewMapView, EditMode
@@ -51,6 +52,10 @@ class LevelEditor(QMainWindow):
         if visible:
             self.map_view.set_mode(EditMode.REGIONS)
 
+    def on_city_tab_select(self, visible):
+        if visible:
+            self.map_view.set_mode(EditMode.CITIES)
+
     def on_units_tab_select(self, visible):
         if visible:
             self.map_view.set_mode(EditMode.UNITS)
@@ -71,6 +76,11 @@ class LevelEditor(QMainWindow):
         self.region_painter_menu = RegionMenu(
             self.state_manager, self.map_view)
         self.docks['Regions'].setWidget(self.region_painter_menu)
+        self.docks['Cities'] = Dock(
+            'Cities', self, self.on_city_tab_select)
+        self.city_painter_menu = CityMenu(
+            self.state_manager, self.map_view)
+        self.docks['Cities'].setWidget(self.city_painter_menu)
         self.docks['Units'] = Dock('Units', self, self.on_units_tab_select)
         self.unit_painter_menu = UnitPainterMenu(
             self.state_manager, self.map_view)
@@ -85,7 +95,8 @@ class LevelEditor(QMainWindow):
             self.addDockWidget(Qt.RightDockWidgetArea, dock)
 
         self.tabifyDockWidget(self.docks['Properties'], self.docks['Regions'])
-        self.tabifyDockWidget(self.docks['Regions'], self.docks['Units'])
+        self.tabifyDockWidget(self.docks['Regions'], self.docks['Cities'])
+        self.tabifyDockWidget(self.docks['Cities'], self.docks['Units'])
         self.tabifyDockWidget(self.docks['Units'], self.docks['Groups'])
 
         for title, dock in self.docks.items():

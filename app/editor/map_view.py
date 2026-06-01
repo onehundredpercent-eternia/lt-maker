@@ -74,7 +74,7 @@ class SimpleMapView(QGraphicsView):
         self.scene.clear()
 
     def update_view(self, _=None):
-        if(self.current_level and not self.current_map):
+        if self.current_level and not self.current_map:
             self.current_map = RESOURCES.tilemaps.get(
                 self.current_level.tilemap)
         if self.current_map:
@@ -141,7 +141,7 @@ class SimpleMapView(QGraphicsView):
         pos_float = float(scene_pos.x() / TILEWIDTH - 0.5), float(scene_pos.y() / TILEHEIGHT - 0.5)
 
         if self.current_map and self.current_map.check_bounds(pos):
-            if(event.buttons() == Qt.RightButton):
+            if event.buttons() == Qt.RightButton:
                 self.position_right_clicked.emit(*pos)
                 self.position_right_clicked_float.emit(*pos_float)
             else:
@@ -316,6 +316,7 @@ class EditMode(Enum):
     REGIONS = 1
     GROUPS = 2
     UNITS = 3
+    CITIES = 4
 
 
 class NewMapView(SimpleMapView):
@@ -335,7 +336,7 @@ class NewMapView(SimpleMapView):
         return None
 
     def update_view(self, _=None):
-        if(self.current_level):
+        if self.current_level:
             self.current_map = RESOURCES.tilemaps.get(
                 self.current_level.tilemap)
         if self.current_map:
@@ -350,6 +351,9 @@ class NewMapView(SimpleMapView):
             self.paint_units()
         elif self.edit_mode == EditMode.REGIONS:
             self.paint_regions()
+            self.paint_units(in_unit_tab=False)
+        elif self.edit_mode == EditMode.CITIES:
+            self.paint_cities()
             self.paint_units(in_unit_tab=False)
         elif self.edit_mode == EditMode.GROUPS:
             self.paint_groups()
@@ -480,6 +484,41 @@ class NewMapView(SimpleMapView):
                                      height * TILEHEIGHT, QBrush(QColor(*color), Qt.DiagCrossPattern))
             painter.end()
 
+    def paint_cities(self):
+        if self.working_image:
+            painter = QPainter()
+            painter.begin(self.working_image)
+            for city in self.current_level.cities:
+                if not city.position:
+                    continue
+                x, y = city.position
+                color = utils.hash_to_color(utils.strhash(city.nid))
+                pixmap = QPixmap(TILEWIDTH, TILEHEIGHT)
+                pixmap.fill(QColor(*color))
+                painter.setOpacity(0.75)
+                painter.drawImage(x * TILEWIDTH, y *
+                                  TILEHEIGHT, pixmap.toImage())
+            current_city = self.main_editor.city_painter_menu.get_current()
+            if current_city:
+                if current_city.position:
+                    x, y = current_city.position
+                    painter.setBrush(Qt.NoBrush)
+                    if current_city.team == 'player':
+                        painter.setPen(Qt.blue)
+                    else:
+                        painter.setPen(Qt.red)
+                    painter.setOpacity(0.75)
+                    painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
+                                     TILEWIDTH, TILEHEIGHT)
+                elif self.city_select and self.current_mouse_pos:
+                    coord = self.current_mouse_pos
+                    color = utils.hash_to_color(
+                        utils.strhash(current_city.nid))
+                    painter.setOpacity(0.75)
+                    painter.fillRect(coord[0] * TILEWIDTH, coord[1] * TILEHEIGHT, TILEWIDTH,
+                                     TILEHEIGHT, QBrush(QColor(*color), Qt.DiagCrossPattern))
+            painter.end()
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         scene_pos = self.mapToScene(event.pos())
@@ -564,6 +603,11 @@ class NewMapView(SimpleMapView):
                         # Remove position for current region if it has one
                         current_region.position = None
                         self.region_select = pos
+            elif self.edit_mode == EditMode.CITIES:
+                if event.button() == self.settings.get_preference(Preference.PLACE_BUTTON):
+                    current_city = self.main_editor.city_painter_menu.get_current()
+                    if current_city:
+                        current_city.position = pos
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
@@ -592,6 +636,17 @@ class NewMapView(SimpleMapView):
                 if current_region:
                     self.main_editor.set_message(
                         "Region ID: %s" % current_region.nid)
+                else:
+                    self.main_editor.set_message(None)
+            elif self.edit_mode == EditMode.CITIES:
+                current_city = None
+                for city in self.current_level.cities:
+                    if city.position == pos:
+                        current_city = city
+                        break
+                if current_city:
+                    self.main_editor.set_message(
+                        "City ID: %s" % current_city.nid)
                 else:
                     self.main_editor.set_message(None)
             elif self.edit_mode == EditMode.UNITS and under_unit:

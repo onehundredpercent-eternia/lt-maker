@@ -4,13 +4,14 @@
 """
 from __future__ import annotations
 
-from typing import Tuple, TYPE_CHECKING
+from typing import List, Tuple, TYPE_CHECKING
 
 from app.data.database.database import DB
-from app.engine import equations, skill_system, evaluate
+from app.engine import skill_system, evaluate
 from app.engine.game_state import game
 
 if TYPE_CHECKING:
+    from app.engine.objects.region import RegionObject
     from app.engine.objects.unit import UnitObject
 
 def get_movement_group(unit_to_move: UnitObject):
@@ -78,7 +79,7 @@ def check_position(unit: UnitObject, new_position: Tuple[int, int],
     else:
         other_team = game.board.get_team(new_position)
         if not other_team or unit.team in DB.teams.get_allies(other_team):
-            return True # Allies, this is fine
+            return True  # Allies, this is fine
         else:  # Enemies
             return False
 

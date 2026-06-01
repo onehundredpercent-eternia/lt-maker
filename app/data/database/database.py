@@ -1,34 +1,31 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 from pathlib import Path
 import re
 import shutil
-from typing import Any, Dict, List
+from typing import List
 
 from app.data.category import Categories, CategorizedCatalog
-from app.data.database import (ai, constants, difficulty_modes, equations,
+from app.data.database import (ai, buildings, constants, difficulty_modes, equations,
                                factions, items, klass, levels, lore, mcost,
                                minimap, overworld, parties, credit,
                                raw_data, skills, stats, supports, tags, teams,
                                terrain, translations, units, varslot, weapons)
 from app.data.serialization import disk_loader
 from app.events import event_prefab
-from app.utilities.data_order import parse_order_keys_file
-from app.utilities.serialization import load_json, save_json
-from app.utilities.typing import NID
+from app.utilities.serialization import save_json
 
 CATEGORY_SUFFIX = '.category'
 
 class Database(object):
     save_data_types = ("constants", "stats", "equations", "mcost", "terrain", "weapon_ranks",
-                       "weapons", "teams", "factions", "items", "skills", "tags", "game_var_slots",
-                       "classes", "support_constants", "support_ranks", "affinities", "units",
-                       "support_pairs", "ai", "parties", "difficulty_modes", "credit",
+                       "weapons", "teams", "factions", "items", "skills", "buildings", "tags", 
+                       "game_var_slots", "classes", "support_constants", "support_ranks", "affinities", 
+                       "units", "support_pairs", "ai", "parties", "difficulty_modes", "credit",
                        "translations", "lore", "levels", "events", "overworlds", "raw_data")
-    save_as_chunks = ("events", 'items', 'skills', 'units', 'classes', 'levels', "credit")
+    save_as_chunks = ("events", 'items', 'skills', 'buildings', 'units', 'classes', 'levels', "credit")
 
     def __init__(self):
         self.current_proj_dir = None
@@ -45,6 +42,7 @@ class Database(object):
         self.factions = factions.FactionCatalog()
         self.items = items.ItemCatalog()
         self.skills = skills.SkillCatalog()
+        self.buildings = buildings.BuildingCatalog()
         self.tags = tags.TagCatalog()
         self.game_var_slots = varslot.VarSlotCatalog([])
         self.classes = klass.ClassCatalog()
@@ -111,7 +109,7 @@ class Database(object):
             # logging.info("Time taken: %s ms" % time2)
         return to_save
 
-    def serialize(self, proj_dir, as_chunks: bool=False) -> bool:
+    def serialize(self, proj_dir, as_chunks: bool = False) -> bool:
         # Returns whether we were successful
 
         data_dir = os.path.join(proj_dir, 'game_data')
