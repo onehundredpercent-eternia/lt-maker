@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon
 
 from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
@@ -10,16 +10,19 @@ from app.editor.custom_widgets import BuildingBox
 from app.data.database import building_components
 from app.data.database.components import ComponentType, swap_values
 
-import app.editor.utilities as editor_utilities
-
 def get_pixmap(building):
-    res = RESOURCES.icons16.get(building.map_sprite_nid)
-    if not res:
+    res = RESOURCES.animations.get(building.map_sprite_nid)
+    if not res or not res.pixmap:
         return None
-    if not res.pixmap:
-        res.pixmap = QPixmap(res.full_path)
-    pixmap = QPixmap.fromImage(editor_utilities.convert_colorkey(res.pixmap.toImage()))
-    return pixmap
+    pixmap = res.pixmap
+    width = pixmap.width() // res.frame_x
+    height = pixmap.height() // res.frame_y
+    median_frame = res.num_frames // 2
+    left = (median_frame % res.frame_x) * width
+    top = (median_frame // res.frame_x) * height
+
+    middle_frame = pixmap.copy(left, top, width, height)
+    return middle_frame
 
 class BuildingModel(DragDropCollectionModel):
     def data(self, index, role):

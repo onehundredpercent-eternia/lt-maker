@@ -1,7 +1,6 @@
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
 
-from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 from app.data.database.level_units import UniqueUnit
 
@@ -9,7 +8,6 @@ from app.extensions.custom_gui import DeletionTab, DeletionDialog
 
 from app.editor.base_database_gui import DragDropCollectionModel
 from app.editor.portrait_editor import portrait_model
-import app.editor.utilities as editor_utilities
 
 from app.utilities.typing import NID
 

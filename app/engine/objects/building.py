@@ -2,6 +2,7 @@ from __future__ import annotations
 from app.utilities.data import Data
 
 from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
 import app.engine.builing_component_access as BCA
 
 class BuildingObject():
@@ -18,8 +19,8 @@ class BuildingObject():
         self.desc = desc
         self.terrain = terrain
 
-        self.map_sprite_nid = map_sprite_nid
-        self.starting_position = starting_position
+        self.map_sprite = RESOURCES.animations.get(map_sprite_nid)
+        self.position = starting_position
 
         self.components = components or Data()
         for component_key, component_value in self.components.items():
@@ -77,7 +78,7 @@ class BuildingObject():
 
     @classmethod
     def restore(cls, dat):
-        prefab = DB.skills.get(dat['nid'])
+        prefab = DB.buildings.get(dat['nid'])
         if prefab:
             components = dat.get('components', [])
             self = cls.from_prefab(prefab, components)

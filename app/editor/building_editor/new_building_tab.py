@@ -11,10 +11,11 @@ from app.data.database.components import swap_values, ComponentType
 from app.editor import timer
 from app.editor.new_editor_tab import NewEditorTab
 from app.editor.data_editor import SingleDatabaseEditor
+from app.editor.icons import PushableMapAnimation
 from app.editor.component_editor_properties import NewComponentProperties
 from app.editor.building_editor import building_model
 from app.extensions.custom_gui import DeletionTab, DeletionDialog
-from app.editor.custom_widgets import BuildingBox
+from app.editor.custom_widgets import BuildingBox, TerrainBox
 
 from app.utilities.typing import NID
 
@@ -24,6 +25,26 @@ class NewBuildingProperties(NewComponentProperties[BuildingPrefab]):
     get_components = staticmethod(BCA.get_building_components)
     get_templates = staticmethod(BCA.get_templates)
     get_tags = staticmethod(BCA.get_building_tags)
+
+    def add_additional_widgets(self, main_section):
+        self.terrain_box = TerrainBox(self)
+        self.terrain_box.edit.currentIndexChanged.connect(self.terrain_changed)
+        main_section.addWidget(self.terrain_box, 1, 0, 1, 3)
+
+    def terrain_changed(self, index):
+        terrain = DB.terrain[index]
+        self.current.terrain = terrain.nid
+
+    def build_icon_edit(self, top_section):
+        self.icon_edit = PushableMapAnimation(self)
+        self.icon_edit.sourceChanged.connect(self.on_icon_changed)
+        top_section.addWidget(self.icon_edit)
+
+    def on_icon_changed(self, nid):
+        if self.current:
+            self.current.map_sprite_nid = nid
+            if self.on_icon_change:
+                self.on_icon_change()
 
 
 class NewBuildingDatabase(NewEditorTab):

@@ -137,6 +137,14 @@ class MapView():
             surf.blit(map_image, shake)
             surf = surf.convert_alpha()
 
+        # Draw buildings
+        for uid, building in game.buildings.items():
+            if building.position:
+                map_sprite = building.map_sprite
+                map_sprite.update()
+                map_sprite.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
+
+        # Draw boundaries
         surf = game.boundary.draw_auras(surf, full_size, cull_rect)
         surf = game.boundary.draw(surf, full_size, cull_rect)
         surf = game.boundary.draw_fog_of_war(surf, full_size, cull_rect)

@@ -159,6 +159,60 @@ class UnitPortrait(QPushButton):
         if res and ok:
             self.change_icon(res.nid)
 
+
+class PushableMapAnimation(QPushButton):
+    sourceChanged = pyqtSignal(str)
+    width, height = 32, 32
+    database = RESOURCES.animations
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.window = parent
+        self._nid = None
+
+        self.setMinimumHeight(self.height)
+        self.setMaximumHeight(self.height)
+        self.setMinimumWidth(self.width)
+        self.setMaximumWidth(self.width)
+        self.resize(self.width, self.height)
+        self.setStyleSheet("QPushButton {qproperty-iconSize: %dpx %dpx;}" % (self.width, self.height))
+        self.pressed.connect(self.onIconSourcePicker)
+
+    def render(self):
+        if self._nid:
+            res = self.database.get(self._nid)
+            if not res:
+                self.setIcon(QIcon())
+                return
+            if not res.pixmap:
+                res.pixmap = QPixmap(res.full_path)
+            pixmap = res.pixmap
+            width = pixmap.width() // res.frame_x
+            height = pixmap.height() // res.frame_y
+            median_frame = res.num_frames // 2
+            left = (median_frame % res.frame_x) * width
+            top = (median_frame // res.frame_x) * height
+            middle_frame = pixmap.copy(left, top, width, height)
+            pic = QIcon(middle_frame)
+            self.setIcon(pic)
+        else:
+            self.setIcon(QIcon())
+
+    def change_icon(self, nid):
+        self._nid = nid
+        self.sourceChanged.emit(self._nid)
+        self.render()
+
+    def set_current(self, nid):
+        self.change_icon(nid)
+
+    def onIconSourcePicker(self):
+        from app.editor.map_animation_editor import map_animation_tab
+        res, ok = map_animation_tab.get()
+        if res and ok:
+            self.change_icon(res.nid)
+
+
 class MapIconButton(QPushButton):
     sourceChanged = pyqtSignal(str)
     width, height = 48, 48

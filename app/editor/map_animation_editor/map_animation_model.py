@@ -7,7 +7,6 @@ from PyQt5.QtGui import QPixmap, QIcon
 from app.data.resources.map_animations import MapAnimation
 from app.data.resources.resources import RESOURCES
 
-from app.utilities.data import Data
 from app.data.database.database import DB
 from app.data.database import item_components, components
 

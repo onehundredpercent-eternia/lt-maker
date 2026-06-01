@@ -2,7 +2,6 @@ import functools
 from enum import Enum
 from typing import (Callable, Dict, Generic, List, Optional, Tuple, Type,
                     TypeVar)
-from typing_extensions import Protocol
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics, QIcon
@@ -41,9 +40,7 @@ class NewComponentProperties(QWidget, Generic[T]):
 
         top_section = QHBoxLayout()
 
-        self.icon_edit = PushableIcon16(self)
-        self.icon_edit.sourceChanged.connect(self.on_icon_changed)
-        top_section.addWidget(self.icon_edit)
+        self.build_icon_edit(top_section)
 
         horiz_spacer = QSpacerItem(40, 10, QSizePolicy.Fixed, QSizePolicy.Fixed)
         top_section.addSpacerItem(horiz_spacer)
@@ -69,6 +66,8 @@ class NewComponentProperties(QWidget, Generic[T]):
         font_height = QFontMetrics(self.desc_box.edit.font())
         self.desc_box.edit.setFixedHeight(font_height.lineSpacing() * 3 + 20)
         main_section.addWidget(self.desc_box, 0, 0, 1, 3)
+
+        self.add_additional_widgets(main_section)
 
         component_section = QGridLayout()
         component_label = QLabel(_("Components"))
@@ -146,6 +145,14 @@ class NewComponentProperties(QWidget, Generic[T]):
         total_section.addLayout(component_section)
 
         self.set_current(self.current)
+
+    def add_additional_widgets(self, main_section):
+        pass
+
+    def build_icon_edit(self, top_section):
+        self.icon_edit = PushableIcon16(self)
+        self.icon_edit.sourceChanged.connect(self.on_icon_changed)
+        top_section.addWidget(self.icon_edit)
 
     def on_icon_changed(self, nid, x, y):
         if self.current:
