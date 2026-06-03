@@ -254,7 +254,6 @@ class GameState():
         self.talk_options = []
         self.talk_hidden = set()
         self.base_convos = {}
-        self.base_tasks = {}
         self.action_log = turnwheel.ActionLog()
         self.events = event_manager.EventManager()
         if not self.dialog_log:
@@ -426,7 +425,6 @@ class GameState():
                   'talk_options': self.talk_options,
                   'talk_hidden': self.talk_hidden,
                   'base_convos': self.base_convos,
-                  'base_tasks': self.base_tasks,
                   'current_random_state': static_random.get_combat_random_state(),
                   'bounds': self.board.bounds if self.board else None,
                   'fog_state': self.board.previously_visited_tiles if self.board else None,
@@ -515,7 +513,6 @@ class GameState():
         self.talk_options = s_dict.get('talk_options', [])
         self.talk_hidden = s_dict.get('talk_hidden', set())
         self.base_convos = s_dict.get('base_convos', {})
-        self.base_tasks = s_dict.get('base_tasks', {})
 
         # load team objects, make sure it compatible with non-updated game saves
         if s_dict.get('teams'):
