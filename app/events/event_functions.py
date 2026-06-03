@@ -720,7 +720,7 @@ def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Op
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', ai_radius))
     if other_radius is not None:
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', other_radius))
-    if;fog_of_war_color is not None:
+    if fog_of_war_color is not None:
         fowc = fog_of_war_color.lower()
         if fowc == 'white':
             fowc = FogOfWarColor.WHITE
