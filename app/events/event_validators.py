@@ -1,4 +1,3 @@
-from __future__ import annotations
 from enum import Enum
 from app.data.database.items import ItemPrefab
 from app.data.database.levels import LevelPrefab
@@ -702,7 +701,7 @@ class FogOfWarType(OptionValidator):
     valid = ['gba', 'thracia', 'hybrid']
 
 class FogOfWarColor(OptionValidator):
-    valid = ['white']
+    valid = ['black', 'white']
 
 class ShakeType(OptionValidator):
     valid = ['default', 'combat', 'kill', 'random', 'celeste']
