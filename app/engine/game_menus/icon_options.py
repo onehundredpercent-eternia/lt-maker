@@ -119,7 +119,7 @@ class ItemOptionUtils():
             uses_string_a = ""
             uses_string_slash = ""
             uses_string_b = str(item.data['cooldown'])
-            cooldown_image = SPRITES.get('cooldown_logo').subsurface((11,0, 9, 14))
+            cooldown_image = SPRITES.get('cooldown_logo').subsurface((11,0, 9, 14)).copy()
             if item.data['cooldown'] == 0:
                 uses_string_b = str(item.data['starting_cooldown'])
                 surf.blit(cooldown_image, uses_string_b_loc)
