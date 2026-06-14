@@ -311,8 +311,12 @@ class GameState():
                 unit.party = self.current_party
         self.set_up_game_board(self._current_level.tilemap)
 
-        for city in self._current_level.cities:
+        from app.engine.objects.city import CityObject
+        for city_prefab in self._current_level.cities:
+            city = CityObject.from_prefab(city_prefab)
             self.register_city(city)
+            for building in city.buildings:
+                self.register_building(building)
         for region in self._current_level.regions:
             self.register_region(region)
 

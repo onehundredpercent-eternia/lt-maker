@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
 
 from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
@@ -12,7 +12,11 @@ from app.data.database.components import ComponentType, swap_values
 
 def get_pixmap(building):
     res = RESOURCES.animations.get(building.map_sprite_nid)
-    if not res or not res.pixmap:
+    if not res:
+        return None
+    if not res.pixmap and res.full_path:
+        res.pixmap = QPixmap(res.full_path)
+    if not res.pixmap:
         return None
     pixmap = res.pixmap
     width = pixmap.width() // res.frame_x

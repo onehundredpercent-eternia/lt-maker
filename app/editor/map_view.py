@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -498,6 +499,22 @@ class NewMapView(SimpleMapView):
                 painter.setOpacity(0.75)
                 painter.drawImage(x * TILEWIDTH, y *
                                   TILEHEIGHT, pixmap.toImage())
+            # Draw each city's assigned buildings' map anims
+            for city in self.current_level.cities:
+                for building_nid, position in city.buildings:
+                    if not position:
+                        continue
+                    building = DB.buildings.get(building_nid)
+                    if not building:
+                        continue
+                    frame = self.get_building_frame(building)
+                    if not frame:
+                        continue
+                    x, y = position
+                    px = x * TILEWIDTH + TILEWIDTH // 2 - frame.width() // 2
+                    py = y * TILEHEIGHT + TILEHEIGHT // 2 - frame.height() // 2
+                    painter.setOpacity(1.0)
+                    painter.drawImage(px, py, frame.toImage())
             current_city = self.main_editor.city_painter_menu.get_current()
             if current_city:
                 if current_city.position:
@@ -510,7 +527,37 @@ class NewMapView(SimpleMapView):
                     painter.setOpacity(0.75)
                     painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
                                      TILEWIDTH, TILEHEIGHT)
+            # Highlight the currently-selected building placement
+            building_sel = self.main_editor.city_painter_menu.get_current_building()
+            if building_sel:
+                _city, idx = building_sel
+                if 0 <= idx < len(_city.buildings) and _city.buildings[idx][1]:
+                    x, y = _city.buildings[idx][1]
+                    painter.setBrush(Qt.NoBrush)
+                    painter.setPen(Qt.yellow)
+                    painter.setOpacity(0.75)
+                    painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
+                                     TILEWIDTH, TILEHEIGHT)
             painter.end()
+
+    def get_building_frame(self, building):
+        """Current animation frame (QPixmap) of a building's map sprite, selected
+        from wall-clock time so the map view animates as it repaints each tick."""
+        res = RESOURCES.animations.get(building.map_sprite_nid)
+        if not res:
+            return None
+        if not res.pixmap and res.full_path:
+            res.pixmap = QPixmap(res.full_path)
+        if not res.pixmap:
+            return None
+        pixmap = res.pixmap
+        width = pixmap.width() // res.frame_x
+        height = pixmap.height() // res.frame_y
+        speed = res.speed or 75
+        frame = int(time.time() * 1000 // speed) % max(1, res.num_frames)
+        left = (frame % res.frame_x) * width
+        top = (frame // res.frame_x) * height
+        return pixmap.copy(left, top, width, height)
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
@@ -598,9 +645,42 @@ class NewMapView(SimpleMapView):
                         self.region_select = pos
             elif self.edit_mode == EditMode.CITIES:
                 if event.button() == self.settings.get_preference(Preference.PLACE_BUTTON):
-                    current_city = self.main_editor.city_painter_menu.get_current()
-                    if current_city:
-                        current_city.position = pos
+                    city_painter_menu = self.main_editor.city_painter_menu
+                    building_sel = city_painter_menu.get_current_building()
+                    if building_sel:
+                        # A building row is selected: place that building
+                        city, idx = building_sel
+                        city.buildings[idx][1] = pos
+                        city_painter_menu.modify_widget.building_list.refresh_labels()
+                        self.main_editor.set_message(
+                            "Placed building %s at (%d, %d)" %
+                            (city.buildings[idx][0], pos[0], pos[1]))
+                        self.update_view()
+                    else:
+                        current_city = city_painter_menu.get_current()
+                        if current_city:
+                            current_city.position = pos
+                            self.update_view()
+                elif event.button() == self.settings.get_preference(Preference.SELECT_BUTTON):
+                    city_painter_menu = self.main_editor.city_painter_menu
+                    # Prefer a building under the cursor (it sits on its own tile)
+                    found = False
+                    for c_idx, city in enumerate(self.current_level.cities):
+                        for b_idx, (building_nid, building_pos) in enumerate(city.buildings):
+                            if building_pos == pos:
+                                # select() rebuilds the building list, so set the
+                                # current row afterwards
+                                city_painter_menu.select(c_idx)
+                                city_painter_menu.modify_widget.building_list.list_widget.setCurrentRow(b_idx)
+                                found = True
+                                break
+                        if found:
+                            break
+                    if not found:
+                        for idx, city in enumerate(self.current_level.cities):
+                            if city.position == pos:
+                                city_painter_menu.select(idx)
+                                break
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
@@ -632,12 +712,23 @@ class NewMapView(SimpleMapView):
                 else:
                     self.main_editor.set_message(None)
             elif self.edit_mode == EditMode.CITIES:
+                hovered_building = None
+                for city in self.current_level.cities:
+                    for building_nid, building_pos in city.buildings:
+                        if building_pos == pos:
+                            hovered_building = (building_nid, city.nid)
+                            break
+                    if hovered_building:
+                        break
                 current_city = None
                 for city in self.current_level.cities:
                     if city.position == pos:
                         current_city = city
                         break
-                if current_city:
+                if hovered_building:
+                    self.main_editor.set_message(
+                        "Building: %s (City: %s)" % hovered_building)
+                elif current_city:
                     self.main_editor.set_message(
                         "City ID: %s" % current_city.nid)
                 else:

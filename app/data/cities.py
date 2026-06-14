@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Set, Tuple
 from app.utilities.typing import NID, Pos
 
 from app.utilities.data import Prefab
@@ -14,6 +14,9 @@ class City(Prefab):
         position (Pos): The position of the city object. Defaults to None.
         team (NID): The nid of the team that owns the city
         population (int): The city's current population.
+        buildings (List[Tuple[NID, Pos]]): Building placements assigned to the
+            city as (building_nid, position) pairs. Position is None until placed
+            on the map. The same building type may appear more than once.
     """
     def __init__(self, nid: NID):
         self.nid: NID = nid
@@ -23,6 +26,8 @@ class City(Prefab):
 
         self.population: int = 1
         self.influence: int = 1
+
+        self.buildings: List[Tuple[NID, Pos]] = []
 
         self.icon_nid: NID = None
         self.icon_index: tuple = (0, 0)
@@ -61,6 +66,16 @@ class City(Prefab):
                 positions.add((cx + i, cy + dy))
                 positions.add((cx + i, cy - dy))
         return positions
+
+    def restore_attr(self, name, value):
+        # JSON has no tuples - coerce positions back so equality checks against
+        # (x, y) tuples elsewhere (map view, contains) hold.
+        if name == 'position' and value:
+            return tuple(value)
+        if name == 'buildings' and value:
+            return [[building_nid, tuple(pos) if pos else None]
+                    for building_nid, pos in value]
+        return value
 
     @classmethod
     def default(cls):

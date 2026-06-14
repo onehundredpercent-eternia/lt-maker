@@ -1,6 +1,7 @@
 from typing import List
 from app.utilities.typing import NID, Pos
 
+from app.data.database.database import DB
 from app.engine.objects.building import BuildingObject
 
 from app.data.cities import City
@@ -50,8 +51,20 @@ class CityObject(City):
 
     @classmethod
     def from_prefab(cls, prefab):
-        return cls(prefab.nid, prefab.name, prefab.position, prefab.team, prefab.population,
+        self = cls(prefab.nid, prefab.name,
+                   tuple(prefab.position) if prefab.position else None,
+                   prefab.team, prefab.population, [], prefab.influence,
                    icon_nid=prefab.icon_nid, icon_index=prefab.icon_index)
+        # Instantiate the building placements assigned to the city in the editor
+        for building_nid, position in (prefab.buildings or []):
+            building_prefab = DB.buildings.get(building_nid)
+            if not building_prefab:
+                continue
+            building = BuildingObject.from_prefab(building_prefab)
+            building.position = tuple(position) if position else None
+            building.owner_nid = self.nid
+            self.buildings.append(building)
+        return self
 
     def save(self) -> dict:
         serial_dict = {}
