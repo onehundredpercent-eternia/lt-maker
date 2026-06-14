@@ -22,6 +22,10 @@ class City(Prefab):
         self.team: NID = None
 
         self.population: int = 1
+        self.influence: int = 1
+
+        self.icon_nid: NID = None
+        self.icon_index: tuple = (0, 0)
 
     def contains(self, pos: Pos) -> bool:
         """
@@ -46,18 +50,17 @@ class City(Prefab):
         Returns:
             Set[Pos]: A set of all positions covered by the city's influence.
         """
-        if self.position:
-            positions = set()
-            for r in range(1, self.influence):
-                for i in range(-r, r+1):
-                    magn = abs(i)
-                    dx = i
-                    dy = r - magn
-                    positions.add((dx, dy))
-                    positions.add((dx, -dy))
-            return positions
-        else:
+        if not self.position:
             return set()
+        cx, cy = self.position
+        positions = set()
+        # Every absolute tile within Manhattan radius `influence` (excluding the center)
+        for r in range(1, self.influence + 1):
+            for i in range(-r, r + 1):
+                dy = r - abs(i)
+                positions.add((cx + i, cy + dy))
+                positions.add((cx + i, cy - dy))
+        return positions
 
     @classmethod
     def default(cls):

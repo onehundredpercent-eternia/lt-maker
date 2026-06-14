@@ -510,13 +510,6 @@ class NewMapView(SimpleMapView):
                     painter.setOpacity(0.75)
                     painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
                                      TILEWIDTH, TILEHEIGHT)
-                elif self.city_select and self.current_mouse_pos:
-                    coord = self.current_mouse_pos
-                    color = utils.hash_to_color(
-                        utils.strhash(current_city.nid))
-                    painter.setOpacity(0.75)
-                    painter.fillRect(coord[0] * TILEWIDTH, coord[1] * TILEHEIGHT, TILEWIDTH,
-                                     TILEHEIGHT, QBrush(QColor(*color), Qt.DiagCrossPattern))
             painter.end()
 
     def mousePressEvent(self, event):

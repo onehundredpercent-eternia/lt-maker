@@ -26,8 +26,9 @@ class CityObject(City):
     """
 
     def __init__(self, nid: NID, name: str, position: Pos = None, team: NID = "player",
-                 population: int = 1, buildings: List = None, influence: int = 1, inn: List[NID] = None, 
-                 production_queue: List = None, food: int = 0, production: int = 0):
+                 population: int = 1, buildings: List = None, influence: int = 1, inn: List[NID] = None,
+                 production_queue: List = None, food: int = 0, production: int = 0,
+                 icon_nid: NID = None, icon_index: tuple = (0, 0)):
         self.nid = nid
         self.name = name
         self.position = position
@@ -38,15 +39,19 @@ class CityObject(City):
         self.buildings: List[BuildingObject] = buildings or []
         self.inn: List[NID] = inn or []
         self.production_queue: List = production_queue or []
-        
+
         self.food: int = food
         self.production: int = production
+
+        self.icon_nid: NID = icon_nid
+        self.icon_index: tuple = icon_index
 
         self.data = {}
 
     @classmethod
     def from_prefab(cls, prefab):
-        return cls(prefab.nid, prefab.name, prefab.position, prefab.team, prefab.population)
+        return cls(prefab.nid, prefab.name, prefab.position, prefab.team, prefab.population,
+                   icon_nid=prefab.icon_nid, icon_index=prefab.icon_index)
 
     def save(self) -> dict:
         serial_dict = {}
@@ -64,15 +69,19 @@ class CityObject(City):
         serial_dict['food'] = self.food
         serial_dict['production'] = self.production
 
+        serial_dict['icon_nid'] = self.icon_nid
+        serial_dict['icon_index'] = self.icon_index
+
         serial_dict['data'] = self.data
         return serial_dict
 
     @classmethod
     def restore(cls, dat: dict, game):
         self = cls(dat['nid'], dat['name'], dat['position'], dat['team'],
-                   dat['population'], [], dat['influence'], 
-                   dat['inn'], dat['production_queue'], dat['food'], dat['production'])
-        self.buildings = [game.get_item(building_uid) for building_uid in dat['buildings']]
+                   dat['population'], [], dat['influence'],
+                   dat['inn'], dat['production_queue'], dat['food'], dat['production'],
+                   dat.get('icon_nid'), dat.get('icon_index', (0, 0)))
+        self.buildings = [game.get_building(building_uid) for building_uid in dat['buildings']]
         self.buildings = [b for b in self.buildings if b]
         self.data = dat['data']
         return self

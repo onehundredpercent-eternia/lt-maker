@@ -3,7 +3,7 @@ from app.utilities.data import Data
 
 from app.data.database.database import DB
 from app.data.resources.resources import RESOURCES
-import app.engine.builing_component_access as BCA
+import app.engine.building_component_access as BCA
 
 class BuildingObject():
     next_uid = 100
@@ -19,14 +19,17 @@ class BuildingObject():
         self.desc = desc
         self.terrain = terrain
 
+        self.map_sprite_nid = map_sprite_nid
         self.map_sprite = RESOURCES.animations.get(map_sprite_nid)
+        # Lazily-built runtime animation wrapper (see map_view.draw)
+        self.map_anim = None
         self.position = starting_position
 
         self.components = components or Data()
         for component_key, component_value in self.components.items():
             self.__dict__[component_key] = component_value
             # Assign parent to component
-            component_value.skill = self
+            component_value.building = self
 
         self.data = {}
 
@@ -46,7 +49,8 @@ class BuildingObject():
                 new_component = BCA.restore_component((component.nid, component.value))
                 components.append(new_component, overwrite=True)
 
-        return cls(prefab.nid, prefab.name, prefab.desc, prefab.icon_nid, prefab.icon_index, components)
+        return cls(prefab.nid, prefab.name, prefab.desc, prefab.terrain,
+                   prefab.map_sprite_nid, prefab.starting_position, components)
 
     # If the attribute is not found
     def __getattr__(self, attr):
@@ -71,6 +75,7 @@ class BuildingObject():
         serial_dict['uid'] = self.uid
         serial_dict['nid'] = self.nid
         serial_dict['owner_nid'] = self.owner_nid
+        serial_dict['position'] = self.position
         serial_dict['data'] = self.data
         components = [(component.nid, component.value) for component in self.components]
         serial_dict['components'] = components
@@ -83,9 +88,10 @@ class BuildingObject():
             components = dat.get('components', [])
             self = cls.from_prefab(prefab, components)
         else:
-            desc = 'This is a placeholder for %s generated when the database cannot locate a builing' % dat['nid']
-            self = cls(dat['nid'], 'Placeholder', desc)
+            desc = 'This is a placeholder for %s generated when the database cannot locate a building' % dat['nid']
+            self = cls(dat['nid'], 'Placeholder', desc, None, None)
         self.uid = dat['uid']
         self.owner_nid = dat['owner_nid']
+        self.position = dat.get('position', self.position)
         self.data = dat['data']
         return self

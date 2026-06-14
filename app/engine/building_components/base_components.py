@@ -3,6 +3,8 @@ from app.data.database.components import ComponentType
 
 from app.events.regions import RegionType
 
+from app.utilities import utils
+
 from app.engine import action
 from app.engine.objects.region import RegionObject
 from app.engine.game_state import game
@@ -81,6 +83,15 @@ class Requires(BuildingComponent):
         return False
 
 
+class Unique(BuildingComponent):
+    nid = "unique"
+    desc = "Building can only be built if no other building with the same nid already exists in the city"
+    tag = BuildingTags.BASE
+
+    def available(self, city) -> bool:
+        return not any(building.nid == self.building.nid for building in city.buildings)
+
+
 class LevelIncrease(BuildingComponent):
     nid = "level_increase"
     desc = "Units with the tag/tags start with their level increased"
@@ -89,7 +100,7 @@ class LevelIncrease(BuildingComponent):
     expose = ComponentType.NewMultipleOptions
 
     options = {
-        "tags": (ComponentType.List, ComponentType.Tags),
+        "tags": (ComponentType.List, ComponentType.Tag),
         "level_increase": ComponentType.Int,
     }
 
@@ -132,12 +143,19 @@ class RequiresTerrain(BuildingComponent):
 
 class RequiresAdjacency(BuildingComponent):
     nid = "requires_adjacency"
-    desc = "Building must be placed adjacent to the main city's buildings"
-    tags = BuildingTags.BASE
+    desc = "Building must be placed adjacent to the city's town hall or another adjacency-requiring building"
+    tag = BuildingTags.BASE
 
     def target_restrict(self, city, position) -> bool:
-        terrain_nid = game.get_terrain_nid(game.tilemap, position)
-        return terrain_nid in self.value
+        # Adjacent to the city's own position (the town hall)
+        if city.position and utils.calculate_distance(city.position, position) == 1:
+            return True
+        # Adjacent to another building in the city that also requires adjacency
+        for building in city.buildings:
+            if building.position and building.requires_adjacency \
+                    and utils.calculate_distance(building.position, position) == 1:
+                return True
+        return False
 
 
 class StatChange(BuildingComponent):

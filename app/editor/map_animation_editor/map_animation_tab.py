@@ -6,6 +6,8 @@ from app.editor.base_database_gui import DatabaseTab
 
 from app.editor.map_animation_editor import map_animation_model, map_animation_properties
 
+from PyQt5.QtWidgets import QDialog
+
 class MapAnimationDatabase(DatabaseTab):
     @classmethod
     def create(cls, parent=None):
@@ -24,6 +26,15 @@ class MapAnimationDatabase(DatabaseTab):
     def edit(cls, parent=None):
         window = SingleResourceEditor(MapAnimationDatabase, ['animations'], parent)
         window.exec_()
+
+def get():
+    window = SingleResourceEditor(MapAnimationDatabase, ['animations'])
+    result = window.exec_()
+    if result == QDialog.Accepted:
+        selected_icon = window.tab.right_frame.current
+        return selected_icon, True
+    else:
+        return None, False
 
 # Testing
 # Run "python -m app.editor.map_animation_editor.map_animation_tab" from main directory

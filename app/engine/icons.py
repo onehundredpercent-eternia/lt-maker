@@ -53,6 +53,17 @@ def get_icon_by_nid(nid: str, x: int, y: int) -> Optional[engine.Surface]:
     engine.set_colorkey(image, COLORKEY, rleaccel=True)
     return image
 
+def get_icon_by_nid_32(nid: str, x: int, y: int) -> Optional[engine.Surface]:
+    image = RESOURCES.icons32.get(nid)
+    if not image:
+        return None
+    if not image.image:
+        image.image = engine.image_load(image.full_path)
+    image = engine.subsurface(image.image, (x * 32, y * 32, 32, 32))
+    image = image.convert()
+    engine.set_colorkey(image, COLORKEY, rleaccel=True)
+    return image
+
 def get_icon(item: Optional[HasIcon]) -> Optional[engine.Surface]:
     # Basically `item` can be any Prefab with `icon_nid` attribute
     if not item:

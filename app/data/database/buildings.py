@@ -17,7 +17,7 @@ class BuildingPrefab(Prefab):
     components: Data[BuildingComponent]
     starting_position = Optional[Pos]
 
-    def __init__(self, nid, name, desc, terrain, map_sprite_nid, starting_position=None, components=None):
+    def __init__(self, nid, name, desc, terrain, map_sprite_nid=None, starting_position=None, components=None):
         self.nid = nid
         self.name = name
         self.desc = desc
@@ -73,7 +73,7 @@ class BuildingPrefab(Prefab):
                 building_components)
         return i
 
-class BuilddingCatalog(CategorizedCatalog[BuildingPrefab]):
+class BuildingCatalog(CategorizedCatalog[BuildingPrefab]):
     datatype = BuildingPrefab
 
     def create_new(self, db):

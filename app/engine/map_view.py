@@ -1,10 +1,10 @@
 import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, TILEX, TILEY, WINWIDTH, WINHEIGHT
-from app.events.regions import RegionType
 
 from app.engine import config as cf
 from app.engine import engine
+from app.engine.animations import MapAnimation
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 
@@ -138,11 +138,12 @@ class MapView():
             surf = surf.convert_alpha()
 
         # Draw buildings
-        for uid, building in game.buildings.items():
-            if building.position:
-                map_sprite = building.map_sprite
-                map_sprite.update()
-                map_sprite.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
+        for building in game.buildings:
+            if building.position and building.map_sprite:
+                if building.map_anim is None:
+                    building.map_anim = MapAnimation(building.map_sprite, building.position, loop=True)
+                building.map_anim.update()
+                building.map_anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
 
         # Draw boundaries
         surf = game.boundary.draw_auras(surf, full_size, cull_rect)

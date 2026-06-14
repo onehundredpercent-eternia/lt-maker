@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import Optional
 
 from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMessageBox
 
-import app.engine.skill_component_access as BCA
+import app.engine.building_component_access as BCA
+from app.data.database.database import DB
 from app.data.database.buildings import BuildingCatalog, BuildingPrefab
 from app.data.database import building_components
 from app.data.database.components import swap_values, ComponentType
@@ -46,6 +48,22 @@ class NewBuildingProperties(NewComponentProperties[BuildingPrefab]):
             if self.on_icon_change:
                 self.on_icon_change()
 
+    def set_current(self, current):
+        if not current:
+            self.setEnabled(False)
+        else:
+            self.setEnabled(True)
+            self.current = current
+            self.cached_nid = current.nid
+            self.nid_box.edit.setText(current.nid)
+            self.name_box.edit.setText(current.name)
+            self.desc_box.edit.setText(current.desc)
+            self.terrain_box.edit.setValue(current.terrain)
+            self.icon_edit.change_icon(current.map_sprite_nid)
+            self.component_list.clear()
+            for component in current.components.values():
+                self.add_component_widget(component)
+
 
 class NewBuildingDatabase(NewEditorTab):
     catalog_type = BuildingCatalog
@@ -67,6 +85,14 @@ class NewBuildingDatabase(NewEditorTab):
         if pix:
             return QIcon(pix.scaled(32, 32))
         return None
+
+    def create_new(self, nid):
+        if self.data.get(nid):
+            QMessageBox.warning(self, 'Warning', 'ID %s already in use' % nid)
+            return False
+        new_unit = self.catalog_type.datatype(nid, nid, '', self._db.terrain[0].nid)
+        self.data.append(new_unit)
+        return True
 
     def _on_delete(self, nid: NID) -> bool:
         """

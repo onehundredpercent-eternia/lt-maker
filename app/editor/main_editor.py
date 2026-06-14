@@ -244,7 +244,7 @@ class MainEditor(QMainWindow):
                             _("Weapon Types"): WeaponDatabase.edit,
                             _("Items"): NewItemDatabase.edit,
                             _("Skills"): NewSkillDatabase.edit,
-                            _("Building"): NewBuildingDatabase.edit,
+                            _("Buildings"): NewBuildingDatabase.edit,
                             "AI": AIDatabase.edit,
                             _("Terrain"): TerrainDatabase.edit,
                             _("Movement Costs"): self.edit_mcost,

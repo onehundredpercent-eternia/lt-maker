@@ -133,7 +133,34 @@ class HighlightController():
     def update(self):
         self.update_idx = (self.update_idx + 1) % 64
 
+    def draw_city_influence(self, surf, cull_rect):
+        # Outline each city's territory using a boundary-style sprite sheet
+        # (a 16-frame horizontal strip indexed the same way as the enemy-range
+        # boundary sprites: top*8 + left*4 + right*2 + bottom).
+        city_boundary = SPRITES.get('boundary_city')
+        if not city_boundary:
+            return surf
+        for city in game.cities:
+            if not city.position:
+                continue
+            owned = city.get_all_positions()
+            owned.add(city.position)
+            for (x, y) in owned:
+                if not game.board.check_bounds((x, y)):
+                    continue
+                top = (x, y - 1) in owned
+                left = (x - 1, y) in owned
+                right = (x + 1, y) in owned
+                bottom = (x, y + 1) in owned
+                idx = top * 8 + left * 4 + right * 2 + bottom
+                image = engine.subsurface(city_boundary, (idx * TILEWIDTH, 0, TILEWIDTH, TILEHEIGHT))
+                surf.blit(image, (x * TILEWIDTH - cull_rect[0], y * TILEHEIGHT - cull_rect[1]))
+        return surf
+
     def draw(self, surf, cull_rect):
+        # City influence territory outlines
+        self.draw_city_influence(surf, cull_rect)
+
         # Handle Formation Highlight
         formation_image = SPRITES.get('highlight_blue')
         rect = (self.update_idx//4 * TILEWIDTH, 0, TILEWIDTH, TILEHEIGHT)

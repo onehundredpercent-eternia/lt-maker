@@ -899,6 +899,16 @@ class GameState():
         """
         return list(self.city_registry.values())
 
+    @property
+    def buildings(self) -> List[BuildingObject]:
+        """
+        Gets a list of all registered building objects.
+
+        Returns:
+            List[BuildingObject]: A list of all registered building objects.
+        """
+        return list(self.building_registry.values())
+
     def register_unit(self, unit):
         logging.debug("Registering unit %s as %s", unit, unit.nid)
         self.unit_registry[unit.nid] = unit
@@ -1091,6 +1101,33 @@ class GameState():
         """
         city = self.city_registry.get(city_nid)
         return city
+
+    def get_city_at(self, pos: Pos) -> Optional[CityObject]:
+        """
+        Gets the city whose town-hall tile is at the given position.
+
+        Args:
+            pos (Pos): The position to check.
+
+        Returns:
+            CityObject: The city centered at that position, if any.
+        """
+        for city in self.city_registry.values():
+            if city.position == pos:
+                return city
+        return None
+
+    def get_building(self, building_uid: UID) -> Optional[BuildingObject]:
+        """
+        Gets a building object by its UID.
+
+        Args:
+            building_uid (UID): The UID of the building.
+
+        Returns:
+            BuildingObject: The building object with the given UID.
+        """
+        return self.building_registry.get(building_uid)
 
     def get_ai_group(self, ai_group_nid: NID) -> Optional[AIGroupObject]:
         """

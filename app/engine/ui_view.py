@@ -35,6 +35,7 @@ class UIView():
         self.unit_info_disp = None
         self.tile_info_disp = None
         self.obj_info_disp = None
+        self.city_info_disp = None
         self.attack_info_disp = None
         self.spell_info_disp = None
         self.initiative_info_disp = None
@@ -106,8 +107,16 @@ class UIView():
             self.unit_info_offset -= 20
             self.unit_info_offset = max(0, self.unit_info_offset)
 
+        # City info handling - shown when the cursor hovers a city's tile
+        if game.state.current() in self.legal_states:
+            city = game.get_city_at(game.cursor.position)
+            self.city_info_disp = self.create_city_info(city) if city else None
+        else:
+            self.city_info_disp = None
+
         # Objective info handling
-        if game.state.current() in self.legal_states and cf.SETTINGS['show_objective']:
+        if game.state.current() in self.legal_states and cf.SETTINGS['show_objective'] \
+                and DB.constants.value('show_objective_display'):
             self.obj_info_disp = self.create_obj_info()
             self.obj_info_offset -= 10
             self.obj_info_offset = max(0, self.obj_info_offset)
@@ -178,8 +187,19 @@ class UIView():
                         ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
                         surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
 
+        # City display takes precedence over the objective box in the top-right slot
+        if self.city_info_disp:
+            # If cursor is in the topright, place in bottomright; else topright
+            if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
+                    game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
+                pos = (WINWIDTH - 4 - self.city_info_disp.get_width(),
+                       WINHEIGHT - 4 - self.city_info_disp.get_height())
+            else:
+                pos = (WINWIDTH - 4 - self.city_info_disp.get_width(), 1)
+            surf.blit(self.city_info_disp, pos)
+
         # Only if we actually have a simple objective
-        if self.obj_info_disp and not self.initiative_info_disp and game.level.objective['simple']:
+        elif self.obj_info_disp and not self.initiative_info_disp and game.level.objective['simple']:
             # Should be in topright, unless the cursor is in the topright
             # TopRight - I believe this has RIGHT precedence
             if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
@@ -342,6 +362,26 @@ class UIView():
             pos = (surf.get_width()//2 - text_width('text', line)//2, 16 * idx + 6)
             render_text(surf, ['text'], [line], [None], pos)
 
+        return surf
+
+    def create_city_info(self, city):
+        font = FONT['info-grey']
+        width, height = 88, 40
+        surf = base_surf.create_base_surf(width, height, 'menu_bg_base')
+        left, top = 5, 4
+
+        # 32x32 icon slot
+        if city.icon_nid:
+            icon = icons.get_icon_by_nid_32(city.icon_nid, city.icon_index[0], city.icon_index[1])
+            if icon:
+                surf.blit(icon, (left, top))
+
+        # Name and population
+        name = city.name or city.nid
+        font.blit(name, surf, (left + 34, top))
+        font.blit('Pop ' + str(city.population), surf, (left + 34, top + 16))
+
+        surf = image_mods.make_translucent(surf, .1)
         return surf
 
     def prepare_attack_info(self):

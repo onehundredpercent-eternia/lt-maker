@@ -1,137 +1,42 @@
-from PyQt5.QtWidgets import QPushButton, QLineEdit, \
+from PyQt5.QtWidgets import QLineEdit, \
     QWidget, QVBoxLayout, QMessageBox, QCheckBox
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QColor, QPixmap
 
 from app.data.database.database import DB
 from app.editor.code_line_edit import CodeLineEdit
-from app.events.regions import Region, RegionType, RegionHighlight
+from app.events.regions import RegionType, RegionHighlight
 
 from app.utilities import utils, str_utils
-from app.utilities.data import Data
 
-from app.extensions.custom_gui import PropertyBox, PropertyCheckBox, ComboBox, RightClickListView
-from app.editor.base_database_gui import DragDropCollectionModel
+from app.extensions.custom_gui import PropertyBox, PropertyCheckBox, ComboBox
 from app.editor.custom_widgets import SkillBox, TerrainBox
 from app.editor.lib.components.validated_line_edit import NidLineEdit
+from app.editor.level_editor.painter_menu import PainterMenu, PainterModel
 from app.events import regions
 
 from app.editor import timer
 
 
-class RegionMenu(QWidget):
+class RegionMenu(PainterMenu):
     def __init__(self, state_manager, map_view):
-        super().__init__()
-        self.state_manager = state_manager
-        self.map_view = map_view
-        self.current_level = DB.levels.get(
-            self.state_manager.state.selected_level)
-        if self.current_level:
-            self._data = self.current_level.regions
-        else:
-            self._data = Data()
-
-        grid = QVBoxLayout()
-        self.setLayout(grid)
-
-        self.view = RightClickListView(
-            (None, None, None), parent=self)
-        self.view.currentChanged = self.on_item_changed
-
-        self.model = RegionModel(self._data, self)
-        self.view.setModel(self.model)
-
-        grid.addWidget(self.view)
-
-        self.create_button = QPushButton("Create Region...")
-        self.create_button.clicked.connect(self.create_region)
-        grid.addWidget(self.create_button)
-
-        self.modify_region_widget = ModifyRegionWidget(self._data, self)
-        grid.addWidget(self.modify_region_widget)
-
-        self.check_whether_enabled()
-
-        self.last_touched_region = None
-        self.display = self.modify_region_widget
-
-        self.state_manager.subscribe_to_key(
-            RegionMenu.__name__, 'selected_level', self.set_current_level)
-        self.state_manager.subscribe_to_key(
-            RegionMenu.__name__, 'ui_refresh_signal', self._refresh_view)
+        super().__init__(state_manager, map_view, noun='Region', data_attr='regions',
+                         model_cls=RegionModel, modify_widget_cls=ModifyRegionWidget,
+                         prefab_cls=regions.Region)
         timer.get_timer().tick_elapsed.connect(self.tick)
 
+    def get_center(self, obj):
+        return obj.center if obj.position else None
+
     def tick(self):
-        status_box = self.modify_region_widget.status_box
+        status_box = self.modify_widget.status_box
         status_box.model.layoutChanged.emit()
-        terrain_box = self.modify_region_widget.terrain_box
+        terrain_box = self.modify_widget.terrain_box
         terrain_box.model.layoutChanged.emit()
 
-    def _refresh_view(self, _=None):
-        self.model.layoutChanged.emit()
 
-    def update_list(self):
-        self.state_manager.change_and_broadcast('ui_refresh_signal', None)
-
-    def check_whether_enabled(self):
-        if not len(self._data):
-            self.modify_region_widget.setEnabled(False)
-
-    def set_current_level(self, level_nid):
-        level = DB.levels.get(level_nid)
-        self.current_level = level
-        self._data = self.current_level.regions
-        self.model._data = self._data
-        self.model.update()
-        self.modify_region_widget._data = self._data
-        if len(self._data):
-            self.modify_region_widget.setEnabled(True)
-            reg = self._data[0]
-            if reg.position:
-                self.map_view.center_on_pos(reg.center)
-            self.modify_region_widget.set_current(reg)
-        else:
-            self.modify_region_widget.setEnabled(False)
-
-    def select(self, idx):
-        index = self.model.index(idx)
-        self.view.setCurrentIndex(index)
-
-    def deselect(self):
-        self.view.clearSelection()
-
-    def on_item_changed(self, curr, prev):
-        if self._data:
-            reg = self._data[curr.row()]
-            if reg.position:
-                self.map_view.center_on_pos(reg.center)
-            self.modify_region_widget.set_current(reg)
-
-    def get_current(self) -> Region:
-        for index in self.view.selectionModel().selectedIndexes():
-            idx = index.row()
-            if len(self._data) > 0 and idx < len(self._data):
-                return self._data[idx]
-        return None
-
-    def create_region(self, example=None):
-        nid = str_utils.get_next_name('New Region', self._data.keys())
-        created_region = regions.Region(nid)
-        self._data.append(created_region)
-        self.modify_region_widget.setEnabled(True)
-        self.model.update()
-        if len(self._data) == 1:
-            self.modify_region_widget.set_current(created_region)
-        # Select the region
-        idx = self._data.index(created_region.nid)
-        index = self.model.index(idx)
-        self.view.setCurrentIndex(index)
-        self.state_manager.change_and_broadcast('ui_refresh_signal', None)
-        return created_region
-
-
-class RegionModel(DragDropCollectionModel):
-    allow_delete_last_obj = True
+class RegionModel(PainterModel):
+    prefab_cls = regions.Region
 
     def data(self, index, role):
         if not index.isValid():
@@ -156,28 +61,6 @@ class RegionModel(DragDropCollectionModel):
             return QIcon(pixmap)
         return None
 
-    def new(self, idx):
-        ok = self.window.create_region()
-        if ok:
-            self._data.move_index(len(self._data) - 1, idx + 1)
-            self.layoutChanged.emit()
-
-    def duplicate(self, idx):
-        view = self.window.view
-        obj = self._data[idx]
-        new_nid = str_utils.get_next_name(obj.nid, self._data.keys())
-        serialized_obj = obj.save()
-        new_obj = regions.Region.restore(serialized_obj)
-        new_obj.nid = new_nid
-        self._data.insert(idx + 1, new_obj)
-        self.layoutChanged.emit()
-        new_index = self.index(idx + 1)
-        view.setCurrentIndex(new_index)
-        return new_index
-
-    def delete(self, idx):
-        super().delete(idx)
-        self.window.check_whether_enabled()
 
 class ModifyRegionWidget(QWidget):
     def __init__(self, data, parent=None, current=None):

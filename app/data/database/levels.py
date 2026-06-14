@@ -52,7 +52,10 @@ class LevelPrefab(Prefab):
         elif name == 'regions':
             value = Data([Region.restore(val) for val in value])
         elif name == 'cities':
-            value = Data([City.restore(val) for val in value])
+            if value:
+                value = Data([City.restore(val) for val in value])
+            else:
+                value = Data()
         elif name == 'music':
             value = {k: value.get(k) for k in value.keys()}
         elif name == 'ai_groups':
