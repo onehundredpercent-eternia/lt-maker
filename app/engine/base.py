@@ -387,9 +387,7 @@ class SupportDisplay():
         prefabs = DB.support_pairs.get_pairs(self.unit_nid, other_unit_nid)
         if prefabs:
             prefab = prefabs[0]
-            if prefab.nid not in game.supports.support_pairs:
-                game.supports.create_pair(prefab.nid)
-            pair = game.supports.support_pairs[prefab.nid]
+            pair = game.supports.create_pair(prefab.nid)
             bonus = prefab.requirements[self.rank_idx]
             rank = bonus.support_rank
             if rank in pair.unlocked_ranks:
@@ -485,10 +483,8 @@ class SupportDisplay():
         ranks = {}
         prefabs = DB.support_pairs.get_pairs(self.unit_nid, other_unit_nid)
         if prefabs:
-            prefab = prefabs[0]
-            if prefab.nid not in game.supports.support_pairs:
-                game.supports.create_pair(prefab.nid)
-            pair = game.supports.support_pairs[prefab.nid]
+            prefab = prefabs[0] 
+            pair = game.supports.create_pair(prefab.nid)
             for bonus in prefab.requirements:
                 rank = bonus.support_rank
                 if rank in pair.locked_ranks:
@@ -616,10 +612,10 @@ class ExtrasSupportDisplay(SupportDisplay):
             try:
                 args = trigger.to_args()
                 if evaluate.evaluate(event_prefab.condition,
-                                        unit1=args.get('unit1', None),
-                                        unit2=args.get('unit2', None),
-                                        position=args.get('position', None),
-                                        local_args=args):
+                                     unit1=args.get('unit1', None),
+                                     unit2=args.get('unit2', None),
+                                     position=args.get('position', None),
+                                     local_args=args):
                     triggered_events.append(event_prefab)
             except:
                 logging.error("Condition {%s} could not be evaluated" % event_prefab.condition)
@@ -955,14 +951,21 @@ class LoreDisplay():
         return False
 
     def draw(self, surf):
+        bottom_right = (self.width, WINHEIGHT - 12)
+        topleft_pad = (2, 4)     # Paddings from the bg sprite
+        bottomright_pad = (1, 5)
         if self.lore:
             image = self.bg_surf.copy()
+            width, height = utils.tuple_sub(image.get_size(), topleft_pad, bottomright_pad)
+            unit = None
             if game.get_unit(self.lore.nid):
                 unit = game.get_unit(self.lore.nid)
-                icons.draw_portrait(image, unit, (self.width - 96, WINHEIGHT - 12 - 80))
             elif self.lore.nid in DB.units:
-                portrait, offset = icons.get_portrait_from_nid(DB.units.get(self.lore.nid).portrait_nid)
-                image.blit(portrait, (self.width - 96, WINHEIGHT - 12 - 80))
+                unit = DB.units.get(self.lore.nid)
+            if unit:
+                portrait = icons.get_portrait_with_size(unit, width, height).convert_alpha()
+                portrait = image_mods.make_translucent(portrait, 0.5)
+                image.blit(portrait, (utils.tuple_sub(image.get_size(), portrait.get_size(), bottomright_pad)))
 
             render_text(image, ['text'], [self.lore.title], ['blue'], (self.width // 2, 4), HAlignment.CENTER)
 
@@ -1707,8 +1710,9 @@ class BaseSoundRoomState(State):
             music = self.music_names[current_music_index]
             song_prefab = RESOURCES.music.get(music)
 
-            if self.playing and song_prefab.battle_full_path and \
-                    get_sound_thread().get_current_song().nid == music:
+            if self.playing and song_prefab.battle_full_path \
+                    and get_sound_thread().get_current_song() \
+                    and get_sound_thread().get_current_song().nid == music:
                 get_sound_thread().battle_fade_in(music)
             else:
                 get_sound_thread().play_sfx('Error')
