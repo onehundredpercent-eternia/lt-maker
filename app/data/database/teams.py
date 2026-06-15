@@ -14,6 +14,7 @@ class Team(Prefab):
     combat_variant_palette: str = None  # Used for battle animation
     combat_color: str = 'red'
     phase_change_sound_effect: Optional[NID] = None  # Defaults to "Next Turn" in engine
+    name: str = ""
 
     @classmethod
     def default(cls):

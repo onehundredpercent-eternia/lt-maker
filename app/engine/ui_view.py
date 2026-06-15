@@ -44,6 +44,7 @@ class UIView():
 
         self.unit_info_offset = 0
         self.obj_info_offset = 0
+        self.city_info_offset = 100
         self.attack_info_offset = 0
         self.initiative_info_offset = 0
 
@@ -110,9 +111,14 @@ class UIView():
         # City info handling - shown when the cursor hovers a city's tile
         if game.state.current() in self.legal_states:
             city = game.get_city_at(game.cursor.position)
-            self.city_info_disp = self.create_city_info(city) if city else None
-        else:
-            self.city_info_disp = None
+            if city:
+                self.city_info_disp = self.create_city_info(city)
+                self.city_info_offset -= 10
+                self.city_info_offset = max(0, self.city_info_offset)
+            elif self.city_info_disp:
+                self.city_info_offset += 10
+                if self.city_info_offset >= 100:
+                    self.city_info_disp = None
 
         # Objective info handling
         if game.state.current() in self.legal_states and cf.SETTINGS['show_objective'] \
@@ -185,7 +191,7 @@ class UIView():
                         surf.blit(self.tile_info_disp, (xpos, 0))
                     else:
                         ypos = WINHEIGHT - self.tile_info_disp.get_height() - 3
-                        surf.blit(self.tile_info_disp, (xpos, ypos)) # Bottomright
+                        surf.blit(self.tile_info_disp, (xpos, ypos))  # Bottomright
 
         # City display takes precedence over the objective box in the top-right slot
         if self.city_info_disp:
@@ -193,9 +199,9 @@ class UIView():
             if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
                     game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
                 pos = (WINWIDTH - 4 - self.city_info_disp.get_width(),
-                       WINHEIGHT - 4 - self.city_info_disp.get_height())
+                       WINHEIGHT - 4 + self.city_info_offset - self.city_info_disp.get_height())
             else:
-                pos = (WINWIDTH - 4 - self.city_info_disp.get_width(), 1)
+                pos = (WINWIDTH - 4 - self.city_info_disp.get_width(), 4 - self.city_info_offset)
             surf.blit(self.city_info_disp, pos)
 
         # Only if we actually have a simple objective
@@ -210,7 +216,7 @@ class UIView():
                     self.obj_info_offset = self.obj_info_disp.get_height()
                 pos = (WINWIDTH - 4 - self.obj_info_disp.get_width(),
                        WINHEIGHT - 4 + self.obj_info_offset - self.obj_info_disp.get_height())
-                surf.blit(self.obj_info_disp, pos) # Should be bottom right
+                surf.blit(self.obj_info_disp, pos)  # Should be bottom right
             else:
                 # Place in topright
                 if not self.obj_top:
@@ -365,7 +371,7 @@ class UIView():
         return surf
 
     def create_city_info(self, city):
-        font = FONT['info-grey']
+        font = FONT['info-white']
         width, height = 88, 40
         surf = base_surf.create_base_surf(width, height, 'menu_bg_base')
         left, top = 5, 4
@@ -378,8 +384,8 @@ class UIView():
 
         # Name and population
         name = city.name or city.nid
-        font.blit(name, surf, (left + 34, top))
-        font.blit('Pop ' + str(city.population), surf, (left + 34, top + 16))
+        font.blit(name + " " + str(city.population), surf, (left + 34, top))
+        font.blit(game.teams.get(city.team).name, surf, (left + 34, top + 16))
 
         surf = image_mods.make_translucent(surf, .1)
         return surf
@@ -393,8 +399,8 @@ class UIView():
         self.spell_info_disp = None
 
     def _build_forecast_background(self, grandmaster: bool, crit_flag: bool, guard_flag: bool, 
-                                    a_assist_flag: bool, d_assist_flag: bool,
-                                    attacker_team: TeamObject, defender_team: TeamObject) -> engine.Surface:
+                                   a_assist_flag: bool, d_assist_flag: bool,
+                                   attacker_team: TeamObject, defender_team: TeamObject) -> engine.Surface:
         prefix = 'attack_info_'
         as_prefix = 'assist_info_'
 

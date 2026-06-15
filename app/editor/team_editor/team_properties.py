@@ -39,6 +39,10 @@ class TeamProperties(QWidget):
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
         top_right_section.addWidget(self.nid_box)
 
+        self.name_box = PropertyBox("Display Name", QLineEdit, self)
+        self.name_box.edit.textChanged.connect(self.name_changed)
+        top_right_section.addWidget(self.name_box)
+
         self.palette_box = PropertyBox("Map Sprite Palette", ComboBox, self)
         model = PaletteModel(RESOURCES.combat_palettes, self)
         self.palette_box.edit.setModel(model)
@@ -99,6 +103,9 @@ class TeamProperties(QWidget):
         self.draw_frame()
         self.window.update_list()
 
+    def name_changed(self, text):
+        self.current.name = text
+
     def palette_changed(self):
         self.current.map_sprite_palette = self.palette_box.edit.currentText()
         self.draw_frame()
@@ -132,8 +139,9 @@ class TeamProperties(QWidget):
         self.combat_palette_box.edit.setText(current.combat_variant_palette)
         self.color_box.edit.setText(current.combat_color)
         self.sfx_box.edit.setText(current.phase_change_sound_effect or "")
+        self.name_box.edit.setText(current.name)
 
-        allies = DB.teams.get_allies(current.nid)[:] # Must make a copy
+        allies = DB.teams.get_allies(current.nid)[:]  # Must make a copy
         self.allies_box.edit.clear()
         self.allies_box.edit.addItems([k for k in DB.teams.keys() if k != current.nid])
         self.allies_box.edit.setCurrentTexts(allies)

@@ -88,7 +88,7 @@ constants = ConstantCatalog([
     Constant('long_range_storage', "Allow use of storage even when not near convoy", ConstantType.BOOL, True, ConstantTag.OTHER),
     Constant('allow_negative_as', "Allow Attack Speed to be negative", ConstantType.BOOL, False, ConstantTag.OTHER),
     Constant('trade', "Can trade items on map", ConstantType.BOOL, True, ConstantTag.OTHER),
-    Constant('show_objective_display', "Show the objective box on the map", ConstantType.BOOL, True, ConstantTag.OTHER),
+    Constant('show_objective_display', "Show the objective box on the map", ConstantType.BOOL, True, ConstantTag.AESTHETIC),
     Constant('growth_info', "Can view unit growths in Info Menu", ConstantType.BOOL, True, ConstantTag.OTHER),
     Constant('alt_growth_format', "Base growths include class bonus growths in Info Menu", ConstantType.BOOL, False, ConstantTag.OTHER),
     Constant('glancing_hit', "Chance (%) to score a glancing hit", ConstantType.INT, 0, ConstantTag.MAJOR_FEATURES),
