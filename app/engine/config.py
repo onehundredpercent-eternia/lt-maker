@@ -21,7 +21,7 @@ def base_config() -> OrderedDict:
                         ('cursor_speed', 66),
                         ('mouse', 1),
                         ('show_terrain', 1),
-                        ('forecast', 'Strat'),
+                        ('forecast', 'Strategic'),
                         ('show_objective', 1),
                         ('autocursor', 1),
                         ('music_volume', 0.3),

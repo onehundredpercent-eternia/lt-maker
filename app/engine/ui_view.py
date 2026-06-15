@@ -352,7 +352,7 @@ class UIView():
         self.attack_info_disp = None
         self.spell_info_disp = None
 
-    def _build_forecast_background(self, grandmaster: bool, crit_flag: bool, guard_flag: bool, 
+    def _build_forecast_background(self, grandmaster: bool, detailed_flag: bool, crit_flag: bool, guard_flag: bool, 
                                     a_assist_flag: bool, d_assist_flag: bool,
                                     attacker_team: TeamObject, defender_team: TeamObject) -> engine.Surface:
         prefix = 'attack_info_'
@@ -361,10 +361,13 @@ class UIView():
         if grandmaster:
             prefix += 'grandmaster_'
             as_prefix += 'grandmaster_'
-
-        elif crit_flag:
-            prefix += 'crit_'
-            as_prefix += 'crit_'
+        else:
+            if detailed_flag:
+                prefix += 'det_'
+                as_prefix += 'det_'
+            if crit_flag:
+                prefix += 'crit_'
+                as_prefix += 'crit_'
 
         if guard_flag:
             prefix += 'guard_'
@@ -406,6 +409,7 @@ class UIView():
 
         # Choose attack info background
         crit_flag = DB.constants.value('crit')
+        detailed_flag = cf.SETTINGS['forecast'] == 'Detailed'
         grandmaster = game.rng_mode == RNGOption.GRANDMASTER
         if grandmaster:  # Grandmaster takes precedence
             crit_flag = False
@@ -421,7 +425,7 @@ class UIView():
 
         a_team = game.teams.get(attacker.team)
         d_team = game.teams.get(defender.team)
-        surf = self._build_forecast_background(grandmaster, crit_flag, guard_flag, 
+        surf = self._build_forecast_background(grandmaster, detailed_flag, crit_flag, guard_flag, 
                                                 a_assist_flag, d_assist_flag,
                                                 a_team, d_team)
 
@@ -459,35 +463,49 @@ class UIView():
         render_text(surf, ['text'], [attacker.name], ['white'], (67 - width//2, 3))
         # Enemy name
         y_pos = 84
+        y_adjust = 0
         if not crit_flag:
-            y_pos -= 16
+            y_adjust -= 16
         if grandmaster:
-            y_pos -= 16
+            y_adjust -= 16
         if guard_flag:
-            y_pos += 16
+            y_adjust += 16
+        if detailed_flag and not grandmaster:
+            y_adjust += 32
+        
+        y_pos += min(32, y_adjust)
         position = 50 - text_width('text', defender.name)//2, y_pos
         render_text(surf, ['text'], [defender.name], ['white'], position)
         # Enemy Weapon
         if defender.get_weapon():
             width = text_width('text', defender.get_weapon().name)
             y_pos = 100
+            y_adjust = 0
             if not crit_flag:
-                y_pos -= 16
+                y_adjust -= 16
             if grandmaster:
-                y_pos -= 16
+                y_adjust -= 16
             if guard_flag:
-                y_pos += 16
+                y_adjust += 16
+            if detailed_flag and not grandmaster:
+                y_adjust += 32
+            
+            y_pos += min(32, y_adjust)
             position = 56 - width//2, y_pos
             render_text(surf, ['text'], [defender.get_weapon().name], ['white'], position)
         
         # Combat Stats
         mt = combat_calcs.compute_damage(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
+        atk = combat_calcs.compute_max_damage(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
+        res = combat_calcs.compute_resist(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         hit = combat_calcs.compute_hit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         crit = combat_calcs.compute_crit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
 
         if defender.get_weapon() and \
                 combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
             e_mt = combat_calcs.compute_damage(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
+            e_atk = combat_calcs.compute_max_damage(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
+            e_res = combat_calcs.compute_resist(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             e_hit = combat_calcs.compute_hit(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             if crit_flag:
                 e_crit = combat_calcs.compute_crit(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
@@ -495,6 +513,8 @@ class UIView():
                 e_crit = 0
         else:
             e_mt = '--'
+            e_atk = '--'
+            e_res = '--'
             e_hit = '--'
             e_crit = '--'
 
@@ -508,8 +528,14 @@ class UIView():
             else:
                 e_stat.append(int(e_mt * float(utils.clamp(e_hit, 0, 100)) / 100))
         else:
-            stat.append(mt)
-            e_stat.append(e_mt)
+            if detailed_flag:
+                stat.append(atk)
+                e_stat.append(e_atk)
+                stat.append(res)
+                e_stat.append(e_res)
+            else:
+                stat.append(mt)
+                e_stat.append(e_mt)
 
             stat.append(hit)
             e_stat.append(e_hit)
@@ -517,11 +543,14 @@ class UIView():
             if crit_flag:
                 stat.append(crit)
                 e_stat.append(e_crit)
-
+        if detailed_flag and not y_adjust > 32:
+            stat.append(combat_calcs.compute_true_speed(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0)))
+            e_stat.append(combat_calcs.compute_true_speed(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0)))
         if guard_flag:
             # If unit is not paired up, no point in displaying guard gauge
             stat.append(attacker.get_guard_gauge() if attacker.traveler else '--')
             e_stat.append(defender.get_guard_gauge() if defender.traveler else '--')
+        
 
         for idx in range(len(stat)):
             blit_num(surf, stat[idx], 88, 19 + 16*idx)
@@ -572,6 +601,7 @@ class UIView():
             self.attack_info_disp = self.create_attack_info(attacker, weapon, defender, a_assist, d_assist)
 
         crit_flag = DB.constants.value('crit')
+        detailed_flag = cf.SETTINGS['forecast'] == 'Detailed'
         grandmaster = game.rng_mode == RNGOption.GRANDMASTER
         if grandmaster:  # Grandmaster takes precedence
             crit_flag = False
@@ -606,12 +636,17 @@ class UIView():
             if icon:
                 icon = item_system.item_icon_mod(defender, eweapon, attacker, weapon, icon)
                 y_pos = topleft[1] + 83
+                y_adjust = 0
                 if not crit_flag:
-                    y_pos -= 16
+                    y_adjust -= 16
                 if grandmaster:
-                    y_pos -= 16
+                    y_adjust -= 16
                 if guard_flag:
-                    y_pos += 16
+                    y_adjust += 16
+                if detailed_flag and not grandmaster:
+                    y_adjust += 32
+                
+                y_pos += min(32, y_adjust)
                 surf.blit(icon, (topleft[0] + 74, y_pos))
 
         # Advantage arrows
@@ -619,13 +654,17 @@ class UIView():
             self.draw_adv_arrows(surf, attacker, defender, weapon, resolve_weapon(defender), (topleft[0] + 37, topleft[1] + 8))
 
             y_pos = topleft[1] + 89
+            y_adjust = 0
             if not crit_flag:
-                y_pos -= 16
+                y_adjust -= 16
             if grandmaster:
-                y_pos -= 16
+                y_adjust -= 16
             if guard_flag:
-                y_pos += 16
-
+                y_adjust += 16
+            if detailed_flag and not grandmaster:
+                y_adjust += 32
+            
+            y_pos += min(32, y_adjust)
             self.draw_adv_arrows(surf, defender, attacker, resolve_weapon(defender), weapon, (topleft[0] + 85, y_pos))
 
         # Doubling
