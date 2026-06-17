@@ -57,6 +57,7 @@ class UIView():
         self.remove_unit_info = True
         self.prev_unit_info_top = False
         self.obj_top = False
+        self.city_top = False  # Handles situation where the city/obj is moved from the top of the screen to the bottom
 
     def remove_unit_display(self):
         self.remove_unit_info = True
@@ -109,16 +110,15 @@ class UIView():
             self.unit_info_offset = max(0, self.unit_info_offset)
 
         # City info handling - shown when the cursor hovers a city's tile
-        if game.state.current() in self.legal_states:
+        if game.state.current() in self.legal_states and game.get_city_at(game.cursor.position):
             city = game.get_city_at(game.cursor.position)
-            if city:
-                self.city_info_disp = self.create_city_info(city)
-                self.city_info_offset -= 10
-                self.city_info_offset = max(0, self.city_info_offset)
-            elif self.city_info_disp:
-                self.city_info_offset += 10
-                if self.city_info_offset >= 100:
-                    self.city_info_disp = None
+            self.city_info_disp = self.create_city_info(city)
+            self.city_info_offset -= 10
+            self.city_info_offset = max(0, self.city_info_offset)
+        elif self.city_info_disp:
+            self.city_info_offset += 10
+            if self.city_info_offset >= 100:
+                self.city_info_disp = None
 
         # Objective info handling
         if game.state.current() in self.legal_states and cf.SETTINGS['show_objective'] \
@@ -198,9 +198,15 @@ class UIView():
             # If cursor is in the topright, place in bottomright; else topright
             if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
                     game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
+                if self.city_top:
+                    self.city_top = False
+                    self.city_info_offset = self.city_info_disp.get_height()
                 pos = (WINWIDTH - 4 - self.city_info_disp.get_width(),
                        WINHEIGHT - 4 + self.city_info_offset - self.city_info_disp.get_height())
             else:
+                if not self.city_top:
+                    self.city_top = True
+                    self.city_info_offset = self.city_info_disp.get_height()
                 pos = (WINWIDTH - 4 - self.city_info_disp.get_width(), 4 - self.city_info_offset)
             surf.blit(self.city_info_disp, pos)
 
@@ -213,7 +219,7 @@ class UIView():
                 # Gotta place in bottomright, because cursor is in topright
                 if self.obj_top:
                     self.obj_top = False
-                    self.obj_info_offset = self.obj_info_disp.get_height()
+                    self.obj_info_offset = self.obj_info_disp.get_height() + 4
                 pos = (WINWIDTH - 4 - self.obj_info_disp.get_width(),
                        WINHEIGHT - 4 + self.obj_info_offset - self.obj_info_disp.get_height())
                 surf.blit(self.obj_info_disp, pos)  # Should be bottom right
@@ -221,7 +227,7 @@ class UIView():
                 # Place in topright
                 if not self.obj_top:
                     self.obj_top = True
-                    self.obj_info_offset = self.obj_info_disp.get_height()
+                    self.obj_info_offset = self.obj_info_disp.get_height() + 4
                 pos = (WINWIDTH - 4 - self.obj_info_disp.get_width(), 1 - self.obj_info_offset)
                 surf.blit(self.obj_info_disp, pos)
 

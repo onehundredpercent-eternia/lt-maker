@@ -67,7 +67,7 @@ class PromotionChoiceState(State):
 
         # Platforms
         if game.tilemap and self.unit.position:
-            terrain = game.tilemap.get_terrain(self.unit.position)
+            terrain = game.get_terrain_nid(game.tilemap, self.unit.position)
             platform_type = DB.terrain.get(terrain).platform
         else:
             platform_type = 'Floor'

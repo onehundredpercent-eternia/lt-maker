@@ -58,7 +58,7 @@ class NewBuildingProperties(NewComponentProperties[BuildingPrefab]):
             self.nid_box.edit.setText(current.nid)
             self.name_box.edit.setText(current.name)
             self.desc_box.edit.setText(current.desc)
-            self.terrain_box.edit.setValue(current.terrain)
+            self.terrain_box.setValue(current.terrain)
             self.icon_edit.change_icon(current.map_sprite_nid)
             self.component_list.clear()
             for component in current.components.values():

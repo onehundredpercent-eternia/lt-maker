@@ -109,6 +109,9 @@ class GameState():
         self.item_registry: Dict[UID, ItemObject] = {}
         self.skill_registry: Dict[UID, SkillObject] = {}
         self.building_registry: Dict[UID, BuildingObject] = {}
+        # Position -> terrain NID override contributed by a building sitting on that tile.
+        # Derived from building_registry; kept in sync by register/unregister_building.
+        self.building_terrain_overrides: Dict[Pos, NID] = {}
         self.terrain_status_registry: Dict[Tuple[int, int, NID], UID] = {}
         self.region_registry: Dict[NID, RegionObject] = {}
         self.city_registry: Dict[NID, CityObject] = {}
@@ -309,14 +312,18 @@ class GameState():
         for unit in self._current_level.units:
             if not unit.party:
                 unit.party = self.current_party
-        self.set_up_game_board(self._current_level.tilemap)
-
         from app.engine.objects.city import CityObject
         for city_prefab in self._current_level.cities:
             city = CityObject.from_prefab(city_prefab)
             self.register_city(city)
             for building in city.buildings:
                 self.register_building(building)
+        # Populate building terrain overrides before the board builds its movement /
+        # opacity grids, so a building's terrain is reflected from the start.
+        self.rebuild_terrain_overrides()
+
+        self.set_up_game_board(self._current_level.tilemap)
+
         for region in self._current_level.regions:
             self.register_region(region)
 
@@ -470,8 +477,10 @@ class GameState():
         from app.engine.objects.overworld import OverworldObject
         from app.engine.objects.party import PartyObject
         from app.engine.objects.skill import SkillObject
+        from app.engine.objects.building import BuildingObject
         from app.engine.objects.unit import UnitObject
         from app.engine.objects.region import RegionObject
+        from app.engine.objects.city import CityObject
         from app.engine.objects.team import TeamObject
         from app.events import event_manager, speak_style
 
@@ -498,6 +507,8 @@ class GameState():
         self.unit_registry = {unit['nid']: UnitObject.restore(unit, self) for unit in s_dict['units']}
         self.region_registry = {region['nid']: RegionObject.restore(region) for region in s_dict.get('regions', [])}
         self.city_registry = {city['nid']: CityObject.restore(city, self) for city in s_dict.get('cities', [])}
+        # Rebuild building terrain overrides before the board grids build (set_up_game_board below).
+        self.rebuild_terrain_overrides()
 
         # Handle subitems
         for item in self.item_registry.values():
@@ -961,6 +972,26 @@ class GameState():
     def unregister_building(self, building):
         logging.debug("Unregistering building %s as %s", building, building.uid)
         del self.building_registry[building.uid]
+
+    def add_terrain_override(self, building):
+        # A building has been placed on the map; its terrain overrides the tile.
+        # Assumes at most one building per tile.
+        if building.position and building.terrain:
+            self.building_terrain_overrides[building.position] = building.terrain
+
+    def remove_terrain_override(self, building):
+        # A building has left the map; drop its tile override.
+        if building.position:
+            self.building_terrain_overrides.pop(building.position, None)
+
+    def rebuild_terrain_overrides(self):
+        # Rebuild the whole index from the buildings currently placed on the map
+        # (a city's building list). Used after load / start_level, where placed
+        # buildings don't pass through the AddBuilding action.
+        self.building_terrain_overrides.clear()
+        for city in self.cities:
+            for building in city.buildings:
+                self.add_terrain_override(building)
 
     def register_terrain_status(self, key: Tuple[int, int, NID], skill_uid: UID):
         logging.debug("Registering terrain status %s", skill_uid)
@@ -1608,6 +1639,10 @@ class GameState():
         Returns:
             NID: The NID of the terrain at the specified position.
         """
+        # A building placed on the tile overrides everything, including TERRAIN regions.
+        building_terrain = self.building_terrain_overrides.get(position)
+        if building_terrain:
+            return building_terrain
         terrain_region = self.get_region_under_pos(position, RegionType.TERRAIN)
         if terrain_region:
             terrain_nid = terrain_region.sub_nid

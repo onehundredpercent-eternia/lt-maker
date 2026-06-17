@@ -249,7 +249,8 @@ class MiniMap(object):
         self.build_units(units)
 
     def get_minimap_key(self, pos):
-        terrain_nid = self.tilemap.get_terrain(pos)
+        # Route through the terrain resolver so building overrides / TERRAIN regions apply.
+        terrain_nid = game.get_terrain_nid(self.tilemap, pos)
         terrain = DB.terrain.get(terrain_nid)
         if terrain:
             minimap_nid = terrain.minimap

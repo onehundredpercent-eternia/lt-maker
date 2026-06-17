@@ -662,7 +662,7 @@ class AnimationCombat(BaseCombat, MockCombat):
 
         # Platforms
         if self.left.position:
-            terrain_nid = game.tilemap.get_terrain(self.left.position)
+            terrain_nid = game.get_terrain_nid(game.tilemap, self.left.position)
             left_terrain = DB.terrain.get(terrain_nid)
             if not left_terrain:
                 left_terrain = DB.terrain[0]
@@ -671,7 +671,7 @@ class AnimationCombat(BaseCombat, MockCombat):
             left_platform_type = 'Arena'
 
         if self.right.position:
-            terrain_nid = game.tilemap.get_terrain(self.right.position)
+            terrain_nid = game.get_terrain_nid(game.tilemap, self.right.position)
             right_terrain = DB.terrain.get(terrain_nid)
             if not right_terrain:
                 right_terrain = DB.terrain[0]
@@ -695,7 +695,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                 panorama = RESOURCES.panoramas[0]
             self.battle_background = background.PanoramaBackground(panorama)
         elif cf.SETTINGS['battle_bg'] and game.tilemap and self.attacker.position:
-            terrain_nid = game.tilemap.get_terrain(self.attacker.position)
+            terrain_nid = game.get_terrain_nid(game.tilemap, self.attacker.position)
             background_nid = DB.terrain.get(terrain_nid).background
             if background_nid:
                 panorama = RESOURCES.panoramas.get(background_nid)

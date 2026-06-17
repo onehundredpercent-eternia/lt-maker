@@ -34,7 +34,7 @@ class TeamObject(Prefab):
     def restore(cls, s_dict):
         team = cls(s_dict['nid'], s_dict.get('map_sprite_palette'), 
                    s_dict.get('combat_variant_palette'), s_dict.get('combat_color', 'red'),
-                   s_dict.get('name'), "", s_dict.get('gold', 0), s_dict.get('research', []))
+                   s_dict.get('name'), s_dict.get('gold', 0), s_dict.get('research', []))
         return team
 
     @classmethod

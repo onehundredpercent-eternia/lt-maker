@@ -3250,6 +3250,28 @@ def _leave(layer) -> List[Tuple[UnitObject, Pos]]:
     return affected_units
 
 
+def _refresh_building_terrain(building, place: bool):
+    # A building has been placed on (place=True) or removed from (place=False) its
+    # tile. Update the terrain override and refresh the tile's board state + the
+    # terrain status of any unit standing there. Re-derived imperatively (not logged)
+    # so it works symmetrically on both do() and reverse().
+    position = building.position
+    if not position:
+        return
+    unit = game.board.get_unit(position)
+    # Drop the unit's current terrain skill while the old terrain is still in effect.
+    if unit:
+        game.remove_terrain_skills(unit)
+    if place:
+        game.add_terrain_override(building)
+    else:
+        game.remove_terrain_override(building)
+    # Re-apply the unit's terrain skill under the new terrain.
+    if unit:
+        game.add_terrain_status(unit, test=False)
+    game.board.reset_pos(game.tilemap, position)
+
+
 class AddBuilding(Action):
     def __init__(self, city, building):
         self.city = city
@@ -3265,6 +3287,7 @@ class AddBuilding(Action):
 
         self.did_add = True
         building_system.after_add(self.city, self.building)
+        _refresh_building_terrain(self.building, place=True)
 
     def reverse(self):
         if self.did_add:
@@ -3272,6 +3295,7 @@ class AddBuilding(Action):
             for act in self.subactions:
                 act.reverse()
             building_system.after_remove(self.city, self.building)
+            _refresh_building_terrain(self.building, place=False)
 
 
 class RemoveBuilding(Action):
@@ -3287,6 +3311,7 @@ class RemoveBuilding(Action):
 
         self.did_remove = True
         building_system.after_remove(self.city, self.building)
+        _refresh_building_terrain(self.building, place=False)
 
     def reverse(self):
         if self.did_remove:
@@ -3294,6 +3319,7 @@ class RemoveBuilding(Action):
             for act in self.subactions:
                 act.reverse()
             building_system.after_add(self.city, self.building)
+            _refresh_building_terrain(self.building, place=True)
 
 
 class ShowLayer(Action):
