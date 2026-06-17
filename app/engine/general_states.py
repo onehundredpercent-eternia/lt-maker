@@ -593,6 +593,10 @@ class OptionMenuState(MapState):
                         game.events.trigger_specific_event(event_prefab.nid)
 
         elif event == 'INFO':
+            if self.menu.info_flag:
+                get_sound_thread().play_sfx('Info Out')
+            else:
+                get_sound_thread().play_sfx('Info In')
             self.menu.toggle_info()
 
     def update(self):
