@@ -453,7 +453,7 @@ def compute_crit(unit, target, item, def_item, mode, attack_info):
 
     return utils.clamp(crit, 0, 100)
     
-def compute_max_damage(unit, target, item, def_item, mode, attack_info, crit=False, assist=False):
+def compute_damage_before_resist(unit, target, item, def_item, mode, attack_info, crit=False, assist=False):
     if not item:
         return None
 

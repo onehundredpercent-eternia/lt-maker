@@ -496,7 +496,7 @@ class UIView():
         
         # Combat Stats
         mt = combat_calcs.compute_damage(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
-        atk = combat_calcs.compute_max_damage(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
+        atk = combat_calcs.compute_damage_before_resist(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         res = combat_calcs.compute_resist(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         hit = combat_calcs.compute_hit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         crit = combat_calcs.compute_crit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
@@ -504,7 +504,7 @@ class UIView():
         if defender.get_weapon() and \
                 combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
             e_mt = combat_calcs.compute_damage(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
-            e_atk = combat_calcs.compute_max_damage(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
+            e_atk = combat_calcs.compute_damage_before_resist(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             e_res = combat_calcs.compute_resist(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             e_hit = combat_calcs.compute_hit(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             if crit_flag:
