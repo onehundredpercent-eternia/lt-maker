@@ -357,33 +357,44 @@ class UIView():
                                     attacker_team: TeamObject, defender_team: TeamObject) -> engine.Surface:
         prefix = 'attack_info_'
         as_prefix = 'assist_info_'
+        height = 3
+        as_height = 2
 
         if grandmaster:
             prefix += 'grandmaster_'
             as_prefix += 'grandmaster_'
+            height -= 1
+            as_height -= 1
         else:
             if detailed_flag:
                 prefix += 'det_'
                 as_prefix += 'det_'
+                height += 2
+                as_height += 1
             if crit_flag:
                 prefix += 'crit_'
                 as_prefix += 'crit_'
+                height += 1
+                as_height += 1
 
         if guard_flag:
             prefix += 'guard_'
+            height += 1
+            
+        height = min(6, height)
 
         a_color = attacker_team.combat_color
         d_color = defender_team.combat_color
 
         if attacker_team.combat_color_diverged() or defender_team.combat_color_diverged():
-            surf = SPRITES.get(prefix + 'top_' + a_color, prefix + 'top_blue').copy()
-            surf.blit(SPRITES.get(prefix + 'bottom_' + d_color, prefix + 'bottom_red'), (0, 0))
+            surf = SPRITES.get('attack_info_' + str(height) + '_top_' + a_color, 'attack_info_3_top_' + a_color).copy()
+            surf.blit(SPRITES.get('attack_info_' + str(height) + '_bottom_' + d_color, 'attack_info_3_bottom_red'), (0, 0))
             surf.blit(SPRITES.get(prefix + 'center'), (0, 0))
 
             if a_assist_flag:
-                surf.blit(SPRITES.get(as_prefix + 'right_' + a_color, as_prefix + 'right_blue'), (92, 35))
+                surf.blit(SPRITES.get('assist_info_' + str(as_height) + '_' + a_color, 'assist_info_2_blue'), (92, 35))
             if d_assist_flag:
-                surf.blit(SPRITES.get(as_prefix + 'left_' + d_color, as_prefix + 'left_red'), (1, 35))
+                surf.blit(SPRITES.get('assist_info_' + str(as_height) + '_' + d_color, 'assist_info_2_red'), (1, 35))
         else:
             surf = SPRITES.get(prefix + d_color, prefix + 'red').copy()
             if a_assist_flag:
@@ -432,31 +443,37 @@ class UIView():
         # Assist Stats
         if a_assist_flag:
             mt = combat_calcs.compute_assist_damage(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
+            y_offset_as = 16 if detailed_flag else 0
             if grandmaster:
                 hit = utils.clamp(combat_calcs.compute_hit(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0)), 0, 100)
                 blit_num(surf, int(mt * float(hit) / 100), 112, 35)
             else:
                 blit_num(surf, mt, 112, 35)
+                if detailed_flag:
+                    blit_num(surf, '--', 112, 51)
                 hit = combat_calcs.compute_hit(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
-                blit_num(surf, hit, 112, 51)
+                blit_num(surf, hit, 112, 51 + y_offset_as)
                 # Blit crit if applicable
                 if crit_flag:
                     c = combat_calcs.compute_crit(a_assist, defender, a_assist.get_weapon(), resolve_weapon(defender), 'attack', (0, 0))
-                    blit_num(surf, c, 112, 67)
+                    blit_num(surf, c, 112, 67 + y_offset_as)
 
         if d_assist_flag:
             mt = combat_calcs.compute_assist_damage(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
+            y_offset_as = 16 if detailed_flag else 0
             if grandmaster:
                 hit = utils.clamp(combat_calcs.compute_hit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0)), 0, 100)
                 blit_num(surf, int(mt * float(hit) / 100), 21, 35)
             else:
                 blit_num(surf, mt, 21, 35)
+                if detailed_flag:
+                    blit_num(surf, '--', 21, 51)
                 hit = combat_calcs.compute_hit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
-                blit_num(surf, hit, 21, 51)
+                blit_num(surf, hit, 21, 51 + y_offset_as)
                 # Blit crit if applicable
                 if crit_flag:
                     c = combat_calcs.compute_crit(d_assist, attacker, d_assist.get_weapon(), weapon, 'defense', (0, 0))
-                    blit_num(surf, c, 21, 67)
+                    blit_num(surf, c, 21, 67 + y_offset_as)
 
         # Name
         width = text_width('text', attacker.name)
@@ -497,7 +514,7 @@ class UIView():
         # Combat Stats
         mt = combat_calcs.compute_damage(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         atk = combat_calcs.compute_damage_before_resist(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
-        res = combat_calcs.compute_resist(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
+        res = combat_calcs.compute_resist(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
         hit = combat_calcs.compute_hit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
         crit = combat_calcs.compute_crit(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
 
@@ -505,7 +522,7 @@ class UIView():
                 combat_calcs.can_counterattack(attacker, weapon, defender, defender.get_weapon()):
             e_mt = combat_calcs.compute_damage(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             e_atk = combat_calcs.compute_damage_before_resist(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
-            e_res = combat_calcs.compute_resist(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
+            e_res = combat_calcs.compute_resist(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0))
             e_hit = combat_calcs.compute_hit(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
             if crit_flag:
                 e_crit = combat_calcs.compute_crit(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0))
@@ -543,7 +560,7 @@ class UIView():
             if crit_flag:
                 stat.append(crit)
                 e_stat.append(e_crit)
-        if detailed_flag and not y_adjust > 32:
+        if not grandmaster and detailed_flag and not y_adjust > 32:
             stat.append(combat_calcs.compute_true_speed(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0)))
             e_stat.append(combat_calcs.compute_true_speed(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0)))
         if guard_flag:
