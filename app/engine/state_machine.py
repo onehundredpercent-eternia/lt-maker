@@ -35,8 +35,8 @@ class StateMachine():
         self.prior_state: State = None
 
     def load_states(self, starting_states=None, temp_state=None):
-        from app.engine import (base, chapter_title, debug_mode, dialog_log,
-                                feat_choice, game_over, general_states,
+        from app.engine import (base, chapter_title, city_states, debug_mode,
+                                dialog_log, feat_choice, game_over, general_states,
                                 level_up, minimap, objective_menu,
                                 player_choice, prep, prep_gba, promotion,
                                 settings, status_upkeep, text_entry,
@@ -72,6 +72,8 @@ class StateMachine():
              'free': general_states.FreeState,
              'option_menu': general_states.OptionMenuState,
              'option_child': general_states.OptionChildState,
+             'city_menu': city_states.CityMenuState,
+             'place_building': city_states.PlaceBuildingState,
              'settings_menu': settings.SettingsMenuState,
              'objective_menu': objective_menu.ObjectiveMenuState,
              'unit_menu': unit_menu_state.UnitMenuState,

@@ -221,6 +221,7 @@ class ModifyCityWidget(QWidget):
     def nid_changed(self, text):
         if self.current:
             self.current.nid = text
+            self.current.name = text.replace('_', ' ')
             self.window.update_list()
 
     def nid_done_editing(self):

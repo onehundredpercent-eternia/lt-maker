@@ -346,8 +346,19 @@ class UIView():
         name = terrain.name
         width = text_width('text', name)
         height = FONT['text'].height
-        pos = (bg_surf.get_width()//2 - width//2, 22 - height)
-        render_text(bg_surf, ['text'], [name], [None], pos)
+        name_y = 22 - height
+        # If the tile is a city you own, prefix the AUX key symbol to advertise the
+        # (otherwise hidden) "open city" control inside the terrain display.
+        city = game.get_city_at(coord)
+        if city and city.team == game.phase.get_current():
+            aux_icon = engine.subsurface(SPRITES.get('buttons'), (1, 133, 16, 9))
+            gap = 2
+            total_width = aux_icon.get_width() + gap + width
+            start_x = bg_surf.get_width()//2 - total_width//2
+            bg_surf.blit(aux_icon, (start_x, name_y + (height - aux_icon.get_height())//2))
+            render_text(bg_surf, ['text'], [name], [None], (start_x + aux_icon.get_width() + gap, name_y))
+        else:
+            render_text(bg_surf, ['text'], [name], [None], (bg_surf.get_width()//2 - width//2, name_y))
         return bg_surf
 
     def create_obj_info(self):

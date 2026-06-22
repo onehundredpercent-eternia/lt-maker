@@ -1,7 +1,7 @@
 import logging
 
 from app.data.database.database import DB
-from app.engine import (action, animations, engine, gui, health_bar,
+from app.engine import (action, animations, city_funcs, engine, gui, health_bar,
                         item_funcs, item_system, skill_system)
 from app.engine.game_state import game
 from app.engine.sound import get_sound_thread
@@ -35,6 +35,7 @@ class StatusUpkeepState(MapState):
         self.state = 'processing'
         self.last_update = 0
         self.time_for_change = 0
+        self.did_city_upkeep = False
 
         self.actions, self.playback = [], []
 
@@ -92,8 +93,17 @@ class StatusUpkeepState(MapState):
 
             else:
                 # About to begin the real phase
-                if self.name == 'status_upkeep':
+                if self.name == 'status_upkeep' and not self.did_city_upkeep:
+                    self.did_city_upkeep = True
                     action.do(action.MarkPhase(game.phase.get_current()))
+                    # Cities owned by the player run their upkeep at the start of the
+                    # player turn; completed buildings are placed interactively.
+                    if game.phase.get_current() == 'player':
+                        pending = city_funcs.run_all_city_upkeeps('player')
+                        if pending:
+                            game.memory['pending_building_placements'] = pending
+                            game.state.change('place_building')
+                            return 'repeat'
                 game.state.back()
                 return 'repeat'
 

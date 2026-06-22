@@ -114,3 +114,26 @@ class TerrainDelegate(BaseComponentDelegate):
 class LoreDelegate(BaseComponentDelegate):
     data = DB.lore
     name = "Lore"
+
+class UnitDraftDelegate(QItemDelegate):
+    """Delegate for ComponentType.UnitDraftList rows:
+    column 0 = Class (nid combobox), columns 1-3 = integers (level, gold, production)."""
+    int_columns = (1, 2, 3)
+
+    def createEditor(self, parent, option, index):
+        if index.column() == 0:
+            editor = ComboBox(parent)
+            for obj in DB.classes:
+                editor.addItem(f"{obj.nid} ({obj.name})", obj.nid)
+            return editor
+        elif index.column() in self.int_columns:
+            editor = QSpinBox(parent)
+            editor.setRange(0, 10000)
+            return editor
+        return super().createEditor(parent, option, index)
+
+    def setModelData(self, editor, model, index):
+        if index.column() == 0:
+            model.setData(index, editor.itemData(editor.currentIndex()), Qt.ItemDataRole)
+        else:
+            super().setModelData(editor, model, index)

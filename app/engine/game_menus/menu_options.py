@@ -6,7 +6,7 @@ from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine import engine, image_mods, icons, help_menu, text_funcs, item_system, item_funcs
 from app.engine.game_state import game
-from app.engine.unit_sprite import load_map_sprite
+from app.engine.unit_sprite import load_map_sprite, load_klass_sprite
 
 from app.engine.graphics.text.text_renderer import render_text, text_width, rendered_text_width
 from app.utilities.enums import HAlignment
@@ -712,3 +712,174 @@ class SkillOption(BasicOption):
         render_text(surf, [main_font], [self.skill.name], [self.color], (x + 20, y))
         # left = x + 99
         # render_text(surf, [uses_font], [uses_string], [uses_color], (left, y), HAlignment.RIGHT)
+
+
+def draw_resource_cost(surf, right_x, y, gold, prod, color):
+    """Draw "<gold_num><gold icon> <prod_num><prod icon>" ending at right_x."""
+    gold_icon = icons.get_city_icon(0)
+    prod_icon = icons.get_city_icon(2)
+    gold_str, prod_str = str(gold), str(prod)
+    icon_w = 16
+    num_gap = 1   # number -> its icon
+    seg_gap = 5   # gold group -> production group
+    gold_w = text_width('text', gold_str)
+    prod_w = text_width('text', prod_str)
+    total = gold_w + num_gap + icon_w + seg_gap + prod_w + num_gap + icon_w
+    cx = right_x - total
+    render_text(surf, ['text'], [gold_str], [color], (cx, y))
+    cx += gold_w + num_gap
+    if gold_icon:
+        surf.blit(gold_icon, (cx, y))
+    cx += icon_w + seg_gap
+    render_text(surf, ['text'], [prod_str], [color], (cx, y))
+    cx += prod_w + num_gap
+    if prod_icon:
+        surf.blit(prod_icon, (cx, y))
+
+
+class DraftUnitRowOption(BasicOption):
+    """A draftable-unit row: class map-sprite icon + class name (no cost).
+    Base for DraftUnitOption and reused by the city production-queue panel."""
+    def __init__(self, idx, spec, city):
+        self.idx = idx
+        self.spec = spec          # {'klass', 'level', 'gold_cost', 'production_cost'}
+        self.city = city
+        self.help_box = None
+        self.font = 'text'
+        self.color = None
+        self.ignore = False
+        self._icon = None         # cached class map-sprite frame (False = tried, none)
+
+    def get(self):
+        return self.spec
+
+    def set_text(self, text):
+        pass
+
+    def width(self):
+        return 144
+
+    def height(self):
+        return 16
+
+    def _klass(self):
+        return DB.classes.get(self.spec['klass'])
+
+    def get_help_box(self):
+        klass = self._klass()
+        return help_menu.HelpDialog(klass.desc if klass else '')
+
+    def get_icon(self):
+        if self._icon is None:
+            map_sprite = load_klass_sprite(self.spec['klass'], self.city.team)
+            self._icon = map_sprite.create_image('passive', stationary=True) if map_sprite else False
+        return self._icon or None
+
+    def row_color(self):
+        return 'grey' if self.ignore else self.color
+
+    def draw(self, surf, x, y):
+        icon = self.get_icon()
+        if icon:
+            surf.blit(icon, (x - 4, y - 9))
+        klass = self._klass()
+        name = klass.name if klass else self.spec['klass']
+        render_text(surf, [self.font], [name], [self.row_color()], (x + 24, y))
+
+
+class DraftUnitOption(DraftUnitRowOption):
+    """Draft-tab row: adds the gold/production cost, greyed when unaffordable."""
+    def _affordable(self):
+        team = game.teams.get(self.city.team)
+        return bool(team) and team.gold >= self.spec['gold_cost']
+
+    def row_color(self):
+        return None if (self._affordable() and not self.ignore) else 'grey'
+
+    def draw(self, surf, x, y):
+        super().draw(surf, x, y)
+        draw_resource_cost(surf, x + self.width() - 4, y,
+                           self.spec['gold_cost'], self.spec['production_cost'], self.row_color())
+
+
+class BuildingRowOption(BasicOption):
+    """A building row: building map-anim icon + name (no cost). Base for
+    BuildingOption / WorkBuildingOption and reused by the production-queue panel."""
+    def __init__(self, idx, building, city):
+        self.idx = idx
+        self.building = building
+        self.city = city
+        self.help_box = None
+        self.font = 'text'
+        self.color = None
+        self.ignore = False
+        self._anim = None
+
+    def get(self):
+        return self.building
+
+    def set_text(self, text):
+        pass
+
+    def width(self):
+        return 144
+
+    def height(self):
+        return 16
+
+    def get_help_box(self):
+        return help_menu.HelpDialog(self.building.desc or '')
+
+    def get_icon(self):
+        if self._anim is None and self.building.map_sprite:
+            from app.engine import animations
+            self._anim = animations.Animation(self.building.map_sprite, (0, 0), loop=True)
+        return self._anim
+
+    def draw_icon(self, surf, x, y):
+        anim = self.get_icon()
+        if anim:
+            anim.update()
+            surf.blit(anim.image, (x, y - 8))
+
+    def row_color(self):
+        return 'grey' if self.ignore else self.color
+
+    def draw(self, surf, x, y):
+        self.draw_icon(surf, x, y)
+        render_text(surf, [self.font], [self.building.name], [self.row_color()], (x + 24, y))
+
+
+class BuildingOption(BuildingRowOption):
+    """Build-tab row: adds the gold/production cost, greyed when unaffordable."""
+    def cost(self):
+        comp = self.building.cost
+        if comp:
+            return comp.gold_cost(self.city), comp.production_cost(self.city)
+        return 0, 0
+
+    def _affordable(self):
+        team = game.teams.get(self.city.team)
+        gold_cost, _ = self.cost()
+        return bool(team) and team.gold >= gold_cost
+
+    def row_color(self):
+        return None if (self._affordable() and not self.ignore) else 'grey'
+
+    def draw(self, surf, x, y):
+        super().draw(surf, x, y)
+        gold_cost, prod_cost = self.cost()
+        draw_resource_cost(surf, x + self.width() - 4, y, gold_cost, prod_cost, self.row_color())
+
+
+class WorkBuildingOption(BuildingRowOption):
+    """Work-tab row: building icon + name + working/idle status (no cost)."""
+    def draw(self, surf, x, y):
+        super().draw(surf, x, y)
+        if self.city.is_worked(self.building):
+            label, color = 'Working', 'blue'
+        elif len(self.city.worked_buildings) >= self.city.worker_cap:
+            label, color = '--', 'grey'
+        else:
+            label, color = 'Idle', 'grey'
+        render_text(surf, ['text'], [label], [color], (x + self.width() - 4, y), HAlignment.RIGHT)

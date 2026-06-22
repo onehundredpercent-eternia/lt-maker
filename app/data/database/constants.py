@@ -27,6 +27,7 @@ class ConstantTag(str, Enum):
     TITLE = 'title'
     AESTHETIC = 'aesthetic'
     EXP = 'exp'
+    CITY = 'city'
     OTHER = 'other'
     HIDDEN = 'hidden'
 
@@ -168,4 +169,7 @@ constants = ConstantCatalog([
     Constant('heal_magnitude', "Added to total exp for healing", ConstantType.INT, 0, ConstantTag.EXP),
     Constant('heal_offset', "Modifies expected healing", ConstantType.INT, 11, ConstantTag.EXP),
     Constant('heal_min', "Min exp gained for healing", ConstantType.INT, 11, ConstantTag.EXP),
+    # City / 4X constants below
+    Constant('city_food_base', "Food a city needs to grow at population 1", ConstantType.POSITIVE_INT, 20, ConstantTag.CITY),
+    Constant('city_food_growth', "Extra food required for each additional population", ConstantType.INT, 10, ConstantTag.CITY),
 ])

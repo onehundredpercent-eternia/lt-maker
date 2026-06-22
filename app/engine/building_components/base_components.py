@@ -43,10 +43,11 @@ class Cost(BuildingComponent):
 
     def _get_eval_cost_reduction(self, city) -> bool:
         from app.engine import evaluate
-        try:
-            return bool(evaluate.evaluate(self.value["cost_reduction"], local_args={'city': city, 'building': self.building}))
-        except:
-            logging.error("Cost: Couldn't evaluate %s conditional" % self.value["cost_reduction"])
+        if self.value["cost_reduction"]:
+            try:
+                return bool(evaluate.evaluate(self.value["cost_reduction"], local_args={'city': city, 'building': self.building}))
+            except:
+                logging.error("Cost: Couldn't evaluate %s conditional" % self.value["cost_reduction"])
         return False
 
     def production_cost(self, city) -> int:
@@ -200,6 +201,30 @@ class ResourcePerTurn(BuildingComponent):
             action.do(action.ChangeCityProduction(city, self.value["production"]))
         if self.value["gold"]:
             action.do(action.ChangeTeamGold(team, self.value["gold"]))
+
+
+class ProducesUnits(BuildingComponent):
+    nid = "produces_units"
+    desc = "Units of these classes can be drafted from the city while this building is present"
+    tag = BuildingTags.BASE
+
+    expose = ComponentType.UnitDraftList
+
+    def __init__(self, value=None):
+        # value is a list of [class_nid, level, gold_cost, production_cost] rows
+        self.value = [list(row) for row in value] if value else []
+
+    def produces_units(self, city):
+        specs = []
+        for row in self.value:
+            klass, level, gold_cost, production_cost = row
+            specs.append({
+                "klass": klass,
+                "level": level,
+                "gold_cost": gold_cost,
+                "production_cost": production_cost,
+            })
+        return specs
 
 
 class InfluenceBonus(BuildingComponent):

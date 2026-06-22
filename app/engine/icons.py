@@ -118,6 +118,20 @@ def draw_skill(surf: engine.Surface, skill: skill.SkillObject | skills.SkillPref
 
     return surf
 
+_CITY_ICON_CACHE: dict = {}
+
+def get_city_icon(index: int) -> Optional[engine.Surface]:
+    """A 16x16 resource icon from sprites/city_icons.png (a single column):
+    0=gold, 1=food, 2=production, 3=population."""
+    if index not in _CITY_ICON_CACHE:
+        sheet = SPRITES.get('city_icons')
+        if not sheet:
+            return None
+        icon = engine.subsurface(sheet, (0, index * 16, 16, 16)).convert()
+        engine.set_colorkey(icon, COLORKEY, rleaccel=True)
+        _CITY_ICON_CACHE[index] = icon
+    return _CITY_ICON_CACHE[index]
+
 def draw_icon_by_alias(surf: engine.Surface, icon_alias: str, topleft: Tuple[int, int]) -> Optional[engine.Surface]:
     image = get_icon_by_name(icon_alias)
     if not image:

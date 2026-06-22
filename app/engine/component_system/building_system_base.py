@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from app.engine.component_system import utils
 from app.engine.utils.ltcache import ltcached
 
 if TYPE_CHECKING:
@@ -36,3 +37,21 @@ def after_remove(city, building):
     for component in building.components:
         if component.defines('after_remove'):
             component.after_remove(city, building)
+
+# Single-candidate-building hooks (the candidate building is not yet in the city, so it is
+# passed explicitly and only its own components are consulted; mirrors condition() above).
+def available(building, city) -> bool:
+    """Whether this building is allowed to be built in this city at all."""
+    for component in building.components:
+        if component.defines('available'):
+            if not component.available(city):
+                return False
+    return True
+
+def target_restrict(building, city, position) -> bool:
+    """Whether this building may be placed at the given position in this city."""
+    for component in building.components:
+        if component.defines('target_restrict'):
+            if not component.target_restrict(city, position):
+                return False
+    return True

@@ -185,6 +185,17 @@ class ReverseDoubleListModel(DoubleListModel):
         new_row = str_utils.get_next_name("%s" % self.title, [d[1] for d in self._data])
         self._data.append([1, new_row])
 
+class QuadListModel(DoubleListModel):
+    """
+    Handles a list of 4-element rows [nid, int, int, int].
+    Used for ComponentType.UnitDraftList (class, level, gold, production).
+    Column data access is inherited (generic over column index); only the
+    default new row differs.
+    """
+    def create_new(self):
+        default = DB.classes[0].nid if DB.classes else ""
+        self._data.append([default, 1, 0, 0])
+
 class MultiAttrListModel(VirtualListModel):
     locked_columns = []
 

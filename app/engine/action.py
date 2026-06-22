@@ -21,6 +21,9 @@ from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.region import RegionObject
+from app.engine.objects.city import CityObject
+from app.engine.objects.building import BuildingObject
+from app.engine.objects.team import TeamObject
 from app.engine.persistent_records import RECORDS
 from app.engine import engine
 from app.utilities import utils, static_random
@@ -78,6 +81,12 @@ class Action():
             value = ('skill', value.uid)
         elif isinstance(value, RegionObject):
             value = ('region', value.nid)
+        elif isinstance(value, CityObject):
+            value = ('city', value.nid)
+        elif isinstance(value, BuildingObject):
+            value = ('building', value.uid)
+        elif isinstance(value, TeamObject):
+            value = ('team', value.nid)
         elif isinstance(value, list):
             value = ('list', [Action.save_obj(v) for v in value])
         elif isinstance(value, Action):
@@ -118,6 +127,12 @@ class Action():
             return game.get_skill(value[1])
         elif value[0] == 'region':
             return game.get_region(value[1])
+        elif value[0] == 'city':
+            return game.get_city(value[1])
+        elif value[0] == 'building':
+            return game.get_building(value[1])
+        elif value[0] == 'team':
+            return game.teams.get(value[1])
         elif value[0] == 'list':
             return [Action.restore_obj(v) for v in value[1]]
         elif value[0] == 'action':
@@ -1888,6 +1903,62 @@ class ChangeTeamGold(Action):
 
     def reverse(self):
         self.team.gold = self.old_gold
+
+
+class ChangeCityPopulation(Action):
+    def __init__(self, city, amount):
+        self.city = city
+        self.amount = amount
+        self.old_population = city.population
+
+    def do(self):
+        self.city.population += self.amount
+
+    def reverse(self):
+        self.city.population = self.old_population
+
+
+class AddToProductionQueue(Action):
+    # entry is an opaque JSON-serializable dict; see city_funcs for its schema/factories.
+    def __init__(self, city, entry):
+        self.city = city
+        self.entry = entry
+
+    def do(self):
+        self.city.production_queue.append(self.entry)
+
+    def reverse(self):
+        if self.entry in self.city.production_queue:
+            self.city.production_queue.remove(self.entry)
+
+
+class RemoveFromProductionQueue(Action):
+    def __init__(self, city, index=0):
+        self.city = city
+        self.index = index
+        self.removed_entry = None
+
+    def do(self):
+        if 0 <= self.index < len(self.city.production_queue):
+            self.removed_entry = self.city.production_queue.pop(self.index)
+
+    def reverse(self):
+        if self.removed_entry is not None:
+            self.city.production_queue.insert(self.index, self.removed_entry)
+
+
+class SetWorkedBuildings(Action):
+    # worked_buildings could be mutated in place, so snapshot it with a copy.
+    def __init__(self, city, new_worked):
+        self.city = city
+        self.new_worked = new_worked
+        self.old_worked = city.worked_buildings.copy()
+
+    def do(self):
+        self.city.worked_buildings = self.new_worked
+
+    def reverse(self):
+        self.city.worked_buildings = self.old_worked
 
 
 class GainExp(Action):

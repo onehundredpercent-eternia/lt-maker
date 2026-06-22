@@ -11,7 +11,7 @@ from app.data.database.units import UnitPrefab
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
 from app.engine.input_manager import get_input_manager
-from app.engine import engine, image_mods, icons, help_menu, item_system, gui, item_funcs, text_funcs, dialog
+from app.engine import engine, image_mods, icons, help_menu, item_system, gui, item_funcs, text_funcs, dialog, banner
 from app.engine.gui import ScrollBar
 from app.engine.base_surf import create_base_surf
 from app.engine.objects.item import ItemObject
@@ -2174,4 +2174,191 @@ class PrepGBA(Choice):
             surf.blit(create_base_surf(chp_width, chp_height, chp_bg), (x_offset + 16, y_offset))
             FONT[chp_font].blit(chapter, surf, (x_offset + 20, y_offset + chp_height - FONT[chp_font].height - 1))
 
+        return surf
+
+
+class CityChoice(Choice):
+    """A vertical Choice whose rows are built from a single option class that
+    takes (idx, value, city) - used for the City menu's Draft/Build/Work tabs."""
+    def __init__(self, city, options, option_cls, topleft=None):
+        self.city = city
+        self.option_cls = option_cls
+        super().__init__(None, options, topleft)
+
+    def create_options(self, options, info_descs=None):
+        self.options.clear()
+        if not options and not self.hard_limit:
+            self.options.append(menu_options.NullOption(0))
+            return
+        for idx, value in enumerate(options):
+            option = self.option_cls(idx, value, self.city)
+            option.help_box = option.get_help_box()
+            self.options.append(option)
+        # Pad to a fixed height with empty rows when a hard limit is set
+        if self.hard_limit:
+            for num in range(self.limit - len(options)):
+                empty = menu_options.EmptyOption(len(options) + num)
+                empty._width = 144
+                self.options.append(empty)
+
+
+class CityQueueDisplay():
+    """Non-interactive panel (left of the CityMenu) showing a city's production
+    queue, up to 6 entries deep. Sized to its contents and bottom-aligned, so it
+    grows upward from a fixed bottom. Rows reuse the cost-less row options."""
+    limit = 6
+
+    def __init__(self, city, left=4, width=84, bottom=148):
+        self.city = city
+        self.left = left
+        self.width = width
+        self.bottom = bottom
+        self.options = []
+        self.build()
+
+    def build(self):
+        """Rebuild the row options from the current queue (call on purchase)."""
+        self.options = []
+        for idx, entry in enumerate(self.city.production_queue[:self.limit]):
+            if entry.get('kind') == 'unit':
+                self.options.append(menu_options.DraftUnitRowOption(idx, entry, self.city))
+            else:
+                prefab = DB.buildings.get(entry.get('nid'))
+                if not prefab:
+                    continue
+                from app.engine.objects.building import BuildingObject
+                building = BuildingObject.from_prefab(prefab)
+                self.options.append(menu_options.BuildingRowOption(idx, building, self.city))
+        if not self.options:
+            self.options.append(menu_options.NullOption(0))
+
+    def draw(self, surf):
+        n = len(self.options)
+        height = 8 + 16 + n * 16  # padding + header + rows (header only when empty)
+        top = self.bottom - height
+        surf.blit(create_base_surf(self.width, height, 'menu_bg_base'), (self.left - 2, top))
+
+        FONT['text-yellow'].blit('Building Queue', surf, (self.left, top + 4))
+
+        for i, option in enumerate(self.options):
+            option.draw(surf, self.left, top + 4 + 16 + i * 16)
+        return surf
+
+
+class CityMenu():
+    """Tabbed in-game city menu. Three Choice sub-menus (Draft / Build / Work)
+    share a position; LEFT/RIGHT switch tabs, UP/DOWN scroll the active tab,
+    INFO toggles its description box. Each Choice owns its own row drawing via
+    DraftUnitOption / BuildingOption / WorkBuildingOption.
+    """
+    # city_icons.png indices used as tab icons (Draft / Build / Work)
+    TAB_ICON_INDICES = [4, 5, 6]
+    TAB_SPACING = 20
+
+    def __init__(self, city, topleft=None):
+        self.city = city
+        self.order = ['Draft', 'Build', 'Work']
+        self.tab_index = 0
+        self.menu_width = 144
+
+        # Default to right-aligned on screen
+        if topleft is None:
+            topleft = (WINWIDTH - self.menu_width - 4, 32)
+        self.topleft = topleft
+
+        x, y = self.topleft
+        self.left_arrow = gui.ScrollArrow('left', (x - 7, y - 16))
+        self.right_arrow = gui.ScrollArrow('right', (x + self.menu_width - 4, y - 16), 0.5)
+
+        self.pennant = banner.CityPennant(city)  # resource display, pinned to top of screen
+        # Production-queue panel on the left, bottom-aligned to the menu's last row
+        self.queue_display = CityQueueDisplay(city, bottom=y + 6 * 16 + 4)
+
+        self.build_options()
+
+    def build_options(self):
+        import app.engine.city_funcs as city_funcs
+        contents = {
+            'Draft': (city_funcs.get_draftable_units(self.city), menu_options.DraftUnitOption),
+            'Build': (city_funcs.get_buildable_buildings(self.city), menu_options.BuildingOption),
+            'Work': ([b for b in self.city.buildings if b.position], menu_options.WorkBuildingOption),
+        }
+        self.menus = {}
+        for tab, (values, option_cls) in contents.items():
+            menu = CityChoice(self.city, values, option_cls, self.topleft)
+            menu.set_limit(6)
+            menu.set_hard_limit(True)  # always render 6 rows, padding with empty rows
+            menu.set_takes_input(False)
+            self.menus[tab] = menu
+        self.get_menu().set_takes_input(True)
+        self.queue_display.build()
+
+    @property
+    def current_tab(self):
+        return self.order[self.tab_index]
+
+    def get_menu(self) -> Choice:
+        return self.menus[self.current_tab]
+
+    def get_current(self):
+        return self.get_menu().get_current()
+
+    # -- input ---------------------------------------------------------------
+    def move_down(self, first_push=True):
+        return self.get_menu().move_down(first_push)
+
+    def move_up(self, first_push=True):
+        return self.get_menu().move_up(first_push)
+
+    def move_left(self, first_push=True):
+        self.get_menu().set_takes_input(False)
+        self.tab_index = (self.tab_index - 1) % len(self.order)
+        self.get_menu().set_takes_input(True)
+        self.left_arrow.pulse()
+        return True
+
+    def move_right(self, first_push=True):
+        self.get_menu().set_takes_input(False)
+        self.tab_index = (self.tab_index + 1) % len(self.order)
+        self.get_menu().set_takes_input(True)
+        self.right_arrow.pulse()
+        return True
+
+    def toggle_info(self):
+        self.get_menu().toggle_info()
+
+    @property
+    def info_flag(self):
+        return self.get_menu().info_flag
+
+    # -- drawing -------------------------------------------------------------
+    def update(self):
+        self.get_menu().update()
+
+    def draw(self, surf):
+        x, y = self.topleft
+
+        # Resource pennant (city name + stored/generated resources + population), always on top
+        self.pennant.draw(surf, draw_on_top=True)
+
+        # Tab icons (active = colored + shine, inactive = grayed), like ConvoyMenu
+        icon_y = y - 16
+        for idx in range(len(self.order)):
+            icon = icons.get_city_icon(self.TAB_ICON_INDICES[idx])
+            if not icon:
+                continue
+            ix = x + idx * self.TAB_SPACING
+            if idx == self.tab_index:
+                surf.blit(icon, (ix, icon_y))
+                surf.blit(SPRITES.get('weapon_shine'), (ix, icon_y))
+            else:
+                surf.blit(image_mods.make_gray_colorkey(icon.copy()), (ix, icon_y))
+
+        # Active sub-menu draws its own bg, rows, cursor, scroll bar and help box
+        self.get_menu().draw(surf)
+        self.left_arrow.draw(surf)
+        self.right_arrow.draw(surf)
+
+        # Production-queue panel on the left
+        self.queue_display.draw(surf)
         return surf

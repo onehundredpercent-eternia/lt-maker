@@ -1,9 +1,18 @@
 from __future__ import annotations
 from typing import Dict
 from app.engine.codegen.codegen_utils import get_codegen_header
-from app.engine.component_system.utils import ARG_TYPE_MAP, HookInfo
+from app.engine.component_system.utils import ARG_TYPE_MAP, HookInfo, ResolvePolicy
 
-BUILDING_HOOKS: Dict[str, HookInfo] = {    
+# City-aggregate hooks: mirror skill_system. `city` is the primary object (like `unit`);
+# each hook fans out over every component of every building in the city. The parent
+# `building` is NOT passed to the component method (a component reaches it via self.building),
+# exactly as skill dispatch passes `unit` but not `skill`.
+# Single-candidate-building hooks (condition, available, target_restrict) are hand-written
+# in building_system_base.py instead, since they evaluate one candidate building.
+BUILDING_HOOKS: Dict[str, HookInfo] = {
+    'on_upkeep':                    HookInfo(['city'], ResolvePolicy.NO_RETURN),
+    'produces_units':               HookInfo(['city'], ResolvePolicy.LIST),
+    'influence_range_modification': HookInfo(['city'], ResolvePolicy.NUMERIC_ACCUM),
 }
 
 def generate_building_hook_str(hook_name: str, hook_info: HookInfo):
@@ -20,8 +29,8 @@ def generate_building_hook_str(hook_name: str, hook_info: HookInfo):
         default_handling = "return result if values else Defaults.{hook_name}({args})".format(hook_name=hook_name, args=', '.join(args))
     if hook_info.has_unconditional:
         unconditional_handling = """
-            if component.defines('{hook_name}_unconditional'):
-                values.append(component.{hook_name}_unconditional({args}))
+                if component.defines('{hook_name}_unconditional'):
+                    values.append(component.{hook_name}_unconditional({args}))
 """.format(hook_name=hook_name, args=', '.join(args))
     if hook_info.is_cached:
         cache_handling = """
@@ -30,10 +39,11 @@ def generate_building_hook_str(hook_name: str, hook_info: HookInfo):
     func_text = """{cache_handling}
 def {hook_name}({func_signature}):
     values = []
-    for component in building.components:
-        if component.defines('{hook_name}'):
-            if component.ignore_conditional or {conditional_check}:
-                values.append(component.{hook_name}({args}))
+    for building in city.buildings[:]:
+        for component in building.components:
+            if component.defines('{hook_name}'):
+                if component.ignore_conditional or {conditional_check}:
+                    values.append(component.{hook_name}({args}))
 {unconditional_handling}
     result = utils.{policy_resolution}(values)
     {default_handling}

@@ -19,6 +19,7 @@ from app.editor.component_editor_delegates import (AffinityDelegate,
                                                    TagDelegate,
                                                    TerrainDelegate,
                                                    UnitDelegate,
+                                                   UnitDraftDelegate,
                                                    WeaponTypeDelegate,
                                                    LoreDelegate)
 from app.editor.component_subcomponent_editors import get_editor_widget, TextColorSubcomponentEditor
@@ -703,6 +704,21 @@ class StringDictItemComponent(DictItemComponent):
         self.delegate.is_string = True
 
 
+class UnitDraftItemComponent(BoolItemComponent):
+    def create_editor(self, hbox):
+        if not self._data.value:
+            self._data.value = []
+        self.editor = AppendMultiListWidget(
+            self._data.value, self._data.name,
+            ("Class", "Level", "Gold", "Production"),
+            UnitDraftDelegate, self, model=list_models.QuadListModel)
+        self.editor.view.setColumnWidth(0, 100)
+        self.editor.view.setMaximumHeight(100)
+        self.editor.model.nid_column = 0
+
+        hbox.addWidget(self.editor)
+
+
 def get_display_widget(component, parent):
     if not component.expose:
         c = BoolItemComponent(component, parent)
@@ -761,6 +777,8 @@ def get_display_widget(component, parent):
         c = DeprecatedOptionsItemComponent(component, parent)
     elif component.expose == ComponentType.NewMultipleOptions:
         c = BetterOptionsItemComponent(component, parent)
+    elif component.expose == ComponentType.UnitDraftList:
+        c = UnitDraftItemComponent(component, parent)
     elif component.expose == ComponentType.Unit:
         c = UnitItemComponent(component, parent)
     elif component.expose == ComponentType.Lore:

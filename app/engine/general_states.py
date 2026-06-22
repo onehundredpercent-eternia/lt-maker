@@ -330,7 +330,15 @@ class FreeState(MapState):
             _handle_info()
 
         elif event == 'AUX':
-            self._select_next_available_unit()
+            # AUX over a city you own opens it (works even with a unit on the tile);
+            # otherwise it cycles to the next available unit.
+            city = game.get_city_at(game.cursor.position)
+            if city and city.team == game.phase.get_current():
+                get_sound_thread().play_sfx('Select 1')
+                game.memory['selected_city'] = city
+                game.state.change('city_menu')
+            else:
+                self._select_next_available_unit()
 
         elif event == 'SELECT':
             cur_pos = game.cursor.position

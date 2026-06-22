@@ -20,7 +20,7 @@ class City(Prefab):
     """
     def __init__(self, nid: NID):
         self.nid: NID = nid
-        self.name: str = ""
+        self.name: str = nid
         self.position: Pos = None
         self.team: NID = None
 
