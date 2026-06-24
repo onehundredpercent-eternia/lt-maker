@@ -1,19 +1,36 @@
 from __future__ import annotations
 
-from app.engine import action, menus
+from app.engine import action, background, menus
 from app.engine.game_state import game
 from app.engine.sound import get_sound_thread
-from app.engine.state import MapState
+from app.engine.state import MapState, State
 from app.engine.selection_helper import SelectionHelper
+from app.engine.fluid_scroll import FluidScroll
+from app.engine.sprites import SPRITES
+from app.data.resources.resources import RESOURCES
 
 
-class CityMenuState(MapState):
+class CityMenuState(State):
     name = 'city_menu'
+    in_level = False
+    show_map = False
+
+    def create_background(self):
+        panorama = RESOURCES.panoramas.get('city_menu_background')
+        if not panorama:
+            panorama = RESOURCES.panoramas.get('default_background')
+        if panorama:
+            self.bg = background.PanoramaBackground(panorama)
+        else:
+            self.bg = None
 
     def start(self):
-        game.cursor.hide()
         self.city = game.memory.get('selected_city')
         self.menu = menus.CityMenu(self.city)
+        self.fluid = FluidScroll()
+        self.create_background()
+        game.state.change('transition_in')
+        return 'repeat'
 
     def begin(self):
         self.fluid.reset_on_change_state()
@@ -89,10 +106,13 @@ class CityMenuState(MapState):
             get_sound_thread().play_sfx('Error')
 
     def update(self):
-        super().update()
+        self.menu.update()
 
     def draw(self, surf):
-        surf = super().draw(surf)
+        if self.bg:
+            self.bg.draw(surf)
+        else:
+            surf.blit(SPRITES.get('bg_black'), (0, 0))
         self.menu.draw(surf)
         return surf
 

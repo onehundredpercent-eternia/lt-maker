@@ -3,7 +3,7 @@ from typing import Tuple
 from app.sprites import SPRITES
 from app.engine import engine
 
-def build_groove(surf, topleft: Tuple[int, int], width: int, fill: float):
+def build_groove(surf, topleft: Tuple[int, int], width: int, fill: float, fg_sprite: str = 'groove_fill'):
     """
     Draws a bar of width `width` onto surf. Bar can be filled some percentage of its width
 
@@ -12,12 +12,13 @@ def build_groove(surf, topleft: Tuple[int, int], width: int, fill: float):
         topleft: The topleft position on the surface to draw the bar to
         width: How long in pixels to make the bar
         fill: A fraction from 0 to 1 indicating how much to fill the bar up
+        fg_sprite: Which fill sprite to use (e.g. 'groove_fill_green', 'groove_fill_red')
     """
     bg = SPRITES.get('groove_back')
     start = engine.subsurface(bg, (0, 0, 2, 5))
     mid = engine.subsurface(bg, (2, 0, 1, 5))
     end = engine.subsurface(bg, (3, 0, 2, 5))
-    fg = SPRITES.get('groove_fill')
+    fg = SPRITES.get(fg_sprite)
 
     # Build back groove
     surf.blit(start, topleft)

@@ -336,7 +336,8 @@ class FreeState(MapState):
             if city and city.team == game.phase.get_current():
                 get_sound_thread().play_sfx('Select 1')
                 game.memory['selected_city'] = city
-                game.state.change('city_menu')
+                game.memory['next_state'] = 'city_menu'
+                game.state.change('transition_to')
             else:
                 self._select_next_available_unit()
 

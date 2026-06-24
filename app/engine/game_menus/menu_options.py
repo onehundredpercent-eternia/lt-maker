@@ -798,7 +798,7 @@ class DraftUnitOption(DraftUnitRowOption):
 
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
-        draw_resource_cost(surf, x + self.width() - 4, y,
+        draw_resource_cost(surf, x + self.width(), y,
                            self.spec['gold_cost'], self.spec['production_cost'], self.row_color())
 
 
@@ -869,7 +869,7 @@ class BuildingOption(BuildingRowOption):
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
         gold_cost, prod_cost = self.cost()
-        draw_resource_cost(surf, x + self.width() - 4, y, gold_cost, prod_cost, self.row_color())
+        draw_resource_cost(surf, x + self.width(), y, gold_cost, prod_cost, self.row_color())
 
 
 class WorkBuildingOption(BuildingRowOption):
