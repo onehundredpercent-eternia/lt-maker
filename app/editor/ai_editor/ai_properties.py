@@ -611,7 +611,7 @@ class AIProperties(QWidget):
         idx = len(self.behaviour_boxes) + 1
 
         behaviour_box = BehaviourBox(self)
-        behaviour_box.setTitle("Behaviour %d" % len(self.behaviour_list))
+        behaviour_box.setTitle("Behaviour %d" % idx)
         item.setSizeHint(behaviour_box.minimumSizeHint())
 
         self.behaviour_list.setItemWidget(item, behaviour_box)
@@ -639,8 +639,10 @@ class AIProperties(QWidget):
         self.behaviour_boxes.insert(idx, behaviour_box)
 
         if self.current and set_current:
-            self.current.add_default(idx)
+            self.current.insert_default(idx)
             behaviour_box.set_current(self.current.behaviours[idx])
+            
+        self.rename_boxes()
           
     def remove_behaviour(self, checked = False, set_current = True, idx = None):
         if idx is None:
@@ -652,11 +654,21 @@ class AIProperties(QWidget):
 
         if self.current and set_current:
             self.current.remove_behaviour(idx)
+        
+        self.rename_boxes()
             
     def handle_drop(self, start_row, end_row):
         item = self.behaviour_boxes.pop(start_row)
         self.behaviour_boxes.insert(end_row, item)
         self.current.handle_drop(start_row, end_row)
+        idx = 0
+        self.rename_boxes()
+        
+    def rename_boxes(self): #Make sure the behaviour titles are still correctly ordered after the move
+        idx = 0
+        for box in self.behaviour_boxes:
+            idx += 1
+            box.setTitle("Behaviour %d" % idx)
 
     def set_current(self, current):
         self.current = current
