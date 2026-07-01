@@ -629,6 +629,8 @@ class AIProperties(QWidget):
         item = QListWidgetItem()
         if idx is None:
             idx = self.behaviour_list.currentRow() + 1
+            if idx == 0: #If nothing was selected, append to the end of the list rather than at the beginning
+                idx = len(self.behaviour_list)
         self.behaviour_list.insertItem(idx, item)
 
         behaviour_box = BehaviourBox(self)
@@ -647,8 +649,13 @@ class AIProperties(QWidget):
     def remove_behaviour(self, checked = False, set_current = True, idx = None):
         if idx is None:
             idx = self.behaviour_list.currentRow()
-        if idx < 0 or len(self.behaviour_boxes) == 0: #Nothing selected or nothing to remove
+            
+        if len(self.behaviour_boxes) == 0: #Nothing to remove
             return
+            
+        if idx < 0: #Nothing selected, so default to removing last item
+            idx = len(self.behaviour_list) - 1
+            
         self.behaviour_list.takeItem(idx)
         self.behaviour_boxes.pop(idx)
 
