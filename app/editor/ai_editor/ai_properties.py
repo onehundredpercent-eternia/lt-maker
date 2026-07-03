@@ -645,6 +645,7 @@ class AIProperties(QWidget):
             behaviour_box.set_current(self.current.behaviours[idx])
             
         self.rename_boxes()
+        self.construct_roam_info()
           
     def remove_behaviour(self, checked = False, set_current = True, idx = None):
         if idx is None:
