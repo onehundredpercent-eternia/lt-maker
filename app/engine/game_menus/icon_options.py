@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from email.mime import image
 from typing import Optional, Tuple
 
 from app.data.database.database import DB
@@ -58,20 +57,45 @@ class ItemOptionUtils():
         else:
             ItemOptionUtils.draw_icon(surf, x, y, item)
         render_text(surf, [font], [display_text], [color], blit_loc, align)
-        uses_string = '--'
-        if item.uses:
-            uses_string = str(item.data['uses'])
-        elif item.parent_item and item.parent_item.uses and item.parent_item.data['uses']:
-            uses_string = str(item.parent_item.data['uses'])
-        elif item.c_uses:
-            uses_string = str(item.data['c_uses'])
-        elif item.parent_item and item.parent_item.c_uses and item.parent_item.data['c_uses']:
-            uses_string = str(item.parent_item.data['c_uses'])
-        elif item.cooldown:
-            uses_string = str(item.data['cooldown'])
-        uses_loc = anchor_align(x, width, HAlignment.RIGHT, (0, 5)), y
-        render_text(surf, [uses_font], [uses_string], [
-                    uses_color], uses_loc, HAlignment.RIGHT)
+
+        uses_string_a = '--'
+        uses_string_b = '--'
+        uses_string_slash = '/'
+
+        uses_string_a_loc = anchor_align(
+            x, width, HAlignment.RIGHT, (0, 24)), y
+        uses_string_b_loc = anchor_align(x, width, HAlignment.RIGHT, (0, 0)), y
+        slash_loc = anchor_align(x, width, HAlignment.RIGHT, (0, 16)), y
+
+        if item.data.get('uses') is not None:
+            uses_string_a = str(item.data['uses'])
+            uses_string_b = str(item.data['starting_uses'])
+        elif item.data.get('c_uses') is not None:
+            uses_string_a = str(item.data['c_uses'])
+            uses_string_b = str(item.data['starting_c_uses'])
+        elif item.parent_item and item.parent_item.data.get('uses') is not None:
+            uses_string_a = str(item.parent_item.data['uses'])
+            uses_string_b = str(item.parent_item.data['starting_uses'])
+        elif item.parent_item and item.parent_item.data.get('c_uses') is not None:
+            uses_string_a = str(item.parent_item.data['c_uses'])
+            uses_string_b = str(item.parent_item.data['starting_c_uses'])
+        elif item.data.get('cooldown') is not None:
+            uses_string_a = ""
+            uses_string_slash = ""
+            uses_string_b = str(item.data['cooldown'])
+            cooldown_image = SPRITES.get('cooldown_logo').subsurface((11,0, 9, 14)).copy()
+            if item.data['cooldown'] == 0:
+                uses_string_b = str(item.data['starting_cooldown'])
+                surf.blit(cooldown_image, uses_string_b_loc)
+            else:
+                image_mods.make_gray_colorkey(cooldown_image)
+                surf.blit(cooldown_image, uses_string_b_loc)
+
+        render_text(surf, [uses_font], [uses_string_a], [
+                    uses_color], uses_string_a_loc, HAlignment.RIGHT)
+        render_text(surf, [uses_font], [uses_string_slash], [], slash_loc, HAlignment.RIGHT)
+        render_text(surf, [uses_font], [uses_string_b], [
+                    uses_color], uses_string_b_loc, HAlignment.RIGHT)
 
     @staticmethod
     def draw_with_full_uses(surf, x, y, item: ItemObject, font: NID, color: NID, uses_color: NID,
