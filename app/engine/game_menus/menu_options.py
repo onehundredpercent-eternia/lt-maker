@@ -4,7 +4,7 @@ from app.data.database.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.fonts import FONT
-from app.engine import engine, image_mods, icons, help_menu, text_funcs, item_system, item_funcs
+from app.engine import engine, image_mods, icons, help_menu, text_funcs, item_system, item_funcs, city_funcs
 from app.engine.game_state import game
 from app.engine.unit_sprite import load_map_sprite, load_klass_sprite
 
@@ -737,6 +737,39 @@ def draw_resource_cost(surf, right_x, y, gold, prod, color):
         surf.blit(prod_icon, (cx, y))
 
 
+# city_icons.png indices; draw order is food, production, gold.
+_RESOURCE_ICON_ORDER = (('food', 1), ('production', 2), ('gold', 0))
+
+
+def resource_gain_width(resources) -> int:
+    """Pixel width of the "<icon>+N" groups for each nonzero resource."""
+    w = 0
+    for key, _index in _RESOURCE_ICON_ORDER:
+        val = resources.get(key, 0)
+        if not val:
+            continue
+        w += 16 + text_width('text', '+%d' % val) + 2
+    return w
+
+
+def draw_resource_gain(surf, x, y, resources, color):
+    """Draw "<icon>+N" left-to-right from x for each nonzero resource
+    (food, production, gold), e.g. "F+4G+2". Returns the ending x."""
+    cx = x
+    for key, index in _RESOURCE_ICON_ORDER:
+        val = resources.get(key, 0)
+        if not val:
+            continue
+        icon = icons.get_city_icon(index)
+        if icon:
+            surf.blit(icon, (cx, y))
+        cx += 16
+        s = '+%d' % val
+        render_text(surf, ['text'], [s], [color], (cx, y))
+        cx += text_width('text', s) + 2
+    return cx
+
+
 class DraftUnitRowOption(BasicOption):
     """A draftable-unit row: class map-sprite icon + class name (no cost).
     Base for DraftUnitOption and reused by the city production-queue panel."""
@@ -873,7 +906,9 @@ class BuildingOption(BuildingRowOption):
 
 
 class WorkBuildingOption(BuildingRowOption):
-    """Work-tab row: building icon + name + working/idle status (no cost)."""
+    """Work-tab row: building icon + name + potential resource yield + working/idle
+    status. The yield shows what working this building would add to the city
+    (ResourcePerTurn component + the underlying tile's terrain resources)."""
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
         if self.city.is_worked(self.building):
@@ -883,3 +918,9 @@ class WorkBuildingOption(BuildingRowOption):
         else:
             label, color = 'Idle', 'grey'
         render_text(surf, ['text'], [label], [color], (x + self.width() - 4, y), HAlignment.RIGHT)
+        # Potential resource yield, right-aligned just left of the status label
+        resources = city_funcs.get_building_generation(self.city, self.building)
+        res_w = resource_gain_width(resources)
+        if res_w:
+            status_left = x + self.width() - 4 - text_width('text', label)
+            draw_resource_gain(surf, status_left - res_w - 4, y, resources, self.row_color())

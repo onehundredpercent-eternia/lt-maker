@@ -359,6 +359,25 @@ class UIView():
             render_text(bg_surf, ['text'], [name], [None], (start_x + aux_icon.get_width() + gap, name_y))
         else:
             render_text(bg_surf, ['text'], [name], [None], (bg_surf.get_width()//2 - width//2, name_y))
+
+        # 4X terrain resource values, in a tiny column just right of the box:
+        # "F<n>" / "P<n>" / "G<n>" (letter in 'small', number in 'number_small'),
+        # skipping any resource that is zero.
+        resources = [(letter, val) for letter, val in
+                     (('F', terrain.food), ('P', terrain.production), ('G', terrain.gold)) if val]
+        if resources:
+            col_width = 13
+            line_h = 8
+            composite = engine.create_surface(
+                (bg_surf.get_width() + col_width, bg_surf.get_height()), transparent=True)
+            composite.blit(bg_surf, (0, 0))
+            rx = bg_surf.get_width() + 1
+            ry = bg_surf.get_height()//2 - (line_h * len(resources))//2
+            for letter, val in resources:
+                render_text(composite, ['small', 'number_small'], [letter, str(val)],
+                            [None, None], (rx, ry))
+                ry += line_h
+            return composite
         return bg_surf
 
     def create_obj_info(self):

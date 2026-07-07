@@ -77,16 +77,50 @@ def get_food_upkeep(city: CityObject) -> int:
     return city.population
 
 
+def get_tile_resources(building: BuildingObject) -> dict:
+    """Terrain resource yield of the tile a placed building occupies.
+
+    Reads the *underlying* terrain (`ignore_buildings=True`) so the building yields
+    the resources of the terrain it was built on, not its own terrain override —
+    this is what makes terrain choice matter when placing buildings/cities."""
+    totals = {'food': 0, 'production': 0, 'gold': 0}
+    if not building.position:
+        return totals
+    terrain_nid = game.get_terrain_nid(game.tilemap, building.position, ignore_buildings=True)
+    terrain = DB.terrain.get(terrain_nid)
+    if terrain:
+        totals['food'] += terrain.food
+        totals['production'] += terrain.production
+        totals['gold'] += terrain.gold
+    return totals
+
+
+def get_building_generation(city: CityObject, building: BuildingObject) -> dict:
+    """What a single building would add to the city each turn if worked: its
+    ResourcePerTurn component plus the underlying tile's terrain resources."""
+    totals = {'food': 0, 'production': 0, 'gold': 0}
+    comp = building.resource_per_turn
+    if comp:
+        for key in totals:
+            totals[key] += comp.value.get(key, 0)
+    tile = get_tile_resources(building)
+    for key in totals:
+        totals[key] += tile[key]
+    return totals
+
+
 def get_generation(city: CityObject) -> dict:
-    """Per-turn resource generation from the city's currently worked buildings."""
+    """Per-turn resource generation from the city's currently worked buildings.
+
+    Sums each worked building's ResourcePerTurn component plus the terrain resource
+    yield of the tile it sits on."""
     totals = {'food': 0, 'production': 0, 'gold': 0}
     for building in city.buildings:
         if not city.is_worked(building):
             continue
-        comp = building.resource_per_turn
-        if comp:
-            for key in totals:
-                totals[key] += comp.value.get(key, 0)
+        gen = get_building_generation(city, building)
+        for key in totals:
+            totals[key] += gen[key]
     return totals
 
 
@@ -180,11 +214,30 @@ def _refund(city: CityObject, entry: dict):
         action.do(action.ChangeCityProduction(city, entry['production_cost']))
 
 
+def _apply_tile_income(city: CityObject):
+    """Apply the terrain resource yield of every worked building's tile as
+    reversible actions (mirrors ResourcePerTurn.on_upkeep)."""
+    team = game.teams.get(city.team)
+    for building in city.buildings:
+        if not city.is_worked(building):
+            continue
+        tile = get_tile_resources(building)
+        if tile['food']:
+            action.do(action.ChangeCityFood(city, tile['food']))
+        if tile['production']:
+            action.do(action.ChangeCityProduction(city, tile['production']))
+        if tile['gold'] and team:
+            action.do(action.ChangeTeamGold(team, tile['gold']))
+
+
 def run_city_upkeep(city: CityObject) -> List[Tuple[CityObject, BuildingObject]]:
     """Run a single city's start-of-turn upkeep. Returns a list of (city, building)
     placements the player must position (completed buildings)."""
     # 1. Resource income from worked buildings (each component self-gates on is_worked)
     building_system.on_upkeep(city)
+
+    # 1b. Tile income: terrain resource yield of each worked building's tile
+    _apply_tile_income(city)
 
     # 2. Food upkeep (currently equal to population)
     upkeep = get_food_upkeep(city)

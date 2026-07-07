@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QSpacerItem, QDialog, \
     QLineEdit, QHBoxLayout, QVBoxLayout, \
-    QMessageBox, QSizePolicy, QCheckBox
+    QMessageBox, QSizePolicy, QCheckBox, QSpinBox, QGroupBox
 from PyQt5.QtGui import QImage, QIcon, QPixmap, QColor
 from PyQt5.QtCore import Qt, QSize
 
@@ -100,6 +100,28 @@ class TerrainProperties(QWidget):
         main_section.addWidget(self.status_box)
         main_section.addWidget(self.background_box)
 
+        # Resource values (4X)
+        self.resource_group = QGroupBox(_("Resource Values"))
+        resource_layout = QHBoxLayout()
+
+        self.food_box = PropertyBox(_("Food"), QSpinBox, self)
+        self.food_box.edit.setRange(0, 99)
+        self.food_box.edit.valueChanged.connect(self.food_changed)
+        resource_layout.addWidget(self.food_box)
+
+        self.production_box = PropertyBox(_("Production"), QSpinBox, self)
+        self.production_box.edit.setRange(0, 99)
+        self.production_box.edit.valueChanged.connect(self.production_changed)
+        resource_layout.addWidget(self.production_box)
+
+        self.gold_box = PropertyBox(_("Gold"), QSpinBox, self)
+        self.gold_box.edit.setRange(0, 99)
+        self.gold_box.edit.valueChanged.connect(self.gold_changed)
+        resource_layout.addWidget(self.gold_box)
+
+        self.resource_group.setLayout(resource_layout)
+        main_section.addWidget(self.resource_group)
+
         total_section = QVBoxLayout()
         self.setLayout(total_section)
         total_section.addLayout(top_section)
@@ -145,6 +167,15 @@ class TerrainProperties(QWidget):
         else:
             self.current.status = status
 
+    def food_changed(self, value):
+        self.current.food = value
+
+    def production_changed(self, value):
+        self.current.production = value
+
+    def gold_changed(self, value):
+        self.current.gold = value
+
     def access_movement_grid(self):
         dlg = McostDialog()
         result = dlg.exec_()
@@ -173,6 +204,10 @@ class TerrainProperties(QWidget):
             self.status_box.edit.setValue(current.status)
         else:
             self.status_box.edit.setValue("None")
+
+        self.food_box.edit.setValue(current.food)
+        self.production_box.edit.setValue(current.production)
+        self.gold_box.edit.setValue(current.gold)
 
         # Icon
         color = current.color

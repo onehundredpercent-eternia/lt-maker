@@ -18,6 +18,10 @@ class Terrain(Prefab):
 
     status: str = None
 
+    food: int = 0
+    production: int = 0
+    gold: int = 0
+
     def restore_attr(self, name, value):
         if name == 'color':
             value = tuple(value)

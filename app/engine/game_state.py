@@ -1628,21 +1628,26 @@ class GameState():
                     return region
         return None
 
-    def get_terrain_nid(self, tilemap: TileMapObject, position: Pos) -> NID:
+    def get_terrain_nid(self, tilemap: TileMapObject, position: Pos, ignore_buildings: bool = False) -> NID:
         """
         Gets the terrain NID at a given position on the tilemap.
 
         Args:
             tilemap (TileMapObject): The tilemap object.
             position (Pos): The position to check.
+            ignore_buildings (bool): If True, skip a building's terrain override and
+                resolve the *underlying* terrain (TERRAIN region > tilemap layer). Used
+                by 4X tile income, where a building should yield the resources of the
+                terrain it was built on, not its own override terrain.
 
         Returns:
             NID: The NID of the terrain at the specified position.
         """
         # A building placed on the tile overrides everything, including TERRAIN regions.
-        building_terrain = self.building_terrain_overrides.get(position)
-        if building_terrain:
-            return building_terrain
+        if not ignore_buildings:
+            building_terrain = self.building_terrain_overrides.get(position)
+            if building_terrain:
+                return building_terrain
         terrain_region = self.get_region_under_pos(position, RegionType.TERRAIN)
         if terrain_region:
             terrain_nid = terrain_region.sub_nid
