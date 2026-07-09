@@ -141396,17 +141396,73 @@
                                 ]
                             ],
                             [
-                                "under_frame",
+                                "frame",
                                 [
-                                    14,
-                                    "Lance_018_under"
+                                    3,
+                                    "Lance_043"
                                 ]
                             ],
                             [
-                                "under_frame",
+                                "frame",
                                 [
-                                    5,
-                                    "Lance_019_under"
+                                    1,
+                                    "Lance_044"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Lance_045"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Lance_046"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Lance_047"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Lance_048"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Lance_049"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Lance_050"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Lance_051"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Lance_052"
                                 ]
                             ],
                             [
@@ -141937,17 +141993,73 @@
                                 ]
                             ],
                             [
-                                "under_frame",
+                                "frame",
                                 [
-                                    14,
-                                    "Lance_018_under"
+                                    3,
+                                    "Lance_043"
                                 ]
                             ],
                             [
-                                "under_frame",
+                                "frame",
                                 [
-                                    5,
-                                    "Lance_019_under"
+                                    1,
+                                    "Lance_044"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Lance_045"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Lance_046"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Lance_047"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Lance_048"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Lance_049"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Lance_050"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Lance_051"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Lance_052"
                                 ]
                             ],
                             [
@@ -146305,9 +146417,73 @@
                                 ]
                             ],
                             [
-                                "wait",
+                                "frame",
                                 [
-                                    19
+                                    3,
+                                    "Sword_038"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_039"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_040"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_041"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_042"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Sword_043"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Sword_044"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Sword_045"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Sword_046"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Sword_047"
                                 ]
                             ],
                             [
@@ -146754,9 +146930,73 @@
                                 ]
                             ],
                             [
-                                "wait",
+                                "frame",
                                 [
-                                    19
+                                    3,
+                                    "Sword_038"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_039"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_040"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_041"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    1,
+                                    "Sword_042"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Sword_043"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Sword_044"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    2,
+                                    "Sword_045"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Sword_046"
+                                ]
+                            ],
+                            [
+                                "frame",
+                                [
+                                    3,
+                                    "Sword_047"
                                 ]
                             ],
                             [
