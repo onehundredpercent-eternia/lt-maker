@@ -1041,8 +1041,8 @@ Sets the fog of war state for the current level.
         """
 
     keywords = ["FogOfWarType", "Radius"]
-    optional_keywords = ["AIRadius", "OtherRadius"]
-    keyword_types = ["FogOfWarType", "PositiveInteger", "PositiveInteger", "PositiveInteger"]
+    optional_keywords = ["AIRadius", "OtherRadius", "FogOfWarColor"]
+    keyword_types = ["FogOfWarType", "PositiveInteger", "PositiveInteger", "PositiveInteger", "FogOfWarColor"]
 
 class EndTurn(EventCommand):
     nid = 'end_turn'
@@ -2386,6 +2386,20 @@ Cannot be undone by the turnwheel.
 
     keywords = ["rng"]
     keyword_types = ["RNGType"]
+
+class SetModePermadeath(EventCommand):
+    nid = 'set_mode_permadeath'
+    tag = Tags.GAME_VARS
+
+    desc = \
+       """
+changes if permadeath is active in the game.
+Cannot be undone by the turnwheel.
+        """
+
+    keywords = ['Permadeath']
+    keyword_types = ["Bool"]
+
 
 class Promote(EventCommand):
     nid = 'promote'

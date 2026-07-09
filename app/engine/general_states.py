@@ -593,6 +593,10 @@ class OptionMenuState(MapState):
                         game.events.trigger_specific_event(event_prefab.nid)
 
         elif event == 'INFO':
+            if self.menu.info_flag:
+                get_sound_thread().play_sfx('Info Out')
+            else:
+                get_sound_thread().play_sfx('Info In')
             self.menu.toggle_info()
 
     def update(self):
@@ -741,6 +745,7 @@ class MoveState(MapState):
 
         elif event == 'SELECT':
             if game.cursor.position == cur_unit.position:
+                cur_unit.sprite.clear_net_position()
                 if cur_unit.has_attacked or cur_unit.has_traded:
                     # Just move in place
                     cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
@@ -763,6 +768,7 @@ class MoveState(MapState):
                         if game.cursor.position in witch_warp and game.cursor.position not in normal_moves:
                             cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         else:
+                            game.cursor.clamp_path_to_movement()
                             cur_unit.current_move = action.CantoMove(cur_unit, game.cursor.position)
                         game.state.change('canto_wait')
                     elif game.cursor.position in witch_warp and game.cursor.position not in normal_moves:
@@ -770,6 +776,7 @@ class MoveState(MapState):
                         cur_unit.current_move = action.Warp(cur_unit, game.cursor.position)
                         game.state.change('menu')
                     else:
+                        game.cursor.clamp_path_to_movement()
                         action.do(action.MarkActionGroupStart(cur_unit, 'free'))
                         cur_unit.current_move = action.Move(cur_unit, game.cursor.position)
                         game.state.change('menu')
@@ -845,7 +852,7 @@ class CantoWaitState(MapState):
         self.menu.set_color(['green' if option == 'Supply' else None for option in options])
 
     def begin(self):
-        self.cur_unit.sprite.change_state('selected')
+        self.cur_unit.sprite.change_state('chosen')
 
     def take_input(self, event):
         first_push = self.fluid.update()
@@ -2481,10 +2488,10 @@ class CombatTargetingState(MapState):
             if item_system.targets_items(self.cur_unit, self.item):
                 ignore = [not item_system.item_restrict(self.cur_unit, self.item, target_unit, item) for item in target_unit.items]
                 game.ui_view.draw_trade_preview(target_unit, surf, ignore)
-            elif item_system.is_weapon(self.cur_unit, self.item):
+            elif item_system.is_weapon(self.cur_unit, self.item) and not cf.SETTINGS['forecast'] == 'Off':
                 self.find_strike_partners(game.cursor.position, atk=False)
                 game.ui_view.draw_attack_info(surf, self.cur_unit, self.item, target_unit, self.attacker_assist, self.defender_assist)
-            else:
+            elif not cf.SETTINGS['forecast'] == 'Off':
                 game.ui_view.draw_spell_info(surf, self.cur_unit, self.item, target_unit)
 
         return surf
