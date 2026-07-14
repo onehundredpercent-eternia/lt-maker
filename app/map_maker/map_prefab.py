@@ -2,6 +2,7 @@ from typing import Dict, List, Set, Tuple
 
 from app.utilities.typing import NID, Pos
 
+from app.data.resources.resource_prefab import NoResources
 from app.utilities.data import Prefab
 import app.map_maker.utilities as map_utils
 from app.map_maker.terrain import Terrain
@@ -10,7 +11,7 @@ from app.map_maker.painter_database import PAINTERS
 
 TILEX, TILEY = 15, 10
 
-class MapPrefab(Prefab):
+class MapPrefab(NoResources, Prefab):
     def __init__(self, nid: NID):
         self.nid: NID = nid
         self.width, self.height = TILEX, TILEY
@@ -27,6 +28,8 @@ class MapPrefab(Prefab):
 
         self.current_indoor_palette: PaletteCollection = None
         self.current_outdoor_palette: PaletteCollection = None
+
+        self.seed: int = 0
 
     def reset_all(self):
         for position in self.terrain_grid:
@@ -174,7 +177,7 @@ class MapPrefab(Prefab):
             str_coord = "%d,%d" % (coord[0], coord[1])
             s_dict['terrain_grid'][str_coord] = terrain.name
         s_dict['autotile_set'] = ["%d,%d" % (coord[0], coord[1]) for coord in self.autotile_set]
-        s_dict['seed'] = map_utils.get_random_seed()
+        s_dict['seed'] = self.seed
         s_dict['indoor_palette'] = self.current_indoor_palette
         s_dict['outdoor_palette'] = self.current_outdoor_palette
         return s_dict
@@ -193,7 +196,7 @@ class MapPrefab(Prefab):
         for str_coord in s_dict['autotile_set']:
             coord = tuple(int(_) for _ in str_coord.split(','))
             self.autotile_set.add(coord)
-        map_utils.set_random_seed(s_dict.get('seed', 0))
+        self.seed = s_dict.get('seed', 0)
         self.current_indoor_palette = s_dict.get('indoor_palette')
         self.current_outdoor_palette = s_dict.get('outdoor_palette')
         return self

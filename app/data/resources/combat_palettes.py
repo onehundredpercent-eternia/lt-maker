@@ -3,9 +3,8 @@ import os
 from pathlib import Path
 import re
 import shutil
-from typing import Dict, List, Optional, Set
-from typing_extensions import override
-from app.data.resources.resource_prefab import WithResources
+from typing import Dict, List, Set
+from app.data.resources.resource_prefab import NoResources
 from app.utilities.data import Prefab
 
 from app.data.category import CategorizedCatalog
@@ -15,7 +14,7 @@ from app.data.resources.default_palettes import default_palettes
 from app.constants import COLORKEY
 from app.utilities.data_order import parse_order_keys_file
 
-class Palette(Prefab, WithResources):
+class Palette(Prefab, NoResources):
     def __init__(self, nid):
         self.nid = nid
         # Mapping of color indices to true colors
@@ -47,14 +46,6 @@ class Palette(Prefab, WithResources):
 
     def save(self):
         return (self.nid, list(self.colors.items()))
-
-    @override
-    def set_full_path(self, path: str) -> None:
-        pass
-
-    @override
-    def used_resources(self) -> List[Optional[Path]]:
-        return []
 
     @classmethod
     def restore(cls, s):

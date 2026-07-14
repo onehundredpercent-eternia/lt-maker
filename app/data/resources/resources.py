@@ -6,7 +6,7 @@ import shutil
 import os
 import traceback
 
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from app import sprites
 from app.data.category import Categories, CategorizedCatalog
@@ -21,6 +21,7 @@ from app.data.resources.panoramas import PanoramaCatalog
 from app.data.resources.map_icons import MapIconCatalog
 from app.data.resources.map_sprites import MapSpriteCatalog
 from app.data.resources.tiles import TileSetCatalog, TileMapCatalog
+from app.data.resources.map_prefabs import MapPrefabCatalog
 from app.data.resources.sounds import SFXCatalog, MusicCatalog
 from app.data.resources.combat_palettes import PaletteCatalog
 from app.data.resources.combat_anims import CombatCatalog, CombatEffectCatalog
@@ -35,8 +36,9 @@ CATEGORY_SUFFIX = '.category'
 class Resources():
     save_data_types = ("icons16", "icons32", "icons80", "portraits", "animations", "panoramas", "fonts",
                        "map_icons", "map_sprites", "combat_palettes", "combat_anims", "combat_effects", "music", "sfx",
-                       "tilesets", "tilemaps")
-    save_as_chunks = ("combat_palettes", 'tilemaps')
+                       "tilesets", "tilemaps", "map_prefabs")
+    save_as_chunks = ("combat_palettes", 'tilemaps', 'map_prefabs')
+    optional_data_types = ("map_prefabs",)
     loose_file_types = ["custom_components", "custom_sprites", "system"]
 
     def __init__(self):
@@ -88,6 +90,7 @@ class Resources():
 
         self.tilesets = TileSetCatalog()
         self.tilemaps = TileMapCatalog()
+        self.map_prefabs = MapPrefabCatalog()
 
         self.music = MusicCatalog()
         self.sfx = SFXCatalog()
@@ -196,6 +199,8 @@ class Resources():
                             actual_save_dir = Path(save_dir, 'tilemap_data')
                         elif key == 'combat_palettes':
                             actual_save_dir = Path(save_dir, 'palette_data')
+                        elif key == 'map_prefabs':
+                            actual_save_dir = Path(save_dir, 'map_prefab_data')
                         if os.path.exists(actual_save_dir):
                             rmtree_robust(actual_save_dir)
                     # divide save data into chunks based on key value
@@ -203,6 +208,7 @@ class Resources():
                         os.makedirs(actual_save_dir)
                     if key in self.save_as_chunks and main_settings.get_save_chunks_preference():
                         orderkeys: List[str] = []
+                        used_names: Set[str] = set()  # case-folded, since some filesystems (Windows, macOS) are case-insensitive
                         for idx, subvalue in enumerate(value):
                             # ordering
                             if key == 'combat_palettes':
@@ -211,6 +217,13 @@ class Resources():
                                 name = subvalue['nid']
                             name = re.sub(r'[\\/*?:"<>|]', "", name)
                             name = name.replace(' ', '_')
+                            if name.lower() in used_names:
+                                base_name = name
+                                suffix = 2
+                                while name.lower() in used_names:
+                                    name = "%s_%d" % (base_name, suffix)
+                                    suffix += 1
+                            used_names.add(name.lower())
                             orderkeys.append(name)
                             save_loc = Path(actual_save_dir, name + '.json')
                             # logging.info("Serializing %s to %s" % ('%s/%s.json' % (key, name), save_loc))
@@ -334,6 +347,8 @@ class Resources():
         start = time.time_ns() / 1e6
 
         for idx, data_type in enumerate(self.save_data_types):
+            if data_type not in unused_files:
+                continue
             try:
                 getattr(self, data_type).clean(unused_files[data_type])
             except Exception as e:

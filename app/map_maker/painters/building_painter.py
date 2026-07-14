@@ -63,7 +63,7 @@ class BuildingPainter(Painter):
 
         # So it always uses the same set of coords...
         base_pos = (pos[0] - offset[0], pos[1] - offset[1])
-        coord = random_choice(coords, base_pos)
+        coord = random_choice(coords, base_pos, seed=tilemap.seed)
         return coord        
 
 class CastlePainter(BuildingPainter):
@@ -179,7 +179,7 @@ class HousePainter(BuildingPainter):
 
         # So it always uses the same set of coords...
         base_pos = (pos[0] - offset[0], pos[1] - offset[1])
-        coord = random_choice(coords, base_pos)
+        coord = random_choice(coords, base_pos, seed=tilemap.seed)
         if coord == (0, 0) and sum([Terrain.sand_like(t) for t in tilemap.get_cardinal_terrain(pos)]) > 2:
             coord = (1, 0)
         return coord

@@ -17,6 +17,8 @@ class Loader0(LoaderBase):
         as_dict = {}
         for key in resources.Resources.save_data_types:
             if not (resource_dir / key).exists():
+                if key in resources.Resources.optional_data_types:  # Older projects won't have these
+                    continue
                 raise FileNotFoundError(
                     f"Resource directory {resource_dir / key} does not exist!\n"
                     f"Please do the following steps:\n\n"
@@ -31,6 +33,8 @@ class Loader0(LoaderBase):
                     as_dict[key + resources.CATEGORY_SUFFIX] = _json_load(resource_dir / key, key + resources.CATEGORY_SUFFIX)
             elif key == 'tilemaps': # special case
                 as_dict[key] = _json_load(resource_dir / key, 'tilemap_data')
+            elif key == 'map_prefabs': # special case
+                as_dict[key] = _json_load(resource_dir / key, 'map_prefab_data')
             else:
                 as_dict[key] = _load_manifest_or_prefabs(resource_dir, key)
                 if Path(resource_dir / key, key + resources.CATEGORY_SUFFIX + '.json').exists():

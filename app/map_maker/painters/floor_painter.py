@@ -15,7 +15,7 @@ class FloorPainter(Painter):
     """
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
-        coord = random_choice([(0, k) for k in range(self.limit[0])], pos)
+        coord = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed)
         return coord
 
     @staticmethod

@@ -22,7 +22,7 @@ class HillPainter(Painter):
         _, far_east, _, _ = tilemap.get_cardinal_terrain((pos[0] + 1, pos[1]))
         _, _, _, far_west = tilemap.get_cardinal_terrain((pos[0] - 1, pos[1]))
         if east != Terrain.HILL and west != Terrain.HILL:
-            choice = random_choice([1, 2, 3, 4, 5, 6], pos)
+            choice = random_choice([1, 2, 3, 4, 5, 6], pos, seed=tilemap.seed)
             if choice <= 3:
                 coord = self.data['main']
             elif choice in (4, 5):

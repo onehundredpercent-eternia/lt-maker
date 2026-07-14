@@ -48,10 +48,10 @@ def handle_cliffs(tilemap, pos: Pos, new_coord1: Pos, new_coord2: Pos, new_coord
 
 class GrassPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
-        new_coord1 = random_choice([(0, k) for k in range(self.limit[0])], pos)
-        new_coord2 = random_choice([(0, k) for k in range(self.limit[0])], pos, offset=1)
-        new_coord3 = random_choice([(0, k) for k in range(self.limit[0])], pos, offset=2)
-        new_coord4 = random_choice([(0, k) for k in range(self.limit[0])], pos, offset=3)
+        new_coord1 = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed)
+        new_coord2 = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed, offset=1)
+        new_coord3 = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed, offset=2)
+        new_coord4 = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed, offset=3)
 
         # Handle cliffs
         new_coord1, new_coord2, new_coord3, new_coord4 = \
@@ -125,10 +125,10 @@ class LightGrassPainter(WangCorner8Painter, Painter):
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         index1, index2, index3, index4 = self._determine_index(tilemap, pos)
 
-        new_coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], pos)
-        new_coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], pos, offset=1)
-        new_coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], pos, offset=2)
-        new_coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], pos, offset=3)
+        new_coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], pos, seed=tilemap.seed)
+        new_coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], pos, seed=tilemap.seed, offset=1)
+        new_coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], pos, seed=tilemap.seed, offset=2)
+        new_coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], pos, seed=tilemap.seed, offset=3)
 
         # Handle cliffs
         # Handle cliffs
@@ -195,10 +195,10 @@ class NoisyGrassPainter(NoiseInterface, Painter):
 
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Tuple[Pos, Pos, Pos, Pos], Pos]:
         index1, index2, index3, index4 = self.get_index(tilemap, pos)
-        coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], (pos[0] * 2, pos[1] * 2))
-        coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], (pos[0] * 2 + 1, pos[1] * 2))
-        coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], (pos[0] * 2 + 1, pos[1] * 2 + 1))
-        coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], (pos[0] * 2, pos[1] * 2 + 1))
+        coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], (pos[0] * 2, pos[1] * 2), seed=tilemap.seed)
+        coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], (pos[0] * 2 + 1, pos[1] * 2), seed=tilemap.seed)
+        coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], (pos[0] * 2 + 1, pos[1] * 2 + 1), seed=tilemap.seed)
+        coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], (pos[0] * 2, pos[1] * 2 + 1), seed=tilemap.seed)
 
         # shading_coord = self.get_shading_coord(tilemap, pos)
 

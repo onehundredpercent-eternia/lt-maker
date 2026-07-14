@@ -32,7 +32,7 @@ class WallTopPainter(WangEdge16Painter):
         index = WallTopPainter.get_index(tilemap, pos)
         ne, se, sw, nw = tilemap.get_diagonal_terrain(pos)
         # Edge is true when we have an adjacent walllike
-        coord = random_choice([(index, k) for k in range(self.limit[index])], pos)
+        coord = random_choice([(index, k) for k in range(self.limit[index])], pos, seed=tilemap.seed)
 
         if index in (12, 13) and sw == Terrain.WALL_TOP:
             coord = (15, 5)  # Requires walls at at least (W, SW, S)
@@ -110,7 +110,7 @@ class ColumnPainter(Painter):
         return True
 
     def single_process(self, tilemap):
-        self.column_index = random_choice([0, 1], (0, 0))
+        self.column_index = random_choice([0, 1], (0, 0), seed=tilemap.seed)
 
     @staticmethod
     def distance_to_column_top(tilemap, pos: Pos) -> int:

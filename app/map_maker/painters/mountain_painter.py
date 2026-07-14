@@ -37,9 +37,9 @@ class MountainPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         coord = self.organization[pos]
         if coord == (12, 6):
-            coord = random_choice([(12, 6), (11, 6)], pos)
+            coord = random_choice([(12, 6), (11, 6)], pos, seed=tilemap.seed)
         elif coord == (13, 3):
-            coord = random_choice([(13, 3), (12, 4), (12, 5)], pos)
+            coord = random_choice([(13, 3), (12, 4), (12, 5)], pos, seed=tilemap.seed)
         return coord
 
     def _initial_process(self):
@@ -66,9 +66,6 @@ class MountainPainter(Painter):
             noneless_rules['left'] = {k: v for k, v in rules['left'].items() if k is not None}
             noneless_rules['right'] = {k: v for k, v in rules['right'].items() if k is not None}
             self.noneless_rules[coord] = noneless_rules
-
-        for index, coord in self.index_dict.items():
-            print(index, sorted(coord))
 
     def single_process(self, tilemap):
         positions: Set[Pos] = tilemap.get_all_terrain(Terrain.MOUNTAIN)
@@ -101,7 +98,7 @@ class MountainPainter(Painter):
 
     def _process_group(self, tilemap, group: Set[Pos]):
         # Just fill it up with generic pieces
-        self._generic_fill(group)
+        self._generic_fill(tilemap, group)
 
         # But then, do the real solve
         if self.gui_processing:
@@ -134,10 +131,10 @@ class MountainPainter(Painter):
             self.organization.update(process.organization)
         # Otherwise the generic fill above remains
 
-    def _generic_fill(self, group: Set[Pos]):
+    def _generic_fill(self, tilemap, group: Set[Pos]):
         for pos in group:
             valid_coords = self.index_dict[15]
-            valid_coord = random_choice(list(valid_coords), pos)
+            valid_coord = random_choice(list(valid_coords), pos, seed=tilemap.seed)
             self.organization[pos] = valid_coord
 
     def _quit_thread(self, thread):

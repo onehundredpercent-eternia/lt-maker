@@ -29,7 +29,7 @@ class RiverPainter(WangEdge16Painter):
         southeast_edge = bool(not southeast or southeast in self.terrain_like)
         southwest_edge = bool(not southwest or southwest in self.terrain_like)
         northwest_edge = bool(not northwest or northwest in self.terrain_like)
-        if random_choice([1, 2], pos) == 1:
+        if random_choice([1, 2], pos, seed=tilemap.seed) == 1:
             use_top = True
         else:
             use_top = False
@@ -118,18 +118,18 @@ class RiverPainter(WangEdge16Painter):
             index2 = 12 + 1 * north_edge + 2 * east_edge
             index3 = 9 + 4 * south_edge + 2 * east_edge
             index4 = 3 + 4 * south_edge + 8 * west_edge
-            new_coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], pos)
-            new_coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], pos, offset=1)
-            new_coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], pos, offset=2)
-            new_coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], pos, offset=3)
+            new_coord1 = random_choice([(index1, k) for k in range(self.limit[index1])], pos, seed=tilemap.seed)
+            new_coord2 = random_choice([(index2, k) for k in range(self.limit[index2])], pos, seed=tilemap.seed, offset=1)
+            new_coord3 = random_choice([(index3, k) for k in range(self.limit[index3])], pos, seed=tilemap.seed, offset=2)
+            new_coord4 = random_choice([(index4, k) for k in range(self.limit[index4])], pos, seed=tilemap.seed, offset=3)
             # Handle using the same set for vertical edges
             if index1 == 7:
-                new_coord1 = (index1, random_choice([0, 1, 2, 3, 4], pos)*2)
+                new_coord1 = (index1, random_choice([0, 1, 2, 3, 4], pos, seed=tilemap.seed)*2)
             if index4 == 7:
-                new_coord4 = (index4, random_choice([0, 1, 2, 3, 4], pos)*2 + 1)
+                new_coord4 = (index4, random_choice([0, 1, 2, 3, 4], pos, seed=tilemap.seed)*2 + 1)
             if index2 == 13:
-                new_coord2 = (index2, random_choice([0, 1, 2, 3, 4], pos)*2)
+                new_coord2 = (index2, random_choice([0, 1, 2, 3, 4], pos, seed=tilemap.seed)*2)
             if index3 == 13:
-                new_coord3 = (index3, random_choice([0, 1, 2, 3, 4], pos)*2 + 1)
+                new_coord3 = (index3, random_choice([0, 1, 2, 3, 4], pos, seed=tilemap.seed)*2 + 1)
 
         return new_coord1, new_coord2, new_coord3, new_coord4

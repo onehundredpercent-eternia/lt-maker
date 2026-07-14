@@ -31,16 +31,16 @@ class ForestPainter(Painter):
 
         north_edge = bool(north and north not in self.forest_like)  # Whether we don't border a forest
         if not north_edge and north and north != Terrain.THICKET:  # We border a forest
-            north_edge = (edge_random((pos[0], pos[1] - 1), pos) < chance_to_lose_adjacent_edges)
+            north_edge = (edge_random((pos[0], pos[1] - 1), pos, seed=tilemap.seed) < chance_to_lose_adjacent_edges)
         east_edge = bool(east and east not in self.forest_like)
         if not east_edge and east and east != Terrain.THICKET:  # We border a forest
-            east_edge = (edge_random(pos, (pos[0] + 1, pos[1])) < chance_to_lose_adjacent_edges)
+            east_edge = (edge_random(pos, (pos[0] + 1, pos[1]), seed=tilemap.seed) < chance_to_lose_adjacent_edges)
         south_edge = bool(south and south not in self.forest_like)
         if not south_edge and south and south != Terrain.THICKET:  # We border a forest
-            south_edge = (edge_random(pos, (pos[0], pos[1] + 1)) < chance_to_lose_adjacent_edges)
+            south_edge = (edge_random(pos, (pos[0], pos[1] + 1), seed=tilemap.seed) < chance_to_lose_adjacent_edges)
         west_edge = bool(west and west not in self.forest_like)
         if not west_edge and west and west != Terrain.THICKET:  # We border a forest
-            west_edge = (edge_random((pos[0] - 1, pos[1]), pos) < chance_to_lose_adjacent_edges)
+            west_edge = (edge_random((pos[0] - 1, pos[1]), pos, seed=tilemap.seed) < chance_to_lose_adjacent_edges)
         
         total_index = \
             north_edge + 2 * east_edge + 4 * south_edge + 8 * west_edge
@@ -48,8 +48,8 @@ class ForestPainter(Painter):
         index2 = north_edge + 2 * east_edge
         index3 = 4 * south_edge + 2 * east_edge
         index4 = 4 * south_edge + 8 * west_edge
-        if total_index == 15 and random_choice([1, 2, 3], pos) != 3:  # When by itself
-            y = random_choice([0, 2], pos)
+        if total_index == 15 and random_choice([1, 2, 3], pos, seed=tilemap.seed) != 3:  # When by itself
+            y = random_choice([0, 2], pos, seed=tilemap.seed)
             new_coord1 = (14, y)
             new_coord2 = (15, y)
             new_coord3 = (15, y + 1)
