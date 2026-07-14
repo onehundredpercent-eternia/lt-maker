@@ -61,7 +61,7 @@ https://pip.pypa.io/en/stable/installation/#
 
 ## Installing engine dependencies
 
-Next, you need to install some extra dependencies. These can be found in the `requirements_editor.txt` To install them, open a terminal window and type the following commands:
+Next, you need to install some extra dependencies. These can be found in the `requirements_editor.txt` To install them, open a terminal window <span style="color: red; font-weight: bold;">inside of the lt-maker folder</span> and type the following commands:
 
 pygame-ce
 
@@ -80,15 +80,16 @@ typing-extensions
 ```
 python3 -m pip install typing-extensions==4.8.0
 ```
-PyQt5 - Ubuntu and Ubuntu-based distributions
+
+PyQt5
+```
+python3 -m pip install PyQt5==5.15.10
+```
+
+If you are using Ubuntu or an Ubuntu-based distribution, and the above PyQt5 command does not work, use the one below:
 
 ```
 sudo apt-get install python3-pyqt5
-```
-
-PyQt5 - Non-Ubuntu distributions
-```
-python3 -m pip install PyQt5==5.15.10
 ```
 
 ## Launching the engine/editor
