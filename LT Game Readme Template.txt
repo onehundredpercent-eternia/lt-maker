@@ -132,8 +132,9 @@ https://github.com/pyenv/pyenv/wiki#suggested-build-environment
 
 *LT is potentially unstable or will not boot on newer versions of python. While using python 3.12 or newer can work, functionality is not guaranteed. Use at your own risk.
 
-2) Install the following programs (preferred versions if possible);
-    python3pip
+2) Install python3pip
+
+3) Because of pyenv, the following programs must be installed in a terminal window that is inside the "lt-maker" folder:
     pygame-ce==2.3.2
     pyinstaller==6.2.0
     typing-extensions==4.8.0
@@ -142,17 +143,17 @@ https://github.com/pyenv/pyenv/wiki#suggested-build-environment
     mypy-extensions==1.0.0
         **Some Linux distributions (mainly Ubuntu and Ubuntu-based distributions) may have trouble installing PyQt5. In that case, try "sudo apt-get install python3-pyqt5".
 
-3.1) If the developer(s) have only published the .exe engine:
+4.1) If the developer(s) have only published the .exe engine:
 Clone the following repository to your preferred storage location;
     https://gitlab.com/rainlash/lt-maker.git
 Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
 
-3.2) If the developer(s) have published the python version of their game:
+4.2) If the developer(s) have published the python version of their game:
 Download that repository and store it in your preferred storage location.
 
-4) Open a terminal window in the folder where the game is stored, and type "pyenv local 3.11.XX" (with XX being the specific python 3.11 version you installed. You can check which versions you have installed at any time with "pyenv versions"). To check if the correct version of python is now active in the game folder, type "python3 --version".
+5) Open a terminal window in the folder where the game is stored, and type "pyenv local 3.11.XX" (with XX being the specific python 3.11 version you installed. You can check which versions you have installed at any time with "pyenv versions"). To check if the correct version of python is now active in the game folder, type "python3 --version".
 
-5) Open a terminal window in the folder where "GAMETITLE.ltproj" is stored and type "python3 run_engine.py". The engine should now boot up with the desired game.*** You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
+6) Open a terminal window in the folder where "GAMETITLE.ltproj" is stored and type "python3 run_engine.py". The engine should now boot up with the desired game.*** You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
     ***If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
 
 =================
