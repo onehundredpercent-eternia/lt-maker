@@ -453,6 +453,9 @@ class UnitSprite():
             else:
                 self.set_image_state('down')
 
+    def clear_net_position(self):
+        self.net_position = None
+
     def update(self):
         self.update_state()
         self.update_transition()
@@ -760,7 +763,7 @@ class UnitSprite():
             topleft = (left - 8, top - 8)
             surf.blit(rescue_icon, topleft)
 
-        if any((i.droppable for i in self.unit.items)):
+        if DB.constants.value('droppable_icon') and any((i.droppable for i in self.unit.items)):
             droppable_icon = SPRITES.get('droppable_icon')
             topleft = (left - 8, top - 8)
             surf.blit(droppable_icon, topleft)

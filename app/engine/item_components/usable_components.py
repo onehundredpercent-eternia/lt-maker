@@ -57,7 +57,7 @@ class Uses(ItemComponent):
                 if item in other_unit.items:
                     action.do(action.RemoveItem(other_unit, item))
 
-    def end_combat(self, playback, unit, item, target, item2, mode):
+    def cleanup_combat(self, playback, unit, item, target, item2, mode):
         if self._did_something and 'uses' in item.data:
             action.do(action.SetObjData(item, 'uses', item.data['uses'] - 1))
             action.do(action.UpdateRecords('item_use', (unit.nid, item.nid)))
@@ -65,10 +65,16 @@ class Uses(ItemComponent):
 
     def reverse_use(self, unit, item):
         if self.is_broken(unit, item):
+            # on_broken removed the item with a persisting RemoveItem. This
+            # give-back is its deliberate inverse, so it must persist through a
+            # menu cancel too -- otherwise backing out of the menu reverses the
+            # give-back but not the removal, and the item is lost.
             if item_funcs.inventory_full(unit, item):
-                action.do(action.PutItemInConvoy(item))
+                give_back = action.PutItemInConvoy(item)
             else:
-                action.do(action.GiveItem(unit, item))
+                give_back = action.GiveItem(unit, item)
+            give_back.persist_through_menu_cancel = True
+            action.do(give_back)
         action.do(action.SetObjData(item, 'uses', item.data['uses'] + 1))
         action.do(action.ReverseRecords('item_use', (unit.nid, item.nid)))
 
@@ -117,7 +123,7 @@ class ChapterUses(ItemComponent):
         elif unit.equipped_accessory is item:
             action.do(action.UnequipItem(unit, item))
 
-    def end_combat(self, playback, unit, item, target, item2, mode):
+    def cleanup_combat(self, playback, unit, item, target, item2, mode):
         if self._did_something and 'c_uses' in item.data:
             action.do(action.SetObjData(item, 'c_uses', item.data['c_uses'] - 1))
             action.do(action.UpdateRecords('item_use', (unit.nid, item.nid)))
@@ -235,7 +241,7 @@ class HPCost(ItemComponent):
             else:
                 action.do(action.ChangeHP(unit, -self.value))
 
-    def end_combat(self, playback, unit, item, target, item2, mode):
+    def cleanup_combat(self, playback, unit, item, target, item2, mode):
         if self._did_something:
             action.do(action.ChangeHP(unit, -self.value))
         self._did_something = False
@@ -293,7 +299,7 @@ class EvalHPCost(ItemComponent):
             else:
                 action.do(action.ChangeHP(unit, -self._check_value(unit, item)))
 
-    def end_combat(self, playback, unit, item, target, item2, mode):
+    def cleanup_combat(self, playback, unit, item, target, item2, mode):
         if self._did_something:
             action.do(action.ChangeHP(unit, -self._check_value(unit, item)))
         self._did_something = False
@@ -375,7 +381,7 @@ class ManaCost(ItemComponent):
             else:
                 action.do(action.ChangeMana(unit, -self.value))
 
-    def end_combat(self, playback, unit, item, target, item2, mode):
+    def cleanup_combat(self, playback, unit, item, target, item2, mode):
         if self._did_something:
             action.do(action.ChangeMana(unit, -self.value))
         self._did_something = False
@@ -434,7 +440,7 @@ class EvalManaCost(ItemComponent):
             else:
                 action.do(action.ChangeMana(unit, -self._check_value(unit, item)))
 
-    def end_combat(self, playback, unit, item, target, item2, mode):
+    def cleanup_combat(self, playback, unit, item, target, item2, mode):
         if self._did_something:
             action.do(action.ChangeMana(unit, -self._check_value(unit, item)))
         self._did_something = False

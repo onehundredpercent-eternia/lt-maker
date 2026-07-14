@@ -16,6 +16,7 @@ from app.engine import (action, background, banner, base_surf, dialog, engine,
                         gui, icons, image_mods, item_funcs, item_system,
                         save, skill_system, unit_funcs)
 from app.engine.game_board import FogOfWarType
+from app.engine.fog_of_war import FogOfWarColor
 from app.engine.achievements import ACHIEVEMENTS
 from app.engine.animations import MapAnimation
 from app.engine.combat import interaction
@@ -127,7 +128,7 @@ def add_portrait(self: Event, portrait, screen_position: Tuple | str, slide=None
         self.logger.error("add_portrait: Couldn't find portrait %s" % name)
         return False
 
-    position, mirror = parse_screen_position(screen_position)
+    position, mirror = parse_screen_position(screen_position, portrait_size=portrait_prefab.face_size)
 
     priority = self.priority_counter
     if 'low_priority' in flags:
@@ -227,7 +228,7 @@ def move_portrait(self: Event, portrait, screen_position: Tuple, speed_mult: flo
     if not event_portrait:
         return False
 
-    position, _ = parse_screen_position(screen_position)
+    position, _ = parse_screen_position(screen_position, portrait_size=event_portrait.get_size())
 
     if 'immediate' in flags or self.do_skip:
         event_portrait.quick_move(position)
@@ -703,7 +704,7 @@ def enable_turnwheel(self: Event, activated: bool, flags=None):
 def enable_fog_of_war(self: Event, activated: bool, flags=None):
     action.do(action.SetLevelVar("_fog_of_war", activated))
 
-def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Optional[int] = None, other_radius: Optional[int] = None, flags=None):
+def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Optional[int] = None, other_radius: Optional[int] = None, fog_of_war_color: Optional[str] = None, flags=None):
     fowt = fog_of_war_type.lower()
     if fowt == 'gba':
         fowt = FogOfWarType.GBA
@@ -719,6 +720,15 @@ def set_fog_of_war(self: Event, fog_of_war_type: str, radius: int, ai_radius: Op
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', ai_radius))
     if other_radius is not None:
         action.do(action.SetLevelVar('_ai_fog_of_war_radius', other_radius))
+    if fog_of_war_color is not None:
+        fowc = fog_of_war_color.lower()
+        if fowc == 'white':
+            fowc = FogOfWarColor.WHITE
+        else:
+            fowc = FogOfWarColor.BLACK
+    else:
+        fowc = FogOfWarColor.BLACK
+    action.do(action.SetLevelVar('_fog_of_war_color', fowc))
 
 def end_turn(self: Event, team: NID = None, flags=None):
     self.logger.info('Force end of turn.')
@@ -1227,6 +1237,17 @@ def interact_unit(self: Event, unit, position, combat_script: Optional[List[str]
         actor, target, item, skip='immediate' in flags, event_combat=True, script=script, total_rounds=total_rounds,
         arena='arena' in flags, force_animation='force_animation' in flags, force_no_animation='force_no_animation' in flags)
     self.state = "paused"
+
+def set_combat_script(self: Event, combat_script: List[str], flags=None):
+    flags = flags or set()
+
+    # Currently in 'event' state, 'combat' state should be preceding
+    combat_state = self.game.state.get_prev_state()
+    if combat_state.name != 'combat':
+        self.logger.error("set_combat_script: Current game state is not combat state")
+        return
+
+    combat_state.combat.state_machine.script = list(reversed(combat_script))
 
 def pose_unit(self: Event, unit, pose, direction=None, flags=None):
     from app.events.event_validators import SpritePose, SpriteDirection
@@ -2407,6 +2428,12 @@ def set_mode_rng(self: Event, rng: str, flags=None):
         return
     self.game.current_mode.rng_mode = RNGOption(new_mode)
 
+def set_mode_permadeath(self: Event, permadeath: bool, flags=None):
+    flags = flags or set()
+    
+    self.game.current_mode.permadeath = permadeath
+
+
 def promote(self: Event, global_unit, klass_list: Optional[List[NID]] = None, flags=None):
     flags = flags or set()
     unit = self._get_unit(global_unit)
@@ -3174,7 +3201,7 @@ def unchoice(self: Event, flags=None):
     except Exception as e:
         self.logger.error("unchoice: Unchoice failed: " + str(e))
 
-def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=None,
+def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments = None,
             width=None, num_lines=None, style_nid=None, text_speed=None,
             font_color=None, font_type=None, bg=None, flags=None):
     flags = flags or set()
@@ -3256,7 +3283,8 @@ def textbox(self: Event, nid: str, text: str, box_position: Point | Alignments=N
                     self.logger.error("textbox: failed to eval %s", callback_expr)
                     return ""
             expr = lambda: tryexcept(text)
-        except:
+        except Exception as e:
+            self.logger.exception(e)
             self.logger.error('textbox: %s is not a valid python expression' % text)
         textbox = dialog.DynamicDialogWrapper(
             expr, background=box_bg, position=position, width=box_width,
