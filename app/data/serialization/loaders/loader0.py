@@ -54,6 +54,8 @@ def _load_as_dict(data_dir: Path) -> NestedPrimitiveDict:
     for key in database.Database.save_data_types:
         as_dict[key] = _json_load(data_dir, key)
         if as_dict[key] is None:
+            if key in database.Database.optional_data_types:  # Older projects won't have these
+                continue
             raise FileNotFoundError(
                 f"Data directory {data_dir / key} does not exist!\n"
                 f"Please do the following steps:\n\n"
