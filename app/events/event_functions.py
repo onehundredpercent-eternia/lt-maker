@@ -34,6 +34,7 @@ from app.engine import exp_funcs
 from app.engine.objects.item import ItemObject
 from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
+from app.engine.objects.prefab_tilemap import MapPrefabTileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.persistent_records import RECORDS
 from app.engine.sound import SongObject, get_sound_thread
@@ -2795,6 +2796,9 @@ def remove_generics_from_region(self: Event, nid, flags=None):
         self.logger.error("remove_generics_from_region: Couldn't find RegionObject %s" % nid)
 
 def show_layer(self: Event, layer, layer_transition=None, flags=None):
+    if isinstance(self.game.level.tilemap, MapPrefabTileMapObject):
+        self.logger.warning("show_layer is not supported on map_prefab levels")
+        return
     if layer not in self.game.level.tilemap.layers:
         self.logger.error("show_layer: Could not find layer %s in tilemap" % layer)
         return
@@ -2807,6 +2811,9 @@ def show_layer(self: Event, layer, layer_transition=None, flags=None):
     action.do(action.ShowLayer(layer, layer_transition))
 
 def hide_layer(self: Event, layer, layer_transition=None, flags=None):
+    if isinstance(self.game.level.tilemap, MapPrefabTileMapObject):
+        self.logger.warning("hide_layer is not supported on map_prefab levels")
+        return
     if layer not in self.game.level.tilemap.layers:
         self.logger.error("hide_layer: Could not find layer %s in tilemap" % layer)
         return

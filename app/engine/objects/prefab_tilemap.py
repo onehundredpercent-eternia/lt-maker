@@ -189,6 +189,7 @@ class MapPrefabTileMapObject(TileMapObject):
 
     def save(self) -> dict:
         s_dict = super().save()
+        s_dict['kind'] = 'map_prefab'
         # Authoritative for restore: carries the *current* (possibly
         # runtime-modified) terrain grid, autotile_set, seed and palettes --
         # not just the resource nid. This is what makes suspend/load and

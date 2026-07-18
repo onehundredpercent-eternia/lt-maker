@@ -278,6 +278,7 @@ class TileMapObject(Prefab):
 
     def save(self):
         s_dict = {}
+        s_dict['kind'] = 'tilemap'
         s_dict['nid'] = self.nid
         s_dict['layers'] = [layer.save() for layer in self.layers]
         s_dict['weather'] = [weather.save() for weather in self.weather]

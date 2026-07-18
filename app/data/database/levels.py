@@ -16,6 +16,7 @@ class LevelPrefab(Prefab):
         self.name = name
         self.tilemap: Optional[NID] = None  # Tilemap Nid
         self.bg_tilemap: Optional[NID] = None # bg tilemap nid
+        self.map_prefab: Optional[NID] = None  # MapPrefab Nid (RESOURCES.map_prefabs); if set, takes over the main map from `tilemap`
         self.party: NID = None  # Party Prefab Nid
         self.music = OrderedDict()
 
