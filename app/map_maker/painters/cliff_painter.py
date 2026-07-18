@@ -15,7 +15,12 @@ class CliffPainter(Painter):
     base_coord = (15, 0)
     second_start_px = 96
     second_limit = {}
-    organization = {}
+
+    def __init__(self, base_coord=None):
+        super().__init__(base_coord)
+        # Instance attribute, not class attribute -- see MountainPainter for
+        # why (mutated via .clear()/item-assignment, not reassigned).
+        self.organization = {}
 
     @property
     def check_flood_fill(self) -> str:

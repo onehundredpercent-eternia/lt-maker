@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 from app.utilities.typing import Pos
 
 from app.map_maker.painter_utils import Painter
@@ -78,7 +78,15 @@ class WangCorner16Painter(Painter):
     """
     """
     terrain_like: Tuple[Terrain] = tuple()
-    vertices: Dict[Pos, Tuple[int, float]] = {}
+
+    def __init__(self, display_coord: Optional[Pos] = None):
+        super().__init__(display_coord)
+        # NOTE: must be an instance attribute, not a class attribute -- it is
+        # mutated in place (.clear()/item assignment) rather than reassigned,
+        # so instances would otherwise silently share state (defeating the
+        # point of giving separate consumers, e.g. the engine, their own
+        # painter instances).
+        self.vertices: Dict[Pos, Tuple[int, float]] = {}
 
     def _pos_to_vertices(self, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos, Pos, Pos, Pos, Pos, Pos]:
         """Given a standard 16x16 tile gridded position
@@ -210,7 +218,6 @@ class WangCorner8Painter(WangCorner16Painter):
     """
     """
     terrain_like: Tuple[Terrain] = tuple()
-    vertices: Dict[Pos, Tuple[int, float]] = {}
 
     def _determine_index(self, tilemap, pos: Pos) -> int:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)

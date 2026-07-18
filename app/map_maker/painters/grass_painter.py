@@ -66,7 +66,6 @@ class LightGrassPainter(WangCorner8Painter, Painter):
     base_coord = (15, 0)
     corner_chance = 0.8
     edge_chance = 0.6
-    vertices: dict = {}
 
     def single_process(self, tilemap):
         # For each vertex, assign a random value

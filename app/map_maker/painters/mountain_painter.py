@@ -17,8 +17,6 @@ from app.map_maker.mountain_processing \
 class MountainPainter(Painter):
     terrain_like = (Terrain.MOUNTAIN, )
     base_coord = (8, 13)
-    organization = {}
-    current_threads = []  # Keeps track of the currently running threads
     # When True (the Qt editor), groups are solved on background Qt threads
     # and reported through the callbacks below. When False (the pygame engine),
     # groups are solved synchronously with no Qt dependency.
@@ -28,6 +26,13 @@ class MountainPainter(Painter):
 
     def __init__(self, base_coord: Optional[Pos] = None):
         super().__init__(base_coord)
+        # NOTE: these must be instance attributes, not class attributes --
+        # they are mutated in place (.clear()/.update()/.append()/.remove())
+        # rather than reassigned, so two MountainPainter() instances would
+        # otherwise silently share the same dict/list (defeating the point of
+        # giving separate consumers, e.g. the engine, their own instances).
+        self.organization = {}
+        self.current_threads = []  # Keeps track of the currently running threads
         self._initial_process()
 
     @property

@@ -1,5 +1,5 @@
-from typing import Dict, List, Tuple
-from app.utilities.typing import NID, Pos
+from typing import List
+from app.utilities.typing import NID
 
 from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES, COLORKEY
 from app.utilities.data import Data, Prefab
@@ -198,40 +198,6 @@ class TileMapObject(Prefab):
 
         return self
 
-    @classmethod
-    def build_from_scratch(cls, nid: NID, size: Tuple[int, int], 
-                           terrain_grid: Dict[Pos, NID], surf: engine.Surface, 
-                           scratch_data: Dict):
-        self = cls()
-        self.nid = nid
-        self.width = size[0]
-        self.height = size[1]
-        self.autotile_fps = 0
-        self.layers = Data()
-        self.scratch_data = scratch_data
-
-        # Build a layer
-        base_layer = LayerObject('base', False, self)
-        
-        for coord, terrain_nid in terrain_grid.items():
-            base_layer.terrain[coord] = terrain_nid
-
-        image = engine.create_surface((self.width * TILEWIDTH, self.height * TILEHEIGHT))
-        engine.fill(image, COLORKEY)
-        engine.set_colorkey(image, COLORKEY, rleaccel=True)
-        image.blit(surf, (0, 0))
-
-        right_bound = (self.width + 1) * TILEWIDTH
-        bottom_bound = (self.height + 1) * TILEHEIGHT
-        base_layer.pixel_bounds = [0, 0, right_bound, bottom_bound]
-
-        base_layer.image = image
-        base_layer.visible = True
-
-        self.layers.append(base_layer)
-
-        return self
-
     def check_bounds(self, pos):
         return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
 
@@ -323,7 +289,14 @@ class TileMapObject(Prefab):
         prefab = RESOURCES.tilemaps.get(s_dict['nid'])
         self = cls.from_prefab(prefab)
         self.restore_layers(s_dict['layers'])
+        self.restore_weather_and_animations(s_dict)
+        return self
+
+    def restore_weather_and_animations(self, s_dict):
+        """Shared by TileMapObject.restore and MapPrefabTileMapObject.restore
+        (which cannot use RESOURCES.tilemaps -- its saved dict is authoritative)."""
         weather = s_dict.get('weather', [])
+        self.weather = []
         for save_w in weather:
             if isinstance(save_w, tuple):
                 nid, pos = save_w
@@ -348,8 +321,6 @@ class TileMapObject(Prefab):
             except:
                 pass
             self.animations.append(new_anim)
-
-        return self
 
     def restore_layers(self, layer_list):
         for layer_dict in layer_list:
