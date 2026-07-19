@@ -559,9 +559,19 @@ class MainEditor(QMainWindow):
             QMessageBox.warning(
                 self, "Import Error", "Could not import map maker map:\n%s" % e)
             return
+        # The map_maker never renames its default 'sample' nid (NidDialog is
+        # only for tileset export), so the filename is the name the user
+        # actually chose.
+        prefab.nid = os.path.splitext(os.path.basename(fn))[0]
         if prefab.nid in RESOURCES.map_prefabs.keys():
             prefab.nid = str_utils.get_next_name(prefab.nid, RESOURCES.map_prefabs.keys())
         RESOURCES.map_prefabs.append(prefab)
+        # Persist immediately: cancelling any SingleResourceEditor/DataEditor
+        # dialog (reject) does a full RESOURCES.load from disk, which would
+        # silently wipe an import that only lives in memory.
+        current_proj = self.settings.get_current_project()
+        if current_proj:
+            RESOURCES.save(current_proj, ('map_prefabs',))
         QMessageBox.information(
             self, "Import Successful", "Imported Map Maker map as '%s'" % prefab.nid)
 
