@@ -259,6 +259,34 @@ New file `app/engine/objects/prefab_tilemap.py` (must pass mypy strict).
   (`python -m unittest discover -s app/tests -p 'test*.py'`).
 - Remember tests share the global `game` singleton — seed everything read.
 
+### Phase 7 outcomes (implemented, reviewed)
+
+- Most of the checklist already existed from earlier phases
+  (test_map_terrain_associations, test_prefab_tilemap,
+  test_change_map_terrain, test_map_prefab_level_wiring). Phase 7 added
+  the two real gaps:
+- `test_map_prefab_editor_display.py` (15 tests, PyQt5 offscreen):
+  create_renderers completeness + every-renderer-has-palette (regression
+  for the `__init__` fixes), painter isolation vs the shared singletons,
+  draw_tilemap_with_renderers, map_prefab_display cache behavior
+  (determinism, reload guard, palette-change rebuild, synchronous
+  mountain solve without touching shared PAINTERS), map_view helpers.
+  Gotcha: renderer_database builds QPixmaps at import time — a missing
+  QApplication does not raise, it kills the interpreter (exit 127, no
+  traceback); setUpModule constructs the QApplication before any
+  map_maker/editor import.
+- `test_map_prefab_board_integration.py` (5 tests): the "fog of war
+  grids build correctly from associated terrain" risk item is verified —
+  opacity/movement/minimap/fog all assert against DB values, and a
+  mock tilemap exposing the same nids yields a tile-for-tile identical
+  GameBoard (the board cannot distinguish a prefab map from a plain one).
+  Fog test drives the real UpdateFogOfWar action because testing_proj has
+  fog_los=True (radius passed directly to board.update_fow is not the
+  whole story).
+- Incidental: `"%s" % terrain` on a `Terrain` member TypeErrors — the
+  namedtuple+Enum mixin unpacks as two format args; use `% (terrain,)`.
+- Full suite: 331 tests, green, run twice for order stability.
+
 ## Risks / open items
 
 - Mountain Algorithm-X synchronous solve time on large ranges at load and
