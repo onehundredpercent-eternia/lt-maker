@@ -1267,10 +1267,12 @@ class MapMakerTerrain(Validator):
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         return [(t.value, t.name) for t in Terrain]
 
-    def convert(self, text: str) -> Optional[Terrain]:
-        if text and text.upper() in Terrain.__members__:
-            return Terrain[text.upper()]
-        return None
+    # No convert() override: change_map_terrain must receive the plain
+    # string on BOTH event pathways. The python-eventing wrapper only
+    # auto-converts EnumValidator params, so it always hands the function a
+    # string -- a convert() here would make the classic parse path
+    # (convert_parse; .event scripts, debug menu) hand it a live Terrain
+    # instead, and Terrain has no .upper().
 
 class MapAnim(Validator):
     def validate(self, text, level):

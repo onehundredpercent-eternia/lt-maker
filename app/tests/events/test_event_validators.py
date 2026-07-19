@@ -326,9 +326,11 @@ class EventValidateUnitTests(unittest.TestCase):
         self.assert_validator_fails(v, "not_a_real_terrain")
         self.assert_validator_fails(v, "")
         self.assert_valid_entries(v, [(t.value, t.name) for t in Terrain], text=None)
-        # convert resolves to the live enum member (used by editor tooling)
-        self.assertIs(Terrain.SEA, v.convert("sea"))
-        self.assertIsNone(v.convert("not_a_real_terrain"))
+        # convert must be the base pass-through: change_map_terrain expects
+        # the plain string on BOTH event pathways. A convert() override
+        # returning the live Terrain member made the classic parse path
+        # (convert_parse; .event scripts, debug menu) crash on .upper().
+        self.assertEqual("sea", v.convert("sea"))
 
     def test_sprite_pose_validator(self):
         v = SpritePose()

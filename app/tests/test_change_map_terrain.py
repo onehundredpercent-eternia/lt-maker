@@ -18,7 +18,8 @@ from app.map_maker.terrain import Terrain
 from app.engine import action
 from app.engine.objects.tilemap import TileMapObject
 from app.engine.objects.prefab_tilemap import MapPrefabTileMapObject
-from app.events import event_functions, event_validators
+from app.events import event_commands, event_functions, event_validators
+from app.utilities import str_utils
 
 
 def setUpModule():
@@ -283,6 +284,26 @@ class ChangeMapTerrainEventFunctionTests(_PrefabLevelTestCaseMixin, unittest.Tes
         event_functions.change_map_terrain(fake_event, (0, 0))
 
         self.assertNotIn((0, 0), tm.prefab.terrain_grid)
+        fake_event.logger.warning.assert_not_called()
+
+    def test_classic_parse_path_hands_function_a_string(self):
+        # Regression: MapMakerTerrain.convert() used to return a live
+        # Terrain member, so the classic parse path (.event scripts, debug
+        # menu -- event.py's convert_parse + run_command) handed
+        # change_map_terrain an enum and it crashed on .upper(). The
+        # python-eventing wrapper never converts (plain Validator), so only
+        # this path was affected. Mirror event.py exactly: parse the raw
+        # command text, convert_parse it, snake-case the keys, call.
+        command, _ = event_commands.parse_text_to_command('change_map_terrain;3,3;forest')
+        parameters, flags = event_commands.convert_parse(command, None)
+        parameters = {str_utils.camel_to_snake(k): v for k, v in parameters.items()}
+        self.assertIsInstance(parameters['map_maker_terrain'], str)
+
+        fake_event = self._make_fake_event()
+        event_functions.change_map_terrain(fake_event, **parameters, flags=flags)
+
+        tm = self.game.level.tilemap
+        self.assertEqual(Terrain.FOREST, tm.prefab.terrain_grid[(3, 3)])
         fake_event.logger.warning.assert_not_called()
 
     def test_change_map_terrain_accepts_lowercase_terrain_name(self):
