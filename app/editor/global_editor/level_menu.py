@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 
 from app.editor import tilemap_editor
+from app.editor.map_prefab_display import get_map_prefab_pixmap
 from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 from app.data.database.levels import LevelPrefab
@@ -95,6 +96,12 @@ class LevelModel(DragDropCollectionModel):
             return text
         elif role == Qt.DecorationRole:
             level = self._data[index.row()]
+            if level.map_prefab:
+                res = RESOURCES.map_prefabs.get(level.map_prefab)
+                if res:
+                    pix = get_map_prefab_pixmap(res)
+                    img = QIcon(pix)
+                    return img
             res = RESOURCES.tilemaps.get(level.tilemap)
             if res:
                 pix = tilemap_editor.get_tilemap_pixmap(res)

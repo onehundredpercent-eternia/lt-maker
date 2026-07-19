@@ -2,8 +2,10 @@ from app.editor.lib.components.validated_line_edit import NidLineEdit
 from functools import partial
 
 from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
 from app.editor import timer
 from app.editor.custom_widgets import PartyBox, UnitBox
+from app.editor.map_prefab_display import get_map_prefab_pixmap
 from app.editor.sound_editor import sound_tab
 from app.editor.tag_widget import TagDialog
 from app.editor.tile_editor import tile_tab
@@ -13,8 +15,59 @@ from app.extensions.custom_gui import (PropertyBox, PropertyCheckBox, QHLine,
 from app.extensions.multi_select_combo_box import MultiSelectComboBox
 from app.utilities import str_utils
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QCheckBox, QLabel, QLineEdit, QMessageBox,
-                             QPushButton, QVBoxLayout, QWidget, QDialog)
+from PyQt5.QtWidgets import (QCheckBox, QDialogButtonBox, QHBoxLayout, QLabel,
+                             QLineEdit, QListWidget, QMessageBox, QPushButton,
+                             QVBoxLayout, QWidget, QDialog)
+
+
+class MapPrefabDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Map Maker Map")
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+        self.selected_nid = None
+
+        layout = QHBoxLayout()
+        self.setLayout(layout)
+
+        left_layout = QVBoxLayout()
+        self.list_widget = QListWidget(self)
+        self.list_widget.addItems(RESOURCES.map_prefabs.keys())
+        self.list_widget.currentTextChanged.connect(self.on_selection_changed)
+        left_layout.addWidget(self.list_widget)
+
+        self.buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
+        self.buttonbox.accepted.connect(self.accept)
+        self.buttonbox.rejected.connect(self.reject)
+        left_layout.addWidget(self.buttonbox)
+
+        layout.addLayout(left_layout)
+
+        self.preview_label = QLabel(self)
+        self.preview_label.setMinimumSize(240, 160)
+        self.preview_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.preview_label)
+
+        self.list_widget.setCurrentRow(0)
+
+    def on_selection_changed(self, nid):
+        self.selected_nid = nid
+        prefab = RESOURCES.map_prefabs.get(nid)
+        if prefab:
+            pixmap = get_map_prefab_pixmap(prefab)
+            if pixmap.width() > 240 or pixmap.height() > 160:
+                pixmap = pixmap.scaled(240, 160, Qt.KeepAspectRatio)
+            self.preview_label.setPixmap(pixmap)
+        else:
+            self.preview_label.clear()
+
+    @classmethod
+    def get(cls, parent=None):
+        dlg = cls(parent)
+        result = dlg.exec_()
+        if result == QDialog.Accepted and dlg.selected_nid:
+            return RESOURCES.map_prefabs.get(dlg.selected_nid), True
+        return None, False
 
 
 class MusicDialog(SimpleDialog):
@@ -126,6 +179,15 @@ class PropertiesMenu(QWidget):
         self.map_box.clicked.connect(self.select_tilemap)
         form.addWidget(self.map_box)
 
+        self.map_prefab_box = QPushButton("Select Map Maker Map...")
+        self.map_prefab_box.clicked.connect(self.select_map_prefab)
+        form.addWidget(self.map_prefab_box)
+
+        self.remove_map_prefab_box = QPushButton("Remove Map Maker Map")
+        self.remove_map_prefab_box.clicked.connect(self.remove_map_prefab)
+        form.addWidget(self.remove_map_prefab_box)
+        self.remove_map_prefab_box.hide()
+
         self.bg_box = QPushButton("Select background tilemap...")
         self.bg_box.clicked.connect(self.select_bg_tilemap)
         form.addWidget(self.bg_box)
@@ -210,6 +272,8 @@ class PropertiesMenu(QWidget):
         self.loss_condition.edit.setText(current.objective['loss'])
         self.overworld_box.edit.setChecked(bool(current.go_to_overworld))
 
+        self.update_map_buttons()
+
     def nid_changed(self, text):
         self.current.nid = text
         self.state_manager.change_and_broadcast('ui_refresh_signal', None)
@@ -268,13 +332,47 @@ class PropertiesMenu(QWidget):
         for group in self.current.unit_groups:
             group.positions = {k: v for k, v in group.positions.items() if v[0] < tilemap.width and v[1] < tilemap.height}
 
+    def update_map_buttons(self):
+        current = self.current
+        if current.tilemap:
+            self.map_box.setText("Select Tilemap... (current: %s)" % current.tilemap)
+        else:
+            self.map_box.setText("Select Tilemap...")
+        if current.map_prefab:
+            self.map_prefab_box.setText("Select Map Maker Map... (in use: %s)" % current.map_prefab)
+            self.remove_map_prefab_box.show()
+        else:
+            self.map_prefab_box.setText("Select Map Maker Map...")
+            self.remove_map_prefab_box.hide()
+
     def select_tilemap(self):
         res, ok = tile_tab.get_tilemaps()
         if ok and res:
             nid = res.nid
             self.current.tilemap = nid
+            self.current.map_prefab = None
             self.check_positions(res)
+            self.update_map_buttons()
             self.state_manager.change_and_broadcast('ui_refresh_signal', None)
+
+    def select_map_prefab(self):
+        if not RESOURCES.map_prefabs:
+            QMessageBox.information(
+                self, 'No Map Maker Maps',
+                'No Map Maker maps have been imported yet. '
+                'Use File > Import Map Maker Map... to import one first.')
+            return
+        prefab, ok = MapPrefabDialog.get(self)
+        if ok and prefab:
+            self.current.map_prefab = prefab.nid
+            self.check_positions(prefab)
+            self.update_map_buttons()
+            self.state_manager.change_and_broadcast('ui_refresh_signal', None)
+
+    def remove_map_prefab(self):
+        self.current.map_prefab = None
+        self.update_map_buttons()
+        self.state_manager.change_and_broadcast('ui_refresh_signal', None)
 
     def select_bg_tilemap(self):
         res, ok = tile_tab.get_tilemaps()
