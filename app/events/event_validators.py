@@ -18,6 +18,7 @@ from app.utilities import str_utils
 from app.utilities.enums import Alignments
 from app.utilities.typing import NID, Point
 from app.events.regions import RegionType as RegionTypeEnum, RegionHighlight as HighlightTypeEnum
+from app.map_maker.terrain import Terrain
 
 class Validator():
     desc = ""
@@ -1249,6 +1250,27 @@ class Layer(Validator):
 
 class LayerTransition(OptionValidator):
     valid = ['fade', 'immediate']
+
+class MapMakerTerrain(Validator):
+    """A `app.map_maker.terrain.Terrain` enum member, matched by member
+    name (not its display value) case-insensitively, e.g. `GRASS`/`grass`.
+    Used by the `change_map_terrain` event command, which is only valid on
+    map_prefab-backed levels."""
+
+    desc = "accepts the name of a map_maker `Terrain` (case-insensitive, e.g. `GRASS` or `grass`). Only usable with `change_map_terrain`."
+
+    def validate(self, text, level):
+        if text and text.upper() in Terrain.__members__:
+            return text
+        return None
+
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        return [(t.value, t.name) for t in Terrain]
+
+    def convert(self, text: str) -> Optional[Terrain]:
+        if text and text.upper() in Terrain.__members__:
+            return Terrain[text.upper()]
+        return None
 
 class MapAnim(Validator):
     def validate(self, text, level):
