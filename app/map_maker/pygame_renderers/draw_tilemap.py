@@ -1,5 +1,5 @@
 # pygame mirror of app/map_maker/editor/draw_tilemap.py
-from typing import Set
+from typing import Dict, Set
 import time
 
 import pygame
@@ -9,9 +9,35 @@ from app.constants import TILEWIDTH, TILEHEIGHT, AUTOTILE_FRAMES
 from app.map_maker.map_prefab import MapPrefab
 from app.map_maker.terrain import Terrain
 
+from app.map_maker.pygame_renderers import SimpleRenderer
 from app.map_maker.pygame_renderers.renderer_database import RENDERERS
 
 last_autotile_num = 0
+
+def process_dirty_positions(tilemap: MapPrefab, renderers: Dict[Terrain, SimpleRenderer], autotile_num: int) -> None:
+    """Runs each dirty position's painter/renderer and caches the resulting
+    sprite in tilemap.tile_grid. This is the "process dirty positions" half
+    of draw_tilemap, factored out so callers that don't need a full Surface
+    (e.g. the engine's MapPrefabTileMapObject, which bakes sprites straight
+    into its own layer surfaces) can reuse it directly.
+
+    Does NOT clear tilemap.terrain_grid_to_update -- callers decide when
+    that happens (draw_tilemap needs the dirty set to survive into its
+    autotile-refresh section below; other callers can clear it themselves
+    once they've consumed it)."""
+    processed_terrains: Set[Terrain] = set()
+    for pos in sorted(tilemap.terrain_grid_to_update):
+        # Determine what terrain is in this position
+        terrain = tilemap.get_terrain(pos)
+        if not terrain:
+            continue
+
+        if terrain not in processed_terrains:
+            painter = renderers.get(terrain).painter
+            painter.single_process(tilemap)
+            processed_terrains.add(terrain)
+        sprite = renderers.get(terrain).determine_sprite(tilemap, pos, autotile_num)
+        tilemap.tile_grid[pos] = sprite
 
 def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> pygame.Surface:
     image = pygame.Surface((tilemap.width * TILEWIDTH,
@@ -26,21 +52,7 @@ def draw_tilemap(tilemap: MapPrefab, autotile_fps=29) -> pygame.Surface:
         autotile_num = 0
 
     # Process terrain
-    processed_terrains: Set[Terrain] = set()
-    for pos in sorted(tilemap.terrain_grid):
-        # Determine what terrain is in this position
-        terrain = tilemap.get_terrain(pos)
-        if not terrain:
-            continue
-
-        # Only process the ones that need to be updated
-        if pos in tilemap.terrain_grid_to_update:
-            if terrain not in processed_terrains:
-                painter = RENDERERS.get(terrain).painter
-                painter.single_process(tilemap)
-                processed_terrains.add(terrain)
-            sprite = RENDERERS.get(terrain).determine_sprite(tilemap, pos, autotile_num)
-            tilemap.tile_grid[pos] = sprite
+    process_dirty_positions(tilemap, RENDERERS, autotile_num)
 
     # Autotiles
     global last_autotile_num

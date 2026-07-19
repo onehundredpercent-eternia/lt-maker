@@ -6,9 +6,23 @@ from app.engine.objects.unit import UnitObject
 from app.engine.objects.region import RegionObject
 from app.engine.objects.ai_group import AIGroupObject
 from app.engine.objects.tilemap import TileMapObject
+from app.engine.objects.prefab_tilemap import MapPrefabTileMapObject
 
 from app.data.database.level_units import UnitGroup
 from app.utilities.typing import NID
+
+
+def _restore_tilemap(s_dict: dict) -> TileMapObject:
+    """Dispatches to the right TileMapObject subclass's restore based on
+    the 'kind' key tilemap save dicts carry (added in Phase 4). Old saves
+    (and any other saved tilemap dict predating this, e.g. overworld's)
+    have no 'kind' key -- treat that the same as 'tilemap' so old data
+    keeps loading unchanged."""
+    kind = s_dict.get('kind', 'tilemap')
+    if kind == 'map_prefab':
+        return MapPrefabTileMapObject.restore(s_dict)
+    return TileMapObject.restore(s_dict)
+
 
 class LevelObject():
     """Representation of a Level or Chapter in the engine. Contains information
@@ -128,7 +142,7 @@ class LevelObject():
         level = cls()
         level.nid = s_dict['nid']
         level.name = s_dict.get('name', "")
-        level.tilemap = TileMapObject.restore(s_dict['tilemap'])
+        level.tilemap = _restore_tilemap(s_dict['tilemap'])
         level.bg_tilemap = TileMapObject.restore(s_dict['bg_tilemap']) if s_dict.get('bg_tilemap', None) else None
         level.party = s_dict.get('party', "")
 

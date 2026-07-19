@@ -6,7 +6,12 @@ from app.map_maker.utilities import random_choice
 from app.map_maker.terrain import Terrain
 
 class BuildingPainter(Painter):
-    organization = {}  # Key: position, value: type
+    def __init__(self, base_coord=None):
+        super().__init__(base_coord)
+        # Instance attribute, not class attribute: mutated in place
+        # (.clear()/item-assignment) rather than reassigned, so two instances
+        # of the same subclass must not share this dict.
+        self.organization = {}  # Key: position, value: type
 
     @property
     def check_flood_fill(self):
@@ -63,14 +68,13 @@ class BuildingPainter(Painter):
 
         # So it always uses the same set of coords...
         base_pos = (pos[0] - offset[0], pos[1] - offset[1])
-        coord = random_choice(coords, base_pos)
+        coord = random_choice(coords, base_pos, seed=tilemap.seed)
         return coord        
 
 class CastlePainter(BuildingPainter):
     base_coord = (0, 0)
-    data = {'single': [(0, 0), (0, 1)], 
+    data = {'single': [(0, 0), (0, 1)],
             '3x3': [(0, 2), (0, 5), (0, 8), (0, 11), (0, 14), (0, 17)]}
-    organization = {}
 
     def single_process(self, tilemap):
         self.organization.clear()
@@ -95,12 +99,11 @@ class CastlePainter(BuildingPainter):
     
 class RuinsPainter(BuildingPainter):
     base_coord = (0, 0)
-    data = {'single': [(0, 0), (1, 0)], 
-            '3x3': [(0, 3)], 
-            '2x2': [(0, 1)], 
-            '2x1': [(0, 2)], 
+    data = {'single': [(0, 0), (1, 0)],
+            '3x3': [(0, 3)],
+            '2x2': [(0, 1)],
+            '2x1': [(0, 2)],
             '3x2': [(0, 6)]}
-    organization = {}
 
     def single_process(self, tilemap):
         self.organization.clear()
@@ -140,10 +143,9 @@ class RuinsPainter(BuildingPainter):
 
 class HousePainter(BuildingPainter):
     base_coord = (0, 0)
-    data = {'single': [(0, 0)], 
-            '3x3': [(0, 1)], 
+    data = {'single': [(0, 0)],
+            '3x3': [(0, 1)],
             '3x2': [(0, 4)]}
-    organization = {}
 
     def single_process(self, tilemap):
         self.organization.clear()
@@ -179,7 +181,7 @@ class HousePainter(BuildingPainter):
 
         # So it always uses the same set of coords...
         base_pos = (pos[0] - offset[0], pos[1] - offset[1])
-        coord = random_choice(coords, base_pos)
+        coord = random_choice(coords, base_pos, seed=tilemap.seed)
         if coord == (0, 0) and sum([Terrain.sand_like(t) for t in tilemap.get_cardinal_terrain(pos)]) > 2:
             coord = (1, 0)
         return coord

@@ -28,7 +28,6 @@ from .autogenerate_indoor_map import AutogenerateIndoorMap
 from .autogenerate_outdoor_map import AutogenerateOutdoorMap
 
 from app.map_maker.map_prefab import MapPrefab
-import app.map_maker.utilities as map_utils
 from app.map_maker.palette_collection import PALETTES
 from app.map_maker.qt_renderers.renderer_database import RENDERERS
 from app.map_maker.terrain import Terrain
@@ -113,7 +112,7 @@ class MapEditor(QMainWindow):
 
         self.random_seed_box = PropertyBox("RNG Seed", QSpinBox, self)
         self.random_seed_box.edit.setRange(0, 1023)
-        self.random_seed_box.edit.setValue(map_utils.get_random_seed())
+        self.random_seed_box.edit.setValue(self.current.seed)
         self.random_seed_box.setMaximumWidth(100)
         self.random_seed_box.edit.setAlignment(Qt.AlignRight)
         self.random_seed_box.edit.valueChanged.connect(self.random_seed_changed)
@@ -374,6 +373,7 @@ class MapEditor(QMainWindow):
 
     def set_current(self, current: MapPrefab):
         self.current = current
+        self.random_seed_box.edit.setValue(current.seed)
         self.view.set_current(current)
         self.autotile_fps_box.edit.setValue(current.autotile_fps)
         self.cliff_marker_widget.set_current(current)
@@ -394,7 +394,7 @@ class MapEditor(QMainWindow):
         self.current.autotile_fps = val
 
     def random_seed_changed(self, val):
-        map_utils.set_random_seed(val)
+        self.current.seed = val
         print("--- Seed Changed to %d ---" % val)
         self.current.reset_all()
 
@@ -561,6 +561,7 @@ class MapEditor(QMainWindow):
             return False
         self.current_map_save_location = None
         self.current = new_tilemap_prefab
+        self.random_seed_box.edit.setValue(self.current.seed)
         self.current.reset_all()
         self.view.set_current(self.current)
         self.set_title()

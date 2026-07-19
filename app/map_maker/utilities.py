@@ -9,35 +9,20 @@ from app.utilities.typing import Pos
 if TYPE_CHECKING:
     from app.map_maker.terrain import Terrain
 
-RANDOM_SEED = 0
-
-def get_random_seed() -> int:
-    return RANDOM_SEED
-
-def set_random_seed(val: int):
-    global RANDOM_SEED
-    RANDOM_SEED = val
-
-def random_choice(choices: List[Any], pos: Pos, seed: int = None, offset: int = 0) -> Any:
-    if seed is None:
-        seed = RANDOM_SEED
+def random_choice(choices: List[Any], pos: Pos, seed: int, offset: int = 0) -> Any:
     random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
     return random.choice(choices)
 
-def random_random(pos: Pos, seed: int = None, offset: int = 0) -> float:
-    if seed is None:
-        seed = RANDOM_SEED
+def random_random(pos: Pos, seed: int, offset: int = 0) -> float:
     random.seed(seed + pos[0] * 1024**2 + pos[1] * 1024 + offset)
     return random.random()
 
-def edge_random(pos1: Pos, pos2: Pos, seed: int = None) -> float:
+def edge_random(pos1: Pos, pos2: Pos, seed: int) -> float:
     """
     Uses two positions (essentially the edge between these two positions)
     to seed the RNG
     north, then south; west, then east
     """
-    if seed is None:
-        seed = RANDOM_SEED
     random.seed(seed + pos1[0] * 1024**3 + pos1[1] * 1024**2 + pos2[0] * 1024 + pos2[1])
     return random.random()
 

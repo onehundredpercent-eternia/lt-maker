@@ -15,7 +15,12 @@ class CliffPainter(Painter):
     base_coord = (15, 0)
     second_start_px = 96
     second_limit = {}
-    organization = {}
+
+    def __init__(self, base_coord=None):
+        super().__init__(base_coord)
+        # Instance attribute, not class attribute -- see MountainPainter for
+        # why (mutated via .clear()/item-assignment, not reassigned).
+        self.organization = {}
 
     @property
     def check_flood_fill(self) -> str:
@@ -84,25 +89,25 @@ class CliffPainter(Painter):
             # Top
             elif other_pos[0] == pos[0] and other_pos[1] == pos[1] - 1:
                 # if edge_random(other_pos, pos) < 0.5:
-                if edge_random(other_pos, pos) < 0.5:
+                if edge_random(other_pos, pos, seed=tilemap.seed) < 0.5:
                     corner_topright = True
                 else:
                     corner_topleft = True
             # Bottom
             elif other_pos[0] == pos[0] and other_pos[1] == pos[1] + 1:
-                if edge_random(pos, other_pos) < 0.5:
+                if edge_random(pos, other_pos, seed=tilemap.seed) < 0.5:
                     corner_bottomright = True
                 else:
                     corner_bottomleft = True
             # Left
             elif other_pos[0] == pos[0] - 1 and other_pos[1] == pos[1]:
-                if edge_random(other_pos, pos) < 0.5:
+                if edge_random(other_pos, pos, seed=tilemap.seed) < 0.5:
                     corner_topleft = True
                 else:
                     corner_bottomleft = True
             # Right
             elif other_pos[0] == pos[0] + 1 and other_pos[1] == pos[1]:
-                if edge_random(pos, other_pos) < 0.5:
+                if edge_random(pos, other_pos, seed=tilemap.seed) < 0.5:
                     corner_topright = True
                 else:
                     corner_bottomright = True
@@ -214,5 +219,5 @@ class CliffPainter(Painter):
         else:
             new_coords = [(index, k + self.second_start_px//16) for k in range(self.second_limit[index])]
 
-        coord = random_choice(new_coords, pos)
+        coord = random_choice(new_coords, pos, seed=tilemap.seed)
         return coord

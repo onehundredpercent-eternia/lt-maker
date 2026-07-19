@@ -1,5 +1,7 @@
 from __future__ import annotations
 from app.engine.objects.tilemap import TileMapObject
+from app.engine.objects.prefab_tilemap import MapPrefabTileMapObject
+from app.map_maker.terrain import Terrain
 from app.utilities.typing import NID
 
 import functools
@@ -3487,6 +3489,61 @@ class ChangeBGTileMap(Action):
             game.level.bg_tilemap = TileMapObject.from_prefab(tilemap_prefab)
         else:
             game.level.bg_tilemap = None
+
+
+class ChangeMapMakerTerrain(Action):
+    """Runtime terrain edit on a map_prefab-backed level (Phase 5 of
+    map_prefab_engine_plan.md). Only valid when `game.level.tilemap` is a
+    `MapPrefabTileMapObject` -- asserts otherwise, since constructing this
+    action against a plain TileMapObject level is a programming error (the
+    `change_map_terrain` event function is what guards this for event-script
+    callers; see event_functions.py).
+
+    `new_terrain=None` erases the tile, matching
+    `MapPrefabTileMapObject.change_terrain`'s own None-means-erase
+    convention. `old_terrain` is captured here in `__init__` (the dominant
+    convention in this file for reversible actions -- e.g. ChangeBGTileMap
+    above), read directly off the live prefab before any mutation happens.
+
+    Cleanly turnwheel-reversible (unlike `change_tilemap`/ChangeBGTileMap's
+    read-only-nid style): `MapPrefabTileMapObject` rendering is deterministic
+    (position-keyed RNG off the prefab's saved seed), so `reverse()` painting
+    the old terrain back in restores byte-identical pixels, and `execute()`
+    (redo) is just `do()` again (the base Action default).
+
+    A unit standing on `pos` is forced to leave and re-arrive (same as
+    AddRegion/RemoveRegion do for TERRAIN regions), so terrain-derived unit
+    state -- the terrain status skill above all -- is re-derived from the new
+    terrain immediately instead of going stale until the unit next moves.
+    Only `pos` needs this: neighboring tiles only re-render sprites, their
+    terrain nid never changes. Keeping the change sensible (e.g. not
+    stranding a unit on impassable terrain) remains the event designer's
+    responsibility.
+    """
+
+    def __init__(self, pos: Pos, new_terrain: Optional[Terrain]):
+        tilemap = game.level.tilemap
+        assert isinstance(tilemap, MapPrefabTileMapObject), \
+            "ChangeMapMakerTerrain requires a map_prefab-backed level (got %s)" % type(tilemap).__name__
+        self.pos = pos
+        self.new_terrain = new_terrain
+        self.old_terrain: Optional[Terrain] = tilemap.prefab.get_terrain(pos)
+
+    def _change_to(self, terrain: Optional[Terrain]):
+        unit = game.board.get_unit(self.pos)
+        if unit:
+            game.leave(unit)
+        game.level.tilemap.change_terrain(self.pos, terrain)
+        game.board.reset_pos(game.level.tilemap, self.pos)
+        game.boundary.reset()
+        if unit:
+            game.arrive(unit, self.pos)
+
+    def do(self):
+        self._change_to(self.new_terrain)
+
+    def reverse(self):
+        self._change_to(self.old_terrain)
 
 
 class AddWeather(Action):

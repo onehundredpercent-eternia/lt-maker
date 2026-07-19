@@ -361,12 +361,21 @@ class GameState():
         from app.engine.level_cursor import LevelCursor
         from app.engine.objects.level import LevelObject
         from app.engine.objects.tilemap import TileMapObject
+        from app.engine.objects.prefab_tilemap import MapPrefabTileMapObject
 
         level_nid = str(level_nid)
         level_prefab = DB.levels.get(level_nid)
-        tilemap_nid = level_prefab.tilemap
-        tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
-        tilemap = TileMapObject.from_prefab(tilemap_prefab)
+        if level_prefab.map_prefab:
+            map_prefab = RESOURCES.map_prefabs.get(level_prefab.map_prefab)
+            if not map_prefab:
+                raise ValueError(
+                    "Level %s: could not find map_prefab %s in RESOURCES.map_prefabs" %
+                    (level_nid, level_prefab.map_prefab))
+            tilemap = MapPrefabTileMapObject.from_prefab(map_prefab)
+        else:
+            tilemap_nid = level_prefab.tilemap
+            tilemap_prefab = RESOURCES.tilemaps.get(tilemap_nid)
+            tilemap = TileMapObject.from_prefab(tilemap_prefab)
         bg_tilemap = TileMapObject.from_prefab(RESOURCES.tilemaps.get(level_prefab.bg_tilemap)) if level_prefab.bg_tilemap else None
         self.cursor = LevelCursor(self)
         self._current_level = LevelObject.from_prefab(level_prefab, tilemap, bg_tilemap, self.unit_registry, self.current_mode)

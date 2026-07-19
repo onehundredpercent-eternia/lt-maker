@@ -48,6 +48,12 @@ class FloorShadingRenderer(SimpleRenderer):
             'ruins': RuinedFloorPainter(),
             'grass': GrassFloorPainter(),
         }
+        # Unlike relying on the editor's startup *_palette_changed(0) call
+        # (map_editor.py), __init__ must apply the palette itself so a
+        # renderer built any other way (e.g. create_renderers()) doesn't
+        # crash with self.palette unset. See
+        # pygame_renderers/shading_renderer.py's identical fix.
+        self.set_palette(palette)
 
     def set_palette(self, palette: Palette):
         self.palette = get_qt_palette(palette)

@@ -2713,6 +2713,26 @@ Causes the specified map *Layer* to be hidden. The optional *LayerTransition* ke
     keywords = ["Layer"]
     optional_keywords = ["LayerTransition"]
 
+class ChangeMapTerrain(EventCommand):
+    nid = 'change_map_terrain'
+    tag = Tags.TILEMAP
+
+    desc = \
+        """
+Changes the map_maker `Terrain` at *Position* to *MapMakerTerrain*, re-rendering the affected tile(s) on the fly.
+
+**Only works on levels that use a map_maker map** (`LevelPrefab.map_prefab` set). On any other level, this command is a no-op and logs a warning.
+
+If *MapMakerTerrain* is omitted, the tile at *Position* is erased instead of repainted.
+
+Flood-fill terrains (e.g. `SEA`, `MOUNTAIN`, `CLIFF`) re-render their whole connected blob, not just the single tile -- expect neighboring tiles to change appearance too when painting into or out of one of these.
+
+This command is fully turnwheel-safe: rewinding past it repaints the previous terrain, and rendering is deterministic, so nothing is lost by rewinding and replaying.
+        """
+
+    keywords = ["Position"]
+    optional_keywords = ["MapMakerTerrain"]
+
 class AddWeather(EventCommand):
     nid = 'add_weather'
     tag = Tags.TILEMAP

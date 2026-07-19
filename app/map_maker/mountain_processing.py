@@ -3,7 +3,7 @@ import time
 
 from app.utilities.typing import Pos
 
-from app.map_maker.utilities import get_random_seed, random_choice
+from app.map_maker.utilities import random_choice
 from app.map_maker import rain_algorithm_x
 from app.map_maker.terrain import Terrain
 
@@ -170,7 +170,7 @@ class NaiveBacktrackingProcess:
                 valid_coord_list += [valid_coord] * count
         if not valid_coord_list:
             valid_coord_list = valid_coords
-        valid_coord = random_choice(valid_coord_list, pos)
+        valid_coord = random_choice(valid_coord_list, pos, seed=tilemap.seed)
         # print("Final", valid_coord)
         self.organization[pos] = valid_coord
         return True
@@ -284,7 +284,7 @@ class AlgorithmXProcess:
             return
 
         print("Setup 1 complete", id(self), len(rows), len(columns), flush=True)
-        solver = rain_algorithm_x.RainAlgorithmX(columns, row_names, rows, self.to_process[0], get_random_seed() + iteration)
+        solver = rain_algorithm_x.RainAlgorithmX(columns, row_names, rows, self.to_process[0], self.tilemap.seed + iteration)
         print("Setup 2 complete", id(self), flush=True)
 
         time.sleep(0.001)

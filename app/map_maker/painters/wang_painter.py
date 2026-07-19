@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 from app.utilities.typing import Pos
 
 from app.map_maker.painter_utils import Painter
@@ -33,7 +33,7 @@ class WangEdge16Painter(Painter):
 
     def get_coord(self, tilemap, position: Pos) -> Pos:
         col_idx = self._determine_index(tilemap, position)
-        coord = random_choice([(col_idx, k) for k in range(self.limit[col_idx])], position)
+        coord = random_choice([(col_idx, k) for k in range(self.limit[col_idx])], position, seed=tilemap.seed)
         return coord
 
 class WangEdge8Painter(Painter):
@@ -68,17 +68,25 @@ class WangEdge8Painter(Painter):
 
     def get_coord(self, tilemap, position: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
         col_idx1, col_idx2, col_idx3, col_idx4 = self._determine_index(tilemap, position)
-        coord1 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position)
-        coord2 = random_choice([(col_idx2, k) for k in range(self.limit[col_idx2])], position, offset=1)
-        coord3 = random_choice([(col_idx3, k) for k in range(self.limit[col_idx3])], position, offset=2)
-        coord4 = random_choice([(col_idx4, k) for k in range(self.limit[col_idx4])], position, offset=3)
+        coord1 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position, seed=tilemap.seed)
+        coord2 = random_choice([(col_idx2, k) for k in range(self.limit[col_idx2])], position, seed=tilemap.seed, offset=1)
+        coord3 = random_choice([(col_idx3, k) for k in range(self.limit[col_idx3])], position, seed=tilemap.seed, offset=2)
+        coord4 = random_choice([(col_idx4, k) for k in range(self.limit[col_idx4])], position, seed=tilemap.seed, offset=3)
         return coord1, coord2, coord3, coord4
 
 class WangCorner16Painter(Painter):
     """
     """
     terrain_like: Tuple[Terrain] = tuple()
-    vertices: Dict[Pos, Tuple[int, float]] = {}
+
+    def __init__(self, display_coord: Optional[Pos] = None):
+        super().__init__(display_coord)
+        # NOTE: must be an instance attribute, not a class attribute -- it is
+        # mutated in place (.clear()/item assignment) rather than reassigned,
+        # so instances would otherwise silently share state (defeating the
+        # point of giving separate consumers, e.g. the engine, their own
+        # painter instances).
+        self.vertices: Dict[Pos, Tuple[int, float]] = {}
 
     def _pos_to_vertices(self, pos: Pos) -> Tuple[Pos, Pos, Pos, Pos, Pos, Pos, Pos, Pos, Pos]:
         """Given a standard 16x16 tile gridded position
@@ -171,15 +179,15 @@ class WangCorner16Painter(Painter):
             topleft, topright, bottomleft, bottomright \
             = self._pos_to_vertices(pos)
 
-        self.vertices[center] = (center_vertex_type, random_random(center))
-        self.vertices[left] = (left_vertex_type, random_random(left))
-        self.vertices[right] = (right_vertex_type, random_random(right))
-        self.vertices[top] = (top_vertex_type, random_random(top))
-        self.vertices[bottom] = (bottom_vertex_type, random_random(bottom))
-        self.vertices[topleft] = (topleft_vertex_type, random_random(topleft))
-        self.vertices[topright] = (topright_vertex_type, random_random(topright))
-        self.vertices[bottomleft] = (bottomleft_vertex_type, random_random(bottomleft))
-        self.vertices[bottomright] = (bottomright_vertex_type, random_random(bottomright))
+        self.vertices[center] = (center_vertex_type, random_random(center, seed=tilemap.seed))
+        self.vertices[left] = (left_vertex_type, random_random(left, seed=tilemap.seed))
+        self.vertices[right] = (right_vertex_type, random_random(right, seed=tilemap.seed))
+        self.vertices[top] = (top_vertex_type, random_random(top, seed=tilemap.seed))
+        self.vertices[bottom] = (bottom_vertex_type, random_random(bottom, seed=tilemap.seed))
+        self.vertices[topleft] = (topleft_vertex_type, random_random(topleft, seed=tilemap.seed))
+        self.vertices[topright] = (topright_vertex_type, random_random(topright, seed=tilemap.seed))
+        self.vertices[bottomleft] = (bottomleft_vertex_type, random_random(bottomleft, seed=tilemap.seed))
+        self.vertices[bottomright] = (bottomright_vertex_type, random_random(bottomright, seed=tilemap.seed))
 
     def _determine_index(self, tilemap, pos: Pos) -> int:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
@@ -203,14 +211,13 @@ class WangCorner16Painter(Painter):
 
     def get_coord(self, tilemap, position: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
         index = self._determine_index(tilemap, position)
-        coord = random_choice([(index, k) for k in range(self.limit[index])], position)
+        coord = random_choice([(index, k) for k in range(self.limit[index])], position, seed=tilemap.seed)
         return coord
 
 class WangCorner8Painter(WangCorner16Painter):
     """
     """
     terrain_like: Tuple[Terrain] = tuple()
-    vertices: Dict[Pos, Tuple[int, float]] = {}
 
     def _determine_index(self, tilemap, pos: Pos) -> int:
         north, east, south, west = tilemap.get_cardinal_terrain(pos)
@@ -239,8 +246,8 @@ class WangCorner8Painter(WangCorner16Painter):
 
     def get_coord(self, tilemap, position: Pos) -> Tuple[Pos, Pos, Pos, Pos]:
         col_idx1, col_idx2, col_idx3, col_idx4 = self._determine_index(tilemap, position)
-        coord1 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position)
-        coord2 = random_choice([(col_idx2, k) for k in range(self.limit[col_idx2])], position, offset=1)
-        coord3 = random_choice([(col_idx3, k) for k in range(self.limit[col_idx3])], position, offset=2)
-        coord4 = random_choice([(col_idx4, k) for k in range(self.limit[col_idx4])], position, offset=3)
+        coord1 = random_choice([(col_idx1, k) for k in range(self.limit[col_idx1])], position, seed=tilemap.seed)
+        coord2 = random_choice([(col_idx2, k) for k in range(self.limit[col_idx2])], position, seed=tilemap.seed, offset=1)
+        coord3 = random_choice([(col_idx3, k) for k in range(self.limit[col_idx3])], position, seed=tilemap.seed, offset=2)
+        coord4 = random_choice([(col_idx4, k) for k in range(self.limit[col_idx4])], position, seed=tilemap.seed, offset=3)
         return coord1, coord2, coord3, coord4

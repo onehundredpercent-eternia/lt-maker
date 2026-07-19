@@ -44,6 +44,12 @@ class FloorShadingRenderer(SimpleRenderer):
             'ruins': RuinedFloorPainter(),
             'grass': GrassFloorPainter(),
         }
+        # Unlike the Qt version (which relies on the editor calling
+        # set_palette(0) once at startup -- see map_editor.py
+        # indoor_palette_changed/outdoor_palette_changed), the engine has no
+        # equivalent init hook, so __init__ must apply the palette itself or
+        # self.palette is never set and .painter/.determine_sprite crash.
+        self.set_palette(palette)
 
     def set_palette(self, palette: Palette):
         self.palette = get_pygame_palette(palette)

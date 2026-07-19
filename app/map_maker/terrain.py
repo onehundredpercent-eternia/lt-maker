@@ -6,6 +6,14 @@ from collections import namedtuple
 from enum import Enum
 
 class Terrain(namedtuple("Terrain", "value outdoor"), Enum):
+    # The anonymous namedtuple base above is also named 'Terrain', which
+    # breaks default enum pickling: pickle serializes the member's _value_
+    # (a namedtuple instance), looks up app.map_maker.terrain.Terrain to
+    # rebuild it, finds this Enum class instead, and fails with "it's not
+    # the same object". Serialize by member name instead.
+    def __reduce_ex__(self, protocol):
+        return (getattr, (Terrain, self.name))
+
     # Outdoors
     GRASS = 'Grass', True
     LIGHT_GRASS = 'Light Grass', True

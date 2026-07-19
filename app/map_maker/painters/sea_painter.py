@@ -2,7 +2,7 @@ from typing import Tuple
 
 from app.utilities.typing import Pos
 
-from app.map_maker.utilities import random_choice, random_random, edge_random, get_random_seed
+from app.map_maker.utilities import random_choice, random_random, edge_random
 from app.map_maker.painters import WangEdge16Painter
 from app.map_maker.terrain import Terrain
 from app.utilities import utils
@@ -46,31 +46,31 @@ class SeaPainter(WangEdge16Painter):
 
     def _modify_index(self, index: int, tilemap, pos: Pos) -> int:
         # For randomly serrating the straight edges of the sea
-        odd = bool((pos[0] + pos[1] + get_random_seed()) % 2)
+        odd = bool((pos[0] + pos[1] + tilemap.seed) % 2)
         even = not odd
         # Left
         if index == 13:
-            if odd and self._determine_index(tilemap, (pos[0], pos[1] - 1)) == 13 and edge_random((pos[0], pos[1] - 1), pos) < self.serration_chance:
+            if odd and self._determine_index(tilemap, (pos[0], pos[1] - 1)) == 13 and edge_random((pos[0], pos[1] - 1), pos, seed=tilemap.seed) < self.serration_chance:
                 index = 12
-            elif even and self._determine_index(tilemap, (pos[0], pos[1] + 1)) == 13 and edge_random(pos, (pos[0], pos[1] + 1)) < self.serration_chance:
+            elif even and self._determine_index(tilemap, (pos[0], pos[1] + 1)) == 13 and edge_random(pos, (pos[0], pos[1] + 1), seed=tilemap.seed) < self.serration_chance:
                 index = 9
         # Right
         elif index == 7:
-            if odd and self._determine_index(tilemap, (pos[0], pos[1] - 1)) == 7 and edge_random((pos[0], pos[1] - 1), pos) < self.serration_chance:
+            if odd and self._determine_index(tilemap, (pos[0], pos[1] - 1)) == 7 and edge_random((pos[0], pos[1] - 1), pos, seed=tilemap.seed) < self.serration_chance:
                 index = 6
-            elif even and self._determine_index(tilemap, (pos[0], pos[1] + 1)) == 7 and edge_random(pos, (pos[0], pos[1] + 1)) < self.serration_chance:
+            elif even and self._determine_index(tilemap, (pos[0], pos[1] + 1)) == 7 and edge_random(pos, (pos[0], pos[1] + 1), seed=tilemap.seed) < self.serration_chance:
                 index = 3
         # Top
         elif index == 11:
-            if odd and self._determine_index(tilemap, (pos[0] - 1, pos[1])) == 11 and edge_random((pos[0] - 1, pos[1]), pos) < self.serration_chance:
+            if odd and self._determine_index(tilemap, (pos[0] - 1, pos[1])) == 11 and edge_random((pos[0] - 1, pos[1]), pos, seed=tilemap.seed) < self.serration_chance:
                 index = 3
-            elif even and self._determine_index(tilemap, (pos[0] + 1, pos[1])) == 11 and edge_random(pos, (pos[0] + 1, pos[1])) < self.serration_chance:
+            elif even and self._determine_index(tilemap, (pos[0] + 1, pos[1])) == 11 and edge_random(pos, (pos[0] + 1, pos[1]), seed=tilemap.seed) < self.serration_chance:
                 index = 9
         # Bottom
         elif index == 14:
-            if odd and self._determine_index(tilemap, (pos[0] - 1, pos[1])) == 14 and edge_random((pos[0] - 1, pos[1]), pos) < self.serration_chance:
+            if odd and self._determine_index(tilemap, (pos[0] - 1, pos[1])) == 14 and edge_random((pos[0] - 1, pos[1]), pos, seed=tilemap.seed) < self.serration_chance:
                 index = 6
-            elif even and self._determine_index(tilemap, (pos[0] + 1, pos[1])) == 14 and edge_random(pos, (pos[0] + 1, pos[1])) < self.serration_chance:
+            elif even and self._determine_index(tilemap, (pos[0] + 1, pos[1])) == 14 and edge_random(pos, (pos[0] + 1, pos[1]), seed=tilemap.seed) < self.serration_chance:
                 index = 12
 
         return index
@@ -90,7 +90,7 @@ class SeaPainter(WangEdge16Painter):
 
         if index == 15:
             dist = self._distance_to_closest_land(tilemap, pos)
-            if dist > (2 + 2 * random_random(pos)):  # Open Sea (adds random number between 0 and 1 for rng)
+            if dist > (2 + 2 * random_random(pos, seed=tilemap.seed)):  # Open Sea (adds random number between 0 and 1 for rng)
                 # Measure distance to closest non sea, bridge terrain
                 new_coords = [(0, k) for k in range(2, 9)]
             else:
@@ -101,7 +101,7 @@ class SeaPainter(WangEdge16Painter):
             else:
                 new_coords = [(index, k) for k in range(self.limit[index])]
 
-        coord = random_choice(new_coords, pos)
+        coord = random_choice(new_coords, pos, seed=tilemap.seed)
 
         # Even though this should be able to use the 16x16
         # pixmaps, the sea autotiles are not set up to use 

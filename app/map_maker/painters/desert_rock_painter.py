@@ -20,12 +20,12 @@ class DesertRockPainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         _, east, _, west = tilemap.get_cardinal_terrain(pos)
         if east != Terrain.DESERT_ROCK and west != Terrain.DESERT_ROCK:
-            coord = random_choice(self.data['singles'], pos)
+            coord = random_choice(self.data['singles'], pos, seed=tilemap.seed)
         elif west != Terrain.DESERT_ROCK:
-            coord = random_choice(self.data['pairs1'], pos)
+            coord = random_choice(self.data['pairs1'], pos, seed=tilemap.seed)
         elif east != Terrain.DESERT_ROCK:
-            coord = random_choice(self.data['pairs2'], pos)
+            coord = random_choice(self.data['pairs2'], pos, seed=tilemap.seed)
         else:
-            coord = random_choice(self.data['middle'], pos)
+            coord = random_choice(self.data['middle'], pos, seed=tilemap.seed)
 
         return coord

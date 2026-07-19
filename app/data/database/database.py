@@ -10,7 +10,8 @@ from typing import List
 from app.data.category import Categories, CategorizedCatalog
 from app.data.database import (ai, buildings, constants, difficulty_modes, equations,
                                factions, items, klass, levels, lore, mcost,
-                               minimap, overworld, parties, credit,
+                               map_terrain_associations, minimap, overworld,
+                               parties, credit,
                                raw_data, skills, stats, supports, tags, teams,
                                terrain, translations, units, varslot, weapons)
 from app.data.serialization import disk_loader
@@ -24,8 +25,10 @@ class Database(object):
                        "weapons", "teams", "factions", "items", "skills", "buildings", "tags", 
                        "game_var_slots", "classes", "support_constants", "support_ranks", "affinities", 
                        "units", "support_pairs", "ai", "parties", "difficulty_modes", "credit",
-                       "translations", "lore", "levels", "events", "overworlds", "raw_data")
+                       "translations", "lore", "levels", "events", "overworlds", "raw_data",
+                       "map_terrain_associations")
     save_as_chunks = ("events", 'items', 'skills', 'buildings', 'units', 'classes', 'levels', "credit")
+    optional_data_types = ("map_terrain_associations",)
 
     def __init__(self):
         self.current_proj_dir = None
@@ -70,6 +73,8 @@ class Database(object):
         self.raw_data = raw_data.RawDataCatalog()
 
         self.credit = credit.CreditCatalog()
+
+        self.map_terrain_associations = map_terrain_associations.MapTerrainAssociations()
 
     @property
     def music_keys(self) -> List[str]:

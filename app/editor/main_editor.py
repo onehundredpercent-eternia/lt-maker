@@ -1,16 +1,18 @@
+import json
 import logging
 import os
 import sys
 import functools
 from typing import Optional
 
+from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, QApplication, \
-    QDesktopWidget, \
+    QDesktopWidget, QFileDialog, \
     QToolButton, QWidgetAction, QStackedWidget
 from PyQt5.QtGui import QIcon
 
 from app import autoupdate, dark_theme
-from app.utilities import file_utils
+from app.utilities import file_utils, str_utils
 
 from app.editor.file_manager.project_builder.project_builder import LTProjectBuilder
 from app.editor.font_editor.font_tab import FontDatabase
@@ -19,6 +21,8 @@ from app.editor.settings import MainSettingsController
 
 from app.constants import VERSION
 from app.data.database.database import DB
+from app.data.resources.resources import RESOURCES
+from app.map_maker.map_prefab import MapPrefab
 
 from app.editor import log_viewer, timer, error_viewer
 
@@ -206,6 +210,8 @@ class MainEditor(QMainWindow):
             "Dump CSV data", self, triggered=lambda: self.project_save_load_handler.dump_csv(DB))
         self.dump_script = QAction(
             "Dump script", self, triggered=lambda: self.project_save_load_handler.dump_script(DB))
+        self.import_map_prefab_act = QAction(
+            "Import Map Maker Map...", self, triggered=self.import_map_prefab)
 
         self.build_project = QAction(
             "Build project", self, triggered=lambda: self.project_builder.build(self.project_save_load_handler.current_proj))
@@ -307,6 +313,7 @@ class MainEditor(QMainWindow):
         file_menu.addAction(self.save_as_act)
         file_menu.addAction(self.dump_csv)
         file_menu.addAction(self.dump_script)
+        file_menu.addAction(self.import_map_prefab_act)
         if not is_editor_engine_built_version():
             file_menu.addAction(self.build_project)
         file_menu.addSeparator()
@@ -538,6 +545,37 @@ class MainEditor(QMainWindow):
         else:
             QMessageBox.warning(
                 self, "Save Error", "Must save project before removing unused resources!")
+
+    def import_map_prefab(self):
+        starting_dir = self.settings.get_current_project() or QDir.currentPath()
+        fn, _filter = QFileDialog.getOpenFileName(
+            self, "Import Map Maker Map", starting_dir,
+            "Map Maker Maps (*.json);;All Files (*)")
+        if not fn:
+            return
+        try:
+            with open(fn) as f:
+                s_dict = json.load(f)
+            prefab = MapPrefab.restore(s_dict)
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Import Error", "Could not import map maker map:\n%s" % e)
+            return
+        # The map_maker never renames its default 'sample' nid (NidDialog is
+        # only for tileset export), so the filename is the name the user
+        # actually chose.
+        prefab.nid = os.path.splitext(os.path.basename(fn))[0]
+        if prefab.nid in RESOURCES.map_prefabs.keys():
+            prefab.nid = str_utils.get_next_name(prefab.nid, RESOURCES.map_prefabs.keys())
+        RESOURCES.map_prefabs.append(prefab)
+        # Persist immediately: cancelling any SingleResourceEditor/DataEditor
+        # dialog (reject) does a full RESOURCES.load from disk, which would
+        # silently wipe an import that only lives in memory.
+        current_proj = self.settings.get_current_project()
+        if current_proj:
+            RESOURCES.save(current_proj, ('map_prefabs',))
+        QMessageBox.information(
+            self, "Import Successful", "Imported Map Maker map as '%s'" % prefab.nid)
 
     def edit_tags(self, parent=None):
         dialog = TagDialog.create()

@@ -17,7 +17,7 @@ class DesertPainter(WangCorner16Painter):
     def get_coord(self, tilemap, position: Pos) -> Pos:
         index = self._determine_index(tilemap, position)
         if index == 15 and self._surrounded_by_desert(tilemap, position):
-            coord = random_choice(self.full_desert_data, position)        
+            coord = random_choice(self.full_desert_data, position, seed=tilemap.seed)
         else:
-            coord = random_choice([(index, k) for k in range(self.limit[index])], position)
+            coord = random_choice([(index, k) for k in range(self.limit[index])], position, seed=tilemap.seed)
         return coord

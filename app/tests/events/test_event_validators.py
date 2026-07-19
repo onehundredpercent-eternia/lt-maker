@@ -20,7 +20,7 @@ from app.events.event_validators import (
     Team, Tag, SupportRank, TagList,
     GlobalUnit, GlobalUnitOrConvoy, UniqueUnit,
     SaveSlot,
-    Panorama, MapAnim, Tilemap,
+    Panorama, MapAnim, Tilemap, MapMakerTerrain,
     Affinity, AI, Skill, Item, Ability, ItemList,
     Klass, Faction, WeaponType, Lore, Chapter, Party,
     StatList, KlassList, ArgList,
@@ -317,6 +317,20 @@ class EventValidateUnitTests(unittest.TestCase):
         self.assert_validator_passes(v, "immediate")
         self.assert_validator_fails(v, "warp")
         self.assert_valid_entries(v, [(None, o) for o in v.valid], text=None)
+
+    def test_map_maker_terrain_validator(self):
+        from app.map_maker.terrain import Terrain
+        v = MapMakerTerrain()
+        self.assert_validator_passes(v, "GRASS")
+        self.assert_validator_passes(v, "sea")  # case-insensitive member name
+        self.assert_validator_fails(v, "not_a_real_terrain")
+        self.assert_validator_fails(v, "")
+        self.assert_valid_entries(v, [(t.value, t.name) for t in Terrain], text=None)
+        # convert must be the base pass-through: change_map_terrain expects
+        # the plain string on BOTH event pathways. A convert() override
+        # returning the live Terrain member made the classic parse path
+        # (convert_parse; .event scripts, debug menu) crash on .upper().
+        self.assertEqual("sea", v.convert("sea"))
 
     def test_sprite_pose_validator(self):
         v = SpritePose()

@@ -37,7 +37,7 @@ class RuinedFloorPainter(NoiseInterface, FloorPainter):
 
     def get_coord(self, tilemap, pos: Pos) -> Tuple[Pos, Pos]:
         index = self._get_index(tilemap, pos)
-        coord = random_choice([(index, k) for k in range(self.limit[index])], pos)
+        coord = random_choice([(index, k) for k in range(self.limit[index])], pos, seed=tilemap.seed)
         return coord
 
 class GrassFloorPainter(NoiseInterface, FloorPainter):
@@ -101,5 +101,5 @@ class GrassFloorPainter(NoiseInterface, FloorPainter):
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         index = self._get_index(tilemap, pos)
-        coord = random_choice([(index, k) for k in range(self.limit[index])], pos)
+        coord = random_choice([(index, k) for k in range(self.limit[index])], pos, seed=tilemap.seed)
         return coord

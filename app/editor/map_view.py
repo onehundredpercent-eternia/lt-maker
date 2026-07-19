@@ -6,12 +6,13 @@ from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.levels import LevelPrefab
 from app.data.resources.tiles import TileMapPrefab
-from app.editor import tilemap_editor, timer
+from app.editor import map_prefab_display, tilemap_editor, timer
 from app.editor.map_sprite_editor import map_sprite_model
 from app.editor.overworld_editor.road_sprite_wrapper import RoadSpriteWrapper
 from app.editor.settings import MainSettingsController
 from app.data.resources.resources import RESOURCES
 from app.editor.settings.preference_definitions import Preference
+from app.map_maker.map_prefab import MapPrefab
 from app.sprites import SPRITES
 from app.utilities import utils
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -20,6 +21,21 @@ from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
 
 if TYPE_CHECKING:
     from app.editor.level_editor.level_editor import LevelEditor
+
+
+def resolve_level_map(level: LevelPrefab):
+    """The level's display map: its MapPrefab if one is assigned, else its tilemap."""
+    if level.map_prefab:
+        prefab = RESOURCES.map_prefabs.get(level.map_prefab)
+        if prefab:
+            return prefab
+    return RESOURCES.tilemaps.get(level.tilemap)
+
+
+def get_map_pixmap(current_map) -> QPixmap:
+    if isinstance(current_map, MapPrefab):
+        return map_prefab_display.get_map_prefab_pixmap(current_map)
+    return tilemap_editor.get_tilemap_pixmap(current_map)
 
 class SimpleMapView(QGraphicsView):
     min_scale = 1
@@ -63,7 +79,7 @@ class SimpleMapView(QGraphicsView):
     def set_current_level(self, level: LevelPrefab):
         self.current_level = level
         if level:
-            self.current_map = RESOURCES.tilemaps.get(level.tilemap)
+            self.current_map = resolve_level_map(level)
         self.update_view()
 
     def set_current_map(self, tilemap: TileMapPrefab):
@@ -76,10 +92,10 @@ class SimpleMapView(QGraphicsView):
 
     def update_view(self, _=None):
         if self.current_level and not self.current_map:
-            self.current_map = RESOURCES.tilemaps.get(
-                self.current_level.tilemap)
+            self.current_map = resolve_level_map(self.current_level)
+
         if self.current_map:
-            pixmap = tilemap_editor.get_tilemap_pixmap(self.current_map)
+            pixmap = get_map_pixmap(self.current_map)
             self.working_image = pixmap
         else:
             self.clear_scene()
@@ -232,10 +248,9 @@ class GlobalModeLevelMapView(SimpleMapView):
 
     def update_view(self, _=None):
         if self.current_level and not self.current_map:
-            self.current_map = RESOURCES.tilemaps.get(
-                self.current_level.tilemap)
+            self.current_map = resolve_level_map(self.current_level)
         if self.current_map:
-            pixmap = tilemap_editor.get_tilemap_pixmap(self.current_map)
+            pixmap = get_map_pixmap(self.current_map)
             self.working_image = pixmap
         else:
             self.clear_scene()
@@ -299,7 +314,10 @@ class GlobalModeLevelMapView(SimpleMapView):
         if not self.overworld_flag and self.current_map and self.current_map.check_bounds(pos):
             self.current_mouse_pos = pos
             self.main_editor.set_position_bar(pos)
-            terrain_nid = self.current_map.get_base_terrain(pos)
+            if isinstance(self.current_map, MapPrefab):
+                terrain_nid = map_prefab_display.get_map_prefab_terrain_nid(self.current_map, pos)
+            else:
+                terrain_nid = self.current_map.get_base_terrain(pos)
             terrain = DB.terrain.get(terrain_nid)
             if terrain:
                 self.main_editor.set_message(
@@ -338,10 +356,10 @@ class NewMapView(SimpleMapView):
 
     def update_view(self, _=None):
         if self.current_level:
-            self.current_map = RESOURCES.tilemaps.get(
-                self.current_level.tilemap)
+            self.current_map = resolve_level_map(self.current_level)
+
         if self.current_map:
-            pixmap = tilemap_editor.get_tilemap_pixmap(self.current_map)
+            pixmap = get_map_pixmap(self.current_map)
             self.working_image = pixmap
         else:
             self.clear_scene()
@@ -738,7 +756,10 @@ class NewMapView(SimpleMapView):
             elif self.edit_mode == EditMode.GROUPS and group_unit_nid:
                 self.main_editor.set_message("Unit: %s" % group_unit_nid)
             else:
-                terrain_nid = self.current_map.get_base_terrain(pos)
+                if isinstance(self.current_map, MapPrefab):
+                    terrain_nid = map_prefab_display.get_map_prefab_terrain_nid(self.current_map, pos)
+                else:
+                    terrain_nid = self.current_map.get_base_terrain(pos)
                 terrain = DB.terrain.get(terrain_nid)
                 if terrain:
                     self.main_editor.set_message(

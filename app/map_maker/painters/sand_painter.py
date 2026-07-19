@@ -21,7 +21,6 @@ class SandPainter(WangCorner8Painter):
     base_coord = (15, 0)
     corner_chance = 0.6
     edge_chance = 0.4
-    vertices: dict = {}
 
     def single_process(self, tilemap):
         # For each vertex, assign a random value

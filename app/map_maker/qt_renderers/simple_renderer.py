@@ -27,8 +27,13 @@ class SimpleRenderer:
         return self.palette.get_pixmap16(self.painter, coord, autotile_num)
 
 class SimpleRenderer8(SimpleRenderer):
-    def __init__(self, painter: Painter, palette: Palette):
-        self.painter = painter
+    # __init__ is inherited from SimpleRenderer (calls set_palette). This
+    # class used to define its own __init__ that only set self.painter and
+    # skipped set_palette, leaving self.palette unset until the map_maker
+    # editor's startup *_palette_changed(0) call papered over it -- a
+    # renderer built any other way (e.g. create_renderers()) would crash on
+    # first use. See pygame_renderers/simple_renderer.py, which never had
+    # this override.
 
     def set_palette(self, palette: Palette):
         self.palette = get_qt_palette(palette)

@@ -80,10 +80,10 @@ class PoolPainter(Painter):
 
     def get_coord(self, tilemap, pos: Pos) -> Pos:
         dist = PoolPainter._distance_to_closest_nonpool(tilemap, pos)
-        if dist > (1 + 2*random_random(pos)):  # Open Sea
-            coord = random_choice([(1, k) for k in range(self.limit[1])], pos)
+        if dist > (1 + 2*random_random(pos, seed=tilemap.seed)):  # Open Sea
+            coord = random_choice([(1, k) for k in range(self.limit[1])], pos, seed=tilemap.seed)
         else:  # Close Sea
-            coord = random_choice([(0, k) for k in range(self.limit[0])], pos)
+            coord = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed)
         column_coord = self.get_column_coord(tilemap, pos)
         # Overwrite coord
         if column_coord in ((2, 0), (3, 0), (4, 0)):
@@ -92,7 +92,7 @@ class PoolPainter(Painter):
 
 class PoolBridgePainter(Painter):
     def get_coord(self, tilemap, pos: Pos) -> Pos:
-        coord = random_choice([(0, k) for k in range(self.limit[0])], pos)
+        coord = random_choice([(0, k) for k in range(self.limit[0])], pos, seed=tilemap.seed)
         return coord
 
     @staticmethod

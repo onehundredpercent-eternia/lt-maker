@@ -31,9 +31,11 @@ from app.engine.graphics.ui_framework.ui_framework import UIComponent
 from app.engine.graphics.ui_framework.ui_framework_animation import \
     InterpolationType
 from app.engine import exp_funcs
+from app.map_maker.terrain import Terrain
 from app.engine.objects.item import ItemObject
 from app.engine.objects.region import RegionObject
 from app.engine.objects.tilemap import TileMapObject
+from app.engine.objects.prefab_tilemap import MapPrefabTileMapObject
 from app.engine.objects.unit import UnitObject
 from app.engine.persistent_records import RECORDS
 from app.engine.sound import SongObject, get_sound_thread
@@ -2795,6 +2797,9 @@ def remove_generics_from_region(self: Event, nid, flags=None):
         self.logger.error("remove_generics_from_region: Couldn't find RegionObject %s" % nid)
 
 def show_layer(self: Event, layer, layer_transition=None, flags=None):
+    if isinstance(self.game.level.tilemap, MapPrefabTileMapObject):
+        self.logger.warning("show_layer is not supported on map_prefab levels")
+        return
     if layer not in self.game.level.tilemap.layers:
         self.logger.error("show_layer: Could not find layer %s in tilemap" % layer)
         return
@@ -2807,6 +2812,9 @@ def show_layer(self: Event, layer, layer_transition=None, flags=None):
     action.do(action.ShowLayer(layer, layer_transition))
 
 def hide_layer(self: Event, layer, layer_transition=None, flags=None):
+    if isinstance(self.game.level.tilemap, MapPrefabTileMapObject):
+        self.logger.warning("hide_layer is not supported on map_prefab levels")
+        return
     if layer not in self.game.level.tilemap.layers:
         self.logger.error("hide_layer: Could not find layer %s in tilemap" % layer)
         return
@@ -2817,6 +2825,23 @@ def hide_layer(self: Event, layer, layer_transition=None, flags=None):
         self.logger.warning("hide_layer: Layer %s is already hidden!" % layer)
         return
     action.do(action.HideLayer(layer, layer_transition))
+
+def change_map_terrain(self: Event, position, map_maker_terrain=None, flags=None):
+    tilemap = self.game.level.tilemap
+    if not isinstance(tilemap, MapPrefabTileMapObject):
+        self.logger.warning("change_map_terrain is not supported on non-map_prefab levels")
+        return
+    pos = self._parse_pos(position)
+    if not pos or not tilemap.check_bounds(pos):
+        self.logger.warning("change_map_terrain: Position %s is out of bounds" % (position,))
+        return
+    terrain = None
+    if map_maker_terrain:
+        if map_maker_terrain.upper() not in Terrain.__members__:
+            self.logger.warning("change_map_terrain: Could not find map_maker Terrain %s" % map_maker_terrain)
+            return
+        terrain = Terrain[map_maker_terrain.upper()]
+    action.do(action.ChangeMapMakerTerrain(pos, terrain))
 
 def add_weather(self: Event, weather, position=None, flags=None):
     nid = weather.lower()
