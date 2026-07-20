@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+import bisect
 import math
 import random
 import time
@@ -11,8 +12,42 @@ from app.map_maker import simplex_noise
 from app.utilities import direction, static_random, utils
 from app.utilities.typing import NID, Pos
 
-MOUNTAIN_THRESHOLD = 0.75
-SEA_THRESHOLD = 0.35
+NOISE_LACUNARITY = 2.0
+NOISE_GAIN = 0.5
+# Derived seeds -- distinct fields must not correlate, so each gets seed + its own offset.
+HILL_SEED_OFFSET = 1
+PASS_SEED_OFFSET = 2
+# The pass field modulates mountain-spine width along each ridge; finer than the hill
+# field so a low patch cuts *across* a ridge rather than tracking it. 2x -> a pass is
+# roughly half a hill wavelength wide (a few tiles at the default frequency).
+PASS_FREQUENCY_MULTIPLIER = 2.0
+# Exponent on the pass field in the spine score. At 1.0 the hill budget spreads evenly
+# between thinning skirts and cutting passes; >1 spends it on carving passes through
+# ridges first, keeping skirts mountainous right up to the band edge elsewhere.
+PASS_STRENGTH = 2.0
+
+def derive_octaves(frequency: float) -> int:
+    """Octaves whose wavelength falls below ~2 tiles (the tile Nyquist limit)
+    add nothing visible, so octave depth follows from frequency."""
+    return max(1, math.ceil(math.log2(0.5 / frequency)))
+
+def get_threshold_from_percent(noise_map: Dict[Pos, float], percent: float,
+                               width: int, height: int,
+                               positions: Optional[Iterable[Pos]] = None) -> float:
+    """Value v such that `percent`% of in-bounds tiles have noise < v.
+    Mirrors Civ 4's CyFractal.getHeightFromPercent. Only in-bounds tiles
+    (0 <= x < width, 0 <= y < height) count; the border ring is excluded.
+    `positions`, if given, restricts the percentile pool to that subset
+    (e.g. land tiles only) instead of the full width x height grid."""
+    if positions is None:
+        positions = [(x, y) for x in range(width) for y in range(height)]
+    values = sorted(noise_map[pos] for pos in positions)
+    if percent <= 0:
+        return values[0] - 1.0
+    if percent >= 100:
+        return values[-1] + 1.0
+    index = min(len(values) - 1, int(len(values) * percent / 100))
+    return values[index]
 
 def generate_terrain(theme: Dict[NID, Any], seed: int) -> WorldTileMap:
     if seed == -1:  # Random seed
@@ -30,14 +65,18 @@ def generate_terrain(theme: Dict[NID, Any], seed: int) -> WorldTileMap:
 
     return result
 
-def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[WorldTileMap]:
+def generate_topology(theme: Dict[NID, Any], seed: int) -> Tuple[WorldTileMap, Dict[Pos, float], float, float]:
+    """Elevation classification (SEA/SAND/land) plus hill/peak bands -- everything up to,
+    but not including, the terrain-mutating passes (rivers/cliffs/forests). Split out from
+    `_generate_terrain_process` so tests can measure band classification in isolation from
+    those later passes, which also consume NOISY_GRASS/HILL tiles."""
     tilemap = WorldTileMap(theme, seed)
 
     # 1. Generate a simplex noise field of the right size and parameters from the theme
     terrain_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
         (tilemap.width + 2, tilemap.height + 2), seed, theme['starting_frequency'],
-        1.0, theme['octaves'], theme['lacunarity'],
-        theme['gain'])
+        1.0, derive_octaves(theme['starting_frequency']), NOISE_LACUNARITY,
+        NOISE_GAIN)
     terrain_noise_map = simplex_noise.normalize_noise_map(terrain_noise_map)
     # Move noise map so it's topleft is (-1, -1)
     new_terrain_noise_map = {}
@@ -75,11 +114,32 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
             new_terrain_noise_map[pos] = value
     terrain_noise_map = new_terrain_noise_map
 
-    # 2. Assign terrain based on the simplex noise field
-    tilemap.generate_terrain_grid_from_noise(terrain_noise_map)
+    # 2. Assign terrain based on the simplex noise field: SEA / SAND / land (NOISY_GRASS)
+    sea_threshold, high_elevation_threshold = tilemap.generate_terrain_grid_from_noise(terrain_noise_map)
+
+    # 2.5 Hills and mountains as bands of their own noise fields, decoupled from elevation,
+    # so ranges snake across land instead of tracking the elevation blob.
+    hill_frequency = theme['hill_frequency']
+    hill_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
+        (tilemap.width, tilemap.height), seed + HILL_SEED_OFFSET, hill_frequency,
+        1.0, derive_octaves(hill_frequency), NOISE_LACUNARITY, NOISE_GAIN)
+    hill_noise_map = simplex_noise.normalize_noise_map(hill_noise_map)
+
+    pass_frequency = hill_frequency * PASS_FREQUENCY_MULTIPLIER
+    pass_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
+        (tilemap.width, tilemap.height), seed + PASS_SEED_OFFSET, pass_frequency,
+        1.0, derive_octaves(pass_frequency), NOISE_LACUNARITY, NOISE_GAIN)
+    pass_noise_map = simplex_noise.normalize_noise_map(pass_noise_map)
+
+    tilemap.generate_bands_from_noise(hill_noise_map, pass_noise_map)
+
+    return tilemap, terrain_noise_map, sea_threshold, high_elevation_threshold
+
+def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[WorldTileMap]:
+    tilemap, terrain_noise_map, sea_threshold, high_elevation_threshold = generate_topology(theme, seed)
 
     # 3. Figure out where rivers go
-    tilemap.generate_rivers_from_noise(terrain_noise_map)
+    tilemap.generate_rivers_from_noise(terrain_noise_map, high_elevation_threshold, sea_threshold)
 
     # 4. Figure out where cliffs go
     tilemap.generate_cliffs_from_noise(terrain_noise_map)
@@ -87,8 +147,8 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
     # 5. Figure out where forests go
     forest_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
         (tilemap.width, tilemap.height), seed, theme['forest_starting_frequency'],
-        1.0, theme['forest_octaves'], theme['forest_lacunarity'],
-        theme['forest_gain'])
+        1.0, derive_octaves(theme['forest_starting_frequency']), NOISE_LACUNARITY,
+        NOISE_GAIN)
     forest_noise_map = simplex_noise.normalize_noise_map(forest_noise_map)
     tilemap.generate_forests_from_noise(forest_noise_map)
 
@@ -107,21 +167,81 @@ class WorldTileMap:
     def check_bounds(self, pos: Pos) -> bool:
         return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
 
-    def generate_terrain_grid_from_noise(self, noise_map: Dict[Pos, float]):
+    def generate_terrain_grid_from_noise(self, noise_map: Dict[Pos, float]) -> Tuple[float, float]:
+        # Cumulative percentile thresholds, computed on the final (post-elevation,
+        # post-water-border, post-sink-fill) field, so ratios are exact for every seed.
+        # This field now decides only SEA / SAND / land -- hills and mountains are
+        # classified separately in generate_bands_from_noise, from the hill field.
+        sea_percent = self.theme['sea_percent'] * 100
+        sand_percent = self.theme['sand_percent'] * 100
+
+        sea_threshold = get_threshold_from_percent(noise_map, sea_percent, self.width, self.height)
+        sand_threshold = get_threshold_from_percent(noise_map, sea_percent + sand_percent, self.width, self.height)
+
         for x in range(self.width):
             for y in range(self.height):
                 value: float = noise_map[(x, y)]
-                if value >= MOUNTAIN_THRESHOLD:
-                    terrain = Terrain.MOUNTAIN
-                elif 0.75 > value >= 0.70:
-                    terrain = Terrain.HILL
-                elif 0.70 > value >= 0.4:
-                    terrain = Terrain.NOISY_GRASS
-                elif 0.4 > value >= SEA_THRESHOLD:
+                if value < sea_threshold:
+                    terrain = Terrain.SEA
+                elif value < sand_threshold:
                     terrain = Terrain.SAND
                 else:
-                    terrain = Terrain.SEA
+                    terrain = Terrain.NOISY_GRASS
                 self.terrain_grid[(x, y)] = terrain
+
+        # Stand-in "high ground" bound for the river logic, which still reads the
+        # elevation field for now (Phase 3 replaces river source selection entirely).
+        high_elevation_threshold = get_threshold_from_percent(
+            noise_map, 100 - self.theme['highland_percent'] * 100, self.width, self.height)
+
+        return sea_threshold, high_elevation_threshold
+
+    def generate_bands_from_noise(self, hill_noise_map: Dict[Pos, float], pass_noise_map: Dict[Pos, float]):
+        # Hills/mountains form as percentile *bands* of the hill field (a level set of a
+        # continuous field is an elongated ridge, not a blob) rather than being thresholded
+        # directly -- this is what produces mountain ranges instead of scattered clumps.
+        land_positions = [(x, y) for x in range(self.width) for y in range(self.height)
+                           if self.get_terrain((x, y)) == Terrain.NOISY_GRASS]
+        if not land_positions:
+            return
+
+        highland_percent = self.theme['highland_percent'] * 100
+        half_width = highland_percent / 4  # two bands, each with two edges
+
+        # Percentile rank of each land tile within the hill field; the bands and the
+        # spines inside them are both defined in this space. Centrality is 0 on a
+        # band's center line (the ridge crest) and 1 at its edge; tiles outside both
+        # bands stay NOISY_GRASS.
+        sorted_values = sorted(hill_noise_map[pos] for pos in land_positions)
+        total = len(sorted_values)
+        centrality: Dict[Pos, float] = {}
+        for pos in land_positions:
+            percentile = bisect.bisect_left(sorted_values, hill_noise_map[pos]) / total * 100
+            for center in (25, 75):
+                band_position = abs(percentile - center) / half_width
+                if band_position < 1:
+                    centrality[pos] = band_position
+                    break
+        if not centrality:
+            return
+
+        # Mountains are the most-central slice of each band, so every range is a
+        # mountain spine flanked by hill skirts. The pass field scales spine width
+        # along the ridge: where it nears zero the score diverges and the spine
+        # pinches off entirely, leaving an all-hill gap -- a mountain pass.
+        # Thresholding the score at a percentile over highland tiles keeps mountain
+        # coverage at exactly peak_percent regardless of the pass field's distribution.
+        score_map = {pos: value / max(pass_noise_map[pos], 1e-9) ** PASS_STRENGTH
+                     for pos, value in centrality.items()}
+        highland_positions = list(centrality)
+        peak_percent = self.theme['peak_percent'] * 100
+        peak_threshold = get_threshold_from_percent(score_map, peak_percent, self.width, self.height, highland_positions)
+
+        for pos in highland_positions:
+            if score_map[pos] <= peak_threshold:
+                self.terrain_grid[pos] = Terrain.MOUNTAIN
+            else:
+                self.terrain_grid[pos] = Terrain.HILL
 
     def generate_cliffs_from_noise(self, noise_map: Dict[Pos, float]):
         # Use Sobel Edge Detection to find areas of discontinuity
@@ -201,13 +321,16 @@ class WorldTileMap:
                 value: float = noise_map[(x, y)]
                 if self.get_terrain((x, y)) != Terrain.NOISY_GRASS:
                     continue  # Don't bother if not grass
+                # Clamped noise (normalize_noise_map) can land exactly on value == 1.0,
+                # so a bare `>= (1 - 0)` threshold would still fire at 0% chance.
                 thick_forest_threshold = (1 - self.theme['thick_forest_threshold'])
-                if value >= thick_forest_threshold:
+                if self.theme['thick_forest_threshold'] > 0 and value >= thick_forest_threshold:
                     self.terrain_grid[(x, y)] = Terrain.THICKET
-                elif thick_forest_threshold > value >= (1 - self.theme['forest_threshold']):
+                elif self.theme['forest_threshold'] > 0 and thick_forest_threshold > value >= (1 - self.theme['forest_threshold']):
                     self.terrain_grid[(x, y)] = Terrain.FOREST
 
-    def generate_rivers_from_noise(self, noise_map: Dict[Pos, float]):
+    def generate_rivers_from_noise(self, noise_map: Dict[Pos, float],
+                                    high_elevation_threshold: float, sea_threshold: float):
         # Locate all locations near mountains, (high terrain noise)
         # Locate all locations near seas (low terrain noise)
         # based on a river incidence rate, draw connections between high noise tiles and low noise tiles, generally preferring low noise tile movement draw connections between the two
@@ -226,8 +349,8 @@ class WorldTileMap:
             return high_noise_locations, low_noise_locations
 
         # Figure out which positions should be used as start and end positions
-        high_limit = MOUNTAIN_THRESHOLD
-        low_limit = SEA_THRESHOLD
+        high_limit = high_elevation_threshold
+        low_limit = sea_threshold
         high_noise_locations, low_noise_locations = \
             get_start_and_end_candidates(high_limit, low_limit)
         while not high_noise_locations or not low_noise_locations:
@@ -273,7 +396,7 @@ class WorldTileMap:
                 # If reach sea, we are done
                 # If reach the edge of the map, we are done
                 # If reach another river, we are done
-                if noise_map[current_point] < SEA_THRESHOLD \
+                if noise_map[current_point] < sea_threshold \
                         or not self.check_bounds(current_point) \
                         or current_point in utils.flatten_list(rivers):  
                     break
