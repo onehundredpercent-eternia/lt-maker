@@ -25,10 +25,9 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 from collections import deque
 import random
 
-_OPPOSITE = {'right': 'left', 'left': 'right', 'up': 'down', 'down': 'up'}
-
 from app.utilities.typing import Pos
 
+_OPPOSITE = {'right': 'left', 'left': 'right', 'up': 'down', 'down': 'up'}
 
 class CSPProcess:
     def __init__(self, tilemap, mountain_data, noneless_rules,
@@ -218,12 +217,10 @@ class CSPProcess:
             return False
         self.counter += 1
         if self.counter > self.step_limit:
+            # Safety valve for a pathological / undetected-unsat instance;
+            # also the path by which stop() takes effect.
             self.broke_out = True
             return False
-        if self.counter % 20000 == 0:
-            if self.gui_processing and self.waiting_callback:
-                self.waiting_callback()
-            print("CSP still processing %d (%d)" % (self.counter, id(self)), flush=True)
         if not unassigned:
             return True
 
