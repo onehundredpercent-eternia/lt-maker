@@ -30,6 +30,20 @@ from app.utilities.typing import Pos
 _OPPOSITE = {'right': 'left', 'left': 'right', 'up': 'down', 'down': 'up'}
 
 class CSPProcess:
+    # Value-selection bias against "index 15" tiles -- tiles that allow a
+    # border (None) in all four directions. They connect to almost anything, so
+    # partner-count weighting over-picks them and maps look washed out. This
+    # scales their selection weight down (they stay in the domain, so they're
+    # still chosen when genuinely the only option). 1.0 = no bias; smaller =
+    # rarer. Tune to taste.
+    index15_weight_scale: float = 0.01
+
+    # Value-selection bias against repeating the tile directly above/below the
+    # current cell, so vertical runs of identical tiles are unlikely. Applied
+    # multiplicatively like index15_weight_scale; non-removing, so a forced
+    # repeat still happens. 1.0 = no bias; smaller = stronger avoidance.
+    vertical_repeat_scale: float = 0.1
+
     def __init__(self, tilemap, mountain_data, noneless_rules,
                  group: Set[Pos], gui_processing: bool = True,
                  waiting_callback: Optional[Callable] = None):
@@ -59,6 +73,13 @@ class CSPProcess:
             self._left[coord] = set(rules['left'].keys())
             self._up[coord] = set(rules['up'].keys())
             self._down[coord] = set(rules['down'].keys())
+
+        # "Index 15" tiles: None allowed in every direction (detected on the raw
+        # rules, since a direction can carry both None and real partners).
+        self._index15: Set[Pos] = {
+            coord for coord, rules in self.mountain_data.items()
+            if None in rules['up'] and None in rules['down']
+            and None in rules['left'] and None in rules['right']}
 
         self.counter = 0
         self.step_limit = int(2e6)
@@ -139,19 +160,25 @@ class CSPProcess:
         return best
 
     def _order_values(self, pos: Pos, domains, assignment) -> List[Pos]:
-        # Weight each candidate coord by how strongly already-assigned neighbors
-        # want it (partner counts), then take a deterministic weighted-random
-        # ordering. Falls back to uniform weight 1 so every candidate appears.
-        coords = domains[pos]
+        # Order this cell's candidate coords by a weighted-random draw: each
+        # coord's weight is 1 + how strongly already-assigned neighbors want it
+        # (partner counts), scaled down for index-15 tiles so they stop
+        # dominating. Uses Efraimidis-Spirakis keys (key = u ** (1/weight)) for
+        # a proper weighted random permutation with float weights; iterating
+        # sorted(coords) keeps the RNG draw order deterministic.
         md = self.mountain_data
-        weighted: List[Pos] = []
         x, y = pos
         west = assignment.get((x - 1, y))
         north = assignment.get((x, y - 1))
         east = assignment.get((x + 1, y))
         south = assignment.get((x, y + 1))
-        for c in coords:
-            w = 1
+        rng = random.Random(self.tilemap.seed + x * 1024 ** 2 + y * 1024)
+        scale = self.index15_weight_scale
+        vrepeat = self.vertical_repeat_scale
+        index15 = self._index15
+        keyed: List[Tuple[float, Pos]] = []
+        for c in sorted(domains[pos]):
+            w = 1.0
             if west is not None:
                 w += md[west]['right'].get(c, 0)
             if north is not None:
@@ -160,16 +187,17 @@ class CSPProcess:
                 w += md[c]['right'].get(east, 0)
             if south is not None:
                 w += md[c]['down'].get(south, 0)
-            weighted.extend([c] * w)
-        rng = random.Random(self.tilemap.seed + x * 1024 ** 2 + y * 1024)
-        rng.shuffle(weighted)
-        seen: Set[Pos] = set()
-        order: List[Pos] = []
-        for c in weighted:
-            if c not in seen:
-                seen.add(c)
-                order.append(c)
-        return order
+            if c in index15:
+                w *= scale
+            # Disfavor repeating the tile directly above/below so columns don't
+            # stack identical tiles. Non-removing: a forced repeat still wins.
+            if c == north or c == south:
+                w *= vrepeat
+            if w < 1e-9:
+                w = 1e-9
+            keyed.append((rng.random() ** (1.0 / w), c))
+        keyed.sort(reverse=True)
+        return [c for _, c in keyed]
 
     def _all_arcs(self, positions):
         for pos in positions:
