@@ -154,6 +154,8 @@ class CreditState(State):
 class CreditDisplay():
     icon_size_dict = {ResourceType.ICONS16: 16, 
                       ResourceType.ICONS32: 32,
+                      ResourceType.ICONS80: 80,
+                      ResourceType.PORTRAITS: 96,
                       ResourceType.MAP_ICONS: 32,
                       ResourceType.MAP_SPRITES: 16}
 
@@ -197,8 +199,8 @@ class CreditDisplay():
 
         lst = self.credits[idx]
         if lst:
-            if lst[0].credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, 
-                                      ResourceType.MAP_ICONS, ResourceType.MAP_SPRITES):
+            if lst[0].credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, ResourceType.ICONS80,
+                          ResourceType.PORTRAITS, ResourceType.MAP_ICONS, ResourceType.MAP_SPRITES):
                 limit = self.height - 24
                 icon_size = self.icon_size_dict.get(lst[0].credit_type) + 4
                 font_height = FONT[self.font].height
@@ -375,13 +377,9 @@ class CreditDisplay():
         header = credit.header()
         render_text(surf, ['text'], [header], ['blue'], utils.tuple_add((self.width // 2, 4), self.topleft), HAlignment.CENTER)
 
-        if credit.credit_type == ResourceType.ICONS80:
-            im = self.get_icon_by_credit(credit)
-            if im:
-                surf.blit(im, utils.tuple_add((self.width - 8 - 80, WINHEIGHT - 12 - 72), self.topleft))
-
         lines = []
-        if credit.credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, ResourceType.MAP_ICONS):
+        if credit.credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, ResourceType.ICONS80,
+                            ResourceType.PORTRAITS, ResourceType.MAP_ICONS):
             y_pos = 20
             icon_size = self.icon_size_dict.get(credit.credit_type) + 4
             for c in lst:
@@ -398,7 +396,7 @@ class CreditDisplay():
                                     utils.tuple_add((8 + icon_size, y_pos + idx * FONT[self.font].height), self.topleft))
                 y_pos += max(len(lines) * FONT[self.font].height, icon_size)
 
-        elif credit.credit_type in (ResourceType.ICONS80, ResourceType.PORTRAITS, ResourceType.PANORAMAS) and \
+        elif credit.credit_type in (ResourceType.PANORAMAS,) and \
                 credit.contrib and credit.contrib[0]:
             c = credit.contrib[0]
             lines = text_funcs.line_wrap(self.font, c[1], self.width - 16)
@@ -407,7 +405,7 @@ class CreditDisplay():
 
             lines += text_funcs.line_wrap(self.font, "<orange>%s</> by %s" % (st, c[0]), self.width - 16)
             for idx, line in enumerate(lines):
-                render_text(surf, [self.font], [line], ['orange' if idx in highlight_lines else None], 
+                render_text(surf, [self.font], [line], ['orange' if idx in highlight_lines else None],
                             utils.tuple_add((8, 20 + idx * FONT[self.font].height), self.topleft))
 
         elif credit.credit_type == 'List' and credit.contrib and credit.contrib[0]:
@@ -440,6 +438,14 @@ class CreditDisplay():
         elif credit.credit_type == ResourceType.ICONS80:
             database = RESOURCES.icons80
             width, height = 80, 72
+        elif credit.credit_type == ResourceType.PORTRAITS:
+            image = RESOURCES.portraits.get(credit.sub_nid)
+            if not image:
+                return None
+            if not image.image:
+                image.image = engine.image_load(image.full_path)
+            im = image.image.copy()
+            return im
         elif credit.credit_type == ResourceType.MAP_ICONS:
             database = RESOURCES.map_icons
             image = database.get(credit.sub_nid)
