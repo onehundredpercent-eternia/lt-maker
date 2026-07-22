@@ -156,5 +156,74 @@ class WorldMakerHillPeakBandTests(unittest.TestCase):
                 print(''.join(chars.get(tm.get_terrain((x, y)), '?') for x in range(tm.width)))
 
 
+def _chebyshev(a, b):
+    return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+
+
+class WorldMakerRiverTests(unittest.TestCase):
+    def test_determinism(self):
+        theme = _make_theme()
+        tm1 = terrain_generation.generate_terrain(theme, 3)
+        tm2 = terrain_generation.generate_terrain(theme, 3)
+        self.assertEqual(tm1.terrain_grid, tm2.terrain_grid)
+
+    def test_disabled_produces_no_rivers(self):
+        theme = _make_theme(tiles_per_river_tile=0)
+        for seed in range(5):
+            tm = terrain_generation.generate_terrain(theme, seed)
+            rivers = sum(1 for t in tm.terrain_grid.values() if t == Terrain.RIVER)
+            self.assertEqual(rivers, 0, "seed %d produced %d river tiles" % (seed, rivers))
+
+    def test_quota_large_landmasses_have_a_river(self):
+        theme = _make_theme()
+        tpr = theme['tiles_per_river_tile']
+        for seed in range(10):
+            tm = terrain_generation.generate_terrain(theme, seed)
+            non_sea = [pos for pos, t in tm.terrain_grid.items() if t != Terrain.SEA]
+            for component in _connected_components(non_sea):
+                if len(component) < tpr:
+                    continue
+                river_tiles = sum(1 for pos in component
+                                  if tm.terrain_grid[pos] == Terrain.RIVER)
+                self.assertGreaterEqual(
+                    river_tiles, 1,
+                    "seed %d: landmass of %d tiles has no river" % (seed, len(component)))
+
+    def test_sources_are_spaced(self):
+        theme = _make_theme()
+        for seed in range(10):
+            tm = terrain_generation.generate_terrain(theme, seed)
+            sources = tm.river_sources
+            for i in range(len(sources)):
+                for j in range(i + 1, len(sources)):
+                    self.assertGreater(
+                        _chebyshev(sources[i], sources[j]), 2,
+                        "seed %d: sources %s and %s too close" % (seed, sources[i], sources[j]))
+
+    def test_every_river_terminates_or_was_erased(self):
+        # Kept rivers end at SEA / RIVER / off-map, or ran out of room (deadend/cap) with
+        # at least 3 painted tiles; anything shorter is never recorded (erased).
+        theme = _make_theme()
+        allowed = set(terrain_generation.RiverEnd)
+        for seed in range(10):
+            tm = terrain_generation.generate_terrain(theme, seed)
+            for path, reason in tm.rivers:
+                self.assertIn(reason, allowed, "seed %d: unexpected reason %s" % (seed, reason))
+                painted = [p for p in path if tm.terrain_grid[p] == Terrain.RIVER]
+                self.assertGreaterEqual(len(painted), 3,
+                                        "seed %d: kept river shorter than 3 tiles" % seed)
+
+    def test_no_river_runs_through_mountain_or_cliff(self):
+        # The walk hard-excludes stepping onto MOUNTAIN/CLIFF, so no path tile past the
+        # source is ever one (the source itself may be a mountain, which stays unpainted).
+        theme = _make_theme()
+        for seed in range(10):
+            tm = terrain_generation.generate_terrain(theme, seed)
+            for path, _reason in tm.rivers:
+                for pos in path[1:]:
+                    self.assertNotIn(tm.terrain_grid[pos], (Terrain.MOUNTAIN, Terrain.CLIFF),
+                                     "seed %d: river crosses %s" % (seed, tm.terrain_grid[pos]))
+
+
 if __name__ == '__main__':
     unittest.main()

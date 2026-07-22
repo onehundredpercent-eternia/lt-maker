@@ -12,7 +12,7 @@ theme_parameters = Data([
     ThemeParameter('cliff_threshold', "Cliff Threshold", 0.3, float, "Necessary discontinuity in noise value to produce a cliff"),
     ThemeParameter('forest_threshold', "Forest Chance", 0.35, percent, "Height of forest noise map that produces forests"),
     ThemeParameter('thick_forest_threshold', "Thick Forest Chance", 0.2, percent, "Height of forest noise map that produces thick forests"),
-    ThemeParameter('river_incidence', "River Chance", 0.05, percent, "Chance that any given tile becomes a river"),
+    ThemeParameter('tiles_per_river_tile', "Tiles Per River Tile", 40, int, "One river tile is targeted per this many land tiles per landmass; 0 disables rivers"),
     ThemeParameter('elevation', "Elevation Modification", 0.0, float, "Modify the effective elevation generated"),
     ThemeParameter('water_border', "Set Sea Border", False, bool, "Add a sea border around the map"),
     ThemeParameter('sea_percent', "Sea Percent", 0.35, percent, "Portion of map that is sea"),
