@@ -99,12 +99,20 @@ class RainAlgorithmX:
         Finds the column with the minimum size.
         Returns it's index
         """
-        if self.header.right.is_first:
+        header = self.header
+        col = header.right
+        if col.is_first:
             raise EmptyMatrixError()
-        col_min = self.header.right
-        for col in iterate_cell_right(self.header):
-            if not col.is_first and col.size < col_min.size:
+        # Inline the header-row walk (hot path): only the header carries
+        # is_first, and it is never visited, so every visited column qualifies.
+        col_min = col
+        min_size = col.size
+        col = col.right
+        while col is not header:
+            if col.size < min_size:
+                min_size = col.size
                 col_min = col
+            col = col.right
         return col_min
 
     def solve(self) -> bool:
@@ -183,23 +191,36 @@ class RainAlgorithmX:
         """
         # Covers the column of the column_header_cell and all rows connected to that column
         """
+        # This is the hottest path in the solver (millions of calls on large
+        # groups), so the cell walks are inlined rather than driven through the
+        # iterate_cell_* generators -- same links touched in the same order,
+        # just without the per-yield generator overhead.
         column_header_cell.right.left = column_header_cell.left
         column_header_cell.left.right = column_header_cell.right
 
-        for i_cell in iterate_cell_down(column_header_cell):
-            for j_cell in iterate_cell_right(i_cell):
+        i_cell = column_header_cell.down
+        while i_cell is not column_header_cell:
+            j_cell = i_cell.right
+            while j_cell is not i_cell:
                 j_cell.down.up = j_cell.up
                 j_cell.up.down = j_cell.down
                 j_cell.header.size -= 1
+                j_cell = j_cell.right
+            i_cell = i_cell.down
 
     def uncover(self, column_header_cell):
         """
         # Uncovers the column of the column_header_cell and also all the row connected to that column
         """
-        for i_cell in iterate_cell_up(column_header_cell):
-            for j_cell in iterate_cell_left(i_cell):
+        # Inlined for the same reason as cover() -- mirrors it exactly in reverse.
+        i_cell = column_header_cell.up
+        while i_cell is not column_header_cell:
+            j_cell = i_cell.left
+            while j_cell is not i_cell:
                 j_cell.header.size += 1
                 j_cell.down.up = j_cell.up.down = j_cell
+                j_cell = j_cell.left
+            i_cell = i_cell.up
 
         column_header_cell.right.left = column_header_cell.left.right = column_header_cell
 

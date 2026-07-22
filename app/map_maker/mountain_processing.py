@@ -1,4 +1,5 @@
 from typing import Callable, Optional, Set, Tuple
+from collections import defaultdict
 import time
 
 from app.utilities.typing import Pos
@@ -225,7 +226,12 @@ class AlgorithmXProcess:
         # valid_coords = [self.find_valid_coords(pos) for pos in self.to_process]
         valid_coords_dict = {pos: self.find_valid_coords(pos) for pos in self.to_process}
 
-        time.sleep(0.001)
+        # The sleeps below only exist to yield to Qt (progress + responding to
+        # stop()) when running on a background editor thread. In the synchronous
+        # engine path (gui_processing False) there is no thread to yield to and
+        # broke_out never flips mid-run, so skip them.
+        if self.gui_processing:
+            time.sleep(0.001)
         if self.broke_out:
             return
 
@@ -234,7 +240,8 @@ class AlgorithmXProcess:
         column_names = [pos for pos in self.to_process]
 
         for idx, pos in enumerate(self.to_process):
-            time.sleep(0.001)
+            if self.gui_processing:
+                time.sleep(0.001)
             if self.broke_out:
                 return
             right = (pos[0] + 1, pos[1])
@@ -262,7 +269,8 @@ class AlgorithmXProcess:
                         columns.append((identifier, False))
                         row.append(len(columns) - 1)
 
-        time.sleep(0.001)
+        if self.gui_processing:
+            time.sleep(0.001)
         if self.broke_out:
             return
 
@@ -270,16 +278,26 @@ class AlgorithmXProcess:
         # the secondary columns are halfway filled. They need their other sections to
         # be filled to completion
         assert len(row_names) == len(rows)
+        # Index rows by their position so each secondary column only scans the
+        # handful of rows that share its partner position, instead of every row.
+        # This turns the fill from O(num_secondary_columns * num_rows) into
+        # O(num_secondary_columns * rows_per_position) -- the dominant setup cost
+        # for large/complicated groups. Rows are still appended in ascending
+        # column order, so the resulting matrix is identical.
+        rows_by_pos = defaultdict(list)
+        for ridx, (rpos, rcoord) in enumerate(row_names):
+            rows_by_pos[rpos].append((ridx, rcoord))
         column_idxs_to_be_filled = range(len(self.to_process), len(columns))
         for cidx in column_idxs_to_be_filled:
             pos, partner_pos, valid_coord, invalid_coords = column_names[cidx]
-            for ridx, row_name in enumerate(row_names):
+            for ridx, rcoord in rows_by_pos.get(partner_pos, ()):
                 # Find the rows that apply to this partner pos and are in the set of invalid coords
-                if partner_pos == row_name[0] and row_name[1] in invalid_coords:
+                if rcoord in invalid_coords:
                     # Add a 1 here
                     rows[ridx].append(cidx)
 
-        time.sleep(0.001)
+        if self.gui_processing:
+            time.sleep(0.001)
         if self.broke_out:
             return
 
@@ -287,7 +305,8 @@ class AlgorithmXProcess:
         solver = rain_algorithm_x.RainAlgorithmX(columns, row_names, rows, self.to_process[0], self.tilemap.seed + iteration)
         print("Setup 2 complete", id(self), flush=True)
 
-        time.sleep(0.001)
+        if self.gui_processing:
+            time.sleep(0.001)
         if self.broke_out:
             return
 
@@ -297,7 +316,8 @@ class AlgorithmXProcess:
         while counter < limit:
             # time.sleep(0)
             if counter % 10000 == 0:
-                time.sleep(0.01)
+                if self.gui_processing:
+                    time.sleep(0.01)
                 print("Still Processing", id(self), counter, flush=True)
             if self.broke_out:
                 return
