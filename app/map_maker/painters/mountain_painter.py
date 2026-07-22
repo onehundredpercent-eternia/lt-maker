@@ -11,8 +11,7 @@ from app.utilities.typing import Pos
 from app.map_maker.utilities import random_choice, flood_fill
 from app.map_maker.terrain import Terrain
 from app.map_maker.painter_utils import Painter
-from app.map_maker.mountain_processing \
-    import NaiveBacktrackingProcess, AlgorithmXProcess
+from app.map_maker.mountain_processing import NaiveBacktrackingProcess
 from app.map_maker.mountain_processing_csp import CSPProcess
 
 class MountainPainter(Painter):
@@ -24,10 +23,6 @@ class MountainPainter(Painter):
     gui_processing: bool = True
     mountain_process_finished: Callable = None
     mountain_processing: Callable = None
-    # PROTOTYPE toggle: when True, large groups are solved by the CSP/AC-3
-    # solver (mountain_processing_csp.CSPProcess) instead of exact-cover DLX
-    # (AlgorithmXProcess). Set MountainPainter.use_csp = True to A/B in editor.
-    use_csp: bool = False
 
     def __init__(self, base_coord: Optional[Pos] = None):
         super().__init__(base_coord)
@@ -120,14 +115,12 @@ class MountainPainter(Painter):
         # Imported here so the engine can use this painter without PyQt5
         from PyQt5.QtCore import QThread
         from app.map_maker.mountain_processing_threads \
-            import NaiveBacktrackingThread, AlgorithmXThread, CSPThread
+            import NaiveBacktrackingThread, CSPThread
 
         if len(group) < 12:
             thread = NaiveBacktrackingThread(tilemap, self.mountain_data, self.noneless_rules, group)
-        elif self.use_csp:
-            thread = CSPThread(tilemap, self.mountain_data, self.noneless_rules, group)
         else:
-            thread = AlgorithmXThread(tilemap, self.mountain_data, self.noneless_rules, group)
+            thread = CSPThread(tilemap, self.mountain_data, self.noneless_rules, group)
         thread.finished.connect(functools.partial(self.mountain_process_finished, thread, tilemap))
         thread.waiting.connect(functools.partial(self.mountain_processing, thread, tilemap))
         self.current_threads.append(thread)
@@ -136,10 +129,8 @@ class MountainPainter(Painter):
     def _process_group_synchronously(self, tilemap, group: Set[Pos]):
         if len(group) < 12:
             process = NaiveBacktrackingProcess(tilemap, self.mountain_data, self.noneless_rules, group, gui_processing=False)
-        elif self.use_csp:
-            process = CSPProcess(tilemap, self.mountain_data, self.noneless_rules, group, gui_processing=False)
         else:
-            process = AlgorithmXProcess(tilemap, self.mountain_data, self.noneless_rules, group, gui_processing=False)
+            process = CSPProcess(tilemap, self.mountain_data, self.noneless_rules, group, gui_processing=False)
         process.process_group()
         if process.did_complete:
             self.organization.update(process.organization)

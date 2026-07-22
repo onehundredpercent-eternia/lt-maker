@@ -1,23 +1,25 @@
 """
-PROTOTYPE -- CSP-based mountain group solver.
+CSP-based mountain group solver.
 
-An alternative to AlgorithmXProcess (exact-cover / dancing-links) in
-mountain_processing.py. Same problem: assign each mountain tile in a connected
-group a tile-coord so that (a) its border edges match the group boundary and
-(b) every adjacent pair is compatible per mountain_data.
+The solver MountainPainter uses for mountain groups of 12+ tiles (smaller
+groups still use NaiveBacktrackingProcess). It replaced an exact-cover /
+dancing-links solver (AlgorithmXProcess), whose encoding ballooned to thousands
+of "invalid-coord" secondary columns and whose cover/uncover cost dominated --
+and which failed to terminate on some shapes. Same problem: assign each
+mountain tile in a connected group a tile-coord so that (a) its border edges
+match the group boundary and (b) every adjacent pair is compatible per
+mountain_data.
 
-Why a CSP instead of exact-cover: the exact-cover encoding balloons to
-thousands of "invalid-coord" secondary columns whose cover/uncover cost
-dominates on large groups. A direct CSP keeps one small domain per tile
-(<= number of mountain tiles) and does forward-checking propagation in
-O(domain) per neighbor -- attacking the measured hotspot directly.
+A direct CSP keeps one small domain per tile (<= number of mountain tiles) and
+maintains arc consistency (AC-3) during search, so it barely backtracks and
+proves unsatisfiable shapes in milliseconds instead of spinning forever.
 
 NOT wave-function-collapse: variable order is MRV and *value* selection is
 weighted-random by partner counts (the same signal NaiveBacktrackingProcess
 uses), so the tile-frequency distribution is preserved rather than collapsing
 to WFC's chaotic min-entropy output.
 
-Interface mirrors AlgorithmXProcess so it can be swapped into MountainPainter:
+Interface (the mountain-process protocol MountainPainter drives):
   __init__(tilemap, mountain_data, noneless_rules, group, gui_processing, waiting_callback)
   process_group(); attrs organization, did_complete, broke_out; stop().
 """
@@ -54,7 +56,7 @@ class CSPProcess:
         self.gui_processing = gui_processing
         self.waiting_callback = waiting_callback
 
-        # Sort top-left to bottom-right (matches AlgorithmXProcess ordering)
+        # Sort top-left to bottom-right
         self.to_process = sorted(self.group, key=lambda x: (x[0] + x[1], x[0]))
         self.organization: Dict[Pos, Pos] = {}
 
@@ -275,8 +277,9 @@ class CSPProcess:
         unassigned.add(pos)
         return False
 
-    # --------------------------------------------- domain / border (reused)
-    # These mirror AlgorithmXProcess exactly so domains match its constraints.
+    # ------------------------------------------------------- domain / border
+    # Border/domain rules: a tile's edge toward the group boundary must allow a
+    # non-mountain (None) neighbor; interior cells exclude fully-generic tiles.
     def find_valid_coords(self, pos) -> list:
         north, east, south, west = self.get_cardinal_terrain(pos)
         north_edge = not north

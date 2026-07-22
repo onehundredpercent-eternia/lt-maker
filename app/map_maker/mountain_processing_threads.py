@@ -4,7 +4,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from app.utilities.typing import Pos
 
-from app.map_maker.mountain_processing import NaiveBacktrackingProcess, AlgorithmXProcess
+from app.map_maker.mountain_processing import NaiveBacktrackingProcess
 from app.map_maker.mountain_processing_csp import CSPProcess
 
 class _MountainProcessThread(QThread):
@@ -39,12 +39,6 @@ class NaiveBacktrackingThread(_MountainProcessThread):
     def __init__(self, tilemap, mountain_data, noneless_rules,
                  group: Set[Pos], gui_processing: bool = True, parent=None):
         process = NaiveBacktrackingProcess(tilemap, mountain_data, noneless_rules, group, gui_processing)
-        super().__init__(process, parent)
-
-class AlgorithmXThread(_MountainProcessThread):
-    def __init__(self, tilemap, mountain_data, noneless_rules,
-                 group: Set[Pos], gui_processing: bool = True, parent=None):
-        process = AlgorithmXProcess(tilemap, mountain_data, noneless_rules, group, gui_processing)
         super().__init__(process, parent)
 
 class CSPThread(_MountainProcessThread):
