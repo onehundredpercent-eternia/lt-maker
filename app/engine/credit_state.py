@@ -198,8 +198,8 @@ class CreditDisplay():
 
         lst = self.credits[idx]
         if lst:
-            if lst[0].credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, ResourceType.ICONS80,
-                                    ResourceType.MAP_ICONS, ResourceType.MAP_SPRITES):
+            if lst[0].credit_type in (ResourceType.ICONS16, ResourceType.ICONS32,
+                                      ResourceType.MAP_ICONS, ResourceType.MAP_SPRITES):
                 limit = self.height - 24
                 icon_size = self.icon_size_dict.get(lst[0].credit_type) + 4
                 font_height = FONT[self.font].height
@@ -326,7 +326,7 @@ class CreditDisplay():
             y_offset = utils.clamp(prefab.get_info_coord()[1] + (INFO_PORTRAIT_HEIGHT - height) // 2,
                                     0, prefab.face_size[1] - height)
             im = engine.subsurface(im, (x_offset, y_offset, width, height)).convert_alpha()
-            #im = image_mods.make_translucent(im, 0.5)
+            im = image_mods.make_translucent(im, 0.5)
             # Blit from bottom right
             surf.blit(im, utils.tuple_sub(utils.tuple_add(self.topleft, (width, height)), im.get_size()))
 
@@ -375,9 +375,14 @@ class CreditDisplay():
 
         header = credit.header()
         render_text(surf, ['text'], [header], ['blue'], utils.tuple_add((self.width // 2, 4), self.topleft), HAlignment.CENTER)
+        
+        if credit.credit_type == ResourceType.ICONS80:
+            im = self.get_icon_by_credit(credit)
+            if im:
+                surf.blit(im, utils.tuple_add((self.width - 8 - 80, WINHEIGHT - 12 - 72), self.topleft))
 
         lines = []
-        if credit.credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, ResourceType.ICONS80, ResourceType.MAP_ICONS):
+        if credit.credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, ResourceType.MAP_ICONS):
             y_pos = 20
             icon_size = self.icon_size_dict.get(credit.credit_type) + 4
             for c in lst:
@@ -394,7 +399,7 @@ class CreditDisplay():
                                     utils.tuple_add((8 + icon_size, y_pos + idx * FONT[self.font].height), self.topleft))
                 y_pos += max(len(lines) * FONT[self.font].height, icon_size)
 
-        elif credit.credit_type in (ResourceType.PANORAMAS, ResourceType.PORTRAITS) and \
+        elif credit.credit_type in (ResourceType.ICONS80, ResourceType.PORTRAITS, ResourceType.PANORAMAS) and \
                 credit.contrib and credit.contrib[0]:
             c = credit.contrib[0]
             lines = text_funcs.line_wrap(self.font, c[1], self.width - 16)
