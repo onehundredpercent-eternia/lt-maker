@@ -158,8 +158,6 @@ class PanoramaDesc(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.window = parent
-
-        self.layout = QVBoxLayout()
         
         self.header_box = PropertyBox("Header", QLineEdit, self)
         self.header_box.edit.textChanged.connect(self.header_changed)
@@ -178,11 +176,15 @@ class PanoramaDesc(QWidget):
         self.author_box = PropertyBox("Author", QLineEdit, self)
         self.author_box.edit.textChanged.connect(self.author_changed)
 
+        centered_layout = QVBoxLayout()
+        centered_layout.addWidget(self.panorama_box)
+        centered_layout.addWidget(self.contrib_box)
+        centered_layout.addWidget(self.author_box)
+        centered_layout.setAlignment(Qt.AlignCenter)
+
+        self.layout = QVBoxLayout()
         self.layout.addWidget(self.header_box)
-        self.layout.addWidget(self.panorama_box)
-        self.layout.addWidget(self.contrib_box)
-        self.layout.addWidget(self.author_box)
-        self.layout.setAlignment(Qt.AlignCenter)
+        self.layout.addLayout(centered_layout)
         self.setLayout(self.layout)
 
     def panorama_changed(self, index):
@@ -277,8 +279,6 @@ class IconDesc(QWidget):
     def __init__(self, parent=None, credit_type=ResourceType.ICONS16):
         super().__init__(parent)
         self.window = parent
-
-        self.layout = QVBoxLayout()
         
         self.header_box = PropertyBox("Header", QLineEdit, self)
         self.header_box.edit.textChanged.connect(self.header_changed)
@@ -295,12 +295,16 @@ class IconDesc(QWidget):
 
         self.author_box = PropertyBox("Author", QLineEdit, self)
         self.author_box.edit.textChanged.connect(self.author_changed)
-
+        
+        centered_layout = QVBoxLayout()
+        centered_layout.addWidget(self.icon_box)
+        centered_layout.addWidget(self.contrib_box)
+        centered_layout.addWidget(self.author_box)
+        centered_layout.setAlignment(Qt.AlignCenter)
+        
+        self.layout = QVBoxLayout()
         self.layout.addWidget(self.header_box)
-        self.layout.addWidget(self.icon_box)
-        self.layout.addWidget(self.contrib_box)
-        self.layout.addWidget(self.author_box)
-        self.layout.setAlignment(Qt.AlignCenter)
+        self.layout.addLayout(centered_layout)
         self.setLayout(self.layout)
 
     def on_icon_changed(self, nid, x, y):
@@ -362,11 +366,14 @@ class MapSpriteDesc(QWidget):
         self.author_box = PropertyBox("Author", QLineEdit, self)
         self.author_box.edit.textChanged.connect(self.author_changed)
 
+        centered_layout = QVBoxLayout()
+        centered_layout.addWidget(self.map_sprite_box)
+        centered_layout.addWidget(self.author_box)
+        centered_layout.setAlignment(Qt.AlignCenter)
+
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.header_box)
-        self.layout.addWidget(self.map_sprite_box)
-        self.layout.addWidget(self.author_box)
-        self.layout.setAlignment(Qt.AlignCenter)
+        self.layout.addLayout(centered_layout)
         self.setLayout(self.layout)
 
     def select_map_sprite(self, nid):
