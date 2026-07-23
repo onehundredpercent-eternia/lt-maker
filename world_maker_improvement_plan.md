@@ -69,7 +69,8 @@ checking). Preserve the ring; do not "fix" those lookups by clamping.
    (from `CvMapGenerator.cpp::addRivers/doRiver/getRiverValueAtPlot`): rivers distribute evenly and
    merge instead of crisscrossing.
 5. **Lakes from a separate coarse field.**
-6. **Climate as a decoupled "skin"** over topology (latitude axis + fuzz + own field).
+6. **Deserts as a decoupled "skin"** over topology — a blob from its own field (no latitude axis;
+   the target is one island/small continent, not a globe), with a SAND skirt around a DESERT core.
 7. **Macro-layout hints** (Civ's `HintedWorld`): a coarse designer-controlled block grid blended
    into the elevation field for guaranteed macro structure.
 8. **Post-generation normalization** for gameplay fairness (Civ edits the map around starting
@@ -374,39 +375,79 @@ Civ's core random-single-tile method.
 
 ---
 
-## Phase 5 — Climate skin: deserts (gated on tileset verification)
+## Phase 5 — Deserts (gated on tileset verification)
 
-**Goal**: decouple climate from topology, Civ `TerrainGenerator`-style. The tileset has
-DESERT / DESERT_CLIFF / DESERT_ROCK but no snow/tundra, so scope = arid axis only.
+**Goal**: arid biomes as a **blob field**, not a latitude belt. We are not building a Civ-style
+whole-globe map — the target is a single large island or small continent — so there is **no
+latitude/climate axis**. A desert is just a noise blob on the land, placed like lakes/forests.
 
-**Gate first**: in the map maker UI, hand-paint DESERT adjacent to GRASS/NOISY_GRASS, SAND, SEA,
-FOREST and confirm the autotiler produces acceptable transitions. If transitions are broken, stop
-and report — do not implement around it. (Fallback design if partially broken: require a 1-tile
-SAND buffer ring around desert regions; only implement if told to.)
+The tileset has DESERT / DESERT_CLIFF / DESERT_ROCK but no snow/tundra, so scope = arid only.
+
+Two shaping principles from testing:
+1. **SAND is the transition, DESERT is the core.** Deserts read well when a band of SAND sits
+   between the true-desert tiles and the surrounding grass/forest. So each arid blob is a DESERT
+   core wrapped in a SAND skirt — exactly the hills/peaks relationship (SAND : DESERT :: HILL :
+   MOUNTAIN). SAND is used **often**; true DESERT only for the deepest interior of a blob.
+2. **DESERT_ROCK is scattered, never banded.** A contiguous band of DESERT_ROCK (e.g. from
+   HILL → DESERT_ROCK) renders badly. HILL does **not** convert to DESERT_ROCK. Instead,
+   DESERT_ROCK is sprinkled onto individual DESERT tiles at random for texture.
+
+**Gate first**: in the map maker UI, hand-paint DESERT adjacent to SAND, and SAND adjacent to
+GRASS/NOISY_GRASS / SEA / FOREST, plus a lone DESERT_ROCK on DESERT and a DESERT_CLIFF, and confirm
+the autotiler produces acceptable transitions. The SAND-skirt design already guarantees DESERT
+never directly abuts grass/forest, so the risky adjacency is SAND↔grass (already used for beaches)
+— but verify DESERT↔SAND and DESERT_ROCK/DESERT_CLIFF anyway. If a transition is broken, stop and
+report — do not implement around it.
 
 ### Spec
 
-- Theme params: `climate_axis` (choice: `none` / `north_hot` / `south_hot` / `west_hot` /
-  `east_hot`, default `none`), `desert_percent` (default 0, type `percent`).
-- Latitude function, Civ's with fuzz: `lat(pos)` = normalized coordinate along the chosen axis in
-  [0, 1] (1 = hot end), plus fuzz `(0.5 - variation_noise(pos)) * 0.2`, clamped to [0, 1].
-  Variation field: frequency 0.15, derived seed `seed + 4`.
-- Desert field: own noise (frequency 0.12, derived seed `seed + 5`). A land tile becomes desert if
-  `lat(pos) >= 0.55` AND desert-field value falls in the top `desert_percent` percentile band
-  (pool: land tiles with `lat >= 0.55`).
-- Conversion map: NOISY_GRASS/GRASS/LIGHT_GRASS → DESERT; CLIFF → DESERT_CLIFF; HILL →
-  DESERT_ROCK; FOREST/SPARSE_FOREST/THICKET → DESERT (climate kills forest); MOUNTAIN, SEA, SAND,
-  RIVER unchanged.
-- Ordering: after cliffs and forests, before lakes and rivers (rivers through desert are desirable;
-  lakes in desert read as oases — both free wins from ordering).
-- `climate_axis = none` or `desert_percent = 0` ⇒ phase is a no-op.
+- Theme params (all `percent` except where noted; each defaults to a no-op-friendly value):
+  - `desert_percent` (default 0) — portion of **land** that is arid biome (DESERT **+** SAND
+    together). 0 disables the phase.
+  - `deep_desert_percent` (default 0.35) — portion of the **arid biome** that is true DESERT core;
+    the rest becomes SAND skirt. Analogous to `peak_percent` within highland. Higher ⇒ more true
+    desert, thinner sand transition.
+  - `desert_rock_chance` (default 0.06) — per-DESERT-tile probability of scattering a DESERT_ROCK.
+- Desert field: own noise (frequency 0.10, derived seed `seed + DESERT_SEED_OFFSET`, i.e. `seed + 4`
+  — the next free offset after lakes' `+3`), `derive_octaves`, shared lacunarity/gain, normalized.
+- **Arid region** = land tiles (non-SEA) in the top `desert_percent` percentile of the desert field
+  (pool: land tiles only, else sea eats the budget). This is one or a few blobs.
+- **Core vs skirt**: within the arid region, a tile is true DESERT if its desert-field value is in
+  the top `deep_desert_percent` percentile **of the arid pool**; otherwise SAND. Because noise level
+  sets nest, the DESERT core sits in the blob interior and the SAND skirt rings it — so DESERT
+  reaches grass/forest only through SAND, giving the wanted transition band for free.
+- **Conversion** (only inside the arid region):
+  - NOISY_GRASS / FOREST / SPARSE_FOREST / THICKET / HILL / MOUNTAIN / RIVER → DESERT (core) or
+    SAND (skirt). HILL and MOUNTAIN flatten to arid ground exactly like grass — no DESERT_ROCK
+    bands and no rocky peaks; a mountain in the desert is overwritten the same way a hill is. A
+    RIVER crossing the blob dries up into desert/sand (it does not flow through the sand).
+  - CLIFF → DESERT_CLIFF (cliffs are already thin discontinuity lines, not blobs — safe to reskin).
+  - SEA, SAND → unchanged (existing beach SAND and open water stay; a lake under the blob survives
+    as an oasis since SEA is not convertible).
+- **Rock scatter** (after conversion): each DESERT tile becomes DESERT_ROCK with probability
+  `desert_rock_chance`, using a deterministic per-tile draw (position+seed jitter, like the river
+  jitter — a pure function of `(x, y, seed)` so it is reproducible and independent of iteration
+  order). Scatter only onto DESERT, never SAND. **DESERT_ROCK is impassable** (blocks movement
+  like MOUNTAIN/CLIFF) — keep `desert_rock_chance` low so the rocks read as decoration, not a
+  wall, and rely on the Phase 8 connectivity pass to guarantee the map stays traversable.
+- Ordering: deserts run **last**, after rivers, so the arid blob overwrites everything under it
+  (including river tiles). Lakes still precede rivers (rivers can terminate in a lake) and a lake
+  under the blob reads as an oasis. Final pipeline order after this phase:
+  elevation classes → hills/peaks → cliffs → forests → lakes → rivers → **deserts**.
+- `desert_percent = 0` ⇒ phase is a no-op.
 
 ### Tests
 
 - No-op when disabled (grid identical with/without the pass when `desert_percent = 0`).
-- With `north_hot`, desert tiles' mean y significantly below map midline (or above, depending on
-  y-axis direction — pin down which end is "north" in this codebase: y=0 is the top row, which
-  this plan calls north).
+- SAND-dominant transition: over 10 seeds, the number of tiles the pass turns into SAND is
+  **greater** than the number it turns into DESERT (at default `deep_desert_percent`), confirming
+  sand is the common tile and true desert is the rare core.
+- No bare DESERT↔vegetation edge: no DESERT (or DESERT_ROCK) tile is 4-adjacent to
+  NOISY_GRASS / FOREST / SPARSE_FOREST / THICKET — it must reach them through SAND. (May need a
+  small tolerance if tile-resolution noise lets the core touch the blob edge; if so, assert the
+  violating fraction is tiny rather than zero.)
+- Rocks are a subset of the desert region and stay sparse (DESERT_ROCK count ≤ roughly
+  `desert_rock_chance` × DESERT-region size, with slack), and never land on SAND.
 - Determinism.
 
 ---
@@ -463,8 +504,10 @@ starting plots; an FE map's equivalent invariant is "one connected passable regi
 
 ### Spec
 
-- Passable terrain: everything except SEA, MOUNTAIN, CLIFF, DESERT_CLIFF. (RIVER counts as
-  impassable for connectivity purposes too — FE infantry can't cross rivers; bridges fix it.)
+- Passable terrain: everything except SEA, MOUNTAIN, CLIFF, DESERT_CLIFF, DESERT_ROCK. (RIVER
+  counts as impassable for connectivity purposes too — FE infantry can't cross rivers; bridges
+  fix it.) **DESERT_ROCK is impassable** — the scattered rocks block movement like mountains, so
+  the connectivity pass must treat them as wall, not floor.
 - After all other generation: flood-fill 4-connected passable regions. Ignore regions smaller than
   4 tiles (convert them entirely to their surrounding impassable terrain's most common type — tiny
   pockets inside mountain ranges are noise, not gameplay).
@@ -514,7 +557,8 @@ Civ 4 files this plan is derived from. Local install root (as of 2026-07):
 - [CvMapGeneratorUtil.py (local)](file:///C:/Program%20Files%20(x86)/Steam/steamapps/common/Sid%20Meier's%20Civilization%20IV%20Beyond%20the%20Sword/Assets/Python/CvMapGeneratorUtil.py)
   — `<root>\Assets\Python\CvMapGeneratorUtil.py`.
   FractalWorld hill/peak bands (`generatePlotTypes`, ~line 177), HintedWorld block hints
-  (~line 219), TerrainGenerator latitude + fuzz (~line 970), FeatureGenerator (~line 1116).
+  (~line 219), TerrainGenerator latitude + fuzz (~line 970 — **not** followed; Phase 5 drops
+  latitude for a blob field), FeatureGenerator (~line 1116).
   Web mirror: [K-Mod fork on GitHub](https://github.com/karadoc/Civ4-K-Mod/blob/master/Assets/Python/CvMapGeneratorUtil.py)
   (lightly modified fork; the classes above are intact).
 - [CvMapScriptInterface.py (local)](file:///C:/Program%20Files%20(x86)/Steam/steamapps/common/Sid%20Meier's%20Civilization%20IV%20Beyond%20the%20Sword/Assets/Python/EntryPoints/CvMapScriptInterface.py)

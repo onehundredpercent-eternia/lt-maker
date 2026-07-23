@@ -20,6 +20,13 @@ NOISE_GAIN = 0.5
 HILL_SEED_OFFSET = 1
 PASS_SEED_OFFSET = 2
 LAKE_SEED_OFFSET = 3
+DESERT_SEED_OFFSET = 4
+# Terrains an arid blob converts to DESERT core / SAND skirt. HILL and MOUNTAIN both flatten
+# to arid ground exactly like grass (no DESERT_ROCK bands or peaks); RIVER dries up into the
+# desert too (deserts run last, so any river crossing the blob is overwritten). Cliffs reskin
+# to DESERT_CLIFF; existing sand and open water (SEA) are left untouched.
+DESERT_CONVERTIBLE = (Terrain.NOISY_GRASS, Terrain.FOREST, Terrain.SPARSE_FOREST,
+                      Terrain.THICKET, Terrain.HILL, Terrain.MOUNTAIN, Terrain.RIVER)
 # The pass field modulates mountain-spine width along each ridge; finer than the hill
 # field so a low patch cuts *across* a ridge rather than tracking it. 2x -> a pass is
 # roughly half a hill wavelength wide (a few tiles at the default frequency).
@@ -66,6 +73,8 @@ class RiverEnd(Enum):
 def derive_octaves(frequency: float) -> int:
     """Octaves whose wavelength falls below ~2 tiles (the tile Nyquist limit)
     add nothing visible, so octave depth follows from frequency."""
+    if frequency == 0:
+        return 1
     return max(1, math.ceil(math.log2(0.5 / frequency)))
 
 def get_threshold_from_percent(noise_map: Dict[Pos, float], percent: float,
@@ -199,6 +208,17 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
     # Civ's order (features last) and letting rivers read the finished altitude field,
     # including forest tiles they may cut through and lakes they may terminate in.
     tilemap.generate_rivers()
+
+    # 7. Figure out where deserts go. Independent field (DESERT_SEED_OFFSET): an arid blob is a
+    # DESERT core wrapped in a SAND skirt (like hills/peaks), with DESERT_ROCK scattered on top.
+    # Runs *last* so the arid blob overwrites everything under it -- including rivers, which dry
+    # up into desert/sand rather than flowing through the sand. A lake (SEA) under the blob
+    # survives as an oasis (SEA is not convertible).
+    desert_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
+        (tilemap.width, tilemap.height), seed + DESERT_SEED_OFFSET, theme['desert_frequency'],
+        1.0, derive_octaves(theme['desert_frequency']), NOISE_LACUNARITY, NOISE_GAIN)
+    desert_noise_map = simplex_noise.normalize_noise_map(desert_noise_map)
+    tilemap.generate_deserts_from_noise(desert_noise_map)
 
     return tilemap
 
@@ -415,6 +435,72 @@ class WorldTileMap:
             if near_coast(pos):  # keep lakes > Chebyshev 2 from the coast
                 continue
             self.terrain_grid[pos] = Terrain.SEA
+
+    def generate_deserts_from_noise(self, noise_map: Dict[Pos, float]):
+        # Arid biome as a blob (no latitude axis -- we target one island/small continent, not a
+        # globe). Each blob is a DESERT core wrapped in a SAND skirt, the SAND : DESERT relation
+        # mirroring HILL : MOUNTAIN: the deepest interior of the blob is true DESERT, everything
+        # out to the blob edge is SAND, so DESERT reaches grass/forest only through a sand band.
+        # DESERT_ROCK is then sprinkled onto DESERT tiles at random -- never banded (a run of
+        # DESERT_ROCK reads badly), so HILL flattens to arid ground rather than becoming rock.
+        desert_percent = self.theme['desert_percent'] * 100
+        if desert_percent <= 0:
+            return
+        # Percentile pool is land only, else sea eats the budget.
+        land_positions = [(x, y) for x in range(self.width) for y in range(self.height)
+                          if self.get_terrain((x, y)) != Terrain.SEA]
+        if not land_positions:
+            return
+        # Arid region = top `desert_percent` of the desert field over land (one/few blobs).
+        arid_threshold = get_threshold_from_percent(
+            noise_map, 100 - desert_percent, self.width, self.height, land_positions)
+        arid_positions = [pos for pos in land_positions if noise_map[pos] >= arid_threshold]
+        if not arid_positions:
+            return
+        # Within the blob, the top `deep_desert_percent` (of the arid pool) is true DESERT core;
+        # the rest is SAND skirt. Because noise level sets nest, the core sits blob-interior.
+        deep_percent = self.theme['deep_desert_percent'] * 100
+        deep_threshold = get_threshold_from_percent(
+            noise_map, 100 - deep_percent, self.width, self.height, arid_positions)
+
+        for pos in arid_positions:
+            terrain = self.get_terrain(pos)
+            if terrain == Terrain.CLIFF:
+                self.terrain_grid[pos] = Terrain.DESERT_CLIFF
+                continue
+            if terrain not in DESERT_CONVERTIBLE:
+                continue  # existing SAND / RIVER survive the climate
+            if noise_map[pos] >= deep_threshold:
+                self.terrain_grid[pos] = Terrain.DESERT
+            else:
+                self.terrain_grid[pos] = Terrain.SAND
+
+        # Guarantee the SAND skirt: percentile nesting alone leaves a jagged, sometimes
+        # one-tile-thin border on small blobs, so a DESERT tile can still abut grass/forest.
+        # Erode once -- every DESERT tile 4-adjacent to vegetation is demoted to SAND
+        # (computed against the pre-erosion grid, so the survivors provably touch no
+        # vegetation). This also thickens the skirt, keeping SAND the common arid tile.
+        vegetation = (Terrain.NOISY_GRASS, Terrain.FOREST, Terrain.SPARSE_FOREST, Terrain.THICKET)
+        to_sand = []
+        for (x, y) in arid_positions:
+            if self.get_terrain((x, y)) != Terrain.DESERT:
+                continue
+            if any(self.get_terrain(n) in vegetation
+                   for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1))):
+                to_sand.append((x, y))
+        for pos in to_sand:
+            self.terrain_grid[pos] = Terrain.SAND
+
+        # Scatter DESERT_ROCK onto true-desert tiles only, via a deterministic per-tile draw
+        # (pure function of position + seed, independent of iteration order and of the river
+        # jitter -- distinct offset), so rocks reproduce and never form a band.
+        rock_chance = self.theme['desert_rock_chance']
+        if rock_chance > 0:
+            for pos in arid_positions:
+                if self.get_terrain(pos) != Terrain.DESERT:
+                    continue
+                if utilities.random_random(pos, self.seed, DESERT_SEED_OFFSET) < rock_chance:
+                    self.terrain_grid[pos] = Terrain.DESERT_ROCK
 
     def _identify_landmasses(self) -> Tuple[Dict[Pos, int], Dict[int, int]]:
         """Flood-fill 4-connected non-SEA tiles into landmasses. Returns

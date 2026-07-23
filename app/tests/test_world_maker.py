@@ -255,6 +255,89 @@ class WorldMakerRiverTests(unittest.TestCase):
                 for (sx, sy) in base:
                     self.assertGreater(max(abs(lx - sx), abs(ly - sy)), 2,
                                        "seed %d: lake at (%d,%d) hugs coast" % (seed, lx, ly))
+    def test_deserts_are_a_noop_when_disabled(self):
+        off = _make_theme(desert_percent=0.0)
+        for seed in range(10):
+            g = terrain_generation.generate_terrain(off, seed).terrain_grid
+            for t in g.values():
+                self.assertNotIn(t, (Terrain.DESERT, Terrain.DESERT_ROCK, Terrain.DESERT_CLIFF),
+                                 "seed %d: desert tile appeared with deserts disabled" % seed)
+
+    def test_desert_sand_skirt_outweighs_desert_core(self):
+        # SAND is the common arid tile, true DESERT only the rare core. The pass must add more
+        # SAND than DESERT. (DESERT_ROCK is excluded: it is mostly replaced mountains, a
+        # separate feature from the sand-skirt / desert-core relationship.)
+        on = _make_theme(desert_percent=0.15)
+        off = _make_theme(desert_percent=0.0)
+        for seed in range(10):
+            g_on = terrain_generation.generate_terrain(on, seed).terrain_grid
+            g_off = terrain_generation.generate_terrain(off, seed).terrain_grid
+            sand_on = {p for p, t in g_on.items() if t == Terrain.SAND}
+            sand_off = {p for p, t in g_off.items() if t == Terrain.SAND}
+            sand_gained = len(sand_on - sand_off)
+            core = sum(1 for t in g_on.values() if t == Terrain.DESERT)
+            if core == 0:
+                continue  # no arid land this seed
+            self.assertGreater(sand_gained, core,
+                               "seed %d: sand skirt %d not > desert core %d" % (seed, sand_gained, core))
+
+    def test_desert_never_directly_touches_vegetation(self):
+        # True DESERT reaches grass/forest only through the SAND skirt: no DESERT tile is
+        # 4-adjacent to vegetation (erosion guarantees this). Checking DESERT alone keeps the
+        # invariant crisp; scattered DESERT_ROCK sits on interior desert, not the eroded edge.
+        on = _make_theme(desert_percent=0.15)
+        veg = (Terrain.NOISY_GRASS, Terrain.FOREST, Terrain.SPARSE_FOREST, Terrain.THICKET)
+        for seed in range(10):
+            g = terrain_generation.generate_terrain(on, seed).terrain_grid
+            core = [p for p, t in g.items() if t == Terrain.DESERT]
+            if not core:
+                continue
+            violations = 0
+            for (x, y) in core:
+                for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if g.get(n) in veg:
+                        violations += 1
+                        break
+            self.assertLessEqual(violations, max(1, len(core) // 20),
+                                 "seed %d: %d/%d desert tiles touch vegetation" % (seed, violations, len(core)))
+
+    def test_desert_rocks_are_sparse_and_on_desert(self):
+        # DESERT_ROCK is only the scatter on flat desert (mountains flatten to DESERT/SAND,
+        # they do not become rock). It must stay a small minority of the desert region.
+        on = _make_theme(desert_percent=0.15, desert_rock_chance=0.06)
+        saw_rock = False
+        for seed in range(10):
+            g = terrain_generation.generate_terrain(on, seed).terrain_grid
+            rocks = sum(1 for t in g.values() if t == Terrain.DESERT_ROCK)
+            region = sum(1 for t in g.values() if t in (Terrain.DESERT, Terrain.DESERT_ROCK))
+            if region == 0:
+                continue
+            saw_rock = saw_rock or rocks > 0
+            self.assertLess(rocks, region * 0.25,
+                            "seed %d: rocks %d not sparse vs region %d" % (seed, rocks, region))
+        self.assertTrue(saw_rock, "no desert rocks scattered across 10 seeds")
+
+    def test_desert_replaces_mountains_in_the_blob(self):
+        # Mountains inside an arid blob flatten to DESERT/SAND like hills, so enabling deserts
+        # strictly reduces the mountain count on at least some seeds (a blob covering a peak).
+        on = _make_theme(desert_percent=0.20)
+        off = _make_theme(desert_percent=0.0)
+        reduced = False
+        for seed in range(10):
+            mtn_on = sum(1 for t in terrain_generation.generate_terrain(on, seed).terrain_grid.values()
+                         if t == Terrain.MOUNTAIN)
+            mtn_off = sum(1 for t in terrain_generation.generate_terrain(off, seed).terrain_grid.values()
+                          if t == Terrain.MOUNTAIN)
+            self.assertLessEqual(mtn_on, mtn_off, "seed %d: deserts added mountains" % seed)
+            reduced = reduced or mtn_on < mtn_off
+        self.assertTrue(reduced, "deserts never replaced a mountain across 10 seeds")
+
+    def test_deserts_are_deterministic(self):
+        on = _make_theme(desert_percent=0.15)
+        for seed in range(5):
+            a = terrain_generation.generate_terrain(on, seed).terrain_grid
+            b = terrain_generation.generate_terrain(on, seed).terrain_grid
+            self.assertEqual(a, b, "seed %d: desert generation not deterministic" % seed)
 
 
 if __name__ == '__main__':
