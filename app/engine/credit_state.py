@@ -374,7 +374,7 @@ class CreditDisplay():
 
         header = credit.header()
         render_text(surf, ['text'], [header], ['blue'], utils.tuple_add((self.width // 2, 4), self.topleft), HAlignment.CENTER)
-        
+
         if credit.credit_type == ResourceType.ICONS80:
             im = self.get_icon_by_credit(credit)
             if im:
