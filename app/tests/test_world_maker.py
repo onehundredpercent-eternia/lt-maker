@@ -201,14 +201,16 @@ class WorldMakerRiverTests(unittest.TestCase):
                         "seed %d: sources %s and %s too close" % (seed, sources[i], sources[j]))
 
     def test_every_river_terminates_or_was_erased(self):
-        # Kept rivers end at SEA / RIVER / off-map, or ran out of room (deadend/cap) with
-        # at least 3 painted tiles; anything shorter is never recorded (erased).
+        # A recorded river reached water: it ends at SEA / RIVER / off-map. Dead-end and
+        # capped walks never reach water and are erased (not painted, not recorded), so
+        # they must not appear in tm.rivers. Kept rivers also paint at least 3 tiles.
         theme = _make_theme()
-        allowed = set(terrain_generation.RiverEnd)
+        clean = {terrain_generation.RiverEnd.SEA, terrain_generation.RiverEnd.RIVER,
+                 terrain_generation.RiverEnd.OFFMAP}
         for seed in range(10):
             tm = terrain_generation.generate_terrain(theme, seed)
             for path, reason in tm.rivers:
-                self.assertIn(reason, allowed, "seed %d: unexpected reason %s" % (seed, reason))
+                self.assertIn(reason, clean, "seed %d: kept river with reason %s" % (seed, reason))
                 painted = [p for p in path if tm.terrain_grid[p] == Terrain.RIVER]
                 self.assertGreaterEqual(len(painted), 3,
                                         "seed %d: kept river shorter than 3 tiles" % seed)
@@ -223,6 +225,36 @@ class WorldMakerRiverTests(unittest.TestCase):
                 for pos in path[1:]:
                     self.assertNotIn(tm.terrain_grid[pos], (Terrain.MOUNTAIN, Terrain.CLIFF),
                                      "seed %d: river crosses %s" % (seed, tm.terrain_grid[pos]))
+    def test_lakes_exist_when_enabled_and_none_when_disabled(self):
+        # Lakes on for most seeds at 8%; exactly zero SEA gained when disabled.
+        on = _make_theme(lake_percent=0.08)
+        off = _make_theme(lake_percent=0.0)
+        seeds_with_lakes = 0
+        for seed in range(10):
+            base = {p for p, t in terrain_generation.generate_terrain(off, seed).terrain_grid.items()
+                    if t == Terrain.SEA}
+            lit = {p for p, t in terrain_generation.generate_terrain(on, seed).terrain_grid.items()
+                   if t == Terrain.SEA}
+            self.assertTrue(base <= lit, "seed %d: disabling lakes must only remove SEA" % seed)
+            if lit - base:
+                seeds_with_lakes += 1
+        self.assertGreaterEqual(seeds_with_lakes, 8,
+                                "lakes appeared on only %d/10 seeds" % seeds_with_lakes)
+
+    def test_no_lake_within_chebyshev_2_of_coastline(self):
+        # Lake tiles (SEA gained vs the lakes-disabled run) must sit > Chebyshev 2 from the
+        # pre-lake coastline, so they never fuse into the coast.
+        on = _make_theme(lake_percent=0.08)
+        off = _make_theme(lake_percent=0.0)
+        for seed in range(10):
+            base = {p for p, t in terrain_generation.generate_terrain(off, seed).terrain_grid.items()
+                    if t == Terrain.SEA}
+            lit = {p for p, t in terrain_generation.generate_terrain(on, seed).terrain_grid.items()
+                   if t == Terrain.SEA}
+            for (lx, ly) in lit - base:
+                for (sx, sy) in base:
+                    self.assertGreater(max(abs(lx - sx), abs(ly - sy)), 2,
+                                       "seed %d: lake at (%d,%d) hugs coast" % (seed, lx, ly))
 
 
 if __name__ == '__main__':

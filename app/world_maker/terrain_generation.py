@@ -19,6 +19,7 @@ NOISE_GAIN = 0.5
 # Derived seeds -- distinct fields must not correlate, so each gets seed + its own offset.
 HILL_SEED_OFFSET = 1
 PASS_SEED_OFFSET = 2
+LAKE_SEED_OFFSET = 3
 # The pass field modulates mountain-spine width along each ridge; finer than the hill
 # field so a low patch cuts *across* a ridge rather than tracking it. 2x -> a pass is
 # roughly half a hill wavelength wide (a few tiles at the default frequency).
@@ -51,8 +52,11 @@ RIVER_PAINTABLE = (Terrain.HILL, Terrain.NOISY_GRASS, Terrain.SAND,
                    Terrain.FOREST, Terrain.SPARSE_FOREST, Terrain.THICKET)
 
 class RiverEnd(Enum):
-    """How a flow walk terminated. SEA/RIVER/OFFMAP are clean exits; DEADEND/CAP mean
-    the river ran out of legal moves (still kept if it painted >= 3 tiles)."""
+    """How a flow walk terminated. SEA/RIVER/OFFMAP are clean exits and are the only
+    reasons a river is painted. DEADEND (ran out of legal moves) and CAP (hit the step
+    limit) mean the river never reached water -- it is erased, not painted, because a
+    river that stops mid-land or space-fills a flat basin into a wide blob reads as wrong
+    in FE (unlike Civ's edge rivers, which may dead-end)."""
     SEA = 'sea'
     RIVER = 'river'
     OFFMAP = 'offmap'
@@ -182,9 +186,18 @@ def _generate_terrain_process(theme: Dict[NID, Any], seed: int) -> Optional[Worl
     forest_noise_map = simplex_noise.normalize_noise_map(forest_noise_map)
     tilemap.generate_forests_from_noise(forest_noise_map)
 
-    # 5. Figure out where rivers go. Rivers run *after* cliffs and forests, matching Civ's
-    # order (features last) and letting rivers read the finished altitude field, including
-    # forest tiles they may cut through.
+    # 5. Figure out where lakes go. Independent field (LAKE_SEED_OFFSET) so lakes don't
+    # correlate with elevation and pile onto the coastal fringe. Runs *before* rivers so a
+    # river can terminate in a lake (river termination already checks SEA).
+    lake_noise_map: Dict[Pos, float] = simplex_noise.gen_noise_map(
+        (tilemap.width, tilemap.height), seed + LAKE_SEED_OFFSET, theme['lake_frequency'],
+        1.0, derive_octaves(theme['lake_frequency']), NOISE_LACUNARITY, NOISE_GAIN)
+    lake_noise_map = simplex_noise.normalize_noise_map(lake_noise_map)
+    tilemap.generate_lakes_from_noise(lake_noise_map)
+
+    # 6. Figure out where rivers go. Rivers run *after* cliffs, forests, and lakes, matching
+    # Civ's order (features last) and letting rivers read the finished altitude field,
+    # including forest tiles they may cut through and lakes they may terminate in.
     tilemap.generate_rivers()
 
     return tilemap
@@ -365,6 +378,44 @@ class WorldTileMap:
                 elif self.theme['forest_threshold'] > 0 and thick_forest_threshold > value >= (1 - self.theme['forest_threshold']):
                     self.terrain_grid[(x, y)] = Terrain.FOREST
 
+    def generate_lakes_from_noise(self, noise_map: Dict[Pos, float]):
+        # Inland water bodies: the low percentile of an independent lake field becomes SEA
+        # (lakes *are* SEA terrain -- the autotiler renders inland sea). Blob lakes modeled
+        # on Highlands.py's dedicated lake fractal, not Civ's single-tile method.
+        lake_percent = self.theme['lake_percent'] * 100
+        if lake_percent <= 0:
+            return
+        # Percentile pool is land only -- include sea and coastal water eats the lake budget.
+        land_positions = [(x, y) for x in range(self.width) for y in range(self.height)
+                          if self.get_terrain((x, y)) != Terrain.SEA]
+        if not land_positions:
+            return
+        lake_threshold = get_threshold_from_percent(
+            noise_map, lake_percent, self.width, self.height, land_positions)
+        # Snapshot the *pre-lake* coastline: distance-to-sea is measured against it, so a
+        # growing lake blob neither fuses into the coast nor self-blocks (the second lake
+        # tile must not measure its distance to the first).
+        coastline = {pos for pos, terrain in self.terrain_grid.items()
+                     if terrain == Terrain.SEA}
+        convertible = (Terrain.NOISY_GRASS, Terrain.SAND, Terrain.FOREST,
+                       Terrain.SPARSE_FOREST, Terrain.THICKET, Terrain.HILL)
+
+        def near_coast(pos: Pos) -> bool:
+            for dx in range(-2, 3):
+                for dy in range(-2, 3):
+                    if (pos[0] + dx, pos[1] + dy) in coastline:
+                        return True
+            return False
+
+        for pos in land_positions:
+            if noise_map[pos] >= lake_threshold:
+                continue
+            if self.get_terrain(pos) not in convertible:
+                continue
+            if near_coast(pos):  # keep lakes > Chebyshev 2 from the coast
+                continue
+            self.terrain_grid[pos] = Terrain.SEA
+
     def _identify_landmasses(self) -> Tuple[Dict[Pos, int], Dict[int, int]]:
         """Flood-fill 4-connected non-SEA tiles into landmasses. Returns
         (area_id per tile, size per area)."""
@@ -420,7 +471,11 @@ class WorldTileMap:
         first_dir: Optional[direction.Direction] = None
         prev_dir: Optional[direction.Direction] = None
         reason = RiverEnd.DEADEND
-        for _ in range(self.width * self.height):
+        # A river that reaches water does so in O(map dimension) steps. A walk that runs
+        # much longer is snaking a flat basin (no gradient to descend, no water to hit);
+        # cap it so it bails as CAP -> erased instead of space-filling a wide blob.
+        max_steps = 2 * (self.width + self.height)
+        for _ in range(max_steps):
             current = path[-1]
             candidates: List[Tuple[Pos, direction.Direction]] = []
             for n in direction.get_cardinal_positions(current):
@@ -531,6 +586,8 @@ class WorldTileMap:
                         continue
 
                     path, reason = self._do_river(pos)
+                    if reason not in (RiverEnd.SEA, RiverEnd.RIVER, RiverEnd.OFFMAP):
+                        continue  # never reached water -- erase it (no dead-end/blob rivers)
                     paintable = [p for p in path if self.get_terrain(p) in RIVER_PAINTABLE]
                     if len(paintable) < 3:
                         continue  # too short -- erase it

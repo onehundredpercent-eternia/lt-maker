@@ -13,6 +13,8 @@ theme_parameters = Data([
     ThemeParameter('forest_threshold', "Forest Chance", 0.35, percent, "Height of forest noise map that produces forests"),
     ThemeParameter('thick_forest_threshold', "Thick Forest Chance", 0.2, percent, "Height of forest noise map that produces thick forests"),
     ThemeParameter('tiles_per_river_tile', "Tiles Per River Tile", 40, int, "One river tile is targeted per this many land tiles per landmass; 0 disables rivers"),
+    ThemeParameter('lake_frequency', "Lake Frequency", 0.08, float, "How close together samples are on the lake noise wave; smaller frequency is closer sampling"),
+    ThemeParameter('lake_percent', "Lake Percent", 0.03, percent, "Portion of land turned into inland lakes (SEA); 0 disables lakes"),
     ThemeParameter('elevation', "Elevation Modification", 0.0, float, "Modify the effective elevation generated"),
     ThemeParameter('water_border', "Set Sea Border", False, bool, "Add a sea border around the map"),
     ThemeParameter('sea_percent', "Sea Percent", 0.35, percent, "Portion of map that is sea"),
