@@ -154,7 +154,6 @@ class CreditState(State):
 class CreditDisplay():
     icon_size_dict = {ResourceType.ICONS16: 16, 
                       ResourceType.ICONS32: 32,
-                      ResourceType.ICONS80: 80,
                       ResourceType.MAP_ICONS: 32,
                       ResourceType.MAP_SPRITES: 16}
 
