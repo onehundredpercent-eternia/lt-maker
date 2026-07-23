@@ -197,7 +197,7 @@ class CreditDisplay():
 
         lst = self.credits[idx]
         if lst:
-            if lst[0].credit_type in (ResourceType.ICONS16, ResourceType.ICONS32,
+            if lst[0].credit_type in (ResourceType.ICONS16, ResourceType.ICONS32, 
                                       ResourceType.MAP_ICONS, ResourceType.MAP_SPRITES):
                 limit = self.height - 24
                 icon_size = self.icon_size_dict.get(lst[0].credit_type) + 4
@@ -407,7 +407,7 @@ class CreditDisplay():
 
             lines += text_funcs.line_wrap(self.font, "<orange>%s</> by %s" % (st, c[0]), self.width - 16)
             for idx, line in enumerate(lines):
-                render_text(surf, [self.font], [line], ['orange' if idx in highlight_lines else None],
+                render_text(surf, [self.font], [line], ['orange' if idx in highlight_lines else None], 
                             utils.tuple_add((8, 20 + idx * FONT[self.font].height), self.topleft))
 
         elif credit.credit_type == 'List' and credit.contrib and credit.contrib[0]:
