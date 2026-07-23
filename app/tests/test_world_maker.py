@@ -338,6 +338,60 @@ class WorldMakerRiverTests(unittest.TestCase):
             a = terrain_generation.generate_terrain(on, seed).terrain_grid
             b = terrain_generation.generate_terrain(on, seed).terrain_grid
             self.assertEqual(a, b, "seed %d: desert generation not deterministic" % seed)
+    def test_pangaea_is_one_landmass(self):
+        # A pangaea layout must collapse the land into a single dominant continent.
+        theme = _make_theme(size=(30, 30), macro_layout='pangaea')
+        for seed in range(10):
+            g = terrain_generation.generate_terrain(theme, seed).terrain_grid
+            land = {p for p, t in g.items() if t != Terrain.SEA}
+            if not land:
+                continue
+            largest = max(len(c) for c in _connected_components(land))
+            self.assertGreaterEqual(largest, 0.85 * len(land),
+                                    "seed %d: largest landmass %d/%d < 85%%" % (seed, largest, len(land)))
+
+    def test_enclosed_layouts_are_surrounded_by_sea(self):
+        # Pangaea and continents must be islands: no land on the outer tile ring, any seed.
+        for layout in ('pangaea', 'continents'):
+            theme = _make_theme(size=(40, 24), macro_layout=layout)
+            for seed in range(10):
+                g = terrain_generation.generate_terrain(theme, seed).terrain_grid
+                w, h = 40, 24
+                ring = [(x, y) for x in range(w) for y in range(h)
+                        if x in (0, w - 1) or y in (0, h - 1)]
+                land = [p for p in ring if g[p] != Terrain.SEA]
+                self.assertEqual(land, [], "%s seed %d: %d land tiles on border ring"
+                                 % (layout, seed, len(land)))
+
+    def test_continents_makes_multiple_landmasses(self):
+        # Continents should usually yield two separate sizable landmasses (noise can bridge
+        # them on some seeds -- require it on most, not all).
+        theme = _make_theme(size=(40, 28), macro_layout='continents')
+        good = 0
+        for seed in range(10):
+            g = terrain_generation.generate_terrain(theme, seed).terrain_grid
+            land = {p for p, t in g.items() if t != Terrain.SEA}
+            big = [c for c in _connected_components(land) if len(c) >= 20]
+            if len(big) >= 2:
+                good += 1
+        self.assertGreaterEqual(good, 7, "only %d/10 seeds had 2+ landmasses" % good)
+
+    def test_none_layout_is_a_noop(self):
+        # With no macro layout, the hint weight must not touch the output at all.
+        a = _make_theme(macro_layout='none', hint_weight=0.55)
+        b = _make_theme(macro_layout='none', hint_weight=0.0)
+        for seed in range(5):
+            ga = terrain_generation.generate_terrain(a, seed).terrain_grid
+            gb = terrain_generation.generate_terrain(b, seed).terrain_grid
+            self.assertEqual(ga, gb, "seed %d: 'none' layout was not a no-op" % seed)
+
+    def test_macro_layout_is_deterministic(self):
+        for layout in ('pangaea', 'continents', 'coastal'):
+            theme = _make_theme(size=(30, 24), macro_layout=layout)
+            for seed in range(4):
+                a = terrain_generation.generate_terrain(theme, seed).terrain_grid
+                b = terrain_generation.generate_terrain(theme, seed).terrain_grid
+                self.assertEqual(a, b, "%s seed %d: not deterministic" % (layout, seed))
 
 
 if __name__ == '__main__':

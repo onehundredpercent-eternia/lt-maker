@@ -468,8 +468,14 @@ top — Civ's `HintedWorld` block-hint concept, adapted from fractal-seeding to 
   - `pangaea` — land seed at grid center, random-walk expansion (Civ's
     `expandContinentBy`: repeatedly pick a random owned block, random cardinal neighbor, claim it
     if unowned) until 55% of blocks are land; all other blocks water.
-  - `continents` — two land seeds at (25%, 50%) and (75%, 50%) of the grid, each expanded to 27%
-    of blocks; remainder water.
+  - `continents` — reserve the two centre columns of the block grid as a water gutter, then pen
+    one land seed in each half (seed at the half's centre) and expand it — same `expandContinentBy`
+    walk, but constrained to its half — to ~65% of that half's blocks; remainder water. (The plan
+    originally specified two free seeds at 25%/75% each grown to 27% of the whole grid, but on the
+    small block grids these maps use the two continents reliably merged: seeds only a few blocks
+    apart, each grabbing a quarter of the grid, join into one landmass, and a single-column gutter
+    is thin enough for noise to bridge. Half-penning + a two-column gutter gives the intended
+    two-landmass result on ≥7/10 seeds.)
   - `coastal` — pick a random map edge; the two block-rows/columns along it are water, everything
     else land.
 - Upsample hint grid to per-tile field with bilinear interpolation (block centers as sample

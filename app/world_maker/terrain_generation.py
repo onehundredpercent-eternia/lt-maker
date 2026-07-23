@@ -21,6 +21,10 @@ HILL_SEED_OFFSET = 1
 PASS_SEED_OFFSET = 2
 LAKE_SEED_OFFSET = 3
 DESERT_SEED_OFFSET = 4
+# Macro-layout hint grid (Civ's HintedWorld): a coarse block grid of land/water bias is
+# blended into the elevation field so the map has guaranteed large-scale structure. Block
+# size is fixed; the grid is ceil(width / BLOCK) x ceil(height / BLOCK).
+MACRO_BLOCK_SIZE = 5
 # Terrains an arid blob converts to DESERT core / SAND skirt. HILL and MOUNTAIN both flatten
 # to arid ground exactly like grass (no DESERT_ROCK bands or peaks); RIVER dries up into the
 # desert too (deserts run last, so any river crossing the blob is overwritten). Cliffs reskin
@@ -130,11 +134,11 @@ def generate_topology(theme: Dict[NID, Any], seed: int) -> Tuple[WorldTileMap, D
         new_terrain_noise_map[(pos[0] - 1, pos[1] - 1)] = value
     terrain_noise_map = new_terrain_noise_map
 
-    # Modify elevation
-    new_terrain_noise_map = {}
-    for pos, value in terrain_noise_map.items():
-        new_terrain_noise_map[pos] = utils.clamp(value + theme['elevation'], 0, 1)
-    terrain_noise_map = new_terrain_noise_map
+    # 1.25 Blend in the macro-layout hint (guaranteed continents / pangaea / coast). Done
+    # *before* the water_border falloff (so both compose, falloff staying an outer multiplier)
+    # and before sink-fill + percentile classification (so it only decides *where* sea goes,
+    # never how much -- the ratios stay percentile-locked).
+    terrain_noise_map = tilemap.apply_macro_layout(terrain_noise_map)
 
     # Set Water Border
     if theme['water_border']:
@@ -236,11 +240,151 @@ class WorldTileMap:
     def check_bounds(self, pos: Pos) -> bool:
         return 0 <= pos[0] < self.width and 0 <= pos[1] < self.height
 
+    def _expand_blocks(self, seeds: List[Pos], target: int, claimed: set,
+                       bx: int, by: int, allowed: Optional[set] = None) -> None:
+        # Civ's expandContinentBy: grow a landmass by repeatedly picking a random block it
+        # already owns, a random cardinal neighbour, and claiming that neighbour if it is
+        # unclaimed (and, if `allowed` is given, inside that region -- used to pen each
+        # continent into its own half so they stay separate). `claimed` is the shared land
+        # set (mutated); `seeds` bootstraps this continent. All choices go through self.random
+        # so expansion is deterministic.
+        owned: List[Pos] = []
+        for s in seeds:
+            claimed.add(s)
+            owned.append(s)
+        guard = 0
+        max_guard = bx * by * 50 + 100
+        while len(owned) < target and guard < max_guard:
+            guard += 1
+            block = self.random.choice(owned)
+            dx, dy = self.random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
+            nb = (block[0] + dx, block[1] + dy)
+            if not (0 <= nb[0] < bx and 0 <= nb[1] < by):
+                continue
+            if allowed is not None and nb not in allowed:
+                continue
+            if nb not in claimed:
+                claimed.add(nb)
+                owned.append(nb)
+
+    def _macro_hint_blocks(self, layout: str, bx: int, by: int) -> Dict[Pos, float]:
+        # Assign each block of the coarse grid a hint value in [0, 1]: land ~0.75, water ~0.15,
+        # unassigned ~0.45 (jittered). Which blocks are land/water comes from the layout.
+        total = bx * by
+        land: set = set()
+        water: set = set()
+        if layout == 'pangaea':
+            # Confine expansion to interior blocks (exclude the outer block ring) so the
+            # continent never claims an edge block -- a water block ring surrounds it, and the
+            # edge falloff in apply_macro_layout then guarantees a true sea border.
+            interior = {(x, y) for x in range(1, bx - 1) for y in range(1, by - 1)}
+            if not interior:  # grid too small for an interior ring
+                interior = {(bx // 2, by // 2)}
+            center = min(interior, key=lambda b: abs(b[0] - bx / 2) + abs(b[1] - by / 2))
+            target = min(max(1, round(0.55 * total)), len(interior))
+            self._expand_blocks([center], target, land, bx, by, interior)
+            water = {(x, y) for x in range(bx) for y in range(by)} - land
+        elif layout == 'continents':
+            # Reserve the two centre columns as a water gutter and pen each continent into its
+            # own interior half (excluding the outer block ring, as pangaea does), so the two
+            # landmasses stay separate *and* stay off the map edge. Each fills ~75% of its half.
+            lo, hi = (bx - 1) // 2, bx // 2  # two central columns (one when bx is odd)
+            left = {(x, y) for x in range(1, lo) for y in range(1, by - 1)}
+            right = {(x, y) for x in range(hi + 1, bx - 1) for y in range(1, by - 1)}
+            if left:
+                seed_a = min(left, key=lambda b: abs(b[0] - lo / 2) + abs(b[1] - by / 2))
+                self._expand_blocks([seed_a], max(1, round(0.75 * len(left))), land, bx, by, left)
+            if right:
+                anchor = (hi + bx) / 2
+                seed_b = min(right, key=lambda b: abs(b[0] - anchor) + abs(b[1] - by / 2))
+                self._expand_blocks([seed_b], max(1, round(0.75 * len(right))), land, bx, by, right)
+            water = {(x, y) for x in range(bx) for y in range(by)} - land
+        elif layout == 'coastal':
+            edge = self.random.randrange(4)  # 0 top, 1 bottom, 2 left, 3 right
+            for x in range(bx):
+                for y in range(by):
+                    if ((edge == 0 and y < 2) or (edge == 1 and y >= by - 2)
+                            or (edge == 2 and x < 2) or (edge == 3 and x >= bx - 2)):
+                        water.add((x, y))
+                    else:
+                        land.add((x, y))
+
+        # Draw the jittered values in a fixed (sorted) block order so the field is deterministic.
+        hint: Dict[Pos, float] = {}
+        for x in range(bx):
+            for y in range(by):
+                r = self.random.random()
+                if (x, y) in land:
+                    hint[(x, y)] = 0.75 + r * 0.15
+                elif (x, y) in water:
+                    hint[(x, y)] = 0.15 + r * 0.15
+                else:
+                    hint[(x, y)] = 0.45 + r * 0.10
+        return hint
+
+    def apply_macro_layout(self, noise_map: Dict[Pos, float]) -> Dict[Pos, float]:
+        # Blend a coarse macro-layout hint into the elevation field. A no-op for 'none'. The
+        # block grid is bilinearly upsampled to per-tile resolution (block centres as sample
+        # points, clamped at edges) and mixed in at strength hint_weight. Because downstream
+        # classification is percentile-based, this only steers *where* land/sea land, not how
+        # much of each there is.
+        layout = str(self.theme['macro_layout'])
+        weight = self.theme['hint_weight']
+        if layout == 'none' or weight <= 0:
+            return noise_map
+
+        bx = max(1, math.ceil(self.width / MACRO_BLOCK_SIZE))
+        by = max(1, math.ceil(self.height / MACRO_BLOCK_SIZE))
+        hint = self._macro_hint_blocks(layout, bx, by)
+
+        def sample(x: int, y: int) -> float:
+            # Block b covers tiles [b*BLOCK, b*BLOCK+BLOCK-1]; its centre tile is b*BLOCK + BLOCK/2.
+            fx = (x - MACRO_BLOCK_SIZE / 2) / MACRO_BLOCK_SIZE
+            fy = (y - MACRO_BLOCK_SIZE / 2) / MACRO_BLOCK_SIZE
+            x0 = int(utils.clamp(math.floor(fx), 0, bx - 1))
+            y0 = int(utils.clamp(math.floor(fy), 0, by - 1))
+            x1 = int(utils.clamp(x0 + 1, 0, bx - 1))
+            y1 = int(utils.clamp(y0 + 1, 0, by - 1))
+            tx = utils.clamp(fx - x0, 0.0, 1.0)
+            ty = utils.clamp(fy - y0, 0.0, 1.0)
+            top = hint[(x0, y0)] * (1 - tx) + hint[(x1, y0)] * tx
+            bot = hint[(x0, y1)] * (1 - tx) + hint[(x1, y1)] * tx
+            return top * (1 - ty) + bot * ty
+
+        blended: Dict[Pos, float] = {}
+        for pos, value in noise_map.items():
+            h = sample(pos[0], pos[1])
+            blended[pos] = utils.clamp((1 - weight) * value + weight * h, 0, 1)
+
+        # Enclosed layouts (pangaea, continents) must be surrounded by sea on every side. The
+        # interior-block confinement keeps land off the edge blocks, but the ~sea_percent budget
+        # alone can't guarantee a full perimeter ring. Force it: drive the outer tile ring to 0
+        # (the global minimum, so it is always classified SEA) and ramp back up over MARGIN tiles.
+        # Coastal is exempt -- it *wants* land running to three of the four edges.
+        if layout in ('pangaea', 'continents'):
+            margin = 2
+            for pos in blended:
+                d = min(pos[0], pos[1], self.width - 1 - pos[0], self.height - 1 - pos[1])
+                if d < margin:
+                    blended[pos] *= max(0.0, d) / margin
+
+        # Continents also need a guaranteed sea channel between the two halves. The reserved
+        # block gutter isn't enough on its own: the edge falloff above consumes sea budget
+        # (classification is percentile-locked), so the ~0.15 gutter hint can end up above the
+        # sea threshold and the two landmasses bridge. Force the two central columns to 0 so a
+        # sea channel always splits the map.
+        if layout == 'continents':
+            centre = (self.width - 1) / 2
+            for pos in blended:
+                if abs(pos[0] - centre) < 1.0:
+                    blended[pos] = 0.0
+        return blended
+
     def generate_terrain_grid_from_noise(self, noise_map: Dict[Pos, float]) -> Tuple[float, float]:
-        # Cumulative percentile thresholds, computed on the final (post-elevation,
-        # post-water-border, post-sink-fill) field, so ratios are exact for every seed.
-        # This field now decides only SEA / SAND / land -- hills and mountains are
-        # classified separately in generate_bands_from_noise, from the hill field.
+        # Cumulative percentile thresholds, computed on the final (post-water-border,
+        # post-sink-fill) field, so ratios are exact for every seed. This field decides only
+        # SEA / SAND / land -- hills and mountains are classified separately in
+        # generate_bands_from_noise, from the hill field.
         sea_percent = self.theme['sea_percent'] * 100
         sand_percent = self.theme['sand_percent'] * 100
 
