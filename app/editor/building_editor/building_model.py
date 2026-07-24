@@ -11,6 +11,8 @@ from app.data.database import building_components
 from app.data.database.components import ComponentType, swap_values
 
 def get_pixmap(building):
+    if not building:  # e.g. nid already deleted from the catalog
+        return None
     res = RESOURCES.animations.get(building.map_sprite_nid)
     if not res:
         return None

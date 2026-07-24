@@ -122,6 +122,29 @@ class TerrainProperties(QWidget):
         self.resource_group.setLayout(resource_layout)
         main_section.addWidget(self.resource_group)
 
+        # Adjacency yield: resources granted to each orthogonally-adjacent tile
+        # (e.g. a river giving neighbors +1 Gold).
+        self.adjacent_group = QGroupBox(_("Adjacency Yield (to neighbors)"))
+        adjacent_layout = QHBoxLayout()
+
+        self.adjacent_food_box = PropertyBox(_("Food"), QSpinBox, self)
+        self.adjacent_food_box.edit.setRange(0, 99)
+        self.adjacent_food_box.edit.valueChanged.connect(self.adjacent_food_changed)
+        adjacent_layout.addWidget(self.adjacent_food_box)
+
+        self.adjacent_production_box = PropertyBox(_("Production"), QSpinBox, self)
+        self.adjacent_production_box.edit.setRange(0, 99)
+        self.adjacent_production_box.edit.valueChanged.connect(self.adjacent_production_changed)
+        adjacent_layout.addWidget(self.adjacent_production_box)
+
+        self.adjacent_gold_box = PropertyBox(_("Gold"), QSpinBox, self)
+        self.adjacent_gold_box.edit.setRange(0, 99)
+        self.adjacent_gold_box.edit.valueChanged.connect(self.adjacent_gold_changed)
+        adjacent_layout.addWidget(self.adjacent_gold_box)
+
+        self.adjacent_group.setLayout(adjacent_layout)
+        main_section.addWidget(self.adjacent_group)
+
         total_section = QVBoxLayout()
         self.setLayout(total_section)
         total_section.addLayout(top_section)
@@ -176,6 +199,15 @@ class TerrainProperties(QWidget):
     def gold_changed(self, value):
         self.current.gold = value
 
+    def adjacent_food_changed(self, value):
+        self.current.adjacent_food = value
+
+    def adjacent_production_changed(self, value):
+        self.current.adjacent_production = value
+
+    def adjacent_gold_changed(self, value):
+        self.current.adjacent_gold = value
+
     def access_movement_grid(self):
         dlg = McostDialog()
         result = dlg.exec_()
@@ -208,6 +240,9 @@ class TerrainProperties(QWidget):
         self.food_box.edit.setValue(current.food)
         self.production_box.edit.setValue(current.production)
         self.gold_box.edit.setValue(current.gold)
+        self.adjacent_food_box.edit.setValue(current.adjacent_food)
+        self.adjacent_production_box.edit.setValue(current.adjacent_production)
+        self.adjacent_gold_box.edit.setValue(current.adjacent_gold)
 
         # Icon
         color = current.color

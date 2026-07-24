@@ -138,7 +138,10 @@ class RequiresTerrain(BuildingComponent):
     expose = (ComponentType.List, ComponentType.Terrain)
 
     def target_restrict(self, city, position) -> bool:
-        terrain_nid = game.get_terrain_nid(game.tilemap, position)
+        # Underlying terrain (ignore_buildings=True): a building override must not
+        # satisfy/block the requirement, so replacing one building with another still
+        # validates against the real terrain it sits on.
+        terrain_nid = game.get_terrain_nid(game.tilemap, position, ignore_buildings=True)
         return terrain_nid in self.value
 
 
@@ -194,6 +197,8 @@ class ResourcePerTurn(BuildingComponent):
             self.value.update(value)
 
     def on_upkeep(self, city):
+        if not city.is_worked(self.building):
+            return
         team = game.teams[city.team]
         if self.value["food"]:
             action.do(action.ChangeCityFood(city, self.value["food"]))

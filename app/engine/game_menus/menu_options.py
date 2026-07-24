@@ -908,7 +908,8 @@ class BuildingOption(BuildingRowOption):
 class WorkBuildingOption(BuildingRowOption):
     """Work-tab row: building icon + name + potential resource yield + working/idle
     status. The yield shows what working this building would add to the city
-    (ResourcePerTurn component + the underlying tile's terrain resources)."""
+    (its ResourcePerTurn component; terrain yield is territory-based and applies
+    regardless of buildings)."""
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
         if self.city.is_worked(self.building):
@@ -919,7 +920,7 @@ class WorkBuildingOption(BuildingRowOption):
             label, color = 'Idle', 'grey'
         render_text(surf, ['text'], [label], [color], (x + self.width() - 4, y), HAlignment.RIGHT)
         # Potential resource yield, right-aligned just left of the status label
-        resources = city_funcs.get_building_generation(self.city, self.building)
+        resources = city_funcs.get_building_output(self.building)
         res_w = resource_gain_width(resources)
         if res_w:
             status_left = x + self.width() - 4 - text_width('text', label)

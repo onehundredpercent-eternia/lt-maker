@@ -362,9 +362,13 @@ class UIView():
 
         # 4X terrain resource values, in a tiny column just right of the box:
         # "F<n>" / "P<n>" / "G<n>" (letter in 'small', number in 'number_small'),
-        # skipping any resource that is zero.
+        # skipping any resource that is zero. Uses per-tile yield (terrain base +
+        # adjacency bonuses, e.g. a river's +1 gold to neighbors) so a hovered tile
+        # shows exactly what it contributes to a city's income.
+        from app.engine import city_funcs
+        tile_yield = city_funcs.get_tile_yield(coord)
         resources = [(letter, val) for letter, val in
-                     (('F', terrain.food), ('P', terrain.production), ('G', terrain.gold)) if val]
+                     (('F', tile_yield['food']), ('P', tile_yield['production']), ('G', tile_yield['gold'])) if val]
         if resources:
             col_width = 13
             line_h = 8

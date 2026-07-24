@@ -22,6 +22,12 @@ class Terrain(Prefab):
     production: int = 0
     gold: int = 0
 
+    # Adjacency yield: resources granted to each orthogonally-adjacent tile
+    # (e.g. a river giving neighbors +1 gold). Applied in city_funcs.get_tile_yield.
+    adjacent_food: int = 0
+    adjacent_production: int = 0
+    adjacent_gold: int = 0
+
     def restore_attr(self, name, value):
         if name == 'color':
             value = tuple(value)
