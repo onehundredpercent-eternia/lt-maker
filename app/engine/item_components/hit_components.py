@@ -298,7 +298,7 @@ class SwapOnEndCombat(ItemComponent):
             
 class SwapTargetRestrict(ItemComponent):
     nid = 'swap_target_restrict'
-    desc = "Prevents use of the item if the target is on a tile the user cannot traverse."
+    desc = "Prevents use of the item if either user or target would move to a tile they cannot traverse."
     tag = ItemTags.SPECIAL
 
     def target_restrict(self, unit, item, def_pos, splash) -> bool:
