@@ -295,6 +295,19 @@ class SwapOnEndCombat(ItemComponent):
                 not skill_system.ignore_forced_movement(target) and \
                 mode == 'attack':
             action.do(action.Swap(unit, target))
+            
+class SwapTargetRestrict(ItemComponent):
+    nid = 'swap_target_restrict'
+    desc = "Prevents use of the item if either user or target would move to a tile they cannot traverse."
+    tag = ItemTags.SPECIAL
+
+    def target_restrict(self, unit, item, def_pos, splash) -> bool:
+        defender = game.board.get_unit(def_pos)
+        pos = unit.position
+        if defender and movement_funcs.check_traversable(defender, pos) and movement_funcs.check_traversable(unit, def_pos) and \
+                not skill_system.ignore_forced_movement(defender):
+            return True
+        return False
 
 class Pivot(ItemComponent):
     nid = 'pivot'
