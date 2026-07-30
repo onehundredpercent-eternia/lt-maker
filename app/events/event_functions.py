@@ -336,10 +336,10 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
     if 'no_block' in flags:
         text += '{no_wait}'
 
-    cursor = True if draw_cursor is None else draw_cursor
-
+    # Leave draw_cursor as None if unspecified, so that it doesn't override
+    # the draw_cursor of the style we're about to resolve. __default supplies True
     manual_style = SpeakStyle(None, None, text_position, width, text_speed, font_color,
-                              font_type, dialog_box, num_lines, cursor, message_tail,
+                              font_type, dialog_box, num_lines, draw_cursor, message_tail,
                               transparency, name_tag_bg, boop_sound, flags)
 
     style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
