@@ -335,6 +335,7 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
 
     if 'no_block' in flags:
         text += '{no_wait}'
+
     cursor = True if draw_cursor is None else draw_cursor
 
     manual_style = SpeakStyle(None, None, text_position, width, text_speed, font_color,
@@ -1420,7 +1421,8 @@ def has_visited(self: Event, unit, flags=None):
         return
     
     # Check if the unit is still alive and valid
-    if not self.game.check_alive(unit):
+    # Must use actor.nid -- Python eventing hands us a unit object, not a nid
+    if not self.game.check_alive(actor.nid):
         self.logger.info("has_visited: Unit %s is no longer alive, skipping action" % unit)
         return
     
