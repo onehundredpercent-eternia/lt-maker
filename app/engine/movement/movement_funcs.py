@@ -31,6 +31,11 @@ def get_mcost(unit_to_move: UnitObject, pos: Tuple[int, int]) -> int:
         else:
             movement_group = DB.classes[0].movement_group
         mcost = DB.mcost.get_mcost(movement_group, terrain.mtype)
+        # 4X: `road_move_bonus` tech reduces the cost to enter a road tile.
+        if unit_to_move and terrain.road:
+            bonus = game.get_tech_value(unit_to_move.team, 'road_move_bonus')
+            if bonus:
+                mcost = max(1, mcost - bonus)
     else:
         mcost = 1
     return mcost

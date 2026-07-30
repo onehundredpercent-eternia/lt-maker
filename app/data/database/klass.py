@@ -23,6 +23,10 @@ class Klass(Prefab):
     tags: list = field(default_factory=list)
     max_level: int = 20
 
+    # 4X: gold this class's units cost their team each upkeep (reduced per-unit by
+    # `upkeep_cost_<tag>` techs; see city_funcs.get_unit_upkeep).
+    upkeep_cost: int = 0
+
     bases: dict = field(default_factory=dict)
     growths: dict = field(default_factory=dict)
     growth_bonus: dict = field(default_factory=dict)

@@ -920,7 +920,7 @@ class WorkBuildingOption(BuildingRowOption):
             label, color = 'Idle', 'grey'
         render_text(surf, ['text'], [label], [color], (x + self.width() - 4, y), HAlignment.RIGHT)
         # Potential resource yield, right-aligned just left of the status label
-        resources = city_funcs.get_building_output(self.building)
+        resources = city_funcs.get_building_output(self.building, self.city)
         res_w = resource_gain_width(resources)
         if res_w:
             status_left = x + self.width() - 4 - text_width('text', label)

@@ -255,6 +255,31 @@ def create_items(unit, item_nid_list: list) -> list:
             logging.error("Cannot find item with nid %s" % item_nid)
     return items
 
+def resolve_upgrade_nid(item_nid: str, tier: int) -> str:
+    """Walk an item's `UpgradesTo` chain to the highest-tier item the given weapon_tier
+    unlocks (Iron->Steel->Mithril). Returns item_nid unchanged if it has no upgrade or the
+    tier isn't high enough. Cycle-guarded."""
+    seen = set()
+    current = item_nid
+    while current and current not in seen:
+        seen.add(current)
+        prefab = DB.items.get(current)
+        if not prefab:
+            break
+        comp = prefab.components.get('upgrades_to')
+        if not comp:
+            break
+        target = comp.value.get('target_item')
+        required = comp.value.get('required_tier', 1)
+        if not target or tier < required:
+            break
+        current = target
+    return current
+
+def resolve_upgrade_nid_for_team(item_nid: str, team_nid: str) -> str:
+    """resolve_upgrade_nid using a team's current `weapon_tier` tech value."""
+    return resolve_upgrade_nid(item_nid, game.get_tech_value(team_nid, 'weapon_tier'))
+
 def get_all_items(unit: UnitObject) -> List[ItemObject]:
     """
     Retrieves all items possessed by a unit, including multi-items.

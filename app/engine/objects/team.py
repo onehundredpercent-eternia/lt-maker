@@ -10,7 +10,8 @@ from app.utilities.data import Prefab
 class TeamObject(Prefab):
     def __init__(self, nid: NID = None, map_sprite_palette: NID = None, 
                  combat_variant_palette: str = None, combat_color: str = None,
-                 name: str = "", gold: int = 0, research: List[str] = None):
+                 name: str = "", gold: int = 0, research: List[str] = None,
+                 renown: int = 0):
         self.nid = nid
         self.map_sprite_palette = map_sprite_palette            # Used for map sprites
         self.combat_variant_palette = combat_variant_palette    # Used for battle animations
@@ -18,7 +19,10 @@ class TeamObject(Prefab):
 
         self.name: str = name
         self.gold: int = gold
-        self.research: List[str] = research or []
+        self.research: List[str] = research or []   # unlocked tech nids
+        self.renown: int = renown                   # currency spent to unlock techs
+
+        self._tech_flag_cache = None                # {key: combined_value}; rebuilt on change, not serialized
 
     def save(self):
         return {'nid': self.nid,
@@ -28,13 +32,15 @@ class TeamObject(Prefab):
                 'name': self.name,
                 'gold': self.gold,
                 'research': self.research,
+                'renown': self.renown,
                 }
 
     @classmethod
     def restore(cls, s_dict):
-        team = cls(s_dict['nid'], s_dict.get('map_sprite_palette'), 
+        team = cls(s_dict['nid'], s_dict.get('map_sprite_palette'),
                    s_dict.get('combat_variant_palette'), s_dict.get('combat_color', 'red'),
-                   s_dict.get('name'), s_dict.get('gold', 0), s_dict.get('research', []))
+                   s_dict.get('name'), s_dict.get('gold', 0), s_dict.get('research', []),
+                   s_dict.get('renown', 0))
         return team
 
     @classmethod

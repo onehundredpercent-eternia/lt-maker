@@ -1173,6 +1173,39 @@ class GameState():
         """
         return self.building_registry.get(building_uid)
 
+    def _resolve_team(self, team) -> Optional[TeamObject]:
+        """Accept either a team nid or a live TeamObject and return the object."""
+        if isinstance(team, str):
+            return self.teams.get(team)
+        return team
+
+    def has_tech(self, team, tech_nid: NID) -> bool:
+        """Whether the team (nid or object) has unlocked the given tech."""
+        from app.engine import tech_funcs
+        team = self._resolve_team(team)
+        return bool(team) and tech_funcs.has_tech(team, tech_nid)
+
+    def get_tech_value(self, team, key: NID, default=0):
+        """Combined value of all unlocked TechFlags writing `key` (sum/max/or)."""
+        from app.engine import tech_funcs
+        team = self._resolve_team(team)
+        if not team:
+            return default
+        return tech_funcs.get_tech_value(team, key, default)
+
+    def get_tech_set(self, team, key: NID) -> set:
+        """Accumulated set of all `combine=set` TechFlags writing `key`."""
+        from app.engine import tech_funcs
+        team = self._resolve_team(team)
+        if not team:
+            return set()
+        return tech_funcs.get_tech_set(team, key)
+
+    def get_renown(self, team) -> int:
+        """The team's current renown balance."""
+        team = self._resolve_team(team)
+        return team.renown if team else 0
+
     def get_ai_group(self, ai_group_nid: NID) -> Optional[AIGroupObject]:
         """
         Gets an AI group object by its NID.

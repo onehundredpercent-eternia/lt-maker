@@ -172,4 +172,5 @@ constants = ConstantCatalog([
     # City / 4X constants below
     Constant('city_food_base', "Food a city needs to grow at population 1", ConstantType.POSITIVE_INT, 20, ConstantTag.CITY),
     Constant('city_food_growth', "Extra food required for each additional population", ConstantType.INT, 10, ConstantTag.CITY),
+    Constant('city_pop_cap_base', "Base maximum city population (before city_pop_cap_bonus techs)", ConstantType.POSITIVE_INT, 5, ConstantTag.CITY),
 ])

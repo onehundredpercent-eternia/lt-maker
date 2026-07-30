@@ -7,6 +7,29 @@ from app.engine import action, combat_calcs, item_funcs, image_mods, engine, ite
 from app.engine.combat import playback as pb
 from app.engine.source_type import SourceType
 
+class UpgradesTo(ItemComponent):
+    nid = 'upgrades_to'
+    desc = ("4X: when the owner's team reaches weapon_tier >= required_tier, this item is "
+            "physically replaced with target_item (retroactively, army-wide, on unlock via the "
+            "UpgradeItems tech effect). Chain these (Iron->Steel->Mithril) for tiered upgrades.")
+    tag = ItemTags.ADVANCED
+
+    expose = ComponentType.NewMultipleOptions
+
+    options = {
+        'target_item': ComponentType.Item,
+        'required_tier': ComponentType.Int,
+    }
+
+    def __init__(self, value=None):
+        self.value = {
+            'target_item': None,
+            'required_tier': 1,
+        }
+        if value:
+            self.value.update(value)
+
+
 class EffectiveDamage(ItemComponent):
     nid = 'effective_damage'
     desc = 'If this item is effective against an enemy, its damage value will be multiplied and increased'

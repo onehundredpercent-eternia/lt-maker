@@ -11,6 +11,20 @@ from app.engine.game_state import game
 
 import logging
 
+# 4X: a building carrying one of these tags gains `{tag}_resource_bonus` (a tech flag,
+# combine=sum) to the mapped resource in its per-turn output.
+RESOURCE_BONUS_TAGS = {'Farm': 'food', 'Mine': 'production', 'Artisan': 'gold'}
+
+
+class BuildingTag(BuildingComponent):
+    nid = 'building_tags'
+    desc = 'Attach arbitrary tags to buildings. Useful for conditionals and resource bonuses.'
+    tag = BuildingTags.BASE
+
+    expose = (ComponentType.List, ComponentType.Tag)
+    value = []
+
+
 class Cost(BuildingComponent):
     nid = 'cost'
     desc = "Determines how much this building costs to produce or upgrade to"
@@ -196,16 +210,29 @@ class ResourcePerTurn(BuildingComponent):
         if value:
             self.value.update(value)
 
+    def get_output(self, city) -> dict:
+        """Effective per-turn output: the base food/production/gold plus any
+        `{tag}_resource_bonus` tech bonus for the building's tags (see RESOURCE_BONUS_TAGS).
+        Shared by on_upkeep (income) and city_funcs.get_building_output (display) so they
+        never diverge."""
+        out = self.value.copy()
+        tags = self.building.tags
+        for tag, resource in RESOURCE_BONUS_TAGS.items():
+            if tag in tags:
+                out[resource] += game.get_tech_value(city.team, tag.lower() + '_resource_bonus')
+        return out
+
     def on_upkeep(self, city):
         if not city.is_worked(self.building):
             return
         team = game.teams[city.team]
-        if self.value["food"]:
-            action.do(action.ChangeCityFood(city, self.value["food"]))
-        if self.value["production"]:
-            action.do(action.ChangeCityProduction(city, self.value["production"]))
-        if self.value["gold"]:
-            action.do(action.ChangeTeamGold(team, self.value["gold"]))
+        out = self.get_output(city)
+        if out["food"]:
+            action.do(action.ChangeCityFood(city, out["food"]))
+        if out["production"]:
+            action.do(action.ChangeCityProduction(city, out["production"]))
+        if out["gold"]:
+            action.do(action.ChangeTeamGold(team, out["gold"]))
 
 
 class ProducesUnits(BuildingComponent):

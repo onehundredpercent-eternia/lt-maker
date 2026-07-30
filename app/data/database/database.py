@@ -13,7 +13,7 @@ from app.data.database import (ai, buildings, constants, difficulty_modes, equat
                                map_terrain_associations, minimap, overworld,
                                parties, credit,
                                raw_data, skills, stats, supports, tags, teams,
-                               terrain, translations, units, varslot, weapons)
+                               techs, terrain, translations, units, varslot, weapons)
 from app.data.serialization import disk_loader
 from app.events import event_prefab
 from app.utilities.serialization import save_json, rmtree_robust
@@ -26,9 +26,9 @@ class Database(object):
                        "game_var_slots", "classes", "support_constants", "support_ranks", "affinities", 
                        "units", "support_pairs", "ai", "parties", "difficulty_modes", "credit",
                        "translations", "lore", "levels", "events", "overworlds", "raw_data",
-                       "map_terrain_associations")
+                       "map_terrain_associations", "techs")
     save_as_chunks = ("events", 'items', 'skills', 'buildings', 'units', 'classes', 'levels', "credit")
-    optional_data_types = ("map_terrain_associations",)
+    optional_data_types = ("map_terrain_associations", "techs")
 
     def __init__(self):
         self.current_proj_dir = None
@@ -46,6 +46,7 @@ class Database(object):
         self.items = items.ItemCatalog()
         self.skills = skills.SkillCatalog()
         self.buildings = buildings.BuildingCatalog()
+        self.techs = techs.TechCatalog()
         self.tags = tags.TagCatalog()
         self.game_var_slots = varslot.VarSlotCatalog([])
         self.classes = klass.ClassCatalog()

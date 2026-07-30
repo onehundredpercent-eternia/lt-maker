@@ -33,6 +33,15 @@ class BuildingObject():
 
         self.data = {}
 
+    @property
+    def tags(self) -> set:
+        """Arbitrary tags attached via the BuildingTag component (mirrors ItemObject.tags)."""
+        all_tags = set()
+        tag_comp = self.components.get('building_tags')
+        if tag_comp:
+            all_tags |= set(tag_comp.value)
+        return all_tags
+
     @classmethod
     def from_prefab(cls, prefab, component_data=None):
         # Components NEED to be copies! Since they store individualized information

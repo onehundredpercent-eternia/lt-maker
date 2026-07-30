@@ -17,7 +17,8 @@ from app.events.regions import RegionType
 from app.events import triggers
 from app.data.resources.resources import RESOURCES
 from app.engine import (aura_funcs, banner, building_system, equations, item_funcs, item_system,
-                        particles, skill_system, unit_funcs, animations)
+                        particles, skill_system, tech_funcs, unit_funcs, animations)
+from app.data.database.techs import GrantSkill, UpgradeItems
 from app.engine.game_state import game
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
@@ -1347,6 +1348,39 @@ class GiveItem(Action):
         if self.item in self.unit.items:
             self.unit.remove_item(self.item)
 
+class UpgradeItem(Action):
+    """Replace one of a unit's items with an upgraded version (its UpgradesTo target),
+    keeping the same inventory slot and droppable flag, carrying over remaining uses, and
+    letting @recalculate_unit re-autoequip. Reversible for the turnwheel; the created
+    upgraded item is built once and reused across execute/reverse."""
+    def __init__(self, unit, item, new_item_nid):
+        self.unit = unit
+        self.old_item = item
+        self.new_item_nid = new_item_nid
+        self.new_item = None
+        self.item_index = 0
+
+    @recalculate_unit
+    def do(self):
+        self.item_index = self.unit.items.index(self.old_item)
+        if self.new_item is None:
+            self.new_item = item_funcs.create_item(self.unit, self.new_item_nid, droppable=self.old_item.droppable)
+            # Carry over remaining uses, clamped to the upgraded item's own maximum.
+            for key in ('uses', 'c_uses'):
+                if key in self.old_item.data and key in self.new_item.data:
+                    self.new_item.data[key] = min(self.old_item.data[key], self.new_item.data[key])
+            if self.new_item.uid not in game.item_registry:
+                game.register_item(self.new_item)
+        self.unit.remove_item(self.old_item)
+        self.unit.insert_item(self.item_index, self.new_item)
+
+    @recalculate_unit
+    def reverse(self):
+        idx = self.unit.items.index(self.new_item)
+        self.unit.remove_item(self.new_item)
+        self.unit.insert_item(idx, self.old_item)
+
+
 class DropItem(Action):
     def __init__(self, unit, item):
         self.unit = unit
@@ -1905,6 +1939,86 @@ class ChangeTeamGold(Action):
 
     def reverse(self):
         self.team.gold = self.old_gold
+
+
+class ChangeRenown(Action):
+    def __init__(self, team, amount):
+        self.team = team
+        self.amount = amount
+        self.old_renown = team.renown
+
+    def do(self):
+        self.team.renown += self.amount
+
+    def reverse(self):
+        self.team.renown = self.old_renown
+
+
+class UnlockTech(Action):
+    """Unlock a tech for a team: pay its renown cost, materialize every GrantSkill
+    effect onto the units currently in its collection (sub-actions, so reversal is
+    automatic), record the tech nid on the team, and invalidate the flag cache.
+
+    Does NOT gate on `tech_funcs.can_unlock` (cost / prereqs) - that check belongs to
+    the caller (the tech-tree UI checks it; the `unlock_tech` event command intentionally
+    forces the unlock). Idempotent: a tech already owned is a no-op."""
+
+    def __init__(self, team, tech_nid):
+        self.team = team
+        self.tech_nid = tech_nid
+        self.subactions: List[Action] = []
+
+    def _record(self):
+        """Mark the tech unlocked and refresh the flag cache. Done *before* effects run so
+        tier-dependent effects (UpgradeItems) already see the new weapon_tier flag."""
+        if self.tech_nid not in self.team.research:
+            self.team.research.append(self.tech_nid)
+        tech_funcs.invalidate_flag_cache(self.team)
+
+    def do(self):
+        self.subactions.clear()
+        if self.tech_nid in self.team.research:
+            logging.info("UnlockTech: %s already unlocked for %s", self.tech_nid, self.team.nid)
+            return
+        tech = DB.techs.get(self.tech_nid)
+        if not tech:
+            logging.error("UnlockTech: no such tech %s", self.tech_nid)
+            return
+        # Record + refresh flags first, so weapon_tier is current when we resolve upgrades.
+        self._record()
+        self.subactions.append(ChangeRenown(self.team, -tech.renown_cost))
+        for effect in tech.effects:
+            if isinstance(effect, GrantSkill):
+                for unit in tech_funcs.get_grant_target_units(self.team, effect.grant_target, effect.grant_target_arg):
+                    self.subactions.append(AddSkill(unit, effect.skill_nid, source='game', source_type=SourceType.GLOBAL))
+            elif isinstance(effect, UpgradeItems):
+                tier = game.get_tech_value(self.team, 'weapon_tier')
+                for unit in tech_funcs.get_grant_target_units(self.team, effect.grant_target, effect.grant_target_arg):
+                    for item in list(unit.items):
+                        new_nid = item_funcs.resolve_upgrade_nid(item.nid, tier)
+                        if new_nid != item.nid:
+                            self.subactions.append(UpgradeItem(unit, item, new_nid))
+        # Re-reveal immediately: refresh fog-of-war sight for the team's on-field units so a
+        # sight tech (overworld_sight_bonus) takes effect the instant it unlocks, not only on
+        # the next move. Reversible with the unlock. Runs after _record so the new radius is live.
+        if game.board and game.level_vars.get('_fog_of_war', False):
+            for unit in game.get_team_units(self.team.nid):
+                if unit.position:
+                    self.subactions.append(UpdateFogOfWar(unit))
+        for action in self.subactions:
+            action.execute()
+
+    def execute(self):
+        self._record()
+        for action in self.subactions:
+            action.execute()
+
+    def reverse(self):
+        if self.tech_nid in self.team.research:
+            self.team.research.remove(self.tech_nid)
+        for action in reversed(self.subactions):
+            action.reverse()
+        tech_funcs.invalidate_flag_cache(self.team)
 
 
 class ChangeCityPopulation(Action):

@@ -594,6 +594,10 @@ class SimpleCombat():
 
     def calculate_exp(self, unit, item):
         total_exp = item_system.exp(self.full_playback, unit, item)
+        # 4X: `exp_mult_bonus` tech scales exp gained by the unit's team.
+        bonus = game.get_tech_value(unit.team, 'exp_mult_bonus')
+        if bonus:
+            total_exp = int(round(total_exp * (1 + bonus)))
         return total_exp
 
     def calculate_guard_stance_exp(self, unit, item):

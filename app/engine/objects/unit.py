@@ -7,7 +7,7 @@ from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit, UniqueUnit
 from app.data.database.units import UnitPrefab
 from app.engine import (combat_calcs, equations, item_funcs, item_system,
-                        skill_system, unit_funcs)
+                        skill_system, tech_funcs, unit_funcs)
 from app.engine.objects.difficulty_mode import DifficultyModeObject
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
@@ -246,6 +246,11 @@ class UnitObject(Prefab):
         if is_level_unit:
             items = item_funcs.create_items(self, prefab.starting_items)
             for item in items:
+                # 4X: a unit built after its team unlocked a weapon tier starts with the
+                # upgraded gear (retroactive upgrade's future-unit counterpart).
+                new_nid = item_funcs.resolve_upgrade_nid_for_team(item.nid, self.team)
+                if new_nid != item.nid:
+                    item = item_funcs.create_item(self, new_nid, droppable=item.droppable)
                 self.add_item(item)
 
             if self.generic:
@@ -255,6 +260,9 @@ class UnitObject(Prefab):
             all_skills = []
             global_skills = unit_funcs.get_global_skills(self)
             for s in global_skills:
+                all_skills.append(UnitSkill(s, 'game', SourceType.GLOBAL))
+            tech_skills = tech_funcs.get_tech_skills(self)
+            for s in tech_skills:
                 all_skills.append(UnitSkill(s, 'game', SourceType.GLOBAL))
             personal_skills = unit_funcs.get_personal_skills(self, prefab)
             for s in personal_skills:

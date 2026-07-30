@@ -304,7 +304,8 @@ class GameBoard(object):
             fog_of_war_radius = fog_info.other_radius
         else:
             fog_of_war_radius = fog_info.ai_radius
-        return fog_of_war_radius
+        # 4X: the `overworld_sight_bonus` tech extends the whole team's sight radius.
+        return fog_of_war_radius + game.get_tech_value(team, 'overworld_sight_bonus')
 
     def check_fog_of_war(self, unit: UnitObject, pos: Pos) -> bool:
         """Returns True if unit can see position for targeting.

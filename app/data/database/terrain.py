@@ -16,6 +16,10 @@ class Terrain(Prefab):
     mtype: str = None
     opaque: bool = False
 
+    # 4X: a road tile; units of a team with the `road_move_bonus` tech pay less
+    # movement to enter it (see movement_funcs.get_mcost).
+    road: bool = False
+
     status: str = None
 
     food: int = 0

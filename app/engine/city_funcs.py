@@ -29,6 +29,7 @@ from app.utilities.typing import NID, Pos
 
 from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit
+from app.data.database.techs import TechFlag, Combine
 
 from app.engine import action, building_system
 from app.engine.objects.building import BuildingObject
@@ -116,15 +117,17 @@ def get_territory_positions(city: CityObject) -> Set[Pos]:
     return positions
 
 
-def get_building_output(building: BuildingObject) -> dict:
+def get_building_output(building: BuildingObject, city: CityObject) -> dict:
     """Per-turn resources a worked building contributes via its ResourcePerTurn
-    component. Terrain yield is territory-based (see get_tile_yield) and does not
-    depend on buildings, so working a building only adds its ResourcePerTurn value."""
+    component, including any `{tag}_resource_bonus` tech bonus for the city's team.
+    Terrain yield is territory-based (see get_tile_yield) and does not depend on
+    buildings, so working a building only adds its ResourcePerTurn output."""
     totals = {'food': 0, 'production': 0, 'gold': 0}
     comp = building.resource_per_turn
     if comp:
+        out = comp.get_output(city)
         for key in totals:
-            totals[key] += comp.value.get(key, 0)
+            totals[key] += out.get(key, 0)
     return totals
 
 
@@ -139,28 +142,51 @@ def get_generation(city: CityObject) -> dict:
     for building in city.buildings:
         if not city.is_worked(building):
             continue
-        out = get_building_output(building)
+        out = get_building_output(building, city)
         for key in totals:
             totals[key] += out[key]
     return totals
 
 
+def _tech_gated_values(key: NID) -> Set[NID]:
+    """Every value some tech places behind a `combine=set` TechFlag of `key`. A class /
+    building nid that appears here is 'tech-locked': hidden until the team unlocks a tech
+    that adds it to `game.get_tech_set(team, key)`. Nids never mentioned stay unconditional."""
+    gated: Set[NID] = set()
+    for tech in DB.techs:
+        for effect in tech.effects:
+            if isinstance(effect, TechFlag) and effect.combine == Combine.SET and effect.key == key:
+                gated.add(effect.value)
+    return gated
+
+
 def get_draftable_units(city: CityObject) -> List[dict]:
-    """Flat list of unit-draft specs contributed by all of the city's buildings."""
+    """Flat list of unit-draft specs contributed by all of the city's buildings, minus
+    any whose class is tech-locked (`draft_unlock`) and not yet unlocked by the city's team."""
+    gated = _tech_gated_values('draft_unlock')
+    unlocked = game.get_tech_set(city.team, 'draft_unlock')
     specs: List[dict] = []
     for component_specs in building_system.produces_units(city):
-        specs.extend(component_specs)
+        for spec in component_specs:
+            klass = spec.get('klass')
+            if klass in gated and klass not in unlocked:
+                continue
+            specs.append(spec)
     return specs
 
 
 def get_buildable_buildings(city: CityObject) -> List[BuildingObject]:
     """Fresh candidate BuildingObjects this city may build right now.
 
-    A building is offered only if it is `available` and has at least one valid
-    placement tile.
+    A building is offered only if it is `available`, has at least one valid placement
+    tile, and (if tech-locked via `build_unlock`) has been unlocked by the city's team.
     """
+    gated = _tech_gated_values('build_unlock')
+    unlocked = game.get_tech_set(city.team, 'build_unlock')
     candidates: List[BuildingObject] = []
     for prefab in DB.buildings:
+        if prefab.nid in gated and prefab.nid not in unlocked:
+            continue
         candidate = BuildingObject.from_prefab(prefab)
         candidate.owner_nid = city.nid
         if not building_system.available(candidate, city):
@@ -266,8 +292,10 @@ def run_city_upkeep(city: CityObject) -> List[Tuple[CityObject, BuildingObject]]
     if upkeep:
         action.do(action.ChangeCityFood(city, -upkeep))
 
-    # 3. Population growth: spend food while it crosses the rising threshold
-    while city.food >= food_threshold(city.population):
+    # 3. Population growth: spend food while it crosses the rising threshold, up to the
+    #    population cap (base constant + `city_pop_cap_bonus` techs owned by the city's team)
+    pop_cap = DB.constants.value('city_pop_cap_base') + game.get_tech_value(city.team, 'city_pop_cap_bonus')
+    while city.population < pop_cap and city.food >= food_threshold(city.population):
         action.do(action.ChangeCityFood(city, -food_threshold(city.population)))
         action.do(action.ChangeCityPopulation(city, 1))
 
@@ -305,3 +333,30 @@ def run_all_city_upkeeps(team: NID) -> List[Tuple[CityObject, BuildingObject]]:
         if city.team == team:
             pending.extend(run_city_upkeep(city))
     return pending
+
+
+def get_unit_upkeep(team: NID) -> int:
+    """Total gold a team's units cost this turn: each living unit's class `upkeep_cost`,
+    reduced per-unit by every `upkeep_cost_<tag>` tech for the tags that unit carries
+    (floored at 0 per unit so a unit never yields gold). Off-field units count too."""
+    total = 0
+    for unit in game.get_team_units(team, only_on_field=False):
+        if unit.dead:
+            continue
+        klass = DB.classes.get(unit.klass)
+        if not klass or not klass.upkeep_cost:
+            continue
+        cost = klass.upkeep_cost
+        for tag in unit.tags:
+            cost -= game.get_tech_value(team, 'upkeep_cost_' + tag)
+        total += max(0, cost)
+    return total
+
+
+def run_unit_upkeep(team: NID):
+    """Deduct the team's total unit upkeep (see get_unit_upkeep) from its gold as a single
+    reversible action."""
+    upkeep = get_unit_upkeep(team)
+    team_obj = game.teams.get(team)
+    if upkeep and team_obj:
+        action.do(action.ChangeTeamGold(team_obj, -upkeep))

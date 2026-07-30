@@ -96,6 +96,8 @@ class StatusUpkeepState(MapState):
                 if self.name == 'status_upkeep' and not self.did_city_upkeep:
                     self.did_city_upkeep = True
                     action.do(action.MarkPhase(game.phase.get_current()))
+                    # Each team pays its unit upkeep (gold) at the start of its own phase.
+                    city_funcs.run_unit_upkeep(game.phase.get_current())
                     # Cities owned by the player run their upkeep at the start of the
                     # player turn; completed buildings are placed interactively.
                     if game.phase.get_current() == 'player':
