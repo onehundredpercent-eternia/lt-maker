@@ -218,10 +218,7 @@ class FrameSelector(Dialog):
     def ask_for_palette(self, all_palette_colors):
         """
         Called when none of this animation's palettes match the colors of the
-        frames being imported. Frames are stored in the coordinate space of
-        whichever palette they are ingested with, and the engine picks an
-        animation's palette by name, so guessing here quietly produces frames
-        that preview correctly in the editor but render wrong in game.
+        frames being imported.
         Returns None if the user would rather not import after all.
         """
         options = [name for name, nid in self.combat_anim.palettes]
