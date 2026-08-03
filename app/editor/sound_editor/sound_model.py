@@ -26,6 +26,8 @@ class SoundModel(TableModel):
                 return "Variant"
             elif val == 'soundroom_idx':
                 return 'Sound Room Number'
+            elif val == 'display_name':
+                return 'Display Name'
             else:
                 return val.capitalize()
         return None
