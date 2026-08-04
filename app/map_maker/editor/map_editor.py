@@ -369,7 +369,7 @@ class MapEditor(QMainWindow):
             self.cliff_marker_widget.main_box.edit.removeItem(idx)
             self.current.reset_all()
         else:
-            QMessageBox.warning("Warning", "Cannot remove last cliff marker!")
+            QMessageBox.warning(self, "Warning", "Cannot remove last cliff marker!")
         self.cliff_marker_widget.toggle_remove_button()
 
     def set_current(self, current: MapPrefab):
@@ -395,6 +395,7 @@ class MapEditor(QMainWindow):
 
     def random_seed_changed(self, val):
         map_utils.set_random_seed(val)
+        self.current.seed = val  # keep prefab attr in sync with the global
         print("--- Seed Changed to %d ---" % val)
         self.current.reset_all()
 

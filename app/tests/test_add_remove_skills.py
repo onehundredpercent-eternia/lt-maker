@@ -205,6 +205,92 @@ class AddRemoveSkillTests(unittest.TestCase):
             self.assertNotIn(test_skill_stack3, self.test_unit.all_skills)
             self.assertNotIn(test_skill_stack4, self.test_unit.all_skills)
             self.assertNotIn(test_skill_stack5, self.test_unit.all_skills)
+    def test_remove_all_auras_strips_orphaned_child(self):
+        '''
+        An aura child applied to a unit must be removable when the unit leaves
+        the map even if board bookkeeping has no record of it. This is the
+        "permanent aura skill" bug: AURA skills are non-removable except via
+        their exact source, so a board desync would otherwise orphan them.
+        '''
+        from app.engine import aura_funcs
+        with unittest.mock.patch('app.engine.action.ResetUnitVars', FakeResetUnitVars):
+            aura_child = MagicMock()
+            aura_child.nid = 'Aura_Child'
+            aura_child.stack = None
+            # Applied as an aura whose parent skill instance has uid 999
+            self.test_unit.add_skill(aura_child, source=999, source_type=SourceType.AURA)
+            self.assertIn(aura_child, self.test_unit.all_skills)
+
+            # No board entry exists for this child anywhere. The old board-driven
+            # teardown would miss it; remove_all_auras must still strip it.
+            aura_funcs.remove_all_auras(self.test_unit, test=True)
+            self.assertNotIn(aura_child, self.test_unit.all_skills)
+
+    def test_remove_all_auras_leaves_other_sources(self):
+        '''
+        remove_all_auras must only remove AURA-sourced skills, leaving skills
+        from every other source (class, personal, terrain, ...) untouched.
+        '''
+        from app.engine import aura_funcs
+        with unittest.mock.patch('app.engine.action.ResetUnitVars', FakeResetUnitVars):
+            aura_child = MagicMock()
+            aura_child.nid = 'Aura_Child'
+            aura_child.stack = None
+            self.test_unit.add_skill(aura_child, source=999, source_type=SourceType.AURA)
+
+            klass_skill = MagicMock()
+            klass_skill.nid = 'Class_Skill'
+            klass_skill.stack = None
+            self.test_unit.add_skill(klass_skill, source='Knight', source_type=SourceType.KLASS)
+
+            aura_funcs.remove_all_auras(self.test_unit, test=True)
+            self.assertNotIn(aura_child, self.test_unit.all_skills)
+            self.assertIn(klass_skill, self.test_unit.all_skills)
+
+    def _add_rescue_skill(self, traveler_nid):
+        AddSkill(self.test_unit, 'Rescue', source=traveler_nid, source_type=SourceType.TRAVELER).do()
+        self.assertIn('Rescue', [s.nid for s in self.test_unit.all_skills])
+
+    def test_separate_removes_rescue_skill(self):
+        '''
+        Separating from a *rescued* traveler must take the Rescue skill off the
+        carrier. TRAVELER skills are only removable via their exact source, so a
+        Separate that clears unit.traveler without removing the skill leaves an
+        orphan that can never be removed again (the captured-unit Rescue bug).
+        '''
+        from app.engine.action import Separate
+        with unittest.mock.patch('app.engine.action.ResetUnitVars', FakeResetUnitVars), \
+                unittest.mock.patch('app.engine.action.Wait', FakeResetUnitVars), \
+                unittest.mock.patch('app.engine.action.skill_system', new=MagicMock()), \
+                unittest.mock.patch('app.engine.action.game', new=MagicMock()):
+            droppee = MagicMock()
+            droppee.nid = 'Traveler'
+            self.test_unit.traveler = droppee.nid
+            self._add_rescue_skill(droppee.nid)
+
+            Separate(self.test_unit, droppee, None, with_wait=False).do()
+
+            self.assertIsNone(self.test_unit.traveler)
+            self.assertNotIn('Rescue', [s.nid for s in self.test_unit.all_skills])
+
+    def test_drop_removes_rescue_skill_when_executed(self):
+        '''
+        Drop.execute() (used by the turnwheel and by end of chapter cleanup) must
+        remove the Rescue skill too, not just Drop.do().
+        '''
+        from app.engine.action import Drop
+        with unittest.mock.patch('app.engine.action.ResetUnitVars', FakeResetUnitVars), \
+                unittest.mock.patch('app.engine.action.skill_system', new=MagicMock()), \
+                unittest.mock.patch('app.engine.action.game', new=MagicMock()):
+            droppee = MagicMock()
+            droppee.nid = 'Traveler'
+            self.test_unit.traveler = droppee.nid
+            self._add_rescue_skill(droppee.nid)
+
+            Drop(self.test_unit, droppee, (1, 1)).execute()
+
+            self.assertIsNone(self.test_unit.traveler)
+            self.assertNotIn('Rescue', [s.nid for s in self.test_unit.all_skills])
 
 
 if __name__ == '__main__':

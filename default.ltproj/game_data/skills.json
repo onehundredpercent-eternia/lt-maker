@@ -485,7 +485,7 @@
     {
         "nid": "Stoneskin",
         "name": "Stoneskin",
-        "desc": "Take half damage but inflicts -2 SPD.",
+        "desc": "Take half damage but inflicts -4 SPD.",
         "icon_nid": "Skills",
         "icon_index": [
             9,
@@ -694,7 +694,7 @@
     {
         "nid": "Locktouch",
         "name": "Locktouch",
-        "desc": "Unit can opened locks without a key.",
+        "desc": "Unit can open locks without a key.",
         "icon_nid": "Skills",
         "icon_index": [
             1,
@@ -1581,6 +1581,30 @@
             [
                 "combat_condition",
                 "item_system.weapon_type(unit, item) == 'Staff'"
+            ]
+        ]
+    },
+    {
+        "nid": "Astra",
+        "name": "Astra",
+        "desc": "Proc: Skl/2%\nUnit makes five consecutive hits with each dealing half damage.",
+        "icon_nid": "Skills",
+        "icon_index": [
+            4,
+            1
+        ],
+        "components": [
+            [
+                "proc_rate",
+                "CRIT_HIT"
+            ],
+            [
+                "astra_proc",
+                {
+                    "extra_attacks": 4,
+                    "damage_percent": 0.5,
+                    "show_proc_effects": true
+                }
             ]
         ]
     }

@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, TYPE_CHECKING
 
 from app.constants import WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
+from app.data.resources.portraits import INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT
 from app.data.resources.resources import RESOURCES
 from app.engine import (background, combat_calcs, engine, equations, gui,
                         help_menu, icons, image_mods, item_funcs, item_system,
@@ -37,22 +38,34 @@ class InfoMenuState(State):
     in_level = False
     show_map = False 
 
-    left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
-    if len(left_stats) >= 7:
-        _extra_stat_row = True
-        # If we have 7 or more left stats, use 7 rows
-        right_stats = left_stats[7:]
-    else:  # Otherwise, just use the 6 rows
-        _extra_stat_row = False
-        right_stats = left_stats[6:]
-    right_stats += [stat.nid for stat in DB.stats if stat.position == 'right']
-    # Make sure we only display up to 6 or 7 on each
-    if _extra_stat_row:
-        left_stats = left_stats[:7]
-        right_stats = right_stats[:7]
-    else:
-        left_stats = left_stats[:6]
-        right_stats = right_stats[:6]
+    def _init(self):
+        """
+        Determines which stats are left stats, right stats, and/or hidden stats
+        for use when drawing within this state.
+
+        Necessary to wrap this in a function that's called when the info menu starts up
+        because otherwise starting up the info menu, then changing the stat nids, and then
+        starting up the info menu again will break which stats are actually available
+        """
+        left_stats = [stat.nid for stat in DB.stats if stat.position == 'left']
+        if len(left_stats) >= 7:
+            _extra_stat_row = True
+            # If we have 7 or more left stats, use 7 rows
+            right_stats = left_stats[7:]
+        else:  # Otherwise, just use the 6 rows
+            _extra_stat_row = False
+            right_stats = left_stats[6:]
+        right_stats += [stat.nid for stat in DB.stats if stat.position == 'right']
+        # Make sure we only display up to 6 or 7 on each
+        if _extra_stat_row:
+            left_stats = left_stats[:7]
+            right_stats = right_stats[:7]
+        else:
+            left_stats = left_stats[:6]
+            right_stats = right_stats[:6]
+        self._extra_stat_row = _extra_stat_row
+        self.left_stats = left_stats
+        self.right_stats = right_stats
 
     def create_background(self):
         panorama = RESOURCES.panoramas.get('info_menu_background')
@@ -64,6 +77,7 @@ class InfoMenuState(State):
             self.bg = None
 
     def start(self):
+        self._init()
         self.mouse_indicator = gui.MouseIndicator()
         self.create_background()
 
@@ -417,12 +431,12 @@ class InfoMenuState(State):
         if self.current_portrait:
             self.current_portrait.update()
             im = self.current_portrait.create_image()
-            offset = self.current_portrait.portrait.info_offset
+            offset = self.current_portrait.portrait.get_info_coord()
         # Draw portrait onto the portrait surf
         if im:
-            x_pos = (im.get_width() - 80)//2
-            im_surf = engine.subsurface(im, (x_pos, offset, 80, 72))
-            portrait_surf.blit(im_surf, (8, 8))
+            im_surf = engine.subsurface(im, (*offset, INFO_PORTRAIT_WIDTH, INFO_PORTRAIT_HEIGHT))
+            portrait_surf.blit(im_surf, (8 + (INFO_PORTRAIT_WIDTH - im_surf.get_width()) // 2,
+                                         8 + (INFO_PORTRAIT_HEIGHT- im_surf.get_height())// 2))
 
         # Stick it on the surface
         if self.transparency:
@@ -520,7 +534,8 @@ class InfoMenuState(State):
         else:
             num_states = len(info_states) - 1
         page = str(info_states.index(self.state) + 1) + '/' + str(num_states)
-        render_text(top_surf, ['small'], [page], [], (235, 12), HAlignment.RIGHT)
+        typeface = 'number_small4' if 'number_small4' in FONT else 'small'
+        render_text(top_surf, [typeface], [page], [], (236, 13), HAlignment.RIGHT)
 
         if num_states > 1:
             self.draw_top_arrows(top_surf)
@@ -646,7 +661,9 @@ class InfoMenuState(State):
             help_box = help_menu.StatDialog(desc_text or ('%s_desc' % stat_nid), contribution)
             self.info_graph.register((96 + 72, 16 * idx + 24, 64, 16), help_box, state)
 
-        other_stats = ['RAT']
+        other_stats = []
+        if DB.constants.value('enable_rating'):
+            other_stats.append('RAT')
         if DB.constants.value('talk_display'):
             other_stats.insert(0, 'TALK')
         if DB.constants.value('pairup') and DB.constants.value('attack_stance_only'):

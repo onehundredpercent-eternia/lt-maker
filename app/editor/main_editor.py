@@ -10,8 +10,11 @@ from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QMessageBox, QApplicati
 from PyQt5.QtGui import QIcon
 
 from app import autoupdate, dark_theme
+from app.utilities import file_utils
 
 from app.editor.file_manager.project_builder.project_builder import LTProjectBuilder
+from app.editor.font_editor.font_tab import FontDatabase
+from app.editor.settings.preferences_tabbed import TabbedPreferencesDialog
 from app.editor.settings import MainSettingsController
 
 from app.constants import VERSION
@@ -22,7 +25,6 @@ from app.editor import log_viewer, timer, error_viewer
 # components
 from app.editor.lib.components.menubar import MenuBar
 from app.editor.lib.components.toolbar import Toolbar
-from app.editor.preferences import PreferencesDialog
 from app.editor.save_viewer import SaveViewer
 from app.editor.file_manager.unused_resources_dialog import UnusedResourcesDialog
 
@@ -206,6 +208,9 @@ class MainEditor(QMainWindow):
 
         self.build_project = QAction(
             "Build project", self, triggered=lambda: self.project_builder.build(self.project_save_load_handler.current_proj))
+        if not file_utils.Pltfm.windows():
+            self.build_project.setEnabled(False)
+            self.build_project.setToolTip("Building is only supported on Windows.")
 
         self.preferences_act = QAction(
             _("&Preferences..."), self, triggered=self.edit_preferences)
@@ -267,7 +272,8 @@ class MainEditor(QMainWindow):
                             "Map Sprites": NewMapSpriteDatabase.edit,
                             "Combat Animations": self.edit_combat_animations,
                             "Tilemaps": self.edit_tilemaps,
-                            "Sounds": self.edit_sounds
+                            "Sounds": self.edit_sounds,
+                            "Fonts": FontDatabase.edit
                             }
         self.resource_actions = {}
         for name, func in resource_actions.items():
@@ -540,7 +546,7 @@ class MainEditor(QMainWindow):
         dialog.exec_()
 
     def edit_supports(self, parent=None):
-        dialog = support_pair_tab.get_full_editor()
+        dialog = support_pair_tab.get_full_editor(self)
         dialog.exec_()
 
     def edit_mcost(self, parent=None):
@@ -556,23 +562,23 @@ class MainEditor(QMainWindow):
         dialog.exec_()
 
     def edit_icons(self, parent=None):
-        dialog = icon_tab.get_full_editor()
+        dialog = icon_tab.get_full_editor(self)
         dialog.exec_()
 
     def edit_combat_animations(self, parent=None):
-        dialog = new_combat_animation_tab.get_full_editor()
+        dialog = new_combat_animation_tab.get_full_editor(self)
         dialog.exec_()
 
     def edit_tilemaps(self, parent=None):
-        dialog = tile_tab.get_full_editor()
+        dialog = tile_tab.get_full_editor(self)
         dialog.exec_()
 
     def edit_sounds(self, parent=None):
-        dialog = sound_tab.get_full_editor()
+        dialog = sound_tab.get_full_editor(self)
         dialog.exec_()
 
     def edit_preferences(self):
-        dialog = PreferencesDialog(self)
+        dialog = TabbedPreferencesDialog(self)
         dialog.exec_()
 
     def render_editor(self, main_editor_mode):
