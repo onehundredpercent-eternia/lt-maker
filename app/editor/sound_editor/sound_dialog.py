@@ -79,47 +79,55 @@ class ModifyMusicDialog(Dialog):
         self.nid_box.edit.textChanged.connect(self.nid_changed)
         self.nid_box.edit.editingFinished.connect(self.nid_done_editing)
 
-        self.choice_box = ComboBox()
-        self.choice_box.addItems(["No Variant", "Battle", "Intro"])
-        self.choice_box.activated.connect(self.on_choice)
-
-        self.battle_box = PropertyBox("Battle Variant", QLineEdit, self,)
+        self.battle_box = PropertyBox("Battle Variant", QLineEdit, self)
         self.battle_box.edit.setReadOnly(True)
         self.battle_box.edit.setPlaceholderText("No Battle Variant")
         battle_button = QPushButton("...")
         battle_button.setMaximumWidth(40)
         battle_button.clicked.connect(self.load_battle_variant)
         self.battle_box.add_button(battle_button)
+        battle_clear = QPushButton("Clear")
+        battle_clear.setMaximumWidth(60)
+        battle_clear.clicked.connect(self.clear_battle_variant)
+        self.battle_box.bottom_section.addWidget(battle_clear)
 
-        self.intro_box = PropertyBox("Intro Section", QLineEdit, self,)
+        self.intro_box = PropertyBox("Intro Section", QLineEdit, self)
         self.intro_box.edit.setReadOnly(True)
         self.intro_box.edit.setPlaceholderText("No Intro Section")
         intro_button = QPushButton("...")
         intro_button.setMaximumWidth(40)
         intro_button.clicked.connect(self.load_intro_variant)
         self.intro_box.add_button(intro_button)
+        intro_clear = QPushButton("Clear")
+        intro_clear.setMaximumWidth(60)
+        intro_clear.clicked.connect(self.clear_intro_variant)
+        self.intro_box.bottom_section.addWidget(intro_clear)
 
-        self.battle_box.hide()
-        self.intro_box.hide()
+        self.battle_intro_box = PropertyBox("Battle Intro Section", QLineEdit, self)
+        self.battle_intro_box.edit.setReadOnly(True)
+        self.battle_intro_box.edit.setPlaceholderText("No Battle Intro Section")
+        battle_intro_button = QPushButton("...")
+        battle_intro_button.setMaximumWidth(40)
+        battle_intro_button.clicked.connect(self.load_battle_intro_variant)
+        self.battle_intro_box.add_button(battle_intro_button)
+        battle_intro_clear = QPushButton("Clear")
+        battle_intro_clear.setMaximumWidth(60)
+        battle_intro_clear.clicked.connect(self.clear_battle_intro_variant)
+        self.battle_intro_box.bottom_section.addWidget(battle_intro_clear)
 
         if self.current.battle_full_path:
-            self.choice_box.setValue("Battle")
-            print(self.current.battle_full_path, flush=True)
             name = os.path.split(self.current.battle_full_path[:-4])[-1]
             self.battle_box.edit.setText("%s" % name)
-            self.battle_box.show()
-        elif self.current.intro_full_path:
-            self.choice_box.setValue("Intro")
-            print(self.current.intro_full_path, flush=True)
+        if self.current.intro_full_path:
             name = os.path.split(self.current.intro_full_path[:-4])[-1]
             self.intro_box.edit.setText("%s" % name)
-            self.intro_box.show()
-        else:
-            self.choice_box.setValue("No Variant")
+        if self.current.battle_intro_full_path:
+            name = os.path.split(self.current.battle_intro_full_path[:-4])[-1]
+            self.battle_intro_box.edit.setText("%s" % name)
 
-        layout.addWidget(self.choice_box)
         layout.addWidget(self.battle_box)
         layout.addWidget(self.intro_box)
+        layout.addWidget(self.battle_intro_box)
 
         self.soundroom_box = PropertyBox("Sound Room Number", QSpinBox, self)
         self.soundroom_box.edit.setValue(self.current.soundroom_idx)
@@ -127,26 +135,6 @@ class ModifyMusicDialog(Dialog):
         layout.addWidget(self.soundroom_box)
 
         layout.addWidget(self.buttonbox)
-
-    def on_choice(self):
-        choice = self.choice_box.currentText()
-        if choice == 'No Variant':
-            self.battle_box.hide()
-            self.intro_box.hide()
-            self.battle_box.edit.setText("")
-            self.intro_box.edit.setText("")
-            self.current.battle_full_path = None
-            self.current.intro_full_path = None
-        elif choice == 'Battle':
-            self.battle_box.show()
-            self.intro_box.hide()
-            self.intro_box.edit.setText("")
-            self.current.intro_full_path = None
-        elif choice == 'Intro':
-            self.battle_box.hide()
-            self.intro_box.show()
-            self.battle_box.edit.setText("")
-            self.current.battle_full_path = None
 
     def nid_changed(self, text):
         self.current.nid = text
@@ -189,6 +177,33 @@ class ModifyMusicDialog(Dialog):
                 QMessageBox.critical(self.window, "File Type Error!", "Music must be in OGG format!")
             parent_dir = os.path.split(fn)[0]
             settings.set_last_open_path(parent_dir)
+
+    def load_battle_intro_variant(self):
+        settings = MainSettingsController()
+        starting_path = settings.get_last_open_path()
+        fn, ok = QFileDialog.getOpenFileName(self.window, "Select Music File", starting_path, "OGG Files (*.ogg);;All FIles (*)")
+        if ok:
+            if fn.endswith('.ogg'):
+                self.current.set_battle_intro_full_path(fn)
+                name = os.path.split(fn[:-4])[-1]
+                self.battle_intro_box.edit.setText("%s" % name)
+                print(self.current.battle_intro_full_path)
+            else:
+                QMessageBox.critical(self.window, "File Type Error!", "Music must be in OGG format!")
+            parent_dir = os.path.split(fn)[0]
+            settings.set_last_open_path(parent_dir)
+
+    def clear_battle_variant(self):
+        self.current.battle_full_path = None
+        self.battle_box.edit.setText("")
+
+    def clear_intro_variant(self):
+        self.current.intro_full_path = None
+        self.intro_box.edit.setText("")
+
+    def clear_battle_intro_variant(self):
+        self.current.battle_intro_full_path = None
+        self.battle_intro_box.edit.setText("")
 
     def soundroom_idx_changed(self, text):
         # Sound room index can be consecutive unique positive int, or 0.
