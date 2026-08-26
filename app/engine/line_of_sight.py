@@ -39,12 +39,18 @@ def simple_check(dest_pos: Pos, team: NID, default_range: int, fow_vantage_point
     """
     Returns true if can see position with line of sight
     """
-    info = [(fow_vantage_point[unit.nid], skill_system.sight_range(unit)) for unit in game.units if unit.team == team and fow_vantage_point.get(unit.nid)]
-    for s_pos, extra_range in info:
+    info = [(fow_vantage_point[unit.nid], unit) for unit in game.units if unit.team == team and fow_vantage_point.get(unit.nid)]
+    for s_pos, unit in info:
         if s_pos == dest_pos:
             return True
-        elif utils.calculate_distance(dest_pos, s_pos) <= default_range + extra_range and get_line(s_pos, dest_pos, game.board.get_opacity):
+        elif utils.calculate_distance(dest_pos, s_pos) <= default_range + skill_system.sight_range(unit) and get_line(s_pos, dest_pos, game.board.get_opacity): # Fog LOS check...
             return True
+        else: # ... but if there's an Ignore Fog LOS component, make the check without caring about LOS 
+            for skill in unit.skills:
+                for nid in skill.components.keys():
+                    if nid == 'ignore_fog_los':
+                        if utils.calculate_distance(dest_pos, s_pos) <= default_range + skill_system.sight_range(unit):
+                            return True
     return False
 
 if __name__ == '__main__':
