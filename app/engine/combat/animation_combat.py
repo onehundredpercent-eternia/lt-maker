@@ -448,7 +448,7 @@ class AnimationCombat(BaseCombat, MockCombat):
                     
             for (mark_attacker, mark_defender, mark_item, damage, was_hit) in self._pending_attack_marks:
                 game.events.trigger(triggers.CombatAttack(mark_attacker, mark_defender, mark_attacker.position, mark_item, damage))
-                if was_hit and mark_defender:
+                if was_hit and damage > 0 and mark_defender:
                     game.events.trigger(triggers.CombatAttacked(mark_defender, mark_attacker, mark_defender.position, mark_item, damage))
             self._pending_attack_marks = []
 

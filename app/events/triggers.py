@@ -267,14 +267,14 @@ class CombatAttack(EventTrigger):
 @dataclass(init=True)
 class CombatAttacked(EventTrigger):
     """
-    Occurs when a unit is hit by an attack in combat (not on miss).
+    Occurs when a unit is hit by an attack in combat and takes actual damage (not on miss or on a hit that deals 0 damage).
     """
     nid: ClassVar[NID] = 'combat_attacked'
     unit1: UnitObject #: the unit who was attacked.
     unit2: UnitObject #: the unit who attacked (can be None).
     position: Tuple[int, int] #: contains the position of unit1.
     item: ItemObject #: the item/ability used against unit1.
-    damage: int #: the actual amount of damage dealt (0 if no damage was dealt despite hitting).
+    damage: int #: the actual amount of damage dealt (always > 0).
 
 @dataclass(init=True)
 class OnTalk(EventTrigger):

@@ -428,7 +428,7 @@ class MapCombat(SimpleCombat):
                 damage = damage_lookup.get((brush.attacker, brush.defender, brush.item), 0)
                 was_hit = brush.nid != 'mark_miss'
                 game.events.trigger(triggers.CombatAttack(brush.attacker, brush.defender, brush.attacker.position, brush.item, damage))
-                if was_hit and brush.defender:
+                if was_hit and damage > 0 and brush.defender:
                     game.events.trigger(triggers.CombatAttacked(brush.defender, brush.attacker, brush.defender.position, brush.item, damage))
 
     def _apply_actions(self):
