@@ -108,18 +108,28 @@ class Resources():
             save_data_types = specific
         else:
             save_data_types = self.save_data_types
-        resource_data = disk_loader.load_resources(Path(self.main_folder), version)
-        for data_type in save_data_types:
-            logging.info("Loading %s from %s..." % (data_type, self.main_folder))
-            getattr(self, data_type).clear()  # Now always clears first
-            getattr(self, data_type).load(os.path.join(self.main_folder, data_type), resource_data.get(data_type, []))
 
-            # Also restore the categories if it has any
-            if isinstance(getattr(self, data_type), CategorizedCatalog):
-                getattr(self, data_type).categories = Categories.load(resource_data.get(data_type + CATEGORY_SUFFIX, {}))
+        backup_folder = os.path.join(proj_dir, 'resouces_backup')
+        shutil.copytree(self.main_folder, backup_folder, dirs_exist_ok=True)
+        try:
+            resource_data = disk_loader.load_resources(Path(self.main_folder), version)
+            for data_type in save_data_types:
+                logging.info("Loading %s from %s..." % (data_type, self.main_folder))
+                getattr(self, data_type).clear()  # Now always clears first
+                getattr(self, data_type).load(os.path.join(self.main_folder, data_type), resource_data.get(data_type, []))
 
-        # load custom components
-        self.load_components()
+                # Also restore the categories if it has any
+                if isinstance(getattr(self, data_type), CategorizedCatalog):
+                    getattr(self, data_type).categories = Categories.load(resource_data.get(data_type + CATEGORY_SUFFIX, {}))
+
+            # load custom components
+            self.load_components()
+            shutil.rmtree(backup_folder)
+        except:
+            # Bring back the backup folder to undo the edits made to PNG files
+            shutil.copytree(backup_folder, self.main_folder, dirs_exist_ok=True)
+            shutil.rmtree(backup_folder)
+            raise
 
     def load_components(self):
         # For getting custom project components at runtime
