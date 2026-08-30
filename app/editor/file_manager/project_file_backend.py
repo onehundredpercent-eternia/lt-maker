@@ -355,8 +355,8 @@ class ProjectFileBackend():
             elif ret == QMessageBox.Cancel:
                 return False
 
-        RESOURCES.load(self.current_proj, self.metadata.serialization_version)
         DB.load(curr_proj_path, self.metadata.serialization_version)
+        RESOURCES.load(self.current_proj, self.metadata.serialization_version)
 
         if self.metadata.serialization_version < CURRENT_SERIALIZATION_VERSION:
             self.save()     # To ensure updates from migration are saved
