@@ -337,10 +337,11 @@ def speak(self: Event, speaker_or_style: str, text, text_position: Point | Align
 
     if 'no_block' in flags:
         text += '{no_wait}'
-    cursor = True if draw_cursor is None else draw_cursor
 
+    # Leave draw_cursor as None if unspecified, so that it doesn't override
+    # the draw_cursor of the style we're about to resolve. __default supplies True
     manual_style = SpeakStyle(None, None, text_position, width, text_speed, font_color,
-                              font_type, dialog_box, num_lines, cursor, message_tail,
+                              font_type, dialog_box, num_lines, draw_cursor, message_tail,
                               transparency, name_tag_bg, boop_sound, flags)
 
     style = self._resolve_speak_style(speaker_or_style, style_nid, manual_style)
@@ -1422,7 +1423,8 @@ def has_visited(self: Event, unit, flags=None):
         return
     
     # Check if the unit is still alive and valid
-    if not self.game.check_alive(unit):
+    # Must use actor.nid -- Python eventing hands us a unit object, not a nid
+    if not self.game.check_alive(actor.nid):
         self.logger.info("has_visited: Unit %s is no longer alive, skipping action" % unit)
         return
     
@@ -3002,7 +3004,7 @@ def prep(self: Event, pick_units_enabled: bool = False, music: SongPrefab | Song
         options_descs = other_options_description or []
 
         if len(options_enabled) <= len(options_list):
-            options_enabled += [False] * (len(options_list) - len(options_enabled))
+            options_enabled += [True] * (len(options_list) - len(options_enabled))
             action.do(action.SetGameVar('_prep_options_enabled', options_enabled))
         else:
             self.logger.error("prep: too many bools in option enabled list: ", other_options_enabled)
@@ -3053,7 +3055,7 @@ def base(self: Event, background: str, music: SongPrefab | SongObject | NID = No
         options_events = other_options_on_select or []
 
         if len(options_enabled) <= len(options_list):
-            options_enabled += [True] * (len(options_list) - len(options_events))
+            options_enabled += [True] * (len(options_list) - len(options_enabled))
             action.do(action.SetGameVar('_base_options_disabled', [not b for b in options_enabled]))
         else:
             self.logger.error("base: too many bools in option enabled list: ", other_options_enabled)
@@ -3097,13 +3099,13 @@ def set_custom_options(
     options_events = custom_options_on_select or []
 
     if len(options_enabled) <= len(options_list):
-        options_enabled += [True] * (len(options_list) - len(options_events))
+        options_enabled += [True] * (len(options_list) - len(options_enabled))
         action.do(action.SetGameVar('_custom_options_disabled', [not b for b in options_enabled]))
     else:
         self.logger.error("set_custom_options: too many bools in option enabled list: ", custom_options_enabled)
         return
 
-    if len(options_desc_str) <= len(options_events):
+    if len(options_desc_str) <= len(options_list):
         for idx, desc in enumerate(options_desc_str):
             options_desc[idx] = desc
         action.do(action.SetGameVar('_custom_info_desc', options_desc))

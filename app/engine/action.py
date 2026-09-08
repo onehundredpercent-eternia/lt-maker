@@ -846,10 +846,11 @@ class Drop(Action):
             self.droppee_wait_action = Wait(self.droppee)
         else:
             self.droppee_wait_action = None
-        self.subactions = []
+        # Built here rather than in do(), so that execute() works on a fresh action
+        self.status_action = \
+            RemoveSkill(self.unit, "Rescue", source=self.droppee.nid, source_type=SourceType.TRAVELER)
 
     def do(self):
-        self.subactions.clear()
         game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.droppee_wait_action:
@@ -858,9 +859,7 @@ class Drop(Action):
         self.unit.traveler = None
         self.unit.has_dropped = True
 
-        self.subactions.append(RemoveSkill(self.unit, "Rescue", source=self.droppee.nid, source_type=SourceType.TRAVELER))
-        for action in self.subactions:
-            action.do()
+        self.status_action.do()
 
         if utils.calculate_distance(self.unit.position, self.pos) == 1:
             self.droppee.sprite.set_transition('fake_in')
@@ -873,11 +872,10 @@ class Drop(Action):
         if self.droppee_wait_action:
             self.droppee_wait_action.execute()
 
-        for action in self.subactions:
-            action.execute()
-
         self.unit.traveler = None
         self.unit.has_dropped = True
+
+        self.status_action.execute()
 
     def reverse(self):
         self.unit.traveler = self.droppee.nid
@@ -887,8 +885,7 @@ class Drop(Action):
         game.leave(self.droppee)
         self.unit.has_dropped = False
 
-        for action in self.subactions:
-            action.reverse()
+        self.status_action.reverse()
 
 
 class Give(Action):
@@ -1069,6 +1066,11 @@ class Separate(Action):
         self.with_wait = with_wait
         self.droppee_wait_action = Wait(self.droppee)
         self.old_gauge = self.unit.get_guard_gauge()
+        # A rescued traveler (as opposed to a pair up partner) gave its carrier the
+        # Rescue skill, and that must come off here as well. SourceType.TRAVELER is
+        # only removable by its exact source, so an orphan can never be removed again
+        self.status_action = \
+            RemoveSkill(self.unit, "Rescue", source=self.droppee.nid, source_type=SourceType.TRAVELER)
 
     def do(self):
         if self.pos:
@@ -1079,6 +1081,7 @@ class Separate(Action):
 
         self.unit.traveler = None
         self.unit.has_dropped = True
+        self.status_action.do()
 
         self.droppee.set_guard_gauge(self.old_gauge//2)
         self.unit.set_guard_gauge(self.old_gauge//2)
@@ -1102,6 +1105,7 @@ class Separate(Action):
 
         self.unit.traveler = None
         self.unit.has_dropped = True
+        self.status_action.execute()
 
         self.droppee.set_guard_gauge(self.old_gauge//2)
         self.unit.set_guard_gauge(self.old_gauge//2)
@@ -1121,6 +1125,7 @@ class Separate(Action):
         self.droppee.lead_unit = False
 
         skill_system.on_pairup(self.droppee, self.unit)
+        self.status_action.reverse()
 
         self.unit.set_guard_gauge(self.old_gauge)
         self.droppee.set_guard_gauge(0)

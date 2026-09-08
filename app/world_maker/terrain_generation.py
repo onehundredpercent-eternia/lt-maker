@@ -381,10 +381,10 @@ class WorldTileMap:
         return blended
 
     def generate_terrain_grid_from_noise(self, noise_map: Dict[Pos, float]) -> Tuple[float, float]:
-        # Cumulative percentile thresholds, computed on the final (post-water-border,
-        # post-sink-fill) field, so ratios are exact for every seed. This field decides only
-        # SEA / SAND / land -- hills and mountains are classified separately in
-        # generate_bands_from_noise, from the hill field.
+        # Cumulative percentile thresholds, computed on the final (post-macro-layout,
+        # post-water-border, post-sink-fill) field, so ratios are exact for every seed. This field decides only SEA / SAND / land -- hills and
+        # mountains are classified separately in generate_bands_from_noise, from the
+        # hill field.
         sea_percent = self.theme['sea_percent'] * 100
         sand_percent = self.theme['sand_percent'] * 100
 
