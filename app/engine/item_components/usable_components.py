@@ -10,7 +10,7 @@ import logging
 
 class Uses(ItemComponent):
     nid = 'uses'
-    desc = "Number of uses of item"
+    desc = "Number of uses of item.\nDo not combine with ChapterUses, CustomUses, BlankUses, ManaCostAsUses, ManaCostRemaining, HPCostAsUses, or HPCostRemaining."
     paired_with = ('uses_options',)
     tag = ItemTags.USES
 
@@ -83,7 +83,7 @@ class Uses(ItemComponent):
 
 class ChapterUses(ItemComponent):
     nid = 'c_uses'
-    desc = "The item’s uses per chapter. The uses recharge to full at chapter end, even if all are used. Do not combine with the uses component."
+    desc = "The item’s uses per chapter. The uses recharge to full at chapter end, even if all are used.\nDo not combine with Uses, CustomUses, BlankUses, ManaCostAsUses, ManaCostRemaining, HPCostAsUses, or HPCostRemaining."
     paired_with = ('uses_options',)
     tag = ItemTags.USES
 
@@ -171,6 +171,72 @@ class UsesOptions(ItemComponent):
 
     def one_loss_per_combat(self) -> bool:
         return self.value.get('one_loss_per_combat', False)
+
+class CustomUses(ItemComponent):
+    nid = 'custom_uses'
+    desc = "Display a custom value in place of the Uses text on the item.\nDo not combine with Uses, ChapterUses, BlankUses, ManaCostAsUses, ManaCostRemaining, HPCostAsUses, or HPCostRemaining."
+    tag = ItemTags.USES
+    expose = ComponentType.String
+
+    def _get_uses(self, unit, item):
+        return self.value or ''
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(self._get_uses, unit=unit, item=item)
+
+class CustomUsesColor(ItemComponent):
+    nid = 'custom_uses_color'
+    desc = "Override the default color of the uses text or the color of another Uses component (e.g. ManaCostAsUses, RemainingManaUses).\n\
+'Override Unavailable' also replaces grey text from an unavailable item.\n\
+'Override Droppable' also replaces green text when an item is dropped by an enemy.\n\
+To override the color in ManaCostAsUses or RemainingManaUses, this component must be BELOW those components in the item component list."
+    tag = ItemTags.USES
+    expose = ComponentType.NewMultipleOptions
+    options = {
+        'color': ComponentType.TextColor,
+        'override_unavailable': ComponentType.Bool,
+        'override_droppable': ComponentType.Bool
+    }
+
+    def __init__(self, value=None):
+        self.value = {
+            'color': 'blue',
+            'override_unavailable': False,
+            'override_droppable': False
+        }
+        if value:
+            self.value.update(value)
+
+    def _override_unavailable(self):
+        return self.value['override_unavailable']
+
+    def _override_droppable(self):
+        return self.value['override_droppable']
+
+    def _font_color(self, unit, item):
+        color = self.value['color']
+        if item.droppable and not self._override_droppable():
+            color = 'green'
+        if not item_funcs.available(unit, item) and not self._override_unavailable():
+            color = 'grey'
+        if 'text-' + color in FONT:
+            return color
+        return None
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(get_uses_color=self._font_color,
+            unit=unit, item=item)
+
+class BlankUses(ItemComponent):
+    nid = 'blank_uses'
+    desc = "Display empty string in place of the Uses text on the item.\nDo not combine with Uses, CustomUses, ManaCostAsUses, ManaCostRemaining, HPCostAsUses, or HPCostRemaining."
+    tag = ItemTags.USES
+
+    def _get_uses(self, unit, item):
+        return ''
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(self._get_uses, unit=unit, item=item)
 
 class NoAlertOnBreak(ItemComponent):
     nid = 'no_alert_on_break'
@@ -486,13 +552,43 @@ class ManaCostAsUses(ItemComponent):
     desc = "Display the Mana Cost in place of Uses on the item. Do not combine with other uses components."
     requires = ['mana_cost', 'eval_mana_cost']
     tag = ItemTags.USES
-    delim = None
 
     def _calc_uses(self, unit, item):
-        return item.mana_cost.value
+        if (item.eval_mana_cost):
+            return item.eval_mana_cost._check_value(unit, item)
+        return item.mana_cost.value if item.mana_cost else 0
+
+    def _font_color(self, unit, item):
+        color = 'navy'
+        if not item_funcs.available(unit, item):
+            color = 'grey'
+        if 'text-' + color in FONT:
+            return color
+        return None
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(self._calc_uses, get_uses_color=self._font_color, unit=unit, item=item)
+
+class RemainingManaUses(ManaCostAsUses):
+    nid = 'remaining_mana_uses'
+    desc = "Display the remaining uses calculated from mana cost and unit's current/max mana. Do not combine with other uses components."
+    delim = "/"
+    requires = ['mana_cost', 'eval_mana_cost']
+    tag = ItemTags.USES
+
+    def _calc_uses(self, unit, item):
+        if (item.eval_mana_cost):
+            if (item.eval_mana_cost._check_value(unit, item) == 0):
+                return 0
+            return unit.get_mana() // item.eval_mana_cost._check_value(unit, item)
+        return unit.get_mana() // item.mana_cost.value if item.mana_cost else 0
 
     def _calc_max_uses(self, unit, item):
-        return None
+        if (item.eval_mana_cost):
+            if (item.eval_mana_cost._check_value(unit, item) == 0):
+                return 0
+            return unit.get_max_mana() // item.eval_mana_cost._check_value(unit, item)
+        return unit.get_max_mana() // item.mana_cost.value if item.mana_cost else 0
 
     def _font_color(self, unit, item):
         color = 'navy'
@@ -505,16 +601,59 @@ class ManaCostAsUses(ItemComponent):
     def item_uses_display(self, unit, item) -> UsesDisplayConfig:
         return UsesDisplayConfig(self._calc_uses, self.delim, self._calc_max_uses, self._font_color, unit=unit, item=item)
 
-class RemainingManaUses(ManaCostAsUses):
-    nid = 'remaining_mana_uses'
-    desc = "Display the remaining uses calculated from mana cost and unit's current/max mana. Do not combine with other uses components."
+class HPCostAsUses(ItemComponent):
+    nid = 'hp_cost_as_uses'
+    desc = "Display the HP Cost in place of the Uses text on the item.\nDo not combine with Uses, ChapterUses, CustomUses, BlankUses, ManaCostAsUses, ManaCostRemaining, HPCostRemaining."
+    requires = ['hp_cost', 'eval_hp_cost']
+    tag = ItemTags.USES
+
+    def _calc_uses(self, unit, item):
+        if (item.eval_hp_cost):
+            return item.eval_hp_cost._check_value(unit, item)
+        return item.hp_cost.value if item.hp_cost else 0
+
+    def _font_color(self, unit, item):
+        color = 'red'
+        if not item_funcs.available(unit, item):
+            color = 'grey'
+        if 'text-' + color in FONT:
+            return color
+        return None
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(self._calc_uses, get_uses_color=self._font_color, unit=unit, item=item)
+
+class RemainingHPUses(ItemComponent):
+    nid = 'remaining_hp_uses'
+    desc = "Display the remaining uses calculated from HP cost and unit's current/max HP.\nDo not combine with Uses, ChapterUses, CustomUses, BlankUses, ManaCostAsUses, ManaCostRemaining, HPCostAsUses, or HPCostRemaining."
+    requires = ['hp_cost', 'eval_hp_cost']
+    tag = ItemTags.USES
     delim = "/"
 
     def _calc_uses(self, unit, item):
-        return unit.get_mana() // item.mana_cost.value
+        if (item.eval_hp_cost):
+            if (item.eval_hp_cost._check_value(unit, item) == 0):
+                return 0
+            return unit.get_hp() // item.eval_hp_cost._check_value(unit, item)
+        return unit.get_hp() // item.hp_cost.value if item.hp_cost else 0
 
     def _calc_max_uses(self, unit, item):
-        return str(unit.get_max_mana() // item.mana_cost.value)
+        if (item.eval_hp_cost):
+            if (item.eval_hp_cost._check_value(unit, item) == 0):
+                return 0
+            return unit.get_max_hp() // item.eval_hp_cost._check_value(unit, item)
+        return unit.get_max_hp() // item.hp_cost.value if item.hp_cost else 0
+
+    def _font_color(self, unit, item):
+        color = 'red'
+        if not item_funcs.available(unit, item):
+            color = 'grey'
+        if 'text-' + color in FONT:
+            return color
+        return None
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(self._calc_uses, self.delim, self._calc_max_uses, self._font_color, unit, item)
 
 class Cooldown(ItemComponent):
     nid = 'cooldown'

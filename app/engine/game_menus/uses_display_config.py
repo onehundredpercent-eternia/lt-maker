@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from app.engine import item_funcs, item_system
 from app.engine.game_state import game
+from app.engine.fonts import FONT
 
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.item import ItemObject
