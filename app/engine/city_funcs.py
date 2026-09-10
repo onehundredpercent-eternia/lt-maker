@@ -29,7 +29,7 @@ from app.utilities.typing import NID, Pos
 
 from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit
-from app.data.database.techs import TechFlag, Combine
+from app.data.database.tech_components import Combine
 
 from app.engine import action, building_system
 from app.engine.objects.building import BuildingObject
@@ -149,14 +149,15 @@ def get_generation(city: CityObject) -> dict:
 
 
 def _tech_gated_values(key: NID) -> Set[NID]:
-    """Every value some tech places behind a `combine=set` TechFlag of `key`. A class /
+    """Every value some tech places behind a `combine=set` flag of `key`. A class /
     building nid that appears here is 'tech-locked': hidden until the team unlocks a tech
     that adds it to `game.get_tech_set(team, key)`. Nids never mentioned stay unconditional."""
     gated: Set[NID] = set()
     for tech in DB.techs:
-        for effect in tech.effects:
-            if isinstance(effect, TechFlag) and effect.combine == Combine.SET and effect.key == key:
-                gated.add(effect.value)
+        for component in tech.components:
+            for flag_key, value, combine in component.flags():
+                if combine == Combine.SET and flag_key == key:
+                    gated.update(value if isinstance(value, list) else [value])
     return gated
 
 

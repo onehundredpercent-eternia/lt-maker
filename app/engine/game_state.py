@@ -1187,7 +1187,7 @@ class GameState():
         return bool(team) and tech_funcs.has_tech(team, tech_nid)
 
     def get_tech_value(self, team, key: NID, default=0):
-        """Combined value of all unlocked TechFlags writing `key` (sum/max/or)."""
+        """Combined value of every unlocked flag component writing `key` (sum/max/or)."""
         from app.engine import tech_funcs
         team = self._resolve_team(team)
         if not team:
@@ -1195,7 +1195,7 @@ class GameState():
         return tech_funcs.get_tech_value(team, key, default)
 
     def get_tech_set(self, team, key: NID) -> set:
-        """Accumulated set of all `combine=set` TechFlags writing `key`."""
+        """Accumulated set of every `combine=set` flag component writing `key`."""
         from app.engine import tech_funcs
         team = self._resolve_team(team)
         if not team:

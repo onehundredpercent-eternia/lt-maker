@@ -97,6 +97,7 @@ class SkillModel(DragDropCollectionModel):
                 unit.replace_skill_nid(old_nid, new_nid)
         swap_values(DB.items.values(), ComponentType.Skill, old_nid, new_nid)
         swap_values(DB.skills.values(), ComponentType.Skill, old_nid, new_nid)
+        swap_values(DB.techs.values(), ComponentType.Skill, old_nid, new_nid)
 
     def create_new(self):
         new_skill = DB.skills.create_new(DB)

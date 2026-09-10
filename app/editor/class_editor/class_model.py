@@ -5,6 +5,7 @@ from app.data.resources.resources import RESOURCES
 
 from app.utilities.data import Data
 from app.data.database.database import DB
+from app.data.database.components import ComponentType, swap_values
 
 from app.extensions.custom_gui import DeletionTab, DeletionDialog
 
@@ -72,6 +73,7 @@ def on_nid_changed(old_nid, new_nid):
         for unit in level.units:
             if unit.klass == old_nid:
                 unit.klass = new_nid
+    swap_values(DB.techs.values(), ComponentType.Class, old_nid, new_nid)
 
 class ClassModel(DragDropCollectionModel):
     display_team = 'player'

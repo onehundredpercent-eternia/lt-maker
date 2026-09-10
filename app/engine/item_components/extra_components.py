@@ -11,7 +11,7 @@ class UpgradesTo(ItemComponent):
     nid = 'upgrades_to'
     desc = ("4X: when the owner's team reaches weapon_tier >= required_tier, this item is "
             "physically replaced with target_item (retroactively, army-wide, on unlock via the "
-            "UpgradeItems tech effect). Chain these (Iron->Steel->Mithril) for tiered upgrades.")
+            "Upgrade Items tech component). Chain these (Iron->Steel->Mithril) for tiered upgrades.")
     tag = ItemTags.ADVANCED
 
     expose = ComponentType.NewMultipleOptions

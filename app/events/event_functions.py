@@ -2050,6 +2050,25 @@ def give_money(self: Event, money: int, party=None, flags=None):
         self.game.state.change('alert')
         self.state = 'paused'
 
+def add_renown(self: Event, team: NID, renown: int, flags=None):
+    team_obj = self.game.teams.get(team)
+    if not team_obj:
+        self.logger.error("add_renown: %s is not a valid team nid" % team)
+        return
+    action.do(action.ChangeRenown(team_obj, renown))
+
+def unlock_tech(self: Event, team: NID, tech: NID, flags=None):
+    flags = flags or set()
+
+    team_obj = self.game.teams.get(team)
+    if not team_obj:
+        self.logger.error("unlock_tech: %s is not a valid team nid" % team)
+        return
+    if tech not in DB.techs:
+        self.logger.error("unlock_tech: %s is not a valid tech nid" % tech)
+        return
+    action.do(action.UnlockTech(team_obj, tech, free='free' in flags))
+
 def give_bexp(self: Event, bexp: int, party=None, string=None, flags=None):
     flags = flags or set()
 

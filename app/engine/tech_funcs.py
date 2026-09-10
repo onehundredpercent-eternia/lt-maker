@@ -4,20 +4,20 @@ Runtime helpers for the renown / tech ("unlock") system.
 A team's unlocked techs live in `TeamObject.research` (list of tech nids); its
 renown currency lives in `TeamObject.renown`. Techs own no logic — each is a bag
 of `TechEffect`s (see `app/data/database/techs.py`). This module interprets the
-`TechFlag` effects of a team's unlocked techs into a single precomputed lookup
+flag components of a team's unlocked techs into a single precomputed lookup
 dict (`TeamObject._tech_flag_cache`), so an engine call site reads a combined flag
 value in O(1).
 
 The cache is rebuilt lazily on first read and invalidated (set to None) whenever
-the unlocked set changes (the `UnlockTech` action, do/reverse). `GrantSkill`
-effects are handled elsewhere (the unlock action + `get_tech_skills` on unit-add),
+the unlocked set changes (the `UnlockTech` action, do/reverse). `grant_skill`
+components are handled elsewhere (the unlock action + `get_tech_skills` on unit-add),
 not here.
 """
 
 from typing import Any, List, Set, TYPE_CHECKING
 
 from app.data.database.database import DB
-from app.data.database.techs import TechFlag, GrantSkill, Combine, GrantTarget
+from app.data.database.tech_components import Combine, GrantTarget
 from app.engine import evaluate, item_funcs
 from app.engine.game_state import game
 from app.engine.objects.team import TeamObject
@@ -31,24 +31,25 @@ if TYPE_CHECKING:
 
 
 def _rebuild_flag_cache(team: TeamObject) -> dict:
-    """Precompute {key: combined_value} from every TechFlag of the team's unlocked techs."""
+    """Precompute {key: combined_value} from every flag-bearing component of the team's
+    unlocked techs. A component contributes zero or more (key, value, combine) triples;
+    the key and the policy are the component's own, not the designer's."""
     cache: dict = {}
     for tech_nid in team.research:
         tech = DB.techs.get(tech_nid)
         if not tech:
             continue
-        for effect in tech.effects:
-            if not isinstance(effect, TechFlag):
-                continue
-            key, value, combine = effect.key, effect.value, effect.combine
-            if combine == Combine.SET:
-                cache.setdefault(key, set()).add(value)
-            elif combine == Combine.SUM:
-                cache[key] = cache.get(key, 0) + value
-            elif combine == Combine.MAX:
-                cache[key] = max(cache[key], value) if key in cache else value
-            else:  # Combine.OR
-                cache[key] = bool(cache.get(key, False)) or bool(value)
+        for component in tech.components:
+            for key, value, combine in component.flags():
+                if combine == Combine.SET:
+                    # A set flag's value is a list of nids, not a single one
+                    cache.setdefault(key, set()).update(value if isinstance(value, list) else [value])
+                elif combine == Combine.SUM:
+                    cache[key] = cache.get(key, 0) + value
+                elif combine == Combine.MAX:
+                    cache[key] = max(cache[key], value) if key in cache else value
+                else:  # Combine.OR
+                    cache[key] = bool(cache.get(key, False)) or bool(value)
     team._tech_flag_cache = cache
     return cache
 
@@ -69,12 +70,12 @@ def has_tech(team: TeamObject, tech_nid: NID) -> bool:
 
 
 def get_tech_value(team: TeamObject, key: NID, default: Any = 0) -> Any:
-    """Combined value of all unlocked TechFlags writing `key` (sum/max/or). O(1)."""
+    """Combined value of every unlocked flag component writing `key` (sum/max/or). O(1)."""
     return _get_cache(team).get(key, default)
 
 
 def get_tech_set(team: TeamObject, key: NID) -> Set:
-    """Accumulated set of all `combine=set` TechFlags writing `key`. O(1)."""
+    """Accumulated set of every `combine=set` flag component writing `key`. O(1)."""
     val = _get_cache(team).get(key)
     if isinstance(val, set):
         return val.copy()
@@ -83,7 +84,7 @@ def get_tech_set(team: TeamObject, key: NID) -> Set:
 
 def unit_matches_grant_target(unit: 'UnitObject', team: TeamObject,
                               grant_target: GrantTarget, grant_target_arg: str = '') -> bool:
-    """Whether `unit` is a subject of a GrantSkill effect's grant_target for `team`.
+    """Whether `unit` is a subject of a grant component's grant_target for `team`.
     Only unit-bearing targets match; TEAM_CITIES / SELF_TEAM never grant to a unit."""
     if unit.team != team.nid:
         return False
@@ -96,13 +97,13 @@ def unit_matches_grant_target(unit: 'UnitObject', team: TeamObject,
 
 def get_grant_target_units(team: TeamObject, grant_target: GrantTarget,
                            grant_target_arg: str = '') -> List['UnitObject']:
-    """All current units that are subjects of a GrantSkill effect's grant_target."""
+    """All current units that are subjects of a grant component's grant_target."""
     return [unit for unit in game.get_all_units(only_on_field=False)
             if unit_matches_grant_target(unit, team, grant_target, grant_target_arg)]
 
 
 def get_tech_skills(unit: 'UnitObject') -> List['SkillObject']:
-    """Skills a newly-created unit should receive from its team's unlocked GrantSkill
+    """Skills a newly-created unit should receive from its team's unlocked grant_skill
     techs (skills it doesn't already have). Sibling of unit_funcs.get_global_skills:
     re-derived on unit creation, no per-unit tracking. Existing units instead get these
     at unlock time via the UnlockTech action."""
@@ -115,11 +116,14 @@ def get_tech_skills(unit: 'UnitObject') -> List['SkillObject']:
         tech = DB.techs.get(tech_nid)
         if not tech:
             continue
-        for effect in tech.effects:
-            if isinstance(effect, GrantSkill) and effect.skill_nid not in current \
-                    and effect.skill_nid not in skill_nids \
-                    and unit_matches_grant_target(unit, team, effect.grant_target, effect.grant_target_arg):
-                skill_nids.append(effect.skill_nid)
+        for component in tech.components:
+            if component.nid != 'grant_skill':
+                continue
+            if not unit_matches_grant_target(unit, team, component.grant_target, component.grant_target_arg):
+                continue
+            for skill_nid in component.skills:
+                if skill_nid not in current and skill_nid not in skill_nids:
+                    skill_nids.append(skill_nid)
     return item_funcs.create_skills(unit, skill_nids)
 
 

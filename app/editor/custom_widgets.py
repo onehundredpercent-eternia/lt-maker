@@ -82,10 +82,18 @@ class SkillBox(ObjBox):
 class BuildingBox(ObjBox):
     def __init__(self, parent=None, button=False, exclude=None):
         from app.editor.building_editor.building_model import BuildingModel
-        database = DB.building
+        database = DB.buildings
         if exclude:
             database = Data([d for d in DB.buildings if d is not exclude])
         super().__init__("Building", BuildingModel, database, parent, button)
+
+class TechBox(ObjBox):
+    def __init__(self, parent=None, button=False, exclude=None):
+        from app.editor.tech_editor.tech_model import TechModel
+        database = DB.techs
+        if exclude:
+            database = Data([d for d in DB.techs if d is not exclude])
+        super().__init__("Tech", TechModel, database, parent, button)
 
 class AIBox(ObjBox):
     def __init__(self, parent=None, button=False, exclude=None):

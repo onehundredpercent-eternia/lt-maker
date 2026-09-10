@@ -6,6 +6,13 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from app.engine.objects.building import BuildingObject
 
+# 4X: a building carrying one of these tags gains `{tag}_resource_bonus` (a tech flag,
+# combine=sum) to the mapped resource in its per-turn output. Lives here rather than in
+# either engine package so the building side (ResourcePerTurn.get_output, which pays out
+# the bonus) and the tech side (ResourceBonus, which offers the tags) can never drift.
+RESOURCE_BONUS_TAGS = {'Farm': 'food', 'Mine': 'production', 'Artisan': 'gold'}
+
+
 class BuildingTags(Enum):
     BASE = 'base'
     RESOURCE = 'resource'

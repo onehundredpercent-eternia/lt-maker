@@ -1,4 +1,6 @@
-from app.data.database.building_components import BuildingComponent, BuildingTags
+from app.data.database.building_components import (RESOURCE_BONUS_TAGS,
+                                                    BuildingComponent,
+                                                    BuildingTags)
 from app.data.database.components import ComponentType
 
 from app.events.regions import RegionType
@@ -10,10 +12,6 @@ from app.engine.objects.region import RegionObject
 from app.engine.game_state import game
 
 import logging
-
-# 4X: a building carrying one of these tags gains `{tag}_resource_bonus` (a tech flag,
-# combine=sum) to the mapped resource in its per-turn output.
-RESOURCE_BONUS_TAGS = {'Farm': 'food', 'Mine': 'production', 'Artisan': 'gold'}
 
 
 class BuildingTag(BuildingComponent):

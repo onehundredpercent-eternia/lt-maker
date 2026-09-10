@@ -70,6 +70,7 @@ class BuildingModel(DragDropCollectionModel):
 
     def on_nid_changed(self, old_nid, new_nid):
         swap_values(DB.buildings.values(), ComponentType.Building, old_nid, new_nid)
+        swap_values(DB.techs.values(), ComponentType.Building, old_nid, new_nid)
 
     def create_new(self):
         new_building = DB.buildings.create_new(DB)

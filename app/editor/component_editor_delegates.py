@@ -111,6 +111,10 @@ class TerrainDelegate(BaseComponentDelegate):
     data = DB.terrain
     name = "Terrain"
 
+class BuildingDelegate(BaseComponentDelegate):
+    data = DB.buildings
+    name = "Building"
+
 class LoreDelegate(BaseComponentDelegate):
     data = DB.lore
     name = "Lore"
@@ -135,5 +139,32 @@ class UnitDraftDelegate(QItemDelegate):
     def setModelData(self, editor, model, index):
         if index.column() == 0:
             model.setData(index, editor.itemData(editor.currentIndex()), Qt.ItemDataRole)
+        else:
+            super().setModelData(editor, model, index)
+
+
+class EvalStringDelegate(QItemDelegate):
+    """Column 0 holds a freeform eval expression rather than a nid from some catalog,
+    so it gets a CodeLineEdit (python highlighting) instead of the usual ComboBox."""
+
+    def createEditor(self, parent, option, index):
+        if index.column() == 0:
+            editor = CodeLineEdit(parent)
+            if self.settings.get_preference(Preference.CODE_FONT_IN_BOXES):
+                editor.setFont(QFont(self.settings.get_preference(Preference.CODE_FONT)))
+            return editor
+        return super().createEditor(parent, option, index)
+
+    settings = MainSettingsController()
+
+    def setEditorData(self, editor, index):
+        if index.column() == 0:
+            editor.setPlainText(index.model().data(index, Qt.EditRole) or '')
+        else:
+            super().setEditorData(editor, index)
+
+    def setModelData(self, editor, model, index):
+        if index.column() == 0:
+            model.setData(index, editor.toPlainText(), Qt.ItemDataRole)
         else:
             super().setModelData(editor, model, index)

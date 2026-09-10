@@ -1,5 +1,10 @@
 # Renown / Tech ("Unlock") System — Design Spec
 
+> **Status (Phases 0–5 and 7 implemented; 6 remains).** Sections below are the original spec; places where the
+> implementation intentionally diverges are marked **`[DEVIATION]`**. Every deviation is an
+> improvement kept on purpose — the spec text is left in place so the reasoning is still
+> readable. See §12 for the consolidated list.
+
 4X-genre progression layer. Player earns **renown** (clear dungeons, conquer cities, find
 relics, defeat heroes, achievements) and spends it to unlock **techs** — flavored as generic
 "unlocks", not techs. Techs "infect" many systems, must be designer-configurable, and cheap
@@ -25,6 +30,27 @@ A **Tech** owns no logic. It is a bag of references (`effects`) plus unlock gati
   after. Use **only** when the effect must ride per-unit through combat/skill machinery.
   (Civ6 "RunOnce/Permanent" modifier.)
 
+**`[DEVIATION — supersedes most of §1/§2]` Effects are `TechComponent`s, not dataclasses.**
+Phase 7 (the editor) forced this: the spec's free-text `TechFlag.key` plus designer-chosen
+`combine` is a fine *runtime* design and a bad *authoring* one — `weapon_teir` silently no-ops
+forever, and `combine=sum` on `weapon_tier` is always a bug because the engine read site, not
+the designer, dictates the policy. So `TechEffect` became one component class per effect
+(`app/engine/tech_components/base_components.py`), with `flag_key` and `combine` as **class
+attributes**. The tagged union, `restore_effect` and the `.kind` discriminator are gone;
+`TechPrefab.components: Data[TechComponent]` replaces `effects`, and `TechPrefab.restore` maps
+the legacy `effects` list forward on load. There is still **no codegen'd dispatch module** —
+tech components are read declaratively, never hook-dispatched — so the §11 non-goal holds in
+substance. The payoff: the editor tab reuses `NewComponentProperties` wholesale, and nid
+renames inside effects are handled by the existing `swap_values` machinery. The rest of §1 and
+§2 below describes the original dataclass shape; read it for the reasoning, not the API.
+
+**`[DEVIATION]` A third effect kind shipped: `UpgradeItems`.** Same "materialize at unlock"
+family as `GrantSkill`, but instead of adding a skill it physically swaps every item in the
+target units' inventories up its `UpgradesTo` chain (Iron→Steel→Mithril) to whatever the
+team's current `weapon_tier` allows. Kept separate from the `TechFlag('weapon_tier', …)` that
+sets the tier, so a designer can raise the tier without a retroactive sweep, or re-sweep
+without changing the tier. See §9's weapon-tier example and §12.
+
 > **Rule of thumb (perf-driven):** default to `TechFlag` (single-site read). Escalate to
 > `GrantSkill` only when the effect genuinely needs to be a live skill on the unit. Never
 > use condition-gated global skills — that's the expensive path.
@@ -32,7 +58,11 @@ A **Tech** owns no logic. It is a bag of references (`effects`) plus unlock gati
 ### Collection (Civ6's best axis — "who it hits")
 Only meaningful for `GrantSkill`. Small enum scoped to 4X needs:
 
-| Collection | Subjects |
+**`[DEVIATION]` Named `GrantTarget`, not `Collection`** (fields `grant_target` /
+`grant_target_arg`). "Collection" reads as a container type in a Python codebase; `GrantTarget`
+says what it actually is — who the grant materializes onto. Applies to `UpgradeItems` too.
+
+| GrantTarget | Subjects |
 |---|---|
 | `TEAM_UNITS` | every unit on the tech's team |
 | `TEAM_CITIES` | every city the team owns |
@@ -54,15 +84,20 @@ same key:
 
 ## 2. Data model (design-time, `DB.techs`)
 
-New catalog `app/data/database/techs.py`, registered on `DB`, versioned into serialization.
+New catalog `app/data/database/techs.py`, registered on `DB`.
+
+**`[DEVIATION]` No serialization version bump / migrator.** `DB.techs` is registered as an
+**`optional_data_type`** (alongside `credit` and `map_terrain_associations`): a project with no
+`techs.json` loads an empty catalog and writes the file on next save. A migrator is the wrong
+tool for a purely-additive catalog — there is nothing to migrate.
 
 ```python
-# app/data/database/techs.py
+# app/data/database/techs.py  (as implemented)
 from dataclasses import dataclass, field
 from typing import List, Any
 from app.utilities.typing import NID
 
-class Collection(enum.Enum):
+class GrantTarget(enum.Enum):       # [DEVIATION] was `Collection`
     TEAM_UNITS      = 'team_units'
     TEAM_CITIES     = 'team_cities'
     UNITS_WITH_TAG  = 'units_with_tag'
@@ -73,19 +108,26 @@ class Combine(enum.Enum):
 
 @dataclass
 class TechFlag:
-    kind: str = 'flag'
     key: NID = ''                       # engine reads this key at its call site
     value: Any = True
     combine: Combine = Combine.OR
+    kind: str = 'flag'                  # discriminator last so the real fields are positional
 
 @dataclass
 class GrantSkill:
-    kind: str = 'grant_skill'
     skill_nid: NID = ''                 # an existing DB.skills prefab (the verb + args)
-    collection: Collection = Collection.TEAM_UNITS
-    collection_arg: str = ''            # e.g. tag name for UNITS_WITH_TAG
+    grant_target: GrantTarget = GrantTarget.TEAM_UNITS
+    grant_target_arg: str = ''          # e.g. tag name for UNITS_WITH_TAG
+    kind: str = 'grant_skill'
 
-TechEffect = Union[TechFlag, GrantSkill]   # tagged by .kind on (de)serialize
+@dataclass                              # [DEVIATION] third effect kind, not in the original spec
+class UpgradeItems:
+    grant_target: GrantTarget = GrantTarget.TEAM_UNITS
+    grant_target_arg: str = ''
+    kind: str = 'upgrade_items'
+
+TechEffect = Union[TechFlag, GrantSkill, UpgradeItems]   # tagged by .kind on (de)serialize
+# each kind owns save()/restore(); module-level restore_effect(dat) dispatches on dat['kind']
 
 @dataclass
 class TechPrefab(Prefab):
@@ -129,12 +171,25 @@ def get_tech_set(team, key) -> set         # combine=set keys
 def can_unlock(team, tech_nid) -> bool     # not owned; all requires owned; conditions pass; renown >= cost
 def _rebuild_flag_cache(team)              # precompute {key: combined_value} once per change
 ```
+**`[DEVIATION]` The module ships more than the five above** — `invalidate_flag_cache(team)` /
+`_get_cache(team)` (the dirty-flag half of the cache), plus the grant-target helpers the
+`GrantSkill` / `UpgradeItems` paths need: `unit_matches_grant_target`, `get_grant_target_units`,
+`get_tech_skills(unit)` (§4's future-unit hook lives here, not in `unit_funcs`). `get_tech_set`
+returns a **copy** so a caller can't mutate the cache.
 `get_tech_value` reads a per-team precomputed dict (`_tech_flag_cache`), rebuilt only when the
 unlocked set changes (on `UnlockTech` do/reverse). So T1 reads are a dict lookup, not a scan.
 
 ### `game` accessors (`game_state.py`)
 `game.has_tech(team, nid)`, `game.get_tech_value(team, key)`, `game.get_tech_set(team, key)`,
 `game.get_renown(team)`.
+
+**`[DEVIATION]` All four take a team *nid or* a live `TeamObject`** (`game._resolve_team`), so
+call sites can pass `unit.team` / `city.team` (both nids) without a lookup dance, and they
+degrade to the default when the team doesn't exist. Each accessor **lazy-imports `tech_funcs`
+inside the method** — a module-level import cycles (`game_state → tech_funcs → evaluate →
+combat_calcs → game_state`). That matches game_state's house style (~30 engine modules are
+lazy-imported there for the same reason); `tech_funcs` and `action.py` themselves import at
+module level.
 
 ---
 
@@ -143,15 +198,39 @@ unlocked set changes (on `UnlockTech` do/reverse). So T1 reads are a dict lookup
 - **`ChangeRenown(team, amount)`** — team.renown += amount; reverse subtracts. `save_obj`
   already resolves `('team', nid)`.
 - **`UnlockTech(team, tech_nid)`**
-  - **do:** assert `can_unlock`; `ChangeRenown(team, -cost)`; append nid to `team.research`;
-    invalidate flag cache; for each `GrantSkill` effect, `AddSkill` on every unit currently in
-    its collection (sub-actions, so reversal is automatic).
-  - **reverse:** remove nid; refund; `RemoveSkill`; invalidate cache.
+  - **do:** ~~assert `can_unlock`~~ **`[DEVIATION]` no `can_unlock` gate** — the *caller* gates.
+    The tech-tree UI checks `can_unlock` before dispatching; the `unlock_tech` event command
+    deliberately force-unlocks so a designer can grant a tech regardless of cost/prereqs.
+    Idempotent instead: a tech already in `team.research` is a no-op.
+  - **`[DEVIATION]` ordering: `_record()` runs FIRST**, before the effect sub-actions are built.
+    Appending the nid + invalidating the cache up front is what lets tier-dependent effects
+    (`UpgradeItems` reading `weapon_tier`, the fog re-reveal reading `overworld_sight_bonus`)
+    see the *new* flag value. Build them first and they read the stale pre-unlock tier and
+    silently under-upgrade.
+  - then: `ChangeRenown(team, -cost)`; per `GrantSkill` effect an `AddSkill` on every unit in
+    its grant target; per `UpgradeItems` effect an `UpgradeItem` per upgradeable inventory item.
+    All as sub-actions, so reversal is automatic.
+  - **`[DEVIATION]` immediate fog re-reveal:** when `_fog_of_war` is live, append a reversible
+    `UpdateFogOfWar` per on-field team unit, so a sight tech takes effect the instant it
+    unlocks rather than on the unit's next move (board vision is cached state).
+  - **reverse:** remove nid; reverse sub-actions (refund, `RemoveSkill`, item downgrade);
+    re-invalidate cache. `execute()` (turnwheel redo) re-runs `_record` then replays the stored
+    sub-actions.
+
+- **`[DEVIATION]` `UpgradeItem(unit, item, new_item_nid)`** — new action backing the
+  `UpgradeItems` effect. Swaps the item in place, preserving inventory slot, droppable flag and
+  remaining uses (clamped to the new item's max); relies on `@recalculate_unit` for autoequip.
 
 `GrantSkill` for **future** units: extend the unit-add skill path (sibling of
 `unit_funcs.get_global_skills`) with `get_tech_skills(unit)` — scans `unit.team`'s unlocked
-techs for `GrantSkill` effects whose collection matches this unit, returns skills to add. No
-per-unit tracking; re-derived on add, exactly like global skills.
+techs for `GrantSkill` effects whose grant target matches this unit, returns skills to add. No
+per-unit tracking; re-derived on add, exactly like global skills. **`[DEVIATION]` both
+materialization sites (unlock sweep and unit construction) use `source='game',
+source_type=SourceType.GLOBAL`** — non-removable, non-displaceable game-rule skills that
+serialize normally (only `AURA` is filtered from `UnitObject.save`), so there's no re-derivation
+on load; turnwheel still undoes them because `AddSkill.reverse` is authoritative. `UpgradeItems`
+has the same two sites: the unlock sweep, and `item_funcs.resolve_upgrade_nid_for_team` on unit
+construction.
 
 ---
 
@@ -159,22 +238,54 @@ per-unit tracking; re-derived on add, exactly like global skills.
 
 Each is a single `if game.has_tech(...)` / `get_tech_value(...)` at the natural fork:
 
-| Tech key | Site |
-|---|---|
-| `weapon_tier` | item usability / draft-equip (grant iron/steel/mithril access) |
-| `city_pop_cap_bonus` | `city_funcs` population cap |
-| `exp_mult_bonus` | exp calc |
-| `upkeep_bonus_<tag>` | `city_funcs.run_city_upkeep` |
-| `dungeon_sight_bonus` / `overworld_sight_bonus` | fow / sight range |
-| `road_move_bonus` | terrain movement cost |
-| `draft_unlock` (set) | `city_funcs` draftable-classes query |
-| `build_unlock` (set) | `city_funcs` buildable query |
-| `farm_/mine_/artisan_resource_bonus` | `ResourcePerTurn` / building resource |
-| `hero_pool_tier` | tavern hero generation |
-| `recruit_chance` | overworld neutral-enemy resolution |
-| `elite_promote_<tag>` | promotion: grant klass skill |
+| Tech key | Combine | Site (as implemented) | |
+|---|---|---|---|
+| `exp_mult_bonus` | sum | `SimpleCombat.calculate_exp` — `total_exp *= 1 + bonus` | ✅ |
+| `road_move_bonus` | max | `movement_funcs.get_mcost` | ✅ |
+| `city_pop_cap_bonus` | sum | `city_funcs.run_city_upkeep` growth loop, on top of the `city_pop_cap_base` constant | ✅ |
+| `draft_unlock` / `build_unlock` | set | `city_funcs` gating via `_tech_gated_values(key)` | ✅ |
+| `farm_/mine_/artisan_resource_bonus` | sum | `ResourcePerTurn.get_output` | ✅ |
+| `upkeep_cost_<tag>` | sum | `city_funcs.get_unit_upkeep` | ✅ |
+| `overworld_sight_bonus` | max | `game_board.get_fog_of_war_radius` | ✅ |
+| `weapon_tier` | max | `item_funcs.resolve_upgrade_nid` + the `UpgradesTo` item component | ✅ |
+| `dungeon_sight_bonus` | max | fow / sight range | ❌ not wired |
+| `hero_pool_tier` | max | tavern hero generation | ❌ not wired |
+| `recruit_chance` | max | overworld neutral-enemy resolution | ❌ not wired |
+| `elite_promote_<tag>` | or | promotion: grant klass skill | ❌ not wired |
 
-`GrantSkill` sites: unlock action + `get_tech_skills(unit)` on unit-add. That's all.
+**`[DEVIATION]` `upkeep_bonus_<tag>` → `upkeep_cost_<tag>`** — it reduces a cost, and the key
+reads at the site as what it modifies.
+
+**`[DEVIATION]` `overworld_sight_bonus` reads at `game_board.get_fog_of_war_radius(team)`, not
+`skill_system.sight_range`.** The tech is *per-team*; `sight_range` is per-unit,
+component-driven, and **codegen'd** (an edit there is clobbered on regen). Every board-sight
+computation is already `skill_system.sight_range(unit) + get_fog_of_war_radius(team)`, so the
+radius function is the correct single chokepoint — one line.
+
+**`[DEVIATION]` `weapon_tier` puts the upgrade chain on the *item*, not the tech.** An
+`UpgradesTo` item component (`{target_item, required_tier}`) declares Iron→Steel→Mithril;
+`item_funcs.resolve_upgrade_nid(item_nid, tier)` walks it (cycle-guarded) to the highest item
+the team's tier unlocks. So the tech stays a one-line flag and designers author progression
+where the items live. Convoy and map loot are deliberately **not** swept — only grant-target
+inventories and newly-built units.
+
+**`[DEVIATION]` `draft_unlock` / `build_unlock` semantics: opt-in per nid.** Via
+`city_funcs._tech_gated_values(key)` — a class/building nid mentioned in **any** tech's set-flag
+is locked until that team unlocks it; nids no tech ever mentions stay unconditional. That means
+adding a tech is the only thing that locks content, so existing projects don't silently
+regress.
+
+**`[DEVIATION]` resource bonuses key off a `BuildingTag` component**, not the building nid.
+`BuildingTag` (`nid='building_tags'`, `expose=(List, Tag)`) mirrors `ItemTag` and carries no
+dispatch hooks; `ResourcePerTurn.get_output` maps tag → bonus key through `RESOURCE_BONUS_TAGS`.
+
+**`[DEVIATION]` two new first-class schema fields, not `fields`-bag entries:**
+`klass.upkeep_cost` (int) and `terrain.road` (bool, since a road's `mtype` is `Normal` rather
+than a distinct type). Always-evaluated mechanics belong in the typed dataclass schema, like
+`max_level` / `tier`. Plus a new `city_pop_cap_base` constant.
+
+`GrantSkill` / `UpgradeItems` sites: the unlock action + unit construction (`get_tech_skills`,
+`resolve_upgrade_nid_for_team`). That's all.
 
 ---
 
@@ -184,8 +295,17 @@ No engine "achievement system." Existing event triggers already cover the source
 (unit death → conquered/hero, region cleared → dungeon/relic, promotion, level-clear).
 Designer awards renown in event scripts:
 
-- New event command **`add_renown;<team>;<amount>`** → `ChangeRenown` action.
-- Optional **`unlock_tech;<team>;<tech>`** for scripted/story unlocks and testing.
+- New event command **`add_renown;<team>;<amount>`** → `ChangeRenown` action. Amount may be
+  negative. Unknown team nid → logged error, no-op.
+- **`unlock_tech;<team>;<tech>[;free]`** for scripted/story unlocks and testing → `UnlockTech`
+  action. Forces the unlock: prereqs, `conditions` and the renown balance are **not** checked.
+  Unknown team/tech nid → logged error, no-op; a tech already owned → no-op.
+  **`[DEVIATION]` the `free` flag** skips the renown payment (`UnlockTech(…, free=True)` omits
+  the `ChangeRenown` sub-action). Without it a story unlock would charge the player for a tech
+  they never bought, potentially driving renown negative. Both halves stay turnwheel-reversible.
+
+New `Tech` validator in `event_validators.py` (validates against `DB.techs`, and populates the
+editor's autocomplete for the keyword).
 
 ---
 
@@ -337,18 +457,55 @@ Legendary Dungeon Reward:
 
 ## 10. Phasing
 
-0. **Data model** — `TechPrefab`/`TechEffect`/`TechCatalog`, `DB.techs`, serialization version
-   bump + migrator. `TeamObject.renown` (+ save/restore; `research` already there).
-1. **Runtime helpers** — `tech_funcs.py` (`has_tech`/`get_tech_value`/`get_tech_set`/
+0. ✅ **Data model** — `TechPrefab`/`TechEffect`/`TechCatalog`, `DB.techs` (as an
+   `optional_data_type`, **not** a version bump + migrator — see §2).
+   `TeamObject.renown` (+ save/restore; `research` already there).
+1. ✅ **Runtime helpers** — `tech_funcs.py` (`has_tech`/`get_tech_value`/`get_tech_set`/
    `can_unlock`/flag cache) + `game` accessors.
-2. **Actions** — `ChangeRenown`, `UnlockTech` (materialize `GrantSkill`), turnwheel.
-3. **GrantSkill plumbing** — `get_tech_skills(unit)` on unit-add.
-4. **T1 flag reads** — wire each engine site in §5 (one line each).
-5. **Events** — `add_renown`, `unlock_tech` commands.
-6. **UI** — `TechTreeState` + entry point.
-7. **Editor** — `tech_editor/` tab + bespoke effects-list widget.
+2. ✅ **Actions** — `ChangeRenown`, `UnlockTech` (materialize `GrantSkill`/`UpgradeItems`),
+   `UpgradeItem`, turnwheel.
+3. ✅ **GrantSkill plumbing** — `get_tech_skills(unit)` on unit-add.
+4. 🟡 **T1 flag reads** — 8 of 12 §5 sites wired; `dungeon_sight_bonus`, `hero_pool_tier`,
+   `recruit_chance`, `elite_promote_<tag>` still open (their host systems aren't built yet).
+5. ✅ **Events** — `add_renown`, `unlock_tech` (+ `free` flag) commands, `Tech` validator.
+6. ⬜ **UI** — `TechTreeState` + entry point.
+7. ✅ **Editor** — `app/editor/tech_editor/` tab. **Not** the bespoke effects-list widget the
+   spec called for: effects became components (see §1), so the tab reuses
+   `NewComponentProperties` and the stock component row rendering instead.
 
-Phases 0–4 make techs fully functional (scriptable via events); 5–7 are authoring/UX.
+Phases 0–5 and 7 are done: techs are fully functional, scriptable via events, and authorable
+in the editor. Only Phase 6 (the in-game player-facing UI) remains, and it is deliberately
+unspecified — the presentation may not be a browsable tree at all (one live possibility is a
+rotating set of randomly offered techs the player buys every N turns).
+Coverage: `app/tests/test_tech_system.py` (combine policies + cache invalidation, `can_unlock`
+gating, `UnlockTech` do/reverse/redo, effect + prefab serialization round-trips, both event
+commands incl. the classic parse path, the `Tech` validator). The §5 flag *read sites* are still
+untested — each needs its host system stood up.
+
+---
+
+## 12. Deviations from spec (all intentional)
+
+| # | Spec said | Implemented | Why |
+|---|---|---|---|
+| 1 | `Collection` / `collection` / `collection_arg` | **`GrantTarget`** / `grant_target` / `grant_target_arg` | "Collection" reads as a container type in Python; the enum names *who a grant lands on*. |
+| 2 | two effect kinds | **third kind `UpgradeItems`** | Retroactive weapon-tier sweeps need a materialize-at-unlock effect that isn't a skill. Kept separate from `TechFlag('weapon_tier')` so tier and sweep are independently authorable. |
+| 3 | serialization version bump + migrator | **`DB.techs` as an `optional_data_type`** | Purely-additive catalog; missing `techs.json` → empty catalog, written on next save. Nothing to migrate. |
+| 4 | `UnlockTech` asserts `can_unlock` | **no gate; caller gates; idempotent** | UI checks `can_unlock`; the event command must be able to force-unlock for scripting/testing. |
+| 5 | (unspecified order) | **`_record()` before effects are built** | Tier-dependent effects must read the *post*-unlock flag value or they under-upgrade. |
+| 6 | — | **fog re-reveal inside `UnlockTech`** | Board vision is cached, so a sight tech would otherwise only take effect on the next move. |
+| 7 | `upkeep_bonus_<tag>` | **`upkeep_cost_<tag>`** | Names what it modifies at the read site. |
+| 8 | sight tech in `skill_system.sight_range` | **`game_board.get_fog_of_war_radius`** | The tech is per-team; `sight_range` is per-unit and codegen'd (edits clobbered on regen). |
+| 9 | `weapon_tier` read at item usability | **`UpgradesTo` item component + `resolve_upgrade_nid`** | Puts the progression chain on the items, keeps the tech a one-line flag. |
+| 10 | `draft_unlock`/`build_unlock` = "base_draftable or in set" | **`_tech_gated_values`: only nids some tech mentions are gated** | Adding a tech is the only thing that can lock content — no silent regression for existing projects. |
+| 11 | resource bonus on "the relevant building" | **`BuildingTag` component + `RESOURCE_BONUS_TAGS`** | Tag-driven like `ItemTag`; designers group buildings without touching engine code. |
+| 12 | — | **`klass.upkeep_cost`, `terrain.road`, `city_pop_cap_base`** as typed schema fields/constant | First-class always-evaluated mechanics belong in the typed schema, not the generic `fields` bag. |
+| 13 | `game.*` accessors take a team | **accept a team nid *or* a `TeamObject`; lazy-import `tech_funcs`** | Call sites hold nids (`unit.team`, `city.team`); a module-level import cycles through `evaluate`/`combat_calcs`. |
+| 14 | `GrantSkill` (source unspecified) | **`source='game'`, `SourceType.GLOBAL`, both sites** | Game-rule skills: non-removable, non-displaceable, serialize normally, still turnwheel-reversible. |
+| 15 | `unlock_tech` charges the cost | **`free` flag on the command / `free=True` on the action** | A story unlock shouldn't bill the player for a tech they never bought. |
+| 16 | `TechEffect` dataclasses + a bespoke editor widget | **`TechComponent` classes; `key`/`combine` are class attributes; editor reuses `NewComponentProperties`** | A free-text key and a designer-chosen combine are unsafe to author. Components make both unspellable-wrong, and the entire component editor comes for free. Still no codegen'd dispatch. |
+| 17 | one `GrantSkill` per skill | **`GrantSkillEffect` holds a `skills` list**; `DraftUnlock`/`BuildUnlock` hold lists too | Components are nid-keyed so a tech cannot carry two of the same; list-valued fields restore that expressiveness without a bespoke rows table, and keep free nid-rename safety. |
+| 18 | — | **`CustomFlag` escape hatch** | Keeps `dungeon_sight_bonus`/`hero_pool_tier`/`recruit_chance`/`elite_promote_<tag>` authorable until their read sites land in P4. |
 
 ## 11. Explicit non-goals
 - **No 4th codegen/component-hook system.** `TechEffect` is plain data interpreted by

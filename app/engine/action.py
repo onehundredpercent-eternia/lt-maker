@@ -18,7 +18,6 @@ from app.events import triggers
 from app.data.resources.resources import RESOURCES
 from app.engine import (aura_funcs, banner, building_system, equations, item_funcs, item_system,
                         particles, skill_system, tech_funcs, unit_funcs, animations)
-from app.data.database.techs import GrantSkill, UpgradeItems
 from app.engine.game_state import game
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
@@ -1960,28 +1959,37 @@ class ChangeRenown(Action):
 
 
 class UnlockTech(Action):
-    """Unlock a tech for a team: pay its renown cost, materialize every GrantSkill
-    effect onto the units currently in its collection (sub-actions, so reversal is
-    automatic), record the tech nid on the team, and invalidate the flag cache.
+    """Unlock a tech for a team: pay its renown cost, materialize every grant_skill and
+    upgrade_items component onto the units currently in its grant target (sub-actions, so
+    reversal is automatic), record the tech nid on the team, and invalidate the flag cache.
 
     Does NOT gate on `tech_funcs.can_unlock` (cost / prereqs) - that check belongs to
     the caller (the tech-tree UI checks it; the `unlock_tech` event command intentionally
-    forces the unlock). Idempotent: a tech already owned is a no-op."""
+    forces the unlock). Idempotent: a tech already owned is a no-op.
 
-    def __init__(self, team, tech_nid):
+    `free` skips the renown payment entirely (no ChangeRenown sub-action), for story unlocks
+    granted by an event rather than bought by the player."""
+
+    def __init__(self, team, tech_nid, free: bool = False):
         self.team = team
         self.tech_nid = tech_nid
+        self.free = free
         self.subactions: List[Action] = []
+        # Whether do() actually performed the unlock. A no-op unlock (tech already owned,
+        # or no such tech) must not have its nid stripped off `research` on reverse -- that
+        # would undo the *earlier* unlock's bookkeeping while its effects stayed applied.
+        self.did_unlock: bool = False
 
     def _record(self):
         """Mark the tech unlocked and refresh the flag cache. Done *before* effects run so
-        tier-dependent effects (UpgradeItems) already see the new weapon_tier flag."""
+        tier-dependent effects (upgrade_items) already see the new weapon_tier flag."""
         if self.tech_nid not in self.team.research:
             self.team.research.append(self.tech_nid)
         tech_funcs.invalidate_flag_cache(self.team)
 
     def do(self):
         self.subactions.clear()
+        self.did_unlock = False
         if self.tech_nid in self.team.research:
             logging.info("UnlockTech: %s already unlocked for %s", self.tech_nid, self.team.nid)
             return
@@ -1989,16 +1997,19 @@ class UnlockTech(Action):
         if not tech:
             logging.error("UnlockTech: no such tech %s", self.tech_nid)
             return
+        self.did_unlock = True
         # Record + refresh flags first, so weapon_tier is current when we resolve upgrades.
         self._record()
-        self.subactions.append(ChangeRenown(self.team, -tech.renown_cost))
-        for effect in tech.effects:
-            if isinstance(effect, GrantSkill):
-                for unit in tech_funcs.get_grant_target_units(self.team, effect.grant_target, effect.grant_target_arg):
-                    self.subactions.append(AddSkill(unit, effect.skill_nid, source='game', source_type=SourceType.GLOBAL))
-            elif isinstance(effect, UpgradeItems):
+        if not self.free:
+            self.subactions.append(ChangeRenown(self.team, -tech.renown_cost))
+        for component in tech.components:
+            if component.nid == 'grant_skill':
+                for unit in tech_funcs.get_grant_target_units(self.team, component.grant_target, component.grant_target_arg):
+                    for skill_nid in component.skills:
+                        self.subactions.append(AddSkill(unit, skill_nid, source='game', source_type=SourceType.GLOBAL))
+            elif component.nid == 'upgrade_items':
                 tier = game.get_tech_value(self.team, 'weapon_tier')
-                for unit in tech_funcs.get_grant_target_units(self.team, effect.grant_target, effect.grant_target_arg):
+                for unit in tech_funcs.get_grant_target_units(self.team, component.grant_target, component.grant_target_arg):
                     for item in list(unit.items):
                         new_nid = item_funcs.resolve_upgrade_nid(item.nid, tier)
                         if new_nid != item.nid:
@@ -2014,11 +2025,15 @@ class UnlockTech(Action):
             action.execute()
 
     def execute(self):
+        if not self.did_unlock:
+            return
         self._record()
         for action in self.subactions:
             action.execute()
 
     def reverse(self):
+        if not self.did_unlock:
+            return
         if self.tech_nid in self.team.research:
             self.team.research.remove(self.tech_nid)
         for action in reversed(self.subactions):

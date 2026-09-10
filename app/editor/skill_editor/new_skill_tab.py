@@ -112,6 +112,7 @@ class NewSkillDatabase(NewEditorTab):
                 unit.replace_skill_nid(old_nid, new_nid)
         swap_values(self._db.items.values(), ComponentType.Skill, old_nid, new_nid)
         swap_values(self._db.skills.values(), ComponentType.Skill, old_nid, new_nid)
+        swap_values(self._db.techs.values(), ComponentType.Skill, old_nid, new_nid)
         for terrain in self._db.terrain:
             if terrain.status == old_nid:
                 terrain.status = new_nid

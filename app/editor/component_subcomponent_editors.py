@@ -14,6 +14,7 @@ from app.data.resources.resources import RESOURCES
 from app.engine.fonts import get_text_color_options
 from app.editor.component_editor_delegates import (AffinityDelegate,
                                                    BaseComponentDelegate,
+                                                   BuildingDelegate,
                                                    ClassDelegate, ItemDelegate,
                                                    SkillDelegate, StatDelegate,
                                                    StatFloatDelegate, StatStringDelegate,
@@ -83,6 +84,25 @@ class SkillSubcomponentEditor(BaseSubcomponentEditor):
         self.editor.setMaximumWidth(width)
         if not self.option_dict.get(self.field_name):
             self.option_dict[self.field_name] = DB.skills[0].nid
+        self.editor.setValue(self.option_dict[self.field_name])
+        self.editor.currentTextChanged.connect(self.on_value_changed)
+        hbox.addWidget(self.editor)
+
+    def on_value_changed(self, val):
+        self.option_dict[self.field_name] = val
+
+
+class TagSubcomponentEditor(BaseSubcomponentEditor):
+    @override
+    def _create_editor(self, hbox):
+        self.editor = ComboBox(self)
+        for tag in DB.tags.values():
+            self.editor.addItem(tag.nid)
+        width = utils.clamp(self.editor.minimumSizeHint().width(
+        ) + DROP_DOWN_BUFFER, MIN_DROP_DOWN_WIDTH, MAX_DROP_DOWN_WIDTH)
+        self.editor.setMaximumWidth(width)
+        if not self.option_dict.get(self.field_name):
+            self.option_dict[self.field_name] = DB.tags[0].nid
         self.editor.setValue(self.option_dict[self.field_name])
         self.editor.currentTextChanged.connect(self.on_value_changed)
         hbox.addWidget(self.editor)
@@ -309,11 +329,13 @@ DELEGATE_MAP: Dict[ComponentType, BaseComponentDelegate] = {
     ComponentType.WeaponType: WeaponTypeDelegate,
     ComponentType.Skill: SkillDelegate,
     ComponentType.Terrain: TerrainDelegate,
+    ComponentType.Building: BuildingDelegate,
 }
 
 EDITOR_MAP: Dict[ComponentType, BaseSubcomponentEditor] = {
     ComponentType.Bool: BoolSubcomponentEditor,
     ComponentType.Skill: SkillSubcomponentEditor,
+    ComponentType.Tag: TagSubcomponentEditor,
     ComponentType.Int: IntSubcomponentEditor,
     ComponentType.String: StringSubcomponentEditor,
     ComponentType.Float: FloatSubcomponentEditor,

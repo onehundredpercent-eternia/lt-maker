@@ -118,6 +118,7 @@ class NewBuildingDatabase(NewEditorTab):
 
     def _on_nid_changed(self, old_nid: NID, new_nid: NID) -> None:
         swap_values(self._db.buildings.values(), ComponentType.Building, old_nid, new_nid)
+        swap_values(self._db.techs.values(), ComponentType.Building, old_nid, new_nid)
 
 # Testing
 # Run "python -m app.editor.skill_editor.new_skill_tab" from main directory

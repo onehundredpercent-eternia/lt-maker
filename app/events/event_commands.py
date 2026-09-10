@@ -2030,6 +2030,41 @@ If the *no_banner* flag is set, there will not be a banner announcing that the p
     keyword_types = ["Integer", "Party"]
     _flags = ['no_banner']
 
+class AddRenown(EventCommand):
+    nid = 'add_renown'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Gives *Renown* to the indicated *Team*. Renown is the currency a team spends to unlock techs.
+*Renown* may be negative to take renown away.
+
+Example: add_renown;player;150
+        """
+
+    keywords = ["Team", "Renown"]
+    keyword_types = ["Team", "Integer"]
+
+class UnlockTech(EventCommand):
+    nid = 'unlock_tech'
+    tag = Tags.GAME_VARS
+
+    desc = \
+        """
+Unlocks *Tech* for the indicated *Team*, applying all of its effects.
+
+The unlock is forced: prerequisites, unlock conditions and the team's renown balance are *not*
+checked, so a story event can grant a tech the player could not yet buy. The tech's renown cost
+is still charged unless the *free* flag is set.
+
+Unlocking a tech the team already has is a no-op.
+
+Example: unlock_tech;player;IronWeapons;free
+        """
+
+    keywords = ["Team", "Tech"]
+    _flags = ['free']
+
 class GiveBexp(EventCommand):
     nid = 'give_bexp'
     tag = Tags.GAME_VARS

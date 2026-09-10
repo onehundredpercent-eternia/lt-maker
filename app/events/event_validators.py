@@ -479,6 +479,16 @@ class Team(Validator):
         valids = [(None, team_nid) for team_nid in self._db.teams.keys()]
         return valids
 
+class Tech(Validator):
+    def validate(self, text, level):
+        if text in self._db.techs:
+            return text
+        return None
+
+    def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
+        valids = [(None, tech_nid) for tech_nid in self._db.techs.keys()]
+        return valids
+
 class Tag(Validator):
     def validate(self, text, level):
         if text in self._db.tags:

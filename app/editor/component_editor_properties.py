@@ -4,7 +4,7 @@ from typing import (Callable, Dict, Generic, List, Optional, Tuple, Type,
                     TypeVar)
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontMetrics, QIcon
+from PyQt5.QtGui import QFontMetrics, QIcon, QPixmap
 from PyQt5.QtWidgets import (QAction, QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QSizePolicy,
                              QSpacerItem, QTextEdit, QToolBar, QToolButton,
@@ -100,7 +100,17 @@ class NewComponentProperties(QWidget, Generic[T]):
                     new_menu = QHelpMenu(self)
                     self.menus[component.tag.value] = new_menu
                     toolbutton = QToolButton(self)
-                    toolbutton.setIcon(QIcon(f"{icon_folder}/component_%s.png" % component.tag.value))
+                    icon_path = f"{icon_folder}/component_%s.png" % component.tag.value
+                    toolbutton.setToolTip(component.tag.value.replace('_', ' ').capitalize())
+                    # QIcon built from a path is never null, even when the file is missing,
+                    # so probe the file itself. Not every tag has an icon drawn for it; a
+                    # blank button is indistinguishable from its neighbours, so name it instead
+                    pixmap = QPixmap(icon_path)
+                    if pixmap.isNull():
+                        toolbutton.setText(component.tag.value.replace('_', ' ').capitalize())
+                        toolbutton.setToolButtonStyle(Qt.ToolButtonTextOnly)
+                    else:
+                        toolbutton.setIcon(QIcon(pixmap))
                     toolbutton.setMenu(new_menu)
                     toolbutton.setPopupMode(QToolButton.InstantPopup)
                     toolbutton_action = QWidgetAction(self)

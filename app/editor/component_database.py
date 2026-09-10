@@ -13,6 +13,7 @@ from app.data.database.database import DB
 from app.data.resources.resources import RESOURCES
 from app.engine.fonts import get_text_color_options
 from app.editor.component_editor_delegates import (AffinityDelegate,
+                                                   BuildingDelegate,
                                                    ClassDelegate, ItemDelegate,
                                                    SkillDelegate, StatDelegate,
                                                    StatFloatDelegate, StatStringDelegate,
@@ -821,6 +822,8 @@ def get_display_widget(component, parent):
             delegate = SkillDelegate
         elif component.expose[1] == ComponentType.Terrain:
             delegate = TerrainDelegate
+        elif component.expose[1] == ComponentType.Building:
+            delegate = BuildingDelegate
         elif component.expose[1] == ComponentType.Lore:
             delegate = LoreDelegate
 
