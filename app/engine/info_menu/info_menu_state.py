@@ -740,11 +740,21 @@ class InfoMenuState(State):
                 self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
 
             elif stat == 'GAUGE':
-                gge = str(self.unit.get_guard_gauge())
-                render_text(surf, ['text'], [gge], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
-                render_text(surf, ['text'], [text_funcs.translate('GAUGE')], ['yellow'], (72, 16 * true_idx + 24))
-                desc = text_funcs.translate_and_text_evaluate('GAUGE_desc', unit=self.unit)
-                self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
+                if growths: #GAUGE replaces AID when pair up is in use.  HP growth will replace one of the two.
+                    #Since AID and GAUGE are mutually exclusive, we shouldn't need to worry about ever displaying the growth twice.
+                    icons.draw_growth(surf, 'HP', self.unit, (111, 16 * true_idx + 24))
+                    color = 'yellow'
+                    if DB.stats.get('HP').growth_colors and self.unit.team == 'player':
+                        color = self.growth_colors(unit_funcs.growth_rate(self.unit, 'HP'))
+                    render_text(surf, ['text'], [text_funcs.translate('HP')], [color], (72, 16 * true_idx + 24))
+                    desc = text_funcs.translate_and_text_evaluate('HP_desc', unit=self.unit)
+                    self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
+                else:
+                    gge = str(self.unit.get_guard_gauge())
+                    render_text(surf, ['text'], [gge], ['blue'], (111, 16 * true_idx + 24), HAlignment.RIGHT)
+                    render_text(surf, ['text'], [text_funcs.translate('GAUGE')], ['yellow'], (72, 16 * true_idx + 24))
+                    desc = text_funcs.translate_and_text_evaluate('GAUGE_desc', unit=self.unit)
+                    self.info_graph.register((96 + 72, 16 * true_idx + 24, 64, 16), desc, state)
 
             elif stat == 'TALK':
                 if (len([talk for talk in game.talk_options if talk[0] == self.unit.nid and talk not in game.talk_hidden]) != 0):
