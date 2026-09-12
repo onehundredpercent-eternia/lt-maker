@@ -454,7 +454,7 @@ class InfoMenuState(State):
 
     def growth_colors(self, value):
         color = 'yellow'
-        if value >= 0 and value <= 20:
+        if value <= 20:
             color = 'red-orange'
         elif value > 20 and value <= 30:
             color = 'light-red'
@@ -666,15 +666,17 @@ class InfoMenuState(State):
             other_stats.append('RAT')
         if DB.constants.value('talk_display'):
             other_stats.insert(0, 'TALK')
-        if DB.constants.value('pairup') and DB.constants.value('attack_stance_only'):
-            pass
+        if DB.constants.value('pairup'):
+            if DB.constants.value('attack_stance_only'):
+                pass
+            else:
+                other_stats.insert(0, 'GAUGE')
+                other_stats.insert(0, 'TRV')
         else:
             other_stats.insert(0, 'AID')
             other_stats.insert(0, 'TRV')
         if self.unit.get_max_mana() > 0:
             other_stats.insert(0, 'MANA')
-        if DB.constants.value('pairup') and not DB.constants.value('attack_stance_only'):
-            other_stats.insert(2, 'GAUGE')
         if DB.constants.value('lead'):
             other_stats.append('LEAD')
 
