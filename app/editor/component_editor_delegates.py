@@ -121,8 +121,8 @@ class LoreDelegate(BaseComponentDelegate):
 
 class UnitDraftDelegate(QItemDelegate):
     """Delegate for ComponentType.UnitDraftList rows:
-    column 0 = Class (nid combobox), columns 1-3 = integers (level, gold, production)."""
-    int_columns = (1, 2, 3)
+    column 0 = Class (nid combobox), columns 1-4 = integers (level, gold, food, production)."""
+    int_columns = (1, 2, 3, 4)
 
     def createEditor(self, parent, option, index):
         if index.column() == 0:

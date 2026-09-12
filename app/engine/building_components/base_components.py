@@ -221,8 +221,6 @@ class ResourcePerTurn(BuildingComponent):
         return out
 
     def on_upkeep(self, city):
-        if not city.is_worked(self.building):
-            return
         team = game.teams[city.team]
         out = self.get_output(city)
         if out["food"]:
@@ -241,17 +239,27 @@ class ProducesUnits(BuildingComponent):
     expose = ComponentType.UnitDraftList
 
     def __init__(self, value=None):
-        # value is a list of [class_nid, level, gold_cost, production_cost] rows
-        self.value = [list(row) for row in value] if value else []
+        # value is a list of [class_nid, level, gold_cost, food_cost, production_cost] rows
+        self.value = [self._pad(row) for row in value] if value else []
+
+    @staticmethod
+    def _pad(row) -> list:
+        """A four-column row on disk is [class, level, gold, production] and has no food
+        cost; food belongs at index 3."""
+        row = list(row)
+        if len(row) == 4:
+            row.insert(3, 0)
+        return row
 
     def produces_units(self, city):
         specs = []
         for row in self.value:
-            klass, level, gold_cost, production_cost = row
+            klass, level, gold_cost, food_cost, production_cost = row
             specs.append({
                 "klass": klass,
                 "level": level,
                 "gold_cost": gold_cost,
+                "food_cost": food_cost,
                 "production_cost": production_cost,
             })
         return specs

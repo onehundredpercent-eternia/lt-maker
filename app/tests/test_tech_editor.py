@@ -146,7 +146,7 @@ class NewTechDatabaseTests(unittest.TestCase):
         self.db.techs.clear()
         for tech in (make_tech('Roots'),
                      make_tech('Branch', requires=['Roots'],
-                               components=[TCA.restore_component(('city_pop_cap_bonus', 5))]),
+                               components=[TCA.restore_component(('city_pop_bonus', 5))]),
                      make_tech('Leaf', requires=['Branch'])):
             self.db.techs.append(tech)
         self.tab = NewTechDatabase(None, self.db)
@@ -189,8 +189,8 @@ class NewTechDatabaseTests(unittest.TestCase):
 
     def test_duplicate_copies_components_without_aliasing(self):
         self.assertTrue(self.tab.duplicate('Branch', 'Branch2'))
-        original = self.db.techs.get('Branch').components.get('city_pop_cap_bonus')
-        copy = self.db.techs.get('Branch2').components.get('city_pop_cap_bonus')
+        original = self.db.techs.get('Branch').components.get('city_pop_bonus')
+        copy = self.db.techs.get('Branch2').components.get('city_pop_bonus')
         self.assertEqual(5, copy.value)
         copy.value = 99
         self.assertEqual(5, original.value)
@@ -275,12 +275,12 @@ class NewTechDatabaseTests(unittest.TestCase):
             raw = json.load(f)
         self.assertEqual(['Roots', 'Branch', 'Leaf'], [d['nid'] for d in raw])
         self.assertNotIn('effects', raw[0])
-        self.assertEqual([['city_pop_cap_bonus', 5]], raw[1]['components'])
+        self.assertEqual([['city_pop_bonus', 5]], raw[1]['components'])
 
         reloaded = Database()
         reloaded.load(self.tmp, CURRENT_SERIALIZATION_VERSION)
         self.assertEqual(['Roots', 'Branch', 'Leaf'], reloaded.techs.keys())
-        self.assertEqual(5, reloaded.techs.get('Branch').components.get('city_pop_cap_bonus').value)
+        self.assertEqual(5, reloaded.techs.get('Branch').components.get('city_pop_bonus').value)
         self.assertEqual(['Roots'], reloaded.techs.get('Branch').requires)
 
 

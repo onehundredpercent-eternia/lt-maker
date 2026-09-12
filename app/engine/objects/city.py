@@ -21,15 +21,17 @@ class CityObject(City):
         buildings (List[BuildingObject]): The city's building object's attached.
         influence (int): The range of influence for the city
         inn (List[NID]): List of Unit Object NIDs that are stationed in this city
-        production_queue (List): The units/buildings the city is currently working on. First in the queue is being built now.
-        food (int): The city's current food.
-        production (int): The city's current production.
+        food (int): The city's current food store, spent when buying units/buildings.
+        production (int): The city's current production store, spent when buying units/buildings.
+        produced_this_turn (bool): Whether the city has already bought its one unit or
+            building this turn. Cleared at the start of the city's upkeep.
     """
 
     def __init__(self, nid: NID, name: str, position: Pos = None, team: NID = "player",
                  population: int = 1, buildings: List = None, influence: int = 1, inn: List[NID] = None,
-                 production_queue: List = None, food: int = 0, production: int = 0,
-                 icon_nid: NID = None, icon_index: tuple = (0, 0), worked_buildings: List = None):
+                 food: int = 0, production: int = 0,
+                 icon_nid: NID = None, icon_index: tuple = (0, 0),
+                 produced_this_turn: bool = False):
         self.nid = nid
         self.name = name
         self.position = position
@@ -39,29 +41,21 @@ class CityObject(City):
         self.influence = influence
         self.buildings: List[BuildingObject] = buildings or []
         self.inn: List[NID] = inn or []
-        self.production_queue: List = production_queue or []
-        # uids of buildings the player has assigned to be "worked" this turn
-        self.worked_buildings: List = worked_buildings or []
 
         self.food: int = food
         self.production: int = production
+        self.produced_this_turn: bool = produced_this_turn
 
         self.icon_nid: NID = icon_nid
         self.icon_index: tuple = icon_index
 
         self.data = {}
 
-    @property
-    def worker_cap(self) -> int:
-        """How many buildings this city can work at once (one per population)."""
-        return self.population
-
-    def is_worked(self, building) -> bool:
-        """Whether the given building is currently assigned to be worked."""
-        return building.uid in self.worked_buildings
-
     @classmethod
     def from_prefab(cls, prefab):
+        # Lazy, like the rest of the engine's game_state reads: game_state imports the
+        # object modules, so a module-level import here would cycle.
+        from app.engine.game_state import game
         self = cls(prefab.nid, prefab.name,
                    tuple(prefab.position) if prefab.position else None,
                    prefab.team, prefab.population, [], prefab.influence,
@@ -75,6 +69,9 @@ class CityObject(City):
             building.position = tuple(position) if position else None
             building.owner_nid = self.nid
             self.buildings.append(building)
+        # A team's city_pop_bonus techs apply to every city it gains, not only the ones
+        # it owned when the tech unlocked.
+        self.population += game.get_tech_value(prefab.team, 'city_pop_bonus')
         return self
 
     def save(self) -> dict:
@@ -85,14 +82,12 @@ class CityObject(City):
         serial_dict['influence'] = self.influence
         serial_dict['team'] = self.team
         serial_dict['buildings'] = [building.uid for building in self.buildings]
-        serial_dict['worked_buildings'] = self.worked_buildings
         serial_dict['inn'] = self.inn
-
-        serial_dict['production_queue'] = self.production_queue
 
         serial_dict['population'] = self.population
         serial_dict['food'] = self.food
         serial_dict['production'] = self.production
+        serial_dict['produced_this_turn'] = self.produced_this_turn
 
         serial_dict['icon_nid'] = self.icon_nid
         serial_dict['icon_index'] = self.icon_index
@@ -104,9 +99,9 @@ class CityObject(City):
     def restore(cls, dat: dict, game):
         self = cls(dat['nid'], dat['name'], dat['position'], dat['team'],
                    dat['population'], [], dat['influence'],
-                   dat['inn'], dat['production_queue'], dat['food'], dat['production'],
+                   dat['inn'], dat['food'], dat['production'],
                    dat.get('icon_nid'), dat.get('icon_index', (0, 0)),
-                   dat.get('worked_buildings', []))
+                   dat.get('produced_this_turn', False))
         self.buildings = [game.get_building(building_uid) for building_uid in dat['buildings']]
         self.buildings = [b for b in self.buildings if b]
         self.data = dat['data']

@@ -724,60 +724,25 @@ class SkillOption(BasicOption):
         # render_text(surf, [uses_font], [uses_string], [uses_color], (left, y), HAlignment.RIGHT)
 
 
-def draw_resource_cost(surf, right_x, y, gold, prod, color):
-    """Draw "<gold_num><gold icon> <prod_num><prod icon>" ending at right_x."""
-    gold_icon = icons.get_city_icon(0)
-    prod_icon = icons.get_city_icon(2)
-    gold_str, prod_str = str(gold), str(prod)
+def draw_resource_cost(surf, right_x, y, costs, color):
+    """Draw "<num><icon>" groups for each nonzero cost in `costs` (a (gold, food,
+    production) triple), ending at right_x. A free resource is left out entirely."""
     icon_w = 16
     num_gap = 1   # number -> its icon
-    seg_gap = 5   # gold group -> production group
-    gold_w = text_width('text', gold_str)
-    prod_w = text_width('text', prod_str)
-    total = gold_w + num_gap + icon_w + seg_gap + prod_w + num_gap + icon_w
+    seg_gap = 5   # group -> group
+    groups = [(str(amount), icons.get_city_icon(index))
+              for amount, index in zip(costs, (0, 1, 2)) if amount]
+    if not groups:
+        return
+    total = sum(text_width('text', num) + num_gap + icon_w for num, _icon in groups)
+    total += seg_gap * (len(groups) - 1)
     cx = right_x - total
-    render_text(surf, ['text'], [gold_str], [color], (cx, y))
-    cx += gold_w + num_gap
-    if gold_icon:
-        surf.blit(gold_icon, (cx, y))
-    cx += icon_w + seg_gap
-    render_text(surf, ['text'], [prod_str], [color], (cx, y))
-    cx += prod_w + num_gap
-    if prod_icon:
-        surf.blit(prod_icon, (cx, y))
-
-
-# city_icons.png indices; draw order is food, production, gold.
-_RESOURCE_ICON_ORDER = (('food', 1), ('production', 2), ('gold', 0))
-
-
-def resource_gain_width(resources) -> int:
-    """Pixel width of the "<icon>+N" groups for each nonzero resource."""
-    w = 0
-    for key, _index in _RESOURCE_ICON_ORDER:
-        val = resources.get(key, 0)
-        if not val:
-            continue
-        w += 16 + text_width('text', '+%d' % val) + 2
-    return w
-
-
-def draw_resource_gain(surf, x, y, resources, color):
-    """Draw "<icon>+N" left-to-right from x for each nonzero resource
-    (food, production, gold), e.g. "F+4G+2". Returns the ending x."""
-    cx = x
-    for key, index in _RESOURCE_ICON_ORDER:
-        val = resources.get(key, 0)
-        if not val:
-            continue
-        icon = icons.get_city_icon(index)
+    for num, icon in groups:
+        render_text(surf, ['text'], [num], [color], (cx, y))
+        cx += text_width('text', num) + num_gap
         if icon:
             surf.blit(icon, (cx, y))
-        cx += 16
-        s = '+%d' % val
-        render_text(surf, ['text'], [s], [color], (cx, y))
-        cx += text_width('text', s) + 2
-    return cx
+        cx += icon_w + seg_gap
 
 
 class DraftUnitRowOption(BasicOption):
@@ -785,7 +750,7 @@ class DraftUnitRowOption(BasicOption):
     Base for DraftUnitOption and reused by the city production-queue panel."""
     def __init__(self, idx, spec, city):
         self.idx = idx
-        self.spec = spec          # {'klass', 'level', 'gold_cost', 'production_cost'}
+        self.spec = spec          # {'klass', 'level', 'gold_cost', 'food_cost', 'production_cost'}
         self.city = city
         self.help_box = None
         self.font = 'text'
@@ -831,23 +796,23 @@ class DraftUnitRowOption(BasicOption):
 
 
 class DraftUnitOption(DraftUnitRowOption):
-    """Draft-tab row: adds the gold/production cost, greyed when unaffordable."""
+    """Draft-tab row: adds the gold/food/production cost, greyed when unaffordable."""
+    def cost(self):
+        return city_funcs.get_unit_cost(self.spec)
+
     def _affordable(self):
-        team = game.teams.get(self.city.team)
-        return bool(team) and team.gold >= self.spec['gold_cost']
+        return city_funcs.can_purchase(self.city) and city_funcs.can_afford(self.city, *self.cost())
 
     def row_color(self):
         return None if (self._affordable() and not self.ignore) else 'grey'
 
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
-        draw_resource_cost(surf, x + self.width(), y,
-                           self.spec['gold_cost'], self.spec['production_cost'], self.row_color())
+        draw_resource_cost(surf, x + self.width(), y, self.cost(), self.row_color())
 
 
 class BuildingRowOption(BasicOption):
-    """A building row: building map-anim icon + name (no cost). Base for
-    BuildingOption / WorkBuildingOption and reused by the production-queue panel."""
+    """A building row: building map-anim icon + name (no cost). Base for BuildingOption."""
     def __init__(self, idx, building, city):
         self.idx = idx
         self.building = building
@@ -894,44 +859,16 @@ class BuildingRowOption(BasicOption):
 
 
 class BuildingOption(BuildingRowOption):
-    """Build-tab row: adds the gold/production cost, greyed when unaffordable."""
+    """Build-tab row: adds the gold/food/production cost, greyed when unaffordable."""
     def cost(self):
-        comp = self.building.cost
-        if comp:
-            return comp.gold_cost(self.city), comp.production_cost(self.city)
-        return 0, 0
+        return city_funcs.get_building_cost(self.building, self.city)
 
     def _affordable(self):
-        team = game.teams.get(self.city.team)
-        gold_cost, _ = self.cost()
-        return bool(team) and team.gold >= gold_cost
+        return city_funcs.can_purchase(self.city) and city_funcs.can_afford(self.city, *self.cost())
 
     def row_color(self):
         return None if (self._affordable() and not self.ignore) else 'grey'
 
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
-        gold_cost, prod_cost = self.cost()
-        draw_resource_cost(surf, x + self.width(), y, gold_cost, prod_cost, self.row_color())
-
-
-class WorkBuildingOption(BuildingRowOption):
-    """Work-tab row: building icon + name + potential resource yield + working/idle
-    status. The yield shows what working this building would add to the city
-    (its ResourcePerTurn component; terrain yield is territory-based and applies
-    regardless of buildings)."""
-    def draw(self, surf, x, y):
-        super().draw(surf, x, y)
-        if self.city.is_worked(self.building):
-            label, color = 'Working', 'blue'
-        elif len(self.city.worked_buildings) >= self.city.worker_cap:
-            label, color = '--', 'grey'
-        else:
-            label, color = 'Idle', 'grey'
-        render_text(surf, ['text'], [label], [color], (x + self.width() - 4, y), HAlignment.RIGHT)
-        # Potential resource yield, right-aligned just left of the status label
-        resources = city_funcs.get_building_output(self.building, self.city)
-        res_w = resource_gain_width(resources)
-        if res_w:
-            status_left = x + self.width() - 4 - text_width('text', label)
-            draw_resource_gain(surf, status_left - res_w - 4, y, resources, self.row_color())
+        draw_resource_cost(surf, x + self.width(), y, self.cost(), self.row_color())

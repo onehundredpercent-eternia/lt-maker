@@ -488,9 +488,6 @@ class ConstantDatabase(DatabaseTab):
         music_constants = ('music_main', 'music_promotion', 'music_class_change', 'music_game_over')
         music_section = self.create_section(music_constants)
         music_section.setTitle("Music Constants")
-        city_constants = ('city_food_base', 'city_food_growth')
-        city_section = self.create_section(city_constants)
-        city_section.setTitle("City Constants")
 
         main_frame = QFrame(self)
         main_layout = QGridLayout(self)
@@ -499,7 +496,6 @@ class ConstantDatabase(DatabaseTab):
         main_layout.addWidget(battle_section, 0, 0)
         main_layout.addWidget(misc_section, 0, 1)
         main_layout.addWidget(music_section, 1, 1)
-        main_layout.addWidget(city_section, 1, 0)
         self.left_tab_bar.addTab(main_frame, "Main")
 
         exp_frame = QFrame(self)

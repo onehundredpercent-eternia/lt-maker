@@ -28,16 +28,19 @@ class ExpMultBonus(TechComponent):
     combine = Combine.SUM
 
 
-class CityPopCapBonus(TechComponent):
-    nid = 'city_pop_cap_bonus'
-    desc = "This team's cities can grow this much larger, on top of the " \
-           "`city_pop_cap_base` constant. Stacks additively with other techs."
+class CityPopBonus(TechComponent):
+    nid = 'city_pop_bonus'
+    desc = "Grants this much extra population to every city this team owns when the " \
+           "tech unlocks, and to every city it founds or gains afterwards. Stacks " \
+           "additively with other techs."
     tag = TechTags.ECONOMY
 
     expose = ComponentType.Int
     value = 5
 
-    flag_key = 'city_pop_cap_bonus'
+    # The flag is what a city reads when it is created after the unlock; the population of
+    # cities that already exist is topped up by UnlockTech (which matches on this nid).
+    flag_key = 'city_pop_bonus'
     combine = Combine.SUM
 
 

@@ -722,8 +722,8 @@ class UnitDraftItemComponent(BoolItemComponent):
             self._data.value = []
         self.editor = AppendMultiListWidget(
             self._data.value, self._data.name,
-            ("Class", "Level", "Gold", "Production"),
-            UnitDraftDelegate, self, model=list_models.QuadListModel)
+            ("Class", "Level", "Gold", "Food", "Production"),
+            UnitDraftDelegate, self, model=list_models.PentaListModel)
         self.editor.view.setColumnWidth(0, 100)
         self.editor.view.setMaximumHeight(100)
         self.editor.model.nid_column = 0

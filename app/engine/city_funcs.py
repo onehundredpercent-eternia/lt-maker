@@ -3,23 +3,12 @@ City helpers for the 4X city/building layer.
 
 This module holds the city-level logic that sits on top of `building_system`
 (the per-component dispatch): aggregating draftable units / buildable buildings,
-computing valid placement, and running a city's per-turn upkeep.
+computing valid placement, paying for a purchase, and running a city's per-turn
+income.
 
-Production-queue entry schema (plain JSON-serializable dicts, stored verbatim in
-`CityObject.production_queue`):
-
-    building entry:
-        {'kind': 'building', 'nid': <building_nid>,
-         'production_cost': int, 'gold_paid': int}
-
-    unit entry:
-        {'kind': 'unit', 'nid': <label>, 'klass': <class_nid>, 'level': int,
-         'team': <team_nid>, 'production_cost': int, 'gold_paid': int}
-
-Production accrues in the shared `city.production` pool; a front entry completes
-when `city.production >= production_cost` and pays the full cost at once (leftover
-stays in the pool, so excess accrues). `gold_paid` is recorded only so a building
-that cannot be placed at completion can be refunded exactly.
+Units and buildings are bought outright: the city menu pays the full gold / food /
+production cost the moment the player selects a row, and the unit spawns (or the
+building goes straight to placement) on the spot. There is no production queue.
 """
 
 from typing import List, Optional, Set, Tuple
@@ -39,43 +28,12 @@ from app.engine.game_state import game
 
 
 # ---------------------------------------------------------------------------
-# Production-queue entry factories
-# ---------------------------------------------------------------------------
-
-def make_building_entry(building_nid: NID, production_cost: int, gold_paid: int) -> dict:
-    return {
-        'kind': 'building',
-        'nid': building_nid,
-        'production_cost': production_cost,
-        'gold_paid': gold_paid,
-    }
-
-
-def make_unit_entry(klass: NID, level: int, team: NID,
-                    production_cost: int, gold_paid: int, nid: Optional[str] = None) -> dict:
-    return {
-        'kind': 'unit',
-        'nid': nid or klass,
-        'klass': klass,
-        'level': level,
-        'team': team,
-        'production_cost': production_cost,
-        'gold_paid': gold_paid,
-    }
-
-
-# ---------------------------------------------------------------------------
 # Aggregation / queries
 # ---------------------------------------------------------------------------
 
 def get_influence(city: CityObject) -> int:
     """Base influence plus any bonus contributed by the city's buildings."""
     return city.influence + building_system.influence_range_modification(city)
-
-
-def get_food_upkeep(city: CityObject) -> int:
-    """Food the city consumes each turn (currently equal to its population)."""
-    return city.population
 
 
 def get_tile_yield(pos: Pos) -> dict:
@@ -118,10 +76,9 @@ def get_territory_positions(city: CityObject) -> Set[Pos]:
 
 
 def get_building_output(building: BuildingObject, city: CityObject) -> dict:
-    """Per-turn resources a worked building contributes via its ResourcePerTurn
-    component, including any `{tag}_resource_bonus` tech bonus for the city's team.
-    Terrain yield is territory-based (see get_tile_yield) and does not depend on
-    buildings, so working a building only adds its ResourcePerTurn output."""
+    """Per-turn resources a building contributes via its ResourcePerTurn component,
+    including any `{tag}_resource_bonus` tech bonus for the city's team. Terrain yield
+    is territory-based (see get_tile_yield) and does not depend on buildings."""
     totals = {'food': 0, 'production': 0, 'gold': 0}
     comp = building.resource_per_turn
     if comp:
@@ -133,15 +90,13 @@ def get_building_output(building: BuildingObject, city: CityObject) -> dict:
 
 def get_generation(city: CityObject) -> dict:
     """Per-turn resource generation: terrain yield (base + adjacency) of every tile in
-    the city's territory, plus each worked building's ResourcePerTurn output."""
+    the city's territory, plus every building's ResourcePerTurn output."""
     totals = {'food': 0, 'production': 0, 'gold': 0}
     for pos in get_territory_positions(city):
         tile = get_tile_yield(pos)
         for key in totals:
             totals[key] += tile[key]
     for building in city.buildings:
-        if not city.is_worked(building):
-            continue
         out = get_building_output(building, city)
         for key in totals:
             totals[key] += out[key]
@@ -229,38 +184,77 @@ def get_valid_placement_tiles(city: CityObject, building: BuildingObject) -> Lis
 
 
 # ---------------------------------------------------------------------------
-# Per-turn upkeep
+# Purchasing
 # ---------------------------------------------------------------------------
 
-def food_threshold(population: int) -> int:
-    base = DB.constants.value('city_food_base')
-    growth = DB.constants.value('city_food_growth')
-    return base + (population - 1) * growth
+def get_unit_cost(spec: dict) -> Tuple[int, int, int]:
+    """The (gold, food, production) a draft spec costs."""
+    return spec.get('gold_cost', 0), spec.get('food_cost', 0), spec.get('production_cost', 0)
 
 
-def _spawn_unit(city: CityObject, entry: dict) -> Optional[UnitObject]:
-    klass = entry['klass']
+def get_building_cost(building: BuildingObject, city: CityObject) -> Tuple[int, int, int]:
+    """The (gold, food, production) `building` costs this city, via its Cost component."""
+    comp = building.cost
+    if not comp:
+        return 0, 0, 0
+    return comp.gold_cost(city), comp.food_cost(city), comp.production_cost(city)
+
+
+def can_purchase(city: CityObject) -> bool:
+    """Whether the city may still buy something this turn. A city produces **one** unit
+    or building per turn, whichever it picks."""
+    return not city.produced_this_turn
+
+
+def can_afford(city: CityObject, gold_cost: int, food_cost: int, production_cost: int) -> bool:
+    """Whether the city's stores (and its team's gold) cover the given cost."""
+    team = game.teams.get(city.team)
+    if gold_cost and (not team or team.gold < gold_cost):
+        return False
+    return city.food >= food_cost and city.production >= production_cost
+
+
+def pay_costs(city: CityObject, gold_cost: int, food_cost: int, production_cost: int):
+    """Spend the given cost out of the team's gold and the city's food/production stores
+    as reversible actions. Pass negative amounts to refund."""
+    team = game.teams.get(city.team)
+    if gold_cost and team:
+        action.do(action.ChangeTeamGold(team, -gold_cost))
+    if food_cost:
+        action.do(action.ChangeCityFood(city, -food_cost))
+    if production_cost:
+        action.do(action.ChangeCityProduction(city, -production_cost))
+
+
+def mark_purchase(city: CityObject, produced: bool = True):
+    """Spend (or hand back, with produced=False) the city's one purchase for the turn."""
+    action.do(action.SetCityProduced(city, produced))
+
+
+def draft_unit(city: CityObject, spec: dict) -> Optional[UnitObject]:
+    """Create a drafted unit of the spec's class/level on the nearest open tile to the
+    city, already finished for the turn (greyed out) so it cannot act the turn it is
+    bought. Does not pay for it - the caller pays (see pay_costs)."""
+    klass = spec['klass']
     if klass not in DB.classes:
         return None
     unit_nid = str_utils.get_next_int('201', [u.nid for u in game.units])
     faction = DB.factions[0].nid if DB.factions else None
-    prefab = GenericUnit(unit_nid, None, entry['level'], klass, faction, [], [], entry['team'], 'None')
+    prefab = GenericUnit(unit_nid, None, spec['level'], klass, faction, [], [], city.team, 'None')
     new_unit = UnitObject.from_prefab(prefab, game.current_mode)
     new_unit.party = game.current_party
     action.do(action.RegisterUnit(new_unit))
     pos = game.target_system.get_nearest_open_tile(new_unit, city.position)
     if pos:
         action.do(action.ArriveOnMap(new_unit, pos))
+        # Wait is built after arrival - it snapshots the unit's position for fog of war
+        action.do(action.Wait(new_unit))
     return new_unit
 
 
-def _refund(city: CityObject, entry: dict):
-    team = game.teams.get(city.team)
-    if team and entry.get('gold_paid'):
-        action.do(action.ChangeTeamGold(team, entry['gold_paid']))
-    if entry.get('production_cost'):
-        action.do(action.ChangeCityProduction(city, entry['production_cost']))
-
+# ---------------------------------------------------------------------------
+# Per-turn income
+# ---------------------------------------------------------------------------
 
 def _apply_territory_income(city: CityObject):
     """Apply the terrain resource yield (base + adjacency) of every tile in the city's
@@ -279,61 +273,21 @@ def _apply_territory_income(city: CityObject):
         action.do(action.ChangeTeamGold(team, totals['gold']))
 
 
-def run_city_upkeep(city: CityObject) -> List[Tuple[CityObject, BuildingObject]]:
-    """Run a single city's start-of-turn upkeep. Returns a list of (city, building)
-    placements the player must position (completed buildings)."""
-    # 1. Building income: worked buildings' ResourcePerTurn (component self-gates on is_worked)
+def run_city_upkeep(city: CityObject):
+    """Run a single city's start-of-turn income: every building's ResourcePerTurn, plus
+    the terrain yield of every tile in the city's radius. Cities have no resource upkeep
+    and do not grow on their own. Also refreshes the city's one purchase for the turn."""
+    if city.produced_this_turn:
+        mark_purchase(city, False)
     building_system.on_upkeep(city)
-
-    # 1b. Territory income: terrain yield (base + adjacency) of every tile in the city's radius
     _apply_territory_income(city)
 
-    # 2. Food upkeep (currently equal to population)
-    upkeep = get_food_upkeep(city)
-    if upkeep:
-        action.do(action.ChangeCityFood(city, -upkeep))
 
-    # 3. Population growth: spend food while it crosses the rising threshold, up to the
-    #    population cap (base constant + `city_pop_cap_bonus` techs owned by the city's team)
-    pop_cap = DB.constants.value('city_pop_cap_base') + game.get_tech_value(city.team, 'city_pop_cap_bonus')
-    while city.population < pop_cap and city.food >= food_threshold(city.population):
-        action.do(action.ChangeCityFood(city, -food_threshold(city.population)))
-        action.do(action.ChangeCityPopulation(city, 1))
-
-    # 4. Queue completion: pay the front entry from the production pool while affordable
-    pending_placements: List[Tuple[CityObject, BuildingObject]] = []
-    while city.production_queue:
-        entry = city.production_queue[0]
-        cost = entry.get('production_cost', 0)
-        if city.production < cost:
-            break
-        if cost:
-            action.do(action.ChangeCityProduction(city, -cost))
-        action.do(action.RemoveFromProductionQueue(city, 0))
-
-        if entry['kind'] == 'unit':
-            _spawn_unit(city, entry)
-        elif entry['kind'] == 'building':
-            prefab = DB.buildings.get(entry['nid'])
-            if not prefab:
-                continue
-            building = BuildingObject.from_prefab(prefab)
-            building.owner_nid = city.nid
-            if get_valid_placement_tiles(city, building):
-                pending_placements.append((city, building))
-            else:
-                _refund(city, entry)
-    return pending_placements
-
-
-def run_all_city_upkeeps(team: NID) -> List[Tuple[CityObject, BuildingObject]]:
-    """Run upkeep for every city owned by the given team. Returns all pending
-    building placements gathered across those cities."""
-    pending: List[Tuple[CityObject, BuildingObject]] = []
+def run_all_city_upkeeps(team: NID):
+    """Run upkeep for every city owned by the given team."""
     for city in game.cities:
         if city.team == team:
-            pending.extend(run_city_upkeep(city))
-    return pending
+            run_city_upkeep(city)
 
 
 def get_unit_upkeep(team: NID) -> int:

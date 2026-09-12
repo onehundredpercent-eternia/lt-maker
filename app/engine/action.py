@@ -2007,6 +2007,12 @@ class UnlockTech(Action):
                 for unit in tech_funcs.get_grant_target_units(self.team, component.grant_target, component.grant_target_arg):
                     for skill_nid in component.skills:
                         self.subactions.append(AddSkill(unit, skill_nid, source='game', source_type=SourceType.GLOBAL))
+            elif component.nid == 'city_pop_bonus':
+                # Cities the team already owns are topped up here; cities it gains later
+                # read the flag when they are built (CityObject.from_prefab).
+                for city in game.cities:
+                    if city.team == self.team.nid:
+                        self.subactions.append(ChangeCityPopulation(city, component.value))
             elif component.nid == 'upgrade_items':
                 tier = game.get_tech_value(self.team, 'weapon_tier')
                 for unit in tech_funcs.get_grant_target_units(self.team, component.grant_target, component.grant_target_arg):
@@ -2041,6 +2047,21 @@ class UnlockTech(Action):
         tech_funcs.invalidate_flag_cache(self.team)
 
 
+class SetCityProduced(Action):
+    """Flips a city's one-purchase-per-turn flag (set when it buys, cleared on upkeep
+    or when a building purchase is refunded)."""
+    def __init__(self, city, produced: bool):
+        self.city = city
+        self.produced = produced
+        self.old_produced = city.produced_this_turn
+
+    def do(self):
+        self.city.produced_this_turn = self.produced
+
+    def reverse(self):
+        self.city.produced_this_turn = self.old_produced
+
+
 class ChangeCityPopulation(Action):
     def __init__(self, city, amount):
         self.city = city
@@ -2052,49 +2073,6 @@ class ChangeCityPopulation(Action):
 
     def reverse(self):
         self.city.population = self.old_population
-
-
-class AddToProductionQueue(Action):
-    # entry is an opaque JSON-serializable dict; see city_funcs for its schema/factories.
-    def __init__(self, city, entry):
-        self.city = city
-        self.entry = entry
-
-    def do(self):
-        self.city.production_queue.append(self.entry)
-
-    def reverse(self):
-        if self.entry in self.city.production_queue:
-            self.city.production_queue.remove(self.entry)
-
-
-class RemoveFromProductionQueue(Action):
-    def __init__(self, city, index=0):
-        self.city = city
-        self.index = index
-        self.removed_entry = None
-
-    def do(self):
-        if 0 <= self.index < len(self.city.production_queue):
-            self.removed_entry = self.city.production_queue.pop(self.index)
-
-    def reverse(self):
-        if self.removed_entry is not None:
-            self.city.production_queue.insert(self.index, self.removed_entry)
-
-
-class SetWorkedBuildings(Action):
-    # worked_buildings could be mutated in place, so snapshot it with a copy.
-    def __init__(self, city, new_worked):
-        self.city = city
-        self.new_worked = new_worked
-        self.old_worked = city.worked_buildings.copy()
-
-    def do(self):
-        self.city.worked_buildings = self.new_worked
-
-    def reverse(self):
-        self.city.worked_buildings = self.old_worked
 
 
 class GainExp(Action):

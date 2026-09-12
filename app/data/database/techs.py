@@ -102,7 +102,7 @@ class TechPrefab(Prefab):
 # in the new shape on the next save.
 _LEGACY_FLAG_COMPONENTS = {
     'exp_mult_bonus': 'exp_mult_bonus',
-    'city_pop_cap_bonus': 'city_pop_cap_bonus',
+    'city_pop_cap_bonus': 'city_pop_bonus',
     'road_move_bonus': 'road_move_bonus',
     'overworld_sight_bonus': 'overworld_sight_bonus',
     'weapon_tier': 'weapon_tier',

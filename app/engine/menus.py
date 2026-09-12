@@ -21,7 +21,6 @@ from app.engine.game_state import game
 from app.engine.game_menus import menu_options
 from app.engine.achievements import Achievement
 from app.engine.graphics.text.text_renderer import fix_tags, render_text, text_width
-from app.engine.graphics.ingame_ui.build_groove import build_groove
 from app.utilities.enums import HAlignment
 from app.engine.text_evaluator import TextEvaluator
 
@@ -2210,55 +2209,19 @@ class CityChoice(Choice):
                 self.options.append(empty)
 
 
-class CityQueueDisplay():
-    """Non-interactive panel (left of the CityMenu) showing a city's production
-    queue, up to 6 entries deep. Top-aligned with a clear background; draws
-    nothing at all when the queue is empty. Rows reuse the cost-less row options."""
-    limit = 6
-
-    def __init__(self, city, topleft=(0, 80), width=84):
-        self.city = city
-        self.topleft = topleft
-        self.width = width
-        self.options = []
-        self.build()
-
-    def build(self):
-        """Rebuild the row options from the current queue (call on purchase)."""
-        self.options = []
-        for idx, entry in enumerate(self.city.production_queue[:self.limit]):
-            if entry.get('kind') == 'unit':
-                self.options.append(menu_options.DraftUnitRowOption(idx, entry, self.city))
-            else:
-                prefab = DB.buildings.get(entry.get('nid'))
-                if not prefab:
-                    continue
-                from app.engine.objects.building import BuildingObject
-                building = BuildingObject.from_prefab(prefab)
-                self.options.append(menu_options.BuildingRowOption(idx, building, self.city))
-
-    def draw(self, surf):
-        if not self.options:
-            return surf
-        left, top = self.topleft
-        for i, option in enumerate(self.options):
-            option.draw(surf, left, top + i * 16)
-        return surf
-
-
 class CityMenu():
-    """Tabbed in-game city menu. Three Choice sub-menus (Draft / Build / Work)
-    share a position; LEFT/RIGHT switch tabs, UP/DOWN scroll the active tab,
-    INFO toggles its description box. Each Choice owns its own row drawing via
-    DraftUnitOption / BuildingOption / WorkBuildingOption.
+    """Tabbed in-game city menu. Two Choice sub-menus (Draft / Build) share a
+    position; LEFT/RIGHT switch tabs, UP/DOWN scroll the active tab, INFO toggles
+    its description box. Each Choice owns its own row drawing via DraftUnitOption /
+    BuildingOption. Selecting a row buys it outright.
     """
-    # city_icons.png indices used as tab icons (Draft / Build / Work)
-    TAB_ICON_INDICES = [4, 5, 6]
+    # city_icons.png indices used as tab icons (Draft / Build)
+    TAB_ICON_INDICES = [4, 5]
     TAB_SPACING = 20
 
     def __init__(self, city, topleft=None):
         self.city = city
-        self.order = ['Draft', 'Build', 'Work']
+        self.order = ['Draft', 'Build']
         self.tab_index = 0
         self.menu_width = 144
 
@@ -2271,9 +2234,6 @@ class CityMenu():
         self.left_arrow = gui.ScrollArrow('left', (97, 25))
         self.right_arrow = gui.ScrollArrow('right', (169, 25), 0.5)
 
-        # Production-queue panel on the left, bottom-aligned to the menu's last row
-        self.queue_display = CityQueueDisplay(city)  # top-aligned at (0, 80)
-
         self.build_options()
 
     def build_options(self):
@@ -2281,7 +2241,6 @@ class CityMenu():
         contents = {
             'Draft': (city_funcs.get_draftable_units(self.city), menu_options.DraftUnitOption),
             'Build': (city_funcs.get_buildable_buildings(self.city), menu_options.BuildingOption),
-            'Work': ([b for b in self.city.buildings if b.position], menu_options.WorkBuildingOption),
         }
         self.menus = {}
         for tab, (values, option_cls) in contents.items():
@@ -2291,7 +2250,6 @@ class CityMenu():
             menu.set_takes_input(False)
             self.menus[tab] = menu
         self.get_menu().set_takes_input(True)
-        self.queue_display.build()
 
     @property
     def current_tab(self):
@@ -2386,19 +2344,18 @@ class CityMenu():
 
     def draw_header(self, surf):
         """Top-of-screen header (drawn over the city_menu_background panorama):
-        city name at (8, 0), working/total population at (88, 0), gold right-
-        aligned at (240, 0). Numbers are blue, slashes yellow. Replaces CityPennant."""
+        city name at (8, 0), population at (88, 0), gold right-aligned at (240, 0).
+        Numbers are blue, slashes yellow."""
         import app.engine.city_funcs as city_funcs
         gen = city_funcs.get_generation(self.city)
         team = game.teams.get(self.city.team)
         gold = team.gold if team else 0
-        working = len(self.city.worked_buildings)
 
         # City name
         render_text(surf, ['text'], [self.city.name], ['white'], (8, 0))
 
-        # Working/Total population at (88, 0): icon (index 3) then text
-        pop_text = "%d/%d" % (working, self.city.population)
+        # Population at (88, 0): icon (index 3) then text
+        pop_text = "%d" % self.city.population
         pop_icon = icons.get_city_icon(3)
         if pop_icon:
             surf.blit(pop_icon, (88, 0))
@@ -2413,44 +2370,21 @@ class CityMenu():
             surf.blit(gold_icon, (gx, 0))
         render_text(surf, ['text'], [self._colorize(gold_text)], ['white'], (gx + (16 if gold_icon else 0), 0))
 
-    def draw_grooves(self, surf):
-        """Food (green) and production (red) groove rows under the header.
-        Food: current food vs the threshold to grow population, with net per-turn
-        food change. Production: progress toward the current queue front, with
-        per-turn production change. Icon left of each groove, count above, change right."""
+    def draw_stores(self, surf):
+        """Food (icon 1) and production (icon 2) stores under the header, each with its
+        per-turn income. Buying units and buildings is the only thing that spends them."""
         import app.engine.city_funcs as city_funcs
         gen = city_funcs.get_generation(self.city)
+        self._draw_store_row(surf, (8, 26), 1, self.city.food, gen['food'])
+        self._draw_store_row(surf, (8, 42), 2, self.city.production, gen['production'])
 
-        # Food groove: current food vs food needed for the next population point
-        food_need = city_funcs.food_threshold(self.city.population)
-        net_food = gen['food'] - city_funcs.get_food_upkeep(self.city)
-        self._draw_groove_row(surf, (24, 30), 'groove_fill_green', 1,
-                              self.city.food, food_need, net_food)
-
-        # Production groove: progress toward the front queue entry's cost
-        entry = self.city.production_queue[0] if self.city.production_queue else None
-        prod_need = entry.get('production_cost', 0) if entry else 0
-        self._draw_groove_row(surf, (24, 46), 'groove_fill_red', 2,
-                              self.city.production, prod_need, gen['production'])
-
-    def _draw_groove_row(self, surf, topleft, fg_sprite, icon_idx, current, total, change):
-        gx, gy = topleft
-        width = 48
-        fill = max(0.0, min(1.0, current / total)) if total > 0 else 0.0
-        build_groove(surf, (gx, gy), width, fill, fg_sprite)
-
-        # Resource icon to the left of the groove
+    def _draw_store_row(self, surf, topleft, icon_idx, current, change):
+        x, y = topleft
         icon = icons.get_city_icon(icon_idx)
         if icon:
-            surf.blit(icon, (gx - 18, gy - 6))
-
-        # current / total drawn above the groove, centered
-        count = self._colorize("%d/%d" % (current, total))
-        render_text(surf, ['text'], [count], ['white'], (gx + width // 2, gy - 7), HAlignment.CENTER)
-
-        # Per-turn change to the right of the groove (no parentheses)
-        change_text = self._colorize(self._gain(change, parens=False))
-        render_text(surf, ['text'], [change_text], ['white'], (gx + width + 6, gy - 7))
+            surf.blit(icon, (x, y))
+        text = self._colorize("%d %s" % (current, self._gain(change)))
+        render_text(surf, ['text'], [text], ['white'], (x + (16 if icon else 0), y))
 
     def draw(self, surf):
         x, y = self.topleft
@@ -2458,13 +2392,8 @@ class CityMenu():
         # City name / population / gold header, drawn over the panorama background
         self.draw_header(surf)
 
-        # Food / production groove rows under the header
-        self.draw_grooves(surf)
-
-        # Battle-queue logo, centered horizontally on x=48, top at y=64
-        logo = SPRITES.get('battle_queue_logo')
-        if logo:
-            surf.blit(logo, (48 - logo.get_width() // 2, 66))
+        # Food / production store rows under the header
+        self.draw_stores(surf)
 
         # Clear base surf behind the tab icons, so they pop out
         surf.blit(create_base_surf(64, 16, 'menu_bg_clear'), (104, 24))
@@ -2486,7 +2415,4 @@ class CityMenu():
         self.get_menu().draw(surf)
         self.left_arrow.draw(surf)
         self.right_arrow.draw(surf)
-
-        # Production-queue panel on the left
-        self.queue_display.draw(surf)
         return surf

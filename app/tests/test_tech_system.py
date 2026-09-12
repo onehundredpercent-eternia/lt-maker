@@ -21,6 +21,10 @@ from app.utilities.data import Data
 
 AVALON_TECHS = os.path.join('..', 'avalon', 'avalon.ltproj', 'game_data', 'techs.json')
 
+# Legacy flag keys whose component was renamed. The migration is still lossless: the old
+# key lands on the new component, which publishes the new key.
+RENAMED_KEYS = {'city_pop_cap_bonus': 'city_pop_bonus'}
+
 
 def setUpModule():
     pygame.init()
@@ -66,10 +70,10 @@ class _TechTestCaseMixin:
                       requires=['IronWeapons'],
                       components=[comp('weapon_tier', 2)]),
             make_tech('CityCap1', 'Increase City Cap 1', cost=150,
-                      components=[comp('city_pop_cap_bonus', 5)]),
+                      components=[comp('city_pop_bonus', 5)]),
             make_tech('CityCap2', 'Increase City Cap 2', cost=300,
                       requires=['CityCap1'],
-                      components=[comp('city_pop_cap_bonus', 5)]),
+                      components=[comp('city_pop_bonus', 5)]),
             make_tech('MageTraining', 'Mage Training', cost=200,
                       components=[comp('draft_unlock', ['Mage']),
                                   comp('build_unlock', ['Library'])]),
@@ -116,9 +120,9 @@ class TechFlagCacheTests(_TechTestCaseMixin, unittest.TestCase):
 
     def test_combine_sum_stacks(self):
         self.unlock('CityCap1')
-        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
         self.unlock('CityCap2')
-        self.assertEqual(10, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(10, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
 
     def test_combine_set_accumulates_across_techs(self):
         self.unlock('MageTraining')
@@ -146,15 +150,15 @@ class TechFlagCacheTests(_TechTestCaseMixin, unittest.TestCase):
 
     def test_cache_survives_reads_and_invalidates_on_unlock(self):
         self.unlock('CityCap1')
-        tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus')
+        tech_funcs.get_tech_value(self.team, 'city_pop_bonus')
         self.assertIsNotNone(self.team._tech_flag_cache)
         self.unlock('CityCap2')
         self.assertIsNone(self.team._tech_flag_cache)
-        self.assertEqual(10, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(10, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
 
     def test_flag_cache_is_not_serialized(self):
         self.unlock('CityCap1')
-        tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus')
+        tech_funcs.get_tech_value(self.team, 'city_pop_bonus')
         s_dict = self.team.save()
         self.assertNotIn('_tech_flag_cache', s_dict)
         self.assertEqual(['CityCap1'], s_dict['research'])
@@ -163,7 +167,7 @@ class TechFlagCacheTests(_TechTestCaseMixin, unittest.TestCase):
         from app.engine.objects.team import TeamObject
         restored = TeamObject.restore(s_dict)
         self.assertIsNone(restored._tech_flag_cache)
-        self.assertEqual(5, tech_funcs.get_tech_value(restored, 'city_pop_cap_bonus'))
+        self.assertEqual(5, tech_funcs.get_tech_value(restored, 'city_pop_bonus'))
 
 
 class TechComponentFlagTests(unittest.TestCase):
@@ -175,8 +179,8 @@ class TechComponentFlagTests(unittest.TestCase):
         DB.load('testing_proj.ltproj', CURRENT_SERIALIZATION_VERSION)
 
     def test_fixed_key_components(self):
-        self.assertEqual([('city_pop_cap_bonus', 5, Combine.SUM)],
-                         comp('city_pop_cap_bonus', 5).flags())
+        self.assertEqual([('city_pop_bonus', 5, Combine.SUM)],
+                         comp('city_pop_bonus', 5).flags())
         self.assertEqual([('weapon_tier', 3, Combine.MAX)],
                          comp('weapon_tier', 3).flags())
         self.assertEqual([('draft_unlock', ['Mage'], Combine.SET)],
@@ -287,7 +291,7 @@ class UnlockTechActionTests(_TechTestCaseMixin, unittest.TestCase):
         second.reverse()
         self.assertEqual(['CityCap1'], self.team.research)
         self.assertEqual(850, self.team.renown)
-        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
 
     def test_reversing_an_unknown_tech_unlock_touches_nothing(self):
         act = action.UnlockTech(self.team, 'NotATech')
@@ -309,11 +313,11 @@ class UnlockTechActionTests(_TechTestCaseMixin, unittest.TestCase):
     def test_reverse_refunds_and_drops_the_tech(self):
         act = action.UnlockTech(self.team, 'CityCap1')
         action.do(act)
-        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
         act.reverse()
         self.assertEqual([], self.team.research)
         self.assertEqual(1000, self.team.renown)
-        self.assertEqual(0, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(0, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
 
     def test_execute_redoes_after_reverse(self):
         act = action.UnlockTech(self.team, 'CityCap1')
@@ -322,7 +326,7 @@ class UnlockTechActionTests(_TechTestCaseMixin, unittest.TestCase):
         act.execute()
         self.assertEqual(['CityCap1'], self.team.research)
         self.assertEqual(850, self.team.renown)
-        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_cap_bonus'))
+        self.assertEqual(5, tech_funcs.get_tech_value(self.team, 'city_pop_bonus'))
 
     def test_reverse_of_a_free_unlock_does_not_refund(self):
         act = action.UnlockTech(self.team, 'IronWeapons', free=True)
@@ -417,6 +421,59 @@ class GrantSkillTests(_TechTestCaseMixin, unittest.TestCase):
         self.assertIn('Fort', nids)
 
 
+class CityPopBonusTests(_TechTestCaseMixin, unittest.TestCase):
+    """city_pop_bonus reaches cities two ways: existing ones are topped up by the unlock
+    (reversibly), later ones read the flag when they are built from their prefab."""
+
+    def setUp(self):
+        super().setUp()
+        self.city = self._make_city('TechPopTestCity', 'player', 3)
+        self.game.register_city(self.city)
+
+    def tearDown(self):
+        self.game.city_registry.pop(self.city.nid, None)
+        super().tearDown()
+
+    def _make_city(self, nid, team, population):
+        from app.data.cities import City
+        from app.engine.objects.city import CityObject
+        prefab = City(nid)
+        prefab.team = team
+        prefab.population = population
+        return CityObject.from_prefab(prefab)
+
+    def test_unlock_raises_population_of_cities_the_team_already_owns(self):
+        self.unlock('CityCap1')
+        self.assertEqual(8, self.city.population)
+
+    def test_bonus_stacks_across_techs(self):
+        self.unlock('CityCap1')
+        self.unlock('CityCap2')
+        self.assertEqual(13, self.city.population)
+
+    def test_reverse_takes_the_population_back(self):
+        act = action.UnlockTech(self.team, 'CityCap1')
+        action.do(act)
+        act.reverse()
+        self.assertEqual(3, self.city.population)
+
+    def test_another_teams_city_is_untouched(self):
+        enemy_city = self._make_city('TechPopTestEnemyCity', 'enemy', 3)
+        self.game.register_city(enemy_city)
+        try:
+            self.unlock('CityCap1')
+            self.assertEqual(3, enemy_city.population)
+        finally:
+            self.game.city_registry.pop(enemy_city.nid, None)
+
+    def test_a_city_built_after_the_unlock_starts_with_the_bonus(self):
+        self.unlock('CityCap1')
+        later = self._make_city('TechPopTestLaterCity', 'player', 3)
+        self.assertEqual(8, later.population)
+        # ...and only once: the unlock sweep already ran, so it is not also topped up
+        self.assertEqual(8, later.population)
+
+
 class TechSerializationTests(unittest.TestCase):
     """Round-tripping the component shape, and reading the legacy `effects` shape."""
 
@@ -480,10 +537,12 @@ class LegacyEffectMigrationTests(unittest.TestCase):
         return [f for c in tech.components for f in c.flags()]
 
     def test_legacy_fixed_key_flag(self):
+        # 'city_pop_cap_bonus' is also the one legacy key that was renamed - it must land
+        # on the component that replaced it rather than degrading to a CustomFlag.
         tech = self.restore_legacy([{'kind': 'flag', 'key': 'city_pop_cap_bonus',
                                      'value': 5, 'combine': 'sum'}])
-        self.assertEqual(['city_pop_cap_bonus'], [c.nid for c in tech.components])
-        self.assertEqual([('city_pop_cap_bonus', 5, Combine.SUM)], self.flags_of(tech))
+        self.assertEqual(['city_pop_bonus'], [c.nid for c in tech.components])
+        self.assertEqual([('city_pop_bonus', 5, Combine.SUM)], self.flags_of(tech))
 
     def test_legacy_set_flags_merge_into_one_component(self):
         tech = self.restore_legacy([
@@ -533,7 +592,8 @@ class LegacyEffectMigrationTests(unittest.TestCase):
     @unittest.skipUnless(os.path.exists(AVALON_TECHS), 'avalon project not checked out')
     def test_the_real_avalon_catalog_migrates_with_identical_flag_keys(self):
         """The 20 hand-authored avalon techs are the ground truth for this migration:
-        every flag key they produced before must still be produced, unchanged."""
+        every flag key they produced before must still be produced, modulo the keys that
+        were deliberately renamed (RENAMED_KEYS)."""
         with open(AVALON_TECHS) as f:
             raw = json.load(f)
         expected = {}
@@ -541,7 +601,7 @@ class LegacyEffectMigrationTests(unittest.TestCase):
             keys = set()
             for effect in dat['effects']:
                 if effect.get('kind', 'flag') == 'flag':
-                    keys.add(effect['key'])
+                    keys.add(RENAMED_KEYS.get(effect['key'], effect['key']))
             expected[dat['nid']] = keys
 
         self.assertEqual(20, len(raw))

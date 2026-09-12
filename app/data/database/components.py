@@ -48,7 +48,7 @@ class ComponentType(Enum):
     MultipleOptions = 104  # Deprecated
     StringDict = 105  # List of Tuples of [Item, str]
     NewMultipleOptions = 106  # item is a dict of string options with types that can be individually configured
-    UnitDraftList = 107  # List of [class_nid, level, gold_cost, production_cost] rows
+    UnitDraftList = 107  # List of [class_nid, level, gold_cost, food_cost, production_cost] rows
 
 def convert_type_from_string(tstr: str, ttype: ComponentType):
     if ttype == ComponentType.Int:
