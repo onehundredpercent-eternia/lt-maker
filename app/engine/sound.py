@@ -213,12 +213,20 @@ class Channel():
         self.state = "fade_out"
         self.last_update = engine.get_time()
 
+    def _finish_fade_in(self):
+        # A crossfade takes over the state, and update would never finish raising local_volume
+        if self.state == "fade_in":
+            self.local_volume = 1
+            self.reset_volume()
+
     def crossfade_in(self):
+        self._finish_fade_in()
         self.last_state = "playing"
         self.state = "crossfade_in"
         self.last_update = engine.get_time()
 
     def crossfade_out(self):
+        self._finish_fade_in()
         self.last_state = "playing"
         self.state = "crossfade_out"
         self.last_update = engine.get_time()
@@ -261,11 +269,17 @@ class ChannelPair():
         self.channel = Channel("music", nid, event)
         self.battle = Channel("battle", nid + 1, event)
 
-        self.battle_mode = False
-        self.battle.crossfade_volume = 0
-        self.battle.reset_volume()
+        self._reset_battle_mode()
 
         self.current_song = None
+
+    def _reset_battle_mode(self):
+        """Crossfades fully back to the normal track, which is where every song starts"""
+        self.battle_mode = False
+        self.channel.crossfade_volume = 1
+        self.battle.crossfade_volume = 0
+        self.channel.reset_volume()
+        self.battle.reset_volume()
 
     def is_playing(self):
         return (self.channel.state in self.channel.playing_states) or \
@@ -312,6 +326,8 @@ class ChannelPair():
         self.current_song = None
         self.channel.clear()
         self.battle.clear()
+        # The next song to use this pair must not inherit the old song's battle crossfade
+        self._reset_battle_mode()
 
     def fade_in(self):
         self.channel.fade_in()
