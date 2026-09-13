@@ -105,7 +105,7 @@ def check_soft_reset(game, inp) -> bool:
         inp.is_pressed('START')
 
 def run(game):
-    from app.engine.sound import get_sound_thread
+    from app.engine.sound import get_sound_thread, get_ambient_thread
     from app.engine.game_counters import ANIMATION_COUNTERS
     from app.engine.input_manager import get_input_manager
 
@@ -114,6 +114,11 @@ def run(game):
     get_sound_thread().reset()
     get_sound_thread().set_music_volume(cf.SETTINGS['music_volume'])
     get_sound_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
+
+    get_ambient_thread().reset()
+    get_ambient_thread().set_music_volume(cf.SETTINGS['music_volume'])
+    get_ambient_thread().set_sfx_volume(cf.SETTINGS['sound_volume'])
+
 
     surf = engine.create_surface((WINWIDTH, WINHEIGHT))
     clock = engine.Clock()
@@ -182,6 +187,8 @@ def run(game):
                     raise e
 
         get_sound_thread().update(raw_events)
+        get_ambient_thread().update(raw_events)
+
 
         engine.push_display(surf, engine.get_screensize(), engine.DISPLAYSURF)
 

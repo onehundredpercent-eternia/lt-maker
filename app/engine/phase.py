@@ -7,7 +7,7 @@ from app.engine.sprites import SPRITES
 from app.utilities import utils
 from app.utilities.typing import NID
 
-from app.engine.sound import get_sound_thread
+from app.engine.sound import get_sound_thread, get_ambient_thread
 from app.engine import config as cf
 from app.engine import engine, image_mods
 from app.engine.game_state import game
@@ -18,6 +18,7 @@ def fade_in_phase_music(at_turn_change: bool = False):
     logging.info('Fade in Phase Music')
     team = game.phase.get_current()
     music = game.level.music.get(team + '_phase', None)
+    ambient = game.level.music.get("ambient", None)
     fade = game.game_vars.get('_phase_music_fade_ms', 400)
     if music:
         if at_turn_change and DB.constants.value('restart_phase_music'):
@@ -26,6 +27,10 @@ def fade_in_phase_music(at_turn_change: bool = False):
             get_sound_thread().fade_in(music, fade_in=fade)
     else:
         get_sound_thread().fade_to_pause(fade_out=fade)
+    if ambient:
+        get_ambient_thread().fade_in(ambient, fade_in=fade)
+    else:
+        get_ambient_thread().fade_to_pause(fade_out=fade)
 
 def fade_out_phase_music():
     logging.info('Fade out Phase Music')

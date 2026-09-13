@@ -869,6 +869,25 @@ class DefaultSoundController(SoundController):
 MUSIC = MusicDict()
 SFX = SoundDict()
 
+class AmbientSoundController(DefaultSoundController):
+    def __init__(self):
+        pygame.mixer.set_num_channels(24)
+        pygame.mixer.set_reserved(16)  # Reserve the first 8 channels for music
+        self.global_music_volume = 1.0
+        self.global_sfx_volume = 1.0
+
+        self.channel1 = ChannelPair(8)
+        self.channel2 = ChannelPair(10)  # Skip each time because battle channel
+        self.channel3 = ChannelPair(12)
+        self.channel4 = ChannelPair(14)
+
+        self.channel_stack = [self.channel1, self.channel2, self.channel3, self.channel4]
+        self.song_stack: List[SongObject] = []
+
+        self._state = GlobalMusicState.STOPPED
+
+        self.PRELOADTHREAD = None
+
 _soundthread: SoundController = None
 
 def init_sound_thread():
@@ -885,3 +904,20 @@ def get_sound_thread():
     if not _soundthread:
         init_sound_thread()
     return _soundthread
+
+_ambientthread: SoundController = None
+
+def init_ambient_thread():
+    global _ambientthread
+    try:
+        pygame.mixer.init()
+        _ambientthread = AmbientSoundController()
+    except Exception as e:
+        logging.warning(e)
+        logging.warning("Audio initialization failed; running game with no audio")
+        _ambientthread = NullSoundController()
+
+def get_ambient_thread():
+    if not _ambientthread:
+        init_ambient_thread()
+    return _ambientthread

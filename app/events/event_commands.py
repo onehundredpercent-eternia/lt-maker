@@ -316,7 +316,20 @@ class Music(EventCommand):
         """
 Fades in *Music* over the course of *FadeIn* milliseconds. Fade in defaults to 400 milliseconds.
         """
+    
+    keywords = ['Music']
+    optional_keywords = ['FadeIn']
+    keyword_types = ['Music', 'Time']
 
+class AmbientMusic(EventCommand):
+    nid = "ambient_music"
+    nickname = "amb"
+    tag = Tags.MUSIC_SOUND
+    desc = \
+        """
+Fades in *Music* over the course of *FadeIn* milliseconds. Fade in defaults to 400 milliseconds. Plays alongside "Music" tracks.
+        """
+    
     keywords = ['Music']
     optional_keywords = ['FadeIn']
     keyword_types = ['Music', 'Time']
@@ -353,11 +366,12 @@ class Sound(EventCommand):
 
     desc = \
         """
-Plays the *Sound* once.
+Plays the *Sound*. Repeat defaults to false, causing the *Sound* to play once.
         """
 
     keywords = ['Sound']
-    optional_keywords = ['Volume']
+    optional_keywords = ['Volume',"Loop"]
+    keyword_types = ["Sound","Volume","Bool"]
 
 class StopSound(EventCommand):
     nid = "stop_sound"

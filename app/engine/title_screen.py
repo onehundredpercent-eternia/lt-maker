@@ -15,7 +15,7 @@ from app.engine.fluid_scroll import FluidScroll
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 from app.engine.objects.difficulty_mode import DifficultyModeObject
-from app.engine.sound import get_sound_thread
+from app.engine.sound import get_sound_thread, get_ambient_thread
 from app.engine.sprites import SPRITES
 from app.engine.state import State
 from app.events.event import Event
@@ -87,6 +87,7 @@ class TitleStartState(State):
 
     def _start_title_music(self):
         get_sound_thread().clear()
+        get_ambient_thread().clear()
         if RECORDS.get('_music_title_screen'):
             get_sound_thread().fade_in(RECORDS.get('_music_title_screen'), fade_in=50)
         elif DB.constants.value('music_main'):
