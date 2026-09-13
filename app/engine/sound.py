@@ -142,6 +142,17 @@ class Channel():
                 return True
         return False
 
+    def _without_end_event(self, func, *args):
+        """
+        SDL posts the end event the moment a sound is stopped or replaced, just as if it had
+        finished playing. update treats that event as the track ending, so for a song that
+        was only just started it would skip ahead (e.g. past its intro). Only a sound that
+        really finishes should advance the channel.
+        """
+        self._channel.set_endevent()
+        func(*args)
+        self._channel.set_endevent(self.end_event)
+
     def _play(self):
         logging.debug('%s _Play: %s %s', self.nid, self.last_state, self.num_plays)
         self.last_play = engine.get_time()
@@ -154,16 +165,16 @@ class Channel():
 
         if self.name == "battle":
             if self.current_song.battle:
-                self._channel.play(self.current_song.battle, 0)
+                self._without_end_event(self._channel.play, self.current_song.battle, 0)
                 self.reset_volume()
         else:
             if self.current_song.intro and not self.played_intro:
                 # logging.debug("Playing Intro %s", self.current_song.intro)
-                self._channel.play(self.current_song.intro, 0)
+                self._without_end_event(self._channel.play, self.current_song.intro, 0)
                 self.played_intro = True
             else:
                 # logging.debug("Playing %s", self.current_song.song)
-                self._channel.play(self.current_song.song, 0)
+                self._without_end_event(self._channel.play, self.current_song.song, 0)
             self.reset_volume()
 
     def set_current_song(self, song, num_plays=-1):
@@ -179,7 +190,7 @@ class Channel():
 
     def clear(self):
         logging.debug("%s Clear", self.nid)
-        self._channel.stop()
+        self._without_end_event(self._channel.stop)
         self.current_song = None
         self.num_plays = 0
         self.played_intro = False
@@ -245,7 +256,7 @@ class Channel():
 
     def stop(self):
         logging.debug("%s Stop: %s", self.nid, self.last_state)
-        self._channel.stop()
+        self._without_end_event(self._channel.stop)
         self.played_intro = False
         self.last_state = "stopped"
         self.state = "stopped"
