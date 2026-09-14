@@ -1033,7 +1033,7 @@ class MenuState(MapState):
             else:
                 for ability_name, ability in self.combat_arts['_uncategorized'].items():
                     options.insert(start_index, ability_name)
-                    info_descs.insert(start_index, text_funcs.translate_and_text_evaluate(ability[0].desc, self=self.cur_unit, unit=self.cur_unit))
+                    info_descs.insert(start_index, text_funcs.translate_and_text_evaluate(ability[0].desc, self=ability[0], unit=self.cur_unit, local_args={'skill': ability[0]}))
                 for category_name in self.combat_arts:
                     if category_name != '_uncategorized':
                         options.insert(start_index, category_name)
@@ -1206,7 +1206,7 @@ class MenuState(MapState):
                             if game.target_system.get_valid_targets_recursive_with_availability_check(self.cur_unit, ability)}
             abilities: List[ItemObject] = list(ability_dict.values())
             options = abilities
-            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=self.cur_unit, unit=self.cur_unit) 
+            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=option, unit=self.cur_unit) 
                          for option in options]
             game.memory['ability_submenu_choice'] = (abilities,
                                                      options, info_desc,
@@ -1232,7 +1232,7 @@ class MenuState(MapState):
             # since combat arts category is checked, self.combat_arts is uncategorized
             combat_arts: List[Tuple[SkillObject, List[ItemObject]]] = list(self.combat_arts.values())
             options = [combat_art[0] for combat_art in combat_arts]
-            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=self.cur_unit, unit=self.cur_unit) 
+            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=option, unit=self.cur_unit, local_args={'skill': option}) 
                          for option in options]
             game.memory['ability_submenu_choice'] = (combat_arts,
                                                      options, info_desc,
@@ -1248,7 +1248,7 @@ class MenuState(MapState):
             combat_art_dict = self.combat_arts[selection]  # get combat arts in category
             combat_arts: List[Tuple[SkillObject, List[ItemObject]]] = list(combat_art_dict.values())
             options = [combat_art[0] for combat_art in combat_arts]
-            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=self.cur_unit, unit=self.cur_unit) 
+            info_desc = [text_funcs.translate_and_text_evaluate(option.desc, self=option, unit=self.cur_unit, local_args={'skill': option}) 
                          for option in options]
             game.memory['ability_submenu_choice'] = (combat_arts,
                                                      options, info_desc,
