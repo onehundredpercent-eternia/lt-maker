@@ -8,6 +8,7 @@ from app.engine import sound
 
 BATTLE_SONG = 'Battle Song'
 PLAIN_SONG = 'Plain Song'
+EVENT_SONG = 'Event Song'
 
 class FakeClock:
     def __init__(self):
@@ -109,6 +110,22 @@ class SoundCrossfadeTests(unittest.TestCase):
         self.assertFalse(pair.battle_mode)
         self.assertAlmostEqual(self.volume(pair.channel), 1, places=2)
         self.assertAlmostEqual(self.volume(pair.battle), 0, places=2)
+
+    def test_song_requested_again_before_it_starts_is_already_present(self):
+        '''
+        sigmaraven 7/17/25: a combat_start event played the same song as the boss battle music.
+        Without a pause in the event, combat asked for that song in the same frame, while it was
+        still waiting for the phase music to fade out. Combat took it as its own battle music and
+        faded it out when the fight ended; with a pause it was already playing and left alone
+        '''
+        sound.MUSIC[EVENT_SONG] = FakeSong(EVENT_SONG, False)
+        self.controller.fade_in(PLAIN_SONG)
+        self.advance(1000)
+        self.controller.fade_in(EVENT_SONG)  # the combat_start event...
+        battle_music = self.controller.battle_fade_in(EVENT_SONG)  # ...and combat, in the same frame
+        self.assertIsNone(battle_music)
+        self.advance(1000)
+        self.assertIs(self.controller.get_current_song(), sound.MUSIC[EVENT_SONG])
 
 if __name__ == '__main__':
     unittest.main()

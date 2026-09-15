@@ -726,8 +726,10 @@ class DefaultSoundController(SoundController):
         any_music_is_playing = self.is_playing()
         current_song = self.get_current_song()
 
-        # Confirm that we're not just replacing the same song
-        if current_song is next_song:
+        # Confirm that we're not just replacing the same song. That includes a song that is still
+        # waiting for the previous one to fade out: it's already been asked for, but isn't playing yet
+        queued_song = self.song_stack[-1] if self.song_stack and self.state == GlobalMusicState.FADE_OUT_TO_FADE_IN else None
+        if current_song is next_song or queued_song is next_song:
             logging.info("Song already present")
             return None
 
