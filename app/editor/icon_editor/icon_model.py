@@ -7,6 +7,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 
 from app.utilities import str_utils
 from app.data.resources.icons import Icon, IconSheet
+from app.data.resources.building_sprites import BuildingSprite
 from app.data.resources.map_icons import MapIcon, MapIconCatalog
 from app.data.resources.resources import RESOURCES
 from app.utilities.data import Data
@@ -346,3 +347,50 @@ class MapIconModel(Icon16Model):
             if i.nid == nid:
                 self.sub_data.delete(i)
         self.layoutChanged.emit()
+
+
+class BuildingSpriteModel(MapIconModel):
+    database = RESOURCES.building_sprites
+    width, height = 32, 32
+
+    def create_new(self):
+        settings = MainSettingsController()
+        starting_path = settings.get_last_open_path()
+        fns, ok = QFileDialog.getOpenFileNames(self.window, "Choose %s", starting_path, "PNG Files (*.png);;All Files(*)")
+        sprite = None
+        if not ok:
+            return None
+        for fn in fns:
+            if not fn.endswith('.png'):
+                QMessageBox.critical(self.window, "File Type Error!", "Building sprite must be PNG format!")
+                continue
+            pix = QPixmap(fn)
+            # A building sprite covers a whole number of tiles, at most 2x2
+            if pix.width() % 16 or pix.height() % 16 or pix.width() > 32 or pix.height() > 32:
+                QMessageBox.critical(
+                    self.window, "File Size Error!",
+                    "Building sprite " + fn + " must be 16x16, 16x32, 32x16, or 32x32 pixels!")
+                continue
+            nid = os.path.split(fn)[-1][:-4]  # Get rid of .png ending
+            nid = str_utils.get_next_name(nid, [d.nid for d in self.database])
+            sprite = BuildingSprite(nid, fn)
+            sprite.pixmap = pix
+            self._data.append(sprite)
+        parent_dir = os.path.split(fns[-1])[0]
+        settings.set_last_open_path(parent_dir)
+        self.window.update_list()
+        return sprite
+
+    def delete(self, idx):
+        sprite = self.sub_data[idx]
+        nid = sprite.nid
+        # What uses building sprites: buildings
+        affected_buildings = [b for b in DB.buildings if b.map_sprite_nid == nid]
+        if affected_buildings:
+            from app.editor.building_editor.building_model import BuildingModel
+            msg = "Deleting Building Sprite <b>%s</b> would affect these buildings." % nid
+            deletion_tab = DeletionTab(affected_buildings, BuildingModel, msg, "Buildings")
+            ok = DeletionDialog.inform([deletion_tab], self.window)
+            if not ok:
+                return
+        self.do_delete(nid)

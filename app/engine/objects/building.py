@@ -1,14 +1,17 @@
 from __future__ import annotations
+from typing import List, Tuple
+
 from app.utilities.data import Data
+from app.utilities.typing import Pos
 
 from app.data.database.database import DB
-from app.data.resources.resources import RESOURCES
 import app.engine.building_component_access as BCA
 
 class BuildingObject():
     next_uid = 100
 
-    def __init__(self, nid, name, desc, terrain, map_sprite_nid, starting_position=None, components=None):
+    def __init__(self, nid, name, desc, terrain, map_sprite_nid, starting_position=None,
+                 components=None, size=(1, 1)):
         self.uid = BuildingObject.next_uid
         BuildingObject.next_uid += 1
 
@@ -20,9 +23,7 @@ class BuildingObject():
         self.terrain = terrain
 
         self.map_sprite_nid = map_sprite_nid
-        self.map_sprite = RESOURCES.animations.get(map_sprite_nid)
-        # Lazily-built runtime animation wrapper (see map_view.draw)
-        self.map_anim = None
+        self.size: Tuple[int, int] = tuple(size)
         self.position = starting_position
 
         self.components = components or Data()
@@ -32,6 +33,22 @@ class BuildingObject():
             component_value.building = self
 
         self.data = {}
+
+    @property
+    def occupied_positions(self) -> List[Pos]:
+        """Every tile this building sits on. Empty when it is off the map."""
+        if not self.position:
+            return []
+        return self.positions_at(self.position)
+
+    def positions_at(self, position: Pos) -> List[Pos]:
+        """The footprint this building would occupy if anchored at `position`.
+
+        The anchor is the top left tile; the footprint extends right and down.
+        """
+        width, height = self.size
+        return [(position[0] + dx, position[1] + dy)
+                for dx in range(width) for dy in range(height)]
 
     @property
     def tags(self) -> set:
@@ -59,7 +76,8 @@ class BuildingObject():
                 components.append(new_component, overwrite=True)
 
         return cls(prefab.nid, prefab.name, prefab.desc, prefab.terrain,
-                   prefab.map_sprite_nid, prefab.starting_position, components)
+                   prefab.map_sprite_nid, prefab.starting_position, components,
+                   prefab.size)
 
     # If the attribute is not found
     def __getattr__(self, attr):
@@ -101,6 +119,8 @@ class BuildingObject():
             self = cls(dat['nid'], 'Placeholder', desc, None, None)
         self.uid = dat['uid']
         self.owner_nid = dat['owner_nid']
-        self.position = dat.get('position', self.position)
+        position = dat.get('position', self.position)
+        # JSON has no tuples, so a saved position comes back as a list
+        self.position = tuple(position) if position else position
         self.data = dat['data']
         return self

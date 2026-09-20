@@ -201,6 +201,30 @@ class MapIconDatabase(IconTab):
             return icon
         return None
 
+class BuildingSpriteDatabase(MapIconDatabase):
+    side_menu_enabled = False
+
+    @classmethod
+    def create(cls, parent=None):
+        data = RESOURCES.building_sprites
+        title = 'Building Sprites'
+        collection_model = icon_model.BuildingSpriteModel
+        deletion_criteria = None
+
+        dialog = cls(data, title, collection_model, parent)
+        return dialog
+
+
+def get_building_sprite_editor():
+    database = BuildingSpriteDatabase
+    window = SingleResourceEditor(database, ['building_sprites'])
+    result = window.exec_()
+    if result == QDialog.Accepted:
+        return window.tab.current, True
+    else:
+        return None, False
+
+
 def get_map_icon_editor():
     database = MapIconDatabase
     window = SingleResourceEditor(database, ['map_icons'])
@@ -232,8 +256,8 @@ def get(width, icon_nid=None):
         return None, False
 
 def get_full_editor(parent=None):
-    return MultiResourceEditor((Icon16Database, Icon32Database, Icon80Database, MapIconDatabase),
-                               ('icons16', 'icons32', 'icons80', 'map_icons'), parent)
+    return MultiResourceEditor((Icon16Database, Icon32Database, Icon80Database, MapIconDatabase, BuildingSpriteDatabase),
+                               ('icons16', 'icons32', 'icons80', 'map_icons', 'building_sprites'), parent)
 
 # Testing
 # Run "python -m app.editor.icon_editor.icon_tab" from main directory

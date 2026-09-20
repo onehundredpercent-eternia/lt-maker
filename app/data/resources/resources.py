@@ -19,6 +19,7 @@ from app.data.resources.portraits import PortraitCatalog
 from app.data.resources.map_animations import MapAnimationCatalog
 from app.data.resources.panoramas import PanoramaCatalog
 from app.data.resources.map_icons import MapIconCatalog
+from app.data.resources.building_sprites import BuildingSpriteCatalog
 from app.data.resources.map_sprites import MapSpriteCatalog
 from app.data.resources.tiles import TileSetCatalog, TileMapCatalog
 from app.data.resources.map_prefabs import MapPrefabCatalog
@@ -35,10 +36,10 @@ CATEGORY_SUFFIX = '.category'
 
 class Resources():
     save_data_types = ("icons16", "icons32", "icons80", "portraits", "animations", "panoramas", "fonts",
-                       "map_icons", "map_sprites", "combat_palettes", "combat_anims", "combat_effects", "music", "sfx",
-                       "tilesets", "tilemaps", "map_prefabs")
+                       "map_icons", "map_sprites", "building_sprites", "combat_palettes", "combat_anims",
+                       "combat_effects", "music", "sfx", "tilesets", "tilemaps", "map_prefabs")
     save_as_chunks = ("combat_palettes", 'tilemaps', 'map_prefabs')
-    optional_data_types = ("map_prefabs",)
+    optional_data_types = ("map_prefabs", "building_sprites")
     loose_file_types = ["custom_components", "custom_sprites", "system"]
 
     def __init__(self):
@@ -84,6 +85,7 @@ class Resources():
         self.panoramas = PanoramaCatalog()
         self.map_icons = MapIconCatalog()
         self.map_sprites = MapSpriteCatalog()
+        self.building_sprites = BuildingSpriteCatalog()
         self.combat_palettes = PaletteCatalog()
         self.combat_anims = CombatCatalog()
         self.combat_effects = CombatEffectCatalog()

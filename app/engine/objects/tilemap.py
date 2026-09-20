@@ -123,11 +123,13 @@ class TileMapObject(Prefab):
         self.width: int = 0
         self.height: int = 0
         self.nid: NID = None
+        self.building_style_nid: NID = None
 
     @classmethod
     def from_prefab(cls, prefab):
         self = cls()
         self.nid = prefab.nid
+        self.building_style_nid = prefab.building_style_nid
         self.width = prefab.width
         self.height = prefab.height
         self.autotile_fps = prefab.autotile_fps

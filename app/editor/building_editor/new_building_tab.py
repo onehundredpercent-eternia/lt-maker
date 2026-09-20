@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QMessageBox, QSpinBox, QWidget
 
 import app.engine.building_component_access as BCA
 from app.data.database.database import DB
@@ -13,7 +13,7 @@ from app.data.database.components import swap_values, ComponentType
 from app.editor import timer
 from app.editor.new_editor_tab import NewEditorTab
 from app.editor.data_editor import SingleDatabaseEditor
-from app.editor.icons import PushableMapAnimation
+from app.editor.icons import PushableBuildingSprite
 from app.editor.component_editor_properties import NewComponentProperties
 from app.editor.building_editor import building_model
 from app.extensions.custom_gui import DeletionTab, DeletionDialog
@@ -32,13 +32,33 @@ class NewBuildingProperties(NewComponentProperties[BuildingPrefab]):
         self.terrain_box = TerrainBox(self)
         self.terrain_box.edit.currentIndexChanged.connect(self.terrain_changed)
         main_section.addWidget(self.terrain_box, 1, 0, 1, 3)
+        main_section.addWidget(self.build_size_edit(), 2, 0, 1, 3)
+
+    def build_size_edit(self) -> QWidget:
+        """The building's footprint in tiles, anchored at its top left tile."""
+        widget = QWidget(self)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        widget.setLayout(layout)
+        layout.addWidget(QLabel("Size (tiles):"))
+        self.size_x_box = QSpinBox(self)
+        self.size_y_box = QSpinBox(self)
+        for box in (self.size_x_box, self.size_y_box):
+            box.setRange(1, 2)
+            box.valueChanged.connect(self.size_changed)
+            layout.addWidget(box)
+        return widget
+
+    def size_changed(self, value):
+        if self.current:
+            self.current.size = (self.size_x_box.value(), self.size_y_box.value())
 
     def terrain_changed(self, index):
         terrain = DB.terrain[index]
         self.current.terrain = terrain.nid
 
     def build_icon_edit(self, top_section):
-        self.icon_edit = PushableMapAnimation(self)
+        self.icon_edit = PushableBuildingSprite(self)
         self.icon_edit.sourceChanged.connect(self.on_icon_changed)
         top_section.addWidget(self.icon_edit)
 
@@ -59,6 +79,13 @@ class NewBuildingProperties(NewComponentProperties[BuildingPrefab]):
             self.name_box.edit.setText(current.name)
             self.desc_box.edit.setText(current.desc)
             self.terrain_box.setValue(current.terrain)
+            # Populate both spinboxes before either writes back, or the first
+            # valueChanged would store the other's stale value
+            for box, value in ((self.size_x_box, current.size[0]),
+                               (self.size_y_box, current.size[1])):
+                box.blockSignals(True)
+                box.setValue(value)
+                box.blockSignals(False)
             self.icon_edit.change_icon(current.map_sprite_nid)
             self.component_list.clear()
             for component in current.components.values():

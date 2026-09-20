@@ -1,14 +1,15 @@
-import time
 from enum import Enum
 from typing import TYPE_CHECKING
 
 from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
 from app.data.database.levels import LevelPrefab
+from app.data.resources.building_palettes import get_conversion_dict
 from app.data.resources.tiles import TileMapPrefab
 from app.editor import map_prefab_display, tilemap_editor, timer
 from app.editor.map_sprite_editor import map_sprite_model
 from app.editor.overworld_editor.road_sprite_wrapper import RoadSpriteWrapper
+from app.editor import utilities as editor_utilities
 from app.editor.settings import MainSettingsController
 from app.data.resources.resources import RESOURCES
 from app.editor.settings.preference_definitions import Preference
@@ -517,7 +518,8 @@ class NewMapView(SimpleMapView):
                 painter.setOpacity(0.75)
                 painter.drawImage(x * TILEWIDTH, y *
                                   TILEHEIGHT, pixmap.toImage())
-            # Draw each city's assigned buildings' map anims
+            # Draw each city's assigned buildings. The sprite is anchored at the top
+            # left of the building's footprint and extends right and down over it.
             for city in self.current_level.cities:
                 for building_nid, position in city.buildings:
                     if not position:
@@ -525,14 +527,13 @@ class NewMapView(SimpleMapView):
                     building = DB.buildings.get(building_nid)
                     if not building:
                         continue
-                    frame = self.get_building_frame(building)
-                    if not frame:
+                    pixmap = self.get_building_pixmap(building, city.team)
+                    if not pixmap:
                         continue
                     x, y = position
-                    px = x * TILEWIDTH + TILEWIDTH // 2 - frame.width() // 2
-                    py = y * TILEHEIGHT + TILEHEIGHT // 2 - frame.height() // 2
                     painter.setOpacity(1.0)
-                    painter.drawImage(px, py, frame.toImage())
+                    painter.drawImage(x * TILEWIDTH, y * TILEHEIGHT,
+                                      editor_utilities.convert_colorkey(pixmap.toImage()))
             current_city = self.main_editor.city_painter_menu.get_current()
             if current_city:
                 if current_city.position:
@@ -558,24 +559,25 @@ class NewMapView(SimpleMapView):
                                      TILEWIDTH, TILEHEIGHT)
             painter.end()
 
-    def get_building_frame(self, building):
-        """Current animation frame (QPixmap) of a building's map sprite, selected
-        from wall-clock time so the map view animates as it repaints each tick."""
-        res = RESOURCES.animations.get(building.map_sprite_nid)
-        if not res:
+    def get_building_style_nid(self):
+        """The building style of the level's tilemap, which supplies the map colors."""
+        if not self.current_level:
             return None
-        if not res.pixmap and res.full_path:
-            res.pixmap = QPixmap(res.full_path)
-        if not res.pixmap:
+        tilemap = RESOURCES.tilemaps.get(self.current_level.tilemap)
+        return tilemap.building_style_nid if tilemap else None
+
+    def get_building_pixmap(self, building, team_nid):
+        """A building's map sprite, recolored for this map's style and the owning team."""
+        res = RESOURCES.building_sprites.get(building.map_sprite_nid)
+        if not res or not res.full_path:
             return None
-        pixmap = res.pixmap
-        width = pixmap.width() // res.frame_x
-        height = pixmap.height() // res.frame_y
-        speed = res.speed or 75
-        frame = int(time.time() * 1000 // speed) % max(1, res.num_frames)
-        left = (frame % res.frame_x) * width
-        top = (frame // res.frame_x) * height
-        return pixmap.copy(left, top, width, height)
+        pixmap = res.get_pixmap()
+        if not pixmap or pixmap.isNull():
+            return None
+        conversion = get_conversion_dict(self.get_building_style_nid(), team_nid)
+        if not conversion:
+            return pixmap
+        return editor_utilities.color_convert_pixmap(pixmap, editor_utilities.rgb_convert(conversion))
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)

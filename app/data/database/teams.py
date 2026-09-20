@@ -2,9 +2,13 @@ from dataclasses import dataclass
 
 from typing import List, Optional, Set, Tuple
 
+from app.data.resources.default_palettes import default_palettes
 from app.utilities.data import Data, Prefab
-from app.utilities.typing import NID
+from app.utilities.typing import Color3, NID
 from app.utilities import str_utils
+
+# The two indices of a `map_sprite_<color>` ramp used as a team's building colors
+BUILDING_COLOR_INDICES = (8, 9)
 
 
 @dataclass
@@ -15,10 +19,19 @@ class Team(Prefab):
     combat_color: str = 'red'
     phase_change_sound_effect: Optional[NID] = None  # Defaults to "Next Turn" in engine
     name: str = ""
+    # The two colors of a building map sprite that belong to the owning team
+    building_color_primary: Optional[Color3] = None
+    building_color_secondary: Optional[Color3] = None
 
     @classmethod
     def default(cls):
         return cls('')
+
+    def restore_attr(self, name, value):
+        # JSON has no tuples, so colors come back as lists
+        if name in ('building_color_primary', 'building_color_secondary') and value:
+            return tuple(value)
+        return super().restore_attr(name, value)
 
 class TeamCatalog(Data[Team]):
     datatype = Team
@@ -43,12 +56,23 @@ class TeamCatalog(Data[Team]):
         if 'player' not in self:
             self.alliance_pairs.add(('other', 'player'))
         for idx, nid in enumerate(self.default_teams):
+            ramp = default_palettes['map_sprite_%s' % self.default_colors[idx]]
+            primary, secondary = (ramp[i] for i in BUILDING_COLOR_INDICES)
             if nid not in self:
                 team = Team(
                     nid, 'map_sprite_%s' % self.default_colors[idx],
                     self.default_combat_palettes[idx], 
-                    self.default_colors[idx])
+                    self.default_colors[idx],
+                    building_color_primary=primary,
+                    building_color_secondary=secondary)
                 self.append(team)
+            else:
+                # A project that predates building colors has none stored
+                team = self.get(nid)
+                if not team.building_color_primary:
+                    team.building_color_primary = primary
+                if not team.building_color_secondary:
+                    team.building_color_secondary = secondary
 
     def save(self):
         vals: list = super().save()

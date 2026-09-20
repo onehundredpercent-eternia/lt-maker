@@ -11,24 +11,20 @@ from app.data.database import building_components
 from app.data.database.components import ComponentType, swap_values
 
 def get_pixmap(building):
+    """The building's map sprite in its reference colors.
+
+    Deliberately unrecolored: the building list has no map style or owning team
+    to recolor against. See `map_view.get_building_pixmap` for the painted map.
+    """
     if not building:  # e.g. nid already deleted from the catalog
         return None
-    res = RESOURCES.animations.get(building.map_sprite_nid)
-    if not res:
+    res = RESOURCES.building_sprites.get(building.map_sprite_nid)
+    if not res or not res.full_path:
         return None
-    if not res.pixmap and res.full_path:
-        res.pixmap = QPixmap(res.full_path)
-    if not res.pixmap:
+    pixmap = res.get_pixmap()
+    if not pixmap or pixmap.isNull():
         return None
-    pixmap = res.pixmap
-    width = pixmap.width() // res.frame_x
-    height = pixmap.height() // res.frame_y
-    median_frame = res.num_frames // 2
-    left = (median_frame % res.frame_x) * width
-    top = (median_frame // res.frame_x) * height
-
-    middle_frame = pixmap.copy(left, top, width, height)
-    return middle_frame
+    return pixmap
 
 class BuildingModel(DragDropCollectionModel):
     def data(self, index, role):

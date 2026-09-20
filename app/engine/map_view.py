@@ -2,9 +2,9 @@ import math
 
 from app.constants import TILEWIDTH, TILEHEIGHT, TILEX, TILEY, WINWIDTH, WINHEIGHT
 
+from app.engine import building_sprite
 from app.engine import config as cf
 from app.engine import engine
-from app.engine.animations import MapAnimation
 from app.engine.fonts import FONT
 from app.engine.game_state import game
 
@@ -137,13 +137,17 @@ class MapView():
             surf.blit(map_image, shake)
             surf = surf.convert_alpha()
 
-        # Draw buildings
+        # Draw buildings. The sprite is anchored at the top left of the building's
+        # footprint and extends right and down over the rest of it.
         for building in game.buildings:
-            if building.position and building.map_sprite:
-                if building.map_anim is None:
-                    building.map_anim = MapAnimation(building.map_sprite, building.position, loop=True)
-                building.map_anim.update()
-                building.map_anim.draw(surf, offset=(-game.camera.get_x(), -game.camera.get_y()))
+            if not building.position:
+                continue
+            sprite = building_sprite.get_building_sprite(building)
+            if not sprite:
+                continue
+            x, y = building.position
+            surf.blit(sprite, (x * TILEWIDTH - game.camera.get_x() * TILEWIDTH,
+                               y * TILEHEIGHT - game.camera.get_y() * TILEHEIGHT))
 
         # Draw boundaries
         surf = game.boundary.draw_auras(surf, full_size, cull_rect)

@@ -150,11 +150,15 @@ class RequiresTerrain(BuildingComponent):
     expose = (ComponentType.List, ComponentType.Terrain)
 
     def target_restrict(self, city, position) -> bool:
+        # Every tile of the footprint must qualify, not just the anchor.
         # Underlying terrain (ignore_buildings=True): a building override must not
         # satisfy/block the requirement, so replacing one building with another still
         # validates against the real terrain it sits on.
-        terrain_nid = game.get_terrain_nid(game.tilemap, position, ignore_buildings=True)
-        return terrain_nid in self.value
+        for tile in self.building.positions_at(position):
+            terrain_nid = game.get_terrain_nid(game.tilemap, tile, ignore_buildings=True)
+            if terrain_nid not in self.value:
+                return False
+        return True
 
 
 class RequiresAdjacency(BuildingComponent):
@@ -163,15 +167,22 @@ class RequiresAdjacency(BuildingComponent):
     tag = BuildingTags.BASE
 
     def target_restrict(self, city, position) -> bool:
+        # Any tile of the footprint being adjacent is enough, so compare footprints
+        # rather than anchors.
+        footprint = self.building.positions_at(position)
         # Adjacent to the city's own position (the town hall)
-        if city.position and utils.calculate_distance(city.position, position) == 1:
+        if city.position and self._is_adjacent(footprint, [city.position]):
             return True
         # Adjacent to another building in the city that also requires adjacency
         for building in city.buildings:
             if building.position and building.requires_adjacency \
-                    and utils.calculate_distance(building.position, position) == 1:
+                    and self._is_adjacent(footprint, building.occupied_positions):
                 return True
         return False
+
+    def _is_adjacent(self, footprint, other_positions) -> bool:
+        return any(utils.calculate_distance(tile, other) == 1
+                   for tile in footprint for other in other_positions)
 
 
 class StatChange(BuildingComponent):

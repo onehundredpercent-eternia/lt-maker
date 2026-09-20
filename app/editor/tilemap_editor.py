@@ -20,7 +20,7 @@ from app.editor.tile_editor import autotiles
 from app.editor.icon_editor.icon_view import IconView
 from app.editor.terrain_painter_menu import TerrainPainterMenu
 from app.editor.base_database_gui import ResourceCollectionModel
-from app.extensions.custom_gui import ResourceListView, Dialog, PropertyBox
+from app.extensions.custom_gui import ComboBox, ResourceListView, Dialog, PropertyBox
 from app.extensions.tiled_view import DraggableTileImageView
 
 from app.editor.file_manager.project_file_backend import DEFAULT_PROJECT
@@ -610,11 +610,20 @@ class MapEditor(QDialog):
         self.autotile_fps_box.edit.setAlignment(Qt.AlignRight)
         self.autotile_fps_box.edit.valueChanged.connect(self.autotile_fps_changed)
 
+        # Which combat palette supplies the map colors of buildings drawn on this map
+        self.building_style_box = PropertyBox("Building Style", ComboBox, self)
+        self.building_style_box.edit.addItem("None")
+        self.building_style_box.edit.addItems([p.nid for p in RESOURCES.combat_palettes])
+        self.building_style_box.edit.setValue(self.current.building_style_nid or "None")
+        self.building_style_box.setMaximumWidth(140)
+        self.building_style_box.edit.currentTextChanged.connect(self.building_style_changed)
+
         view_frame = QFrame()
         view_layout = QVBoxLayout()
         toolbar_layout = QHBoxLayout()
         toolbar_layout.addWidget(self.toolbar)
         toolbar_layout.addWidget(self.autotile_fps_box)
+        toolbar_layout.addWidget(self.building_style_box)
         view_layout.addLayout(toolbar_layout)
         view_layout.addWidget(self.view)
         view_frame.setLayout(view_layout)
@@ -751,6 +760,9 @@ class MapEditor(QDialog):
 
     def autotile_fps_changed(self, val):
         self.current.autotile_fps = val
+
+    def building_style_changed(self, val):
+        self.current.building_style_nid = None if val == "None" else val
 
     def export_as_png(self):
         if self.current:

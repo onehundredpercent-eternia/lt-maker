@@ -3,7 +3,7 @@ from functools import lru_cache
 
 import random
 import time
-from typing import TYPE_CHECKING, Dict, Set, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Set, Iterable, List, Optional, Tuple
 
 from app.engine.query_engine import GameQueryEngine
 from app.engine.utils import ltcache
@@ -112,6 +112,10 @@ class GameState():
         # Position -> terrain NID override contributed by a building sitting on that tile.
         # Derived from building_registry; kept in sync by register/unregister_building.
         self.building_terrain_overrides: Dict[Pos, NID] = {}
+        # Every tile covered by a placed building's footprint -> that building's uid.
+        # Separate from the terrain overrides above, which only hold buildings that
+        # actually declare a terrain.
+        self.building_position_index: Dict[Pos, UID] = {}
         self.terrain_status_registry: Dict[Tuple[int, int, NID], UID] = {}
         self.region_registry: Dict[NID, RegionObject] = {}
         self.city_registry: Dict[NID, CityObject] = {}
@@ -140,6 +144,8 @@ class GameState():
         self.action_log: turnwheel.ActionLog = None
         self.events: EventManager = None
         self.map_sprite_registry: Dict[NID, unit_sprite.MapSprite] = {}
+        # (building sprite nid, style nid, team nid) -> recolored surface
+        self.building_sprite_registry: Dict[Tuple[NID, NID, NID], Any] = {}
 
         # current-level controllers and game objects
         self.board: game_board.GameBoard = None
@@ -297,6 +303,7 @@ class GameState():
 
         # Build registries
         self.map_sprite_registry = {}
+        self.building_sprite_registry = {}
 
         self.get_region_under_pos.cache_clear()
 
@@ -984,24 +991,36 @@ class GameState():
         del self.building_registry[building.uid]
 
     def add_terrain_override(self, building):
-        # A building has been placed on the map; its terrain overrides the tile.
-        # Assumes at most one building per tile.
-        if building.position and building.terrain:
-            self.building_terrain_overrides[building.position] = building.terrain
+        # A building has been placed on the map; it occupies its whole footprint,
+        # and its terrain overrides every tile of it. At most one building per tile.
+        for position in building.occupied_positions:
+            self.building_position_index[position] = building.uid
+            if building.terrain:
+                self.building_terrain_overrides[position] = building.terrain
 
     def remove_terrain_override(self, building):
-        # A building has left the map; drop its tile override.
-        if building.position:
-            self.building_terrain_overrides.pop(building.position, None)
+        # A building has left the map; drop its footprint and tile overrides.
+        for position in building.occupied_positions:
+            if self.building_position_index.get(position) == building.uid:
+                del self.building_position_index[position]
+                self.building_terrain_overrides.pop(position, None)
 
     def rebuild_terrain_overrides(self):
         # Rebuild the whole index from the buildings currently placed on the map
         # (a city's building list). Used after load / start_level, where placed
         # buildings don't pass through the AddBuilding action.
         self.building_terrain_overrides.clear()
+        self.building_position_index.clear()
         for city in self.cities:
             for building in city.buildings:
                 self.add_terrain_override(building)
+
+    def get_building_at(self, position: Pos) -> Optional[BuildingObject]:
+        """The building whose footprint covers `position`, if any."""
+        uid = self.building_position_index.get(position)
+        if uid is None:
+            return None
+        return self.get_building(uid)
 
     def register_terrain_status(self, key: Tuple[int, int, NID], skill_uid: UID):
         logging.debug("Registering terrain status %s", skill_uid)

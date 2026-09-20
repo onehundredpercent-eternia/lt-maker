@@ -214,6 +214,47 @@ class PushableMapAnimation(QPushButton):
             self.change_icon(res.nid)
 
 
+class PushableBuildingSprite(QPushButton):
+    """Picks a flat building map sprite out of RESOURCES.building_sprites."""
+    sourceChanged = pyqtSignal(str)
+    width, height = 32, 32
+    database = RESOURCES.building_sprites
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.window = parent
+        self._nid = None
+
+        self.setMinimumHeight(self.height)
+        self.setMaximumHeight(self.height)
+        self.setMinimumWidth(self.width)
+        self.setMaximumWidth(self.width)
+        self.resize(self.width, self.height)
+        self.setStyleSheet("QPushButton {qproperty-iconSize: %dpx %dpx;}" % (self.width, self.height))
+        self.pressed.connect(self.onIconSourcePicker)
+
+    def render(self):
+        res = self.database.get(self._nid) if self._nid else None
+        if not res:
+            self.setIcon(QIcon())
+            return
+        self.setIcon(QIcon(res.get_pixmap()))
+
+    def change_icon(self, nid):
+        self._nid = nid
+        self.sourceChanged.emit(self._nid)
+        self.render()
+
+    def set_current(self, nid):
+        self.change_icon(nid)
+
+    def onIconSourcePicker(self):
+        from app.editor.icon_editor import icon_tab
+        res, ok = icon_tab.get_building_sprite_editor()
+        if res and ok:
+            self.change_icon(res.nid)
+
+
 class MapIconButton(QPushButton):
     sourceChanged = pyqtSignal(str)
     width, height = 48, 48

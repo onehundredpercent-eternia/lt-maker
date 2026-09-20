@@ -169,14 +169,23 @@ def get_all_influence_positions(city: CityObject) -> Set[Pos]:
 
 
 def get_valid_placement_tiles(city: CityObject, building: BuildingObject) -> List[Pos]:
-    """Tiles where `building` may be placed: within influence, in bounds, not already
-    occupied by another building, and passing the building's target_restrict."""
+    """Anchor tiles where `building` may be placed.
+
+    The building's whole footprint (see `BuildingObject.positions_at`) must lie
+    within the city's influence and in bounds, and no tile of it may already be
+    covered by another building. `target_restrict` is then asked about the anchor
+    once; components that care about the rest of the footprint expand it themselves.
+    """
+    influence = get_all_influence_positions(city)
     valid: List[Pos] = []
-    for pos in get_all_influence_positions(city):
-        if not game.board.check_bounds(pos):
+    for pos in influence:
+        footprint = building.positions_at(pos)
+        if not all(tile in influence for tile in footprint):
             continue
-        if pos in game.building_terrain_overrides:  # another building already here
+        if not all(game.board.check_bounds(tile) for tile in footprint):
             continue
+        if any(tile in game.building_position_index for tile in footprint):
+            continue  # another building already covers part of the footprint
         if not building_system.target_restrict(building, city, pos):
             continue
         valid.append(pos)

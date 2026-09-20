@@ -21,6 +21,8 @@ class TileMapPrefab(WithResources, Prefab):
         self.nid = nid
         self.width, self.height = int(TILEX), int(TILEY)
         self.autotile_fps = 29
+        # Combat palette supplying the map colors of building sprites drawn on this map
+        self.building_style_nid = None
         self.layers = Data()
         self.layers.append(LayerGrid('base', self))
 
@@ -83,6 +85,7 @@ class TileMapPrefab(WithResources, Prefab):
         if self.width == 0 or self.height == 0:
             print("TileMap: Width or Height == 0!!!")
         s_dict['autotile_fps'] = self.autotile_fps
+        s_dict['building_style_nid'] = self.building_style_nid
         s_dict['layers'] = [layer.save() for layer in self.layers]
         s_dict['tilesets'] = self.tilesets
         return s_dict
@@ -92,6 +95,7 @@ class TileMapPrefab(WithResources, Prefab):
         self = cls(s_dict['nid'])
         self.width, self.height = s_dict['size']
         self.autotile_fps = s_dict.get('autotile_fps', 29)
+        self.building_style_nid = s_dict.get('building_style_nid')
         self.tilesets = s_dict['tilesets']
         self.layers = Data([LayerGrid.restore(layer, self) for layer in s_dict['layers']])
         return self
