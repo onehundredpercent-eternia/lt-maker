@@ -1230,16 +1230,19 @@ class PutItemInConvoy(Action):
         self.item = item
         self.party_nid = party_nid
         self.owner_nid = self.item.owner_nid
+        self.is_unequipped = self.unit.is_unequipped
 
     def do(self):
         self.item.change_owner(None)
         party = game.get_party(self.party_nid)
         party.convoy.append(self.item)
+        self.unit.is_unequipped = False
 
     def reverse(self):
         party = game.get_party(self.party_nid)
         party.convoy.remove(self.item)
         self.item.change_owner(self.owner_nid)
+        self.unit.is_unequipped = self.is_unequipped
 
 
 class TakeItemFromConvoy(Action):
@@ -1247,18 +1250,21 @@ class TakeItemFromConvoy(Action):
         self.unit = unit
         self.item = item
         self.party_nid = party_nid
+        self.is_unequipped = self.unit.is_unequipped
 
     @recalculate_unit
     def do(self):
         party = game.get_party(self.party_nid)
         party.convoy.remove(self.item)
         self.unit.add_item(self.item)
+        self.unit.is_unequipped = False
 
     @recalculate_unit
     def reverse(self):
         self.unit.remove_item(self.item)
         party = game.get_party(self.party_nid)
         party.convoy.append(self.item)
+        self.unit.is_unequipped = self.is_unequipped
 
 
 class RemoveItemFromConvoy(Action):
@@ -1280,11 +1286,15 @@ class MoveItem(Action):
         self.owner = owner
         self.unit = unit
         self.item = item
+        self.is_unequipped_owner = self.owner.is_unequipped
+        self.is_unequipped_unit = self.unit.is_unequipped
 
     @recalculate_unit
     def do(self):
         self.owner.remove_item(self.item)
         self.unit.add_item(self.item)
+        self.unit.is_unequipped = False
+        self.owner.is_unequipped = False
 
         if self.owner.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.owner)
@@ -1293,6 +1303,8 @@ class MoveItem(Action):
     def reverse(self):
         self.unit.remove_item(self.item)
         self.owner.add_item(self.item)
+        self.unit.is_unequipped = self.is_unequipped_unit
+        self.owner.is_unequipped = self.is_unequipped_owner
 
         if self.owner.position and game.tilemap and game.boundary:
             game.boundary.recalculate_unit(self.owner)
@@ -1304,6 +1316,7 @@ class TradeItemWithConvoy(Action):
         self.convoy_item = convoy_item
         self.unit_item = unit_item
         self.unit_idx = self.unit.items.index(self.unit_item)
+        self.is_unequipped = self.unit.is_unequipped
 
     @recalculate_unit
     def do(self):
@@ -1311,6 +1324,7 @@ class TradeItemWithConvoy(Action):
         game.party.convoy.remove(self.convoy_item)
         game.party.convoy.append(self.unit_item)
         self.unit.insert_item(self.unit_idx, self.convoy_item)
+        self.unit.is_unequipped = False
 
     @recalculate_unit
     def reverse(self):
@@ -1318,6 +1332,7 @@ class TradeItemWithConvoy(Action):
         game.party.convoy.remove(self.unit_item)
         game.party.convoy.append(self.convoy_item)
         self.unit.insert_item(self.unit_idx, self.unit_item)
+        self.unit.is_unequipped = self.is_unequipped
 
 
 class GiveItem(Action):
@@ -1388,16 +1403,19 @@ class StoreItem(Action):
         self.unit = unit
         self.item = item
         self.item_index = self.unit.items.index(self.item)
+        self.is_unequipped = self.unit.is_unequipped
 
     @recalculate_unit
     def do(self):
         self.unit.remove_item(self.item)
         game.party.convoy.append(self.item)
+        self.unit.is_unequipped = False
 
     @recalculate_unit
     def reverse(self):
         game.party.convoy.remove(self.item)
         self.unit.insert_item(self.item_index, self.item)
+        self.unit.is_unequipped = self.is_unequipped
 
 class RemoveItem(StoreItem):
     @recalculate_unit
@@ -1407,6 +1425,7 @@ class RemoveItem(StoreItem):
     @recalculate_unit
     def reverse(self):
         self.unit.insert_item(self.item_index, self.item)
+        self.unit.is_unequipped = self.is_unequipped
 
 
 class EquipItem(Action):
@@ -1415,6 +1434,7 @@ class EquipItem(Action):
     def __init__(self, unit, item):
         self.unit = unit
         self.item = item
+        self.is_unequipped = self.unit.is_unequipped
         if item_system.is_accessory(unit, item):
             self.current_equipped = self.unit.equipped_accessory
         else:
@@ -1425,22 +1445,31 @@ class EquipItem(Action):
 
     def reverse(self):
         self.unit.unequip(self.item)
+        self.unit.is_unequipped = self.is_unequipped
         if self.current_equipped:
             self.unit.equip(self.current_equipped)
 
 
 class UnequipItem(Action):
-    def __init__(self, unit, item):
+    persist_through_menu_cancel = True
+
+    def __init__(self, unit, item, force_unequip=False):
         self.unit = unit
         self.item = item
         self.is_equipped_weapon = self.item is self.unit.equipped_weapon
         self.is_equipped_accesory = self.item is self.unit.equipped_accessory
+        self.force_unequip = force_unequip if self.unit.can_unequip(self.item) else False
 
     def do(self):
         if self.is_equipped_weapon or self.is_equipped_accesory:
-            self.unit.unequip(self.item)
+            self.unit.unequip(self.item, None)
 
-            # Unequip now auto-equips the next valid item
+            # If Can Unequip is Enabled AND force_unequip is True, then don't auto equip another item
+            if self.force_unequip:
+                self.unit.is_unequipped = True
+                return
+
+            # Auto equip another item if possible, prioritizing accessories over weapons
             all_items = item_funcs.get_all_items(self.unit)
             for item in all_items:
                 if item is not self.item and (item_system.is_accessory(self.unit, item) ^ self.is_equipped_weapon):
@@ -1479,6 +1508,8 @@ class TradeItem(Action):
         self.item2 = item2
         self.item_index1 = unit1.items.index(item1) if item1 else DB.constants.total_items() - 1
         self.item_index2 = unit2.items.index(item2) if item2 else DB.constants.total_items() - 1
+        self.is_unequipped1 = self.unit1.is_unequipped
+        self.is_unequipped2 = self.unit2.is_unequipped
 
     def swap(self, unit1, unit2, item1, item2, item_index1, item_index2):
         # Do the swap
@@ -1490,16 +1521,25 @@ class TradeItem(Action):
             unit1.insert_item(item_index1, item2)
 
     def do(self):
+        self.unit1.is_unequipped = False
+        self.unit2.is_unequipped = False
         self.swap(self.unit1, self.unit2, self.item1, self.item2, self.item_index1, self.item_index2)
 
         recalc_unit(self.unit1)
         recalc_unit(self.unit2)
 
     def reverse(self):
+        self.unit1.is_unequipped = self.is_unequipped1
+        self.unit2.is_unequipped = self.is_unequipped2
         self.swap(self.unit1, self.unit2, self.item2, self.item1, self.item_index2, self.item_index1)
 
         recalc_unit(self.unit1)
         recalc_unit(self.unit2)
+
+        if self.unit1.is_unequipped:
+            self.unit1.equipped_weapon = None
+        if self.unit2.is_unequipped:
+            self.unit2.equipped_weapon = None
 
 class RepairItem(Action):
     def __init__(self, item):

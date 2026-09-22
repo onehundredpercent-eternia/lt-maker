@@ -129,6 +129,7 @@ constants = ConstantCatalog([
     Constant('combat_art_category', "Combat Arts get put in their own category in the menu", ConstantType.BOOL, False, ConstantTag.OTHER),
     Constant('reset_mana', "Mana resets to full for units upon completion of the chapter", ConstantType.BOOL, ConstantTag.OTHER),
     Constant('double_splash', "When doubling, splash/aoe applied on second strike", ConstantType.BOOL, ConstantTag.OTHER),
+    Constant('can_unequip', "Enables the ability to unequip weapons.", ConstantType.BOOL, False, ConstantTag.OTHER),
     Constant('num_save_slots', "Number of save slots", ConstantType.POSITIVE_INT, 3, ConstantTag.TITLE),
     Constant('sell_modifier', "Value multiplier when selling an item", ConstantType.FLOAT, 0.5, ConstantTag.INVENTORY),
     Constant('attack_zero_hit', "Enemy AI attacks even if Hit is 0", ConstantType.BOOL, True, ConstantTag.AI),
