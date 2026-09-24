@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from typing import Optional
@@ -295,6 +296,12 @@ class FontProperties(QWidget):
         self.outline_font_box.edit.stateChanged.connect(self._outline_font_changed)
         meta_layout.addWidget(self.outline_font_box)
 
+        self.headless_box = PropertyCheckBox("Headless", QCheckBox, self)
+        self.headless_box.edit.setToolTip(
+            "Whether this font renders on a transparent surf")
+        self.headless_box.edit.stateChanged.connect(self._headless_changed)
+        meta_layout.addWidget(self.headless_box)
+
         main_layout.addWidget(meta_group)
 
         # -- Palette editor --
@@ -329,6 +336,10 @@ class FontProperties(QWidget):
         self.outline_font_box.edit.blockSignals(True)
         self.outline_font_box.edit.setChecked(bool(current.outline_font))
         self.outline_font_box.edit.blockSignals(False)
+
+        self.headless_box.edit.blockSignals(True)
+        self.headless_box.edit.setChecked(bool(current.headless))
+        self.headless_box.edit.blockSignals(False)
 
         self.palette_editor.set_font(current)
 
@@ -381,7 +392,7 @@ class FontProperties(QWidget):
             try:
                 self._bmp_font = BmpFont(self.current, headless=True)
             except Exception:
-                pass
+                logging.exception("Could not build a preview font for %s", self.current.nid)
         self._update_preview()
 
     def _update_preview(self):
@@ -459,4 +470,9 @@ class FontProperties(QWidget):
     def _outline_font_changed(self, state):
         if self.current:
             self.current.outline_font = bool(state)
+            self._reinit_bmp_font()
+    
+    def _headless_changed(self, state):
+        if self.current:
+            self.current.headless = bool(state)
             self._reinit_bmp_font()
