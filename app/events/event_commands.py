@@ -527,6 +527,27 @@ The direction of the portrait is flipped across the Y axis.
     keyword_types = ['Portrait', 'Float']
     _flags = ["no_block", "fade"]
 
+class ReplacePortrait(EventCommand):
+    nid = "replace_portrait"
+    tag = Tags.PORTRAIT
+
+    desc = \
+        """
+Swaps the on-screen *Portrait* for *NewPortrait*. The new portrait keeps the position, facing, priority,
+saturation and expressions of the one it replaces, and fades in over the top of it.
+
+Afterwards the portrait is referred to as *NewPortrait* by other commands, such as `speak` or `remove_portrait`.
+
+Extra flags:
+
+1. *immediate*: Portrait will be swapped instantly and will not fade.
+2. *no_block*: Portrait will fade, but will not pause execution of event script while doing so.
+        """
+
+    keywords = ['Portrait', 'NewPortrait']
+    keyword_types = ['Portrait', 'Portrait']
+    _flags = ["immediate", "no_block"]
+
 class Expression(EventCommand):
     nid = "expression"
     nickname = "e"
@@ -833,6 +854,33 @@ class ScreenShakeEnd(EventCommand):
     desc = \
         """
 Ends any extant screen shake command if there is one present
+        """
+
+class Rumble(EventCommand):
+    nid = 'rumble'
+    tag = Tags.MISCELLANEOUS
+
+    desc =         """
+Rumbles the player's controller for *Duration* milliseconds.
+Set *Duration* to 0 to make the rumble last until a `rumble_end` command.
+
+*LowFrequency* sets the strength of the heavy, low-frequency motor and
+*HighFrequency* the light, high-frequency motor, each from 0 to 1. Both default to 0.5.
+
+Does nothing if the player has turned rumble off in the settings,
+or if their controller cannot rumble. Does not block the event.
+        """
+
+    keywords = ["Duration"]
+    optional_keywords = ["LowFrequency", "HighFrequency"]
+    keyword_types = ["Time", "Intensity", "Intensity"]
+
+class RumbleEnd(EventCommand):
+    nid = 'rumble_end'
+    tag = Tags.MISCELLANEOUS
+
+    desc =         """
+Stops any rumble started by a `rumble` command
         """
 
 class GameVar(EventCommand):

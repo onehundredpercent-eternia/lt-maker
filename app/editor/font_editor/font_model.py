@@ -1,9 +1,10 @@
 import os
-from typing import Optional
+from collections import Counter
+from typing import List, Optional
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QIcon, QPainter
+from PyQt5.QtGui import QImage, QPixmap, QIcon, QPainter
 
 from app.data.resources.fonts import Font
 from app.data.resources.fonts import FontIndex
@@ -11,6 +12,7 @@ from app.data.resources.resources import RESOURCES
 from app.editor.base_database_gui import ResourceCollectionModel
 from app.editor.settings import MainSettingsController
 from app.utilities import str_utils
+from app.utilities.typing import Color4
 
 # Characters tried in order when looking for a preview glyph
 _PREVIEW_CANDIDATES = (
@@ -23,6 +25,81 @@ _PREVIEW_CANDIDATES = (
 
 
 _ICON_SIZE = 32
+
+#: Name given to the palette seeded from the sprite sheet's own colors.
+DEFAULT_PALETTE_NID = 'default'
+
+#: Upper bound on how many sheet colors get seeded into the base palette.
+#: Bitmap fonts use a handful of colors; an anti-aliased sheet could otherwise
+#: produce hundreds of swatches and make the palette editor unusable.
+_MAX_SEEDED_COLORS = 32
+
+
+def extract_default_palette(png_path: str, max_colors: int = _MAX_SEEDED_COLORS) -> List[Color4]:
+    """Return the fully-opaque colors of the sprite sheet at *png_path*.
+
+    Every other palette on a font remaps this one index for index
+    (see :class:`app.engine.bmpfont.BmpFont`), so the palette named by
+    ``Font.base_palette_nid`` has to be the colors that actually appear in the
+    PNG -- which is why it is not simply whichever palette text defaults to
+    rendering in. Ordered most-common first, so
+    index 0 is the dominant glyph color and index 1 its shadow -- the order
+    ``Font.primary_color``/``secondary_color`` expect.
+    """
+    image = QImage(png_path)
+    if image.isNull():
+        return []
+    image = image.convertToFormat(QImage.Format_RGBA8888)
+    counts = Counter()
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            if color.alpha() == 255:
+                counts[(color.red(), color.green(), color.blue(), 255)] += 1
+    return [color for color, _count in counts.most_common(max_colors)]
+
+
+def detect_base_palette(font: Font) -> Optional[str]:
+    """Name the palette holding the sprite sheet's own colors, by reading the PNG.
+
+    Fonts saved before ``base_color`` existed only say which palette text
+    defaults to, and for a font whose default was moved off the sheet that is
+    the wrong answer -- so ask the PNG instead of trusting ``default_color``.
+    Returns None when no palette matches, leaving the caller to fall back.
+    """
+    png_path = font.image_path()
+    if not font.palettes or not png_path or not os.path.exists(png_path):
+        return None
+    sheet_colors = {tuple(color) for color in extract_default_palette(png_path)}
+    if not sheet_colors:
+        return None
+    # The current default first, so a font that is already correct keeps its answer
+    # even if some other palette happens to hold the same colors
+    names = [font.default_color] + [name for name in font.palettes if name != font.default_color]
+    for name in names:
+        palette = font.palettes.get(name)
+        if palette and all(tuple(color) in sheet_colors for color in palette):
+            return name
+    return None
+
+
+def seed_default_palette(font: Font) -> bool:
+    """Give *font* a palette of its sprite sheet's colors read off its PNG, if it has none yet."""
+    base_nid = font.base_palette_nid
+    if base_nid and base_nid in font.palettes:
+        return False
+    png_path = font.image_path()
+    if not png_path or not os.path.exists(png_path):
+        return False
+    palette = extract_default_palette(png_path)
+    if not palette:
+        return False
+    nid = base_nid or DEFAULT_PALETTE_NID
+    font.palettes[nid] = palette
+    font.base_color = nid
+    if not font.default_color:
+        font.default_color = nid
+    return True
 
 
 def _to_uniform_icon(pixmap: QPixmap) -> QPixmap:
@@ -112,6 +189,7 @@ class FontModel(ResourceCollectionModel):
         nid = str_utils.get_next_name(nid, [d.nid for d in RESOURCES.fonts])
         new_font = Font(nid=nid)
         new_font.set_full_path(file_name_no_ext)
+        seed_default_palette(new_font)
         RESOURCES.fonts.append(new_font)
         settings.set_last_open_path(os.path.dirname(fn))
         return new_font

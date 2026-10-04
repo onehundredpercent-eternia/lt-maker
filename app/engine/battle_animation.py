@@ -1,10 +1,13 @@
 import os
+from typing import Optional, Tuple
+
 from app.constants import WINWIDTH, WINHEIGHT, COLORKEY
 from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
+from app.engine.input_manager import get_input_manager
 from app.engine.game_state import game
 from app.engine import engine, image_mods, item_system, item_funcs, skill_system
 
@@ -121,6 +124,8 @@ class BattleAnimation():
         self.flash_color = []  # It's a list so you could have it flash through several colors
         self.flash_counter = 0
         self.flash_image = None
+        # Set by the combat, from a hit that tints this unit for the rest of the combat
+        self.hit_tint: Optional[Tuple[int, int, int]] = None
         self.screen_dodge_color = None
         self.screen_dodge_counter = 0
         self.screen_dodge_image = None
@@ -664,6 +669,10 @@ class BattleAnimation():
             self.owner._shake(1)
         elif command.nid == 'screen_shake_2':
             self.owner._shake(4)
+        elif command.nid == 'rumble':
+            get_input_manager().rumble(0.5, 0.5, 150)
+        elif command.nid == 'rumble_2':
+            get_input_manager().rumble(1, 1, 500)
         elif command.nid == 'darken':
             self.owner.darken()
         elif command.nid == 'lighten':
@@ -763,6 +772,9 @@ class BattleAnimation():
             if self.unit and self.parent == self: # Don't apply tint if this is combat effect or mock combat
                 current_time = engine.get_time()
                 flicker_tints = skill_system.combat_sprite_flicker_tint(self.unit)
+                if self.hit_tint:
+                    # Color, Period, Width, Add Tint or Subtract Tint
+                    flicker_tints.append((self.hit_tint, 0, 0, True))
                 flicker_tints = [image_mods.FlickerTint(*tint) for tint in flicker_tints]
                 image = image_mods.draw_flicker_tint(image, current_time, flicker_tints)
 

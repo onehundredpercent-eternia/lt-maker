@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 import random
 from typing import Optional, Tuple
@@ -67,6 +69,9 @@ class EventPortrait():
         self.talk_on = False
         self.remove = False
 
+        # The portrait this one is fading in over the top of, while it is crossfading
+        self.outgoing: Optional[EventPortrait] = None
+
         # For moving
         self.moving = False
         self.orig_position = None
@@ -112,6 +117,11 @@ class EventPortrait():
 
     def desaturate(self):
         self.saturation_direction = -1
+
+    def crossfade_from(self, outgoing: EventPortrait):
+        self.outgoing = outgoing
+        self.transition = True
+        self.transition_update = engine.get_time()
 
     def bop(self, num: int = 2, height: int = 2, speed: int = utils.frames2ms(8)):
         self.bop_time = speed
@@ -168,7 +178,7 @@ class EventPortrait():
                 if expression.startswith('MouthFrame'):
                     # `expression` should be a str of format 'MouthFrameX' where X is a non-negative integer,
                     #  so get X using string slice at 10th index `expression[10:]`
-                    idx = min(int(expression[10:]), self.portrait.mouth_frames-1)
+                    idx = int(expression[10:])
                     break
         mouth_image = engine.subsurface(self.portrait.image,
             self.portrait.get_mouth_frame(idx, smile="Smile" in self.expressions))
@@ -183,13 +193,13 @@ class EventPortrait():
         elif "OpenEyes" in self.expressions:
             idx = None
         else:
-            if self.blink_counter.count:
-                idx = self.blink_counter.count - 1
+            if not self.blink_counter.is_open_eyes():
+                idx = self.blink_counter.get_blink_index()
             for expression in self.expressions:
                 if expression.startswith('BlinkFrame'):
                     # `expression` should be a str of format 'BlinkFrameX' where X is a non-negative integer,
                     #  so get X using string slice at 10th index `expression[10:]`
-                    idx = min(int(expression[10:]), self.portrait.blink_frames-1)
+                    idx = int(expression[10:])
                     break
         if idx is not None:
             blink_image = engine.subsurface(self.portrait.image, self.portrait.get_blink_frame(idx))
@@ -236,6 +246,7 @@ class EventPortrait():
             self.transition_progress = perc
             if perc > 1 or perc < 0:
                 self.transition = False
+                self.outgoing = None
                 self.transition_progress = utils.clamp(perc, 0, 1)
                 if self.remove:
                     return True
@@ -277,7 +288,8 @@ class EventPortrait():
 
         return False
 
-    def draw(self, surf):
+    def get_image(self):
+        """The portrait as it appears once it has finished transitioning"""
         image = self.create_image()
         if self.mirror:
             image = engine.flip_horiz(image)
@@ -285,9 +297,15 @@ class EventPortrait():
         if self.saturation < 1:
             blackness = 0.5 * (1 - self.saturation)
             image = image_mods.make_black_colorkey(image, blackness)
+        return image
+
+    def draw(self, surf):
+        image = self.get_image()
 
         if self.transition:
-            if self.slide:
+            if self.outgoing:
+                image = image_mods.make_translucent(image.convert_alpha(), 1 - self.transition_progress)
+            elif self.slide:
                 image = image_mods.make_translucent(image.convert_alpha(), 1 - self.transition_progress)
             else:
                 image = image_mods.make_black_colorkey(image, 1 - self.transition_progress)
@@ -303,9 +321,12 @@ class EventPortrait():
         if self.bop_state:
             position = position[0], position[1] + self.bop_height
 
+        if self.outgoing:
+            surf.blit(self.outgoing.get_image(), position)
         surf.blit(image, position)
 
     def end(self, speed_mult=1, slide: Optional[str] = None):
+        self.outgoing = None
         self.transition = True
         self.remove = True
         if slide:  # Use the existing slide if not specified

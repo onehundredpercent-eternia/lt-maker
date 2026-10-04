@@ -98,6 +98,17 @@ class MapCastPose(ItemComponent):
     def map_cast_pose(self, unit, item):
         return True
 
+class BattleHitTint(ItemComponent):
+    nid = 'battle_hit_tint'
+    desc = "When this item hits in a combat animation, the target's battle animation stays tinted this color until the combat ends. Useful for effects like petrify, where a spell's own Tint Enemy command would wear off before the combat does."
+    tag = ItemTags.AESTHETIC
+
+    expose = ComponentType.Color3
+    value = (0, 0, 0)
+
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        playback.append(pb.BattleAnimTint(target, self.value))
+
 class BattleCastAnim(ItemComponent):
     nid = 'battle_cast_anim'
     desc = "Adds a specific animation effect when the item is used. This does not change the battle animation used, think instead of the spell's effect."
@@ -125,6 +136,61 @@ class NoMapHPDisplay(ItemComponent):
     tag = ItemTags.BASE
 
     def no_map_hp_display(self, unit, item):
+        return True
+
+class NoMapHitFlash(ItemComponent):
+    nid = 'no_map_hit_flash'
+    desc = "Targets do not flash white (or the color chosen by a Map Hit Add/Sub Blend component) when hit in map combat. Also suppresses the critical hit flash."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_hit_flash(self, unit, item):
+        return True
+
+class NoMapHitSFX(ItemComponent):
+    nid = 'no_map_hit_sfx'
+    desc = "No sound effect is played when a target is hit or missed in map combat. Sounds from a Map Cast SFX component still play."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_hit_sfx(self, unit, item):
+        return True
+
+class NoMapCombatMovement(ItemComponent):
+    nid = 'no_map_combat_movement'
+    desc = "Combatants do not turn to face one another or jostle towards one another during map combat. Also suppresses the critical hit vibration."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_combat_movement(self, unit, item):
+        return True
+
+class NoMapDamageNumbers(ItemComponent):
+    nid = 'no_map_damage_numbers'
+    desc = "No floating damage, healing, or critical damage numbers appear over targets in map combat."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_damage_numbers(self, unit, item):
+        return True
+
+class NoMapCombatFX(ItemComponent):
+    nid = 'no_map_combat_fx'
+    desc = ("Suppresses every default map combat flourish at once -- the hp display, the hit flash, "
+            "the hit sound effect, the combatants' facing and jostle, and the floating damage numbers. "
+            "Equivalent to adding No Map HP Display, No Map Hit Flash, No Map Hit SFX, "
+            "No Map Combat Movement, and No Map Damage Numbers together.")
+    tag = ItemTags.AESTHETIC
+
+    def no_map_hp_display(self, unit, item):
+        return True
+
+    def no_map_hit_flash(self, unit, item):
+        return True
+
+    def no_map_hit_sfx(self, unit, item):
+        return True
+
+    def no_map_combat_movement(self, unit, item):
+        return True
+
+    def no_map_damage_numbers(self, unit, item):
         return True
 
 class PreCombatEffect(ItemComponent):

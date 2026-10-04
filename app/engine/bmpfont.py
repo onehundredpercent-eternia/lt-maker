@@ -70,6 +70,9 @@ class BmpFont():
         self.memory: Dict[str, Dict[str, Tuple[engine.Surface, int]]] = {}
 
         self.font_info = font_info
+        # The caller forces headless when no display exists at all (editor
+        # previews, tests); the font itself can also opt in for its own sake
+        headless = headless or self.font_info.headless
         self.fallback_font = None
         if self.font_info.ttf_path():
             self.fallback_font = FallbackFont(
@@ -84,12 +87,19 @@ class BmpFont():
         self.default_color = font_info.default_color or 'default'
         self.surfaces: Dict[str, engine.Surface] = {}
         base_surf = engine.image_load(self.png_path, convert_alpha=not headless)
+        # Covers a default_color that names no palette at all; the loop below
+        # replaces this as soon as the default is a real, recolorable palette
         self.surfaces[self.default_color] = base_surf
+        # A recoloring reads from the palette that names the sheet's own colors,
+        # not from whichever palette text defaults to. Without it there is
+        # nothing to map *from*, so every palette just renders as the sheet.
+        base_color = font_info.base_palette_nid
+        base_palette = font_info.palettes.get(base_color, [])
         for color_name, palette in font_info.palettes.items():
-            if color_name == self.default_color:
+            if color_name == base_color or not base_palette:
                 self.surfaces[color_name] = base_surf
             else:
-                palette_map = {orig: new for orig, new in zip(map(tuple, font_info.palettes[self.default_color]), map(tuple, palette))}
+                palette_map = {orig: new for orig, new in zip(map(tuple, base_palette), map(tuple, palette))}
                 self.surfaces[color_name] = image_mods.color_convert_alpha(base_surf.copy(), palette_map)
 
     @property
