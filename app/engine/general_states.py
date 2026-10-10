@@ -21,7 +21,7 @@ from app.engine.game_state import game
 from app.engine import engine, action, menus, image_mods, \
     banner, save, phase, skill_system, item_system, \
     item_funcs, ui_view, base_surf, gui, background, dialog, \
-    text_funcs, equations, evaluate, supports
+    text_funcs, equations, evaluate, supports, city_funcs
 from app.engine.combat import base_combat, interaction
 from app.engine.selection_helper import SelectionHelper
 from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, FoundAbility, RazeAbility, SeizeAbility, TradeAbility, SupplyAbility
@@ -315,6 +315,12 @@ class FreeState(MapState):
         if not cf.SETTINGS['autoend_turn']:
             autoend_turn = False
         if not any(unit.position for unit in game.units):
+            autoend_turn = False
+        # A player with no units on the map still has a turn to take (their cities)
+        if not game.get_player_units():
+            autoend_turn = False
+        # And so does one with a city that has not bought anything yet this turn
+        if any(city.team == 'player' and city_funcs.can_purchase(city) for city in game.cities):
             autoend_turn = False
         for unit in game.get_player_units():
             if not skill_system.can_select(unit):

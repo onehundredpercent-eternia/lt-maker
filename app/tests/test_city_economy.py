@@ -54,8 +54,10 @@ class CityIncomeTests(EngineTestCase):
         self.enemy_city = add_city(self.game, 'Lair', 'enemy', (12, 2), ['Market'])
 
     def end_turn(self):
+        # A turn does not end itself while the player's city can still buy something
         self.harness.wait('Eirika', (4, 5))
         self.harness.wait('Seth', (4, 4))
+        self.harness.end_turn()
         self.harness.run_until_player_turn(2)
 
     def test_an_enemy_city_collects_income_on_the_enemy_phase(self):
