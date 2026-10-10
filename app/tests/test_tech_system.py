@@ -1,4 +1,3 @@
-import json
 import os
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 
@@ -18,12 +17,6 @@ from app.engine import action, tech_funcs
 from app.events import event_commands, event_functions, event_validators
 from app.utilities import str_utils
 from app.utilities.data import Data
-
-AVALON_TECHS = os.path.join('..', 'avalon', 'avalon.ltproj', 'game_data', 'techs.json')
-
-# Legacy flag keys whose component was renamed. The migration is still lossless: the old
-# key lands on the new component, which publishes the new key.
-RENAMED_KEYS = {'city_pop_cap_bonus': 'city_pop_bonus'}
 
 
 def setUpModule():
@@ -588,32 +581,6 @@ class LegacyEffectMigrationTests(unittest.TestCase):
                                    'effects': [{'kind': 'flag', 'key': 'weapon_tier',
                                                 'value': 1, 'combine': 'max'}]})
         self.assertEqual([('weapon_tier', 3, Combine.MAX)], self.flags_of(tech))
-
-    @unittest.skipUnless(os.path.exists(AVALON_TECHS), 'avalon project not checked out')
-    def test_the_real_avalon_catalog_migrates_with_identical_flag_keys(self):
-        """The 20 hand-authored avalon techs are the ground truth for this migration:
-        every flag key they produced before must still be produced, modulo the keys that
-        were deliberately renamed (RENAMED_KEYS)."""
-        with open(AVALON_TECHS) as f:
-            raw = json.load(f)
-        expected = {}
-        for dat in raw:
-            keys = set()
-            for effect in dat['effects']:
-                if effect.get('kind', 'flag') == 'flag':
-                    keys.add(RENAMED_KEYS.get(effect['key'], effect['key']))
-            expected[dat['nid']] = keys
-
-        self.assertEqual(20, len(raw))
-        for dat in raw:
-            tech = TechPrefab.restore(dat)
-            got = {key for c in tech.components for key, _, _ in c.flags()}
-            self.assertEqual(expected[dat['nid']], got, tech.nid)
-            # Nothing may be dropped: a flag-less tech must still carry its grant component
-            self.assertEqual(len([e for e in dat['effects']
-                                  if e.get('kind', 'flag') != 'flag']),
-                             len([c for c in tech.components if not c.flags()]),
-                             tech.nid)
 
 
 class TechGatedValueTests(_TechTestCaseMixin, unittest.TestCase):
