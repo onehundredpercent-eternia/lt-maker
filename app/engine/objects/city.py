@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from app.utilities.typing import NID, Pos
 
 from app.data.database.database import DB
@@ -25,13 +25,16 @@ class CityObject(City):
         production (int): The city's current production store, spent when buying units/buildings.
         produced_this_turn (bool): Whether the city has already bought its one unit or
             building this turn. Cleared at the start of the city's upkeep.
+        razed (bool): Whether the city has been destroyed. A razed city is off the map
+            for good but stays registered, so `game.cities` leaves it out while
+            `game.get_city` still finds it.
     """
 
     def __init__(self, nid: NID, name: str, position: Pos = None, team: NID = "player",
                  population: int = 1, buildings: List = None, influence: int = 1, inn: List[NID] = None,
                  food: int = 0, production: int = 0,
                  icon_nid: NID = None, icon_index: tuple = (0, 0),
-                 produced_this_turn: bool = False):
+                 produced_this_turn: bool = False, razed: bool = False):
         self.nid = nid
         self.name = name
         self.position = position
@@ -45,6 +48,7 @@ class CityObject(City):
         self.food: int = food
         self.production: int = production
         self.produced_this_turn: bool = produced_this_turn
+        self.razed: bool = razed
 
         self.icon_nid: NID = icon_nid
         self.icon_index: tuple = icon_index
@@ -74,6 +78,31 @@ class CityObject(City):
         self.population += game.get_tech_value(prefab.team, 'city_pop_bonus')
         return self
 
+    @property
+    def center(self) -> Optional[BuildingObject]:
+        """The building at the heart of the city (its Outpost or Town Hall): the one
+        that carries the CityCenter component."""
+        for building in self.buildings:
+            if building.city_center:
+                return building
+        return None
+
+    @property
+    def is_outpost(self) -> bool:
+        """Whether the city is still an outpost: its center carries the Outpost
+        component. An outpost drafts no units and builds only OutpostBuildable buildings."""
+        center = self.center
+        return bool(center and center.outpost)
+
+    @property
+    def center_positions(self) -> List[Pos]:
+        """Every tile of the city's center: the footprint of its center building. A
+        city with no center building has the one-tile center of its own position."""
+        center = self.center
+        if center and center.position:
+            return center.occupied_positions
+        return super().center_positions
+
     def save(self) -> dict:
         serial_dict = {}
         serial_dict['nid'] = self.nid
@@ -88,6 +117,7 @@ class CityObject(City):
         serial_dict['food'] = self.food
         serial_dict['production'] = self.production
         serial_dict['produced_this_turn'] = self.produced_this_turn
+        serial_dict['razed'] = self.razed
 
         serial_dict['icon_nid'] = self.icon_nid
         serial_dict['icon_index'] = self.icon_index
@@ -101,7 +131,8 @@ class CityObject(City):
                    dat['population'], [], dat['influence'],
                    dat['inn'], dat['food'], dat['production'],
                    dat.get('icon_nid'), dat.get('icon_index', (0, 0)),
-                   dat.get('produced_this_turn', False))
+                   dat.get('produced_this_turn', False),
+                   dat.get('razed', False))
         self.buildings = [game.get_building(building_uid) for building_uid in dat['buildings']]
         self.buildings = [b for b in self.buildings if b]
         self.data = dat['data']

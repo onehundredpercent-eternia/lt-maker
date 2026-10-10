@@ -140,6 +140,35 @@ class ChapterUses(ItemComponent):
     def special_sort(self, unit, item):
         return item.data['c_uses']
 
+class Food(ItemComponent):
+    nid = 'food'
+    desc = "Item holds food, and starts with this much. A unit pays food costs (such as founding an outpost) out of the food items it carries. The item is used up when its food runs out."
+    tag = ItemTags.USES
+    delim = "/"
+
+    expose = ComponentType.Int
+    value = 10
+
+    def init(self, item):
+        item.data['food'] = self.value
+        item.data['starting_food'] = self.value
+
+    def is_broken(self, unit, item) -> bool:
+        return item.data['food'] <= 0
+
+    def on_broken(self, unit, item):
+        if item in unit.items:
+            action.do(action.RemoveItem(unit, item))
+
+    def _calc_uses(self, unit, item):
+        return item.data['food']
+
+    def _calc_max_uses(self, unit, item):
+        return item.data['starting_food']
+
+    def item_uses_display(self, unit, item) -> UsesDisplayConfig:
+        return UsesDisplayConfig(self._calc_uses, self.delim, self._calc_max_uses, unit=unit, item=item)
+
 class UsesOptions(ItemComponent):
     nid = 'uses_options'
     desc = 'Additional options for uses'

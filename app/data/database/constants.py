@@ -93,6 +93,8 @@ constants = ConstantCatalog([
     Constant('growth_info', "Can view unit growths in Info Menu", ConstantType.BOOL, True, ConstantTag.OTHER),
     Constant('alt_growth_format', "Base growths include class bonus growths in Info Menu", ConstantType.BOOL, False, ConstantTag.OTHER),
     Constant('glancing_hit', "Chance (%) to score a glancing hit", ConstantType.INT, 0, ConstantTag.MAJOR_FEATURES),
+    Constant('city_min_distance', "Fewest tiles allowed between a newly founded city and any other city", ConstantType.INT, 5, ConstantTag.CITY),
+    Constant('raze_ruin_chance', "Chance (%) that a building leaves ruins when its city is razed", ConstantType.INT, 50, ConstantTag.CITY),
     Constant('backpropagate_difficulty_growths', "Apply difficulty bonus growths to past levels", ConstantType.BOOL, True, ConstantTag.OTHER),
     Constant('traveler_time_decrement', "Timed skills applied to traveler units will decrease.", ConstantType.BOOL, False, ConstantTag.OTHER),
     Constant('line_of_sight', "Force items and abilities to obey line of sight rules", ConstantType.BOOL, False, ConstantTag.LINE_OF_SIGHT),

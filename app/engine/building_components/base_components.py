@@ -2,6 +2,7 @@ from app.data.database.building_components import (RESOURCE_BONUS_TAGS,
                                                     BuildingComponent,
                                                     BuildingTags)
 from app.data.database.components import ComponentType
+from app.data.database.database import DB
 
 from app.events.regions import RegionType
 
@@ -21,6 +22,31 @@ class BuildingTag(BuildingComponent):
 
     expose = (ComponentType.List, ComponentType.Tag)
     value = []
+
+
+class CityCenter(BuildingComponent):
+    nid = 'city_center'
+    desc = "Marks this building as the center of its city (an Outpost or a Town Hall). The city's influence spreads from it, and it is where the city is opened, seized and razed. A city center is never offered in the Build menu."
+    tag = BuildingTags.BASE
+
+    def available(self, city) -> bool:
+        # A city gets its center when it is founded, and a new one by upgrading it
+        return False
+
+
+class Outpost(BuildingComponent):
+    nid = 'outpost'
+    desc = "A newly founded city starts as this building. Its Cost is what founding costs: gold from the team, food from what the founding hero carries. While this is a city's center, the city drafts no units and builds only Outpost Buildable buildings."
+    tag = BuildingTags.BASE
+
+
+class OutpostBuildable(BuildingComponent):
+    nid = 'outpost_buildable'
+    desc = "Building can be built in an outpost. An outpost can build nothing else."
+    tag = BuildingTags.BASE
+
+    def outpost_buildable(self, city) -> bool:
+        return True
 
 
 class Cost(BuildingComponent):
@@ -161,6 +187,23 @@ class RequiresTerrain(BuildingComponent):
         return True
 
 
+class RequiresTraversable(BuildingComponent):
+    nid = "requires_traversable"
+    desc = "Building can only stand on tiles a unit of this movement type could walk on"
+    tag = BuildingTags.BASE
+
+    expose = ComponentType.MovementType
+
+    def target_restrict(self, city, position) -> bool:
+        # Every tile of the footprint must be walkable, judged on the terrain
+        # underneath any building already there (see RequiresTerrain).
+        for tile in self.building.positions_at(position):
+            terrain = DB.terrain.get(game.get_terrain_nid(game.tilemap, tile, ignore_buildings=True))
+            if DB.mcost.get_mcost(self.value, terrain.mtype) >= 99:
+                return False
+        return True
+
+
 class RequiresAdjacency(BuildingComponent):
     nid = "requires_adjacency"
     desc = "Building must be placed adjacent to the city's town hall or another adjacency-requiring building"
@@ -170,8 +213,8 @@ class RequiresAdjacency(BuildingComponent):
         # Any tile of the footprint being adjacent is enough, so compare footprints
         # rather than anchors.
         footprint = self.building.positions_at(position)
-        # Adjacent to the city's own position (the town hall)
-        if city.position and self._is_adjacent(footprint, [city.position]):
+        # Adjacent to the city's center (the town hall)
+        if self._is_adjacent(footprint, city.center_positions):
             return True
         # Adjacent to another building in the city that also requires adjacency
         for building in city.buildings:

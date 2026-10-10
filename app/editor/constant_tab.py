@@ -729,7 +729,7 @@ class ConstantDatabase(DatabaseTab):
                        "How should enemy units get their automatic level ups")
         battle_section = self.create_section(battle_constants, battle_info)
         battle_section.setTitle("Battle Constants")
-        misc_constants = ('game_nid', 'title', 'num_save_slots', 'sell_modifier', 'glancing_hit')
+        misc_constants = ('game_nid', 'title', 'num_save_slots', 'sell_modifier', 'glancing_hit', 'city_min_distance', 'raze_ruin_chance')
         misc_section = self.create_section(misc_constants)
         misc_section.setTitle("Miscellaneous Constants")
         music_constants = ('music_main', 'music_promotion', 'music_class_change', 'music_game_over')

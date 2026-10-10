@@ -98,10 +98,8 @@ class StatusUpkeepState(MapState):
                     action.do(action.MarkPhase(game.phase.get_current()))
                     # Each team pays its unit upkeep (gold) at the start of its own phase.
                     city_funcs.run_unit_upkeep(game.phase.get_current())
-                    # Cities owned by the player collect their income at the start of
-                    # the player turn.
-                    if game.phase.get_current() == 'player':
-                        city_funcs.run_all_city_upkeeps('player')
+                    # ...and its cities collect their income.
+                    city_funcs.run_all_city_upkeeps(game.phase.get_current())
                 game.state.back()
                 return 'repeat'
 

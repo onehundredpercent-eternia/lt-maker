@@ -927,12 +927,13 @@ class GameState():
     @property
     def cities(self) -> List[CityObject]:
         """
-        Gets a list of all registered city objects.
+        Gets a list of every city on the map. A razed city stays in `city_registry`
+        (so anything holding it can still find it with `get_city`) but is not listed here.
 
         Returns:
-            List[CityObject]: A list of all registered city objects.
+            List[CityObject]: A list of all cities that have not been razed.
         """
-        return list(self.city_registry.values())
+        return [city for city in self.city_registry.values() if not city.razed]
 
     @property
     def buildings(self) -> List[BuildingObject]:
@@ -1171,16 +1172,17 @@ class GameState():
 
     def get_city_at(self, pos: Pos) -> Optional[CityObject]:
         """
-        Gets the city whose town-hall tile is at the given position.
+        Gets the city whose center covers the given position. The center is every
+        tile of the city's center building (its Outpost or Town Hall).
 
         Args:
             pos (Pos): The position to check.
 
         Returns:
-            CityObject: The city centered at that position, if any.
+            CityObject: The city whose center is at that position, if any.
         """
-        for city in self.city_registry.values():
-            if city.position == pos:
+        for city in self.cities:
+            if pos in city.center_positions:
                 return city
         return None
 

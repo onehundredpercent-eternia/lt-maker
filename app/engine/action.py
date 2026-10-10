@@ -2075,6 +2075,90 @@ class ChangeCityPopulation(Action):
         self.city.population = self.old_population
 
 
+class ChangeCityTeam(Action):
+    """Hands a city, and every building in it, to another team."""
+    def __init__(self, city, team_nid: NID):
+        self.city = city
+        self.team_nid = team_nid
+        self.old_team_nid = city.team
+
+    def do(self):
+        self.city.team = self.team_nid
+
+    def reverse(self):
+        self.city.team = self.old_team_nid
+
+
+class FoundCity(Action):
+    """Puts a newly founded city on the map, with the building that is its center."""
+    def __init__(self, city, center):
+        self.city = city
+        self.add_center = AddBuilding(city, center)
+
+    def do(self):
+        game.register_city(self.city)
+        self.add_center.do()
+
+    def execute(self):
+        game.register_city(self.city)
+        self.add_center.execute()
+
+    def reverse(self):
+        self.add_center.reverse()
+        del game.city_registry[self.city.nid]
+
+
+class RazeCity(Action):
+    """Destroys a city: every building in it comes down and the city leaves the map.
+
+    The city stays in `game.city_registry` with `razed` set (see `game.cities`), so an
+    action that holds it still resolves after a save and load.
+
+    On a map_prefab-backed level the center is left as ruins, and each outlying building
+    has a `raze_ruin_chance` percent chance of leaving ruins too. Every other tile goes
+    back to the terrain the building stood on. A plain tilemap cannot draw new terrain,
+    so there the buildings are only removed.
+    """
+    def __init__(self, city):
+        self.city = city
+        self.did_raze = False
+        self.subactions = []
+
+    def do(self):
+        self.subactions.clear()
+        center = self.city.center
+        ruins = self.city.center_positions
+        ruin_chance = DB.constants.value('raze_ruin_chance')
+        # Last building first, so that reversing puts them back in their original order
+        for building in reversed(self.city.buildings):
+            if building is not center and building.position and \
+                    static_random.get_other(1, 100) <= ruin_chance:
+                ruins += building.occupied_positions
+            self.subactions.append(RemoveBuilding(self.city, building))
+        if isinstance(game.level.tilemap, MapPrefabTileMapObject):
+            for position in ruins:
+                self.subactions.append(ChangeMapMakerTerrain(position, Terrain.RUINS))
+
+        self.did_raze = True
+        for act in self.subactions:
+            act.do()
+        self.city.razed = True
+
+    def execute(self):
+        if not self.did_raze:
+            return
+        for act in self.subactions:
+            act.execute()
+        self.city.razed = True
+
+    def reverse(self):
+        if not self.did_raze:
+            return
+        self.city.razed = False
+        for act in reversed(self.subactions):
+            act.reverse()
+
+
 class GainExp(Action):
     def __init__(self, unit, exp_gain):
         self.unit = unit
@@ -3437,24 +3521,26 @@ def _leave(layer) -> List[Tuple[UnitObject, Pos]]:
 
 def _refresh_building_terrain(building, place: bool):
     # A building has been placed on (place=True) or removed from (place=False) its
-    # tile. Update the terrain override and refresh the tile's board state + the
-    # terrain status of any unit standing there. Re-derived imperatively (not logged)
-    # so it works symmetrically on both do() and reverse().
-    position = building.position
-    if not position:
+    # tiles. Update the terrain override and refresh, for every tile of its footprint,
+    # the board state + the terrain status of any unit standing there. Re-derived
+    # imperatively (not logged) so it works symmetrically on both do() and reverse().
+    positions = building.occupied_positions
+    if not positions:
         return
-    unit = game.board.get_unit(position)
-    # Drop the unit's current terrain skill while the old terrain is still in effect.
-    if unit:
+    units = [game.board.get_unit(position) for position in positions]
+    units = [unit for unit in units if unit]
+    # Drop each unit's current terrain skill while the old terrain is still in effect.
+    for unit in units:
         game.remove_terrain_skills(unit)
     if place:
         game.add_terrain_override(building)
     else:
         game.remove_terrain_override(building)
-    # Re-apply the unit's terrain skill under the new terrain.
-    if unit:
+    # Re-apply each unit's terrain skill under the new terrain.
+    for unit in units:
         game.add_terrain_status(unit, test=False)
-    game.board.reset_pos(game.tilemap, position)
+    for position in positions:
+        game.board.reset_pos(game.tilemap, position)
 
 
 class AddBuilding(Action):
@@ -3505,6 +3591,38 @@ class RemoveBuilding(Action):
                 act.reverse()
             building_system.after_add(self.city, self.building)
             _refresh_building_terrain(self.building, place=True)
+
+
+class UpgradeBuilding(Action):
+    """Replaces a building in a city with the one it upgrades to. The new building
+    must already be positioned (on the old one's anchor tile); it takes the old
+    building's place in the city's order."""
+    def __init__(self, city, old_building, new_building):
+        self.city = city
+        self.old_building = old_building
+        self.new_building = new_building
+        self.index = city.buildings.index(old_building)
+        self.remove_old = RemoveBuilding(city, old_building)
+        self.add_new = AddBuilding(city, new_building)
+
+    def _take_place(self):
+        # Both sub-actions append; move what they appended back to where the other was
+        self.city.buildings.insert(self.index, self.city.buildings.pop())
+
+    def do(self):
+        self.remove_old.do()
+        self.add_new.do()
+        self._take_place()
+
+    def execute(self):
+        self.remove_old.execute()
+        self.add_new.execute()
+        self._take_place()
+
+    def reverse(self):
+        self.add_new.reverse()
+        self.remove_old.reverse()
+        self._take_place()
 
 
 class ShowLayer(Action):

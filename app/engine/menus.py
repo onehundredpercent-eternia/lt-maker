@@ -2214,18 +2214,21 @@ class CityChoice(Choice):
 
 
 class CityMenu():
-    """Tabbed in-game city menu. Two Choice sub-menus (Draft / Build) share a
-    position; LEFT/RIGHT switch tabs, UP/DOWN scroll the active tab, INFO toggles
+    """Tabbed in-game city menu. Three Choice sub-menus (Draft / Build / Manage) share
+    a position; LEFT/RIGHT switch tabs, UP/DOWN scroll the active tab, INFO toggles
     its description box. Each Choice owns its own row drawing via DraftUnitOption /
-    BuildingOption. Selecting a row buys it outright.
+    BuildingOption / UpgradeBuildingOption. Selecting a row buys it outright.
+
+    Manage holds what a city does to itself rather than makes: for now, upgrading a
+    building (an Outpost to a Town Hall).
     """
-    # city_icons.png indices used as tab icons (Draft / Build)
-    TAB_ICON_INDICES = [4, 5]
+    # city_icons.png indices used as tab icons (Draft / Build / Manage)
+    TAB_ICON_INDICES = [4, 5, 6]
     TAB_SPACING = 20
 
     def __init__(self, city, topleft=None):
         self.city = city
-        self.order = ['Draft', 'Build']
+        self.order = ['Draft', 'Build', 'Manage']
         self.tab_index = 0
         self.menu_width = 144
 
@@ -2245,6 +2248,7 @@ class CityMenu():
         contents = {
             'Draft': (city_funcs.get_draftable_units(self.city), menu_options.DraftUnitOption),
             'Build': (city_funcs.get_buildable_buildings(self.city), menu_options.BuildingOption),
+            'Manage': (city_funcs.get_building_upgrades(self.city), menu_options.UpgradeBuildingOption),
         }
         self.menus = {}
         for tab, (values, option_cls) in contents.items():

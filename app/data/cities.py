@@ -42,11 +42,37 @@ class City(Prefab):
         Returns:
             bool: True if the position is within the city's influence, False otherwise.
         """
-        x, y = pos
-        if self.position:
-            return utils.calculate_distance(self.position, pos) <= self.influence
-        else:
-            return False
+        return any(utils.calculate_distance(center, pos) <= self.influence
+                   for center in self.center_positions)
+
+    @property
+    def center_positions(self) -> List[Pos]:
+        """
+        Every tile of the city's center. A city prefab only knows its own position;
+        a CityObject widens this to the footprint of its center building.
+        """
+        return [self.position] if self.position else []
+
+    def positions_within(self, radius: int) -> Set[Pos]:
+        """
+        Get every tile within `radius` (Manhattan) of the city's center, measured from
+        the nearest center tile. The center itself is not included.
+
+        Args:
+            radius (int): How far out from the center to reach.
+
+        Returns:
+            Set[Pos]: The tiles in range. Not clipped to the map.
+        """
+        center = self.center_positions
+        positions = set()
+        for cx, cy in center:
+            for dx in range(-radius, radius + 1):
+                reach = radius - abs(dx)
+                for dy in range(-reach, reach + 1):
+                    positions.add((cx + dx, cy + dy))
+        positions.difference_update(center)
+        return positions
 
     def get_all_positions(self) -> Set[Pos]:
         """
@@ -55,17 +81,7 @@ class City(Prefab):
         Returns:
             Set[Pos]: A set of all positions covered by the city's influence.
         """
-        if not self.position:
-            return set()
-        cx, cy = self.position
-        positions = set()
-        # Every absolute tile within Manhattan radius `influence` (excluding the center)
-        for r in range(1, self.influence + 1):
-            for i in range(-r, r + 1):
-                dy = r - abs(i)
-                positions.add((cx + i, cy + dy))
-                positions.add((cx + i, cy - dy))
-        return positions
+        return self.positions_within(self.influence)
 
     def restore_attr(self, name, value):
         # JSON has no tuples - coerce positions back so equality checks against

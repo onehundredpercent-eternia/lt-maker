@@ -138,16 +138,19 @@ class MapView():
             surf = surf.convert_alpha()
 
         # Draw buildings. The sprite is anchored at the top left of the building's
-        # footprint and extends right and down over the rest of it.
-        for building in game.buildings:
-            if not building.position:
-                continue
-            sprite = building_sprite.get_building_sprite(building)
-            if not sprite:
-                continue
-            x, y = building.position
-            surf.blit(sprite, (x * TILEWIDTH - game.camera.get_x() * TILEWIDTH,
-                               y * TILEHEIGHT - game.camera.get_y() * TILEHEIGHT))
+        # footprint and extends right and down over the rest of it. Only a building
+        # in a city is on the map: one that was removed, upgraded away or razed stays
+        # registered and keeps its position.
+        for city in game.cities:
+            for building in city.buildings:
+                if not building.position:
+                    continue
+                sprite = building_sprite.get_building_sprite(building)
+                if not sprite:
+                    continue
+                x, y = building.position
+                surf.blit(sprite, (x * TILEWIDTH - game.camera.get_x() * TILEWIDTH,
+                                   y * TILEHEIGHT - game.camera.get_y() * TILEHEIGHT))
 
         # Draw boundaries
         surf = game.boundary.draw_auras(surf, full_size, cull_rect)

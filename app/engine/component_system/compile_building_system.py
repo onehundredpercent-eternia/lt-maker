@@ -13,6 +13,9 @@ BUILDING_HOOKS: Dict[str, HookInfo] = {
     'on_upkeep':                    HookInfo(['city'], ResolvePolicy.NO_RETURN),
     'produces_units':               HookInfo(['city'], ResolvePolicy.LIST),
     'influence_range_modification': HookInfo(['city'], ResolvePolicy.NUMERIC_ACCUM),
+    # Asked about a unit the city has just drafted
+    'starting_level_modification':  HookInfo(['city', 'unit'], ResolvePolicy.NUMERIC_ACCUM),
+    'stat_change':                  HookInfo(['city', 'unit'], ResolvePolicy.LIST),
 }
 
 def generate_building_hook_str(hook_name: str, hook_info: HookInfo):

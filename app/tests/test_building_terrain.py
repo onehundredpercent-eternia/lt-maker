@@ -30,6 +30,7 @@ class FakeBuilding:
 class FakeCity:
     def __init__(self, buildings):
         self.buildings = buildings
+        self.razed = False
 
 
 class BuildingTerrainTests(unittest.TestCase):

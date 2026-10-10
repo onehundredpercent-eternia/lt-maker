@@ -24,7 +24,7 @@ from app.engine import engine, action, menus, image_mods, \
     text_funcs, equations, evaluate, supports
 from app.engine.combat import base_combat, interaction
 from app.engine.selection_helper import SelectionHelper
-from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, TradeAbility, SupplyAbility
+from app.engine.abilities import ABILITIES, PRIMARY_ABILITIES, OTHER_ABILITIES, FoundAbility, RazeAbility, SeizeAbility, TradeAbility, SupplyAbility
 from app.engine.input_manager import get_input_manager
 from app.engine.fluid_scroll import FluidScroll
 import threading
@@ -1173,6 +1173,11 @@ class MenuState(MapState):
                             action.do(action.RemoveRegion(region))
                         # if did_trigger:
                             # action.do(action.HasTraded(self.cur_unit))
+
+            # Founding or taking a city acts on the tile the unit stands on, so there is
+            # nothing to target
+            elif selection in (FoundAbility.name, SeizeAbility.name, RazeAbility.name):
+                self.target_dict[selection].do(self.cur_unit)
 
             # An extra ability
             elif selection in self.extra_abilities.get('_uncategorized', {}) or selection in self.extra_abilities:

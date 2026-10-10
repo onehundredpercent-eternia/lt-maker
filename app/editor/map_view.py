@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 from app.data.database.database import DB
@@ -16,7 +16,8 @@ from app.editor.settings.preference_definitions import Preference
 from app.map_maker.map_prefab import MapPrefab
 from app.sprites import SPRITES
 from app.utilities import utils
-from PyQt5.QtCore import Qt, pyqtSignal
+from app.utilities.typing import NID, Pos
+from PyQt5.QtCore import QRect, Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
 
@@ -339,6 +340,33 @@ class EditMode(Enum):
     CITIES = 4
 
 
+def get_placement_positions(building_nid: NID, position: Pos) -> List[Pos]:
+    """Every tile a building placement covers. Empty until the building is placed."""
+    building = DB.buildings.get(building_nid)
+    if not position:
+        return []
+    if not building:
+        return [position]
+    return building.positions_at(position)
+
+def get_city_center_positions(city) -> List[Pos]:
+    """Every tile of a city's center, as the engine will see it: the footprint of its
+    placed center building, or the city's own tile when it has none."""
+    for building_nid, position in city.buildings:
+        building = DB.buildings.get(building_nid)
+        if building and building.city_center and position:
+            return building.positions_at(position)
+    return city.center_positions
+
+def get_bounding_rect(positions: List[Pos]) -> QRect:
+    """The pixel rectangle around a block of tiles."""
+    left = min(x for x, y in positions)
+    top = min(y for x, y in positions)
+    right = max(x for x, y in positions)
+    bottom = max(y for x, y in positions)
+    return QRect(left * TILEWIDTH, top * TILEHEIGHT,
+                 (right - left + 1) * TILEWIDTH, (bottom - top + 1) * TILEHEIGHT)
+
 class NewMapView(SimpleMapView):
     def __init__(self, window=None):
         super().__init__(window)
@@ -509,15 +537,12 @@ class NewMapView(SimpleMapView):
             painter = QPainter()
             painter.begin(self.working_image)
             for city in self.current_level.cities:
-                if not city.position:
+                center = get_city_center_positions(city)
+                if not center:
                     continue
-                x, y = city.position
                 color = utils.hash_to_color(utils.strhash(city.nid))
-                pixmap = QPixmap(TILEWIDTH, TILEHEIGHT)
-                pixmap.fill(QColor(*color))
                 painter.setOpacity(0.75)
-                painter.drawImage(x * TILEWIDTH, y *
-                                  TILEHEIGHT, pixmap.toImage())
+                painter.fillRect(get_bounding_rect(center), QColor(*color))
             # Draw each city's assigned buildings. The sprite is anchored at the top
             # left of the building's footprint and extends right and down over it.
             for city in self.current_level.cities:
@@ -536,27 +561,25 @@ class NewMapView(SimpleMapView):
                                       editor_utilities.convert_colorkey(pixmap.toImage()))
             current_city = self.main_editor.city_painter_menu.get_current()
             if current_city:
-                if current_city.position:
-                    x, y = current_city.position
+                center = get_city_center_positions(current_city)
+                if center:
                     painter.setBrush(Qt.NoBrush)
                     if current_city.team == 'player':
                         painter.setPen(Qt.blue)
                     else:
                         painter.setPen(Qt.red)
                     painter.setOpacity(0.75)
-                    painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
-                                     TILEWIDTH, TILEHEIGHT)
+                    painter.drawRect(get_bounding_rect(center))
             # Highlight the currently-selected building placement
             building_sel = self.main_editor.city_painter_menu.get_current_building()
             if building_sel:
                 _city, idx = building_sel
                 if 0 <= idx < len(_city.buildings) and _city.buildings[idx][1]:
-                    x, y = _city.buildings[idx][1]
+                    footprint = get_placement_positions(*_city.buildings[idx])
                     painter.setBrush(Qt.NoBrush)
                     painter.setPen(Qt.yellow)
                     painter.setOpacity(0.75)
-                    painter.drawRect(x * TILEWIDTH, y * TILEHEIGHT,
-                                     TILEWIDTH, TILEHEIGHT)
+                    painter.drawRect(get_bounding_rect(footprint))
             painter.end()
 
     def get_building_style_nid(self):
@@ -683,11 +706,11 @@ class NewMapView(SimpleMapView):
                             self.update_view()
                 elif event.button() == self.settings.get_preference(Preference.SELECT_BUTTON):
                     city_painter_menu = self.main_editor.city_painter_menu
-                    # Prefer a building under the cursor (it sits on its own tile)
+                    # Prefer a building under the cursor
                     found = False
                     for c_idx, city in enumerate(self.current_level.cities):
                         for b_idx, (building_nid, building_pos) in enumerate(city.buildings):
-                            if building_pos == pos:
+                            if pos in get_placement_positions(building_nid, building_pos):
                                 # select() rebuilds the building list, so set the
                                 # current row afterwards
                                 city_painter_menu.select(c_idx)
@@ -698,7 +721,7 @@ class NewMapView(SimpleMapView):
                             break
                     if not found:
                         for idx, city in enumerate(self.current_level.cities):
-                            if city.position == pos:
+                            if pos in get_city_center_positions(city):
                                 city_painter_menu.select(idx)
                                 break
 

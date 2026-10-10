@@ -1,5 +1,5 @@
 from app.data.database.database import DB
-from app.engine import skill_system, action, equations
+from app.engine import city_funcs, skill_system, action, equations
 from app.engine.movement import movement_funcs
 from app.engine.game_state import game
 from app.events import triggers
@@ -66,6 +66,76 @@ class TalkAbility(Ability):
         # did_trigger = game.events.trigger(triggers.OnTalk(unit, u, unit.position))
         # if did_trigger:
             # action.do(action.RemoveTalk(unit.nid, u.nid))
+
+def _get_takeable_city(unit):
+    """The city whose center `unit` stands on, if the unit could take it: the city
+    belongs to a team that is neither the unit's own nor an ally, and no enemy of the
+    unit stands anywhere on the center."""
+    city = game.get_city_at(unit.position)
+    if not city or city.team == unit.team or city.team in DB.teams.get_allies(unit.team):
+        return None
+    for position in city.center_positions:
+        other = game.board.get_unit(position)
+        if other and skill_system.check_enemy(unit, other):
+            return None
+    return city
+
+def _finish_on_city(unit):
+    """Seizing or razing is the unit's whole action for the turn."""
+    game.state.clear()
+    game.state.change('free')
+    game.cursor.set_pos(unit.position)
+    unit.wait()
+
+class FoundAbility(Ability):
+    name = 'Found'
+
+    @staticmethod
+    def targets(unit) -> set:
+        # Only a hero (a named unit) can found a city
+        if not unit.generic and city_funcs.can_found_city(unit):
+            return {unit.position}
+        return set()
+
+    @staticmethod
+    def do(unit):
+        city = city_funcs.found_city(unit)
+        _finish_on_city(unit)
+        game.events.trigger(triggers.CityFounded(unit, city, unit.position))
+
+class SeizeAbility(Ability):
+    name = 'Seize'
+
+    @staticmethod
+    def targets(unit) -> set:
+        # Only a hero (a named unit) can claim a city
+        if not unit.generic and _get_takeable_city(unit):
+            return {unit.position}
+        return set()
+
+    @staticmethod
+    def do(unit):
+        city = game.get_city_at(unit.position)
+        old_team = city.team
+        action.do(action.ChangeCityTeam(city, unit.team))
+        _finish_on_city(unit)
+        game.events.trigger(triggers.CitySeized(unit, city, unit.position, old_team))
+
+class RazeAbility(Ability):
+    name = 'Raze'
+
+    @staticmethod
+    def targets(unit) -> set:
+        if _get_takeable_city(unit):
+            return {unit.position}
+        return set()
+
+    @staticmethod
+    def do(unit):
+        city = game.get_city_at(unit.position)
+        action.do(action.RazeCity(city))
+        _finish_on_city(unit)
+        game.events.trigger(triggers.CityRazed(unit, city, unit.position))
 
 class SupportAbility(Ability):
     name = 'Support'

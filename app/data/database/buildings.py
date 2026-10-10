@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import app.engine.building_component_access as BCA
 from app.data.category import CategorizedCatalog
@@ -34,6 +34,15 @@ class BuildingPrefab(Prefab):
         self.components = components or Data[BuildingComponent]()
         for component_key, component_value in self.components.items():
             self.__dict__[component_key] = component_value
+
+    def positions_at(self, position: Pos) -> List[Pos]:
+        """The footprint this building would occupy if anchored at `position`.
+
+        The anchor is the top left tile; the footprint extends right and down.
+        """
+        width, height = self.size
+        return [(position[0] + dx, position[1] + dy)
+                for dx in range(width) for dy in range(height)]
 
     def add_component(self, component: BuildingComponent):
         self.components.append(component)

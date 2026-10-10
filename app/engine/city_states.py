@@ -68,8 +68,10 @@ class CityMenuState(State):
             return
         if self.menu.current_tab == 'Draft':
             self._draft(opt)
-        else:
+        elif self.menu.current_tab == 'Build':
             self._build(opt)
+        else:
+            self._upgrade(opt)
 
     def _draft(self, spec):
         """Buy a unit outright: pay, then spawn it next to the city."""
@@ -95,6 +97,19 @@ class CityMenuState(State):
         game.memory['pending_building'] = (self.city, building, costs)
         game.memory['next_state'] = 'place_building'
         game.state.change('transition_to_with_pop')
+
+    def _upgrade(self, upgrade):
+        """Buy an upgrade outright: pay, then swap the building where it stands."""
+        costs = city_funcs.get_building_cost(upgrade.new, self.city)
+        if not city_funcs.can_purchase(self.city) or not city_funcs.can_afford(self.city, *costs) \
+                or not city_funcs.upgrade_fits(self.city, upgrade):
+            get_sound_thread().play_sfx('Error')
+            return
+        city_funcs.pay_costs(self.city, *costs)
+        city_funcs.mark_purchase(self.city)
+        city_funcs.upgrade_building(self.city, upgrade)
+        get_sound_thread().play_sfx('Select 1')
+        self.menu.build_options()
 
     def update(self):
         self.menu.update()

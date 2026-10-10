@@ -8,6 +8,7 @@ from app.engine.utils.ltcache import ltcached
 if TYPE_CHECKING:
     from app.engine.objects.city import CityObject
     from app.engine.objects.building import BuildingObject
+    from app.engine.objects.unit import UnitObject
 
 class Defaults():
     pass
@@ -47,6 +48,14 @@ def available(building, city) -> bool:
             if not component.available(city):
                 return False
     return True
+
+def outpost_buildable(building, city) -> bool:
+    """Whether this building may be built in a city that is still an outpost."""
+    for component in building.components:
+        if component.defines('outpost_buildable'):
+            if component.outpost_buildable(city):
+                return True
+    return False
 
 def target_restrict(building, city, position) -> bool:
     """Whether this building may be placed at the given position in this city."""

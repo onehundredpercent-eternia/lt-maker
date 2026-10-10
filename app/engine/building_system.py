@@ -12,6 +12,7 @@ from app.engine.utils.ltcache import ltcached
 if TYPE_CHECKING:
     from app.engine.objects.city import CityObject
     from app.engine.objects.building import BuildingObject
+    from app.engine.objects.unit import UnitObject
 
 class Defaults():
     pass
@@ -52,6 +53,14 @@ def available(building, city) -> bool:
                 return False
     return True
 
+def outpost_buildable(building, city) -> bool:
+    """Whether this building may be built in a city that is still an outpost."""
+    for component in building.components:
+        if component.defines('outpost_buildable'):
+            if component.outpost_buildable(city):
+                return True
+    return False
+
 def target_restrict(building, city, position) -> bool:
     """Whether this building may be placed at the given position in this city."""
     for component in building.components:
@@ -91,4 +100,26 @@ def influence_range_modification(city: CityObject):
                     values.append(component.influence_range_modification(city))
 
     result = utils.numeric_accumulate(values)
+    return result
+
+def starting_level_modification(city: CityObject, unit: UnitObject):
+    values = []
+    for building in city.buildings[:]:
+        for component in building.components:
+            if component.defines('starting_level_modification'):
+                if component.ignore_conditional or condition(building, city):
+                    values.append(component.starting_level_modification(city, unit))
+
+    result = utils.numeric_accumulate(values)
+    return result
+
+def stat_change(city: CityObject, unit: UnitObject):
+    values = []
+    for building in city.buildings[:]:
+        for component in building.components:
+            if component.defines('stat_change'):
+                if component.ignore_conditional or condition(building, city):
+                    values.append(component.stat_change(city, unit))
+
+    result = utils.list(values)
     return result

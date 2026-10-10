@@ -874,3 +874,23 @@ class BuildingOption(BuildingRowOption):
     def draw(self, surf, x, y):
         super().draw(surf, x, y)
         draw_resource_cost(surf, x + self.width(), y, self.cost(), self.row_color())
+
+
+class UpgradeBuildingOption(BuildingOption):
+    """Manage-tab row: a building the city can upgrade one of its own to, with the
+    gold/food/production cost. Greyed when unaffordable or when it would not fit."""
+    def __init__(self, idx, upgrade, city):
+        super().__init__(idx, upgrade.new, city)
+        self.upgrade = upgrade
+
+    def get(self):
+        return self.upgrade
+
+    def get_help_box(self):
+        text = text_funcs.translate('Upgrade %s to %s.') % (self.upgrade.old.name, self.upgrade.new.name)
+        if self.building.desc:
+            text += ' ' + self.building.desc
+        return help_menu.HelpDialog(text)
+
+    def _affordable(self):
+        return super()._affordable() and city_funcs.upgrade_fits(self.city, self.upgrade)

@@ -11,20 +11,28 @@ production cost the moment the player selects a row, and the unit spawns (or the
 building goes straight to placement) on the spot. There is no production queue.
 """
 
-from typing import List, Optional, Set, Tuple
+from typing import List, NamedTuple, Optional, Set, Tuple
 
-from app.utilities import str_utils
+from app.utilities import str_utils, utils
 from app.utilities.typing import NID, Pos
 
+from app.data.cities import City
+from app.data.database.buildings import BuildingPrefab
 from app.data.database.database import DB
 from app.data.database.level_units import GenericUnit
 from app.data.database.tech_components import Combine
 
-from app.engine import action, building_system
+from app.engine import action, building_system, item_system, unit_funcs
 from app.engine.objects.building import BuildingObject
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.city import CityObject
 from app.engine.game_state import game
+
+
+class BuildingUpgrade(NamedTuple):
+    """One upgrade a city could buy."""
+    old: BuildingObject  #: the building standing in the city
+    new: BuildingObject  #: what it would become: not in the city yet, anchored on the same tile
 
 
 # ---------------------------------------------------------------------------
@@ -68,11 +76,8 @@ def get_tile_yield(pos: Pos) -> dict:
 def get_territory_positions(city: CityObject) -> Set[Pos]:
     """Every tile the city draws terrain income from: its center plus all influence
     tiles (Manhattan radius). In-bounds tiles only."""
-    positions = {pos for pos in get_all_influence_positions(city)
-                 if game.board.check_bounds(pos)}
-    if city.position and game.board.check_bounds(city.position):
-        positions.add(city.position)
-    return positions
+    positions = get_all_influence_positions(city) | set(city.center_positions)
+    return {pos for pos in positions if game.board.check_bounds(pos)}
 
 
 def get_building_output(building: BuildingObject, city: CityObject) -> dict:
@@ -118,7 +123,10 @@ def _tech_gated_values(key: NID) -> Set[NID]:
 
 def get_draftable_units(city: CityObject) -> List[dict]:
     """Flat list of unit-draft specs contributed by all of the city's buildings, minus
-    any whose class is tech-locked (`draft_unlock`) and not yet unlocked by the city's team."""
+    any whose class is tech-locked (`draft_unlock`) and not yet unlocked by the city's team.
+    An outpost drafts nothing."""
+    if city.is_outpost:
+        return []
     gated = _tech_gated_values('draft_unlock')
     unlocked = game.get_tech_set(city.team, 'draft_unlock')
     specs: List[dict] = []
@@ -136,6 +144,7 @@ def get_buildable_buildings(city: CityObject) -> List[BuildingObject]:
 
     A building is offered only if it is `available`, has at least one valid placement
     tile, and (if tech-locked via `build_unlock`) has been unlocked by the city's team.
+    An outpost is offered only the buildings marked OutpostBuildable.
     """
     gated = _tech_gated_values('build_unlock')
     unlocked = game.get_tech_set(city.team, 'build_unlock')
@@ -147,25 +156,52 @@ def get_buildable_buildings(city: CityObject) -> List[BuildingObject]:
         candidate.owner_nid = city.nid
         if not building_system.available(candidate, city):
             continue
+        if city.is_outpost and not building_system.outpost_buildable(candidate, city):
+            continue
         if not get_valid_placement_tiles(city, candidate):
             continue
         candidates.append(candidate)
     return candidates
 
 
+def get_building_upgrades(city: CityObject) -> List[BuildingUpgrade]:
+    """Every upgrade open to a building standing in the city, from its UpgradesTo
+    component: an Outpost to a Town Hall, for one. A building that is tech-locked
+    (`build_unlock`) cannot be upgraded to until the city's team unlocks it. Whether
+    the city can pay for an upgrade, and whether it fits (see `upgrade_fits`), is not
+    decided here."""
+    gated = _tech_gated_values('build_unlock')
+    unlocked = game.get_tech_set(city.team, 'build_unlock')
+    upgrades: List[BuildingUpgrade] = []
+    for building in city.buildings:
+        if not building.position or not building.upgrades_to:
+            continue
+        for nid in building.upgrades_to.upgrades_to(city):
+            if nid in gated and nid not in unlocked:
+                continue
+            candidate = BuildingObject.from_prefab(DB.buildings.get(nid))
+            candidate.owner_nid = city.nid
+            candidate.position = building.position
+            upgrades.append(BuildingUpgrade(building, candidate))
+    return upgrades
+
+
+def upgrade_fits(city: CityObject, upgrade: BuildingUpgrade) -> bool:
+    """Whether the new building may stand where the old one does: its whole footprint
+    on the map, covering no building but the one it replaces, and somewhere the new
+    building itself allows (`target_restrict`)."""
+    for tile in upgrade.new.occupied_positions:
+        if not game.board.check_bounds(tile):
+            return False
+        if game.building_position_index.get(tile, upgrade.old.uid) != upgrade.old.uid:
+            return False
+    return building_system.target_restrict(upgrade.new, city, upgrade.new.position)
+
+
 def get_all_influence_positions(city: CityObject) -> Set[Pos]:
-    """Every tile within the city's effective influence (Manhattan), excluding center."""
-    if not city.position:
-        return set()
-    cx, cy = city.position
-    influence = get_influence(city)
-    positions: Set[Pos] = set()
-    for r in range(1, influence + 1):
-        for i in range(-r, r + 1):
-            dy = r - abs(i)
-            positions.add((cx + i, cy + dy))
-            positions.add((cx + i, cy - dy))
-    return positions
+    """Every tile within the city's effective influence (Manhattan, measured from the
+    nearest tile of the center), excluding the center."""
+    return city.positions_within(get_influence(city))
 
 
 def get_valid_placement_tiles(city: CityObject, building: BuildingObject) -> List[Pos]:
@@ -240,6 +276,34 @@ def mark_purchase(city: CityObject, produced: bool = True):
     action.do(action.SetCityProduced(city, produced))
 
 
+def upgrade_building(city: CityObject, upgrade: BuildingUpgrade):
+    """Swap a building in the city for what it upgrades to. Does not pay for it - the
+    caller pays (see pay_costs) and checks `upgrade_fits` first."""
+    action.do(action.UpgradeBuilding(city, upgrade.old, upgrade.new))
+
+
+def apply_building_bonuses(city: CityObject, unit: UnitObject):
+    """Give a freshly drafted unit what the city's buildings grant it: extra starting
+    levels (LevelIncrease) and flat stat bonuses (StatChange). Neither can take the
+    unit past its class's max level or max stats."""
+    klass = DB.classes.get(unit.klass)
+    extra_levels = building_system.starting_level_modification(city, unit)
+    extra_levels = min(extra_levels, klass.max_level - unit.level)
+    if extra_levels > 0:
+        unit_funcs.auto_level(unit, unit.level, extra_levels)
+        unit.level += extra_levels
+
+    bonus = {}
+    for stat_changes in building_system.stat_change(city, unit):
+        for stat_nid, value in stat_changes.items():
+            bonus[stat_nid] = bonus.get(stat_nid, 0) + value
+    for stat_nid, value in bonus.items():
+        max_stat = klass.max_stats.get(stat_nid, 30) + unit.stat_cap_modifiers.get(stat_nid, 0)
+        bonus[stat_nid] = min(value, max_stat - unit.stats[stat_nid])
+    if bonus:
+        unit_funcs.apply_stat_changes(unit, bonus)
+
+
 def draft_unit(city: CityObject, spec: dict) -> Optional[UnitObject]:
     """Create a drafted unit of the spec's class/level on the nearest open tile to the
     city, already finished for the turn (greyed out) so it cannot act the turn it is
@@ -252,6 +316,7 @@ def draft_unit(city: CityObject, spec: dict) -> Optional[UnitObject]:
     prefab = GenericUnit(unit_nid, None, spec['level'], klass, faction, [], [], city.team, 'None')
     new_unit = UnitObject.from_prefab(prefab, game.current_mode)
     new_unit.party = game.current_party
+    apply_building_bonuses(city, new_unit)
     action.do(action.RegisterUnit(new_unit))
     pos = game.target_system.get_nearest_open_tile(new_unit, city.position)
     if pos:
@@ -259,6 +324,103 @@ def draft_unit(city: CityObject, spec: dict) -> Optional[UnitObject]:
         # Wait is built after arrival - it snapshots the unit's position for fog of war
         action.do(action.Wait(new_unit))
     return new_unit
+
+
+# ---------------------------------------------------------------------------
+# Carried food
+# ---------------------------------------------------------------------------
+
+def get_carried_food(unit: UnitObject) -> int:
+    """Total food held in the food items the unit carries."""
+    return sum(item.data['food'] for item in unit.items if item.food)
+
+
+def spend_carried_food(unit: UnitObject, amount: int):
+    """Take `amount` food out of the unit's food items, emptying the first before
+    touching the next, as reversible actions. An item that runs out is used up. The
+    caller checks the unit has enough."""
+    for item in unit.items.copy():
+        if amount <= 0:
+            break
+        if item.food:
+            spent = min(amount, item.data['food'])
+            if spent:
+                action.do(action.SetObjData(item, 'food', item.data['food'] - spent))
+            amount -= spent
+            if item_system.is_broken(unit, item):
+                item_system.on_broken(unit, item)
+
+
+# ---------------------------------------------------------------------------
+# Founding
+# ---------------------------------------------------------------------------
+
+def get_outpost_prefab() -> Optional[BuildingPrefab]:
+    """The building a newly founded city starts as: the one carrying the Outpost
+    component."""
+    for prefab in DB.buildings:
+        if prefab.outpost:
+            return prefab
+    return None
+
+
+def new_outpost_city(unit: UnitObject) -> Tuple[CityObject, BuildingObject]:
+    """A city for `unit` to found, and the Outpost that will be its center, anchored
+    on the unit's tile. Neither is on the map yet: the city is not registered and the
+    Outpost is not in it (see action.FoundCity)."""
+    outpost_prefab = get_outpost_prefab()
+    prefab = City(str_utils.get_next_name(outpost_prefab.name, [city.nid for city in game.city_registry.values()]))
+    prefab.team = unit.team
+    prefab.position = unit.position
+    city = CityObject.from_prefab(prefab)
+    outpost = BuildingObject.from_prefab(outpost_prefab)
+    outpost.position = unit.position
+    outpost.owner_nid = city.nid
+    return city, outpost
+
+
+def get_found_cost(city: CityObject, outpost: BuildingObject) -> Tuple[int, int]:
+    """The (gold, food) it costs to found `city`, from its Outpost's Cost component.
+    Gold comes from the team; food from what the founding unit carries. A new city
+    has no production store to draw on, so a production cost is not charged."""
+    gold_cost, food_cost, _ = get_building_cost(outpost, city)
+    return gold_cost, food_cost
+
+
+def can_found_city(unit: UnitObject) -> bool:
+    """Whether `unit` may found a city where it stands. The Outpost's whole footprint
+    must be on the map, clear of other buildings, at least `city_min_distance` tiles
+    from every other city's center, and somewhere the Outpost itself allows
+    (`target_restrict`); and the unit's team and the unit must cover the cost."""
+    if not get_outpost_prefab():
+        return False
+    city, outpost = new_outpost_city(unit)
+    footprint = outpost.occupied_positions
+    if not all(game.board.check_bounds(tile) for tile in footprint):
+        return False
+    if any(tile in game.building_position_index for tile in footprint):
+        return False
+    min_distance = DB.constants.value('city_min_distance')
+    for other in game.cities:
+        if any(utils.calculate_distance(tile, center) < min_distance
+               for tile in footprint for center in other.center_positions):
+            return False
+    if not building_system.target_restrict(outpost, city, outpost.position):
+        return False
+    gold_cost, food_cost = get_found_cost(city, outpost)
+    return game.teams.get(unit.team).gold >= gold_cost and get_carried_food(unit) >= food_cost
+
+
+def found_city(unit: UnitObject) -> CityObject:
+    """Found a city where `unit` stands and pay for it. The caller checks
+    `can_found_city` first."""
+    city, outpost = new_outpost_city(unit)
+    gold_cost, food_cost = get_found_cost(city, outpost)
+    if gold_cost:
+        action.do(action.ChangeTeamGold(game.teams.get(unit.team), -gold_cost))
+    spend_carried_food(unit, food_cost)
+    action.do(action.FoundCity(city, outpost))
+    return city
 
 
 # ---------------------------------------------------------------------------

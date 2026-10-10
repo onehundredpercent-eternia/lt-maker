@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from app.engine.objects.item import ItemObject
     from app.engine.objects.unit import UnitObject
     from app.engine.objects.region import RegionObject
+    from app.engine.objects.city import CityObject
     from app.engine.combat.playback import PlaybackBrush
 
 from app.utilities.typing import NID
@@ -488,6 +489,37 @@ class EventOnRemove(EventTrigger):
     nid: ClassVar[NID] = 'event_on_remove'
     hidden: ClassVar[bool] = True
     unit1: UnitObject #: the unit bearing the skill to be removed.
+
+@dataclass(init=True)
+class CityFounded(EventTrigger):
+    """
+    Occurs when a unit founds a city, after the city is on the map.
+    """
+    nid: ClassVar[NID] = 'city_founded'
+    unit1: UnitObject #: the unit that founded the city.
+    city: CityObject #: the city that was founded.
+    position: Tuple[int, int] #: the position of the founding unit.
+
+@dataclass(init=True)
+class CitySeized(EventTrigger):
+    """
+    Occurs when a unit seizes a city, after the city has changed teams.
+    """
+    nid: ClassVar[NID] = 'city_seized'
+    unit1: UnitObject #: the unit that seized the city.
+    city: CityObject #: the city that was seized.
+    position: Tuple[int, int] #: the position of the seizing unit.
+    old_team: NID #: the team that owned the city before it was seized.
+
+@dataclass(init=True)
+class CityRazed(EventTrigger):
+    """
+    Occurs when a unit razes a city, after the city and its buildings are gone.
+    """
+    nid: ClassVar[NID] = 'city_razed'
+    unit1: UnitObject #: the unit that razed the city.
+    city: CityObject #: the city that was razed.
+    position: Tuple[int, int] #: the position of the razing unit.
 
 @dataclass(init=True)
 class UnlockStaff(EventTrigger):
