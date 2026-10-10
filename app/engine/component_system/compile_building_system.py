@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Dict
-from app.engine.codegen.codegen_utils import get_codegen_header
+from app.engine.codegen.codegen_utils import GeneratedSource, get_codegen_header
 from app.engine.component_system.utils import ARG_TYPE_MAP, HookInfo, ResolvePolicy
 
 # City-aggregate hooks: mirror skill_system. `city` is the primary object (like `unit`);
@@ -64,8 +64,8 @@ def {hook_name}({func_signature}):
 def compile_building_system():
     import os
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    compiled_building_system = open(os.path.join(
-        dir_path, '..', 'building_system.py'), 'w')
+    compiled_building_system = GeneratedSource(os.path.join(
+        dir_path, '..', 'building_system.py'))
     building_system_base = open(os.path.join(
         dir_path, 'building_system_base.py'), 'r')
 
