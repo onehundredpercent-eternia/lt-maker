@@ -23,6 +23,7 @@ from app.editor.stat_widget import StatListWidget, StatAverageDialog, ClassStatA
 from app.editor.weapon_editor.weapon_rank import WexpGainDelegate, WexpGainMultiAttrModel
 from app.editor.learned_skill_delegate import LearnedSkillDelegate
 from app.editor.icons import ItemIcon80, MapSpriteBox
+from app.editor.item_list_widget import ItemListWidget
 from app.editor.lib.components.validated_line_edit import NidLineEdit
 from app.editor.component_editor_types import T
 
@@ -147,6 +148,12 @@ class NewClassProperties(QWidget):
         self.field_widget = AppendMultiListWidget([], "Class Fields", attrs, UnitFieldDelegate, self, model=KeyValueDoubleListModel)
         field_section.addWidget(self.field_widget)
 
+        item_section = QHBoxLayout()
+        self.item_widget = ItemListWidget(_("Default Items"), self)
+        self.item_widget.setToolTip(_("The items a unit of this class is drafted with"))
+        self.item_widget.items_updated.connect(self.items_changed)
+        item_section.addWidget(self.item_widget)
+
         self.map_sprite_box = MapSpriteBox()
         self.map_sprite_box.sourceChanged.connect(self.select_map_sprite)
 
@@ -177,6 +184,7 @@ class NewClassProperties(QWidget):
         right_section.addWidget(QHLine())
         right_section.addLayout(skill_section)
         right_section.addLayout(field_section)
+        right_section.addLayout(item_section)
         right_section.addWidget(self.map_sprite_box)
 
         combat_anim_section = QHBoxLayout()
@@ -256,6 +264,9 @@ class NewClassProperties(QWidget):
 
     def max_level_changed(self, val):
         self.current.max_level = val
+
+    def items_changed(self):
+        self.current.default_items = self.item_widget.get_items()
 
     def turns_into_changed(self):
         self.current.turns_into = self.turns_into_box.edit.currentText()
@@ -368,6 +379,7 @@ class NewClassProperties(QWidget):
             current.wexp_gain = default_weapons
             self.wexp_gain_widget.set_current(current.wexp_gain)
             self.field_widget.set_current(current.fields)
+            self.item_widget.set_current(current.default_items)
 
             self.icon_edit.set_current(current.icon_nid, current.icon_index)
             self.map_sprite_box.set_current(current, current.map_sprite_nid)

@@ -87,9 +87,12 @@ def get_from_xml(parent_dir: str, xml_fn: str) -> list:
             map_sprite_nid = None
 
         new_class = Klass(
-            nid, name, desc, tier, movement_group, promotes_from, turns_into,
-            tags, max_level, bases, growths, growth_bonus, promotion, maxes,
-            learned_skills, wexp_gain, icon_nid, icon_index, map_sprite_nid, None, [])
+            nid=nid, name=name, desc=desc, tier=tier, movement_group=movement_group,
+            promotes_from=promotes_from, turns_into=turns_into, tags=tags,
+            max_level=max_level, bases=bases, growths=growths, growth_bonus=growth_bonus,
+            promotion=promotion, max_stats=maxes, learned_skills=learned_skills,
+            wexp_gain=wexp_gain, icon_nid=icon_nid, icon_index=icon_index,
+            map_sprite_nid=map_sprite_nid)
         class_list.append(new_class)
 
     # Turns into

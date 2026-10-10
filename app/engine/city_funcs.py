@@ -306,14 +306,16 @@ def apply_building_bonuses(city: CityObject, unit: UnitObject):
 
 def draft_unit(city: CityObject, spec: dict) -> Optional[UnitObject]:
     """Create a drafted unit of the spec's class/level on the nearest open tile to the
-    city, already finished for the turn (greyed out) so it cannot act the turn it is
-    bought. Does not pay for it - the caller pays (see pay_costs)."""
+    city, carrying its class's default items, already finished for the turn (greyed
+    out) so it cannot act the turn it is bought. Does not pay for it - the caller pays
+    (see pay_costs)."""
     klass = spec['klass']
     if klass not in DB.classes:
         return None
     unit_nid = str_utils.get_next_int('201', [u.nid for u in game.units])
     faction = DB.factions[0].nid if DB.factions else None
-    prefab = GenericUnit(unit_nid, None, spec['level'], klass, faction, [], [], city.team, 'None')
+    items = [item.copy() for item in DB.classes.get(klass).default_items]
+    prefab = GenericUnit(unit_nid, None, spec['level'], klass, faction, items, [], city.team, 'None')
     new_unit = UnitObject.from_prefab(prefab, game.current_mode)
     new_unit.party = game.current_party
     apply_building_bonuses(city, new_unit)

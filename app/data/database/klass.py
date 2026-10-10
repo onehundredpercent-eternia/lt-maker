@@ -26,6 +26,9 @@ class Klass(Prefab):
     # 4X: gold this class's units cost their team each upkeep (reduced per-unit by
     # `upkeep_cost_<tag>` techs; see city_funcs.get_unit_upkeep).
     upkeep_cost: int = 0
+    # 4X: the items a unit of this class is drafted with, as [item_nid, droppable]
+    # rows like a unit's starting items (see city_funcs.draft_unit).
+    default_items: list = field(default_factory=list)
 
     bases: dict = field(default_factory=dict)
     growths: dict = field(default_factory=dict)
@@ -52,6 +55,14 @@ class Klass(Prefab):
     def get_skills(self) -> List[NID]:
         return [skill[1] for skill in self.learned_skills]
 
+    def get_items(self) -> List[NID]:
+        return [item[0] for item in self.default_items]
+
+    def replace_item_nid(self, old_nid, new_nid):
+        for item in self.default_items:
+            if item[0] == old_nid:
+                item[0] = new_nid
+
     def replace_skill_nid(self, old_nid, new_nid):
         for skill in self.learned_skills:
             if skill[1] == old_nid:
@@ -63,7 +74,7 @@ class Klass(Prefab):
     def save_attr(self, name, value):
         if name in ('bases', 'growths', 'growth_bonus', 'promotion', 'max_stats', 'fields', 'tags'):
             return copy.deepcopy(value)  # So we don't make a copy
-        elif name == 'learned_skills':
+        elif name in ('learned_skills', 'default_items'):
             return [val.copy() for val in value]  # So we don't make a copy
         elif name == 'wexp_gain':
             return {k: v.save() for (k, v) in self.wexp_gain.items()}
@@ -102,9 +113,8 @@ class ClassCatalog(CategorizedCatalog[Klass]):
         max_stats = {stat.nid: stat.maximum for stat in db.stats}
         wexp_gain = {weapon_nid: db.weapons.default(db) for weapon_nid in db.weapons.keys()}
         new_class = Klass(
-            nid, name, "", 1, movement_group, None, [], [], 20,
-            bases, growths, growth_bonus, promotion, max_stats,
-            [], wexp_gain)
-        new_class.fields = []
+            nid=nid, name=name, movement_group=movement_group,
+            bases=bases, growths=growths, growth_bonus=growth_bonus,
+            promotion=promotion, max_stats=max_stats, wexp_gain=wexp_gain)
         self.append(new_class)
         return new_class

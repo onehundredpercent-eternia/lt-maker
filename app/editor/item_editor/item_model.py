@@ -47,6 +47,7 @@ class ItemModel(DragDropCollectionModel):
             nid = item.nid
             affected_units = [unit for unit in DB.units if nid in unit.get_items()]
             affected_levels = [level for level in DB.levels if any(nid in unit.get_items() for unit in level.units)]
+            affected_classes = [klass for klass in DB.classes if nid in klass.get_items()]
             affected_items = item_components.get_items_using(ComponentType.Item, nid, DB)
             affected_skills = skill_components.get_skills_using(ComponentType.Item, nid, DB)
 
@@ -61,6 +62,11 @@ class ItemModel(DragDropCollectionModel):
                 model = LevelModel
                 msg = "Deleting Item <b>%s</b> would affect units in these levels." % nid
                 deletion_tabs.append(DeletionTab(affected_levels, model, msg, "Levels"))
+            if affected_classes:
+                from app.editor.class_editor.class_model import ClassModel
+                model = ClassModel
+                msg = "Deleting Item <b>%s</b> would affect these classes." % nid
+                deletion_tabs.append(DeletionTab(affected_classes, model, msg, "Classes"))
             if affected_items:
                 model = ItemModel
                 msg = "Deleting Item <b>%s</b> would affect these items" % nid
@@ -86,6 +92,8 @@ class ItemModel(DragDropCollectionModel):
         for level in DB.levels:
             for unit in level.units:
                 unit.replace_item_nid(old_nid, new_nid)
+        for klass in DB.classes:
+            klass.replace_item_nid(old_nid, new_nid)
         swap_values(DB.items.values(), ComponentType.Item, old_nid, new_nid)
         swap_values(DB.skills.values(), ComponentType.Item, old_nid, new_nid)
 
