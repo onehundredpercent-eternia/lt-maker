@@ -430,9 +430,8 @@ class GameQueryEngine():
             Optional[NID]: the nid of the region, or None if the position is invalid
         """
         pos = self._resolve_pos(pos)
-        terrain_nid = self.game.get_terrain_nid(self.game.tilemap, pos)
-        terrain = DB.terrain.get(terrain_nid)
-        return terrain.status if terrain.status else ''
+        terrain_skill = self.game.get_terrain(self.game.tilemap, pos).status
+        return terrain_skill if terrain_skill else ''
 
     def has_achievement(self, nid) -> bool:
         """Checks if an achievement is completed
