@@ -511,9 +511,8 @@ class GameQueryEngine():
         return None
 
     def check_advantage(self, unit, target, item1, item2, advantage=True) -> bool:
-        """Returns whether the unit has an bonus or malus from triangle mechanics (accounting for reavers)"""
+        """Returns whether the unit has an bonus from triangle mechanics (accounting for reavers).
+        No advantage == None, Disadvantage == False
+        """
         from app.engine import combat_calcs
-        mod = combat_calcs.compute_advantage_attr(unit, target, item1, item2, 'accuracy')
-        if advantage:
-            return mod > 0
-        return mod < 0
+        return combat_calcs.compute_advantage_indicator(unit, target, item1, item2)

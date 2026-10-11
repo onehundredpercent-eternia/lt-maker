@@ -121,6 +121,25 @@ def compute_advantage_attr(attacker, defender, weapon, def_weapon, attribute: st
         mod += int(getattr(disadv, attribute))
     return mod
 
+def compute_advantage_indicator(attacker, defender, weapon, def_weapon) -> Optional[bool]:
+    '''Returns True on advantage, False on disadvantage, and None if neither applies'''
+    adv = compute_advantage(attacker, defender, weapon, def_weapon)
+    disadv = compute_advantage(attacker, defender, weapon, def_weapon, False)
+
+    if item_system.show_weapon_advantage(attacker, weapon, defender, def_weapon):
+        return True
+    elif item_system.show_weapon_disadvantage(attacker, weapon, defender, def_weapon):
+        return False
+    elif adv and adv.modification > 0:
+        return True
+    elif adv and adv.modification < 0:
+        return False
+    elif disadv and disadv.modification > 0:
+        return False
+    elif disadv and disadv.modification < 0:
+        return True
+    return None
+
 def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
     # A unit that targets itself is not its own enemy
     if defender is attacker:
