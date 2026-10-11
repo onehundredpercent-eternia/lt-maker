@@ -148,7 +148,8 @@ class TurnChangeState(MapState):
             # If entering player phase
             if game.phase.get_current() == 'player':
                 for unit in game.get_all_units(): # Matches behavior when loading a save
-                    action.do(action.SetPreviousPosition(unit))
+                    if unit.previous_position != unit.position:
+                        action.do(action.SetPreviousPosition(unit))
                 game.boundary.reset() # Recalc threat zone since previous position may be an input
                 action.do(action.IncrementTurn())
                 action.do(action.UpdateRecords('turn', None))
