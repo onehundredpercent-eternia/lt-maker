@@ -421,6 +421,19 @@ class GameQueryEngine():
         pos = self._resolve_pos(pos)
         return self.game.get_terrain_nid(self.game.tilemap, pos)
 
+    def get_terrain_skill(self, pos) -> Optional[NID]:
+        """Returns the skill granted by the terrain at position,
+        or, if unit is provided, the terrain underneath the unit.
+        Args:
+            pos: Position tuple or unit
+        Returns:
+            Optional[NID]: the nid of the region, or None if the position is invalid
+        """
+        pos = self._resolve_pos(pos)
+        terrain_nid = self.game.get_terrain_nid(self.game.tilemap, pos)
+        terrain = DB.terrain.get(terrain_nid)
+        return terrain.status if terrain.status else ''
+
     def has_achievement(self, nid) -> bool:
         """Checks if an achievement is completed
 
@@ -496,3 +509,11 @@ class GameQueryEngine():
                 mcost <= unit_to_move.get_movement():
             return new_position
         return None
+
+    def check_advantage(self, unit, target, item1, item2, advantage=True) -> bool:
+        """Returns whether the unit has an bonus or malus from triangle mechanics (accounting for reavers)"""
+        from app.engine import combat_calcs
+        mod = combat_calcs.compute_advantage_attr(unit, target, item1, item2, 'accuracy')
+        if advantage:
+            return mod > 0
+        return mod < 0
