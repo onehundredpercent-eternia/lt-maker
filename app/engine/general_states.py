@@ -2905,8 +2905,7 @@ class ShopState(State):
         self.money_counter_disp = gui.PopUpDisplay((223, 32))
 
         self.bg = background.create_background('rune_background')
-        # Engine hack: cache the purchases for use in events
-        self.purchases = []
+        self.purchases = [] # Caches the purchases for use in events
         # Clear the list from the previous trip
         action.do(action.SetLevelVar('_shop_purchases', self.purchases.copy()))
 
@@ -2982,7 +2981,6 @@ class ShopState(State):
                         get_sound_thread().play_sfx('GoldExchange')
                         action.do(action.GainMoney(game.current_party, -value))
                         action.do(action.UpdateRecords('money', (game.current_party, -value)))
-                        # Engine hack: cache the purchases for use in events
                         self.purchases.append(item.nid)
                         action.do(action.SetLevelVar('_shop_purchases', self.purchases.copy()))
                         stock_marker = '__shop_%s_%s' % (self.shop_id, item.nid)
