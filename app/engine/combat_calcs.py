@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional, Tuple
 from app.engine.utils.ltcache import ltcached
 from app.engine.combat_calcs_utils import resolve_defensive_formula, resolve_offensive_formula
@@ -121,24 +122,29 @@ def compute_advantage_attr(attacker, defender, weapon, def_weapon, attribute: st
         mod += int(getattr(disadv, attribute))
     return mod
 
-def compute_advantage_indicator(attacker, defender, weapon, def_weapon) -> Optional[bool]:
-    '''Returns True on advantage, False on disadvantage, and None if neither applies'''
+class WeaponAdvantage(str, Enum):
+    ADVANTAGE = 'advantage'
+    DISADVANTAGE = 'disadvantage'
+    NEUTRAL = 'neutral'
+
+    def __bool__(self):
+        # Every member is a non-empty string, so a bare `if advantage:` would always pass
+        raise TypeError("WeaponAdvantage has no truth value, compare it instead (e.g. == 'advantage')")
+
+def compute_overall_advantage(attacker, defender, weapon, def_weapon) -> WeaponAdvantage:
+    '''Which way the weapon triangle leans for the attacker, after reaver-style modifiers'''
     adv = compute_advantage(attacker, defender, weapon, def_weapon)
     disadv = compute_advantage(attacker, defender, weapon, def_weapon, False)
 
-    if item_system.show_weapon_advantage(attacker, weapon, defender, def_weapon):
-        return True
-    elif item_system.show_weapon_disadvantage(attacker, weapon, defender, def_weapon):
-        return False
-    elif adv and adv.modification > 0:
-        return True
+    if adv and adv.modification > 0:
+        return WeaponAdvantage.ADVANTAGE
     elif adv and adv.modification < 0:
-        return False
+        return WeaponAdvantage.DISADVANTAGE
     elif disadv and disadv.modification > 0:
-        return False
+        return WeaponAdvantage.DISADVANTAGE
     elif disadv and disadv.modification < 0:
-        return True
-    return None
+        return WeaponAdvantage.ADVANTAGE
+    return WeaponAdvantage.NEUTRAL
 
 def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
     # A unit that targets itself is not its own enemy

@@ -5,6 +5,7 @@ from app.utilities.str_utils import is_int
 
 if TYPE_CHECKING:
     from app.data.database.klass import Klass
+    from app.engine.combat_calcs import WeaponAdvantage
     from app.engine.game_state import GameState
     from app.engine.objects.item import ItemObject
     from app.engine.objects.region import RegionObject
@@ -510,13 +511,26 @@ class GameQueryEngine():
             return new_position
         return None
 
-    def check_advantage(self, unit, target, item1, item2) -> Optional[bool]:
-        """Returns whether the unit has an bonus from triangle mechanics (accounting for reavers).
-        No advantage == None, Disadvantage == False
+    def check_advantage(self, unit, target, item1, item2) -> WeaponAdvantage:
+        """Returns which way the weapon triangle leans for the unit (accounting for reavers).
+        An item that only shows an advantage or disadvantage arrow does not count.
+
+        Example usage:
+        * `check_advantage(unit, target, item, target.get_weapon()) == 'advantage'`
+
+        Args:
+            unit: unit in question
+            target: unit it is fighting
+            item1: the unit's item
+            item2: the target's item
+
+        Returns:
+            WeaponAdvantage: 'advantage', 'disadvantage' or 'neutral'.
+            It has no truth value of its own, so compare it against one of those.
         """
         from app.engine import combat_calcs
         unit   = self._resolve_to_unit(unit)
         target = self._resolve_to_unit(target)
         item1  = self.get_item(unit, item1)
         item2  = self.get_item(target, item2)
-        return combat_calcs.compute_advantage_indicator(unit, target, item1, item2)
+        return combat_calcs.compute_overall_advantage(unit, target, item1, item2)

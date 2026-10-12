@@ -620,15 +620,20 @@ class UIView():
         return surf
 
     def draw_adv_arrows(self, surf, attacker, defender, weapon, def_weapon, topleft):
-        adv = combat_calcs.compute_advantage_indicator(attacker, defender, weapon, def_weapon)
-
         up_arrow = engine.subsurface(SPRITES.get('arrow_advantage'), (ANIMATION_COUNTERS.arrow_counter.count * 7, 0, 7, 10))
         down_arrow = engine.subsurface(SPRITES.get('arrow_advantage'), (ANIMATION_COUNTERS.arrow_counter.count * 7, 10, 7, 10))
 
-        if adv is True:
+        # An item that asks for an arrow gets it, whatever the weapon triangle says
+        if item_system.show_weapon_advantage(attacker, weapon, defender, def_weapon):
             surf.blit(up_arrow, topleft)
-        elif adv is False:
+        elif item_system.show_weapon_disadvantage(attacker, weapon, defender, def_weapon):
             surf.blit(down_arrow, topleft)
+        else:
+            advantage = combat_calcs.compute_overall_advantage(attacker, defender, weapon, def_weapon)
+            if advantage is combat_calcs.WeaponAdvantage.ADVANTAGE:
+                surf.blit(up_arrow, topleft)
+            elif advantage is combat_calcs.WeaponAdvantage.DISADVANTAGE:
+                surf.blit(down_arrow, topleft)
 
     def draw_attack_info(self, surf, attacker, weapon, defender, a_assist=None, d_assist=None):
         def has_attacker_strike_partner() -> bool:
