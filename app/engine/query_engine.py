@@ -427,7 +427,8 @@ class GameQueryEngine():
         Args:
             pos: Position tuple or unit
         Returns:
-            Optional[NID]: the nid of the region, or None if the position is invalid
+            Optional[NID]: the nid of the skill. If the position is invalid, 
+            returns the nid of default terrain's status (which may be None)
         """
         pos = self._resolve_pos(pos)
         terrain_skill = self.game.get_terrain(self.game.tilemap, pos).status
@@ -509,7 +510,7 @@ class GameQueryEngine():
             return new_position
         return None
 
-    def check_advantage(self, unit, target, item1, item2) -> bool:
+    def check_advantage(self, unit, target, item1, item2) -> Optional[bool]:
         """Returns whether the unit has an bonus from triangle mechanics (accounting for reavers).
         No advantage == None, Disadvantage == False
         """
