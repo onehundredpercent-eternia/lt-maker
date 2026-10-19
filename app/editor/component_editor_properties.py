@@ -1,8 +1,7 @@
 import functools
 from enum import Enum
-from typing import (Callable, Dict, Generic, List, Optional, Tuple, Type,
-                    TypeVar)
-from typing_extensions import Protocol
+from typing import (Callable, Dict, Generic, List, Optional, Protocol, Tuple,
+                    Type, TypeVar)
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics, QIcon
@@ -22,6 +21,18 @@ from app.extensions.custom_gui import PropertyBox, QHLine
 from app.extensions.qhelpmenu import QHelpMenu
 from app.utilities.data import Data
 from app.utilities.typing import NID
+
+def component_search_text(prefab: T) -> str:
+    """The text the editor's search box matches for an item or skill:
+    its nid, name and description, plus each component's nid, display name and value,
+    so a search can find everything that uses a component, or a snippet of a condition or formula"""
+    lines = [prefab.nid, prefab.name, prefab.desc]
+    for component in prefab.components:
+        lines.append(component.nid)
+        lines.append(component.name)
+        if component.value is not None:
+            lines.append(str(component.value))
+    return '\n'.join(lines)
 
 class NewComponentProperties(QWidget, Generic[T]):
     title = None

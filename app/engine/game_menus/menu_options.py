@@ -239,6 +239,16 @@ class ChapterSelectOption(TitleOption):
         self.bg_color = color
         self.option_bg_name = self.option_bg_prefix + '_' + self.bg_color
 
+    def draw_flip(self, surf, x, y, flip_timer):
+        temp_surf = engine.create_surface((self.width(), self.height()), True)
+
+        left = x - self.width()//2
+        temp_surf.blit(SPRITES.get(self.option_bg_name), (0, 0))
+        self.draw_text(temp_surf, self.width()//2, self.height()//2 + 1)
+
+        flipped_surf = image_mods.do_flip(temp_surf, flip_timer)
+        surf.blit(flipped_surf, (left, y))
+    
     def draw_flicker(self, surf, x, y):
         left = x - self.width()//2
         surf.blit(SPRITES.get(self.option_bg_name + '_flicker'), (left, y))
@@ -699,8 +709,10 @@ class SkillOption(BasicOption):
         text = text_funcs.translate_and_text_evaluate(
                self.skill.desc,
                unit=game.get_unit(self.skill.owner_nid),
-               self=self.skill)
-        return help_menu.HelpDialog(text, name=self.skill.name)
+               self=self.skill,
+               local_args={'skill': self.skill})
+        # The option draws the skill's name itself, so the help box does not need to
+        return help_menu.HelpDialog(text)
 
     def draw(self, surf, x, y):
         icon = icons.get_icon(self.skill)

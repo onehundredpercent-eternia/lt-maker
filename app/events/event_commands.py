@@ -527,6 +527,27 @@ The direction of the portrait is flipped across the Y axis.
     keyword_types = ['Portrait', 'Float']
     _flags = ["no_block", "fade"]
 
+class ReplacePortrait(EventCommand):
+    nid = "replace_portrait"
+    tag = Tags.PORTRAIT
+
+    desc = \
+        """
+Swaps the on-screen *Portrait* for *NewPortrait*. The new portrait keeps the position, facing, priority,
+saturation and expressions of the one it replaces, and fades in over the top of it.
+
+Afterwards the portrait is referred to as *NewPortrait* by other commands, such as `speak` or `remove_portrait`.
+
+Extra flags:
+
+1. *immediate*: Portrait will be swapped instantly and will not fade.
+2. *no_block*: Portrait will fade, but will not pause execution of event script while doing so.
+        """
+
+    keywords = ['Portrait', 'NewPortrait']
+    keyword_types = ['Portrait', 'Portrait']
+    _flags = ["immediate", "no_block"]
+
 class Expression(EventCommand):
     nid = "expression"
     nickname = "e"
@@ -835,6 +856,34 @@ class ScreenShakeEnd(EventCommand):
 Ends any extant screen shake command if there is one present
         """
 
+class Rumble(EventCommand):
+    nid = 'rumble'
+    tag = Tags.MISCELLANEOUS
+
+    desc =         """
+Rumbles the player's controller for *Duration* milliseconds.
+Set *Duration* to 0 to make the rumble last until a `rumble_end` command,
+or until this event ends.
+
+*LowFrequency* sets the strength of the heavy, low-frequency motor and
+*HighFrequency* the light, high-frequency motor, each from 0 to 1. Both default to 0.5.
+
+Does nothing if the player has turned rumble off in the settings,
+or if their controller cannot rumble. Does not block the event.
+        """
+
+    keywords = ["Duration"]
+    optional_keywords = ["LowFrequency", "HighFrequency"]
+    keyword_types = ["Time", "Intensity", "Intensity"]
+
+class RumbleEnd(EventCommand):
+    nid = 'rumble_end'
+    tag = Tags.MISCELLANEOUS
+
+    desc =         """
+Stops any rumble started by a `rumble` command
+        """
+
 class GameVar(EventCommand):
     nid = 'game_var'
     nickname = 'gvar'
@@ -964,7 +1013,10 @@ class SetNextChapter(EventCommand):
 
     desc = \
         """
-Sets the next chapter the player will go to
+Sets the next chapter the player will go to.
+
+This takes priority over the current level's *Go to overworld after?* setting: if a next chapter has been set
+when the level ends, the game goes straight to that chapter instead of returning to the overworld.
         """
 
     keywords = ["Chapter"]
@@ -2696,10 +2748,17 @@ class ShowLayer(EventCommand):
     desc = \
         """
 Causes the specified map *Layer* to be displayed. The optional *LayerTransition* keyword controls whether the layer fades in (default) or is immediately displayed.
+
+As on the GBA, the event waits for the layer to fade in.
+
+Extra flags:
+
+1. *no_block*: Event script will continue while the layer fades in.
         """
 
     keywords = ["Layer"]
     optional_keywords = ["LayerTransition"]
+    _flags = ["no_block"]
 
 class HideLayer(EventCommand):
     nid = 'hide_layer'
@@ -2708,10 +2767,17 @@ class HideLayer(EventCommand):
     desc = \
         """
 Causes the specified map *Layer* to be hidden. The optional *LayerTransition* keyword controls whether the layer fades out (default) or is immediately hidden.
+
+As on the GBA, the event waits for the layer to fade out.
+
+Extra flags:
+
+1. *no_block*: Event script will continue while the layer fades out.
         """
 
     keywords = ["Layer"]
     optional_keywords = ["LayerTransition"]
+    _flags = ["no_block"]
 
 class AddWeather(EventCommand):
     nid = 'add_weather'
@@ -2866,7 +2932,7 @@ Optional args:
 * *OtherOptions* is a list of strings (Option1, Option2, Option3) that specify additional option names to display in the base.
 * *OtherOptionsEnabled* is a list of string bools (e.g. true, false, false) that specify which of the OtherOptions are enabled. If blank, all OtherOptions will be enabled by default.
 * *OtherOptionsOnSelect* is a list of Event NIDs or Event Names. These events will be triggered when the corresponding OtherOptions are selected.
-* *OtherOptionsDesciption* is a list of strings that provide description to the Option in gba prep screen.
+* *OtherOptionsDesciption* is a list of strings that provide description to the Option in specifically the GBA version of the prep screen.
 
 Flags:
 * *gba* uses gba prep screen layout instead.
@@ -3270,6 +3336,21 @@ The (*Scroll*) flag determines whether the background image will move.
     keyword_types = ['Panorama']
     _flags = ["scroll", "immediate"]
 
+class OpenUnitInfoScreen(EventCommand):
+    nid = 'open_unit_info_screen'
+    tag = Tags.MISCELLANEOUS
+
+    desc = \
+        """
+Displays the unit's stat/info screen for the given unit, as if it were viewed from the unit menu.
+
+1. *immediate* flag skips the transition between screens
+        """
+
+    keywords = ['Unit']
+    keyword_types = ['Unit']
+    _flags = ["immediate"]
+
 class OpenTrade(EventCommand):
     nid = 'open_trade'
     tag = Tags.MISCELLANEOUS
@@ -3536,10 +3617,20 @@ class PairUp(EventCommand):
     nid = 'pair_up'
     nickname = 'rescue'
     tag = Tags.MISCELLANEOUS
-    desc = "Pairs the first unit into the second"
+    desc = \
+        """
+Pairs the first unit into the second.
+
+Without the pair up constant, the second unit rescues the first. If they are next to each other, as on the GBA, the first walks into the second, and the event waits for it.
+
+Extra flags:
+
+1. *immediate*: The first unit is rescued at once, without walking.
+        """
 
     keywords = ["Unit1", "Unit2"]
     keyword_types = ["Unit", "Unit"]
+    _flags = ["immediate"]
 
 class Separate(EventCommand):
     nid = 'separate'

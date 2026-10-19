@@ -15,7 +15,15 @@
     "Flying",
     "Monster",
     "Mogall",
+    "Zombie",
+    "Skeleton",
+    "Spider",
+    "Dog",
+    "Gorgon",
+    "Manakete",
+    "Boat",
     "Sword",
     "ArenaIgnore",
-    "Protect"
+    "Protect",
+    "SlowMove"
 ]

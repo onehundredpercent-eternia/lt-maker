@@ -5,13 +5,14 @@ from typing import Optional, Tuple
 from app.engine.objects.unit import UnitObject
 from app.engine.objects.region import RegionObject
 from app.events.regions import RegionType
-from app.constants import TILEHEIGHT, TILEWIDTH
+from app.constants import FRAMERATE, TILEHEIGHT, TILEWIDTH
 from app.counters import GenericAnimCounter
 from app.data.database.database import DB
 from app.engine import engine, image_mods, skill_system, evaluate
 from app.engine.cursor import BaseCursor
 from app.engine.game_state import GameState
 from app.engine.input_manager import get_input_manager
+from app.engine.movement.move_selection import MoveSelection
 from app.engine.sprites import SPRITES
 from app.engine.engine import Surface
 
@@ -34,6 +35,8 @@ class LevelCursor(BaseCursor):
         self.path = []
         self.draw_state = LevelCursorDrawState.Hidden
         self.speed_state = False
+        # When the formation cursor came onto a tile nothing can be put down on
+        self._blocked_since = None
 
         self._sprite = SPRITES.get('cursor')
         self._sprite_dim = (32, 32)
@@ -41,8 +44,11 @@ class LevelCursor(BaseCursor):
 
         self._display_arrows: bool = False
         self.arrows = []
+        # Where the selected unit may move. Armed when a unit is selected for movement and
+        # cleared by remove_arrows, so an empty selection is what frees the cursor to
+        # roam the whole map outside of move selection
+        self.move_selection = MoveSelection()
         self._last_valid_position = None  # Last position within movement borders
-        self.stopped_at_move_border = False
 
         self.position = (self.get_bounds()[0], self.get_bounds()[1])
 
@@ -92,6 +98,7 @@ class LevelCursor(BaseCursor):
     def formation_show(self):
         super().show()
         self.draw_state = LevelCursorDrawState.Formation
+        self._blocked_since = None
 
     def set_speed_state(self, val: bool):
         self.speed_state = val
@@ -112,8 +119,8 @@ class LevelCursor(BaseCursor):
         if self.path:
             # Check to see if we have passed from move to xcom move and back again
             # If so, just create a new path
-            if self.game.highlight.check_in_move(self._last_valid_position) \
-                    and any(self.game.highlight.check_in_xcom_move(pos) for pos in self.path):
+            if self._last_valid_position in self.move_selection.normal \
+                    and any(pos in self.move_selection.xcom for pos in self.path):
                 pass
             elif self._last_valid_position in self.path:
                 idx = self.path.index(self._last_valid_position)
@@ -149,7 +156,7 @@ class LevelCursor(BaseCursor):
     def move(self, dx, dy, mouse=False, sound=True):
         super().move(dx, dy, mouse, sound)
 
-        if self.game.highlight.check_in_all_move(self.position):
+        if self.position in self.move_selection:
             self._last_valid_position = self.position
 
         if self._display_arrows:
@@ -232,37 +239,25 @@ class LevelCursor(BaseCursor):
     def remove_arrows(self):
         self._last_valid_position = None
         self._display_arrows = False
+        self.move_selection = MoveSelection()
         self.arrows.clear()
 
     def take_input(self):
         self.fluid.update()
-        if self.stopped_at_move_border:
-            directions = self.fluid.get_directions(double_speed=self.speed_state, slow_speed=True)
-        else:
-            directions = self.fluid.get_directions(double_speed=self.speed_state)
+        directions = self.fluid.get_directions(double_speed=self.speed_state)
 
-        if self.game.highlight.check_in_all_move(self.position):
-            if directions:
-                # If we would move off the current move
-                if ('LEFT' in directions and not get_input_manager().just_pressed('LEFT') and
-                        not self.game.highlight.check_in_all_move((self.position[0] - 1, self.position[1]))) or \
-                        ('RIGHT' in directions and not get_input_manager().just_pressed('RIGHT') and
-                         not self.game.highlight.check_in_all_move((self.position[0] + 1, self.position[1]))) or \
-                        ('UP' in directions and not get_input_manager().just_pressed('UP') and
-                         not self.game.highlight.check_in_all_move((self.position[0], self.position[1] - 1))) or \
-                        ('DOWN' in directions and not get_input_manager().just_pressed('DOWN') and
-                         not self.game.highlight.check_in_all_move((self.position[0], self.position[1] + 1))):
-                    # Then we can just keep going
-                    if self.stopped_at_move_border:
-                        self.stopped_at_move_border = False
-                    else:  # Ooh, we gotta stop the cursor movement
-                        directions.clear()
-                        self.fluid.reset()
-                        self.stopped_at_move_border = True
-                else:
-                    self.stopped_at_move_border = False
-        else:
-            self.stopped_at_move_border = False
+        if self.position in self.move_selection and directions:
+            # As on the GBA, a held direction stops at the edge of where the unit
+            # can move for as long as it is held. It must be pressed again to go on
+            if ('LEFT' in directions and not get_input_manager().just_pressed('LEFT') and
+                    (self.position[0] - 1, self.position[1]) not in self.move_selection) or \
+                    ('RIGHT' in directions and not get_input_manager().just_pressed('RIGHT') and
+                     (self.position[0] + 1, self.position[1]) not in self.move_selection) or \
+                    ('UP' in directions and not get_input_manager().just_pressed('UP') and
+                     (self.position[0], self.position[1] - 1) not in self.move_selection) or \
+                    ('DOWN' in directions and not get_input_manager().just_pressed('DOWN') and
+                     (self.position[0], self.position[1] + 1) not in self.move_selection):
+                directions.clear()
 
         self._handle_move(directions)
 
@@ -272,9 +267,17 @@ class LevelCursor(BaseCursor):
         base_size = 32
         if self.draw_state == LevelCursorDrawState.Formation:
             if self.game.check_for_region(self.position, 'formation'):
+                self._blocked_since = None
                 return engine.subsurface(self.formation_sprite, (0, 0, base_size, base_size))
-            else:
+            # Nothing can be put down here. As on the GBA, the X blinks: there
+            # for 30 frames and gone for 8, from when the cursor came off the formation
+            if self._blocked_since is None:
+                self._blocked_since = engine.get_time()
+            frames_passed = (engine.get_time() - self._blocked_since) // FRAMERATE
+            if frames_passed % 38 < 30:
                 return engine.subsurface(self.formation_sprite, (base_size, 0, base_size, base_size))
+            else:
+                return engine.subsurface(self.formation_sprite, (0, 0, base_size, base_size))
         elif self.draw_state == LevelCursorDrawState.Combat:
             return engine.subsurface(self.red_sprite, (left, 0, base_size, base_size))
         elif self.draw_state == LevelCursorDrawState.Turnwheel:  # Green for turnwheel

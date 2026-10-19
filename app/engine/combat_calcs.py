@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional, Tuple
 from app.engine.utils.ltcache import ltcached
 from app.engine.combat_calcs_utils import resolve_defensive_formula, resolve_offensive_formula
@@ -121,7 +122,34 @@ def compute_advantage_attr(attacker, defender, weapon, def_weapon, attribute: st
         mod += int(getattr(disadv, attribute))
     return mod
 
+class WeaponAdvantage(str, Enum):
+    ADVANTAGE = 'advantage'
+    DISADVANTAGE = 'disadvantage'
+    NEUTRAL = 'neutral'
+
+    def __bool__(self):
+        # Every member is a non-empty string, so a bare `if advantage:` would always pass
+        raise TypeError("WeaponAdvantage has no truth value, compare it instead (e.g. == 'advantage')")
+
+def compute_overall_advantage(attacker, defender, weapon, def_weapon) -> WeaponAdvantage:
+    '''Which way the weapon triangle leans for the attacker, after reaver-style modifiers'''
+    adv = compute_advantage(attacker, defender, weapon, def_weapon)
+    disadv = compute_advantage(attacker, defender, weapon, def_weapon, False)
+
+    if adv and adv.modification > 0:
+        return WeaponAdvantage.ADVANTAGE
+    elif adv and adv.modification < 0:
+        return WeaponAdvantage.DISADVANTAGE
+    elif disadv and disadv.modification > 0:
+        return WeaponAdvantage.DISADVANTAGE
+    elif disadv and disadv.modification < 0:
+        return WeaponAdvantage.ADVANTAGE
+    return WeaponAdvantage.NEUTRAL
+
 def can_counterattack(attacker, aweapon, defender, dweapon) -> bool:
+    # A unit that targets itself is not its own enemy
+    if defender is attacker:
+        return False
     if not dweapon:
         return False
     if not item_funcs.available(defender, dweapon):
@@ -603,7 +631,7 @@ def compute_damage(unit, target, item, def_item, mode, attack_info, crit=False, 
 def compute_assist_damage(unit, target, item, def_item, mode, attack_info, crit=False):
     return compute_damage(unit, target, item, def_item, mode, attack_info, crit, assist=True)
 
-def compute_true_speed(unit, target, item, def_item, mode, attack_info) -> int:
+def _compute_speed_before_defense(unit, target, item, def_item, mode, attack_info) -> int:
     speed = attack_speed(unit, item)
 
     # Handles things like effective damage
@@ -626,7 +654,19 @@ def compute_true_speed(unit, target, item, def_item, mode, attack_info) -> int:
         support_rank_bonuses, support_allies = get_support_rank_bonus(target, unit)
         for bonus in support_rank_bonuses:
             speed -= float(bonus.defense_speed)
-    speed = int(speed)
+    return int(speed)
+
+def compute_attack_speed(unit, target, item, def_item, mode, attack_info) -> int:
+    """The unit's own attack speed in this combat, with the target's defense speed not yet taken off"""
+    speed = _compute_speed_before_defense(unit, target, item, def_item, mode, attack_info)
+    # A dynamic attack speed's base_value is the speed difference between the two units
+    speed_difference = speed - defense_speed(target, def_item, item)
+    speed += skill_system.dynamic_attack_speed(unit, item, target, resolve_weapon(target), mode, attack_info, speed_difference)
+    return speed
+
+def compute_true_speed(unit, target, item, def_item, mode, attack_info) -> int:
+    """How much faster the unit is than the target. This is what gets compared to the speed needed to double"""
+    speed = _compute_speed_before_defense(unit, target, item, def_item, mode, attack_info)
 
     speed -= defense_speed(target, def_item, item)
 

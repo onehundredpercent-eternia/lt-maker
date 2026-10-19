@@ -8,16 +8,16 @@ import pygame
 
 from app.utilities import utils
 from app.data.resources.resources import RESOURCES
-from app.engine import engine
+from app.engine import deferred_files, engine
 
 import logging
 
 class SongObject(HasNid):
     def __init__(self, prefab: SongPrefab):
         self.nid = prefab.nid
-        self.song = pygame.mixer.Sound(prefab.full_path)
-        self.battle = pygame.mixer.Sound(prefab.battle_full_path) if prefab.battle_full_path else None
-        self.intro = pygame.mixer.Sound(prefab.intro_full_path) if prefab.intro_full_path else None
+        self.song = pygame.mixer.Sound(deferred_files.ensure(prefab.full_path))
+        self.battle = pygame.mixer.Sound(deferred_files.ensure(prefab.battle_full_path)) if prefab.battle_full_path else None
+        self.intro = pygame.mixer.Sound(deferred_files.ensure(prefab.intro_full_path)) if prefab.intro_full_path else None
 
         self.channel = None
 
@@ -55,7 +55,7 @@ class SoundDict(dict):
         if val not in self:
             sfx = RESOURCES.sfx.get(val)
             if sfx:
-                self[val] = pygame.mixer.Sound(sfx.full_path)
+                self[val] = pygame.mixer.Sound(deferred_files.ensure(sfx.full_path))
             else:
                 return None
         return self[val]
@@ -142,6 +142,17 @@ class Channel():
                 return True
         return False
 
+    def _without_end_event(self, func, *args):
+        """
+        SDL posts the end event the moment a sound is stopped or replaced, just as if it had
+        finished playing. update treats that event as the track ending, so for a song that
+        was only just started it would skip ahead (e.g. past its intro). Only a sound that
+        really finishes should advance the channel.
+        """
+        self._channel.set_endevent()
+        func(*args)
+        self._channel.set_endevent(self.end_event)
+
     def _play(self):
         logging.debug('%s _Play: %s %s', self.nid, self.last_state, self.num_plays)
         self.last_play = engine.get_time()
@@ -154,16 +165,16 @@ class Channel():
 
         if self.name == "battle":
             if self.current_song.battle:
-                self._channel.play(self.current_song.battle, 0)
+                self._without_end_event(self._channel.play, self.current_song.battle, 0)
                 self.reset_volume()
         else:
             if self.current_song.intro and not self.played_intro:
                 # logging.debug("Playing Intro %s", self.current_song.intro)
-                self._channel.play(self.current_song.intro, 0)
+                self._without_end_event(self._channel.play, self.current_song.intro, 0)
                 self.played_intro = True
             else:
                 # logging.debug("Playing %s", self.current_song.song)
-                self._channel.play(self.current_song.song, 0)
+                self._without_end_event(self._channel.play, self.current_song.song, 0)
             self.reset_volume()
 
     def set_current_song(self, song, num_plays=-1):
@@ -179,7 +190,7 @@ class Channel():
 
     def clear(self):
         logging.debug("%s Clear", self.nid)
-        self._channel.stop()
+        self._without_end_event(self._channel.stop)
         self.current_song = None
         self.num_plays = 0
         self.played_intro = False
@@ -213,12 +224,20 @@ class Channel():
         self.state = "fade_out"
         self.last_update = engine.get_time()
 
+    def _finish_fade_in(self):
+        # A crossfade takes over the state, and update would never finish raising local_volume
+        if self.state == "fade_in":
+            self.local_volume = 1
+            self.reset_volume()
+
     def crossfade_in(self):
+        self._finish_fade_in()
         self.last_state = "playing"
         self.state = "crossfade_in"
         self.last_update = engine.get_time()
 
     def crossfade_out(self):
+        self._finish_fade_in()
         self.last_state = "playing"
         self.state = "crossfade_out"
         self.last_update = engine.get_time()
@@ -237,7 +256,7 @@ class Channel():
 
     def stop(self):
         logging.debug("%s Stop: %s", self.nid, self.last_state)
-        self._channel.stop()
+        self._without_end_event(self._channel.stop)
         self.played_intro = False
         self.last_state = "stopped"
         self.state = "stopped"
@@ -261,11 +280,17 @@ class ChannelPair():
         self.channel = Channel("music", nid, event)
         self.battle = Channel("battle", nid + 1, event)
 
-        self.battle_mode = False
-        self.battle.crossfade_volume = 0
-        self.battle.reset_volume()
+        self._reset_battle_mode()
 
         self.current_song = None
+
+    def _reset_battle_mode(self):
+        """Crossfades fully back to the normal track, which is where every song starts"""
+        self.battle_mode = False
+        self.channel.crossfade_volume = 1
+        self.battle.crossfade_volume = 0
+        self.channel.reset_volume()
+        self.battle.reset_volume()
 
     def is_playing(self):
         return (self.channel.state in self.channel.playing_states) or \
@@ -312,6 +337,8 @@ class ChannelPair():
         self.current_song = None
         self.channel.clear()
         self.battle.clear()
+        # The next song to use this pair must not inherit the old song's battle crossfade
+        self._reset_battle_mode()
 
     def fade_in(self):
         self.channel.fade_in()
@@ -355,11 +382,11 @@ class SoundController(ABC):
         pass
 
     @abstractmethod
-    def lower(self):
+    def lower(self, fraction: float = 0.25, fade: int = 0):
         pass
 
     @abstractmethod
-    def unmute(self):
+    def unmute(self, fade: int = 0):
         pass
 
     @abstractmethod
@@ -465,10 +492,10 @@ class NullSoundController(ABC):
     def mute(self):
         pass
 
-    def lower(self):
+    def lower(self, fraction: float = 0.25, fade: int = 0):
         pass
 
-    def unmute(self):
+    def unmute(self, fade: int = 0):
         pass
 
     def get_music_volume(self) -> float:
@@ -558,6 +585,10 @@ class DefaultSoundController(SoundController):
         pygame.mixer.set_reserved(8)  # Reserve the first 8 channels for music
         self.global_music_volume = 1.0
         self.global_sfx_volume = 1.0
+        # What fraction of its volume the music is heard at (see lower and unmute),
+        # and the fade it is in the middle of: from, to, when it began, how long
+        self.music_fraction = 1.0
+        self._fraction_fade = None
 
         self.channel1 = ChannelPair(0)
         self.channel2 = ChannelPair(2)  # Skip each time because battle channel
@@ -584,21 +615,34 @@ class DefaultSoundController(SoundController):
     def mute(self):
         self.current_channel.set_volume(0)
 
-    def lower(self):
-        for channel in self.channel_stack:
-            channel.set_volume(0.25 * self.global_music_volume)
+    def lower(self, fraction: float = 0.25, fade: int = 0):
+        """
+        Plays the music at this fraction of its volume until unmute.
+        It gets there over `fade` milliseconds, or at once
+        """
+        self._set_music_fraction(fraction, fade)
 
-    def unmute(self):
+    def unmute(self, fade: int = 0):
+        self._set_music_fraction(1.0, fade)
+
+    def _set_music_fraction(self, fraction: float, fade: int):
+        if fade > 0:
+            self._fraction_fade = (self.music_fraction, fraction, engine.get_time(), fade)
+        else:
+            self._fraction_fade = None
+            self.music_fraction = fraction
+            self._apply_music_volume()
+
+    def _apply_music_volume(self):
         for channel in self.channel_stack:
-            channel.set_volume(self.global_music_volume)
+            channel.set_volume(self.music_fraction * self.global_music_volume)
 
     def get_music_volume(self) -> float:
         return self.global_music_volume
 
     def set_music_volume(self, volume):
         self.global_music_volume = volume
-        for channel in self.channel_stack:
-            channel.set_volume(self.global_music_volume)
+        self._apply_music_volume()
 
     def get_sfx_volume(self) -> float:
         return self.global_sfx_volume
@@ -699,8 +743,10 @@ class DefaultSoundController(SoundController):
         any_music_is_playing = self.is_playing()
         current_song = self.get_current_song()
 
-        # Confirm that we're not just replacing the same song
-        if current_song is next_song:
+        # Confirm that we're not just replacing the same song. That includes a song that is still
+        # waiting for the previous one to fade out: it's already been asked for, but isn't playing yet
+        queued_song = self.song_stack[-1] if self.song_stack and self.state == GlobalMusicState.FADE_OUT_TO_FADE_IN else None
+        if current_song is next_song or queued_song is next_song:
             logging.info("Song already present")
             return None
 
@@ -790,6 +836,16 @@ class DefaultSoundController(SoundController):
 
     def update(self, event_list):
         current_time = engine.get_time()
+
+        if self._fraction_fade:
+            start, end, began, length = self._fraction_fade
+            progress = utils.clamp((current_time - began) / length, 0, 1)
+            # Quick at first and slowing as it gets there, as the GBA's fades do
+            eased = 1 - (1 - progress) ** 2
+            self.music_fraction = start + (end - start) * eased
+            self._apply_music_volume()
+            if progress >= 1:
+                self._fraction_fade = None
 
         any_changes = False
         for channel in self.channel_stack:

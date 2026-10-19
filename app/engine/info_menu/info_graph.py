@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from app.constants import TILEHEIGHT, WINHEIGHT
 from app.engine import engine, help_menu, menus
@@ -16,7 +16,10 @@ info_states = ('personal_data', 'equipment', 'support_skills', 'notes')
 class BoundingBox():
     idx: int = 0
     aabb: tuple = None
-    _help_box: help_menu.HelpDialog | List[help_menu.HelpDialog] = None
+    # A description, or a function making the help box, is made into the help
+    # box when first shown. Laying out the text of every help box on a page was
+    # most of the time a page of the info menu took to draw
+    _help_box: help_menu.HelpDialog | List[help_menu.HelpDialog] | str | Callable[[], help_menu.HelpDialog] = None
     state: str = None
     first: bool = False
 
@@ -24,6 +27,10 @@ class BoundingBox():
 
     @property
     def help_box(self) -> help_menu.HelpDialog:
+        if isinstance(self._help_box, str):
+            self._help_box = help_menu.HelpDialog(self._help_box)
+        elif callable(self._help_box):
+            self._help_box = self._help_box()
         if self.is_multiple():
             return self._help_box[self._page]
         return self._help_box
@@ -84,10 +91,9 @@ class InfoGraph():
         if state not in self.registry:
             self.registry[state] = []
 
-    def register(self, aabb: tuple[int, int, int, int], help_box: help_menu.HelpDialog, state: str, first:bool=False):
-        if isinstance(help_box, str):
-            help_box = help_menu.HelpDialog(help_box)
-
+    def register(self, aabb: tuple[int, int, int, int],
+                 help_box: help_menu.HelpDialog | List[help_menu.HelpDialog] | str | Callable[[], help_menu.HelpDialog],
+                 state: str, first: bool = False):
         if state == 'all':
             for s in self.registry:
                 idx = len(self.registry[s])
@@ -223,3 +229,7 @@ class InfoGraph():
                     else:
                         pos = (pos[0] + self.current_bb.help_box.get_width() - 16, pos[1] - 4)
                     render_text(surf, ['small-yellow'], ['%d/%d' % (self.current_bb._page + 1, len(self.current_bb._help_box))], [], pos, HAlignment.RIGHT)
+        elif self.last_bb and self.last_bb.help_box.is_closing():
+            # As on the GBA, the help box let go of shrinks away
+            pos = (max(0, self.last_bb.aabb[0] - 32), self.last_bb.aabb[1] + 13)
+            self.last_bb.help_box.draw(surf, pos)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QColor, QIcon, QPalette, QFont
@@ -639,6 +639,14 @@ class EventItemComponent(BoolItemComponent):
     def on_value_changed(self, index):
         self._data.value = self.editor.itemData(index)
 
+def get_first_valid_nid(delegate) -> Optional[NID]:
+    """The rows of these components are nids from the delegate's catalog, so a new
+    row must start as one of those rather than as an invented name"""
+    if not delegate:
+        return None
+    return next((obj.nid for obj in delegate.data), None)
+
+
 class ListItemComponent(BoolItemComponent):
     delegate = None
 
@@ -650,41 +658,44 @@ class ListItemComponent(BoolItemComponent):
         self.editor.view.setColumnWidth(0, 100)
         self.editor.view.setMaximumHeight(75)
         self.editor.model.nid_column = 0
+        self.editor.model.default_value = get_first_valid_nid(self.delegate)
 
         hbox.addWidget(self.editor)
 
 
 class DictItemComponent(BoolItemComponent):
     delegate = None
+    is_float = False
+    is_string = False
 
     def create_editor(self, hbox):
         if not self._data.value:
             self._data.value = []
         title = self._data.name
-        self.modify_delegate()
         self.editor = AppendMultiListWidget(self._data.value, title, (
-            self.delegate.name, "Value"), self.delegate, self, model=list_models.DoubleListModel)
+            self.delegate.name, "Value"), self.value_delegate(), self, model=list_models.DoubleListModel)
         self.editor.view.setColumnWidth(0, 100)
         self.editor.view.setMaximumHeight(75)
         self.editor.model.nid_column = 0
+        self.editor.model.default_value = get_first_valid_nid(self.delegate)
 
         hbox.addWidget(self.editor)
 
-    def modify_delegate(self):
-        self.delegate.is_float = False
-        self.delegate.is_string = False
+    def value_delegate(self):
+        """The kind of dict decides what the value column edits with, while the delegate
+        itself comes from what the key column holds, and one delegate can serve several
+        kinds of dict. Each widget therefore gets its own subclass to carry the choice --
+        writing it onto the delegate reconfigures every other component sharing it."""
+        return type(self.delegate.__name__, (self.delegate,),
+                    {'is_float': self.is_float, 'is_string': self.is_string})
 
 
 class FloatDictItemComponent(DictItemComponent):
-    def modify_delegate(self):
-        self.delegate.is_float = True
-        self.delegate.is_string = False
+    is_float = True
 
 
 class StringDictItemComponent(DictItemComponent):
-    def modify_delegate(self):
-        self.delegate.is_float = False
-        self.delegate.is_string = True
+    is_string = True
 
 
 def get_display_widget(component, parent):

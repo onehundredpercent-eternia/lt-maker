@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import logging
-from typing import List
+from typing import List, Tuple
 
 from PyQt5.QtCore import QRegularExpression
 from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
@@ -22,6 +22,23 @@ class LineToFormat():
     start: int
     length: int
     _format: QTextCharFormat
+
+def brace_spans(text: str) -> List[Tuple[int, int]]:
+    """(start, length) spans of the {...} groups in text, such as {w} or {eval:...}.
+    Every closing brace ends a span that starts at its outermost open brace,
+    so a nested group is covered in full. A stray closing brace is ignored"""
+    spans: List[Tuple[int, int]] = []
+    depth = 0
+    start = 0
+    for idx, char in enumerate(text):
+        if char == '{':
+            if depth == 0:
+                start = idx
+            depth += 1
+        elif char == '}' and depth > 0:
+            spans.append((start, idx - start + 1))
+            depth -= 1
+    return spans
 
 class EventSyntaxRuleHighlighter():
     def __init__(self, window) -> None:
@@ -84,17 +101,8 @@ class EventSyntaxRuleHighlighter():
                 format_lines.append(LineToFormat(as_tokens[idx].index, len(as_tokens[idx].string), self.lint_format))
 
         # brace formatting
-        brace_mode = 0
-        special_start = 0
-        for idx, char in enumerate(line):
-            if char == '{':
-                if brace_mode == 0:
-                    special_start = idx
-                brace_mode += 1
-            if char == '}':
-                if brace_mode > 0:
-                    format_lines.append(LineToFormat(special_start, idx - special_start + 1, self.special_text_format))
-                    brace_mode -= 1
+        for start, length in brace_spans(line):
+            format_lines.append(LineToFormat(start, length, self.special_text_format))
 
         # Comment rule goes last because it must have the highest precedence -- it overwrites everything else
         match_iterator = self.comment_rule.pattern.globalMatch(line)
@@ -139,7 +147,14 @@ class EventHighlighter(QSyntaxHighlighter):
         self.event_syntax_formatter = EventSyntaxRuleHighlighter(self.window)
 
     def highlightBlock(self, text: str):
-        to_format = self.event_syntax_formatter.match_line(text)
+        # PyQt aborts the entire process (SIGABRT, no dialog, no chance to save)
+        # if an exception escapes a reimplemented virtual like this one.
+        # Syntax highlighting is cosmetic -- never let it take the editor down.
+        try:
+            to_format = self.event_syntax_formatter.match_line(text)
+        except Exception:
+            logging.exception("Failed to syntax highlight line %s", text)
+            return
         for piece_to_format in to_format:
             if piece_to_format.length == 0:
                 piece_to_format.length = 1

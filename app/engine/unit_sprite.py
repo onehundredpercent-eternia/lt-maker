@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.counters import GenericAnimCounter
 from app.data.database.units import UnitPrefab
@@ -20,13 +20,38 @@ from app.utilities import utils
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
 from app.engine import engine, image_mods, gui, health_bar, equations
-from app.engine import item_funcs, item_system, skill_system, particles
+from app.engine import item_funcs, item_system, skill_system, particles, status_heal_effect
 import app.engine.config as cf
 from app.engine.animations import Animation
 from app.engine.game_state import game
 from app.utilities.typing import NID, Color3
 
 import logging
+
+# The color map sprites are outlined in, in their blue palette (color 15 on the GBA)
+MAP_SPRITE_OUTLINE: Color3 = (64, 56, 56)
+
+def swap_arc_frames(distance: int) -> int:
+    """
+    How many frames a unit takes to fly `distance` pixels when units are
+    reordered on the prep screen: 12 for no distance, 48 for 512 pixels.
+    From the GBA games (FE8's PrepUnitSwapProc_Init)
+    """
+    return 12 + 36 * distance // 512
+
+def swap_arc_offset(start: Tuple[int, int], progress: float) -> Tuple[int, int]:
+    """
+    Where a unit is, in pixels from its new tile, `progress` (0 to 1) of the
+    way through that flight. `start` is where it began, also in pixels from
+    its new tile. The unit bows out to the left of its heading, by more the
+    farther it flies but never by much more than a tile, so that two units
+    trading places circle each other.
+    From the GBA games (FE8's PrepUnitSwapProc_MainLoop)
+    """
+    distance = math.isqrt(start[0] * start[0] + start[1] * start[1])
+    bow = math.sin(math.pi * progress) * 0x1000 / (0x1000 + (0x20000 - 0x1000) * distance // 0x200)
+    return (start[0] + math.floor(-start[0] * progress) + int(-start[1] * bow),
+            start[1] + math.floor(-start[1] * progress) + int(start[0] * bow))
 
 class SingleMapSprite():
     frames: List[engine.Surface] = []
@@ -108,6 +133,7 @@ class MapSprite():
         return palette
 
     def convert_to_team_colors(self, map_sprite):
+        self.outline_color = MAP_SPRITE_OUTLINE
         if self.team == 'black' and not self.palette_override:
             palette = RESOURCES.combat_palettes.get('map_sprite_black')
             if palette:
@@ -125,6 +151,7 @@ class MapSprite():
                 colors: List[Color3] = default_palettes['map_sprite_black']
 
         conversion_dict = {a: b for a, b in zip(default_palettes['map_sprite_blue'], colors)}
+        self.outline_color = conversion_dict.get(MAP_SPRITE_OUTLINE, MAP_SPRITE_OUTLINE)
         return image_mods.color_convert(map_sprite.standing_image, conversion_dict), \
             image_mods.color_convert(map_sprite.moving_image, conversion_dict)
 
@@ -201,17 +228,28 @@ class UnitSprite():
         self.unit = unit
         self.state = 'normal'  # What state the image sprite is in
         self.image_state = 'passive'  # What the image looks like
+        self.hover_start = None  # When the cursor came onto the unit
         self.transition_state = 'normal'
 
         self.transition_counter = 0
         self.transition_time = self.default_transition_time
+        # Where a 'swap_arc' began, in pixels from the unit's tile, and how long it takes
+        self.swap_arc_start = (0, 0)
+        self.swap_arc_time = 0
 
         self._fake_position = None  # For escape and rescue, etc...
         self._roam_position = None  # For roam
         self.net_position = None
         self.offset = [0, 0]
+        # Set by change_state whenever a combat state is entered -- when True the unit
+        # neither turns to face its opponent nor jostles towards it
+        self.suppress_combat_movement = False
 
         self.flicker = []
+        # When the unit began to show a bad status leaving it
+        self.status_heal_start: Optional[int] = None
+        # When the unit began to fade away in death
+        self.death_fade_start: Optional[int] = None
         self.vibrate = []
         self.vibrate_counter = 0
         self.animations: Dict[NID, Animation] = {}
@@ -283,6 +321,37 @@ class UnitSprite():
 
     def start_flicker(self, start_time, total_time, color, direction='add', fade_out=False):
         self.flicker.append((engine.get_time() + start_time, total_time, color, direction, fade_out))
+
+    def start_status_heal(self):
+        """Shows a bad status leaving the unit, as on the GBA"""
+        self.status_heal_start = engine.get_time()
+
+    # As on the GBA (MU_StartDeathFade), a dying unit flashes white and its colors come back
+    # over 20 frames, while over 32 it fades away. It is added onto the map below it, out of
+    # 16 parts at first and one less every other frame, so it lightens the map as it goes
+    death_fade_frames = 32
+    death_flash_frames = 20
+
+    def start_death_fade(self):
+        self.death_fade_start = engine.get_time()
+
+    def death_fade_image(self, image: engine.Surface, frame: int) -> Optional[engine.Surface]:
+        """The dying unit's image on this frame of its fade, to be added onto the map. None once it is gone"""
+        strength = (self.death_fade_frames - frame) >> 1
+        if strength <= 0:
+            return None
+        image = image.convert_alpha()
+        white = max(0, self.death_flash_frames - frame) / self.death_flash_frames
+        if white:
+            # From the GBA's white back to its own colors
+            engine.fill(image, (int(255 * (1 - white)),) * 3, None, engine.BLEND_RGB_MULT)
+            engine.fill(image, (int(248 * white),) * 3, None, engine.BLEND_RGB_ADD)
+        # On black, so nothing is added where the unit is not
+        faded = engine.create_surface(image.get_size())
+        faded.fill((0, 0, 0))
+        faded.blit(image, (0, 0))
+        engine.fill(faded, (255 * strength // 16,) * 3, None, engine.BLEND_RGB_MULT)
+        return faded
 
     def start_vibrate(self, start_time, total_time):
         self.vibrate.append((engine.get_time() + start_time, total_time))
@@ -393,8 +462,26 @@ class UnitSprite():
             self._fake_position = self.unit.position
             self.add_swoosh_anim(reverse=True)
 
-    def change_state(self, new_state, dir = None):
+    def begin_swap_arc(self, old_pos: Tuple[int, int]):
+        """
+        Draws the unit flying in an arc from old_pos to the tile it now stands on,
+        as units do on the GBA when they are reordered on the prep screen
+        """
+        self.set_transition('swap_arc')
+        self._fake_position = None
+        self.swap_arc_start = ((old_pos[0] - self.unit.position[0]) * TILEWIDTH,
+                               (old_pos[1] - self.unit.position[1]) * TILEHEIGHT)
+        distance = math.isqrt(self.swap_arc_start[0] ** 2 + self.swap_arc_start[1] ** 2)
+        self.swap_arc_time = utils.frames2ms(swap_arc_frames(distance))
+        self.transition_counter = self.swap_arc_time
+        self.offset = list(self.swap_arc_start)
+
+    combat_states = ('combat_attacker', 'combat_anim', 'combat_defender', 'combat_counter')
+
+    def change_state(self, new_state, dir = None, suppress_movement: bool = False):
         self.state = new_state
+        if self.state in self.combat_states:
+            self.suppress_combat_movement = suppress_movement
         if self.state in ('combat_attacker', 'combat_anim'):
             self.net_position = game.cursor.position[0] - self.unit.position[0], game.cursor.position[1] - self.unit.position[1]
             self.handle_net_position(self.net_position)
@@ -424,7 +511,8 @@ class UnitSprite():
             self.net_position = pos
             self.handle_net_position(self.net_position)
         elif self.state == 'selected':
-            self.set_image_state('down')
+            # Mounted units face right while selected, everybody else faces down
+            self.set_image_state('right' if 'Mounted' in self.unit.tags else 'down')
         elif self.state == 'start_cast':
             self.map_sprite.start_cast.counter.reset()
             self.set_image_state('start_cast')
@@ -440,6 +528,8 @@ class UnitSprite():
 
     def handle_net_position(self, pos):
         self.net_position = pos
+        if self.suppress_combat_movement and self.state in self.combat_states:
+            return  # Hold whatever direction the unit was already facing
         if abs(pos[0]) >= abs(pos[1]):
             if pos[0] > 0:
                 self.set_image_state('right')
@@ -474,22 +564,39 @@ class UnitSprite():
         for damage_num in self.damage_numbers:
             damage_num.update()
 
+    # As on the GBA, a player unit's hover animation waits for the cursor to rest on it
+    # for 5 frames, so that it is not begun for every unit the cursor passes over
+    hover_wait = utils.frames2ms(4.5)
+
     def update_state(self):
+        hovered = self.state == 'normal' and game.cursor.draw_state and \
+            game.cursor.position == self.unit.position and self.unit.team == 'player'
+        if not hovered:
+            self.hover_start = None
+        elif self.hover_start is None:
+            self.hover_start = engine.get_time()
+
         if self.state == 'normal':
             if self.unit.finished and not self.unit.is_dying:
                 self.set_image_state('gray')
             elif DB.constants.value('initiative') and game.initiative.get_current_unit() != self.unit \
                     and not game.is_roam() and self.unit.team == 'player':
                 self.set_image_state('gray')
-            elif game.cursor.draw_state and game.cursor.position == self.unit.position and self.unit.team == 'player':
+            elif hovered and engine.get_time() - self.hover_start >= self.hover_wait:
+                if self.image_state != 'active':
+                    # and then it starts from its first frame
+                    ANIMATION_COUNTERS.active_sprite_counter.restart()
                 self.set_image_state('active')
             elif game.is_roam() and game.get_roam_unit() == self.unit:
                 self.set_image_state('passive')
             else:
                 self.set_image_state('passive')
         elif self.state == 'combat_anim':
-            self.offset[0] = utils.clamp(self.net_position[0], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
-            self.offset[1] = utils.clamp(self.net_position[1], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
+            if self.suppress_combat_movement:
+                self.offset = [0, 0]
+            else:
+                self.offset[0] = utils.clamp(self.net_position[0], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
+                self.offset[1] = utils.clamp(self.net_position[1], -1, 1) * ANIMATION_COUNTERS.attack_movement_counter.value()
         elif self.state == 'chosen':
             pos = self.unit.position or self._fake_position
             test_position = game.cursor.position[0] - pos[0], game.cursor.position[1] - pos[1]
@@ -539,8 +646,48 @@ class UnitSprite():
                 self.set_transition('normal')
                 self.change_state('normal')
 
+    def walk_one_tile(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int], stays: bool):
+        """
+        As on the GBA (KOIDO), the unit walks one tile at its usual pace, from from_pos
+        to to_pos: into a unit that rescues it, out of the one that drops it, or from one
+        to another. If it stays, it is on the map at to_pos; otherwise it is gone once there
+        """
+        from app.engine.movement import movement_funcs
+        self.set_transition('walk')
+        self.walk_vector = (to_pos[0] - from_pos[0], to_pos[1] - from_pos[1])
+        self.walk_stays = stays
+        self.walk_start = engine.get_time()
+        self.walk_time = movement_funcs.get_default_speed(self.unit)
+        self._fake_position = None if stays else from_pos
+        self.offset = [-TILEWIDTH * self.walk_vector[0], -TILEHEIGHT * self.walk_vector[1]] if stays else [0, 0]
+        self.change_state('moving')
+        self.handle_net_position(self.walk_vector)
+        self.unit.sound.play()
+
+    def update_walk(self):
+        progress = (engine.get_time() - self.walk_start) / max(self.walk_time, 1)
+        if progress < 1:
+            # Rounded, so at the GBA's pace it steps 2 pixels a frame, as it does on a move
+            start = -1 if self.walk_stays else 0
+            self.offset = [round(TILEWIDTH * (start + progress) * self.walk_vector[0]),
+                           round(TILEHEIGHT * (start + progress) * self.walk_vector[1])]
+        else:
+            self.unit.sound.stop()
+            self.change_state('normal')
+            self.set_transition('normal')
+
     def update_transition(self):
         self.transition_counter -= engine.get_delta()
+        if self.transition_state == 'walk':
+            self.update_walk()
+            return
+        if self.transition_state == 'swap_arc':
+            if self.transition_counter > 0:
+                progress = 1 - self.transition_counter / self.swap_arc_time
+                self.offset = list(swap_arc_offset(self.swap_arc_start, progress))
+            else:
+                self.set_transition('normal')
+            return
         if self.transition_counter < 0:
             self.transition_counter = 0
             self._fake_position = None
@@ -587,7 +734,7 @@ class UnitSprite():
                 if engine.get_time() > starting_time + total_time:
                     self.vibrate.remove(vibrate)
                     continue
-                left += (1 if self.vibrate_counter % 2 else -1)
+                left += (2 if self.vibrate_counter % 2 else -2)  # As far as on the GBA
 
         # Handle transitions
         if self.transition_state in ('fade_out', 'warp_out', 'swoosh_out', 'fade_move', 'warp_move', 'swoosh_move') or self.state in ('fake_transition_out'):
@@ -628,8 +775,17 @@ class UnitSprite():
                 elif direction == 'sub':
                     image = image_mods.sub_tint(image.convert_alpha(), color)
 
+        if self.status_heal_start is not None:
+            # Frames since it began, to the nearest frame
+            frame = int((current_time - self.status_heal_start) * 60 / 1000 + 0.5)
+            if frame < status_heal_effect.FRAMES:
+                image = status_heal_effect.draw(image, frame, self.map_sprite.outline_color)
+            else:
+                self.status_heal_start = None
+
         # Color a unit red if they are highlighted by the boundary
-        if not self.flicker and game.boundary.draw_flag and self.unit.nid in game.boundary.displaying_units:
+        if not self.flicker and self.status_heal_start is None and \
+                game.boundary.draw_flag and self.unit.nid in game.boundary.displaying_units:
             image = image_mods.change_color(image.convert_alpha(), (60, 0, 0))
 
         # Turnwheel tint of unit sprite
@@ -662,6 +818,13 @@ class UnitSprite():
             partner_image = partner_image.convert_alpha()
             surf.blit(partner_image, (topleft[0] + 3, topleft[1] - 3))
             surf.blit(image, (topleft[0] - 3, topleft[1] + 3))
+        elif self.death_fade_start is not None:
+            # Frames since it began, to the nearest frame
+            frame = int((current_time - self.death_fade_start) * 60 / 1000 + 0.5)
+            faded = self.death_fade_image(image, frame)
+            if faded:
+                # It adds onto what is below, so onto the map itself, below the other units (see MapView.draw_units)
+                surf.blit(faded, topleft, None, engine.BLEND_RGB_ADD)
         else:
             surf.blit(image, topleft)
 

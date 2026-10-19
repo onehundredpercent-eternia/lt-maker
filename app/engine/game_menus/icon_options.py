@@ -222,11 +222,13 @@ class BasicItemOption(BaseOption[Optional[ItemObject]]):
         if self.get_ignore():
             pass
         elif self._color:
-            main_color = self._color
-            if not custom_color:
-                if owner and not item_funcs.available(owner, self._value):
-                    pass
-                else:
+            if owner and not item_funcs.available(owner, self._value):
+                # Stays grey -- an item its owner can't use is greyed out,
+                # whatever color tag it carries
+                pass
+            else:
+                main_color = self._color
+                if not custom_color:
                     uses_color = 'blue'
         elif self._value.droppable:
             main_color = 'green'
@@ -319,8 +321,14 @@ class BasicSkillOption(BaseOption[SkillObject]):
 
     def get_help_box(self):
         if not self._help_box:
-            text = text_funcs.translate_and_text_evaluate(self._value.desc, self=self._value)
-            self._help_box = help_menu.HelpDialog(text, name=self._value.name)
+            text = text_funcs.translate_and_text_evaluate(self._value.desc, self=self._value, local_args={'skill': self._value})
+            # The option draws its display text itself, so the help box only needs
+            # the skill's name when the option is labelled with something else
+            if self._disp_value == text_funcs.translate(self._value.name):
+                name = ''
+            else:
+                name = self._value.name
+            self._help_box = help_menu.HelpDialog(text, name=name)
         return self._help_box
 
     def draw(self, surf, x, y):

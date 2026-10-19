@@ -19,25 +19,29 @@ import app.editor.utilities as editor_utilities
 
 import logging
 
+def image_palette_name(image_fn: str) -> str:
+    # Legacy palette images are named {nid}-{weapon}-{palette_name}.png
+    return os.path.split(image_fn)[-1][:-4].split('-')[-1]
+
 def populate_palettes(current, images, nid):
     for image_fn in images:
-        palette_name = os.path.split(image_fn)[-1][:-4].split('-')[-1]
+        palette_name = image_palette_name(image_fn)
         palette_nid = nid + '_' + palette_name
         logging.debug("palette_nid: %s", palette_nid)
         palette_names = [_[0] for _ in current.palettes]
         logging.debug("palette name: %s %s", palette_name, palette_name in palette_names)
         if palette_name in palette_names:
-            # Check whether this palette is bigger
+            # Check whether this image uses colors the palette doesn't have yet.
+            # Every color has to earn a palette slot: the conversion below rewrites only
+            # the colors the palette knows, and leaves the rest in the frame as literal RGB
             idx = palette_names.index(palette_name)
             orig_palette_nid = current.palettes[idx][1]
             orig_palette = RESOURCES.combat_palettes.get(orig_palette_nid)
             pix = QPixmap(image_fn)
             palette_colors = editor_utilities.find_palette(pix.toImage())
-            orig_len = len(orig_palette.colors)
-            if len(palette_colors) > orig_len:
-                # Add new colors in
-                new_colors = [color for color in palette_colors if color not in orig_palette.colors.values()]
-                new_colors = {(int((idx + orig_len) % 8), int((idx + orig_len) / 8)): color for idx, color in enumerate(new_colors)}
+            new_colors = editor_utilities.assign_new_colors(orig_palette, palette_colors)
+            if new_colors:
+                logging.debug("Adding %s to palette %s", new_colors, orig_palette_nid)
                 orig_palette.colors.update(new_colors)
         else:
             if palette_nid not in RESOURCES.combat_palettes:
@@ -56,14 +60,18 @@ def add_frames(index_fn, current, new_weapon, images):
         index_lines = [line.strip() for line in index_fp.readlines()]
         index_lines = [line.split(';') for line in index_lines]
 
-    # Use the first palette
-    palette_name, palette_nid = current.palettes[0]
+    # Cut the frames from one palette image and convert them with that same image's palette.
+    # Prefer the image for the animation's first palette
+    palette_names = [name for name, nid in current.palettes]
+    image_fn = next((fn for fn in images if image_palette_name(fn) == palette_names[0]), images[0])
+    palette_name = image_palette_name(image_fn)
+    palette_nid = current.palettes[palette_names.index(palette_name)][1]
     palette = RESOURCES.combat_palettes.get(palette_nid)
 
     # Need to convert to universal coord palette
     convert_dict = editor_utilities.get_color_conversion(palette)
     logging.debug("Add Frames: Palette Name: %s, Palette Nid: %s, Conversion Dict: %s", palette_name, palette_nid, editor_utilities.human_readable(convert_dict))
-    main_pixmap = QPixmap(images[0])
+    main_pixmap = QPixmap(image_fn)
     for i in index_lines:
         # Only accepts length 4 lines
         if len(i) != 4:
@@ -76,6 +84,10 @@ def add_frames(index_fn, current, new_weapon, images):
         new_pixmap = main_pixmap.copy(x, y, width, height)
         assert width > 0 and height > 0
         # Convert to universal base palette
+        leftover = editor_utilities.find_unconvertible_colors(new_pixmap.toImage(), convert_dict)
+        if leftover:
+            logging.error("Frame %s uses colors missing from palette %s: %s. They will be stored raw "
+                          "and read back as palette coords", nid, palette_nid, leftover)
         new_pixmap = editor_utilities.color_convert_pixmap(new_pixmap, convert_dict)
         new_frame = combat_anims.Frame(nid, (x, y, width, height), (offset_x, offset_y), pixmap=new_pixmap)
         # print(new_frame.nid, id(new_frame.pixmap), new_frame.pixmap.width(), new_frame.pixmap.height(), editor_utilities.find_palette(QImage(new_frame.pixmap)))
@@ -131,7 +143,9 @@ def import_from_legacy(current, fn):
     if not os.path.exists(index_fn):
         QMessageBox.critical(None, "Error", "Could not find associated index file: %s" % index_fn)
         return
-    images = glob.glob(fn.replace('-Script.txt', '-*.png'))
+    # glob.escape first -- a '[' or ']' anywhere in the path is a glob character class,
+    # so an unescaped path silently matches nothing. It leaves '-Script.txt' alone
+    images = glob.glob(glob.escape(fn).replace('-Script.txt', '-*.png'))
     if not images:
         QMessageBox.critical(None, "Error", "Could not find any associated palettes")
         return
@@ -146,8 +160,6 @@ def import_from_legacy(current, fn):
     # Need to build full image file now
     build_full_image(main_pixmap, new_weapon)
     # print(id(new_weapon), new_weapon.nid, id(new_weapon.pixmap), new_weapon.pixmap.width(), new_weapon.pixmap.height())
-    main_pixmap.save("main_pixmap.png")
-    new_weapon.pixmap.save("new_weapon_pixmap.png")
 
     add_poses(fn, new_weapon)
     # Actually add weapon to current
@@ -196,7 +208,9 @@ def import_effect_from_legacy(fn: str):
         RESOURCES.combat_effects.append(current)
         return current
         
-    images = glob.glob(fn.replace('-Script.txt', '-*.png'))
+    # glob.escape first -- a '[' or ']' anywhere in the path is a glob character class,
+    # so an unescaped path silently matches nothing. It leaves '-Script.txt' alone
+    images = glob.glob(glob.escape(fn).replace('-Script.txt', '-*.png'))
     if not images:
         QMessageBox.critical(None, "Error", "Could not find any associated palettes")
         return
@@ -335,11 +349,14 @@ def import_from_gba(current, fn):
     # Convert pixmaps to new palette colors
     convert_dict = editor_utilities.get_color_conversion(my_palette)
     pixmaps = {name: editor_utilities.color_convert_pixmap(pixmap, convert_dict) for name, pixmap in pixmaps.items()}
+    # What the transparent pixels hold now. A palette without the colorkey leaves them as the colorkey itself.
+    # Measuring frames against it matters because a frame's top left pixel can be artwork
+    colorkey = convert_dict.get(editor_utilities.qCOLORKEY, editor_utilities.qCOLORKEY)
     # Determine which pixmaps should be replaced by "wait" commands
-    empty_pixmaps = find_empty_pixmaps(pixmaps)
+    empty_pixmaps = find_empty_pixmaps(pixmaps, colorkey)
 
     # So now we have melee_anim and ranged_anim with all poses
-    melee_weapon_anim, ranged_weapon_anim = parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps)
+    melee_weapon_anim, ranged_weapon_anim = parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps, colorkey)
 
     for pose in melee_weapon_anim.poses:
         combine_identical_commands(pose)
@@ -439,7 +456,7 @@ def import_from_gba(current, fn):
         path = os.path.join(settings.get_current_project(), 'resources', 'combat_anims')
         RESOURCES.combat_anims.save_image(path, current)
 
-def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
+def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps, colorkey):
     # Read script
     # Now add poses to the weapon anim
     with open(fn, encoding='utf-8') as script_fp:
@@ -538,7 +555,7 @@ def parse_gba_script(fn, pixmaps, weapon_type, empty_pixmaps):
                     # Don't bother if already present
                     continue
                 pixmap = pixmaps[frame_nid]
-                x, y, width, height = editor_utilities.get_bbox(pixmap.toImage())
+                x, y, width, height = editor_utilities.get_bbox(pixmap.toImage(), colorkey)
                 if width > 0 and height > 0:
                     pixmap = pixmap.copy(x, y, width, height)
                     new_frame = combat_anims.Frame(frame_nid, (0, 0, width, height), (x, y), pixmap=pixmap)

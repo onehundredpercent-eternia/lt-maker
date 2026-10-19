@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Optional
 
 import math, string
 
@@ -19,6 +19,7 @@ from app.engine.objects.skill import SkillObject
 from app.engine.objects.unit import UnitObject
 from app.engine.game_state import game
 from app.engine.game_menus import menu_options
+from app.engine.game_menus.menu_components.generic_menu.cursor_hand import slide_hand
 from app.engine.achievements import Achievement
 from app.engine.graphics.text.text_renderer import fix_tags
 from app.engine.text_evaluator import TextEvaluator
@@ -57,6 +58,8 @@ def draw_unit_face(surf, topleft, unit, right):
     bg_surf_size = (104, 16 * DB.constants.total_items() + 8)   # Copied from above
     width, height = utils.tuple_sub(bg_surf_size, topleft_pad, bottomright_pad)
     face_image = icons.get_portrait_with_size(unit, width, height)
+    if not face_image:
+        return
     left = x + topleft_pad[0] + (width - face_image.get_width()) // 2           # blit at center
     top = y - bottomright_pad[1] + bg_surf_size[1] - face_image.get_height()    # blit from bottom
 
@@ -113,6 +116,9 @@ def draw_unit_bexp(surf, topleft, unit, new_exp, new_bexp, current_bexp, include
         FONT['text'].blit(str(new_bexp), surf, (topleft[0] + 57, topleft[1] + 52))
 
 class Cursor():
+    # The rows of a menu are this many pixels apart
+    row_height = 16
+
     def __init__(self, sprite=None):
         self.counter = 0
         self.anim = [0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
@@ -120,31 +126,42 @@ class Cursor():
             self.sprite = SPRITES.get('menu_hand')
         else:
             self.sprite = sprite
+        # How far the hand is from its item, in pixels, as it slides to it
         self.y_offset = 0
+        self._last_slide = None
 
-    def y_offset_up(self):
-        self.y_offset = 12
+    def y_offset_up(self, distance: int = row_height):
+        self.y_offset = distance
 
-    def y_offset_down(self):
-        self.y_offset = -12
+    def y_offset_down(self, distance: int = row_height):
+        self.y_offset = -distance
 
     def update(self):
         self.counter = (self.counter + 1) % len(self.anim)
 
     def update_y_offset(self):
-        if self.y_offset > 0:
-            self.y_offset = max(0, self.y_offset - 4)
-        elif self.y_offset < 0:
-            self.y_offset = min(0, self.y_offset + 4)
+        # Once a frame, however many times the hand is drawn
+        current_time = engine.get_time()
+        if current_time != self._last_slide:
+            self._last_slide = current_time
+            self.y_offset = slide_hand(self.y_offset)
 
     def draw(self, surf, x, y):
-        surf.blit(self.sprite, (x - 12 + self.anim[self.counter], y + 3 + self.y_offset))
         self.update_y_offset()
+        surf.blit(self.sprite, (x - 12 + self.anim[self.counter], y + 3 + self.y_offset))
         return surf
 
     def draw_vert(self, surf, x, y):
-        surf.blit(self.sprite, (x - 12, y + 3 + self.y_offset + self.anim[self.counter]))
         self.update_y_offset()
+        surf.blit(self.sprite, (x - 12, y + 3 + self.y_offset + self.anim[self.counter]))
+        return surf
+
+    def draw_still(self, surf, x, y):
+        """
+        A hand left on a picked option. As on the GBA (DisplayFrozenUiHand), it stays put,
+        2 pixels in from where the moving hand bobs out to
+        """
+        surf.blit(self.sprite, (x - 10, y + 3))
         return surf
 
 class Simple():
@@ -164,6 +181,10 @@ class Simple():
         self.hard_limit = False
         self.scroll = 0
         self.y_offset = 0  # Make room for header
+        # How far the rows are drawn from where they are scrolled to, in pixels, as they slide there
+        self.scroll_offset = 0
+        self._drawn_scroll = None
+        self._last_scroll_slide = None
 
         self.options = []
         self.create_options(options, info)
@@ -265,10 +286,21 @@ class Simple():
         # If we did scroll
         return scroll != self.scroll
 
+    def _row_top(self, index: int, scroll: int) -> int:
+        """How far down the menu an option is drawn, scrolled that far"""
+        if index >= scroll:
+            return sum(option.height() for option in self.options[scroll:index])
+        return -sum(option.height() for option in self.options[index:scroll])
+
+    def _slide_cursor(self, old_index: int, old_scroll: int):
+        """The hand slides from where it was to the option now chosen, however far that is"""
+        self.cursor.y_offset = self._row_top(old_index, old_scroll) - self._row_top(self.current_index, self.scroll)
+
     def move_down(self, first_push=True) -> bool:
         should_move = first_push or self.current_index < len(self.options) - 1
         if not should_move:
             return False
+        old_index, old_scroll = self.current_index, self.scroll
         if first_push:
             self.current_index += 1
             if self.current_index > len(self.options) - 1:
@@ -276,22 +308,20 @@ class Simple():
                 self.scroll = 0
             elif self.current_index > self.scroll + self.limit - 2 and self.scroll + self.limit < len(self.options):
                 self.scroll += 1
-            else:
-                self.cursor.y_offset_down()
         else: # not at bottom of list
             self.current_index += 1
             if self.current_index > self.scroll + self.limit - 2 and self.scroll + self.limit < len(self.options):
                 self.scroll += 1
-            else:
-                self.cursor.y_offset_down()
         if self.limit < len(self.options):
             self.scroll = min(len(self.options) - self.limit, self.scroll)
+        self._slide_cursor(old_index, old_scroll)
         return True
 
     def move_up(self, first_push=True) -> bool:
         should_move = first_push or self.current_index > 0
         if not should_move:
             return False
+        old_index, old_scroll = self.current_index, self.scroll
         if first_push:
             self.current_index -= 1
             if self.current_index < 0:
@@ -299,15 +329,12 @@ class Simple():
                 self.scroll = self.current_index - self.limit + 1
             elif self.current_index < self.scroll + 1:
                 self.scroll -= 1
-            else:
-                self.cursor.y_offset_up()
         else: # not at top of list
             self.current_index -= 1
             if self.current_index < self.scroll + 1:
                 self.scroll -= 1
-            else:
-                self.cursor.y_offset_up()
         self.scroll = max(0, self.scroll)
+        self._slide_cursor(old_index, old_scroll)
         return True
 
     def update_options(self, options=None):
@@ -353,6 +380,46 @@ class Simple():
         if self.draw_cursor == 1:
             self.cursor.update()
 
+    # As on the GBA (ShopUpdateBg2Offset, PrepItemList), a scrolled list slides this many pixels a frame
+    scroll_speed = 4
+
+    def _scroll_distance(self, old_scroll: int, new_scroll: int) -> int:
+        """How far the rows move, in pixels, when the list scrolls from old_scroll to new_scroll"""
+        return self._row_top(new_scroll, old_scroll)
+
+    def update_scroll_offset(self):
+        """Once a frame, however many times the menu is drawn, the rows slide toward their place"""
+        current_time = engine.get_time()
+        if current_time == self._last_scroll_slide:
+            return
+        self._last_scroll_slide = current_time
+        if self._drawn_scroll is not None and self.scroll != self._drawn_scroll:
+            if abs(self.scroll - self._drawn_scroll) == 1:
+                self.scroll_offset += self._scroll_distance(self._drawn_scroll, self.scroll)
+            else:  # A jump, such as wrapping round, is not slid
+                self.scroll_offset = 0
+        self._drawn_scroll = self.scroll
+        if self.scroll_offset > 0:
+            self.scroll_offset = max(0, self.scroll_offset - self.scroll_speed)
+        else:
+            self.scroll_offset = min(0, self.scroll_offset + self.scroll_speed)
+
+    def is_scrolling(self) -> bool:
+        return self.scroll_offset != 0 or (self._drawn_scroll is not None and self.scroll != self._drawn_scroll)
+
+    def _rows_in_view(self, num_rows: int, row_height, view_height: int) -> list:
+        """The rows to draw, each with how far down the list it is, as the list slides to its scroll"""
+        row, y = self.scroll, self.scroll_offset
+        while row > 0 and y > 0:
+            row -= 1
+            y -= row_height(row)
+        rows = []
+        while row < num_rows and y < view_height:
+            rows.append((row, y))
+            y += row_height(row)
+            row += 1
+        return rows
+
     def draw_scroll_bar(self, surf, topleft):
         right = topleft[0] + self.get_menu_width()
         topright = (right, topleft[1])
@@ -389,6 +456,8 @@ class Choice(Simple):
 
         self.stationary_cursor = Cursor()
         self.fake_cursor_idx = None
+        # How far across the rows are drawn, as a page slides in or out (Convoy)
+        self.rows_x_offset = 0
 
     def set_horizontal(self, val):
         self.horizontal = val
@@ -569,12 +638,12 @@ class Choice(Simple):
                     unit = None
                     if item:
                         unit = game.get_unit(item.owner_nid)
-                    if unit:
-                        topleft_pad = (4, 8)     # Paddings from the bg sprite
-                        bottomright_pad = (1, 5)
-                        width, height = utils.tuple_sub(surf.get_size(), topleft_pad, bottomright_pad)
-                        portrait = icons.get_portrait_with_size(unit, width, height).convert_alpha()
-                        portrait = image_mods.make_translucent(portrait, 0.5)
+                    topleft_pad = (4, 8)     # Paddings from the bg sprite
+                    bottomright_pad = (1, 5)
+                    width, height = utils.tuple_sub(surf.get_size(), topleft_pad, bottomright_pad)
+                    portrait = icons.get_portrait_with_size(unit, width, height) if unit else None
+                    if portrait:
+                        portrait = image_mods.make_translucent(portrait.convert_alpha(), 0.5)
                         surf.blit(portrait, (topleft_pad[0] + (width - portrait.get_width()) // 2,
                                              surf.get_height() - portrait.get_height() - bottomright_pad[1]))
 
@@ -617,28 +686,32 @@ class Choice(Simple):
             draw_scroll_bar = True
             self.draw_scroll_bar(surf, topleft)
 
-        start_index = self.scroll
-        end_index = self.scroll + self.limit
-        choices = self.options[start_index:end_index]
-        running_height = self.y_offset
         menu_width = self.get_menu_width()
-        if choices:
-            for idx, choice in enumerate(choices):
-                top = topleft[1] + 4 + running_height
-                left = topleft[0]
-
-                if self.highlight and idx + self.scroll == self.current_index and self.takes_input and self.draw_cursor:
-                    choice.draw_highlight(surf, left, top, menu_width - 8 if draw_scroll_bar else menu_width)
-                # elif self.highlight and idx + self.scroll == self.fake_cursor_idx:
-                    # choice.draw_highlight(surf, left, top, menu_width)
+        if self.options[self.scroll:self.scroll + self.limit]:
+            self.update_scroll_offset()
+            list_top = topleft[1] + 4 + self.y_offset
+            left = topleft[0]
+            view_height = sum(option.height() for option in self.options[self.scroll:self.scroll + self.limit])
+            rows = self._rows_in_view(len(self.options), lambda idx: self.options[idx].height(), view_height)
+            # Rows sliding in or out are cut off at the edge of the list
+            old_clip = surf.get_clip()
+            if self.rows_x_offset:
+                surf.set_clip(old_clip.clip((left, list_top, menu_width, view_height)))
+            elif self.scroll_offset:
+                surf.set_clip(old_clip.clip((0, list_top, surf.get_width(), view_height)))
+            row_left = left + self.rows_x_offset
+            for idx, y in rows:
+                choice = self.options[idx]
+                if self.highlight and idx == self.current_index and self.takes_input and self.draw_cursor:
+                    choice.draw_highlight(surf, row_left, list_top + y, menu_width - 8 if draw_scroll_bar else menu_width)
                 else:
-                    choice.draw(surf, left, top)
-                if idx + self.scroll == self.fake_cursor_idx:
-                    self.stationary_cursor.draw(surf, left, top)
-                if idx + self.scroll == self.current_index and self.takes_input and self.draw_cursor:
-                    self.cursor.draw(surf, left, top)
-
-                running_height += choice.height()
+                    choice.draw(surf, row_left, list_top + y)
+            surf.set_clip(old_clip)
+            if self.fake_cursor_idx is not None and self.scroll <= self.fake_cursor_idx < self.scroll + self.limit:
+                self.stationary_cursor.draw_still(surf, left, list_top + self._row_top(self.fake_cursor_idx, self.scroll))
+            # The hand goes straight to where its option is scrolled to
+            if self.scroll <= self.current_index < self.scroll + self.limit and self.takes_input and self.draw_cursor:
+                self.cursor.draw(surf, left, list_top + self._row_top(self.current_index, self.scroll))
         else:
             FONT['text-grey'].blit("Nothing", surf, (self.topleft[0] + 16, self.topleft[1] + 4))
         return surf
@@ -666,7 +739,7 @@ class Choice(Simple):
                 else:
                     choice.draw(surf, left, top)
                 if idx == self.fake_cursor_idx:
-                    self.stationary_cursor.draw(surf, left, top)
+                    self.stationary_cursor.draw_still(surf, left, top)
                 if idx == self.current_index and self.takes_input and self.draw_cursor:
                     self.cursor.draw(surf, left, top)
 
@@ -830,12 +903,33 @@ class Trade(Simple):
     def selected_option(self):
         return self._selected_option
 
+    @staticmethod
+    def _item_at_or_above(menu, index: int) -> Optional[int]:
+        """The last row at or above index that has an item, if any"""
+        for idx in range(min(index, len(menu.options) - 1), -1, -1):
+            option = menu.options[idx]
+            if not option.ignore and option.get():
+                return idx
+        return None
+
     def unset_selected_option(self):
         self._selected_option = None
         self.selecting_hand = self.other_hand
         self.other_hand = None
         self.menu1.set_fake_cursor(None)
         self.menu2.set_fake_cursor(None)
+        # As on the GBA (TradeMenu_OnEndSelected), the hand goes back to the item that was
+        # picked. If it was traded away, onto the last item above it, or onto the other
+        # unit's if this one has nothing left
+        side, row = self.selecting_hand
+        menus = (self.menu1, self.menu2)
+        item_row = self._item_at_or_above(menus[side], row)
+        if item_row is None:
+            item_row = self._item_at_or_above(menus[1 - side], row)
+            if item_row is not None:
+                side = 1 - side
+        if item_row is not None:
+            self.selecting_hand = (side, item_row)
         # handle cursor
         if self.selecting_hand[0] == 0:
             self.menu1.move_to(self.selecting_hand[1])
@@ -978,12 +1072,14 @@ class Trade(Simple):
         bg_surf_width = 104
         portrait_size = (96, 68)
         owner_surf = icons.get_portrait_with_size(self.owner, *portrait_size)
-        owner_surf = engine.flip_horiz(owner_surf)
-        surf.blit(owner_surf, (11 + (bg_surf_width - owner_surf.get_width()) // 2, 0))
+        if owner_surf:
+            owner_surf = engine.flip_horiz(owner_surf)
+            surf.blit(owner_surf, (11 + (bg_surf_width - owner_surf.get_width()) // 2, 0))
 
         # Partner
         partner_surf = icons.get_portrait_with_size(self.partner, *portrait_size)
-        surf.blit(partner_surf, (125 + (bg_surf_width - partner_surf.get_width()) // 2, 0))
+        if partner_surf:
+            surf.blit(partner_surf, (125 + (bg_surf_width - partner_surf.get_width()) // 2, 0))
 
         if self.menu1.info_flag:
             self.menu2.draw(surf)
@@ -1033,6 +1129,8 @@ class Table(Simple):
 
         self.stationary_cursor = Cursor()
         self.fake_cursor_idx = None
+        # Whether left and right go on round to the row before or after
+        self.wrap_rows = True
 
     def get_scroll(self):
         return self.scroll
@@ -1180,6 +1278,8 @@ class Table(Simple):
             col += 1
             if self._exists(row, col):
                 pass
+            elif not self.wrap_rows:
+                break  # Stop at the right edge
             elif idx >= len(self.options) - 1:
                 break  # Don't move right because we are on the last row
             elif row < num_rows - 1:
@@ -1209,6 +1309,8 @@ class Table(Simple):
             col -= 1
             if self._exists(row, col):
                 pass
+            elif not self.wrap_rows:
+                break  # Stop at the left edge
             elif row > 0:
                 row -= 1
                 col = self._get_right(row)
@@ -1292,7 +1394,9 @@ class Table(Simple):
         width = max(option.width() for option in self.options)
         width -= width%8
         height = max(option.height() for option in self.options)
-        if choices:
+        if choices and self.mode != 'objective_menu':
+            self._draw_sliding_rows(surf, topleft, width, height, draw_scroll_bar)
+        elif choices:
             for idx, choice in enumerate(choices):
                 top = topleft[1] + 4 + (idx // self.columns * height)
                 left = topleft[0] + (idx % self.columns * width)
@@ -1315,21 +1419,47 @@ class Table(Simple):
                             surf.blit(SPRITES.get('lowlight'), (topleft[0] + 2, topleft[1] + 12 + (win_count - self.scroll + 2) * 16))
                             FONT['text-yellow'].blit("Loss Conditions", surf, (topleft[0] + 4, topleft[1] + 4 + (win_count - self.scroll + 2) * 16))
                     choice.draw(surf, left, top)
-                else:
-                    if self.mode in ('unit', 'prep_manage'):
-                        left += 16
-                    if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
-                        choice.draw_highlight(surf, left, top, width - 8 if draw_scroll_bar else width)
-                    elif idx + (self.scroll * self.columns) == self.fake_cursor_idx:
-                        choice.draw_highlight(surf, left, top, width - 8 if draw_scroll_bar else width)
-                    else:
-                        choice.draw(surf, left, top)
-                    if idx + (self.scroll * self.columns) == self.fake_cursor_idx:
-                        self.stationary_cursor.draw(surf, left, top)
-                    if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
-                        self.cursor.draw(surf, left, top)
         else:
             FONT['text-grey'].blit("Nothing", bg_surf, (topleft[0] + 16, topleft[1] + 4))
+
+    def _scroll_distance(self, old_scroll: int, new_scroll: int) -> int:
+        return (new_scroll - old_scroll) * max(option.height() for option in self.options)
+
+    def _draw_sliding_rows(self, surf, topleft, width, height, draw_scroll_bar):
+        self.update_scroll_offset()
+        list_top = topleft[1] + 4
+        num_rows = math.ceil(len(self.options) / self.columns)
+        rows = self._rows_in_view(num_rows, lambda row: height, self.rows * height)
+        left_pad = 16 if self.mode in ('unit', 'prep_manage') else 0
+        highlight_width = width - 8 if draw_scroll_bar else width
+
+        def option_left(idx):
+            return topleft[0] + left_pad + idx % self.columns * width
+
+        # Rows sliding in or out are cut off at the edge of the list
+        old_clip = surf.get_clip()
+        if self.scroll_offset:
+            surf.set_clip(old_clip.clip((0, list_top, surf.get_width(), self.rows * height)))
+        for row, y in rows:
+            for idx in range(row * self.columns, min((row + 1) * self.columns, len(self.options))):
+                choice = self.options[idx]
+                if (idx == self.current_index and self.takes_input and self.draw_cursor) or idx == self.fake_cursor_idx:
+                    choice.draw_highlight(surf, option_left(idx), list_top + y, highlight_width)
+                else:
+                    choice.draw(surf, option_left(idx), list_top + y)
+        surf.set_clip(old_clip)
+
+        def in_view(idx):
+            return self.scroll <= idx // self.columns < self.scroll + self.rows
+
+        def view_top(idx):
+            return list_top + (idx // self.columns - self.scroll) * height
+
+        if self.fake_cursor_idx is not None and in_view(self.fake_cursor_idx):
+            self.stationary_cursor.draw_still(surf, option_left(self.fake_cursor_idx), view_top(self.fake_cursor_idx))
+        # The hand goes straight to where its option is scrolled to
+        if in_view(self.current_index) and self.takes_input and self.draw_cursor:
+            self.cursor.draw(surf, option_left(self.current_index), view_top(self.current_index))
 
     # For mouse handling
     def get_rects(self):
@@ -1380,6 +1510,10 @@ class Convoy():
 
         self.owner_surf = create_base_surf(96, 24)
         self.owner_surf = image_mods.make_translucent(self.owner_surf, .4)
+
+        # [page slid away from, direction, frame] while a new page slides in
+        self._page_slide = None
+        self._last_page_slide = None
 
         for name, menu in self.menus.items():
             menu.set_takes_input(False)
@@ -1502,7 +1636,27 @@ class Convoy():
         else:
             return self.get_menu().move_up(first_push)
 
+    def _slide_page(self, old_index: int, old_menu: Choice, direction: int):
+        """Moving from one page of the convoy to another slides the new page in"""
+        if old_index > 0 and self.selection_index > 0 and self.selection_index != old_index:
+            self._page_slide = [old_menu, direction, 0]
+
+    def is_sliding(self) -> bool:
+        return self._page_slide is not None
+
     def move_left(self, first_push=True):
+        old_index, old_menu = self.selection_index, self.get_menu()
+        moved = self._move_left(first_push)
+        self._slide_page(old_index, old_menu, -1)
+        return moved
+
+    def move_right(self, first_push=True):
+        old_index, old_menu = self.selection_index, self.get_menu()
+        moved = self._move_right(first_push)
+        self._slide_page(old_index, old_menu, 1)
+        return moved
+
+    def _move_left(self, first_push=True):
         if self.selection_index == 0:
             if self.locked:
                 return False
@@ -1531,7 +1685,7 @@ class Convoy():
             self.left_arrow.pulse()
         return True
 
-    def move_right(self, first_push=True):
+    def _move_right(self, first_push=True):
         if self.selection_index == 0:
             if self.locked:
                 return False
@@ -1604,8 +1758,8 @@ class Convoy():
 
         # Draw Portrait to left of menu
         # Owner
-        if not self.disp_value:
-            owner_surf = icons.get_portrait_with_size(self.owner, 96, 68)
+        owner_surf = icons.get_portrait_with_size(self.owner, 96, 68) if not self.disp_value else None
+        if owner_surf:
             owner_surf = engine.flip_horiz(owner_surf)
             surf.blit(owner_surf, (18, 68 - owner_surf.get_height()))
 
@@ -1631,7 +1785,7 @@ class Convoy():
                 icons.draw_weapon(surf, weapon_nid, topleft)
                 surf.blit(SPRITES.get('weapon_shine'), topleft)
 
-        self.get_menu().draw(surf)
+        self.draw_page(surf)
         if self.inventory:
             self.inventory.draw(surf)
 
@@ -1645,6 +1799,38 @@ class Convoy():
         self.left_arrow.draw(surf)
         self.right_arrow.draw(surf)
         return surf
+
+    def draw_page(self, surf):
+        """
+        As on the GBA (PrepItemSupply_SwitchPageLeft), a new page slides in over 8 frames: the old
+        page's items slide 96 pixels out, easing out, and on the 4th frame the new page's slide in
+        from the other side, easing in. The hand stays where it was until the new page comes
+        """
+        menu = self.get_menu()
+        if not self._page_slide:
+            menu.draw(surf)
+            return
+        old_menu, direction, frame = self._page_slide
+        current_time = engine.get_time()
+        if current_time != self._last_page_slide:
+            self._last_page_slide = current_time
+            frame += 1
+            self._page_slide[2] = frame
+        if frame >= 8:
+            self._page_slide = None
+            menu.draw(surf)
+            return
+        if frame < 4:
+            shown, x = old_menu, -direction * (96 - (4 - frame) ** 2 * 6)
+        else:
+            shown, x = menu, direction * (8 - frame) ** 2 * 6
+        takes_input = shown.takes_input
+        if shown is old_menu:
+            shown.takes_input = menu.takes_input
+        shown.rows_x_offset = x
+        shown.draw(surf)
+        shown.rows_x_offset = 0
+        shown.takes_input = takes_input
 
     def handle_mouse(self) -> bool:
         mouse_position = get_input_manager().get_mouse_position()
@@ -1753,7 +1939,8 @@ class Market(Convoy):
     def move_up(self, first_push=True):
         return self.menus[self.order[self.selection_index - 1]].move_up(first_push)
 
-    def move_left(self, first_push=True):
+    # Convoy.move_left and move_right slide the new page in
+    def _move_left(self, first_push=True):
         if self.selection_index == 1:
             if first_push:
                 self.selection_index = len(self.order)
@@ -1765,7 +1952,7 @@ class Market(Convoy):
             self.menu_index = self.selection_index - 1
             self.left_arrow.pulse()
 
-    def move_right(self, first_push=True):
+    def _move_right(self, first_push=True):
         if self.selection_index == len(self.order):
             if first_push:
                 self.selection_index = 1
@@ -1888,7 +2075,7 @@ class ChapterSelect(Main):
             elif self.rel_pos_y < 0:
                 self.rel_pos_y = min(0, self.rel_pos_y + 8)
 
-    def draw(self, surf, center=(WINWIDTH//2, WINHEIGHT//2), show_cursor=True, flicker=False):
+    def draw(self, surf, center=(WINWIDTH//2, WINHEIGHT//2), show_cursor=True, flicker=False, flip_timer=0):
         self.center = center
         num_options = len(self.options)
         start_index = max(0, self.current_index - 3)
@@ -1900,7 +2087,9 @@ class ChapterSelect(Main):
             else:
                 top = center[1] + idx * (option.height() + 1) - (num_options * (option.height() + 1)//2)
             if self.current_index == idx:
-                if flicker:
+                if flip_timer:
+                    option.draw_flip(surf, center[0], top, flip_timer)
+                elif flicker:
                     option.draw_flicker(surf, center[0], top)
                 else:
                     option.draw_highlight(surf, center[0], top)
@@ -2040,7 +2229,7 @@ class KeyboardMenu(Table):
                 else:
                     choice.draw(surf, left, top)
                 if idx + (self.scroll * self.columns) == self.fake_cursor_idx:
-                    self.stationary_cursor.draw(surf, left, top)
+                    self.stationary_cursor.draw_still(surf, left, top)
                 if idx + (self.scroll * self.columns) == self.current_index and self.takes_input and self.draw_cursor:
                     self.cursor.draw(surf, left, top)
 
@@ -2119,7 +2308,7 @@ class PrepGBA(Choice):
                 else:
                     choice.draw(surf, left, top)
                 if idx + self.scroll == self.fake_cursor_idx:
-                    self.stationary_cursor.draw(surf, left, top)
+                    self.stationary_cursor.draw_still(surf, left, top)
                 if idx + self.scroll == self.current_index and self.takes_input and self.draw_cursor:
                     self.cursor.draw(surf, left, top)
 

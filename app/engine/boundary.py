@@ -18,6 +18,9 @@ class BoundaryInterface():
     fog_of_war_tile2 = SPRITES.get('bg_black_tile')
     fog_of_war_tile3 = SPRITES.get('bg_fow_tile_white')
     fog_of_war_tile4 = SPRITES.get('bg_white_tile')
+    # As on the GBA (BMXFADE), a change to the fog fades in over 16 frames, the map
+    # with the fog as it was drawn a sixteenth less over it each frame
+    fog_fade_time = utils.frames2ms(16)
 
     def __init__(self, width, height):
         self.modes = {'attack': SPRITES.get('boundary_red'),
@@ -52,7 +55,13 @@ class BoundaryInterface():
 
         self.surf = None
         self.fog_of_war_surf = None
+        # The fog as it was, while a change to it fades in
+        self.old_fog_of_war_surf = None
+        self.fog_fade_start = 0
         self.aura_surf = None
+        # Where anything is drawn in surf and aura_surf
+        self.surf_content = None
+        self.aura_surf_content = None
         self.should_reset_surf: bool = False
         self.should_reset_aura_surf: bool = False
         self.frozen: bool = False  # Whether I should update my display surf (generally False, for immediate updates)
@@ -95,6 +104,8 @@ class BoundaryInterface():
 
     def reset_fog_of_war(self):
         self.reset_surf()  # Also needs to reset surf since the units you can see in fog of war may have changed
+        if self.fog_of_war_surf:
+            self.old_fog_of_war_surf = self.fog_of_war_surf
         self.fog_of_war_surf = None
 
     def _set(self, positions, mode, nid):
@@ -133,12 +144,7 @@ class BoundaryInterface():
         self.should_reset_aura_surf = True
 
     def _add_unit(self, unit):
-        valid_moves = game.path_system.get_valid_moves(unit, force=True)
-        if DB.constants.value('zero_move') and unit.get_ai() and not game.ai_group_active(unit.ai_group):
-            ai_prefab = DB.ai.get(unit.get_ai())
-            guard = ai_prefab.guard_ai()
-            if guard:
-                valid_moves = {unit.position}
+        valid_moves = game.path_system.get_move_selection(unit, force=True, zero_move=True).normal
 
         valid_attacks = game.target_system.get_all_attackable_positions_weapons(unit, valid_moves, force=True)
         valid_spells = game.target_system.get_all_attackable_positions_spells(unit, valid_moves, force=True)
@@ -246,8 +252,8 @@ class BoundaryInterface():
                 for x, y in tiles_to_color:
                     image = self.get_color_square(aura_color)
                     self.aura_surf.blit(image, (x * TILEWIDTH, y * TILEHEIGHT))
-        im = engine.subsurface(self.aura_surf, cull_rect)
-        surf.blit(im, (0, 0))
+            self.aura_surf_content = self.aura_surf.get_bounding_rect()
+        engine.blit_layer_view(surf, self.aura_surf, self.aura_surf_content, cull_rect)
         return surf
 
     def draw(self, surf, full_size, cull_rect):
@@ -312,9 +318,9 @@ class BoundaryInterface():
 
                             image = self.create_image(new_grid, x, y, grid_name)
                             self.surf.blit(image, (x * TILEWIDTH, y * TILEHEIGHT))
+            self.surf_content = self.surf.get_bounding_rect()
 
-        im = engine.subsurface(self.surf, cull_rect)
-        surf.blit(im, (0, 0))
+        engine.blit_layer_view(surf, self.surf, self.surf_content, cull_rect)
         return surf
 
     def create_image(self, grid, x, y, grid_name):
@@ -348,6 +354,7 @@ class BoundaryInterface():
     def draw_fog_of_war(self, surf, full_size, cull_rect):
         if game.get_current_fog_info().is_active or game.board.fog_region_set:
             if not self.fog_of_war_surf:
+                self.fog_fade_start = engine.get_time()
                 self.fog_of_war_surf = engine.create_surface(full_size, transparent=True)
                 for (y, x) in utils.itergrid(self.height, self.width):
                     is_in_vision = game.board.in_vision((x, y))
@@ -368,7 +375,18 @@ class BoundaryInterface():
                         self.fog_of_war_surf.blit(image, (x * TILEWIDTH, y * TILEHEIGHT))
 
             im = engine.subsurface(self.fog_of_war_surf, cull_rect)
-            surf.blit(im, (0, 0))
+            progress = (engine.get_time() - self.fog_fade_start) / self.fog_fade_time
+            old = self.old_fog_of_war_surf
+            if old and progress < 1 and old.get_size() == self.fog_of_war_surf.get_size():
+                # The map as it was, over the map as it is now
+                before = engine.copy_surface(surf)
+                before.blit(engine.subsurface(old, cull_rect), (0, 0))
+                surf.blit(im, (0, 0))
+                before.set_alpha(int(255 * (1 - progress)))
+                surf.blit(before, (0, 0))
+            else:
+                self.old_fog_of_war_surf = None
+                surf.blit(im, (0, 0))
         return surf
 
     def print_grid(self, mode):

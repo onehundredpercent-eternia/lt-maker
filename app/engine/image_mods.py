@@ -111,6 +111,24 @@ def make_white(image, white):
 
     return image
 
+# How much an effective weapon's icon is brightened, a frame at a time, as on the GBA
+# (UpdateBattleForecastEffectivenessPalettes): quickly up, slowly down, then a rest
+EFFECTIVE_FLASH = (0, 1, 1, 2, 3, 4, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2,
+                   2, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+def flash_effective(image, frame: int):
+    """
+    Brightens the icon of a weapon effective against its target, as on the GBA: each
+    step adds 3 of 31 to each color, no brighter than the GBA's white
+    """
+    step = EFFECTIVE_FLASH[frame % len(EFFECTIVE_FLASH)]
+    if not step:
+        return image
+    image = engine.copy_surface(image)
+    engine.fill(image, (24 * step, 24 * step, 24 * step), None, engine.BLEND_RGB_ADD)
+    engine.fill(image, (248, 248, 248), None, engine.BLEND_RGB_MIN)
+    return image
+
 def change_color(image, color: tuple):
     """
     Additively blends a color with the image
@@ -234,3 +252,16 @@ def draw_flicker_tint(image: engine.Surface, time: int, tints: List[FlickerTint]
             image = sub_tint(image.convert_alpha(), color)
 
     return image
+
+def do_flip(surf, t): # By DecklynKern
+    t = utils.clamp(t, 0, 1)
+    
+    newSurf = engine.create_surface((surf.get_width(), surf.get_height()), True)
+    
+    if t < 0.5:
+        scaled = engine.transform_scale(surf, (surf.get_width(), int(surf.get_height() * (1 - 2 * t))))
+    else:
+        scaled = engine.transform_scale(surf, (surf.get_width(), int(surf.get_height() * (2 * t - 1))))
+    
+    newSurf.blit(scaled, (0, (newSurf.get_height() - scaled.get_height()) / 2)) 
+    return newSurf

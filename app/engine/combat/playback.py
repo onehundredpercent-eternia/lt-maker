@@ -377,6 +377,31 @@ class TargetCastAnim(PlaybackBrush):
     nid: ClassVar[str] = 'target_cast_anim'
     anim: str
     pos: Tuple[int, int]
+    
+    
+
+@dataclass
+class SpellCastAnim(PlaybackBrush):
+    """
+    Aesthetic brush for playing a moving spell animation
+    Processed by a Map Combat only
+    """
+    nid: ClassVar[str] = 'spell_cast_anim'
+    anim: str
+    pos: Tuple[int, int]
+    velocity: Tuple[float, float]
+    duration: float
+    loop: bool
+    theta: float
+    
+    
+@dataclass
+class SequentialAnim(SpellCastAnim):
+    """
+    Aesthetic brush for playing a moving spell animation through a series of targets.
+    Processed by a Map Combat only
+    """
+    nid: ClassVar[str] = 'sequential_anim'
 
 
 @dataclass
@@ -399,6 +424,17 @@ class UnitTintSub(PlaybackBrush):
     Also processed by StatusUpkeep
     """
     nid: ClassVar[str] = 'unit_tint_sub'
+    unit: UnitObject
+    color: Tuple[int, int, int]
+
+
+@dataclass
+class BattleAnimTint(PlaybackBrush):
+    """
+    Aesthetic brush for tinting a unit's battle animation for the rest of the combat
+    Processed by an Animation Combat only
+    """
+    nid: ClassVar[str] = 'battle_anim_tint'
     unit: UnitObject
     color: Tuple[int, int, int]
 

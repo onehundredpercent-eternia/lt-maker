@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Set, Tuple
-from typing_extensions import override
+from typing import TYPE_CHECKING, List, Optional, override, Set, Tuple
 
 from app.data.category import CategorizedCatalog
 from app.data.resources.base_catalog import ManifestCatalog
@@ -86,7 +85,7 @@ class PortraitPrefab(WithResources, Prefab):
 
     def get_blink_frame(self, idx: int) -> Rect:
         return (self.full_size[0] - self.blink_size[0],
-                self.full_size[1] - self.mouth_size[1]*2 - self.blink_size[1]*(self.blink_frames-idx),
+                self.full_size[1] - self.mouth_size[1]*2 - self.blink_size[1]*(idx+1),
                 *self.blink_size)
 
     def get_mouth_frame(self, idx: int, smile: bool = False) -> Rect:

@@ -1,19 +1,32 @@
+import os
+from typing import Optional, Tuple
+
 from app.constants import WINWIDTH, WINHEIGHT, COLORKEY
 from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 
 from app.engine.sprites import SPRITES
 from app.engine.sound import get_sound_thread
+from app.engine.input_manager import get_input_manager
 from app.engine.game_state import game
-from app.engine import engine, image_mods, item_system, item_funcs, skill_system
+from app.engine import deferred_files, engine, image_mods, item_system, item_funcs, skill_system
 
 from app.data.resources.combat_anims import CombatAnimation, WeaponAnimation, EffectAnimation
 from app.data.resources.combat_palettes import Palette
+from app.utilities import file_utils
 
 import logging
 
 battle_anim_speed = 1
 battle_anim_registry = {}
+
+def no_damage_sway() -> list:
+    """
+    As on the GBA, a unit hit for no damage sways toward its foe, 0, 1, 2, 3, 2, 1, 0 pixels,
+    then is still for 6 frames. As lr_offset, which is taken from the end
+    """
+    sway = [0, -1, -2, -3, -2, -1, 0] + [0] * 6
+    return list(reversed(sway))
 
 class BattleAnimation():
     idle_poses = {'Stand', 'RangedStand', 'TransformStand'}
@@ -119,6 +132,8 @@ class BattleAnimation():
         self.flash_color = []  # It's a list so you could have it flash through several colors
         self.flash_counter = 0
         self.flash_image = None
+        # Set by the combat, from a hit that tints this unit for the rest of the combat
+        self.hit_tint: Optional[Tuple[int, int, int]] = None
         self.screen_dodge_color = None
         self.screen_dodge_counter = 0
         self.screen_dodge_image = None
@@ -131,6 +146,8 @@ class BattleAnimation():
         self.pan_away: bool = False
 
         self.lr_offset = []
+        # This frame's from lr_offset, taken once a frame however many layers are drawn
+        self.lr_now = None
         self.effect_offset = (0, 0)
         self.personal_offset = (0, 0)
 
@@ -153,13 +170,16 @@ class BattleAnimation():
 
     def load_full_image(self):
         # Only do load stuff if image does not exist already
-        image_full_path = self.anim_prefab.full_path
+        image_full_path = deferred_files.ensure(self.anim_prefab.full_path)
         self.anim_prefab.image = engine.image_load(image_full_path, convert=True)
         colors = self.current_palette.colors.values()
-        if COLORKEY in colors:
-            engine.set_colorkey(self.anim_prefab.image, COLORKEY, rleaccel=True)
-        else:  # Effects can use 0, 0, 0 as their colorkey
+        if file_utils.Pltfm.mac():
             engine.set_colorkey(self.anim_prefab.image, (0, 0, 0), rleaccel=True)
+        else:
+            if COLORKEY in colors:
+                engine.set_colorkey(self.anim_prefab.image, COLORKEY, rleaccel=True)
+            else:  # Effects can use 0, 0, 0 as their colorkey
+                engine.set_colorkey(self.anim_prefab.image, (0, 0, 0), rleaccel=True)
         for frame in self.anim_prefab.frames:
             frame.image = engine.subsurface(self.anim_prefab.image, frame.rect)
 
@@ -366,6 +386,7 @@ class BattleAnimation():
         return self.poses[self.current_pose].timeline
 
     def update(self):
+        self.lr_now = self.lr_offset.pop() if self.lr_offset else None
         if self.state == 'run':
             # Read script
             if self.frame_count >= self.num_frames:
@@ -475,11 +496,12 @@ class BattleAnimation():
             get_sound_thread().stop_sfx(values[0])
 
         elif command.nid == 'start_hit':
+            if self.partner_anim:  # Also offset partner, since they got hit
+                self.partner_anim.lr_offset = no_damage_sway() if self.owner.is_no_damage_hit() else [-1, -2, -3, -2, -1]
             self.owner.shake()
             self.owner.start_hit()
-            if self.partner_anim:  # Also offset partner, since they got hit
+            if self.partner_anim:
                 self.partner_anim.damaged()
-                self.partner_anim.lr_offset = [-1, -2, -3, -2, -1]
         elif command.nid == 'wait_for_hit':
             if self.wait_for_hit:
                 self.current_frame = self.get_frame(values[0])
@@ -495,6 +517,8 @@ class BattleAnimation():
         elif command.nid == 'spell_hit':
             self.state = 'wait'
             self.processing = False
+            if self.partner_anim and self.owner.is_no_damage_hit():
+                self.partner_anim.lr_offset = no_damage_sway()
             self.owner.shake()
             self.owner.spell_hit()
             self.owner.hit_modifiers()
@@ -659,6 +683,10 @@ class BattleAnimation():
             self.owner._shake(1)
         elif command.nid == 'screen_shake_2':
             self.owner._shake(4)
+        elif command.nid == 'rumble':
+            get_input_manager().rumble(0.5, 0.5, 150)
+        elif command.nid == 'rumble_2':
+            get_input_manager().rumble(1, 1, 500)
         elif command.nid == 'darken':
             self.owner.darken()
         elif command.nid == 'lighten':
@@ -758,6 +786,9 @@ class BattleAnimation():
             if self.unit and self.parent == self: # Don't apply tint if this is combat effect or mock combat
                 current_time = engine.get_time()
                 flicker_tints = skill_system.combat_sprite_flicker_tint(self.unit)
+                if self.hit_tint:
+                    # Color, Period, Width, Add Tint or Subtract Tint
+                    flicker_tints.append((self.hit_tint, 0, 0, True))
                 flicker_tints = [image_mods.FlickerTint(*tint) for tint in flicker_tints]
                 image = image_mods.draw_flicker_tint(image, current_time, flicker_tints)
 
@@ -820,8 +851,8 @@ class BattleAnimation():
             image = engine.flip_horiz(image)
         offset = frame.offset[0] + (WINWIDTH - 240)//2, frame.offset[1] + (WINHEIGHT - 160)
         # Handle offset (placement of the object on the screen)
-        if self.lr_offset:
-            offset = offset[0] + self.lr_offset.pop(), offset[1] + y_offset
+        if self.lr_now is not None:
+            offset = offset[0] + self.lr_now, offset[1] + y_offset
         if self.effect_offset:
             offset = offset[0] + self.effect_offset[0], offset[1] + self.effect_offset[1] + y_offset
         if self.personal_offset:

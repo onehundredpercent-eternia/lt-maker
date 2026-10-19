@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Dict
-from app.engine.codegen.codegen_utils import get_codegen_header
+from app.engine.codegen.codegen_utils import GeneratedSource, get_codegen_header
 from app.engine.component_system.utils import HookInfo, ARG_TYPE_MAP, ResolvePolicy
 
 ITEM_HOOKS: Dict[str, HookInfo] = {
@@ -26,12 +26,17 @@ ITEM_HOOKS: Dict[str, HookInfo] = {
     'transforms':                                      HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'no_attack_after_move':                            HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'no_map_hp_display':                               HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    'no_map_hit_flash':                                HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    'no_map_hit_sfx':                                  HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    'no_map_combat_movement':                          HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    'no_map_damage_numbers':                           HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'cannot_be_dual_strike_partner':                   HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'cannot_have_dual_strike_partner':                 HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'can_attack_after_combat':                         HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'simple_target_restrict':                          HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'force_map_anim':                                  HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'map_cast_pose':                                   HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
+    'wait_on_map_anim':                                HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'ignore_line_of_sight':                            HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'ignore_fog_of_war':                               HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
     'allow_target_in_fog_of_war':                      HookInfo(['unit', 'item'], ResolvePolicy.ALL_DEFAULT_FALSE),
@@ -95,6 +100,7 @@ ITEM_HOOKS: Dict[str, HookInfo] = {
     'dynamic_multiattacks':                            HookInfo(['unit', 'item', 'target', 'item2', 'mode', 'attack_info', 'base_value'], ResolvePolicy.NUMERIC_ACCUM),
     # aesthetic components that return a value
     'hover_description':                               HookInfo(['unit', 'item'], ResolvePolicy.UNIQUE),
+    'targeting_pennant':                               HookInfo(['unit', 'item'], ResolvePolicy.UNIQUE),
     'show_weapon_advantage':                           HookInfo(['unit', 'item', 'target', 'item2'], ResolvePolicy.UNIQUE),
     'show_weapon_disadvantage':                        HookInfo(['unit', 'item', 'target', 'item2'], ResolvePolicy.UNIQUE),
     'battle_music':                                    HookInfo(['unit', 'item', 'target', 'item2', 'mode'], ResolvePolicy.UNIQUE),
@@ -159,7 +165,7 @@ def {hook_name}({func_signature}):
 def compile_item_system():
     import os
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    compiled_item_system = open(os.path.join(dir_path, '..', 'item_system.py'), 'w')
+    compiled_item_system = GeneratedSource(os.path.join(dir_path, '..', 'item_system.py'))
     item_system_base = open(os.path.join(dir_path, 'item_system_base.py'), 'r')
 
     # write warning msg

@@ -1,7 +1,7 @@
 import logging
 import functools
 import math
-from typing import List, Set
+from typing import Callable, List, Optional, Set
 
 from app.constants import FRAMERATE
 from app.data.database.database import DB
@@ -39,6 +39,9 @@ class AIController():
         self.behaviour_idx = 0
         self.behaviour = None
         self.inner_ai = None
+        # Where to move if no behaviour can do what it wants: as far as possible
+        # towards the target of the first behaviour whose path an enemy blocks
+        self.fallback_position: Optional[Pos] = None
 
         self.did_something = False
 
@@ -230,7 +233,7 @@ class AIController():
             return valid_moves
 
     def think(self):
-        time = engine.get_time()
+        time = engine.get_true_time()
         success = False
         self.did_something = False
         orig_pos = self.unit.position
@@ -274,6 +277,10 @@ class AIController():
                         else:
                             self.state = "Init"  # Try another behaviour
                 else:
+                    if self.fallback_position:
+                        logging.info("No behaviour succeeded. Moving towards a blocked target")
+                        self.goal_position = self.fallback_position
+                        success = self.ready_to_move()
                     self.state = 'Done'
 
             elif self.state == 'Primary':
@@ -305,20 +312,13 @@ class AIController():
             elif self.state == 'Secondary':
                 done, self.goal_position = self.inner_ai.run()
                 if done:
-                    if self.goal_position:
-                        if self.goal_position != self.unit.position:
-                            if self.unit.ai_group and game.get_ai_group(self.unit.ai_group):
-                                ai_group = game.get_ai_group(self.unit.ai_group)
-                                triggered = ai_group.trigger(self.unit.nid, len(game.get_units_in_ai_group(self.unit.ai_group)))
-                                if triggered:
-                                    self.ai_group_ping(ai_group)
-                                    success = True
-                                else:
-                                    # If we didn't trigger, that means this unit is not ready to participate
-                                    self.clean_up()
-                                    success = False
-                            else:
-                                success = True
+                    if self.goal_position and self.inner_ai.best_path_blocked:
+                        # Only worth doing if no later behaviour can do what it wants
+                        if not self.fallback_position:
+                            self.fallback_position = self.goal_position
+                        self.state = "Init"  # Try another behaviour
+                    elif self.goal_position:
+                        success = self.ready_to_move()
                         self.state = "Done"
                     else:
                         self.state = "Init"  # Try another behaviour
@@ -332,6 +332,24 @@ class AIController():
                 break
 
         return False
+
+    def ready_to_move(self) -> bool:
+        """
+        Returns whether the unit will move to its goal position
+        """
+        if self.goal_position == self.unit.position:
+            return False
+        if self.unit.ai_group and game.get_ai_group(self.unit.ai_group):
+            ai_group = game.get_ai_group(self.unit.ai_group)
+            triggered = ai_group.trigger(self.unit.nid, len(game.get_units_in_ai_group(self.unit.ai_group)))
+            if triggered:
+                self.ai_group_ping(ai_group)
+                return True
+            else:
+                # If we didn't trigger, that means this unit is not ready to participate
+                self.clean_up()
+                return False
+        return True
 
     def ai_group_ping(self, ai_group):
         action.do(action.AIGroupPing(ai_group.nid))
@@ -733,16 +751,22 @@ class SecondaryAI():
         self.max_tp = None  # Not 0, to entertain the possible case of non-positive tp
         self.best_target = 0
         self.best_path = None
+        self.best_path_blocked = False  # Whether an enemy cuts the best path short
 
         limit = self.get_limit()
-        self.available_targets = [t for t in self.all_targets if utils.calculate_distance(self.unit.position, t) <= limit]
+        self.available_targets = [t for t in self.all_targets
+                                  if limit is None or utils.calculate_distance(self.unit.position, t) <= limit]
 
         self.best_position = None
 
-    def get_limit(self) -> int:
-        # Make sure we don't exceed double move
+    def get_limit(self) -> Optional[int]:
+        """
+        How far off a target may be: in tiles for it to be considered at all,
+        and in movement cost for the path to it. None is no limit, for a
+        behaviour that looks at the whole map, however large the map is.
+        """
         if self.widen_flag or self.view_range == -4:
-            limit = 99
+            limit = None
         elif self.view_range == -3:
             limit = self.double_move
         elif self.view_range == -2:
@@ -760,7 +784,11 @@ class SecondaryAI():
         if self.available_targets:
             target = self.available_targets.pop()
             # Find a path to the target
-            path = self.get_path(target)
+            path = self.get_path(target, through_enemies=False)
+            blocked = not path
+            if blocked:
+                # Enemies are in the way, so find the path we would take if they weren't
+                path = self.get_path(target, through_enemies=True)
             if not path:
                 logging.info("No valid path to %s.", target)
                 return False, None
@@ -770,7 +798,11 @@ class SecondaryAI():
             if tp is not None and (self.max_tp is None or tp > self.max_tp):
                 self.max_tp = tp
                 self.best_target = target
+                if blocked:
+                    logging.info("Path to %s is blocked by an enemy.", target)
+                    path = self.stop_before_blocker(path)
                 self.best_path = path
+                self.best_path_blocked = blocked
 
         elif self.best_target:
             self.best_position = game.path_system.travel_algorithm(self.best_path, self.unit.movement_left, self.unit, self.grid)
@@ -788,26 +820,50 @@ class SecondaryAI():
                 return True, None
         return False, None
 
-    def get_path(self, goal_pos):
+    def get_path(self, goal_pos, through_enemies: bool) -> List[Pos]:
+        """
+        Args:
+            through_enemies: If set, enemy units do not block the path
+        """
         self.pathfinder.set_goal_pos(goal_pos)
 
-        if self.behaviour.target == 'Event':
-            adj_good_enough = False
-        elif self.behaviour.target == 'Position' and not game.board.get_unit(goal_pos):
-            adj_good_enough = False  # Don't move adjacent if it's not necessary
-        elif self.behaviour.target == 'Terrain':
-            adj_good_enough = False
-        else:
-            adj_good_enough = True
+        # A unit target is reached by standing next to it. Any other target is a tile to stand on
+        adj_good_enough = self.behaviour.target not in ('Event', 'Position', 'Terrain')
 
         limit = self.get_limit()
-        if skill_system.pass_through(self.unit):
+        if through_enemies:
             can_move_through = lambda adj: True
         else:
-            can_move_through = functools.partial(game.board.can_move_through, self.unit.team)
+            can_move_through = self.get_can_move_through(goal_pos)
         max_movement_limit = self.unit.get_movement()
         path = self.pathfinder.process(can_move_through, adj_good_enough=adj_good_enough, limit=limit, max_movement_limit=max_movement_limit)
         self.pathfinder.reset()
+        return path
+
+    def get_can_move_through(self, goal_pos: Pos) -> Callable[[Pos], bool]:
+        """
+        Returns a function that determines whether the unit can
+        move through a position on its way to the goal position
+        """
+        can_move_through = functools.partial(game.board.can_move_through, self.unit.team)
+        if skill_system.pass_through(self.unit):
+            # Can walk through an enemy, but can't stop on one
+            return lambda pos: pos != goal_pos or can_move_through(pos)
+        return can_move_through
+
+    def stop_before_blocker(self, path: List[Pos]) -> List[Pos]:
+        """
+        Cuts a path short so that it ends on the last position
+        we can reach before an enemy unit is in the way
+
+        Args:
+            path: The path, with the goal position first and the start position last
+        """
+        can_move_through = self.get_can_move_through(path[0])
+        # Travel backwards from the position after the start position
+        for idx in range(len(path) - 2, -1, -1):
+            if not can_move_through(path[idx]):
+                return path[idx + 1:]
         return path
 
     def default_priority(self, enemy):
@@ -822,7 +878,11 @@ class SecondaryAI():
         highest_damage_term, highest_status_term = 0, 0
 
         for item in items:
-            status_term = 1 if item.status_on_hit else 0
+            # Consult the item's own AI priority hooks rather than probing for one
+            # hardcoded component, so every status-applying component counts and a
+            # target that already has the status scores nothing.
+            custom_priority = item_system.ai_priority(self.unit, item, enemy, self.unit.position)
+            status_term = utils.clamp(custom_priority, 0, 1) if custom_priority is not None else 0
             true_damage = None
             if item_system.is_weapon(self.unit, item) or item_system.is_spell(self.unit, item):
                 raw_damage = combat_calcs.compute_damage(self.unit, enemy, item, enemy.get_weapon(), 'attack', (0, 0))

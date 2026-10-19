@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from app.constants import TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
+from app.constants import FRAMERATE, TILEHEIGHT, TILEWIDTH, WINHEIGHT, WINWIDTH
 # from app.data.resources.resources import RESOURCES
 from app.data.database.database import DB
 from app.engine import action, background, banner, base_surf
@@ -13,6 +13,7 @@ from app.engine.combat import interaction
 from app.engine.fluid_scroll import FluidScroll
 from app.engine.fonts import FONT
 from app.engine.game_state import game
+from app.engine.input_manager import get_input_manager
 from app.engine.sound import get_sound_thread
 from app.engine.sprites import SPRITES
 from app.engine.state import MapState, State
@@ -196,6 +197,8 @@ class PrepPickUnitsState(State):
         self.units = stuck_units + sorted(unstuck_units, key=lambda unit: bool(unit.position), reverse=True)
         self.menu = menus.Table(None, self.units, (6, 2), (110, 24))
         self.menu.set_mode('position')
+        # As on the GBA (ProcPrepUnit_Idle), the hand stops at the left and right edges
+        self.menu.wrap_rows = False
 
         self.bg = background.create_background('rune_background')
         game.memory['prep_bg'] = self.bg
@@ -223,19 +226,21 @@ class PrepPickUnitsState(State):
         directions = self.fluid.get_directions()
 
         self.menu.handle_mouse()
+        # As on the GBA (ProcPrepUnit_Idle), the hand only makes a sound when it moves
+        moved = False
         if 'DOWN' in directions:
-            get_sound_thread().play_sfx('Select 5')
-            self.menu.move_down(first_push)
+            moved = self.menu.move_down(first_push)
         elif 'UP' in directions:
-            get_sound_thread().play_sfx('Select 5')
-            self.menu.move_up(first_push)
+            moved = self.menu.move_up(first_push)
         elif 'LEFT' in directions:
-            get_sound_thread().play_sfx('Select 5')
-            self.menu.move_left(first_push)
+            moved = self.menu.move_left(first_push)
         elif 'RIGHT' in directions:
+            moved = self.menu.move_right(first_push)
+        if moved:
             get_sound_thread().play_sfx('Select 5')
-            self.menu.move_right(first_push)
 
+        # As on the GBA (PrepUnit_HandlePressA), picking a unit makes the select sound,
+        # sending one back the cancel sound, and a unit that can't be picked or sent back the miss
         if event == 'SELECT':
             unit = self.menu.get_current()
             pair_up_valid = DB.constants.value('pairup') and not DB.constants.value('attack_stance_only')
@@ -243,16 +248,16 @@ class PrepPickUnitsState(State):
                 get_sound_thread().play_sfx('Error')
                 return
             if unit.position and not game.check_for_region(unit.position, 'formation'):
-                get_sound_thread().play_sfx('Select 4')  # Locked/Lord character
+                get_sound_thread().play_sfx('Error')  # Locked/Lord character
             elif unit.position and 'Required' in unit.tags:
-                get_sound_thread().play_sfx('Select 4')  # Required unit, can't be removed
+                get_sound_thread().play_sfx('Error')  # Required unit, can't be removed
             elif unit.position:
-                get_sound_thread().play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 4')
                 if unit.traveler:
                     action.do(action.Separate(unit, game.get_unit(unit.traveler), None, False))
                 action.do(action.LeaveMap(unit))
             elif pair_up_valid and game.get_rescuer(unit) and game.get_rescuer(unit).position:
-                get_sound_thread().play_sfx('Select 1')
+                get_sound_thread().play_sfx('Select 4')
                 action.do(action.Separate(game.get_rescuer(unit), unit, None, False))
             else:
                 possible_position = game.get_next_formation_spot()
@@ -278,8 +283,10 @@ class PrepPickUnitsState(State):
                         get_sound_thread().play_sfx('Select 1')
                         next_unit = next((unit for unit in on_map if unit.position and not unit.traveler))
                         action.do(action.PairUp(unit, next_unit))
-                elif is_fatigued:
-                    get_sound_thread().play_sfx('Select 4')
+                    else:
+                        get_sound_thread().play_sfx('Error')  # Nowhere to put them
+                else:
+                    get_sound_thread().play_sfx('Error')  # Fatigued, or every slot is taken
 
         elif event == 'BACK':
             self.order_party()
@@ -357,6 +364,26 @@ def _handle_info():
         get_sound_thread().play_sfx('Select 3')
         game.boundary.toggle_all_enemy_attacks()
 
+def _move_on_map(unit, pos):
+    """The unit flies from the tile it stands on to pos, an empty one"""
+    old_pos = unit.position
+    action.do(action.LeaveMap(unit))
+    action.do(action.ArriveOnMap(unit, pos))
+    unit.sprite.begin_swap_arc(old_pos)
+
+def _swap_on_map(unit1, unit2):
+    """Two units on the map trade places, each flying to the other's tile"""
+    pos1, pos2 = unit1.position, unit2.position
+    action.do(action.LeaveMap(unit1))
+    action.do(action.LeaveMap(unit2))
+    action.do(action.ArriveOnMap(unit1, pos2))
+    action.do(action.ArriveOnMap(unit2, pos1))
+    unit1.sprite.begin_swap_arc(pos1)
+    unit2.sprite.begin_swap_arc(pos2)
+
+def _units_in_flight():
+    return [unit for unit in game.get_player_units() if unit.sprite.transition_state == 'swap_arc']
+
 class PrepFormationState(MapState):
     name = 'prep_formation'
 
@@ -368,6 +395,9 @@ class PrepFormationState(MapState):
         game.boundary.show()
 
     def take_input(self, event):
+        if _units_in_flight():
+            return  # As on the GBA, nothing can be done until reordered units have landed
+
         game.cursor.take_input()
 
         if event == 'INFO':
@@ -426,6 +456,11 @@ class PrepFormationState(MapState):
 
     def draw(self, surf):
         surf = super().draw(surf)
+        # The hand rides above each reordered unit while it flies, as on the GBA
+        for unit in _units_in_flight():
+            x = (unit.position[0] - game.camera.get_x()) * TILEWIDTH + unit.sprite.offset[0] + PrepFormationSelectState.marker_left
+            y = (unit.position[1] - game.camera.get_y()) * TILEHEIGHT + unit.sprite.offset[1] - PrepFormationSelectState.marker_height
+            surf.blit(PrepFormationSelectState.marker, (x, y))
         if game.memory.get('_prep_outline'):
             game.memory['_prep_outline'].draw(surf)
         return surf
@@ -439,7 +474,18 @@ class PrepFormationState(MapState):
 class PrepFormationSelectState(MapState):
     name = 'prep_formation_select'
     marker = SPRITES.get('menu_hand_rotated')
-    marker_offset = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
+    # Where the GBA draws its hands, in pixels right of the tile's left edge and
+    # above its top. The one over the picked unit, and over a unit in flight, stays
+    # at marker_height
+    marker_left = 3
+    marker_height = 12
+    # The one over the cursor bobs down from marker_bob_height: how far it hangs
+    # below that on each frame. It rests at the bottom and at the top and is quick
+    # in between
+    marker_bob_height = 14
+    # And it is held this high over a tile nothing can be put down on
+    marker_blocked_height = 10
+    marker_offset = [5] * 4 + [3] * 3 + [2] + [1] * 3 + [0] * 4 + [1] * 3 + [2] + [3] * 3
 
     def start(self):
         game.cursor.formation_show()
@@ -479,12 +525,7 @@ class PrepFormationSelectState(MapState):
                 # Else if solo unit but cannot pair-up and I'm on the map
                 # Swap us
                 elif hovered_unit and self.unit.position:
-                    old_unit_position = self.unit.position
-                    old_hovered_unit_position = hovered_unit.position
-                    action.do(action.LeaveMap(self.unit))
-                    action.do(action.LeaveMap(hovered_unit))
-                    action.do(action.ArriveOnMap(self.unit, old_hovered_unit_position))
-                    action.do(action.ArriveOnMap(hovered_unit, old_unit_position))
+                    _swap_on_map(self.unit, hovered_unit)
                     self.back()
                 # Else if solo unit but cannot pair-up and I'm not on the map
                 # Send solo unit to bench and put me there, unless solo unit is REQUIRED
@@ -501,8 +542,7 @@ class PrepFormationSelectState(MapState):
                 # Put me there
                 else:
                     if self.unit.position:
-                        action.do(action.LeaveMap(self.unit))
-                        action.do(action.ArriveOnMap(self.unit, game.cursor.position))
+                        _move_on_map(self.unit, game.cursor.position)
                         self.back()
                     else:
                         game.memory['child_menu'] = menus.Choice(self.unit, ['Separate', 'Swap'])
@@ -512,39 +552,43 @@ class PrepFormationSelectState(MapState):
 
         elif event == 'BACK':
             get_sound_thread().play_sfx('Select 4')
+            # As on the GBA, the cursor goes back to the unit that was picked up
+            game.cursor.set_pos(self.unit_position())
             self.back()
 
         elif event == 'AUX':
-            if self.unit.position:
-                game.cursor.set_pos(self.unit.position)
-            else:
-                game.cursor.set_pos(game.get_rescuer(self.unit).position)
+            game.cursor.set_pos(self.unit_position())
 
         elif event == 'INFO':
             _handle_info()
+
+    def unit_position(self):
+        """Where the picked up unit is: on its own tile, or on its carrier's"""
+        return self.unit.position or game.get_rescuer(self.unit).position
 
     def draw(self, surf):
         surf = super().draw(surf)
 
         # Draw static hand
         if self.unit:
-            if self.unit.position:
-                pos = self.unit.position
-            else:
-                pos = game.get_rescuer(self.unit).position
-            x = (pos[0] - game.camera.get_x()) * TILEWIDTH + 2
-            y = (pos[1] - game.camera.get_y() - 1) * TILEHEIGHT
+            pos = self.unit_position()
+            x = (pos[0] - game.camera.get_x()) * TILEWIDTH + self.marker_left
+            y = (pos[1] - game.camera.get_y()) * TILEHEIGHT - self.marker_height
             surf.blit(self.marker, (x, y))
 
         hovered_unit = game.cursor.get_hover()
-        if game.check_for_region(game.cursor.position, 'formation') or (hovered_unit and hovered_unit.team == 'player' and hovered_unit.traveler):
-            pos = game.cursor.position
-            while engine.get_time() - 50 > self.last_update:
-                self.last_update += 50
-                self.counter = self.counter % len(self.marker_offset)
-            x = (pos[0] - game.camera.get_x()) * TILEWIDTH + 2
-            y = (pos[1] - game.camera.get_y() - 1) * TILEHEIGHT + self.marker_offset[self.counter]
-            surf.blit(self.marker, (x, y))
+        pos = game.cursor.position
+        if game.check_for_region(pos, 'formation') or (hovered_unit and hovered_unit.team == 'player' and hovered_unit.traveler):
+            frames_passed = (engine.get_time() - self.last_update) // FRAMERATE
+            self.counter = frames_passed % len(self.marker_offset)
+            height = self.marker_bob_height - self.marker_offset[self.counter]
+        else:
+            # Nothing can be put down here: the hand keeps still, over the cursor's blinking X
+            height = self.marker_blocked_height
+        # The cursor's offset is how far it still is from its tile: the hand slides with it
+        x = (pos[0] - game.camera.get_x()) * TILEWIDTH - game.cursor.offset_x + self.marker_left
+        y = (pos[1] - game.camera.get_y()) * TILEHEIGHT - game.cursor.offset_y - height
+        surf.blit(self.marker, (x, y))
 
         return surf
 
@@ -619,15 +663,9 @@ class PrepFormationMenuState(MapState):
                     # Unit was a duo unit
                     unit_to_move = game.get_rescuer(self.unit)
                 if hovered_unit:
-                    old_unit_position = unit_to_move.position
-                    old_hovered_unit_position = hovered_unit.position
-                    action.do(action.LeaveMap(unit_to_move))
-                    action.do(action.LeaveMap(hovered_unit))
-                    action.do(action.ArriveOnMap(unit_to_move, old_hovered_unit_position))
-                    action.do(action.ArriveOnMap(hovered_unit, old_unit_position))
+                    _swap_on_map(unit_to_move, hovered_unit)
                 else:
-                    action.do(action.LeaveMap(unit_to_move))
-                    action.do(action.ArriveOnMap(unit_to_move, game.cursor.position))
+                    _move_on_map(unit_to_move, game.cursor.position)
                 game.state.back()
                 game.state.back()
 
@@ -666,7 +704,7 @@ class PrepFormationMenuState(MapState):
 
 def draw_funds(surf):
     # Draw R: Info display
-    helper = engine.get_key_name(cf.SETTINGS['key_INFO']).upper()
+    helper = get_input_manager().get_button_name('INFO').upper()
     FONT['text-yellow'].blit(helper, surf, (123, 143))
     FONT['text'].blit(': Info', surf, (123 + FONT['text-blue'].width(helper), 143))
     # Draw Funds display
@@ -683,6 +721,8 @@ class PrepManageState(State):
         units = game.get_units_in_party()
         self.units = sorted(units, key=lambda unit: bool(unit.position), reverse=True)
         self.menu = menus.Table(None, self.units, (4, 3), (6, 0))
+        # As on the GBA (PrepItemScreen_DpadKeyHandler), the hand stops at the left and right edges
+        self.menu.wrap_rows = False
         if self.name.startswith('base'):
             self.menu.set_mode('unit')
         else:
@@ -885,18 +925,19 @@ class PrepManageSelectState(State):
         directions = self.fluid.get_directions()
 
         self.select_menu.handle_mouse()
+        # As on the GBA (sub_80996E8), moving among the commands makes the grid's sound
         if 'DOWN' in directions:
             if self.select_menu.move_down(first_push):
-                get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 5')
         elif 'UP' in directions:
             if self.select_menu.move_up(first_push):
-                get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 5')
         elif 'RIGHT' in directions:
             if self.select_menu.move_right(first_push):
-                get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 5')
         elif 'LEFT' in directions:
             if self.select_menu.move_left(first_push):
-                get_sound_thread().play_sfx('Select 6')
+                get_sound_thread().play_sfx('Select 5')
 
         if event == 'SELECT':
             get_sound_thread().play_sfx('Select 1')
@@ -1064,6 +1105,10 @@ class PrepItemsState(State):
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
+
+        # As on the GBA, nothing can be done while a page of the convoy slides in
+        if self.menu.is_sliding():
+            return
 
         if self.state in ('free', 'trade_convoy', 'trade_inventory'):
             self.menu.handle_mouse()
@@ -1462,6 +1507,10 @@ class PrepMarketState(State):
     def take_input(self, event):
         first_push = self.fluid.update()
         directions = self.fluid.get_directions()
+
+        # As on the GBA, nothing can be done while a page slides in
+        if self.display_menu.is_sliding():
+            return
 
         self.menu.handle_mouse()
         if 'DOWN' in directions:

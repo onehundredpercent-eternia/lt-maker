@@ -1,9 +1,10 @@
 from __future__  import annotations
 # Helper global object for map sprite animations
+import random
 from typing import Callable, List, Union
 
 from app.constants import FRAMERATE
-from app.engine import engine
+from app.utilities import utils
 
 
 class generic3counter():
@@ -93,6 +94,13 @@ class GenericAnimCounter():
         else:
             self._last_update = self._get_time()
 
+    def restart(self):
+        """Starts it over from its first value, which it keeps for the rest of this frame"""
+        self._count = 0
+        if self._get_time:
+            current_time = self._get_time()
+            self._last_update = int((current_time // self._frame_duration) * self._frame_duration)
+
     @staticmethod
     def from_frames(frames: List[int], loop: bool = True, frame_duration: int = FRAMERATE, get_time: Callable[[], int] = None) -> GenericAnimCounter:
         """
@@ -125,24 +133,37 @@ class GenericAnimCounter():
 
 
 class movement_counter():
+    """
+    How many pixels a unit leans toward its target as it strikes on the map.
+    As on the GBA: out a pixel a frame, held there until it is told to
+    retreat, and back a pixel a frame
+    """
+    reach = 4
+
     def __init__(self):
         self.count = 0
-        self.movement = [0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1]
-        self.started = False
+        self.direction = 0  # 1 on the way out, -1 on the way back, 0 at rest
+        self.last_update = None
 
     def value(self):
-        return self.movement[self.count]
+        return self.count
 
     def update(self, current_time):
-        if self.started:
-            self.count += 1
-            if self.count >= len(self.movement):
-                self.count = 0
-                self.started = False
+        # One step a frame, however many times it is read during that frame
+        if self.direction and current_time != self.last_update:
+            self.last_update = current_time
+            self.count = max(0, min(self.reach, self.count + self.direction))
+            if self.count == 0:
+                self.direction = 0
 
     def reset(self):
-        self.started = True
+        """Begins a lunge"""
+        self.direction = 1
         self.count = 0
+        self.last_update = None
+
+    def retreat(self):
+        self.direction = -1
 
 class arrow_counter():
     def __init__(self, offset=0):
@@ -188,3 +209,32 @@ class BlinkCounter():
         self.count = 0
         self.last_update = 0
         self.reverse = False
+
+    def get_blink_index(self):
+        return self.max_count - self.count
+
+    def is_open_eyes(self):
+        return self.count == 0
+
+def blink_wait() -> int:
+    """How long the eyes stay open before the next blink: 30 to 541 frames at random on the GBA, a new wait each time"""
+    return utils.frames2ms(random.randint(30, 541) + 3 - 0.5)
+
+class FaceBlinkCounter(BlinkCounter):
+    """
+    A portrait's eyes, as on the GBA: open for a random wait, drawn again after each blink,
+    then half shut, shut and half shut for 3 frames each
+    """
+    # Half a frame short, since the time is checked once a frame
+    step_time = utils.frames2ms(2.5)
+
+    def __init__(self, blink_frames: int, current_time: int):
+        super().__init__(blink_frames, [blink_wait(), self.step_time])
+        # So it does not blink the moment it appears
+        self.last_update = current_time
+
+    def update(self, current_time) -> bool:
+        changed = super().update(current_time)
+        if changed and self.is_open_eyes():
+            self.update_times[0] = blink_wait()
+        return changed

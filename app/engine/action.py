@@ -17,6 +17,7 @@ from app.data.resources.resources import RESOURCES
 from app.engine import (aura_funcs, banner, equations, item_funcs, item_system,
                         particles, skill_system, unit_funcs, animations)
 from app.engine.game_state import game
+from app.engine.movement import movement_funcs
 from app.engine.objects.item import ItemObject
 from app.engine.objects.skill import SkillObject
 from app.engine.objects.unit import UnitObject
@@ -200,7 +201,7 @@ class Move(Action):
         self.has_moved = self.unit.has_moved
         self.event = event
         self.follow = follow
-        self.speed = speed or cf.SETTINGS['unit_speed']
+        self.speed = speed or movement_funcs.get_default_speed(self.unit)
         self.silent = silent
 
     def do(self):
@@ -773,9 +774,11 @@ class HasNotTraded(Reset):
 
 # === RESCUE ACTIONS ========================================================
 class Rescue(Action):
-    def __init__(self, unit: UnitObject, rescuee: UnitObject):
+    def __init__(self, unit: UnitObject, rescuee: UnitObject, immediate: bool = False):
         self.unit = unit
         self.rescuee = rescuee
+        # Whether the rescuee is gone at once, rather than walking into its rescuer
+        self.immediate = immediate
         self.old_pos = self.rescuee.position
         self.update_fow_rescuee = UpdateFogOfWar(self.rescuee)
         self.subactions = []
@@ -783,9 +786,12 @@ class Rescue(Action):
     def do(self):
         self.subactions.clear()
         self.unit.traveler = self.rescuee.nid
-        # TODO Add transition
 
         if self.rescuee.position:
+            if not self.immediate and self.unit.position and \
+                    utils.calculate_distance(self.unit.position, self.rescuee.position) == 1:
+                # As on the GBA, it walks into its rescuer
+                self.rescuee.sprite.walk_one_tile(self.rescuee.position, self.unit.position, stays=False)
             game.leave(self.rescuee)
         self.unit.has_rescued = True
 
@@ -828,10 +834,11 @@ class Drop(Action):
             self.droppee_wait_action = Wait(self.droppee)
         else:
             self.droppee_wait_action = None
-        self.subactions = []
+        # Built here rather than in do(), so that execute() works on a fresh action
+        self.status_action = \
+            RemoveSkill(self.unit, "Rescue", source=self.droppee.nid, source_type=SourceType.TRAVELER)
 
     def do(self):
-        self.subactions.clear()
         game.arrive(self.droppee, self.pos)
         self.droppee.sprite.change_state('normal')
         if self.droppee_wait_action:
@@ -840,14 +847,11 @@ class Drop(Action):
         self.unit.traveler = None
         self.unit.has_dropped = True
 
-        self.subactions.append(RemoveSkill(self.unit, "Rescue", source=self.droppee.nid, source_type=SourceType.TRAVELER))
-        for action in self.subactions:
-            action.do()
+        self.status_action.do()
 
         if utils.calculate_distance(self.unit.position, self.pos) == 1:
-            self.droppee.sprite.set_transition('fake_in')
-            self.droppee.sprite.offset = [(self.unit.position[0] - self.pos[0]) * TILEWIDTH,
-                                          (self.unit.position[1] - self.pos[1]) * TILEHEIGHT]
+            # As on the GBA, it walks out of the unit that dropped it
+            self.droppee.sprite.walk_one_tile(self.unit.position, self.pos, stays=True)
 
     def execute(self):
         game.arrive(self.droppee, self.pos)
@@ -855,11 +859,10 @@ class Drop(Action):
         if self.droppee_wait_action:
             self.droppee_wait_action.execute()
 
-        for action in self.subactions:
-            action.execute()
-
         self.unit.traveler = None
         self.unit.has_dropped = True
+
+        self.status_action.execute()
 
     def reverse(self):
         self.unit.traveler = self.droppee.nid
@@ -869,8 +872,7 @@ class Drop(Action):
         game.leave(self.droppee)
         self.unit.has_dropped = False
 
-        for action in self.subactions:
-            action.reverse()
+        self.status_action.reverse()
 
 
 class Give(Action):
@@ -1051,6 +1053,11 @@ class Separate(Action):
         self.with_wait = with_wait
         self.droppee_wait_action = Wait(self.droppee)
         self.old_gauge = self.unit.get_guard_gauge()
+        # A rescued traveler (as opposed to a pair up partner) gave its carrier the
+        # Rescue skill, and that must come off here as well. SourceType.TRAVELER is
+        # only removable by its exact source, so an orphan can never be removed again
+        self.status_action = \
+            RemoveSkill(self.unit, "Rescue", source=self.droppee.nid, source_type=SourceType.TRAVELER)
 
     def do(self):
         if self.pos:
@@ -1061,6 +1068,7 @@ class Separate(Action):
 
         self.unit.traveler = None
         self.unit.has_dropped = True
+        self.status_action.do()
 
         self.droppee.set_guard_gauge(self.old_gauge//2)
         self.unit.set_guard_gauge(self.old_gauge//2)
@@ -1084,6 +1092,7 @@ class Separate(Action):
 
         self.unit.traveler = None
         self.unit.has_dropped = True
+        self.status_action.execute()
 
         self.droppee.set_guard_gauge(self.old_gauge//2)
         self.unit.set_guard_gauge(self.old_gauge//2)
@@ -1103,6 +1112,7 @@ class Separate(Action):
         self.droppee.lead_unit = False
 
         skill_system.on_pairup(self.droppee, self.unit)
+        self.status_action.reverse()
 
         self.unit.set_guard_gauge(self.old_gauge)
         self.droppee.set_guard_gauge(0)

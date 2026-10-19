@@ -17,6 +17,7 @@ from app.data.database.database import DB
 from app.engine import (action, background, dialog, engine, evaluate,
                         image_mods, item_funcs)
 from app.engine.game_state import GameState
+from app.engine.input_manager import get_input_manager
 from app.engine.movement import movement_funcs
 from app.engine.objects.overworld import OverworldNodeObject
 from app.engine.objects.unit import UnitObject
@@ -117,6 +118,9 @@ class Event():
 
         # For map animations
         self.animations = []
+
+        # Whether this event has a rumble going that only stops when told to
+        self.endless_rumble = False
 
         # a way of passing key input events down to individual events
         # map between name of listener, and listener function
@@ -285,9 +289,12 @@ class Event():
         for key in delete:
             del self.portraits[key]
 
-        # draw all uiframework elements
-        ui_surf = self.overlay_ui.to_surf()
-        surf.blit(ui_surf, (0, 0))
+        # draw all uiframework elements. Only when there are any, since the
+        # full screen see-through overlay costs most of a millisecond to blit
+        # in the browser
+        if self.overlay_ui.children:
+            ui_surf = self.overlay_ui.to_surf()
+            surf.blit(ui_surf, (0, 0))
 
         sorted_portraits = sorted(self.portraits.values(), key=lambda x: x.priority)
         for portrait in sorted_portraits:
@@ -323,12 +330,16 @@ class Event():
             surf.blit(s, (0, 0))
 
         # draw all achievements
-        ui_surf = self.foreground_overlay_ui.to_surf()
-        surf.blit(ui_surf, (0, 0))
+        if self.foreground_overlay_ui.children:
+            ui_surf = self.foreground_overlay_ui.to_surf()
+            surf.blit(ui_surf, (0, 0))
 
         return surf
 
     def end(self):
+        if self.endless_rumble:
+            get_input_manager().stop_rumble()
+            self.endless_rumble = False
         self.state = 'almost_complete'
 
     def process(self):

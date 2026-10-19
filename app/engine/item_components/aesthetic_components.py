@@ -3,9 +3,22 @@ from app.data.database.item_components import ItemComponent, ItemTags
 from app.data.database.components import ComponentType
 
 from app.engine.combat import playback as pb
-from app.engine import engine, image_mods, item_funcs, skill_system
+from app.engine import image_mods, item_funcs, skill_system
+from app.engine.game_counters import ANIMATION_COUNTERS
+
+from app.utilities import utils
+from app.constants import TILEWIDTH, TILEHEIGHT
+
+import math
 
 import logging
+
+def get_target_position(target, target_pos, mode):
+    #Return the position of the tile we are targeting.  Splash needs a special case, because for splash attacks target_pos will always give the main target's position.
+    if mode == 'splash' and target:
+        return target.position
+    else:
+        return target_pos       
 
 class NeverUseBattleAnimation(ItemComponent):
     nid = 'never_use_battle_animation'
@@ -84,11 +97,109 @@ class MapTargetCastAnim(ItemComponent):
 
     def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
         if target:
-            playback.append(pb.TargetCastAnim(self.value, target.position))
+            playback.append(pb.TargetCastAnim(self.value, get_target_position(target, target_pos, mode)))
 
     def on_miss(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
         if target:
-            playback.append(pb.TargetCastAnim(self.value, target.position))
+            playback.append(pb.TargetCastAnim(self.value, get_target_position(target, target_pos, mode)))
+            
+class ProjectileSpellAnim(ItemComponent):
+    nid = 'projectile_spell_anim'
+    desc = """Adds an animation which moves from the user to the target when the item is used. Relevant in map combat situations.
+    anim: The animation to be used.
+    speed: How quickly the animation will move (Must be a positive integer).
+    loop: Whether the animation should loop while moving.
+    rotate: Whether the animation should rotate to face the target.  If used, make sure your animation png is initially facing right and centered on the rotation point.
+    """
+    tag = ItemTags.AESTHETIC
+
+    expose = ComponentType.NewMultipleOptions
+    options = {
+        'anim': ComponentType.String,
+        'speed': ComponentType.Int,
+        'loop': ComponentType.Bool,
+        'rotate': ComponentType.Bool
+    }
+
+    def __init__(self, value=None):
+        self.value = {
+            'anim': None,
+            'speed': 1,
+            'loop': False,
+            'rotate': False
+        }
+        if value:
+            self.value.update(value)
+            
+    def _create_projectile(self, unit_pos, target_pos):
+        u_pos = ((unit_pos[0] * TILEWIDTH + TILEWIDTH // 2), (unit_pos[1] * TILEHEIGHT + TILEHEIGHT // 2)) #Centered unit position in pixels
+        t_pos = (target_pos[0] * TILEWIDTH + TILEWIDTH // 2, target_pos[1] * TILEHEIGHT + TILEHEIGHT // 2) #Centered target pos
+        delta = utils.tuple_sub(t_pos, u_pos)
+        distance = utils.magnitude(delta)
+        direction = utils.normalize(delta)
+        speed = max(self.value['speed'], 1) #Speed should be a positive integer.
+        theta = math.atan2(-direction[1], direction[0]) if self.value['rotate'] else 0
+        vel = utils.tmult(direction, speed)
+        anim = self._generate_anim(self.value['anim'], unit_pos, vel, distance / speed, self.value['loop'], theta)
+        return anim
+        
+    def _generate_anim(self, val, pos, vel, dur, loop, rot):
+        return pb.SpellCastAnim(val, pos, vel, dur, loop, rot)
+        
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        if unit.position != get_target_position(target, target_pos, mode):
+            playback.append(self._create_projectile(unit.position, get_target_position(target, target_pos, mode)))
+
+    def on_miss(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        if unit.position != get_target_position(target, target_pos, mode):
+            playback.append(self._create_projectile(unit.position, get_target_position(target, target_pos, mode)))
+        
+class SequentialProjectileAnim(ProjectileSpellAnim):
+    nid = 'sequential_projectile_anim'
+    desc = """Adds an animation which moves between targets in order when the item is used. Relevant in map combat situations.
+    Intended for scenarios in which there is a clearly designated order to targets, such as multi-target items.
+    anim: The animation to be used.
+    speed: How quickly the animation will move (Must be a positive integer).
+    loop: Whether the animation should loop while moving.
+    rotate: Whether the animation should rotate to face the target.  If used, make sure your animation png is initially facing right and centered on the rotation point.
+    """
+    tag = ItemTags.AESTHETIC
+    
+    def __init__(self, value = None):
+        self.prev_targ_pos = None
+        self.current_attack = (0,0) #This records which attack/sub-attack we're currently on.  Later, if it differs from what is indicated in attack info, we'll reset prev_targ
+        super().__init__(value)
+        
+    def _generate_anim(self, val, pos, vel, dur, loop, rot):
+        return pb.SequentialAnim(val, pos, vel, dur, loop, rot)
+        
+    def _handle_sequence_anim(self, unit, item, target_pos, playback, attack_info):
+        if self.prev_targ_pos is None or self.current_attack != attack_info: #First target, animation goes from attacker to target
+            self.current_attack = attack_info
+            if target_pos != unit.position: #In case unit is also the first target, don't spawn a projectile that has nowhere to go
+                playback.append(self._create_projectile(unit.position, target_pos))
+        else:
+            if target_pos != self.prev_targ_pos: #In case we select same target multiple times consecutively, don't spawn a projectile that has nowhere to go 
+                playback.append(self._create_projectile(self.prev_targ_pos, target_pos))
+        self.prev_targ_pos = target_pos
+                
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        self._handle_sequence_anim(unit, item, get_target_position(target, target_pos, mode), playback, attack_info)
+
+    def on_miss(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        self._handle_sequence_anim(unit, item, get_target_position(target, target_pos, mode), playback, attack_info)
+        
+    def end_combat(self, playback, unit, item, target, item2, mode):
+        self.prev_targ_pos = None
+        self.current_attack = (0, 0)
+            
+class WaitOnMapAnim(ItemComponent):
+    nid = 'wait_on_map_anim'
+    desc = "Wait for all map cast animations to complete before proceeding with map combat."
+    tag = ItemTags.AESTHETIC
+
+    def wait_on_map_anim(self, unit, item):
+        return True
 
 class MapCastPose(ItemComponent):
     nid = 'map_cast_pose'
@@ -97,6 +208,17 @@ class MapCastPose(ItemComponent):
 
     def map_cast_pose(self, unit, item):
         return True
+
+class BattleHitTint(ItemComponent):
+    nid = 'battle_hit_tint'
+    desc = "When this item hits in a combat animation, the target's battle animation stays tinted this color until the combat ends. Useful for effects like petrify, where a spell's own Tint Enemy command would wear off before the combat does."
+    tag = ItemTags.AESTHETIC
+
+    expose = ComponentType.Color3
+    value = (0, 0, 0)
+
+    def on_hit(self, actions, playback, unit, item, target, item2, target_pos, mode, attack_info):
+        playback.append(pb.BattleAnimTint(target, self.value))
 
 class BattleCastAnim(ItemComponent):
     nid = 'battle_cast_anim'
@@ -125,6 +247,61 @@ class NoMapHPDisplay(ItemComponent):
     tag = ItemTags.BASE
 
     def no_map_hp_display(self, unit, item):
+        return True
+
+class NoMapHitFlash(ItemComponent):
+    nid = 'no_map_hit_flash'
+    desc = "Targets do not flash white (or the color chosen by a Map Hit Add/Sub Blend component) when hit in map combat. Also suppresses the critical hit flash."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_hit_flash(self, unit, item):
+        return True
+
+class NoMapHitSFX(ItemComponent):
+    nid = 'no_map_hit_sfx'
+    desc = "No sound effect is played when a target is hit or missed in map combat. Sounds from a Map Cast SFX component still play."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_hit_sfx(self, unit, item):
+        return True
+
+class NoMapCombatMovement(ItemComponent):
+    nid = 'no_map_combat_movement'
+    desc = "Combatants do not turn to face one another or jostle towards one another during map combat. Also suppresses the critical hit vibration."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_combat_movement(self, unit, item):
+        return True
+
+class NoMapDamageNumbers(ItemComponent):
+    nid = 'no_map_damage_numbers'
+    desc = "No floating damage, healing, or critical damage numbers appear over targets in map combat."
+    tag = ItemTags.AESTHETIC
+
+    def no_map_damage_numbers(self, unit, item):
+        return True
+
+class NoMapCombatFX(ItemComponent):
+    nid = 'no_map_combat_fx'
+    desc = ("Suppresses every default map combat flourish at once -- the hp display, the hit flash, "
+            "the hit sound effect, the combatants' facing and jostle, and the floating damage numbers. "
+            "Equivalent to adding No Map HP Display, No Map Hit Flash, No Map Hit SFX, "
+            "No Map Combat Movement, and No Map Damage Numbers together.")
+    tag = ItemTags.AESTHETIC
+
+    def no_map_hp_display(self, unit, item):
+        return True
+
+    def no_map_hit_flash(self, unit, item):
+        return True
+
+    def no_map_hit_sfx(self, unit, item):
+        return True
+
+    def no_map_combat_movement(self, unit, item):
+        return True
+
+    def no_map_damage_numbers(self, unit, item):
         return True
 
 class PreCombatEffect(ItemComponent):
@@ -193,7 +370,7 @@ class ItemIconFlash(ItemComponent):
             print("Could not evaluate %s (%s)" % (self.value, e))
             return sprite
         if val:
-            sprite = image_mods.make_white(sprite.convert_alpha(), abs(250 - engine.get_time() % 500)/250)
+            sprite = image_mods.flash_effective(sprite.convert_alpha(), ANIMATION_COUNTERS.forecast_counter.count)
         return sprite
         
 class HoverDescription(ItemComponent):
@@ -205,6 +382,17 @@ class HoverDescription(ItemComponent):
     value = ''
 
     def hover_description(self, unit, item):
+        return self.value
+
+class TargetingPennant(ItemComponent):
+    nid = 'targeting_pennant'
+    desc = "Scrolls this text along the bottom of the screen while the player chooses a target for the item. Ex: Select a character to restore HP to. On a sequence item, it is shown for each subitem that has none of its own."
+    tag = ItemTags.AESTHETIC
+
+    expose = ComponentType.String
+    value = ''
+
+    def targeting_pennant(self, unit, item):
         return self.value
 
 class ShowAdvantageArrow(ItemComponent):
@@ -226,3 +414,11 @@ class ShowDisadvantageArrow(ItemComponent):
     
     def show_weapon_disadvantage(self, unit, item, target, item2):
         return True
+
+class SpecialArticle(ItemComponent):
+    nid = 'special_article'
+    desc = 'Causes the article in the banner to be this string'
+    tag = ItemTags.AESTHETIC
+
+    expose = ComponentType.String
+    value = ''

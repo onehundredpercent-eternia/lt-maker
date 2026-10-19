@@ -323,6 +323,9 @@ class GameState():
             if unit.position:
                 if self._current_level.tilemap.check_bounds(unit.position):
                     self.arrive(unit, unit.position)
+                    # Its vantage point, so it sees from here before it ever moves.
+                    # GameState.load does the same for every unit on the map
+                    action.UpdateFogOfWar(unit).execute()
                 else:
                     logging.warning("Unit %s's position not on map. Removing...", unit.nid)
                     unit.position = None
@@ -524,7 +527,8 @@ class GameState():
         if 'overworlds' in s_dict:
             for overworld in s_dict['overworlds']:
                 overworld_obj = OverworldObject.restore(overworld, self)
-                self.overworld_registry[overworld_obj.nid] = overworld_obj
+                if overworld_obj:  # None when the project no longer has that overworld
+                    self.overworld_registry[overworld_obj.nid] = overworld_obj
         for overworld in DB.overworlds.values():
             if overworld.nid not in self.overworld_registry:
                 self.overworld_registry[overworld.nid] = OverworldObject.from_prefab(overworld, self.parties, self.unit_registry)

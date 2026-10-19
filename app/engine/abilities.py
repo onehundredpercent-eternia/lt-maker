@@ -117,14 +117,20 @@ class DropAbility(Ability):
         u = game.get_unit(unit.traveler)
         action.do(action.Drop(unit, u, game.cursor.position))
         if skill_system.has_canto(unit, u):
+            # Read the canto movement before HasAttacked lands -- components that
+            # stop granting canto once the unit has attacked abstain from
+            # canto_movement too, and has_canto above was judged on the same state.
+            canto_movement = skill_system.canto_movement(unit, u)
             action.do(action.HasAttacked(unit))
             game.state.change('move')
-            action.do(action.SetMovementLeft(unit, skill_system.canto_movement(unit, u)))
+            action.do(action.SetMovementLeft(unit, canto_movement))
             game.cursor.place_arrows()
         else:
             game.state.change('free')
             game.cursor.set_pos(unit.position)
             unit.wait()
+        # As on the GBA, nothing goes on until the unit dropped has walked out
+        game.state.change('unit_walk')
 
 class RescueAbility(Ability):
     name = "Rescue"
@@ -142,9 +148,13 @@ class RescueAbility(Ability):
     def do(unit):
         u = game.board.get_unit(game.cursor.position)
         if skill_system.has_canto(unit, u):
+            # Read the canto movement before HasAttacked lands -- components that
+            # stop granting canto once the unit has attacked abstain from
+            # canto_movement too, and has_canto above was judged on the same state.
+            canto_movement = skill_system.canto_movement(unit, u)
             action.do(action.HasAttacked(unit))
             game.state.change('move')
-            action.do(action.SetMovementLeft(unit, skill_system.canto_movement(unit, u)))
+            action.do(action.SetMovementLeft(unit, canto_movement))
             game.cursor.place_arrows()
             game.cursor.set_pos(unit.position)
             # Actually Rescuing needs to be after the state changes above, so that if rescuing causes
@@ -155,6 +165,8 @@ class RescueAbility(Ability):
             game.cursor.set_pos(unit.position)
             action.do(action.Rescue(unit, u))
             unit.wait()
+        # As on the GBA, nothing goes on until the unit rescued has walked in
+        game.state.change('unit_walk')
 
 class TakeAbility(Ability):
     name = 'Take'
@@ -171,10 +183,14 @@ class TakeAbility(Ability):
     @staticmethod
     def do(unit):
         u = game.board.get_unit(game.cursor.position)
+        # As on the GBA, the unit carried walks across
+        game.get_unit(u.traveler).sprite.walk_one_tile(u.position, unit.position, stays=False)
         action.do(action.HasTraded(unit))
         action.do(action.Take(unit, u))
         # Taking does not count as major action
         game.state.change('menu')
+        # Which comes back once the unit taken has walked across, as on the GBA
+        game.state.change('unit_walk')
 
 class GiveAbility(Ability):
     name = 'Give'
@@ -191,10 +207,14 @@ class GiveAbility(Ability):
     @staticmethod
     def do(unit):
         u = game.board.get_unit(game.cursor.position)
+        # As on the GBA, the unit carried walks across
+        game.get_unit(unit.traveler).sprite.walk_one_tile(unit.position, u.position, stays=False)
         action.do(action.HasTraded(unit))
         action.do(action.Give(unit, u))
         # Giving does not count as a major action
         game.state.change('menu')
+        # Which comes back once the unit given has walked across, as on the GBA
+        game.state.change('unit_walk')
 
 class PairUpAbility(Ability):
     name = 'Pair Up'
@@ -293,7 +313,7 @@ class SupplyAbility(Ability):
 
     @staticmethod
     def targets(unit) -> set:
-        if game.game_vars.get('_convoy'):
+        if game.game_vars.get('_convoy') and not skill_system.no_convoy(unit):
             adj_allies = game.target_system.get_adj_allies(unit)
             if 'Convoy' in unit.tags:
                 return {unit.position}

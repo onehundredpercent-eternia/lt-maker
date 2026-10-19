@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from app.engine.game_state import GameState
 
 class Camera():
+    default_min_speed = 0.25
+
     def __init__(self, game: GameState):
         self.game = game
 
@@ -24,6 +26,9 @@ class Camera():
 
         # How fast the camera should move
         self.speed = 8.0  # Linear speed based on distance from target
+        # The least it moves a frame, in tiles. While it follows the cursor, as fast as
+        # the cursor moves, as on the GBA (see follow_cursor_speed)
+        self.min_speed = self.default_min_speed
 
         # Whether the camera should be panning at a constant speed
         self.pan_mode = False
@@ -56,7 +61,7 @@ class Camera():
             return (new_x, new_y)
         elif diff_x or diff_y:
             dist = utils.distance((self.current_x, self.current_y), (self.target_x, self.target_y))
-            total_speed = utils.clamp(dist / self.speed, min(dist, 0.25), 1.0)  # max of 0.5 is faithful to GBA, but I like the snappyness of 1.0
+            total_speed = utils.clamp(dist / self.speed, min(dist, self.min_speed), 1.0)  # max of 0.5 is faithful to GBA, but I like the snappyness of 1.0
             angle = math.atan2(abs(diff_y), abs(diff_x))
             x_push = math.cos(angle)
             y_push = math.sin(angle)
@@ -78,6 +83,13 @@ class Camera():
         elif y >= (TILEY + self.target_y - 2):
             self.target_y += 1
 
+    def follow_cursor_speed(self, tiles_per_frame: float):
+        """
+        On the GBA the camera moves with the cursor, as fast as it does: a quarter of
+        a tile a frame, or half while B is held. Until the camera next comes to rest
+        """
+        self.min_speed = max(self.default_min_speed, tiles_per_frame)
+
     def cursor_x(self, x):
         self._shift_x(x)
 
@@ -97,19 +109,21 @@ class Camera():
         self.mouse_x(x)
         self.mouse_y(y)
 
+    # As on the GBA, a position is kept at least 3 tiles in from the left and right
+    # of the screen, and 2 from the top and bottom, the same as the cursor is
     def _change_x(self, x):
-        if x <= self.target_x + 3:
+        if x < self.target_x + 3:
             new_x = x - 3
-        elif x >= self.target_x + TILEX - 3:
-            new_x = x - TILEX + 3
+        elif x > self.target_x + TILEX - 4:
+            new_x = x - TILEX + 4
         else:
             new_x = self.target_x
         return new_x
 
     def _change_y(self, y):
-        if y <= self.target_y + 3:
-            new_y = y - 3
-        elif y >= self.target_y + TILEY - 3:
+        if y < self.target_y + 2:
+            new_y = y - 2
+        elif y > self.target_y + TILEY - 3:
             new_y = y - TILEY + 3
         else:
             new_y = self.target_y
@@ -232,6 +246,7 @@ class Camera():
         if self.at_rest():
             # all custom algorithms should only last one pan
             self.pan_algorithm = None
+            self.min_speed = self.default_min_speed
             self.last_at_rest_time = engine.get_time()
             self.last_at_rest_position = (self.current_x, self.current_y)
 

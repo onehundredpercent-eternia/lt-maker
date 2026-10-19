@@ -5,8 +5,8 @@ from typing import Tuple, List
 from enum import Enum
 
 import app.utilities as utils
-from app.constants import (TILEHEIGHT, TILEWIDTH, TILEX, TILEY, WINHEIGHT,
-                           WINWIDTH)
+from app.constants import (FPS, TILEHEIGHT, TILEWIDTH, TILEX, TILEY,
+                           WINHEIGHT, WINWIDTH)
 from app.data.database.database import DB
 from app.engine import (combat_calcs, engine, icons, item_system,
                         skill_system, unit_funcs, text_funcs)
@@ -102,8 +102,30 @@ class HealthBar(GenericBar):
     def get_max_val(self):
         return self.unit.get_max_hp()
 
+class MapCombatHealthBar(HealthBar):
+    """
+    The HP bar of a map combat info box. As on the GBA, HP that is lost drains
+    at 1 a frame, and HP that is gained fills at 1 every 4 frames, with a boop for each
+    """
+    heal_speed = utils.frames2ms(4)
+
+    def __init__(self, unit, new_time_for_change = None, new_speed = None):
+        super().__init__(unit, new_time_for_change, new_speed)
+        self.damage_speed = self.speed
+
+    def update(self):
+        if not self.transition_flag:
+            self.speed = self.heal_speed if self.displayed_val < self.get_val() else self.damage_speed
+        super().update()
+
+    def set_val(self, val):
+        if self.transition_flag and val > self.displayed_val:
+            get_sound_thread().stop_sfx('HP_Recovery')
+            get_sound_thread().play_sfx('HP_Recovery')
+        super().set_val(val)
+
 class BarType(Enum):
-    HP = HealthBar
+    HP = MapCombatHealthBar
 
     def __call__(self, *args, **kwargs):
         return self.value(*args, **kwargs)
@@ -117,12 +139,18 @@ class MultiGenericBar():
         self.unit = unit
         self.combat_bars = []
 
-        self.transition_flag = False
-        self.time_for_change = self.time_for_change_min
-        self.last_update = 0
-
         for bar in bars:
-            self.combat_bars.append(bar(unit, self.time_for_change, self.speed))
+            self.combat_bars.append(bar(unit, self.time_for_change_min, self.speed))
+
+    @property
+    def transition_flag(self) -> bool:
+        """Whether any of its bars is still on its way to a new value"""
+        return any(bar.transition_flag for bar in self.combat_bars)
+
+    @property
+    def time_for_change(self) -> int:
+        """How long the slowest of its bars takes to reach its new value"""
+        return max((bar.time_for_change for bar in self.combat_bars), default=self.time_for_change_min)
 
     def set_val(self, val):
         for bar in self.combat_bars:
@@ -135,7 +163,9 @@ class MultiGenericBar():
 
 MAX_HP_PER_BAR = 40
 class CombatHealthBar(HealthBar):
-    colors = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1]
+    # The shade of the glow, a frame at a time, as on the GBA (gFrameLut_EfxHPBarColorChange1):
+    # up to the lightest 2 frames a step, held 10 frames, back down, and the darkest held 10
+    colors = [1, 1, 2, 2, 3, 3, 4, 4] + [5] * 10 + [4, 4, 3, 3, 2, 2, 1, 1] + [0] * 10
     speed = utils.frames2ms(2)
     time_for_change_min = 0
 
@@ -148,6 +178,7 @@ class CombatHealthBar(HealthBar):
         self.end_full_hp_blip = engine.subsurface(self.full_hp_blip, (0, 0, 1, self.full_hp_blip.get_height()))
         self.end_damaged_hp_blip = engine.subsurface(self.empty_hp_blip, (0, 0, 1, self.empty_hp_blip.get_height()))
         self.color_tick = 0
+        self.glow_start = engine.get_time()
         self.heal_sound_update = 0
 
     def update(self, skip=False):
@@ -156,14 +187,16 @@ class CombatHealthBar(HealthBar):
         else:
             self.speed = utils.frames2ms(2)
         super().update()
-        self.color_tick = int(engine.get_time() / 16.67) % len(self.colors)
+        # Whole frames since the glow began. Rounded, since a frame is 16 or 17 ms on the clock
+        frames = round((engine.get_time() - self.glow_start) * FPS / 1000)
+        self.color_tick = frames % len(self.colors)
 
     def set_val(self, val):
         current_time = engine.get_time()
         if self.displayed_val < self.get_val() and current_time - self.heal_sound_update > self.speed:
             self.heal_sound_update = current_time
-            get_sound_thread().stop_sfx('HealBoop')
-            get_sound_thread().play_sfx('HealBoop')
+            get_sound_thread().stop_sfx('HP_Recovery')
+            get_sound_thread().play_sfx('HP_Recovery')
         super().set_val(val)
 
     def big_number(self) -> bool:
@@ -239,17 +272,14 @@ class CombatHealthBar(HealthBar):
             surf.blit(double_hp_bars, (left + 5, top - 4))
 
 class MapHealthBar(HealthBar):
-    health_outline = SPRITES.get('map_health_outline')
-    health_bar = SPRITES.get('map_health_bar')
-
     def draw(self, surf, left, top):
         total = max(1, self.get_max_val())
         fraction = utils.clamp(self.displayed_val / total, 0, 1)
         index_pixel = int(12 * fraction) + 1
 
-        surf.blit(self.health_outline, (left, top + 13))
+        surf.blit(SPRITES.get('map_health_outline'), (left, top + 13))
         if fraction > 0:
-            bar = engine.subsurface(self.health_bar, (0, 0, index_pixel, 1))
+            bar = engine.subsurface(SPRITES.get('map_health_bar'), (0, 0, index_pixel, 1))
             surf.blit(bar, (left + 1, top + 14))
 
         return surf
@@ -267,7 +297,6 @@ class MapBars(MultiGenericBar):
 
 class MapCombatBar(MultiGenericBar):
     display_numbers = True
-    health_bar = SPRITES.get('health_bar')
     prefix = 'map_bar_'
     color = 'blue'
     surfs = []

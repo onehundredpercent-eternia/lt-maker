@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Tuple
 
-from app.constants import TILEHEIGHT, TILEWIDTH, TILEX, TILEY
+from app.constants import FPS, TILEHEIGHT, TILEWIDTH, TILEX, TILEY
 from app.engine import engine
 from app.engine.camera import Camera
 from app.engine.fluid_scroll import FluidScroll
@@ -22,7 +22,8 @@ class BaseCursor():
     
     def __init__(self, camera: Camera = None, game_board=None):
         # internal scroll controller
-        self.fluid: FluidScroll = FluidScroll(frames2ms(4), 3.25)
+        # gba timing: a held direction repeats after 12 frames, then every 4
+        self.fluid: FluidScroll = FluidScroll()
 
         # fellow controllers
         self.camera = camera
@@ -133,8 +134,9 @@ class BaseCursor():
             if sound:
                 get_sound_thread().play_sfx('Select 5')
 
-        # queue transition
-        transition_start = engine.get_time()
+        # queue transition. As on the GBA, the cursor takes its first step on the
+        # frame it is moved, so the move is counted from a frame before
+        transition_start = engine.get_time() - 1000 / FPS
         if mouse:
             duration = self.transition_duration / 2
         else:
@@ -213,6 +215,7 @@ class BaseCursor():
                 else:
                     self.camera.cursor_x(self.position[0])
                     self.camera.cursor_y(self.position[1])
+                    self.camera.follow_cursor_speed(self._transition_speed / self.TRANSITION_FRAMES)
 
     def take_input(self):
         self.fluid.update()

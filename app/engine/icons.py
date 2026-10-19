@@ -183,9 +183,11 @@ def get_portrait_from_nid(portrait_nid: str) -> Tuple[Optional[engine.Surface], 
         offset = (0, 0)
     return image, offset
 
-def get_portrait_with_size(unit: unit.UnitObject | units.UnitPrefab, width: int, height: int) -> engine.Surface:
+def get_portrait_with_size(unit: unit.UnitObject | units.UnitPrefab, width: int, height: int) -> Optional[engine.Surface]:
     # Sub-surface out the best portion of the portrait given the size
     image, offset = get_portrait(unit)
+    if not image:
+        return None
     x_offset = max(min(offset[0] + (min( INFO_PORTRAIT_WIDTH,  image.get_width()) -  width)//2,
                         image.get_width() -  width), 0)
     y_offset = max(min(offset[1] + (min(INFO_PORTRAIT_HEIGHT, image.get_height()) - height)//2,
@@ -263,7 +265,7 @@ def draw_stat(surf: engine.Surface, stat_nid: str, unit: unit.UnitObject,
             draw_glow(surf, FONT['small-red'], str(bonus), topright)
 
 def draw_growth(surf: engine.Surface, stat_nid: str, unit: unit.UnitObject,
-                topright: Tuple[int, int], compact:bool=False) -> None:
+                topright: Tuple[int, int], compact:bool=False, percent: bool = False) -> None:
     if stat_nid not in DB.stats:
         FONT['text-yellow'].blit_right('--', surf, topright)
         return
@@ -274,10 +276,15 @@ def draw_growth(surf: engine.Surface, stat_nid: str, unit: unit.UnitObject,
         pass
     else:
         FONT['text-blue'].blit_right(str(value), surf, topright)
+        # The bonus follows the percent sign
+        bonus_pos = topright
+        if percent:
+            FONT['text-blue'].blit('%', surf, topright)
+            bonus_pos = (topright[0] + FONT['text-blue'].width('%'), topright[1])
         if bonus > 0:
-            FONT['small-green'].blit("+%d" % bonus, surf, topright)
+            FONT['small-green'].blit("+%d" % bonus, surf, bonus_pos)
         elif bonus < 0:
-            FONT['small-red'].blit(str(bonus), surf, topright)
+            FONT['small-red'].blit(str(bonus), surf, bonus_pos)
 
 def draw_glow(surf: engine.Surface, font_obj: BmpFont, text: str, topright: Tuple[int, int],
               align: HAlignment = HAlignment.LEFT, color: str = None) -> engine.Surface:

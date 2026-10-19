@@ -4,6 +4,7 @@ import re
 from typing import Callable, List, Dict, Tuple
 
 from app.constants import WINHEIGHT, WINWIDTH
+from app.data.database.database import DB
 from app.engine import config as cf
 from app.events import event_portrait, screen_positions
 from app.engine import engine, image_mods, text_funcs
@@ -26,7 +27,7 @@ from app.utilities.enums import Alignments, HAlignment
 
 from app.utilities.str_utils import SHIFT_NEWLINE
 
-MATCH_DIALOG_COMMAND_RE = re.compile("(\{[^\{]*?\})")
+MATCH_DIALOG_COMMAND_RE = re.compile(r"(\{[^\{]*?\})")
 
 
 def process_dialog_shorthand(text: str) -> str:
@@ -46,6 +47,19 @@ def process_dialog_shorthand(text: str) -> str:
     return text
 
 
+def speaker_name(speaker: str) -> str:
+    """
+    The name to show for a speaker. A unit speaks under its nid,
+    so this is the unit's name; any other speaker shows as written
+    """
+    unit = game.get_unit(speaker)
+    if unit:
+        return unit.name
+    if speaker in DB.units:
+        return DB.units.get(speaker).name
+    return speaker
+
+
 class DialogState(Enum):
     PROCESS = "process"  # Normal display of characters one at a time
     TRANSITION_IN = "transition_in"  # Dialog is fading in
@@ -60,6 +74,7 @@ class DialogState(Enum):
 class Dialog:
     solo_flag = False
     cursor_offset = [0] * 20 + [1] * 2 + [2] * 8 + [1] * 2
+    cursor_gap = 4  # Pixels between the end of the text and the waiting cursor
     transition_speed = utils.frames2ms(10)
     pause_before_wait_time = utils.frames2ms(9)
     pause_time = utils.frames2ms(3)
@@ -273,8 +288,9 @@ class Dialog:
     def determine_width(self):
         width = 0
         current_line = ""
+        # How far into current_line each wait arrives, since that is where the waiting cursor is drawn
+        wait_offsets: List[int] = []
         preceded_by_wait: bool = False
-        waiting_cursor = False
         for command in self.text_commands:
             if command in ("{br}", "{break}", "{clear}", "{sub_break}"):
                 if not preceded_by_wait or not self.attempt_split:
@@ -285,12 +301,13 @@ class Dialog:
                 current_width = text_funcs.get_max_width(self.font_type,
                                                          split_lines)
                 width = max(width, current_width)
-                if len(split_lines) == 1:
-                    waiting_cursor = True
+                width = self._reserve_cursor_width(current_line, wait_offsets, width)
                 current_line = ""
+                wait_offsets = []
                 preceded_by_wait = False
             elif command in ("{w}", "{wait}"):
                 preceded_by_wait = True
+                wait_offsets.append(len(current_line))
             elif command.startswith("{"):
                 pass
             else:
@@ -302,12 +319,49 @@ class Dialog:
                 split_lines = self.get_lines_from_block(current_line, 1)
             current_width = text_funcs.get_max_width(self.font_type, split_lines)
             width = max(width, current_width)
-            if len(split_lines) == 1:
-                waiting_cursor = True
-        if waiting_cursor:
-            if len(split_lines) == 1:
-                width += utils.clamp(current_width - width + 16, 0, 16)
+            width = self._reserve_cursor_width(current_line, wait_offsets, width)
         return width
+
+    def _reserve_cursor_width(self, block: str, wait_offsets: List[int], width: int) -> int:
+        """
+        Grow *width* until the waiting cursor fits beside the text at every wait in *block*.
+        *wait_offsets* are how many characters of *block* come before each wait.
+
+        The width above comes from a balanced split, but the box wraps greedily as
+        it types, so the line a cursor ends up on is whichever one `line_wrap`
+        puts its word on -- ask it rather than assume the two agree. Without this the
+        box is built to a width the typing wrap then refuses to use, and the word
+        before a wait drops to the next line with the rest of the box left empty.
+        """
+        if not self.draw_cursor_flag or width <= 0:
+            return width
+        words_before_waits = [len(text_funcs.line_chunk(block[:offset])) for offset in wait_offsets]
+        words_before_waits = [num_words for num_words in words_before_waits if num_words]
+        if not words_before_waits:
+            return width
+        allowance = self.cursor_gap + self.cursor.get_width()
+        ceiling = WINWIDTH - 32  # determine_size clamps to this anyway
+        # Widening can pull a word back up, lengthening a line again, so
+        # settle it rather than growing once
+        for _ in range(4):
+            lines = text_funcs.line_wrap(self.font_type, block, width)
+            needed = max(self._width_before_wait(lines, num_words) for num_words in words_before_waits) + allowance
+            if needed <= width or width >= ceiling:
+                break
+            width = min(needed, ceiling)
+        return width
+
+    def _width_before_wait(self, lines: List[str], num_words: int) -> int:
+        """
+        Width of the text sharing a line with the waiting cursor, for the wait
+        that arrives *num_words* words into the wrapped *lines*
+        """
+        for line in lines:
+            words = text_funcs.line_chunk(line)
+            if num_words <= len(words):
+                return text_funcs.get_max_width(self.font_type, [' '.join(words[:num_words])])
+            num_words -= len(words)
+        return 0
 
     def determine_height(self):
         self.text_height = self.font.height * self.num_lines
@@ -403,6 +457,9 @@ class Dialog:
             start, stop = self.text_indices[-1]
             stop += len(next_word) + 1
             next_width = self.tagged_text[start:stop].width()
+            if self._cursor_drawn_after(self.text_index + len(next_word) + 1):
+                # The waiting cursor sits at the end of this word, so it has to fit on the line too
+                next_width += self.cursor_gap + self.cursor.get_width()
             if next_width > self.text_width:
                 # move to next line and discard ' '
                 self._next_line(True)
@@ -437,6 +494,20 @@ class Dialog:
             else:
                 word += letter
         return word
+
+    def _cursor_drawn_after(self, text_index: int) -> bool:
+        """
+        Whether the waiting cursor will be drawn right after the text that ends just
+        before text_commands[text_index], i.e. a wait arrives before any more text or line break
+        """
+        if not self.draw_cursor_flag:
+            return False
+        for command in self.text_commands[text_index:]:
+            if command in ("{w}", "{wait}"):
+                return True
+            if len(command) == 1 or command in ("{br}", "{break}", "{sub_break}", "{clear}"):
+                return False
+        return False
 
     def is_complete(self) -> bool:
         """
@@ -546,8 +617,8 @@ class Dialog:
                 self.state = DialogState.PROCESS
 
         elif self.state == DialogState.NEW_LINE:
-            # Update y_offset
-            self.y_offset = max(0, self.y_offset - 2)
+            # The lines move up a pixel a frame, as on the GBA
+            self.y_offset = max(0, self.y_offset - 1)
             if self.y_offset == 0:
                 self.state = DialogState.PROCESS
 
@@ -701,13 +772,13 @@ class Dialog:
                 self.draw_tail(surf, self.portrait)
             # Draw nametag
             if not self.portrait and self.speaker and self.speaker != "Narrator":
-                self.draw_nametag(surf, self.speaker)
+                self.draw_nametag(surf, speaker_name(self.speaker))
             # Draw text
             end_pos = self.draw_text(surf)
 
             if self.state == DialogState.WAIT and self.draw_cursor_flag:
                 cursor_pos = (
-                    4 + end_pos[0],
+                    self.cursor_gap + end_pos[0],
                     6 + end_pos[1] + self.cursor_offset[self.cursor_offset_index],
                 )
                 surf.blit(self.cursor, cursor_pos)
@@ -946,7 +1017,7 @@ class Ending:
 
     solo_flag = True
     wait_time = 5000
-    background = SPRITES.get("endings_display")
+    background_sprite = "endings_display"
 
     def __init__(self, portrait, title, text, unit, wait_for_input: bool = False):
         self.portrait = portrait
@@ -978,7 +1049,7 @@ class Ending:
     def make_background(self):
         size = WINWIDTH, WINHEIGHT
         self.bg = engine.create_surface(size, transparent=True)
-        self.bg.blit(self.background, (0, 0))
+        self.bg.blit(SPRITES.get(self.background_sprite), (0, 0))
         self.bg.blit(self.portrait, (WINWIDTH - self.portrait.get_width() - 8,
                                     WINHEIGHT - self.portrait.get_height() - 23))
 
@@ -1056,7 +1127,7 @@ class PairedEnding(Ending):
     Contains a dialog
     """
 
-    background = SPRITES.get("paired_endings_display")
+    background_sprite = "paired_endings_display"
 
     def __init__(self, left_portrait, right_portrait, left_title, right_title, text,
                  left_unit, right_unit, wait_for_input: bool = False):
@@ -1081,7 +1152,7 @@ class PairedEnding(Ending):
     def make_background(self):
         size = WINWIDTH, WINHEIGHT
         self.bg = engine.create_surface(size, transparent=True)
-        self.bg.blit(self.background, (0, 0))
+        self.bg.blit(SPRITES.get(self.background_sprite), (0, 0))
         self.bg.blit(self.left_portrait, (8, WINHEIGHT - self.left_portrait.get_height() - 31))
         self.bg.blit(self.right_portrait, (WINWIDTH - self.right_portrait.get_width() - 8,
                                           WINHEIGHT - self.right_portrait.get_height() - 31))

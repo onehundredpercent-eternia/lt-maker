@@ -48,8 +48,10 @@ class SkillOption(menu_options.BasicOption):
         text = text_funcs.translate_and_text_evaluate(
             self.skill.desc,
             unit=game.get_unit(self.skill.owner_nid),
-            self=self.skill)
-        return help_menu.HelpDialog(text, name=self.skill.name)
+            self=self.skill,
+            local_args={'skill': self.skill})
+        # The option draws the skill's name itself, so the help box does not need to
+        return help_menu.HelpDialog(text)
 
     def draw(self, surf, x, y):
         icon = icons.get_icon(self.skill)

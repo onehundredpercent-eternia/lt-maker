@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from app.engine.graphics.text.text_renderer import fix_tags, render_text, text_width
 import logging
+import math
 from app.engine.text_evaluator import TextEvaluator
 import app.engine.config as cf
 from app.constants import TILEX, TILEY, WINHEIGHT, WINWIDTH
@@ -25,11 +26,87 @@ if TYPE_CHECKING:
     from app.engine.objects.team import TeamObject
 
 
+def first_existing_sprite(*nids: str) -> engine.Surface:
+    """Return the first of `nids` that is actually loaded.
+
+    SPRITES.get only accepts a single fallback, which isn't enough for the combat
+    forecast sprites, where both the size and the color baked into the name can be
+    unsupported. The last nid given is used unconditionally if none of them exist.
+    """
+    for nid in nids:
+        if nid in SPRITES:
+            return SPRITES.get(nid)
+    return SPRITES.get(nids[-1])
+
+
+# How much of each side window shows, a frame at a time, as it slides in and out. As on the
+# GBA (sMMBSlideInWidthLut and the rest), where they are drawn a tile at a time: the unit
+# window 13 tiles wide, the terrain window 7 wide and the goal window 6 tall
+UNIT_WINDOW_IN = (5 / 13, 9 / 13, 11 / 13, 1)
+UNIT_WINDOW_OUT = (11 / 13, 7 / 13, 0)
+TERRAIN_WINDOW_IN = (5 / 7, 6 / 7, 1)
+TERRAIN_WINDOW_OUT = (5 / 7, 4 / 7, 0)
+GOAL_WINDOW_IN = (1 / 6, 3 / 6, 4 / 6, 5 / 6, 1)
+GOAL_WINDOW_OUT = (3 / 6, 1 / 6, 0)
+# The battle forecast, 10 tiles wide, as on the GBA (BattleForecast_LoopSlideIn)
+FORECAST_IN = (6 / 10, 8 / 10, 9 / 10, 1)
+FORECAST_OUT = (9 / 10, 8 / 10, 6 / 10, 0)
+FORECAST_WIDTH = 80
+
+# Where the battle forecast's ×2 is, a frame at a time. As on the GBA, it goes round an
+# ellipse once every 64 frames, 4 pixels to either side and 2 up and down, rounded down
+X2_POSITIONS = tuple(4 + (round(4096 * math.sin(math.tau * i / 64)) * 4 >> 12) for i in range(64))
+Y2_POSITIONS = tuple(2 + (round(4096 * math.cos(math.tau * i / 64)) * 2 >> 12) for i in range(64))
+
+
+class SideWindowSlide():
+    """
+    A side window sliding in and out, a frame at a time. Once it starts to slide, it
+    finishes before it can turn back, as on the GBA
+    """
+
+    def __init__(self, slide_in: tuple, slide_out: tuple):
+        self.slide_in = slide_in
+        self.slide_out = slide_out
+        self.reset()
+
+    def reset(self):
+        self.state = 'hidden'
+        self.idx = 0
+        self.shown = 0
+
+    def show(self):
+        if self.state == 'hidden':
+            self.state, self.idx = 'in', 0
+
+    def hide(self):
+        if self.state == 'shown':
+            self.state, self.idx = 'out', 0
+
+    def update(self):
+        if self.state == 'in':
+            self.shown = self.slide_in[self.idx]
+            self.idx += 1
+            if self.idx >= len(self.slide_in):
+                self.state = 'shown'
+        elif self.state == 'out':
+            self.shown = self.slide_out[self.idx]
+            self.idx += 1
+            if self.idx >= len(self.slide_out):
+                self.state = 'hidden'
+        elif self.state == 'shown':
+            self.shown = 1
+        else:
+            self.shown = 0
+
+    def shown_width(self, width: int) -> int:
+        """How much of a window this wide shows"""
+        return round(self.shown * width)
+
+
 class UIView():
     legal_states = ('free', 'prep_formation', 'prep_formation_select')
     initiative_states = ('status_endstep', 'turn_change', 'ai', 'phase_change', 'menu', 'turnwheel')
-    x_positions = (0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 5, 4, 3, 2, 1)
-    y_positions = (0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0, 0)
 
     def __init__(self):
         self.unit_info_disp = None
@@ -39,82 +116,116 @@ class UIView():
         self.spell_info_disp = None
         self.initiative_info_disp = None
 
-        self.cursor_right: bool = False
-
-        self.unit_info_offset = 0
-        self.obj_info_offset = 0
-        self.attack_info_offset = 0
         self.initiative_info_offset = 0
 
-        # Tile Info Offset
-        self.tile_transition_state = 'normal'
-        self.tile_progress: float = 0
-        self.tile_last_update: int = 0
+        # The battle forecast: how far in it has slid, which side it is on, and who it is of
+        self.attack_info_slide = SideWindowSlide(FORECAST_IN, FORECAST_OUT)
+        self.attack_info_left = False
+        self.attack_info_args = None
+        self.attack_info_wait = False
+        self.attack_info_closing = False
+
+        # The side windows on the map. As on the GBA, they slide in and out a tile at a time
+        self.unit_slide = SideWindowSlide(UNIT_WINDOW_IN, UNIT_WINDOW_OUT)
+        self.tile_slide = SideWindowSlide(TERRAIN_WINDOW_IN, TERRAIN_WINDOW_OUT)
+        self.obj_slide = SideWindowSlide(GOAL_WINDOW_IN, GOAL_WINDOW_OUT)
+        self._last_slide_update = None
+        # Where each window is: the unit window on top or not, the terrain window
+        # on the left or not, the goal window on top or not
+        self.unit_info_top = True
+        self.tile_info_left = False
+        self.obj_top = True
         self.current_tile_pos = None
 
+        # The cursor has moved since the unit window last looked
         self.remove_unit_info = True
-        self.prev_unit_info_top = False
-        self.obj_top = False
 
     def remove_unit_display(self):
         self.remove_unit_info = True
 
     def get_cursor_right(self):
-        return game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1
+        """
+        Whether the cursor is in the right half of the screen. As on the GBA, the middle
+        column counts as the left half
+        """
+        return game.cursor.position[0] > TILEX // 2 + game.camera.get_x()
+
+    def get_cursor_top(self):
+        return game.cursor.position[1] < TILEY // 2 + game.camera.get_y()
 
     def update(self):
+        """The side windows, once a frame however many times they are drawn"""
         current_time = engine.get_time()
+        if current_time == self._last_slide_update:
+            return
+        # Not drawn for a while: something else had the screen
+        put_away = self._last_slide_update is None or current_time - self._last_slide_update > 100
+        self._last_slide_update = current_time
 
-        # Tile info handling
-        if self.cursor_right == self.get_cursor_right():
-            pass  # No need to transition
-        else:
-            self.cursor_right = self.get_cursor_right()
-            self.tile_transition_state = 'out'
-            self.tile_progress = 0
-            self.tile_last_update = engine.get_time()
+        if put_away or game.state.current() not in self.legal_states:
+            # As on the GBA, they are gone at once when the cursor is put away, and
+            # slide in anew when it is back
+            self.unit_slide.reset()
+            self.tile_slide.reset()
+            self.obj_slide.reset()
+            self.unit_info_disp = None
+            self.remove_unit_info = True
+            if not put_away or game.state.current() not in self.legal_states:
+                return
 
-        # Handle tile info slide in
-        if self.tile_transition_state != 'normal':
-            diff = current_time - self.tile_last_update
-            self.tile_progress = utils.clamp(diff / utils.frames2ms(4), 0, 1)
-            if self.tile_progress >= 1:
-                self.tile_progress = 0
-                self.tile_last_update = current_time
-                if self.tile_transition_state == 'out':
-                    self.tile_transition_state = 'in'
-                    self.current_tile_pos = game.cursor.position
-                else:
-                    self.tile_transition_state = 'normal'
-        else:
+        cursor_right = self.get_cursor_right()
+        cursor_top = self.get_cursor_top()
+
+        # The unit window is at the bottom only while the cursor is in the top left
+        unit_top = not (cursor_top and not cursor_right)
+        hover = game.cursor.get_hover()
+        if self.unit_slide.state == 'hidden':
+            if hover:
+                self.unit_info_disp = self.create_unit_info(hover)
+                self.unit_info_top = unit_top
+                self.unit_slide.show()
+            self.remove_unit_info = False
+        elif self.unit_slide.state == 'shown' and self.remove_unit_info:
+            # On to another unit on the same side, it is redrawn where it is.
+            # Otherwise it slides out, and in again where it should be
+            if hover and unit_top == self.unit_info_top:
+                self.unit_info_disp = self.create_unit_info(hover)
+            else:
+                self.unit_slide.hide()
+            self.remove_unit_info = False
+        self.unit_slide.update()
+        if self.unit_slide.state == 'hidden':
+            self.unit_info_disp = None
+
+        # The terrain window is opposite the cursor
+        if self.tile_slide.state == 'hidden':
+            self.tile_info_left = cursor_right
             self.current_tile_pos = game.cursor.position
+            self.tile_slide.show()
+        elif self.tile_slide.state == 'shown':
+            if cursor_right != self.tile_info_left:
+                self.tile_slide.hide()
+            else:
+                self.current_tile_pos = game.cursor.position
+        self.tile_slide.update()
+
+        # The goal window is at the top right, unless the cursor is there
+        obj_top = not (cursor_top and cursor_right)
+        if self.obj_slide.state == 'hidden':
+            self.obj_top = obj_top
+            self.obj_slide.show()
+        elif self.obj_slide.state == 'shown' and obj_top != self.obj_top:
+            self.obj_slide.hide()
+        self.obj_slide.update()
 
     def draw(self, surf):
         self.update()
-        # Unit info handling
-        if self.remove_unit_info:
-            hover = game.cursor.get_hover()
-            if game.state.current() in self.legal_states and hover:
-                self.remove_unit_info = False
-                self.unit_info_disp = self.create_unit_info(hover)
-                self.unit_info_offset = min(self.unit_info_disp.get_width(), self.unit_info_offset)
-            elif self.unit_info_disp:
-                self.unit_info_offset += 20
-                if self.unit_info_offset >= 200:
-                    self.unit_info_disp = None
-        else:
-            self.unit_info_offset -= 20
-            self.unit_info_offset = max(0, self.unit_info_offset)
 
         # Objective info handling
         if game.state.current() in self.legal_states and cf.SETTINGS['show_objective']:
             self.obj_info_disp = self.create_obj_info()
-            self.obj_info_offset -= 10
-            self.obj_info_offset = max(0, self.obj_info_offset)
-        elif self.obj_info_disp:
-            self.obj_info_offset += 10
-            if self.obj_info_offset >= 100:
-                self.obj_info_disp = None
+        else:
+            self.obj_info_disp = None
 
         if (game.state.current() in self.legal_states or game.state.current() in self.initiative_states) \
                 and DB.constants.value('initiative') \
@@ -129,49 +240,29 @@ class UIView():
             self.initiative_info_disp = None
 
         # === Final drawing
-        # Should be in topleft, unless cursor is in topleft, in which case it should be in bottomleft
         if game.state.current() in self.legal_states and self.unit_info_disp:
-            # If in top and not in right
             if not DB.constants.value('initiative') or not game.initiative.draw_me:
-                if self.remove_unit_info:
-                    if self.prev_unit_info_top:
-                        surf.blit(self.unit_info_disp, (-self.unit_info_offset, 0))
-                    else:
-                        surf.blit(self.unit_info_disp, (-self.unit_info_offset, WINHEIGHT - self.unit_info_disp.get_height()))
-                elif game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
-                        not (game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1):
-                    self.prev_unit_info_top = False
-                    surf.blit(self.unit_info_disp, (-self.unit_info_offset, WINHEIGHT - self.unit_info_disp.get_height()))
-                else:
-                    self.prev_unit_info_top = True
-                    surf.blit(self.unit_info_disp, (-self.unit_info_offset, 0))
-            else:
-                pass
+                width = self.unit_info_disp.get_width()
+                x = self.unit_slide.shown_width(width) - width
+                y = 0 if self.unit_info_top else WINHEIGHT - self.unit_info_disp.get_height()
+                surf.blit(self.unit_info_disp, (x, y))
 
         # Display terrain with none, GBA, or Hybrid fog (hybrid only if in previously_visited_tile)
         if game.state.current() in self.legal_states and cf.SETTINGS['show_terrain'] and \
                 game.board.terrain_known(game.cursor.position, game.board.in_vision(game.cursor.position)):
             self.tile_info_disp = self.create_tile_info(self.current_tile_pos)
             if self.tile_info_disp:
-                right = self.cursor_right
-
-                # Handle transition offset
-                if self.tile_transition_state == 'out':
-                    right = not right  # Mirror on the way out
-                    offset = self.tile_info_disp.get_width() * self.tile_progress
-                elif self.tile_transition_state == 'in':
-                    offset = self.tile_info_disp.get_width() * (1 - self.tile_progress)
-                else:
-                    offset = 0
-
+                # It sits 5 pixels in from the edge of the screen it comes in from
+                width = self.tile_info_disp.get_width()
+                hidden = width + 5 - self.tile_slide.shown_width(width + 5)
                 # Should be in bottom. Can be in bottomleft or bottomright, depending on where cursor is. May move to the top if Initiative is enabled.
-                if right:
+                if self.tile_info_left:
                     if self.initiative_info_disp and game.cursor.position[1] < TILEY // 2 + game.camera.get_y():
-                        surf.blit(self.tile_info_disp, (5 - offset, 0)) # Topleft
+                        surf.blit(self.tile_info_disp, (5 - hidden, 0)) # Topleft
                     else:
-                        surf.blit(self.tile_info_disp, (5 - offset, WINHEIGHT - self.tile_info_disp.get_height() - 3)) # Bottomleft
+                        surf.blit(self.tile_info_disp, (5 - hidden, WINHEIGHT - self.tile_info_disp.get_height() - 3)) # Bottomleft
                 else:
-                    xpos = WINWIDTH - self.tile_info_disp.get_width() - 5 + offset
+                    xpos = WINWIDTH - width - 5 + hidden
                     if self.initiative_info_disp and game.cursor.position[1] < TILEY // 2 + game.camera.get_y():
                         surf.blit(self.tile_info_disp, (xpos, 0))
                     else:
@@ -180,24 +271,16 @@ class UIView():
 
         # Only if we actually have a simple objective
         if self.obj_info_disp and not self.initiative_info_disp and game.level.objective['simple']:
-            # Should be in topright, unless the cursor is in the topright
-            # TopRight - I believe this has RIGHT precedence
-            if game.cursor.position[1] < TILEY // 2 + game.camera.get_y() and \
-                    game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
-                # Gotta place in bottomright, because cursor is in topright
-                if self.obj_top:
-                    self.obj_top = False
-                    self.obj_info_offset = self.obj_info_disp.get_height()
-                pos = (WINWIDTH - 4 - self.obj_info_disp.get_width(),
-                       WINHEIGHT - 4 + self.obj_info_offset - self.obj_info_disp.get_height())
-                surf.blit(self.obj_info_disp, pos) # Should be bottom right
+            # Topright, or bottomright while the cursor is in the topright. It comes in
+            # from the top or the bottom of the screen
+            height = self.obj_info_disp.get_height()
+            x = WINWIDTH - 4 - self.obj_info_disp.get_width()
+            if self.obj_top:
+                hidden = height + 1 - self.obj_slide.shown_width(height + 1)
+                surf.blit(self.obj_info_disp, (x, 1 - hidden))
             else:
-                # Place in topright
-                if not self.obj_top:
-                    self.obj_top = True
-                    self.obj_info_offset = self.obj_info_disp.get_height()
-                pos = (WINWIDTH - 4 - self.obj_info_disp.get_width(), 1 - self.obj_info_offset)
-                surf.blit(self.obj_info_disp, pos)
+                hidden = height + 4 - self.obj_slide.shown_width(height + 4)
+                surf.blit(self.obj_info_disp, (x, WINHEIGHT - 4 - height + hidden))
 
         if self.initiative_info_disp:
             if game.cursor.position[1] < TILEY // 2 + game.camera.get_y():
@@ -346,7 +429,26 @@ class UIView():
 
     def prepare_attack_info(self):
         self.attack_info_disp = None
-        self.attack_info_offset = 80
+        self.attack_info_slide.reset()
+        self.attack_info_args = None
+        # As on the GBA, it is not up until the frame after it is asked for
+        self.attack_info_wait = True
+        self.attack_info_closing = False
+
+    def close_attack_info(self) -> bool:
+        """Slides the battle forecast out, if it is up. Whether it has to"""
+        slide = self.attack_info_slide
+        if slide.state == 'hidden':
+            return False
+        self.attack_info_closing = True
+        if slide.state == 'in':
+            slide.state, slide.idx = 'out', 0
+        else:
+            slide.hide()
+        return True
+
+    def attack_info_closed(self) -> bool:
+        return self.attack_info_closing and self.attack_info_slide.state == 'hidden'
 
     def reset_info(self):
         self.attack_info_disp = None
@@ -386,15 +488,46 @@ class UIView():
         a_color = attacker_team.combat_color
         d_color = defender_team.combat_color
 
-        if attacker_team.combat_color_diverged() or defender_team.combat_color_diverged():
-            surf = SPRITES.get('attack_info_' + str(height) + '_top_' + a_color, 'attack_info_3_top_' + a_color).copy()
-            surf.blit(SPRITES.get('attack_info_' + str(height) + '_bottom_' + d_color, 'attack_info_3_bottom_red'), (0, 0))
+        # The old-format sprites are one baked image per color, and only ship in a
+        # handful of colors. The new-format sprites compose a neutral center over an
+        # attacker-colored top and a defender-colored bottom, so they cover any color.
+        # Prefer an old-format sprite when one actually exists for this color (so a
+        # project's custom art still wins), otherwise fall through to the new format.
+        # combat_color_diverged() only catches a *runtime* palette change; a color set
+        # in the team editor and never touched by an event has no old-format sprite and
+        # would silently render red without the membership check.
+        use_new_format = (attacker_team.combat_color_diverged() or
+                          defender_team.combat_color_diverged() or
+                          (prefix + d_color) not in SPRITES)
+        if use_new_format:
+            # Fall back on the size first, then on a color that is guaranteed to ship.
+            # Both of the old fallbacks kept the requested color, so a team recolored to
+            # something with no sprites at all missed twice and got None back, and the
+            # .copy() below raised.
+            surf = first_existing_sprite(
+                'attack_info_' + str(height) + '_top_' + a_color,
+                'attack_info_3_top_' + a_color,
+                'attack_info_' + str(height) + '_top_blue',
+                'attack_info_3_top_blue').copy()
+            surf.blit(first_existing_sprite(
+                'attack_info_' + str(height) + '_bottom_' + d_color,
+                'attack_info_3_bottom_' + d_color,
+                'attack_info_' + str(height) + '_bottom_red',
+                'attack_info_3_bottom_red'), (0, 0))
             surf.blit(SPRITES.get(prefix + 'center'), (0, 0))
 
             if a_assist_flag:
-                surf.blit(SPRITES.get('assist_info_' + str(as_height) + '_' + a_color, 'assist_info_2_blue'), (92, 35))
+                surf.blit(first_existing_sprite(
+                    'assist_info_' + str(as_height) + '_' + a_color,
+                    'assist_info_2_' + a_color,
+                    'assist_info_' + str(as_height) + '_blue',
+                    'assist_info_2_blue'), (92, 35))
             if d_assist_flag:
-                surf.blit(SPRITES.get('assist_info_' + str(as_height) + '_' + d_color, 'assist_info_2_red'), (1, 35))
+                surf.blit(first_existing_sprite(
+                    'assist_info_' + str(as_height) + '_' + d_color,
+                    'assist_info_2_' + d_color,
+                    'assist_info_' + str(as_height) + '_red',
+                    'assist_info_2_red'), (1, 35))
         else:
             surf = SPRITES.get(prefix + d_color, prefix + 'red').copy()
             if a_assist_flag:
@@ -561,8 +694,8 @@ class UIView():
                 stat.append(crit)
                 e_stat.append(e_crit)
         if not grandmaster and detailed_flag and not y_adjust > 32:
-            stat.append(combat_calcs.compute_true_speed(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0)))
-            e_stat.append(combat_calcs.compute_true_speed(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0)))
+            stat.append(combat_calcs.compute_attack_speed(attacker, defender, weapon, resolve_weapon(defender), 'attack', (0, 0)))
+            e_stat.append(combat_calcs.compute_attack_speed(defender, attacker, resolve_weapon(defender), weapon, 'defense', (0, 0)))
         if guard_flag:
             # If unit is not paired up, no point in displaying guard gauge
             stat.append(attacker.get_guard_gauge() if attacker.traveler else '--')
@@ -576,26 +709,51 @@ class UIView():
         return surf
 
     def draw_adv_arrows(self, surf, attacker, defender, weapon, def_weapon, topleft):
-        adv = combat_calcs.compute_advantage(attacker, defender, weapon, def_weapon)
-        disadv = combat_calcs.compute_advantage(attacker, defender, weapon, def_weapon, False)
-
         up_arrow = engine.subsurface(SPRITES.get('arrow_advantage'), (ANIMATION_COUNTERS.arrow_counter.count * 7, 0, 7, 10))
         down_arrow = engine.subsurface(SPRITES.get('arrow_advantage'), (ANIMATION_COUNTERS.arrow_counter.count * 7, 10, 7, 10))
 
+        # An item that asks for an arrow gets it, whatever the weapon triangle says
         if item_system.show_weapon_advantage(attacker, weapon, defender, def_weapon):
             surf.blit(up_arrow, topleft)
         elif item_system.show_weapon_disadvantage(attacker, weapon, defender, def_weapon):
             surf.blit(down_arrow, topleft)
-        elif adv and adv.modification > 0:
-            surf.blit(up_arrow, topleft)
-        elif adv and adv.modification < 0:
-            surf.blit(down_arrow, topleft)
-        elif disadv and disadv.modification > 0:
-            surf.blit(down_arrow, topleft)
-        elif disadv and disadv.modification < 0:
-            surf.blit(up_arrow, topleft)
+        else:
+            advantage = combat_calcs.compute_overall_advantage(attacker, defender, weapon, def_weapon)
+            if advantage is combat_calcs.WeaponAdvantage.ADVANTAGE:
+                surf.blit(up_arrow, topleft)
+            elif advantage is combat_calcs.WeaponAdvantage.DISADVANTAGE:
+                surf.blit(down_arrow, topleft)
 
     def draw_attack_info(self, surf, attacker, weapon, defender, a_assist=None, d_assist=None):
+        """
+        As on the GBA, the battle forecast slides in from the side of the screen away from
+        its target. Onto a target on the other side, it slides out with what it showed, and
+        in again on that side
+        """
+        slide = self.attack_info_slide
+        left = game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1
+        if slide.state == 'hidden' and not self.attack_info_closing:
+            if self.attack_info_wait:
+                self.attack_info_wait = False
+                return
+            self.attack_info_left = left
+            self.attack_info_disp = None
+            slide.show()
+        elif slide.state == 'shown' and left != self.attack_info_left and not self.attack_info_closing:
+            slide.hide()
+        if slide.state in ('in', 'shown'):
+            self.attack_info_args = (attacker, weapon, defender, a_assist, d_assist)
+        slide.update()
+        if slide.shown:
+            offset = round((1 - slide.shown) * FORECAST_WIDTH)
+            self._draw_attack_info(surf, offset, *self.attack_info_args)
+
+    def draw_closing_attack_info(self, surf):
+        """The battle forecast as it slides out, after its target is let go"""
+        if self.attack_info_args:
+            self.draw_attack_info(surf, *self.attack_info_args)
+
+    def _draw_attack_info(self, surf, offset, attacker, weapon, defender, a_assist=None, d_assist=None):
         def has_attacker_strike_partner() -> bool:
             return DB.constants.value('pairup') and \
                 a_assist and not (attacker.traveler or defender.traveler)
@@ -616,6 +774,11 @@ class UIView():
 
         if not self.attack_info_disp:
             self.attack_info_disp = self.create_attack_info(attacker, weapon, defender, a_assist, d_assist)
+            # As on the GBA, the ×2 and the effective weapon flash start over when it is drawn anew
+            ANIMATION_COUNTERS.forecast_counter.restart()
+        if offset:
+            # and are not drawn while it slides
+            ANIMATION_COUNTERS.forecast_counter.restart()
 
         crit_flag = DB.constants.value('crit')
         detailed_flag = cf.SETTINGS['forecast'] == 'Detailed'
@@ -625,18 +788,16 @@ class UIView():
         # Only if either units is paired up
         guard_flag = DB.constants.value('pairup') and (attacker.traveler or defender.traveler)
 
-        if game.cursor.position[0] > TILEX // 2 + game.camera.get_x() - 1:
+        if self.attack_info_left:
             if has_defender_strike_partner():
-                topleft = (5 - self.attack_info_offset, 4)
+                topleft = (5 - offset, 4)
             else:
-                topleft = (-19 - self.attack_info_offset, 4)
+                topleft = (-19 - offset, 4)
         else:
             if has_attacker_strike_partner():
-                topleft = (WINWIDTH - 122 + self.attack_info_offset, 4)
+                topleft = (WINWIDTH - 122 + offset, 4)
             else:
-                topleft = (WINWIDTH - 97 + self.attack_info_offset, 4)
-        if self.attack_info_offset > 0:
-            self.attack_info_offset -= 20
+                topleft = (WINWIDTH - 97 + offset, 4)
 
         surf.blit(self.attack_info_disp, topleft)
 
@@ -667,7 +828,7 @@ class UIView():
                 surf.blit(icon, (topleft[0] + 74, y_pos))
 
         # Advantage arrows
-        if skill_system.check_enemy(attacker, defender):
+        if not offset and skill_system.check_enemy(attacker, defender):
             self.draw_adv_arrows(surf, attacker, defender, weapon, resolve_weapon(defender), (topleft[0] + 37, topleft[1] + 8))
 
             y_pos = topleft[1] + 89
@@ -685,83 +846,85 @@ class UIView():
             self.draw_adv_arrows(surf, defender, attacker, resolve_weapon(defender), weapon, (topleft[0] + 85, y_pos))
 
         # Doubling
-        count = ANIMATION_COUNTERS.x2_counter.count
-        x2_pos_player = (topleft[0] + 83 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_enemy = (topleft[0] + 44 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_player_partner = (topleft[0] + 107 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
-        x2_pos_enemy_partner = (topleft[0] + 20 + self.x_positions[count], topleft[1] + 38 + self.y_positions[count])
+        if not offset:
+            count = ANIMATION_COUNTERS.forecast_counter.count
+            x2_x, x2_y = X2_POSITIONS[count], Y2_POSITIONS[count]
+            x2_pos_player = (topleft[0] + 83 + x2_x, topleft[1] + 38 + x2_y)
+            x2_pos_enemy = (topleft[0] + 44 + x2_x, topleft[1] + 38 + x2_y)
+            x2_pos_player_partner = (topleft[0] + 107 + x2_x, topleft[1] + 38 + x2_y)
+            x2_pos_enemy_partner = (topleft[0] + 20 + x2_x, topleft[1] + 38 + x2_y)
 
-        x2_font = 'small-yellow'
-        x2_offset = (0, -4)
-        number_font = 'number_small'
-        number_offset = (6, -2)
+            x2_font = 'small-yellow'
+            x2_offset = (0, -4)
+            number_font = 'number_small'
+            number_offset = (6, -2)
 
-        num_phases = combat_calcs.compute_attack_phases(attacker, defender, weapon, resolve_weapon(defender), "attack", (0 , 0))
-        num_attacks = num_phases
-        for attack_phase in range(num_phases):
-            num_sub_attacks = combat_calcs.compute_multiattacks(attacker, defender, weapon, "attack", (attack_phase, 0)) - 1
-            num_attacks += num_sub_attacks
-        if weapon.uses_options and weapon.uses_options.one_loss_per_combat():
-            pass  # If you can only lose one use at a time, no need to min this
-        else:
-            num_attacks = min(num_attacks, weapon.data.get('uses', 100), weapon.data.get('c_uses', 100))
-
-        if num_attacks > 1:
-            im = SPRITES.get("x%d" % (num_attacks), fallback=None)
-            if im:
-                surf.blit(im, x2_pos_player)
+            num_phases = combat_calcs.compute_attack_phases(attacker, defender, weapon, resolve_weapon(defender), "attack", (0 , 0))
+            num_attacks = num_phases
+            for attack_phase in range(num_phases):
+                num_sub_attacks = combat_calcs.compute_multiattacks(attacker, defender, weapon, "attack", (attack_phase, 0)) - 1
+                num_attacks += num_sub_attacks
+            if weapon.uses_options and weapon.uses_options.one_loss_per_combat():
+                pass  # If you can only lose one use at a time, no need to min this
             else:
-                FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_player, x2_offset))
-                FONT[number_font].blit(str(num_attacks), surf, utils.tuple_add(x2_pos_player, number_offset))
+                num_attacks = min(num_attacks, weapon.data.get('uses', 100), weapon.data.get('c_uses', 100))
 
-        if a_assist:
-            if DB.constants.value('limit_attack_stance'):
-                a_assist_num_attacks = combat_calcs.compute_multiattacks(a_assist, defender, a_assist.get_weapon(), "attack", (0, 0))
-            else:
-                a_assist_num_attacks = 0
-                for attack_phase in range(num_phases):
-                    a_assist_num_attacks += combat_calcs.compute_multiattacks(a_assist, defender, a_assist.get_weapon(), "attack", (attack_phase, 0))
-
-            if a_assist_num_attacks > 1:
-                im = SPRITES.get("x%d" % (a_assist_num_attacks), fallback=None)
+            if num_attacks > 1:
+                im = SPRITES.get("x%d" % (num_attacks), fallback=None)
                 if im:
-                    surf.blit(im, x2_pos_player_partner)
+                    surf.blit(im, x2_pos_player)
                 else:
-                    FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_player_partner, x2_offset))
-                    FONT[number_font].blit(str(a_assist_num_attacks), surf, utils.tuple_add(x2_pos_player_partner, number_offset))
+                    FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_player, x2_offset))
+                    FONT[number_font].blit(str(num_attacks), surf, utils.tuple_add(x2_pos_player, number_offset))
 
-        # Enemy doubling
-        eweapon = defender.get_weapon()
-        if eweapon and combat_calcs.can_counterattack(attacker, weapon, defender, eweapon):
-            e_num_phases = combat_calcs.compute_attack_phases(defender, attacker, eweapon, weapon, 'defense', (0, 0))
-            e_num_attacks = e_num_phases
-            for e_attack_phase in range(e_num_phases):
-                e_num_attacks += combat_calcs.compute_multiattacks(defender, attacker, eweapon, 'defense', (e_attack_phase, 0)) - 1
-            e_num_attacks = min(e_num_attacks, eweapon.data.get('uses', 100))
-
-            if e_num_attacks > 1:
-                im = SPRITES.get("x%d" % (e_num_attacks), fallback=None)
-                if im:
-                    surf.blit(im, x2_pos_enemy)
-                else:
-                    FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_enemy, x2_offset))
-                    FONT[number_font].blit(str(e_num_attacks), surf, utils.tuple_add(x2_pos_enemy, number_offset))
-
-            if d_assist:     
+            if a_assist:
                 if DB.constants.value('limit_attack_stance'):
-                    d_assist_num_attacks = combat_calcs.compute_multiattacks(d_assist, attacker, d_assist.get_weapon(), "defense", (0, 0))
+                    a_assist_num_attacks = combat_calcs.compute_multiattacks(a_assist, defender, a_assist.get_weapon(), "attack", (0, 0))
                 else:
-                    d_assist_num_attacks = 0
-                    for attack_phase in range(e_num_phases):
-                        d_assist_num_attacks += combat_calcs.compute_multiattacks(d_assist, attacker, d_assist.get_weapon(), "defense", (attack_phase, 0))
+                    a_assist_num_attacks = 0
+                    for attack_phase in range(num_phases):
+                        a_assist_num_attacks += combat_calcs.compute_multiattacks(a_assist, defender, a_assist.get_weapon(), "attack", (attack_phase, 0))
 
-                if d_assist_num_attacks > 1:
-                    im = SPRITES.get("x%d" % (d_assist_num_attacks), fallback=None)
+                if a_assist_num_attacks > 1:
+                    im = SPRITES.get("x%d" % (a_assist_num_attacks), fallback=None)
                     if im:
-                        surf.blit(im, x2_pos_enemy_partner)
+                        surf.blit(im, x2_pos_player_partner)
                     else:
-                        FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_enemy_partner, x2_offset))
-                        FONT[number_font].blit(str(d_assist_num_attacks), surf, utils.tuple_add(x2_pos_enemy_partner, number_offset))
+                        FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_player_partner, x2_offset))
+                        FONT[number_font].blit(str(a_assist_num_attacks), surf, utils.tuple_add(x2_pos_player_partner, number_offset))
+
+            # Enemy doubling
+            eweapon = defender.get_weapon()
+            if eweapon and combat_calcs.can_counterattack(attacker, weapon, defender, eweapon):
+                e_num_phases = combat_calcs.compute_attack_phases(defender, attacker, eweapon, weapon, 'defense', (0, 0))
+                e_num_attacks = e_num_phases
+                for e_attack_phase in range(e_num_phases):
+                    e_num_attacks += combat_calcs.compute_multiattacks(defender, attacker, eweapon, 'defense', (e_attack_phase, 0)) - 1
+                e_num_attacks = min(e_num_attacks, eweapon.data.get('uses', 100))
+
+                if e_num_attacks > 1:
+                    im = SPRITES.get("x%d" % (e_num_attacks), fallback=None)
+                    if im:
+                        surf.blit(im, x2_pos_enemy)
+                    else:
+                        FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_enemy, x2_offset))
+                        FONT[number_font].blit(str(e_num_attacks), surf, utils.tuple_add(x2_pos_enemy, number_offset))
+
+                if d_assist:     
+                    if DB.constants.value('limit_attack_stance'):
+                        d_assist_num_attacks = combat_calcs.compute_multiattacks(d_assist, attacker, d_assist.get_weapon(), "defense", (0, 0))
+                    else:
+                        d_assist_num_attacks = 0
+                        for attack_phase in range(e_num_phases):
+                            d_assist_num_attacks += combat_calcs.compute_multiattacks(d_assist, attacker, d_assist.get_weapon(), "defense", (attack_phase, 0))
+
+                    if d_assist_num_attacks > 1:
+                        im = SPRITES.get("x%d" % (d_assist_num_attacks), fallback=None)
+                        if im:
+                            surf.blit(im, x2_pos_enemy_partner)
+                        else:
+                            FONT[x2_font].blit("X", surf, utils.tuple_add(x2_pos_enemy_partner, x2_offset))
+                            FONT[number_font].blit(str(d_assist_num_attacks), surf, utils.tuple_add(x2_pos_enemy_partner, number_offset))
 
         # Turns off combat conditionals
         skill_system.test_off([], defender, resolve_weapon(defender), attacker, weapon, 'defense')
@@ -877,6 +1040,7 @@ class UIView():
     def draw_spell_info(self, surf, attacker, spell, defender):
         # Turns on appropriate combat conditionals to get accurate stats
         skill_system.test_on([], attacker, spell, defender, resolve_weapon(defender), 'attack')
+        skill_system.test_on([], defender, resolve_weapon(defender), attacker, spell, 'defense')
 
         if not self.spell_info_disp:
             self.spell_info_disp = self.create_spell_info(attacker, spell, defender)
@@ -906,6 +1070,7 @@ class UIView():
             surf.blit(icon, (topleft[0] + 8, topleft[1] + self.spell_info_disp.get_height() - 20))
 
         # Turns off combat conditionals
+        skill_system.test_off([], defender, resolve_weapon(defender), attacker, spell, 'defense')
         skill_system.test_off([], attacker, spell, defender, resolve_weapon(defender), 'attack')
 
         return surf

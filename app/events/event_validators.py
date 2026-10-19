@@ -278,7 +278,7 @@ class Achievement(Validator):
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         achs = self._db.events.inspector.find_all_calls_of_command(event_commands.CreateAchievement())
-        slots = [(None, command.parameters['Nid']) for command in achs.values()]
+        slots = [(None, command.parameters['Nid']) for command in achs.values() if command.parameters.get('Nid')]
         return slots
 
 class GeneralVar(Validator):
@@ -378,6 +378,14 @@ class Time(Integer):
     desc = "Indicates a duration"
 class Volume(Float):
     desc = "A number between 0 and 1 (0 is muted, 1 is current volume)"
+
+class Intensity(Float):
+    desc = "A number between 0 and 1 (0 is off, 1 is full strength)"
+
+    def validate(self, text, level):
+        if str_utils.is_float(text) and 0 <= float(text) <= 1:
+            return text
+        return None
 
 class String(Validator):
     """
@@ -575,7 +583,7 @@ class ExpressionList(SequenceValidator):
     desc = ("expects a comma-delimited list of expressions. "
             "Valid expressions are: (`NoSmile`, `Smile`, `NormalBlink`, `CloseEyes`, `HalfCloseEyes`, `LeftWink`, `RightWink`, `FarWink`, `NearWink`, `OpenEyes`, `OpenMouth`). "
             "Expressions can also be of patterns: `BlinkFrameX` and `MouthFrameX` where X is a non-negative whole number "
-            "(BlinkFrame0 is top blink frame, and MouthFrame0 is rightmost mouth frame). "
+            "(BlinkFrame0 is bottom blink frame, and MouthFrame0 is rightmost mouth frame). "
             "Example: `Smile,LeftWink,MouthFrame12,HalfCloseEyes`")
 
     def validate(self, text, level):
@@ -610,7 +618,7 @@ class DialogVariant(Validator):
     def validate(self, text, level):
         slots = self.built_in.copy()
         predefined_variants = self._db.events.inspector.find_all_calls_of_command(event_commands.SpeakStyle())
-        slots += list(set([variant.parameters['Style'] for variant in predefined_variants.values()]))
+        slots += list(set([variant.parameters['Style'] for variant in predefined_variants.values() if variant.parameters.get('Style')]))
         if text in slots:
             return text
         return None
@@ -618,7 +626,7 @@ class DialogVariant(Validator):
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         slots = [(None, style) for style in self.built_in]
         predefined_variants = self._db.events.inspector.find_all_calls_of_command(event_commands.SpeakStyle())
-        slots += [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values()])]
+        slots += [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values() if variant.parameters.get('Style')])]
         return slots
 
 class StringList(SequenceValidator):
@@ -644,7 +652,7 @@ class Speaker(Validator):
 
     def valid_entries(self, level: Optional[NID] = None, text: Optional[str] = None) -> List[Tuple[Optional[str], NID]]:
         predefined_variants = self._db.events.inspector.find_all_calls_of_command(event_commands.SpeakStyle())
-        slots = [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values()])]
+        slots = [(None, style) for style in set([variant.parameters['Style'] for variant in predefined_variants.values() if variant.parameters.get('Style')])]
         return []
 
 class Panorama(Validator):

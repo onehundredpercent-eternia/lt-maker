@@ -73,9 +73,15 @@ class AcquiredItem(Banner):
         super().__init__()
         self.unit = unit
         self.item = item
-        article = 'an' if self.item.name.lower()[0] in ('a', 'e', 'i', 'o', 'u') else 'a'
+        if item.special_article:
+            if item.special_article.value is not None:
+                article = item.special_article.value
+            else:
+                article = ''
+        else:    
+            article = 'an' if self.item.name.lower()[0] in ('a', 'e', 'i', 'o', 'u') else 'a'
         item_color = item_system.text_color(None, item) if item_system.text_color(None, item) else 'blue'
-        if "'" in self.item.name:
+        if "'" in self.item.name or article == '':
             # No article for things like Prim's Charm, Ophie's Blade, etc.
             self.text = '<blue>{name}</> got <{item_color}>{item_name}</>.'.format(name=unit.name, item_color=item_color, item_name=item.name)
         else:
@@ -88,9 +94,15 @@ class StoleItem(Banner):
         super().__init__()
         self.unit = unit
         self.item = item
+        if item.special_article:
+            if item.special_article.value is not None:
+                article = item.special_article.value
+            else:
+                article = ''
+        else:    
+            article = 'an' if self.item.name.lower()[0] in ('a', 'e', 'i', 'o', 'u') else 'a'
         item_color = item_system.text_color(None, item) if item_system.text_color(None, item) else 'blue'
-        article = 'an' if self.item.name.lower()[0] in ('a', 'e', 'i', 'o', 'u') else 'a'
-        if "'" in self.item.name:
+        if "'" in self.item.name or article == '':
             # No article for things like Prim's Charm, Ophie's Blade, etc.
             self.text = '<blue>{name}</> stole <{item_color}>{item_name}</>.'.format(name=unit.name, item_color=item_color, item_name=item.name)
         else:
@@ -231,7 +243,6 @@ class Pennant():
     """
 
     font = 'convo'
-    bg_surf = SPRITES.get('pennant_bg')
 
     def __init__(self, text):
         self.change_text(text)
@@ -256,12 +267,12 @@ class Pennant():
 
         # If cursor is all the way on the bottom of the map
         if draw_on_top:
-            surf.blit(engine.flip_vert(self.bg_surf), (0, -self.sprite_offset))
+            surf.blit(engine.flip_vert(SPRITES.get('pennant_bg')), (0, -self.sprite_offset))
             while counter < self.width:
                 render_text(surf, [self.font], [self.text], ['white'], (counter, -self.sprite_offset))
                 counter += self.text_width + 24
         else:
-            surf.blit(self.bg_surf, (0, WINHEIGHT - self.height + self.sprite_offset))
+            surf.blit(SPRITES.get('pennant_bg'), (0, WINHEIGHT - self.height + self.sprite_offset))
             while counter < self.width:
                 render_text(surf, [self.font], [self.text], ['white'], (counter, WINHEIGHT - self.height + self.sprite_offset))
                 counter += self.text_width + 24

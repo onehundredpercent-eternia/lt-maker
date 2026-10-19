@@ -52,7 +52,7 @@ class IconModel(ResourceCollectionModel):
             return False
         if role == Qt.EditRole:
             item: Icon = self.sub_data[index.row()]
-            item.nid = value
+            self.sub_data.update_nid(item, value)
             self._data.get(item.parent_nid).set_alias(item.nid, item.icon_index)
         return True
 
@@ -99,6 +99,21 @@ class IconModel(ResourceCollectionModel):
         for i in self.sub_data._list[:]:
             if i.nid == nid or i.parent_nid == nid:
                 self.sub_data.delete(i)
+        self.layoutChanged.emit()
+
+    def reorder_sub_data(self):
+        """Re-sort the sliced icons to follow the current icon sheet order.
+
+        Keeps the existing Icon objects (and their aliases) rather than re-slicing.
+        """
+        self.layoutAboutToBeChanged.emit()
+        by_sheet = {}
+        for icon in self.sub_data:
+            by_sheet.setdefault(icon.parent_nid, []).append(icon)
+        self.sub_data.clear()
+        for sheet in self._data:
+            for icon in by_sheet.get(sheet.nid, []):
+                self.sub_data.append(icon)
         self.layoutChanged.emit()
 
 class Icon16Model(IconModel):
@@ -273,6 +288,10 @@ class MapIconModel(Icon16Model):
     def __init__(self, data, window):
         super().__init__(data, window)
         self.sub_data = self._data
+
+    def reorder_sub_data(self):
+        # Map icons are never sliced -- sub_data *is* _data, so it is already in order
+        pass
 
     def flags(self, index):
         if index.isValid():

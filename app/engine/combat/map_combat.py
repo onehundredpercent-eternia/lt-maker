@@ -6,14 +6,27 @@ from app.engine.combat.solver import CombatPhaseSolver
 from app.engine.sound import get_sound_thread
 from app.engine import engine, combat_calcs, gui, action, item_system, skill_system
 from app.engine.health_bar import MapCombatInfo
-from app.engine.animations import MapAnimation
+from app.engine.animations import MapAnimation, SpellAnimation
+from app.engine.game_counters import ANIMATION_COUNTERS
 from app.engine.game_state import game
+
+from app.events import triggers
+from app.utilities import utils
 
 from app.engine.combat.simple_combat import SimpleCombat
 
 
 class MapCombat(SimpleCombat):
     alerts: bool = True
+
+    # The GBA's pace, for a strike with nothing to show before it (see needs_lead_in).
+    # How long before the lunge: on the first strike, while the HP boxes open,
+    # and on the later ones
+    quick_opening_wait = utils.frames2ms(12)
+    quick_wait = utils.frames2ms(3)
+    # How long the units rest once the HP bars have settled, the 4 frames the
+    # striker takes to step back among them
+    quick_rest = utils.frames2ms(23)
 
     def __init__(self, attacker, main_item, items, positions, main_target_positions, splash_positions, script, total_rounds=1):
         self._full_setup(attacker, main_item, items, positions,
@@ -36,7 +49,20 @@ class MapCombat(SimpleCombat):
         self.health_bars = {}
 
         self.first_phase = True
+        self.opening_phase = True
+        self.quick_phase = False
         self.cast_pose = False
+
+        # Aesthetic suppression -- decided by the attacker's item for the whole combat,
+        # the same way no_map_hp_display is
+        self.no_hit_flash = item_system.no_map_hit_flash(self.attacker, self.main_item)
+        self.no_hit_sfx = item_system.no_map_hit_sfx(self.attacker, self.main_item)
+        self.no_combat_movement = item_system.no_map_combat_movement(self.attacker, self.main_item)
+        self.no_damage_numbers = item_system.no_map_damage_numbers(self.attacker, self.main_item)
+
+    def change_sprite_state(self, unit, new_state: str):
+        """Enter one of the combat sprite states, honoring no_map_combat_movement."""
+        unit.sprite.change_state(new_state, suppress_movement=self.no_combat_movement)
 
     def set_state(self, state: str):
         self.state = state
@@ -54,12 +80,28 @@ class MapCombat(SimpleCombat):
     def update(self) -> bool:
         current_time = engine.get_time() - self.last_update
         current_state = self.state
+        hp_bars_updated = False
         # Only for the very first phase
         if self.state == 'init':
             game.highlight.remove_highlights()
             self.start_combat()
             self.start_event()
-            self.set_state('init_pause')
+            target_pos = self.defender.position if self.defender else self.target_positions[0]
+            if self.ai_combat and target_pos and not self._skip:
+                # As on the GBA, the cursor is put on what the AI is about to strike,
+                # counted from once the camera has got there
+                game.cursor.combat_show()
+                game.cursor.set_pos(target_pos)
+                game.state.change('move_camera')
+                self.target_cursor_start = None
+                self.set_state('target_cursor')
+            else:
+                self.set_state('init_pause')
+
+        elif self.state == 'target_cursor':
+            if self._skip or self.target_cursor_done():
+                game.cursor.hide()
+                self.set_state('init_pause')
 
         elif self.state == 'init_pause':
             if self._skip or current_time > 200:
@@ -80,6 +122,7 @@ class MapCombat(SimpleCombat):
                 return False
             if not item_system.no_map_hp_display(self.attacker, self.main_item):
                 self._build_health_bars()
+            self.opening_phase = self.first_phase
             if self.first_phase:
                 self.set_up_pre_proc_animation('attack_pre_proc')
                 self.set_up_pre_proc_animation('defense_pre_proc')
@@ -102,28 +145,23 @@ class MapCombat(SimpleCombat):
             if self.get_from_playback('defender_phase') or self.get_from_playback('defender_partner_phase'):
                 if self.defender:
                     if self.get_from_playback('defender_phase'):
-                        self.defender.sprite.change_state('combat_attacker')
+                        self.change_sprite_state(self.defender, 'combat_attacker')
                     elif self.get_from_playback('defender_partner_phase'):
-                        self.defender.strike_partner.sprite.change_state(
-                            'combat_attacker')
-                self.attacker.sprite.change_state('combat_counter')
+                        self.change_sprite_state(self.defender.strike_partner, 'combat_attacker')
+                self.change_sprite_state(self.attacker, 'combat_counter')
                 if self.attacker.strike_partner:
-                    self.attacker.strike_partner.sprite.change_state(
-                        'combat_counter')
+                    self.change_sprite_state(self.attacker.strike_partner, 'combat_counter')
             else:
                 if self.get_from_playback('defender_partner_phase'):
-                    self.attacker.strike_partner.sprite.change_state(
-                        'combat_attacker')
+                    self.change_sprite_state(self.attacker.strike_partner, 'combat_attacker')
                 else:
-                    self.attacker.sprite.change_state('combat_attacker')
+                    self.change_sprite_state(self.attacker, 'combat_attacker')
                     if self.attacker.strike_partner:
-                        self.attacker.strike_partner.sprite.change_state(
-                            'combat_counter')
+                        self.change_sprite_state(self.attacker.strike_partner, 'combat_counter')
                 if self.defender:
-                    self.defender.sprite.change_state('combat_defender')
+                    self.change_sprite_state(self.defender, 'combat_defender')
                     if self.defender.strike_partner:
-                        self.defender.strike_partner.sprite.change_state(
-                            'combat_defender')
+                        self.change_sprite_state(self.defender.strike_partner, 'combat_defender')
 
             # handle cast pose 
             if self.defender and self.defender.sprite.state == 'combat_attacker' and \
@@ -160,10 +198,15 @@ class MapCombat(SimpleCombat):
             self.set_up_proc_animation('defense_proc')
             self.set_up_proc_animation('defense_hit_proc')
 
+            self.quick_phase = not self.needs_lead_in()
             self.set_state('start_anim')
 
         elif self.state == 'start_anim':
-            if self._skip or current_time > 200:
+            if self.quick_phase:
+                wait = self.quick_opening_wait if self.opening_phase else self.quick_wait
+            else:
+                wait = 200
+            if self._skip or current_time > wait:
                 animation_brushes = self.get_from_playback('cast_anim')
                 for brush in animation_brushes:
                     anim = RESOURCES.animations.get(brush.anim)
@@ -178,30 +221,74 @@ class MapCombat(SimpleCombat):
                     if anim:
                         anim = MapAnimation(anim, brush.pos)
                         self.animations.append(anim)
+                        
                 self.set_state('sound')
 
         elif self.state == 'sound':
-            if self._skip or current_time > 250:
+            if self._skip or self.quick_phase or current_time > 250:
                 if self.defender and self.defender.sprite.state == 'combat_attacker' and \
                         self.get_from_playback('defender_phase'):
-                    self.defender.sprite.change_state("combat_anim")
+                    self.change_sprite_state(self.defender, 'combat_anim')
                 elif self.defender and self.defender.strike_partner and \
                         self.defender.strike_partner.sprite.state == 'combat_attacker' and \
                         self.get_from_playback('defender_partner_phase'):
-                    self.defender.strike_partner.sprite.change_state(
-                        "combat_anim")
+                    self.change_sprite_state(self.defender.strike_partner, 'combat_anim')
                 elif self.get_from_playback('attacker_partner_phase') and \
                         not self.attacker.strike_partner.sprite.state == 'start_cast':
-                    self.attacker.strike_partner.sprite.change_state(
-                        "combat_anim")
+                    self.change_sprite_state(self.attacker.strike_partner, 'combat_anim')
                 elif self.attacker.position and not self.attacker.sprite.state == 'start_cast' and \
                         not self.get_from_playback('attacker_partner_phase'):
-                    self.attacker.sprite.change_state("combat_anim")
+                    self.change_sprite_state(self.attacker, 'combat_anim')
                 sound_brushes = self.get_from_playback('cast_sound')
                 for brush in sound_brushes:
                     get_sound_thread().play_sfx(brush.sound)
+                self.projectile_brushes = [brush for brush in self.playback if brush.nid in ('spell_cast_anim', 'sequential_anim')] #See if we have any projectiles to fire 
+                if item_system.wait_on_map_anim(self.attacker, self.main_item): #We should let cast anims play before proceeding
+                    self.set_state('cast_anim_wait')
+                elif self.main_item.sequence_item and any([item_system.wait_on_map_anim(self.attacker, item) for item in self.items]): #Handle sequence items
+                    self.set_state('cast_anim_wait')
+                else:
+                    if not self.projectile_brushes:
+                        self.set_state('anim')
+                    else:
+                        self.set_state('projectile_anim')
+                    
+        elif self.state == 'cast_anim_wait':
+            if self._skip or not self.animations:
+                if not self.projectile_brushes:
+                    self.set_state('anim')
+                else:
+                    self.set_state('projectile_anim')
                 
+        elif self.state == 'projectile_anim':
+            #Handle projectile animations.  Looks better here than in start anim since it occurs after the attacker's lunge
+            animation_brushes = [brush for brush in self.projectile_brushes if brush.nid == 'spell_cast_anim'] #Normal projectiles
+            for brush in animation_brushes:
+                anim = RESOURCES.animations.get(brush.anim)
+                if anim:
+                    anim = SpellAnimation(anim, brush.pos, brush.velocity, brush.duration, brush.theta, loop = brush.loop)
+                    self.animations.append(anim)
+            
+            animation_brushes = [brush for brush in self.projectile_brushes if brush.nid == 'sequential_anim'] #Sequence projectiles
+            if animation_brushes:
+                animation_brushes.reverse()
+                self.sequence_anims = animation_brushes
+            else:
+                self.sequence_anims = []
+            self.set_state('projectile_wait')
+                
+        elif self.state == 'projectile_wait':
+            if self._skip:
                 self.set_state('anim')
+            elif self.all_proj_anim_done():
+                if self.sequence_anims:
+                    brush = self.sequence_anims.pop()
+                    anim = RESOURCES.animations.get(brush.anim)
+                    if anim:
+                        anim = SpellAnimation(anim, brush.pos, brush.velocity, brush.duration, brush.theta, loop = brush.loop)
+                        self.animations.append(anim)
+                else:
+                    self.set_state('anim')
 
         elif self.state == 'anim':
             if self._skip or current_time > 83:
@@ -211,6 +298,7 @@ class MapCombat(SimpleCombat):
                 # Force update hp bars so we can get timing info
                 for hp_bar in self.health_bars.values():
                     hp_bar.update()
+                hp_bars_updated = True
                 if self.health_bars:
                     self.hp_bar_time = max(hp_bar.get_time_for_change()
                                            for hp_bar in self.health_bars.values())
@@ -220,32 +308,33 @@ class MapCombat(SimpleCombat):
 
         elif self.state == 'hp_bar_wait':
             if self._skip or current_time > self.hp_bar_time:
+                # The striker has leaned in all this while
+                ANIMATION_COUNTERS.attack_movement_counter.retreat()
                 self.set_state('end_phase_anim')
 
         elif self.state == 'end_phase_anim':
-            if self._skip or (self.cast_pose and current_time > 250) or current_time > 550:
+            rest = self.quick_rest if self.quick_phase else 550
+            if self._skip or (self.cast_pose and current_time > 250) or current_time > rest:
                 if self.defender and self.defender.sprite.state == 'combat_anim':
-                    self.defender.sprite.change_state('combat_attacker')
+                    self.change_sprite_state(self.defender, 'combat_attacker')
                 elif self.defender and self.defender.sprite.state == 'start_cast':
                     self.defender.sprite.change_state('end_cast')
                 elif self.defender and self.defender.strike_partner and \
                         self.defender.strike_partner.sprite.state == 'combat_anim':
-                    self.defender.strike_partner.sprite.change_state(
-                        'combat_attacker')
+                    self.change_sprite_state(self.defender.strike_partner, 'combat_attacker')
                 elif self.defender and self.defender.strike_partner and \
                         self.defender.strike_partner.sprite.state == 'start_cast':
                     self.defender.strike_partner.sprite.change_state(
                         'end_cast')
                 elif self.attacker.strike_partner and \
                         self.attacker.strike_partner.sprite.state == 'combat_anim':
-                    self.attacker.strike_partner.sprite.change_state(
-                        'combat_attacker')
+                    self.change_sprite_state(self.attacker.strike_partner, 'combat_attacker')
                 elif self.attacker.strike_partner and \
                         self.attacker.strike_partner.sprite.state == 'start_cast':
                     self.attacker.strike_partner.sprite.change_state(
                         'end_cast')
                 elif self.attacker.position and self.attacker.sprite.state == 'combat_anim':
-                    self.attacker.sprite.change_state('combat_attacker')
+                    self.change_sprite_state(self.attacker, 'combat_attacker')
                 elif self.attacker.position and self.attacker.sprite.state == 'start_cast':
                     self.attacker.sprite.change_state('end_cast')
                 self.set_state('end_phase')
@@ -269,11 +358,22 @@ class MapCombat(SimpleCombat):
         if self.state != current_state:
             self.last_update = engine.get_time()
 
-        if self.state not in ('begin_phase', 'proc_animations'):
+        # Once a frame: a second update would step a box's shake past its first frame
+        if not hp_bars_updated and self.state not in ('begin_phase', 'proc_animations'):
             for hp_bar in self.health_bars.values():
                 hp_bar.update()
 
         return False
+
+    def needs_lead_in(self) -> bool:
+        """
+        Whether this phase has something for the player to take in before the
+        strike: a casting pose, a cast animation, or a skill's icon by an HP box
+        """
+        return bool(self.cast_pose or
+                    self.get_from_playback('cast_anim') or
+                    self.get_from_playback('target_cast_anim') or
+                    any(hp_bar.skill_icons for hp_bar in self.health_bars.values()))
 
     def _show_guard_gauge(self) -> bool:
         return DB.constants.value('pairup') and not DB.constants.value('attack_stance_only')
@@ -358,12 +458,23 @@ class MapCombat(SimpleCombat):
                     self.health_bars[defender] = splash_health
 
     def _handle_playback(self):
+        damage_lookup = {}
+        for b in self.playback:
+            if b.nid in ('damage_hit', 'damage_crit'):
+                damage_lookup[(b.attacker, b.defender, b.item)] = b.true_damage
+                
         for brush in self.playback:
             if brush.nid == 'unit_tint_add':
+                if self.no_hit_flash:
+                    continue
                 brush.unit.sprite.begin_flicker(333, brush.color, 'add')
             elif brush.nid == 'unit_tint_sub':
+                if self.no_hit_flash:
+                    continue
                 brush.unit.sprite.begin_flicker(333, brush.color, 'sub')
             elif brush.nid == 'crit_tint':
+                if self.no_hit_flash:
+                    continue
                 brush.unit.sprite.begin_flicker(33, brush.color, 'add')
                 # Delay five frames
                 brush.unit.sprite.start_flicker(83, 33, brush.color, 'add')
@@ -371,9 +482,13 @@ class MapCombat(SimpleCombat):
                 brush.unit.sprite.start_flicker(
                     166, 333, brush.color, 'add', fade_out=True)
             elif brush.nid == 'crit_vibrate':
+                if self.no_combat_movement:
+                    continue
                 # In 10 frames, start vibrating for 12 frames
                 brush.unit.sprite.start_vibrate(166, 200)
             elif brush.nid == 'hit_sound':
+                if self.no_hit_sfx:
+                    continue
                 get_sound_thread().play_sfx(brush.sound)
             elif brush.nid == 'shake':
                 shake = brush.shake
@@ -389,7 +504,7 @@ class MapCombat(SimpleCombat):
                     self.animations.append(anim)
             elif brush.nid == 'damage_hit':
                 damage = brush.damage
-                if damage <= 0:
+                if damage <= 0 or self.no_damage_numbers:
                     continue
                 str_damage = str(damage)
                 target = brush.defender
@@ -399,7 +514,7 @@ class MapCombat(SimpleCombat):
                     target.sprite.damage_numbers.append(d)
             elif brush.nid == 'damage_crit':
                 damage = brush.damage
-                if damage <= 0:
+                if damage <= 0 or self.no_damage_numbers:
                     continue
                 str_damage = str(damage)
                 target = brush.defender
@@ -409,7 +524,7 @@ class MapCombat(SimpleCombat):
                     target.sprite.damage_numbers.append(d)
             elif brush.nid == 'heal_hit':
                 damage = brush.damage
-                if damage <= 0:
+                if damage <= 0 or self.no_damage_numbers:
                     continue
                 str_damage = str(damage)
                 target = brush.defender
@@ -417,6 +532,12 @@ class MapCombat(SimpleCombat):
                     d = gui.DamageNumber(int(num), idx, len(
                         str_damage), target.position, 'small_cyan')
                     target.sprite.damage_numbers.append(d)
+            elif brush.nid in ('mark_hit', 'mark_crit', 'mark_miss'):
+                damage = damage_lookup.get((brush.attacker, brush.defender, brush.item), 0)
+                was_hit = brush.nid != 'mark_miss'
+                game.events.trigger(triggers.CombatAttack(brush.attacker, brush.defender, brush.attacker.position, brush.item, damage))
+                if was_hit and damage > 0 and brush.defender:
+                    game.events.trigger(triggers.CombatAttacked(brush.defender, brush.attacker, brush.defender.position, brush.item, damage))
 
     def _apply_actions(self):
         """
@@ -485,3 +606,10 @@ class MapCombat(SimpleCombat):
             hp_bar.draw(surf)
 
         return surf
+        
+    def all_proj_anim_done(self):
+        for anim in self.animations:
+            if isinstance(anim, SpellAnimation) and not anim.is_done():
+                return False
+        return True
+

@@ -967,9 +967,9 @@ class LoreDisplay():
                 unit = game.get_unit(self.lore.nid)
             elif self.lore.nid in DB.units:
                 unit = DB.units.get(self.lore.nid)
-            if unit:
-                portrait = icons.get_portrait_with_size(unit, width, height).convert_alpha()
-                portrait = image_mods.make_translucent(portrait, 0.5)
+            portrait = icons.get_portrait_with_size(unit, width, height) if unit else None
+            if portrait:
+                portrait = image_mods.make_translucent(portrait.convert_alpha(), 0.5)
                 image.blit(portrait, (utils.tuple_sub(image.get_size(), portrait.get_size(), bottomright_pad)))
 
             render_text(image, ['text'], [self.lore.title], ['blue'], (self.width // 2, 4), HAlignment.CENTER)
@@ -1615,7 +1615,6 @@ class BaseSoundRoomState(State):
     def start(self):
         self.fluid = FluidScroll()
         self.bg = game.memory.get('base_bg')
-
         sorted_list = sorted(RESOURCES.music.keys(), key=lambda x: RESOURCES.music.get(x).soundroom_idx)
         if sorted_list:
             self.music_names = sorted_list[-RESOURCES.music.get(sorted_list[-1]).soundroom_idx:]
@@ -1749,8 +1748,9 @@ class BaseSoundRoomState(State):
         return surf
 
     def draw_sound_room_title(self, surf, center, music_name):
+        display_name = RESOURCES.music.get(music_name).display_name
         engine.blit_center(surf, SPRITES.get('chapter_select_green'), center)
-        render_text(surf, ['convo'], [music_name], ['white'], (center[0], center[1] - 8), HAlignment.CENTER)
+        render_text(surf, ['convo'], [display_name], ['white'], (center[0], center[1] - 8), HAlignment.CENTER)
         return surf
 
     def draw_volume(self, surf):
