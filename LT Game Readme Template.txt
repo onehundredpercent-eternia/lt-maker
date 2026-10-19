@@ -131,6 +131,9 @@ Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside
 =================
 MacOS - WINE
 
+!!WARNING - OUTDATED!!
+!!THESE INSTRUCTIONS NEED TO BE UPDATED FOR PYTHON 3.12!!
+
 Building Lex Talionis games from source is possible under the following circumstances:
 - The developer(s) have published a repository of the python version of their game with all engine hacking/changes included.
 - The developer(s) have published the .exe engine, and have NOT modified the engine.

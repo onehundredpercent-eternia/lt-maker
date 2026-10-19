@@ -46,6 +46,7 @@ Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside
 >*If the desired game does not boot up, launch the editor instead of the engine with "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
 
 ## MacOS - Wine
+<span style="color: red; font-weight: bold;">!!WARNING: THESE INSTRUCTIONS ARE OUTDATED. THEY NEED TO BE REWRITTEN FOR PYTHON 3.12 SUPPORT!!</span>
 NOTE: Most creators will ship the blank .exe engine with their game files attached. For maximum stability, the MacOS version needs the python version of the engine to run in Wine. If you are unsure, please contact the developer(s) of the LT game you want to play.
 
 1. Download and extract the game folder from its archive file to a desired location.
