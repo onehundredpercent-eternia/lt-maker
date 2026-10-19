@@ -1,6 +1,6 @@
 # Helpful Information For Players
 
-_last updated 2026-04-01_
+_last updated 2026-10-19_
 
 This guide includes information that may be helpful to new players of LT-Maker games.
 
@@ -15,14 +15,17 @@ AUX        | A        |       | Back            | Share
 Move       | Arrows   | Hover | Left Stick      | Left Stick
 Start      | S        |       | Start / Y       | Options / Triangle
 Screenshot | ` / F12  |       |                 |
+Speedup    | Tab      |       |                 |
 ```
 * The AUX key is used to focus the cursor on your units when on the map and to toggle the Growth Rate display on the Unit Info Menu.
 
-* Screenshots are saved as .bmp files if the \` key was pressed or .png files if F12 was pressed. Screenshots are saved within the game folder.
+* Screenshots are saved as .bmp files if the ` key was pressed or .png files if F12 was pressed. Screenshots are saved within the game folder.
 
-* You can soft reset by holding Select, Back, and Start.
+* To soft reset, press Select, Back, and Start at the same time.
 
-* You can rebind which key on your keyboard does what in the Options > Controls menu in-game. Controller button remapping has not been implemented yet, although you can use an input remapper to bind controller input to keyboard keys as a workaround.
+* Keys can be rebound in the Options > Controls menu in-game. Controller button remapping is also supported in that same window.
+
+* Mouse controls can be enabled/disabled in the settings menu.
 
 
 ## Known Common Issues
@@ -31,8 +34,4 @@ Screenshot | ` / F12  |       |                 |
 
 * The EXP gain SFX may sound weird on some computers. (The pitch is sound card dependent.) To adjust this, go into saves/config.ini. Change sound_buffer_size to a small even number until the SFX sounds right. Make sure to close the game while editing these settings, and to save the file after editing it.
 
-## Miscellaneous Tips
-* You can change the screen size in-game through: Extras > Options > Config > Screen Size
-    * The full-screen option is wonky and not recommended.
-
-* You can toggle mouse controls in-game through: Extras > Options > Config > Mouse
+* The fullscreen option is not recommended for use. Maximizing the window instead is recommended.

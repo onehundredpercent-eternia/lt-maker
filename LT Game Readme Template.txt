@@ -1,20 +1,19 @@
 ==================================
 
-LEX TALIONIS "LT" README
+LEX TALIONIS "LT" README TEMPLATE
 
 ==================================
 
 CHAPTERS
-A) Playing Lex Talionis games (Windows, Linux)
+A) Playing Lex Talionis games (Windows, Linux, Itch.io)
 B) Controls
 C) Known Issues
 D) Save Data
-E) Tips & Tricks
-F) Advanced installations - Build from source (Linux), MacOS & Android
+E) Advanced installations - Build from source (Linux), MacOS & Android
 
 ==================================
 
-A) - PLAYING LEX TALIONIS GAMES (WINDOWS, LINUX)
+A) - PLAYING LEX TALIONIS GAMES (WINDOWS, LINUX, ITCH.IO)
 
 ==================================
 WINDOWS
@@ -43,6 +42,12 @@ LINUX - WINE
 3) Run "winecfg" in your terminal to make sure Wine functions as intended. You do not need to make any changes, and can close the window that pops up.
 4) Open "GAMENAME.exe" with Wine (right-click, open with > Wine Windows Program Loader).
 
+NOTE: Wine 11.0 can cause stuttering if you manually resize/maximize the game window. This can be avoided by simply using the in-game screen size settings.
+
+=================
+ITCH.IO
+
+LT-games running in a web browser should run natively on all systems. No additional setup is required, though do note the first boot may take 10-20 seconds, due to the browser installing Python.
 ==================================
 
 B) - CONTROLS
@@ -58,6 +63,7 @@ AUX        | A        |       | Back            | Share
 Move       | Arrows   | Hover | Left Stick      | Left Stick
 Start      | S        |       | Start / Y       | Options / Triangle
 Screenshot | ` / F12  |       |                 |
+Speedup    | Tab      |       |                 |
 
 =================
 EXTRA FUNCTIONALITIES
@@ -65,7 +71,8 @@ EXTRA FUNCTIONALITIES
 - The AUX key is used to focus the cursor on your units when on the map and to toggle the Growth Rate display on the Unit Info Menu.
 - Screenshots are saved as .bmp files if the ` key was pressed or .png files if F12 was pressed. Screenshots are saved within the game folder.
 - To soft reset, press Select, Back, and Start at the same time.
-- Keys can be rebound in the Options > Controls menu in-game. Controller button remapping has not been implemented yet, although an input remapper can be used to bind controller input to keyboard keys as a workaround.
+- Keys can be rebound in the Options > Controls menu in-game. Controller button remapping is also supported in that same window.
+- Mouse controls can be enabled/disabled in the settings menu.
 
 ==================================
 
@@ -80,7 +87,7 @@ C) - KNOWN ISSUES
 3) Open "config.ini" with a text editor of choice. Change the value of "sound_buffer_size" to a SMALL, EVEN NUMBER.
 4) Save your changes, close the "config.ini" file check if the issue is resolved by booting up the game again. If the issue persists, close the game and repeat step 3 until the sound is correct.
 
-- The fullscreen option is not recommended for use.
+- The fullscreen option is not recommended for use. Maximizing the window instead is recommended.
 
 ==================================
 
@@ -96,18 +103,7 @@ Developer(s) may update their game to fix bugs or add new content. If you wish t
 
 ==================================
 
-E) - TIPS & TRICKS
-
-==================================
-
-- Screen size can be adjusted in-game. From the title screen: Extras > Options > Config > Screen Size
--- The fullscreen option is not recommended for use. It is recommended to stick to one size below that.
-
-- Mouse controls can be enabled/disabled in-game. From the title screen: Extras > Options > Config > Mouse
-
-==================================
-
-F) ADVANCED INSTALLATIONS - BUILD FROM SOURCE (LINUX), MACOS & ANDROID (!!NOTE TO DEVELOPERS: CHANGE THE "lt-maker" FOLDER NAME IN THIS DOCUMENT WITH YOUR OWN FOLDER NAME WHERE NECESSARY!!)
+E) ADVANCED INSTALLATIONS - BUILD FROM SOURCE (LINUX), MACOS & ANDROID (!!NOTE TO DEVELOPERS: CHANGE THE "lt-maker" FOLDER NAME IN THIS DOCUMENT WITH YOUR OWN FOLDER NAME WHERE NECESSARY!!)
 
 ==================================
 LINUX - BUILD FROM SOURCE
@@ -123,38 +119,14 @@ If you are unsure, contact the developer(s) of the LT game you wish to play.
 
 ========
 
-1) Install a version of Python 3.11*;
-Linux distributions often ship with newer versions of Python. This means you will need to install python 3.11 on your device without interfering with other python versions. This can be accomplished with pyenv:
-https://github.com/pyenv/pyenv/
+1) Set up a virtual environment for Python;
+Consult the following documentation on setting up the correct Linux environment: https://lt-maker.readthedocs.io/en/latest/source/getting_started/Installation-Linux.html
 
-Follow the instructions on the github page to install the program. Depending on your distribution, you may need to install additional dependencies. You can see these dependencies here:
-https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+If the developer has made their game available in a repository, you should clone that repository instead of the master branch that is listed in the installation guide.
 
-*LT is potentially unstable or will not boot on newer versions of python. While using python 3.12 or newer can work, functionality is not guaranteed. Use at your own risk.
-
-2) Install python3pip
-
-3) Because of pyenv, the following programs must be installed in a terminal window that is inside the "lt-maker" folder:
-    pygame-ce==2.3.2
-    pyinstaller==6.2.0
-    typing-extensions==4.8.0
-    PyQt5==5.15.10**
-    mypy==1.8.0
-    mypy-extensions==1.0.0
-        **Some Linux distributions (mainly Ubuntu and Ubuntu-based distributions) may have trouble installing PyQt5. In that case, try "sudo apt-get install python3-pyqt5".
-
-4.1) If the developer(s) have only published the .exe engine:
-Clone the following repository to your preferred storage location;
-    https://gitlab.com/rainlash/lt-maker.git
-Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
-
-4.2) If the developer(s) have published the python version of their game:
-Download that repository and store it in your preferred storage location.
-
-5) Open a terminal window in the folder where the game is stored, and type "pyenv local 3.11.XX" (with XX being the specific python 3.11 version you installed. You can check which versions you have installed at any time with "pyenv versions"). To check if the correct version of python is now active in the game folder, type "python3 --version".
-
-6) Open a terminal window in the folder where "GAMETITLE.ltproj" is stored and type "python3 run_engine.py". The engine should now boot up with the desired game.*** You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
-    ***If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
+2) If the developer(s) have only published the .exe engine, without engine hacks:
+Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder. When next launching the engine, the desired game should boot up.*
+    *If the desired game does not boot up, launch the editor instead of the engine with "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
 
 =================
 MacOS - WINE
