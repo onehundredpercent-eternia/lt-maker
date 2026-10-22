@@ -54,16 +54,16 @@ B) - CONTROLS
 
 ==================================
 
-Function   | Keyboard | Mouse | Xbox Controller | PS Controller
-===============================================================
-Select     | X        | Left  | A               | Cross
-Back       | Z        | Right | B               | Circle
-Info       | C        | Middle| X               | Square
-AUX        | A        |       | Back            | Share
-Move       | Arrows   | Hover | Left Stick      | Left Stick
-Start      | S        |       | Start / Y       | Options / Triangle
-Screenshot | ` / F12  |       |                 |
-Speedup    | Tab      |       |                 |
+Function   | Keyboard | Mouse | Xbox Controller   | PS Controller
+=================================================================
+Select     | X        | Left  | A                 | Cross
+Back       | Z        | Right | B                 | Circle
+Info       | C        | Middle| X                 | Square
+AUX        | A        |       | Back              | Share
+Move       | Arrows   | Hover | Left Stick / DPad | Left Stick / DPad
+Start      | S        |       | Start / Y         | Options / Triangle
+Screenshot | ` / F12  |       |                   |
+Speedup    | Tab      |       | Right Stick       | Right Stick
 
 =================
 EXTRA FUNCTIONALITIES
@@ -107,89 +107,86 @@ E) ADVANCED INSTALLATIONS - BUILD FROM SOURCE (LINUX), MACOS & ANDROID (!!NOTE T
 
 ==================================
 LINUX - BUILD FROM SOURCE
+NOTE: Most creators will ship the blank .exe engine with their game files attached. If this is the case, you can build the game from source. However, if the creator has included engine hacking in their project, this method WILL NOT WORK. If you are unsure, please contact the developer(s) of the LT game you want to play. If the developer(s) have a native version for linux available for download, you can skip step 3.
 
-Building Lex Talionis games from source is possible under the following circumstances:
-- The developer(s) have published a repository of the python version of their game with all engine hacking/changes included.
-- The developer(s) have published the .exe engine, and have NOT modified the engine.
+1) Install the following programs (preferred versions if possible):
+python==3.12*
+python3pip
+pygame-ce==2.5.7
+pyinstaller==6.2.0
+PyQt5==5.15.10**
+mypy==1.8.0
+mypy-extensions==1.0.0
 
-Building Lex Talionis games from source is NOT possible under the following circumstances:
-- The developer(s) have only published the .exe engine, which includes engine hacking/changes.
+*LT is tested only on Python 3.12, and is potentially unstable or will not boot on other versions. Many current Linux distributions already come with Python 3.12 (type "python3 --version" to see yours); others can install it beside their own with pyenv (https://github.com/pyenv/pyenv). With your system's own Python, install the programs above in a virtual environment inside the lt-maker folder ("python3 -m venv venv", then "source venv/bin/activate" in each new terminal), as most distributions refuse pip installs into the system's Python.
+**Some Linux distributions (mainly Ubuntu and Ubuntu-based distributions) may have trouble installing PyQt5. In that case, try: "sudo apt-get install python3-pyqt5".
 
-If you are unsure, contact the developer(s) of the LT game you wish to play.
+2) Clone the following repository* to your prefered storage location;
 
-========
+https://gitlab.com/rainlash/lt-maker.git
 
-1) Set up a virtual environment for Python;
-Consult the following documentation on setting up the correct Linux environment: https://lt-maker.readthedocs.io/en/latest/source/getting_started/Installation-Linux.html
+*If the creator has their own repository set up, clone that instead, and skip to step 4.
 
-If the developer has made their game available in a repository, you should clone that repository instead of the master branch that is listed in the installation guide.
+3) Grab the folder named "GAMETITLE.ltproj" from the windows version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
 
-2) If the developer(s) have only published the .exe engine, without engine hacks:
-Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder. When next launching the engine, the desired game should boot up.*
-    *If the desired game does not boot up, launch the editor instead of the engine with "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
+4) Open a terminal window in the folder and type "python3 run_engine.py". The engine should now boot up with the desired game*. You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
 
-=================
-MacOS - WINE
+*If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
 
-!!WARNING - OUTDATED!!
-!!THESE INSTRUCTIONS NEED TO BE UPDATED FOR PYTHON 3.12!!
+==================================
+MACOS - WINE
+NOTE: Most creators will ship the blank .exe engine with their game files attached. For maximum stability, the MacOS version needs the python version of the engine to run in Wine. If you are unsure, please contact the developer(s) of the LT game you want to play.
 
-Building Lex Talionis games from source is possible under the following circumstances:
-- The developer(s) have published a repository of the python version of their game with all engine hacking/changes included.
-- The developer(s) have published the .exe engine, and have NOT modified the engine.
+1) Download and extract the game folder from its archive file to a desired location.
+*If the developer(s) have a python version available, you can skip steps 2 and 3.
 
-Building Lex Talionis games from source is NOT possible under the following circumstances:
-- The developer(s) have only published the .exe engine, which includes engine hacking/changes.
+2) Download the LT repository and place it in desired location:
+https://gitlab.com/rainlash/lt-maker.git
 
-MacOS requires the native python versions of LT games for maximum stability. If this is not available, running LT games on MacOS is not recommended. If you are unsure, contact the developer(s) of the LT game you wish to play.
+3) Grab the "GAMENAME.ltproj" folder and place it into the "lt-maker" folder. Remove the "default.ltproj" folder from the "lt-maker" folder.
 
-========
+4) Install Homebrew
 
-1.1) If the developer(s) have only published the .exe engine:
-Clone the following repository to your preferred storage location;
-    https://gitlab.com/rainlash/lt-maker.git
-Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-1.2) If the developer(s) have published the python version of their game:
-Download that repository and store it in your preferred storage location.
+5) Install Wine
 
-2) Install Homebrew
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-3) Install Wine
-    brew install wine-stable
-4) Install Miniconda
-    brew install --cask miniconda
-5) Initialize conda in your shell
-    conda init "$(basename "${SHELL}")"
+brew install wine-stable
 
-6) Execute the following commands before first boot;
-    cd lt-maker
-    conda create -n fe-i-lt python=3.11.7
-    conda activate fe-i-lt
-7) Setup Windows Python;
-    curl -O https://www.python.org/ftp/python/3.11.7/python-3.11.7-amd64.exe
-    wine python-3.11.7-amd64.exe
-8) Install the following requirements IN Wine Python;
-    wine pip install -r
-    python3pip
-    pygame-ce==2.3.2
-    pyinstaller==6.2.0
-    typing-extensions==4.8.0
-    PyQt5==5.15.10
-    mypy==1.8.0
-    mypy-extensions==1.0.0
+6) Install Miniconda
 
-9) Execute the following commands;
-    cd lt-maker
-    conda activate fe-i-lt
-    wine python run_engine.py
-EX) If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
+brew install --cask miniconda
 
-=================
+7) Initialize conda in your shell
+
+conda init "$(basename "${SHELL}")"
+
+8) Perform the following steps before first boot;
+cd lt-maker
+conda create -n fe-i-lt python=3.12.10
+conda activate fe-i-ltproj
+
+9) Setup Windows Python;
+curl -O https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe
+wine python-3.12.10-amd64.exe
+
+10) Install the following requirements IN Wine Python;
+wine pip install -r
+python3pip
+pygame-ce==2.5.7
+pyinstaller==6.2.0
+PyQt5==5.15.10
+mypy==1.8.0
+mypy-extensions==1.0.0
+
+11) Execute the following commands;
+cd lt-maker
+conda activate fe-i-lt
+wine python run_engine.py
+
+==================================
 ANDROID
-
 Refer to the following links;
-1) https://feuniverse.us/t/lex-talionis-on-android-its-time/28374
-2) https://feuniverse.us/t/lex-talionis-on-android-its-time/28374/6
-
+* https://feuniverse.us/t/lex-talionis-on-android-its-time/28374
+* https://feuniverse.us/t/lex-talionis-on-android-its-time/28374/6
 ==================================

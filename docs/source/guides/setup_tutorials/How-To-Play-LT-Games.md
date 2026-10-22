@@ -17,9 +17,6 @@ No terminal required. Recommended method.
 3. In the lower left corner of your Steam library, click the "Add a Game" button, and select "Add a non-Steam game...".
 4. Click "Browse...", navigate to the folder where you stored the game, and select "GAMENAME.exe". Then, click "Add selected programs" and the game now shows up in your Steam library.
 
-Normally, Steam will automatically recognize the .exe file and force the game to run with Proton. If it does not:
-5. Right-click on the game in your library list and select "Properties...". Navigate to the "Compatibility" tab and select "Force the use of a specific Steam Play compatibility tool". Proton 10.0-4 is known to be stable. Newer versions may offer performance benefits, but may also introduce unknown issues.
-
 ## Linux - Wine 
 Requires terminal.
 
@@ -29,24 +26,38 @@ https://www.winehq.org/
 It is recommended to install Wine manually, as the package distributed by many package managers are outdated. Version 11.0 is known to run LT games in a stable manner. Older versions are untested.
 3. Open "GAMENAME.exe" with Wine.
 
-NOTE: Wine 11.0 can cause stuttering if you manually resize/maximize the game window. This can be avoided by simply using the in-game screen size settings.
-
 ## ITCH.IO
 LT-games running in a web browser should run natively on all systems. No additional setup is required, though do note the first boot may take 10-20 seconds, due to the browser installing Python.
 
 ## Linux - Build from Source
-NOTE: Most creators will ship the blank .exe engine with their game files attached. If this is the case, you can build the game from source. However, if the creator has included engine hacking in their project, this method WILL NOT WORK. If you are unsure, please contact the developer(s) of the LT game you want to play.
+NOTE: Most creators will ship the blank .exe engine with their game files attached. If this is the case, you can build the game from source. However, if the creator has included engine hacking in their project, this method WILL NOT WORK. If you are unsure, please contact the developer(s) of the LT game you want to play. If the developer(s) have a native version for linux available for download, you can skip step 3.
 
-1. Refer to the [Linux installation guide on setting up the enviroment](https://lt-maker.readthedocs.io/en/latest/source/getting_started/Installation-Linux.html)
+1. Install the following programs (preferred versions if possible):
+```
+python==3.12
+python3pip
+pygame-ce==2.5.7
+pyinstaller==6.2.0
+PyQt5==5.15.10
+mypy==1.8.0
+mypy-extensions==1.0.0
+```
+* LT is tested only on Python 3.12, and is potentially unstable or will not boot on other versions. Many current Linux distributions already come with Python 3.12 (type "python3 --version" to see yours); others can install it beside their own with pyenv (https://github.com/pyenv/pyenv). With your system's own Python, install the programs above in a virtual environment inside the lt-maker folder ("python3 -m venv venv", then "source venv/bin/activate" in each new terminal), as most distributions refuse pip installs into the system's Python.
+* Some Linux distributions (mainly Ubuntu and Ubuntu-based distributions) may have trouble installing PyQt5. In that case, try: "sudo apt-get install python3-pyqt5".
 
->If the developer(s) have made their game available in a repository, you should clone that repository instead of the master branch that is listed in the installation guide.
+2. Clone the following repository to your prefered storage location;
+```
+https://gitlab.com/rainlash/lt-maker.git
+```
+* If the creator has their own repository set up, clone that instead.
 
-2. If the developer(s) have only published the .exe engine, without engine hacks:
-Grab the folder named "GAMETITLE.ltproj" from the .exe version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder. When next launching the engine, the desired game should boot up.*
->*If the desired game does not boot up, launch the editor instead of the engine with "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
+3. Grab the folder named "GAMETITLE.ltproj" from the windows version and put it inside the "lt-maker" folder. Delete the "default.ltproj" folder.
+
+4. Open a terminal window in the folder and type "python3 run_engine.py". The engine should now boot up with the desired game. You can also create a script to perform this command. It is recommended to run this script in the terminal, as the game uses the terminal as a log.
+
+* If the desired game does not boot up, change the command to "python3 run_editor.py", click the "Open other" button and select the "GAMENAME.ltproj" folder. Once the editor opens, click the play icon in the icon bar and then select the "Test Full Game..." option. From there, you can play as normal.
 
 ## MacOS - Wine
-<span style="color: red; font-weight: bold;">!!WARNING: THESE INSTRUCTIONS ARE OUTDATED. THEY NEED TO BE REWRITTEN FOR PYTHON 3.12 SUPPORT!!</span>
 NOTE: Most creators will ship the blank .exe engine with their game files attached. For maximum stability, the MacOS version needs the python version of the engine to run in Wine. If you are unsure, please contact the developer(s) of the LT game you want to play.
 
 1. Download and extract the game folder from its archive file to a desired location.

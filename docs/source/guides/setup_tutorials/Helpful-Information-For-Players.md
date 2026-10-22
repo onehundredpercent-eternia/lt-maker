@@ -1,21 +1,21 @@
 # Helpful Information For Players
 
-_last updated 2026-10-19_
+_last updated 2026-10-22_
 
 This guide includes information that may be helpful to new players of LT-Maker games.
 
 ## Default Controls
 ```
-Function   | Keyboard | Mouse | Xbox Controller | PS Controller
-===============================================================
-Select     | X        | Left  | A               | Cross
-Back       | Z        | Right | B               | Circle
-Info       | C        | Middle| X               | Square
-AUX        | A        |       | Back            | Share
-Move       | Arrows   | Hover | Left Stick      | Left Stick
-Start      | S        |       | Start / Y       | Options / Triangle
-Screenshot | ` / F12  |       |                 |
-Speedup    | Tab      |       |                 |
+Function   | Keyboard | Mouse | Xbox Controller   | PS Controller
+=================================================================
+Select     | X        | Left  | A                 | Cross
+Back       | Z        | Right | B                 | Circle
+Info       | C        | Middle| X                 | Square
+AUX        | A        |       | Back              | Share
+Move       | Arrows   | Hover | Left Stick / DPad | Left Stick / DPad
+Start      | S        |       | Start / Y         | Options / Triangle
+Screenshot | ` / F12  |       |                   |
+Speedup    | Tab      |       | Right Stick       | Right Stick
 ```
 * The AUX key is used to focus the cursor on your units when on the map and to toggle the Growth Rate display on the Unit Info Menu.
 

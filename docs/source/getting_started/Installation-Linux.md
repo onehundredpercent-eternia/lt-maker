@@ -124,8 +124,14 @@ python3 run_editor.py
 
 If you used `venv`, type
 ```
-source venv/bin/activate
-python3 run_editor.py
+#!/bin/bash
+venv_activate="./venv/bin/activate"
+if [ -f "$venv_activate" ]; then
+    source "$venv_activate"
+    python3 run_editor.py
+else
+    echo "The virtual environment was not found. Make sure this script is inside of the 'lt-maker folder'. Also, make sure there is a 'venv' folder inside of the 'lt-maker' folder. If there is not, make sure you set up the virtual environment correctly."
+fi
 ```
 
 Save your newly created boot script. Give it a creative name, and place it inside of the `lt-maker` folder. Then, right click on the .sh file, go to its properties, and allow it to be executed as a program. If your file manager asks, it is recommended to run the script in the terminal, as the terminal functions as an output log for the editor. That makes troubleshooting much easier if something goes wrong, like an outdated dependency or a crash!
